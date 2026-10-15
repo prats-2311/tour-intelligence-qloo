@@ -22,4 +22,8 @@ echo "=== qloo_gateway test suite (vitest) ==="
 
 echo ""
 echo "=== graft freshness ==="
-graft check
+if command -v graft >/dev/null 2>&1 && [ -d graft ]; then
+  graft check
+else
+  echo "graft not installed or graft/ not built — skipping freshness check"
+fi

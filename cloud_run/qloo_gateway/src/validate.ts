@@ -76,7 +76,7 @@ export function validateToolCall(name: string, args: unknown):
   if (typeof args !== "object" || args === null || Array.isArray(args)) return { ok: false, error: `${tool}: arguments must be an object` };
   const record = args as Record<string, unknown>;
   const rules = RULES[tool];
-  for (const key of Object.keys(record)) if (!(key in rules)) return { ok: false, error: `${tool}: unknown argument ${key}` };
+  for (const key of Object.keys(record)) if (!Object.hasOwn(rules, key)) return { ok: false, error: `${tool}: unknown argument ${key}` };
   for (const [key, rule] of Object.entries(rules)) {
     const value = record[key];
     if (value === undefined) {

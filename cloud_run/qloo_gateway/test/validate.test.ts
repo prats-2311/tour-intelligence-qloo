@@ -18,6 +18,10 @@ describe("validateToolCall", () => {
     const r = validateToolCall("qloo_describe", { entity: "x", bogus: 1 });
     expect(r).toEqual({ ok: false, error: "qloo_describe: unknown argument bogus" });
   });
+  it("rejects inherited prototype keys as unknown arguments", () => {
+    const r = validateToolCall("qloo_describe", { entity: "x", constructor: 1 });
+    expect(r).toEqual({ ok: false, error: "qloo_describe: unknown argument constructor" });
+  });
   it("rejects rank with more than 10 options", () => {
     const options = Array.from({ length: 11 }, (_, i) => `Venue ${i}`);
     const r = validateToolCall("qloo_rank", { options, option_type: "place", signals: ["Bad Bunny"] });
