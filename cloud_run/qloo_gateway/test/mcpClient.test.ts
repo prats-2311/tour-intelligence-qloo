@@ -62,4 +62,52 @@ describe("QlooMcpClient", () => {
     const env = await c.callTool("qloo_describe", { entity: "x" });
     expect(env).toMatchObject({ status: "error", error: { code: "UNAVAILABLE", retryable: false } });
   });
+
+  it("single-flights concurrent cold connects", async () => {
+    let created = 0;
+    const c = new QlooMcpClient({
+      factory: () => {
+        created += 1;
+        return {
+          async connect() { await new Promise((r) => setTimeout(r, 10)); },
+          async close() {},
+          async callTool() { return { structuredContent: { operation: "describe", status: "ok" } }; },
+        };
+      },
+    });
+    const [a, b] = await Promise.all([c.callTool("qloo_describe", {}), c.callTool("qloo_describe", {})]);
+    expect(created).toBe(1);
+    expect([a.status, b.status]).toEqual(["ok", "ok"]);
+  });
+
+  it("a stale failure from an old client does not discard a newer healthy client", async () => {
+    let created = 0;
+    let rejectOld: (e: Error) => void = () => undefined;
+    const clients: McpLike[] = [];
+    const c = new QlooMcpClient({
+      factory: () => {
+        created += 1;
+        const n = created;
+        const m: McpLike = {
+          async connect() {},
+          async close() {},
+          callTool() {
+            if (n === 1) return new Promise((_, rej) => { rejectOld = rej; });
+            return Promise.resolve({ structuredContent: { operation: "describe", status: "ok" } });
+          },
+        };
+        clients.push(m);
+        return m;
+      },
+    });
+    const pendingA = c.callTool("qloo_describe", { entity: "a" });
+    await new Promise((r) => setTimeout(r, 0));
+    clients[0].onclose?.();
+    await c.callTool("qloo_describe", { entity: "b" });
+    expect(created).toBe(2);
+    rejectOld(new Error("EPIPE"));
+    expect((await pendingA).error?.code).toBe("TRANSPORT");
+    await c.callTool("qloo_describe", { entity: "c" });
+    expect(created).toBe(2);
+  });
 });

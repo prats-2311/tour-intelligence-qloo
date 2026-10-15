@@ -43,8 +43,17 @@ export class QlooMcpClient {
     this.maxReconnects = opts.maxReconnects ?? 3;
   }
 
-  private async ensure(): Promise<McpLike | undefined> {
-    if (this.client) return this.client;
+  private connecting: Promise<McpLike | undefined> | undefined;
+
+  private ensure(): Promise<McpLike | undefined> {
+    if (this.client) return Promise.resolve(this.client);
+    if (!this.connecting) {
+      this.connecting = this.connectWithRetries().finally(() => { this.connecting = undefined; });
+    }
+    return this.connecting;
+  }
+
+  private async connectWithRetries(): Promise<McpLike | undefined> {
     for (let attempt = 0; attempt < this.maxReconnects; attempt += 1) {
       const candidate = this.factory();
       try {
@@ -71,7 +80,7 @@ export class QlooMcpClient {
       }
       return raw as QlooEnvelope;
     } catch (err) {
-      this.client = undefined;
+      if (this.client === client) this.client = undefined;
       await client.close().catch(() => undefined);
       return errorEnvelope(operation, "TRANSPORT", true, `qloo mcp transport failed: ${(err as Error).message}`);
     }
