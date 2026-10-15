@@ -1,0 +1,89 @@
+import { describe, expect, it } from "vitest";
+import { BudgetGuard } from "../src/budget.js";
+import { MemoryCache, cacheKey } from "../src/cache.js";
+import { createQlooCaller } from "../src/qlooCall.js";
+import type { QlooEnvelope } from "../src/types.js";
+
+const ok: QlooEnvelope = { operation: "describe", status: "ok", results: [{ name: "x" }], result_count: 1 };
+const retryable: QlooEnvelope = { operation: "describe", status: "error", error: { code: "RATE", retryable: true, recovery: "wait" } };
+const fatal: QlooEnvelope = { operation: "describe", status: "error", error: { code: "QLOO_AUTH", retryable: false, recovery: "key" } };
+
+function setup(responses: QlooEnvelope[], perSession = 60) {
+  const calls: string[] = [];
+  const mcp = { async callTool(name: string) { calls.push(name); return responses.shift() ?? ok; } };
+  const cache = new MemoryCache(() => 0);
+  const caller = createQlooCaller({ mcp, cache, budget: new BudgetGuard({ perSession, perDay: 1000, now: () => 0 }), sleep: async () => {} });
+  return { caller, calls, cache };
+}
+
+describe("resilientCall", () => {
+  it("rejects invalid calls without touching Qloo", async () => {
+    const { caller, calls } = setup([]);
+    await expect(caller.call("qloo_api", {}, "s")).rejects.toThrow("tool not allowlisted");
+    expect(calls).toHaveLength(0);
+  });
+  it("caches ok results; second call is a free cache hit", async () => {
+    const { caller, calls } = setup([ok]);
+    const a = await caller.call("qloo_describe", { entity: "x" }, "s");
+    const b = await caller.call("qloo_describe", { entity: "X " }, "s");
+    expect([a.cached, b.cached]).toEqual([false, true]);
+    expect(calls).toHaveLength(1);
+  });
+  it("retries retryable errors at most twice", async () => {
+    const { caller, calls } = setup([retryable, retryable, retryable]);
+    const r = await caller.call("qloo_describe", { entity: "x" }, "s");
+    expect(calls).toHaveLength(3);
+    expect(r.envelope.status).toBe("error");
+  });
+  it("succeeds after one retry", async () => {
+    const { caller, calls } = setup([retryable, ok]);
+    const r = await caller.call("qloo_describe", { entity: "x" }, "s");
+    expect(calls).toHaveLength(2);
+    expect(r.envelope.status).toBe("ok");
+  });
+  it("does not retry non-retryable errors and returns the error when nothing is cached", async () => {
+    const { caller, calls } = setup([fatal]);
+    const r = await caller.call("qloo_describe", { entity: "y" }, "s");
+    expect(calls).toHaveLength(1);
+    expect(r.envelope).toMatchObject({ status: "error", error: { code: "QLOO_AUTH" } });
+  });
+  it("never caches needs_input or error envelopes", async () => {
+    const needs: QlooEnvelope = { operation: "describe", status: "needs_input", issues: [] };
+    const { caller, calls } = setup([needs, needs]);
+    await caller.call("qloo_describe", { entity: "x" }, "s");
+    await caller.call("qloo_describe", { entity: "x" }, "s");
+    expect(calls).toHaveLength(2);
+  });
+  it("de-duplicates identical in-flight calls and charges budget once (Review Focus 4)", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    const calls: string[] = [];
+    const mcp = { async callTool(name: string) { calls.push(name); await gate; return ok; } };
+    const budget = new BudgetGuard({ perSession: 60, perDay: 1000, now: () => 0 });
+    const caller = createQlooCaller({ mcp, cache: new MemoryCache(() => 0), budget, sleep: async () => {} });
+    const p1 = caller.call("qloo_describe", { entity: "x" }, "s");
+    const p2 = caller.call("qloo_describe", { entity: "x" }, "s2");
+    release();
+    const [a, b] = await Promise.all([p1, p2]);
+    expect(calls).toHaveLength(1);
+    expect(a.envelope).toEqual(b.envelope);
+    expect(budget.remaining("s2").session).toBe(60);
+  });
+  it("surfaces budget exhaustion as a BUDGET error envelope (not a throw)", async () => {
+    const { caller } = setup([ok, ok], 1);
+    await caller.call("qloo_describe", { entity: "a" }, "s");
+    const r = await caller.call("qloo_describe", { entity: "b" }, "s");
+    expect(r.envelope).toMatchObject({ status: "error", error: { code: "BUDGET", retryable: false } });
+  });
+  it("returns stale cache on non-retryable error", async () => {
+    let t = 0;
+    const cache = new MemoryCache(() => t);
+    await cache.put(cacheKey("qloo_describe", { entity: "x" }), "qloo_describe", ok);
+    t = 8 * 86_400_000;
+    const mcp = { async callTool() { return fatal; } };
+    const caller = createQlooCaller({ mcp, cache, budget: new BudgetGuard({ perSession: 9, perDay: 9, now: () => t }), sleep: async () => {} });
+    const r = await caller.call("qloo_describe", { entity: "x" }, "s");
+    expect(r).toMatchObject({ cached: true, stale: true });
+    expect(r.envelope.status).toBe("ok");
+  });
+});
