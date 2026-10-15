@@ -255,7 +255,29 @@ The UI shows the system thinking while it works — but only reasoning that actu
 | Scores & verdicts | "Why this score?" — formula, weights, component values, Qloo inputs | Scoring code; labelled as a calculation, not as AI thinking. |
 | Claims | "N verified · M removed" with removal reasons | Claim verifier (§5.6). |
 
-Rules (acceptance criteria): every displayed reasoning line maps to a real event or a real model thought summary; cached results are labelled "from cache"; reasoning UI is a compact chip that opens a bottom sheet on phones and a side panel on desktop (reusing the `ThinkingTrace.tsx` pattern); it respects reduced motion. Delivered in Plan 2 (agent log) and Plans 3–4 (thought summaries).
+Rules (acceptance criteria) for 7.4 follow the dashboard section below.
+
+### 7.5 Taste Insights dashboard (data-rich, filterable)
+A dashboard for organisers, promoters and judges to explore the evidence in depth. It is built **only from data the product already fetched** (cached Tour Board and playbook results) plus bounded comparison calls — never a catalogue-wide crawl (Qloo kit `docs/API_ACCESS.md`: no bulk scraping or recreating a database).
+
+**Filters:** artist (compare up to 3) · region/country · city · entity type (brand, place/venue, movie, artist, tv_show) · minimum affinity · verdict (Play / Hidden goldmine / De-risk / Consider / Skip) · data source (live vs cached) · trend date window.
+
+| Panel | Visual | Data points | Source |
+|---|---|---|---|
+| Market map | Heat/bubble map | Fan heat per city, hotspot cells, verdict colour | `where_popular` |
+| Winnability matrix | Scatter fan heat (x) × activation (y), verdict quadrants shaded | All scored cities; click → City Playbook | Scoring |
+| Activation breakdown | Stacked bars per city | Sponsor fit, local hooks, fan concentration, venue fit (with weights) | Activation components |
+| Audience profile | Age/gender bars + tag cloud | Demographic distribution, defining tags with affinity | `audience_demographics`, `entity_tags` |
+| Momentum | Line chart | 90-day trend for the artist and up to 4 comparison artists | `trends` |
+| Cross-domain taste | Ranked bars / treemap by category | Top brands, venues, films, artists fans in the selected city love | `recommend` per type |
+| Promo zones | In-city heatmap + table | Zone label, share of heat, coordinates | in-city `where_popular` |
+| Artist vs artist | Overlap view + table | Shared vs distinct audience | `compare_audiences` |
+| Data quality & provenance | Stat tiles | Qloo calls, cache hits, partial/empty results, claims verified/removed | Gateway events, claim verifier |
+
+**Rules (acceptance criteria):** every chart has a source chip opening the Qloo requests behind it; empty or partial data shows an honest state, never filler; comparisons go through the budget guard (≤ ~15 extra calls for a 3-artist compare); charts follow the dataviz guidelines (accessible palette validated against the dark theme, consistent marks) and are reused by the Tour Book's market chapter; mobile: filters in a bottom sheet, panels stacked; desktop: grid. Delivered in Plan 2 alongside the Tour Board.
+
+### 7.4 rules (acceptance criteria)
+Every displayed reasoning line maps to a real event or a real model thought summary; cached results are labelled "from cache"; reasoning UI is a compact chip that opens a bottom sheet on phones and a side panel on desktop (reusing the `ThinkingTrace.tsx` pattern); it respects reduced motion. Delivered in Plan 2 (agent log) and Plans 3–4 (thought summaries).
 
 ---
 
@@ -332,14 +354,14 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 |---|---|
 | Oct 16–17 | Repo + dataset; spec approved; plan written; **data spike when key arrives**; tune §5 |
 | Oct 18–20 | `qloo_gateway`: MCP client, validation, cache, budget, scoring, pipeline skeleton; deployed |
-| Oct 20–23 | Tour Board (Discover + Decide), agent log, Why-sheet, comparison toggle; showcase pre-warm |
+| Oct 20–23 | Tour Board (Discover + Decide), agent log, Why-sheet, comparison toggle, Taste Insights dashboard; showcase pre-warm |
 | Oct 21–24 (parallel track) | Backtest case gathering via Parallel + **human review by Prateek** (target 12–20, minimum 8) |
 | Oct 23–25 | City Playbook (Activate) with grounding-verified claims; Stage-2 Playbooks get Qloo evidence; Book chapters + .ics |
 | Oct 25–27 | Strategist chat; MCP taste tools + public demo endpoint; WebMCP tools; **run backtest, build `/proof`** |
 | Oct 27–29 | Polish, performance, Playwright judge path, README (request→result walkthrough, limitations, architecture), Devpost write-up, existing-project answer; repo → public |
 | Oct 30 | Final deploy, real-device smoke test, submit |
 
-**Cut order if behind:** merch localisation → Density-only/Without-Qloo toggle → WebMCP UI-driving tools → co-billing. **Never cut:** Tour Board with winnability, City Playbook (sponsors, promo zones, local moment, venue fit) with grounding-verified claims, provenance, Book, MCP demo endpoint, backtest with at least 8 cases.
+**Cut order if behind:** merch localisation → Insights comparison & momentum panels → Density-only/Without-Qloo toggle → WebMCP UI-driving tools → co-billing. **Never cut:** Tour Board with winnability, City Playbook (sponsors, promo zones, local moment, venue fit) with grounding-verified claims, provenance, Book, MCP demo endpoint, backtest with at least 8 cases.
 
 ---
 
