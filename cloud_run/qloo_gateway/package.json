@@ -2,7 +2,9 @@
   "name": "qloo-gateway",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.19.0" },
+  "engines": {
+    "node": ">=22.19.0"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
@@ -10,7 +12,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@google-cloud/bigquery": "^8.1.0",
+    "@google-cloud/firestore": "^7.11.6",
     "@modelcontextprotocol/sdk": "1.30.1",
     "express": "^5.2.1"
   },
