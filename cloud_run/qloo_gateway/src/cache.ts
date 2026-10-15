@@ -45,7 +45,7 @@ export class MemoryCache implements Cache {
 }
 
 export interface BigQueryLike {
-  query(opts: { query: string; params: Record<string, unknown> }): Promise<[Array<Record<string, unknown>>]>;
+  query(opts: { query: string; params: Record<string, unknown> }): Promise<[Array<Record<string, unknown>>, ...unknown[]]>;
   dataset(id: string): { table(id: string): { insert(rows: object[]): Promise<unknown> } };
 }
 
