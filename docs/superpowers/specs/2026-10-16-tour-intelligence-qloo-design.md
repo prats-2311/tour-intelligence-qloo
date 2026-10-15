@@ -13,6 +13,8 @@
 A taste-powered planning system for live music tours that answers one question: **where can this artist win, and exactly how?**
 
 > *Other tools tell you where your fans are. Tour Intelligence tells you where you can **win** — and exactly how — city by city.*
+>
+> One-liner: **"Don't just find your fans. Win their city."**
 
 ### 1.2 Who it is for
 - **Primary:** promoters, booking agents, artist managers and label marketing teams planning tours for mid-tier and emerging artists — teams without a ticketing data warehouse, entering markets with no sales history.
@@ -79,6 +81,19 @@ Activation findings feed back into ② (they are the inputs to the activation-po
 - **Tour & Activation Book** (existing Executive Tour Book, extended): market-selection chapter (heat map, winnability table, density-only vs winnability comparison), one activation chapter per city, provenance appendix listing every Qloo request. Print stylesheet → PDF; plus an `.ics` of chosen stops.
 - "Build tour from shortlist" creates a campaign in the existing campaign system; existing per-city briefs (Culture, Delight, Talent) run with Qloo evidence attached.
 
+### ⑤ Proof — the activation backtest (`/proof`)
+Competitors "prove" Qloo by scoring tours against Qloo's own heatmap (circular). We test against **real-world outcomes**.
+
+- **Question:** for real past tours, would our Qloo-powered playbook have surfaced the activations that actually happened in that city?
+- **Dataset (`backtest_cases`, BigQuery):** 12–20 documented city-specific activations from 2023–2026 tours — local sponsor/brand partnerships, city-exclusive merch collaborations, local guest appearances or covers of local artists. Each case: `artist, city, activation_type (sponsor | merch_collab | local_artist), real_entity, date, source_urls[]`. Candidates are gathered with Parallel Search/Task; **every case is human-reviewed before inclusion** (cases are evidence, so they are not trusted from an LLM). Minimum viable set: 8 cases.
+- **Method:** run `get_city_playbook(artist, city)` and check whether `real_entity` appears in the matching card's top-10 (**exact hit**), or shares its Qloo category/tag (**category hit**, via `entity_tags`).
+- **Baselines (same cases, same top-10 cut):**
+  1. **LLM-only** — Gemini, same prompt, no Qloo.
+  2. **City-popularity** — Qloo `recommend(filter_location=city)` **without** the artist signal (tests that the artist's taste adds value beyond "what's popular in the city").
+- **Reporting:** per-case table (hit/miss per method, with source links), aggregate hit rates, and an explicit "where we lost" section. Ties and losses are published, not hidden.
+- **Disclosed limitation:** Qloo's graph may already reflect past activations (post-hoc leakage); we cannot control for this and say so. The backtest shows consistency with real decisions, not causal lift.
+- **Reproducibility:** `scripts/backtest` runs end-to-end from the case table; results JSON committed; `/proof` renders from that JSON (static, no live quota during judging).
+
 ---
 
 ## 4. Qloo tool constraints (from `@qloo/qloo-harness` 0.1.26 schemas)
@@ -136,6 +151,15 @@ Initial weights and thresholds are configuration constants, displayed in the "Wh
 - Every displayed number links to its inputs and the Qloo requests behind them.
 - In-product label: "Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals."
 
+### 5.6 Grounding-verified activation claims
+Every playbook card has two layers: **evidence** (structured Qloo/Parallel results) and **narrative** (Gemini-written recommendation text). The narrative is never trusted on its own.
+
+1. **Constrained generation.** Gemini receives only the card's evidence set and must return schema-constrained JSON: a list of atomic claims, each with `text`, `entities[]`, `numbers[]` and `evidence_refs[]` (Qloo result ids / Parallel citation ids).
+2. **Verification (deterministic, reusing `checkGrounding`).** A claim passes only if every named entity appears in a referenced evidence item, every number matches a value in referenced evidence (no rounding beyond display precision), and every `evidence_ref` exists. Entity matching is by Qloo entity id where available, else normalised exact name.
+3. **Removal, not repair.** Failing claims are dropped from the card (never rewritten by another LLM call) and kept in a `removed_claims[]` audit list with the failure reason.
+4. **UI.** Each card shows a badge "N verified · M removed"; tapping it opens the audit list. The Book prints the same counts per chapter.
+5. **Tests.** A fabricated entity, an altered number, a dangling evidence ref, and a correct claim each produce the expected pass/remove outcome; a card with all claims removed shows evidence-only content plus an honest notice.
+
 ---
 
 ## 6. Architecture
@@ -190,6 +214,7 @@ All payloads carry `provenance` (Qloo requests), `status`, and `warnings`.
 - New BigQuery dataset `tour_intelligence_qloo` seeded from the same seed files; new Cloud Run service names; the original Google submission's services, data and URLs are untouched.
 - Node for the gateway (harness + MCP SDK are Node). Gemini (Vertex) for the strategist (already provisioned).
 - Only the gateway holds the Qloo key.
+- The root `CLAUDE.md` (Google-hackathon era) is rewritten for this hackathon as the first plan task. Its rule "don't re-propose the Next.js/Node stack" is superseded **for the gateway only**: the Qloo harness and `qloo mcp` are Node-only. All other services keep their existing stacks.
 
 ---
 
@@ -209,7 +234,8 @@ Landing → **Try the showcase tour** (pre-cached) → Tour Board → tap a **Hi
 | Why this score? | Bottom sheet: formula + weights, component values, Qloo inputs, raw requests, limitations | Side drawer |
 | Ask the strategist | FAB → full-screen chat; tool calls as chips; voice input (existing) | Docked panel |
 | Tour & Activation Book | Vertical reader + chapter index sheet; Share (Web Share API), Download PDF, Download .ics | Existing print layout |
-| Navigation | Bottom tab bar: Discover · Tours · Strategist | Top bar |
+| Proof (`/proof`) | Headline hit rates (ours vs LLM-only vs city-popularity), per-case cards with source links, "where we lost" section, limitations | Table view |
+| Navigation | Bottom tab bar: Discover · Tours · Strategist; Proof linked from Landing and the Tour Board header | Top bar |
 
 ### 7.3 UI rules (acceptance criteria)
 - Touch targets ≥ 44 px; primary actions in thumb zone; no horizontal scroll at 360 px.
@@ -275,6 +301,8 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 | Strategist | Allowlisted tools only; `needs_input` pause; SSE shape; Gemini mocked |
 | tour_data_api /qloo_* | Forwarding; `checkGrounding`; injection allowlists |
 | MCP / WebMCP | Tools as plain functions; schema checks; one live E2E against the deployed demo endpoint |
+| Claim verification (§5.6) | Fabricated entity, altered number, dangling ref, valid claim; all-removed card fallback; audit list contents |
+| Backtest (§3 ⑤) | Hit/category-hit logic on fixtures; baselines use identical cases and cut-off; results JSON schema; `/proof` renders from JSON with no live calls |
 | UI | vitest for logic (geo conversion, score formatting, state); **Playwright judge path at 375 px and 1280 px**; no horizontal scroll at 360 px |
 
 `./run_tests.sh` (existing 413 + new) must be green for every merge. `graft check` runs inside it.
@@ -293,12 +321,13 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 | Oct 16–17 | Repo + dataset; spec approved; plan written; **data spike when key arrives**; tune §5 |
 | Oct 18–20 | `qloo_gateway`: MCP client, validation, cache, budget, scoring, pipeline skeleton; deployed |
 | Oct 20–23 | Tour Board (Discover + Decide), agent log, Why-sheet, comparison toggle; showcase pre-warm |
-| Oct 23–25 | City Playbook (Activate); Stage-2 Playbooks get Qloo evidence; Book chapters + .ics |
-| Oct 25–27 | Strategist chat; MCP taste tools + public demo endpoint; WebMCP tools |
+| Oct 21–24 (parallel track) | Backtest case gathering via Parallel + **human review by Prateek** (target 12–20, minimum 8) |
+| Oct 23–25 | City Playbook (Activate) with grounding-verified claims; Stage-2 Playbooks get Qloo evidence; Book chapters + .ics |
+| Oct 25–27 | Strategist chat; MCP taste tools + public demo endpoint; WebMCP tools; **run backtest, build `/proof`** |
 | Oct 27–29 | Polish, performance, Playwright judge path, README (request→result walkthrough, limitations, architecture), Devpost write-up, existing-project answer; repo → public |
 | Oct 30 | Final deploy, real-device smoke test, submit |
 
-**Cut order if behind:** merch localisation → Density-only/Without-Qloo toggle → WebMCP UI-driving tools → co-billing. **Never cut:** Tour Board with winnability, City Playbook (sponsors, promo zones, local moment, venue fit), provenance, Book, MCP demo endpoint.
+**Cut order if behind:** merch localisation → Density-only/Without-Qloo toggle → WebMCP UI-driving tools → co-billing. **Never cut:** Tour Board with winnability, City Playbook (sponsors, promo zones, local moment, venue fit) with grounding-verified claims, provenance, Book, MCP demo endpoint, backtest with at least 8 cases.
 
 ---
 
@@ -313,6 +342,8 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 | 5 | Judges perceive project as recycled | Qloo drives the hero flow; clear upgrade narrative; new Tour Board and Playbook |
 | 6 | `routed` keeps improving | Don't compete on routing; win on winnability + activation + breadth + polish |
 | 7 | Quota during judging | Cache, pre-warm, budget guards, cached fallback |
+| 8 | Too few well-documented past activations for the backtest | Start gathering Oct 21 in parallel; widen to 2021–2026 and to film press tours if needed; floor of 8 cases; report sample size prominently |
+| 9 | Backtest results unfavourable | Publish anyway with analysis (honesty is a differentiator); never tune the method on the test cases |
 
 ---
 
