@@ -87,3 +87,49 @@ describe("resilientCall", () => {
     expect(r.envelope.status).toBe("ok");
   });
 });
+
+describe("resilientCall fix round 1", () => {
+  it("does not leak a leader's budget refusal to a follower with budget", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    const calls: string[] = [];
+    const mcp = { async callTool(name: string) { calls.push(name); await gate; return ok; } };
+    const budget = new BudgetGuard({ perSession: 1, perDay: 1000, now: () => 0 });
+    budget.reserve("A");
+    const caller = createQlooCaller({ mcp, cache: new MemoryCache(() => 0), budget, sleep: async () => {} });
+    const p1 = caller.call("qloo_describe", { entity: "x" }, "A");
+    const p2 = caller.call("qloo_describe", { entity: "x" }, "B");
+    release();
+    const [a, b] = await Promise.all([p1, p2]);
+    expect(a.envelope).toMatchObject({ status: "error", error: { code: "BUDGET" } });
+    expect(b.envelope.status).toBe("ok");
+    expect(calls).toHaveLength(1);
+  });
+  it("charges the leader exactly once and not the follower", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    const mcp = { async callTool() { await gate; return ok; } };
+    const budget = new BudgetGuard({ perSession: 60, perDay: 1000, now: () => 0 });
+    const caller = createQlooCaller({ mcp, cache: new MemoryCache(() => 0), budget, sleep: async () => {} });
+    const p1 = caller.call("qloo_describe", { entity: "x" }, "L");
+    const p2 = caller.call("qloo_describe", { entity: "x" }, "F");
+    release();
+    await Promise.all([p1, p2]);
+    expect(budget.remaining("L").session).toBe(59);
+    expect(budget.remaining("F").session).toBe(60);
+  });
+  const badCache = { async get() { throw new Error("boom"); }, async put() { throw new Error("boom"); } };
+  it("returns ok envelope when cache get and put reject", async () => {
+    const mcp = { async callTool() { return ok; } };
+    const caller = createQlooCaller({ mcp, cache: badCache as never, budget: new BudgetGuard({ perSession: 9, perDay: 9, now: () => 0 }), sleep: async () => {} });
+    const r = await caller.call("qloo_describe", { entity: "x" }, "s");
+    expect(r).toMatchObject({ cached: false, stale: false });
+    expect(r.envelope.status).toBe("ok");
+  });
+  it("returns the error envelope when stale get rejects", async () => {
+    const mcp = { async callTool() { return fatal; } };
+    const caller = createQlooCaller({ mcp, cache: badCache as never, budget: new BudgetGuard({ perSession: 9, perDay: 9, now: () => 0 }), sleep: async () => {} });
+    const r = await caller.call("qloo_describe", { entity: "x" }, "s");
+    expect(r.envelope).toMatchObject({ status: "error", error: { code: "QLOO_AUTH" } });
+  });
+});
