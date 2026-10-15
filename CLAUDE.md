@@ -1,44 +1,22 @@
-# google_promotions — Agentic Cinema Hackathon Submission
+# tour-intelligence-qloo — Qloo Agentic Hackathon Submission
 
 ## What this is
-A submission for **Agentic Cinema: The Blockbuster Hackathon** (Google Cloud + Devpost). The product concept is the **Agentic Tour & Promotion Intelligence OS** — a multi-agent system that generates city-specific cultural intelligence, fan-enthusiasm scoring, and localization guidance for entertainment press tours and music tours (e.g., a Mumbai stop where the artist should speak a few Hindi lines and reference a beloved local icon).
+Tour Intelligence × Qloo: "Don't just find your fans. Win their city." A taste-powered planning system for live music tours (film press tours secondary) that scores where an artist can **win** (fan heat + activation potential) and produces a per-city activation playbook and a Tour & Activation Book. Upgraded from the Google "Agentic Cinema" submission (`prats-2311/google_promotions`, left untouched).
 
-Goal is not just a valid submission — the intent is to genuinely compete for placement, so architecture and scope decisions should be made against the hackathon's actual judging criteria, not just internal design taste.
+## Source of truth
+- Spec: `docs/superpowers/specs/2026-10-16-tour-intelligence-qloo-design.md`
+- Plans: `docs/superpowers/plans/`
+- Hackathon: qloo.devpost.com — deadline 2026-10-30 23:45 ET (2026-10-31 09:15 IST). Criteria (equal weight, tie-break order): Technological Implementation, Design, Potential Impact, Quality of the Idea.
 
-## Source-of-truth files
-- `agentic-tour-promo-intelligence.md` — the product concept, multi-agent design, MVP scope, UX screens, demo narrative. This is the primary working doc; it's been revised in place to close known gaps (see "Resolved gaps" below).
-- `devpost_google_hackathon_overview.md` — official hackathon rules snapshot (deadline, required tech stack, judging criteria, submission requirements). Re-verified and updated July 30, 2026 (prize pool $10K→$75K, all 5 partner tracks now announced) — re-verify again as the deadline approaches, since the judge panel is still "to be announced."
-- `ibm_partner.md` — IBM partner-track resources (no longer our chosen track — see below). Confirmed via direct doc research: **IBM Bob is a dev-time AI coding assistant/IDE, not a runtime API or MCP server.** The IBM track's requirement is process-level ("must be built using IBM Bob," pass/fail) not architectural. Confluent (Kafka) is optional, for real-time/event-driven flourishes.
-- `parallel_partner.md` — **our chosen partner track.** Parallel Search/Extract/Task/Monitor APIs for live web grounding, official Gemini Enterprise integration path, MCP server option. Track requirement: must actively call Parallel's Search API at runtime (not just reference it in docs).
+## Decisions (don't relitigate without new info)
+- Qloo access only via `cloud_run/qloo_gateway` (Node, because the Qloo harness / `qloo mcp` is Node-only). The old "no Node stack" rule is superseded for this service only.
+- Scores are deterministic code, never LLM output; missing data ⇒ `insufficient_data`.
+- LLM narrative claims pass grounding verification; failing claims are removed, never rewritten.
+- Mobile-first responsive UI in the existing Premiere Noir system.
+- Process: Superpowers workflow (TDD, subagent-driven development with Sonnet subagents, verification before completion); Graft for code navigation; UI tasks read frontend-design, ui-ux-pro-max, taste-skill.
 
-## Key hackathon constraints (from the source docs)
-- **Deadline:** September 10, 2026, 2:30 AM IST (corrected 2026-09-08 from a live Devpost schedule-page screenshot — was documented as Sept 8; see `devpost_google_hackathon_overview.md` for the full correction, including judging-period and winners-announced dates that also shifted).
-- **Required stack:** Gemini + Google Cloud Agent Builder (Playbooks), Agent Builder Data Stores (BigQuery), Enterprise Agent Platform SDK (Python), Cloud Run, Secret Manager.
-- **Must integrate a partner track** to be eligible for prizes. **All 5 tracks are now announced (confirmed 2026-07-30): IBM, Grafana, Parallel, ClickHouse, Replit** — five identical prize buckets, $75,000 total, judged independently per track (was $10K/IBM-only as of July 28). Submission requires selecting exactly one.
-- **Judging criteria:** Technological Implementation, Design, Potential Impact, Quality of Idea.
-- **Production Goals judges look for:** agents that *act* (real tool calls, DB updates, triggered cloud functions) not just chat; genuine multi-agent handoffs, not a single-agent wrapper; grounded output with no hallucination in production-critical flows; Cloud IAM/security awareness.
-- **Submission deliverables:** hosted project URL, 3-minute demo video, public repo with license file, partner-track selection.
+## Nested guides
+Existing per-directory `CLAUDE.md` files remain authoritative for their services; `cloud_run/qloo_gateway/CLAUDE.md` covers the gateway.
 
-## Current strategic decisions (already made — don't relitigate without new info)
-- **Partner track: Parallel** (decided 2026-07-30, superseding the earlier "defer to IBM" plan now that all 5 tracks are known). Rationale: our one honest, stated scope limit is curated/seeded data for only 5 demo cities. Parallel's Search/Extract APIs (via the documented Gemini Enterprise grounding integration) let Culture Intelligence and Fan Enthusiasm fetch live, real data for **any city on demand**, not just the seeded 5 — and the already-built `grounding_check.py` agent becomes more meaningful fact-checking live-fetched claims instead of static rows. Minimal architectural disruption: same Playbooks, same Cloud Run OpenAPI-tool pattern, one new tool. Grafana (observability/MCP) was the runner-up — stronger "studio-grade security" story but doesn't change what judges see in the product; ClickHouse and Replit were rejected as poor fits (ClickHouse duplicates the data layer against our deliberate strategy below; Replit requires rehosting the already-deployed Cloud Run/Dialogflow CX stack onto replit.app/dev). See `parallel_partner.md` for resource links and integration detail.
-- **MVP agent count: 5**, not 6. Culture Intelligence, Fan Enthusiasm, Local Delight, Talent Prep, and the Campaign Orchestrator are in the MVP. Promotion Architect is explicitly Phase 2/stretch.
-- **Primary persona: the campaign/marketing planner** (dashboard-first). The Mumbai talent-brief moment is the demo's emotional climax, reached *from* the dashboard — not the opening screen.
-- **Data strategy:** curated/seeded BigQuery tables remain the core for the 5 demo cities (fast, reliable, deterministic for the main demo path) — this is a deliberate, stated scope limit, not an oversight. **Live as of 2026-07-30:** the Parallel "expand to any city" path is built and verified for **both** Culture Intelligence and Local Delight, not just planned — `tour_data_api`'s `/live_culture_search` and `/live_local_delight_search` routes (official `parallel-web` SDK — required, not just raw REST, to actually satisfy the track's "official SDK / supported integration / Grounding configuration" eligibility wording — + a schema-constrained Gemini synthesis call) are wired into their respective Playbooks as a fallback when the BigQuery lookup 404s, and into the orchestration driver directly (bypassing a per-turn execution-budget limit on chaining two tool calls in one nested playbook turn). Verified live for Seoul, Berlin, Lagos, and Nairobi — none seeded. Parallel-sourced data still passes through the same `checkGrounding` as BigQuery-sourced data before being treated as canon, and both live-search routes validate `city_name`/`country` against a prompt-injection surface (see `cloud_run/tour_data_api/CLAUDE.md`). See `parallel_partner.md` for the full writeup.
-- **Testing: full test coverage, TDD for new work** (decided 2026-07-30, driven by the hackathon's "Studio-Grade Security" judging criterion). 123 tests across pytest (sdk/, both Cloud Run services, orchestration_driver) and vitest (dashboard's pure-logic modules) — run everything with `./run_tests.sh`. New features and security fixes are built test-first (see the prompt-injection fix in `cloud_run/tour_data_api/CLAUDE.md` for a real red→green example). See `agent_builder/AGENT_PROTOCOL.md` for the binding inter-agent contract these tests enforce.
-- **Action-driven design:** the Orchestrator writes finalized city briefs as real BigQuery records; Talent Prep triggers a Cloud Run function to render the final delight card. This is what makes the agents "act" rather than just generate text, per the Production Goals requirement above.
-- **Real inter-agent handoff:** Talent Prep sends its draft brief back to Culture Intelligence for a grounding check before finalizing — a genuine two-way dependency, not a strict one-way pipeline, which is what justifies calling this a "network." **This is now live and verified**, not just a design intent — see `agentic-tour-promo-intelligence.md`'s Technical Implementation Direction section for the architecture correction (native Data Store dropped in favor of a `tour_data_api` Cloud Run OpenAPI tool) and project memory for full provisioning detail.
-
-## Repo layout & nested guides
-This root file covers strategy and hackathon-compliance decisions. Directory-specific engineering conventions live in nested `CLAUDE.md` files, checked into the repo, auto-loaded when working in that directory — read the relevant one before making changes there rather than re-deriving conventions from scratch or relying on session memory (memory holds decision *history*; these hold current *how-to*):
-- `cloud_run/CLAUDE.md` — shared Cloud Run conventions (deploy pattern, service accounts, auth between services, the `sdk/` vs `sdk_logic/` duplication)
-- `cloud_run/tour_data_api/CLAUDE.md` — the Parallel Search + Gemini synthesis integration in detail, IAM specifics
-- `cloud_run/agent_mcp_server/CLAUDE.md` — a real MCP server (official `mcp` SDK) exposing `tour_data_api`'s own tools to external callers, not just our internal Playbooks
-- `bigquery/CLAUDE.md` — schema/seed conventions, streaming-buffer gotchas, dataset ACL pattern
-- `agent_builder/CLAUDE.md` — Playbook/Tool provisioning method, auth config, **the PATCH-is-broken platform bug and its delete-and-recreate workaround** (read this before editing any live Playbook)
-- `orchestration_driver/CLAUDE.md` — the "LLM reasons, code acts" architecture, known driver bugs already fixed, session-reset pattern
-- `dashboard/CLAUDE.md` — frontend stack, design system rules, BFF auth pattern, deploy command
-
-## Working style for this project
-- Be a proactive, creative problem-solver here, not just an analyst — the user's stated goal is to win, and stakes/deadline pressure mean momentum matters. Default toward concrete next actions (draft code, draft data schemas, draft the Agent Builder Playbook config) over more rounds of pure discussion once a decision has been made.
-- When a new hackathon detail surfaces (partner tracks, judge panel, rule clarifications), cross-check it against the three source docs above and flag contradictions explicitly rather than silently picking one.
-- Don't re-propose the Next.js/Node stack or a 6-agent MVP — both were deliberately superseded above.
+## Tests
+`./run_tests.sh` runs pytest, dashboard vitest, gateway vitest, and `graft check`. Must be green before every commit.

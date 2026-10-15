@@ -15,3 +15,11 @@ fi
 echo ""
 echo "=== Dashboard test suite (vitest) ==="
 (cd dashboard && npm test)
+
+echo ""
+echo "=== qloo_gateway test suite (vitest) ==="
+(cd cloud_run/qloo_gateway && npm test)
+
+echo ""
+echo "=== graft freshness ==="
+graft check
