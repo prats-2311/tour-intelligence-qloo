@@ -245,6 +245,18 @@ Landing → **Try the showcase tour** (pre-cached) → Tour Board → tap a **Hi
 - Premiere Noir system per `dashboard/CLAUDE.md` (warm dark only, Fraunces/JetBrains Mono/Inter, validated city palette, reduced motion).
 - Map: MapLibre GL + CARTO dark basemap (no token).
 
+### 7.4 Visible AI reasoning (honest by construction)
+The UI shows the system thinking while it works — but only reasoning that actually happened. Nothing is reconstructed or invented.
+
+| Surface | What the user sees | Source of truth |
+|---|---|---|
+| Tour Board agent log (live) | Plain-language steps as they run, e.g. "Finding where <artist>'s fans concentrate in Brazil… 14 hotspots → 6 cities", "Checking sponsor fit in São Paulo… 10 brands, top fit 0.82" | Rendered deterministically from the gateway's real `tool_call` / `tool_result` / `region_empty` / `city_scored` events (tool, inputs, result counts, values). A step sentence template per tool; no LLM writes these lines. |
+| City Playbook narrative & Strategist chat | Collapsible "Thinking" panel with the model's reasoning summary before its answer, followed by the tool chips it called | Gemini thought summaries (`thinkingConfig.includeThoughts: true`), passed through verbatim and labelled "Model reasoning summary". |
+| Scores & verdicts | "Why this score?" — formula, weights, component values, Qloo inputs | Scoring code; labelled as a calculation, not as AI thinking. |
+| Claims | "N verified · M removed" with removal reasons | Claim verifier (§5.6). |
+
+Rules (acceptance criteria): every displayed reasoning line maps to a real event or a real model thought summary; cached results are labelled "from cache"; reasoning UI is a compact chip that opens a bottom sheet on phones and a side panel on desktop (reusing the `ThinkingTrace.tsx` pattern); it respects reduced motion. Delivered in Plan 2 (agent log) and Plans 3–4 (thought summaries).
+
 ---
 
 ## 8. Agent surfaces — one tool contract, three entry points
