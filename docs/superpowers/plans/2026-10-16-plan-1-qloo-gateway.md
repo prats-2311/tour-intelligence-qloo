@@ -6,7 +6,7 @@
 
 **Architecture:** A Node 22 + TypeScript service (`cloud_run/qloo_gateway`) holding one long-lived `qloo mcp` child process via the official MCP SDK. Pure modules (validate, scoring, geo, claims) are unit-tested in isolation; I/O modules (mcpClient, cache, budget) are tested with injected fakes; the pipeline composes them as async generators of typed events; an Express app exposes them as SSE. Deployed as a container on Cloud Run with `min-instances=1`.
 
-**Tech Stack:** Node 22.19+, TypeScript 5, Express 5, `@modelcontextprotocol/sdk` 1.30.1, `@qloo/qloo-harness` ≥ 0.1.26 (global in container), `@google-cloud/bigquery`, vitest, supertest.
+**Tech Stack:** Node 22.19+, TypeScript 5, Express 5, `@modelcontextprotocol/sdk` 1.30.1, `@qloo/qloo-harness` ≥ 0.1.26 (global in container), `@google-cloud/firestore`, vitest, supertest.
 
 **Spec:** `docs/superpowers/specs/2026-10-16-tour-intelligence-qloo-design.md` (read §3–§6, §9, §10 before starting any task).
 
@@ -19,7 +19,7 @@
 - Limits: `rank.options` ≤ 10; `compare_audiences` groups ≤ 10 each; `trends.entities` 1–5; entity/tag input arrays ≤ 10; `limit` 1–20; dates `YYYY-MM-DD`.
 - Insights types: `artist, book, brand, movie, person, place, podcast, tv_show, videogame`. Search types add `locality, actor, album, author, director`.
 - Retries: at most 2, only when `error.retryable === true`.
-- Cache TTL: 7 days; `qloo_trends` 1 day. Insert-only, latest row wins.
+- Cache: L1 in-memory LRU (2000 entries) + L2 Firestore `qloo_cache` (TTL policy on `expireAt`); TTL 7 days, `qloo_trends` 1 day; latest write wins; L2 failures never fail a Qloo call.
 - Budget: 60 Qloo calls per session; global daily ceiling from env `QLOO_DAILY_CEILING` (default 2000). Cache hits never consume budget.
 - Scoring constants (initial): fan heat `0.7·affinity + 0.3·popularity`; activation weights `sponsor_fit 0.30, local_hooks 0.25, fan_concentration 0.25, venue_fit 0.20`; activation needs ≥ 2 components; winnability `0.5·fan + 0.5·activation`; verdicts per spec §5.3.
 - Missing inputs ⇒ `insufficient_data`; no scoring path calls an LLM.
@@ -50,7 +50,7 @@ cloud_run/qloo_gateway/
     types.ts                        Envelope, EvidenceRef, Score, Verdict, events
     validate.ts                     allowlist + argument validation
     mcpClient.ts                    qloo mcp process wrapper
-    cache.ts                        Cache interface, MemoryCache, BigQueryCache, cacheKey()
+    cache.ts                        Cache interface, MemoryCache (LRU), FirestoreCache, TieredCache, cacheKey()
     budget.ts                       BudgetGuard
     qlooCall.ts                     resilientCall(): validate→cache→budget→mcp→retry→fallback, in-flight dedupe
     geo/geohash.ts                  geohash decode
@@ -798,6 +798,257 @@ Expected: PASS (6 tests). Note: the fake returns `created_at_ms` as stored; the 
 ```bash
 git add cloud_run/qloo_gateway/src/cache.ts cloud_run/qloo_gateway/test/cache.test.ts bigquery/qloo_cache.sql
 git commit -m "feat(gateway): request-hash cache with memory and BigQuery backends"
+```
+
+---
+
+### Task 3b: Replace BigQuery cache with in-memory LRU + Firestore (tiered)
+
+**Why:** decided 2026-10-16 with Prateek — BigQuery point lookups cost ~0.5–2 s each (≈55 per Tour Board run) and bill ≥ 10 MB per query; a key-value cache needs millisecond reads. L1 = in-process LRU, L2 = Firestore (native TTL), BigQuery stays only for campaign data/analytics.
+
+**Files:**
+- Modify: `cloud_run/qloo_gateway/src/cache.ts`, `cloud_run/qloo_gateway/test/cache.test.ts`, `cloud_run/qloo_gateway/package.json` (+ lock), `cloud_run/qloo_gateway/CLAUDE.md` (replace `BigQueryLike` with `FirestoreLike` in the injected-deps line; add "Cache: L1 in-memory LRU + L2 Firestore `qloo_cache`, TTL on `expireAt`")
+- Create: `cloud_run/qloo_gateway/src/firestoreCompat.ts`
+- Delete: `cloud_run/qloo_gateway/src/bigqueryCompat.ts`, `bigquery/qloo_cache.sql`
+
+**Interfaces:**
+- Consumes: `QlooEnvelope` (T1), existing `cacheKey`, `ttlMs`, `CacheHit` (T3).
+- Produces (replaces T3's `BigQueryLike`/`BigQueryCache`, keeps everything else):
+  - `type CacheHit = { tool: string; envelope: QlooEnvelope; createdAt: number; stale: boolean }` — gains `tool` so a tier can re-store an entry with its own TTL.
+  - `interface Cache { get(key, opts?): Promise<CacheHit | null>; put(key: string, tool: string, envelope: QlooEnvelope, createdAt?: number): Promise<void> }` — `createdAt` optional (defaults to now) so a tier can copy an entry without extending its freshness.
+  - `class MemoryCache implements Cache { constructor(now?: () => number, maxEntries?: number) }` — LRU: default `maxEntries` 2000; a `get` hit refreshes recency; inserting beyond the cap evicts the least recently used.
+  - `interface FirestoreLike { collection(name: string): { doc(id: string): { get(): Promise<{ exists: boolean; data(): Record<string, unknown> | undefined }>; set(data: Record<string, unknown>): Promise<unknown> } } }`
+  - `class FirestoreCache implements Cache { constructor(opts: { db: FirestoreLike; collection?: string /* default "qloo_cache" */; now?: () => number; staleGraceMs?: number /* default 7 days */ }) }` — document id = cache key; fields `{ tool, envelope (JSON string), createdAtMs, expireAt: Date }` where `expireAt = createdAt + ttlMs(tool) + staleGraceMs` (Firestore TTL policy deletes after expireAt; the grace window keeps rows available for stale fallback).
+  - `class TieredCache implements Cache { constructor(opts: { l1: Cache; l2: Cache; onError?: (err: unknown) => void }) }` — `get`: L1 hit → return; else L2 (errors → `onError`, treated as miss); an L2 hit is copied into L1 with its original `createdAt`. `put`: L1 then L2 (L2 errors → `onError`, never thrown).
+  - `assertFirestoreCompat(db: Firestore): FirestoreLike` in `src/firestoreCompat.ts` (compile-time guard, mirrors the removed BigQuery one).
+
+- [ ] **Step 1: Swap the dependency**
+
+Run: `cd cloud_run/qloo_gateway && npm uninstall @google-cloud/bigquery && npm install @google-cloud/firestore@^7.11.0`
+Expected: package.json lists `@google-cloud/firestore`, not `@google-cloud/bigquery`.
+
+- [ ] **Step 2: Write failing tests** — replace the `BigQueryCache` describe block in `test/cache.test.ts` and add LRU + tiered tests (keep the existing `cacheKey`, `ttlMs` and `MemoryCache` tests unchanged):
+
+```ts
+import { FirestoreCache, MemoryCache, TieredCache, cacheKey, ttlMs, type FirestoreLike } from "../src/cache.js";
+
+function fakeFirestore() {
+  const docs = new Map<string, Record<string, unknown>>();
+  const db: FirestoreLike = {
+    collection: () => ({
+      doc: (id: string) => ({
+        async get() { const d = docs.get(id); return { exists: d !== undefined, data: () => d }; },
+        async set(data: Record<string, unknown>) { docs.set(id, data); },
+      }),
+    }),
+  };
+  return { db, docs };
+}
+
+describe("MemoryCache LRU", () => {
+  it("evicts the least recently used entry beyond maxEntries", async () => {
+    const c = new MemoryCache(() => 0, 2);
+    await c.put("a", "qloo_describe", env);
+    await c.put("b", "qloo_describe", env);
+    await c.get("a");                       // a is now most recent
+    await c.put("c", "qloo_describe", env); // evicts b
+    expect(await c.get("b")).toBeNull();
+    expect(await c.get("a")).not.toBeNull();
+    expect(await c.get("c")).not.toBeNull();
+  });
+  it("put honours an explicit createdAt", async () => {
+    let t = 10 * DAY;
+    const c = new MemoryCache(() => t);
+    await c.put("k", "qloo_trends", env, 0);
+    expect(await c.get("k")).toBeNull();    // created at 0, now 10 days → stale
+  });
+});
+
+describe("FirestoreCache", () => {
+  it("round-trips an envelope and writes TTL fields", async () => {
+    const { db, docs } = fakeFirestore();
+    const c = new FirestoreCache({ db, now: () => 1000 });
+    await c.put("k", "qloo_describe", env);
+    expect((await c.get("k"))?.envelope).toEqual(env);
+    const row = docs.get("k")!;
+    expect(row).toMatchObject({ tool: "qloo_describe", createdAtMs: 1000 });
+    expect((row.expireAt as Date).getTime()).toBe(1000 + 7 * DAY + 7 * DAY);
+  });
+  it("returns null for missing docs and hides stale rows unless allowStale", async () => {
+    let t = 0;
+    const { db } = fakeFirestore();
+    const c = new FirestoreCache({ db, now: () => t });
+    expect(await c.get("nope")).toBeNull();
+    await c.put("k", "qloo_trends", env);
+    t = DAY + 1;
+    expect(await c.get("k")).toBeNull();
+    expect((await c.get("k", { allowStale: true }))?.stale).toBe(true);
+  });
+  it("treats a malformed createdAtMs as a miss", async () => {
+    const { db, docs } = fakeFirestore();
+    docs.set("k", { tool: "qloo_describe", envelope: JSON.stringify(env), createdAtMs: "garbage" });
+    expect(await new FirestoreCache({ db, now: () => 0 }).get("k", { allowStale: true })).toBeNull();
+  });
+});
+
+describe("TieredCache", () => {
+  it("serves L1 first, falls back to L2 and back-fills L1 with the original createdAt", async () => {
+    let t = 0;
+    const l1 = new MemoryCache(() => t);
+    const l2 = new MemoryCache(() => t);
+    await l2.put("k", "qloo_trends", env);
+    const tiered = new TieredCache({ l1, l2 });
+    t = 1000;
+    expect((await tiered.get("k"))?.envelope).toEqual(env);
+    expect((await l1.get("k"))?.createdAt).toBe(0);
+  });
+  it("writes through to both tiers", async () => {
+    const l1 = new MemoryCache(() => 0);
+    const l2 = new MemoryCache(() => 0);
+    await new TieredCache({ l1, l2 }).put("k", "qloo_describe", env);
+    expect(await l1.get("k")).not.toBeNull();
+    expect(await l2.get("k")).not.toBeNull();
+  });
+  it("survives L2 failures (treated as miss / no-op) and reports them", async () => {
+    const errors: unknown[] = [];
+    const broken = { async get() { throw new Error("firestore down"); }, async put() { throw new Error("firestore down"); } };
+    const tiered = new TieredCache({ l1: new MemoryCache(() => 0), l2: broken, onError: (e) => errors.push(e) });
+    await tiered.put("k", "qloo_describe", env);
+    expect((await tiered.get("k"))?.envelope).toEqual(env);      // from L1
+    expect(await tiered.get("missing")).toBeNull();              // L2 throws → miss
+    expect(errors).toHaveLength(2);
+  });
+});
+```
+
+- [ ] **Step 3: Run to verify failure**
+
+Run: `npx vitest run test/cache.test.ts`
+Expected: FAIL — `FirestoreCache` / `TieredCache` not exported; LRU test fails.
+
+- [ ] **Step 4: Implement** — in `src/cache.ts`, delete `BigQueryLike` and `BigQueryCache`, add `tool` to `CacheHit`, extend `put` with `createdAt?`, and add the LRU, Firestore and tiered caches:
+
+```ts
+export type CacheHit = { tool: string; envelope: QlooEnvelope; createdAt: number; stale: boolean };
+
+export interface Cache {
+  get(key: string, opts?: { allowStale?: boolean }): Promise<CacheHit | null>;
+  put(key: string, tool: string, envelope: QlooEnvelope, createdAt?: number): Promise<void>;
+}
+
+export class MemoryCache implements Cache {
+  private readonly store = new Map<string, { tool: string; envelope: QlooEnvelope; createdAt: number }>();
+  constructor(private readonly now: () => number = Date.now, private readonly maxEntries = 2000) {}
+
+  async get(key: string, opts: { allowStale?: boolean } = {}): Promise<CacheHit | null> {
+    const row = this.store.get(key);
+    if (!row) return null;
+    const stale = this.now() - row.createdAt > ttlMs(row.tool);
+    if (stale && !opts.allowStale) return null;
+    this.store.delete(key);
+    this.store.set(key, row); // refresh LRU recency
+    return { tool: row.tool, envelope: row.envelope, createdAt: row.createdAt, stale };
+  }
+
+  async put(key: string, tool: string, envelope: QlooEnvelope, createdAt: number = this.now()): Promise<void> {
+    this.store.delete(key);
+    this.store.set(key, { tool, envelope, createdAt });
+    while (this.store.size > this.maxEntries) {
+      const oldest = this.store.keys().next().value as string;
+      this.store.delete(oldest);
+    }
+  }
+}
+
+export interface FirestoreLike {
+  collection(name: string): {
+    doc(id: string): {
+      get(): Promise<{ exists: boolean; data(): Record<string, unknown> | undefined }>;
+      set(data: Record<string, unknown>): Promise<unknown>;
+    };
+  };
+}
+
+export class FirestoreCache implements Cache {
+  private readonly db: FirestoreLike;
+  private readonly collection: string;
+  private readonly now: () => number;
+  private readonly staleGraceMs: number;
+
+  constructor(opts: { db: FirestoreLike; collection?: string; now?: () => number; staleGraceMs?: number }) {
+    this.db = opts.db;
+    this.collection = opts.collection ?? "qloo_cache";
+    this.now = opts.now ?? Date.now;
+    this.staleGraceMs = opts.staleGraceMs ?? 7 * DAY;
+  }
+
+  async get(key: string, opts: { allowStale?: boolean } = {}): Promise<CacheHit | null> {
+    const snap = await this.db.collection(this.collection).doc(key).get();
+    const row = snap.exists ? snap.data() : undefined;
+    if (!row) return null;
+    const createdAt = Number(row.createdAtMs);
+    if (!Number.isFinite(createdAt) || typeof row.envelope !== "string") return null;
+    const stale = this.now() - createdAt > ttlMs(String(row.tool));
+    if (stale && !opts.allowStale) return null;
+    return { tool: String(row.tool), envelope: JSON.parse(row.envelope) as QlooEnvelope, createdAt, stale };
+  }
+
+  async put(key: string, tool: string, envelope: QlooEnvelope, createdAt: number = this.now()): Promise<void> {
+    await this.db.collection(this.collection).doc(key).set({
+      tool, envelope: JSON.stringify(envelope), createdAtMs: createdAt,
+      expireAt: new Date(createdAt + ttlMs(tool) + this.staleGraceMs),
+    });
+  }
+}
+
+export class TieredCache implements Cache {
+  private readonly l1: Cache;
+  private readonly l2: Cache;
+  private readonly onError: (err: unknown) => void;
+
+  constructor(opts: { l1: Cache; l2: Cache; onError?: (err: unknown) => void }) {
+    this.l1 = opts.l1;
+    this.l2 = opts.l2;
+    this.onError = opts.onError ?? ((err) => console.warn("qloo cache L2 error:", (err as Error).message));
+  }
+
+  async get(key: string, opts: { allowStale?: boolean } = {}): Promise<CacheHit | null> {
+    const hit = await this.l1.get(key, opts);
+    if (hit) return hit;
+    let remote: CacheHit | null = null;
+    try { remote = await this.l2.get(key, opts); } catch (err) { this.onError(err); return null; }
+    if (remote) await this.l1.put(key, remote.tool, remote.envelope, remote.createdAt);
+    return remote;
+  }
+
+  async put(key: string, tool: string, envelope: QlooEnvelope, createdAt?: number): Promise<void> {
+    await this.l1.put(key, tool, envelope, createdAt);
+    try { await this.l2.put(key, tool, envelope, createdAt); } catch (err) { this.onError(err); }
+  }
+}
+```
+
+`src/firestoreCompat.ts`:
+
+```ts
+import type { Firestore } from "@google-cloud/firestore";
+import type { FirestoreLike } from "./cache.js";
+// Compile-time check: the real client must satisfy the cache's interface.
+export const assertFirestoreCompat = (db: Firestore): FirestoreLike => db;
+```
+
+Delete `src/bigqueryCompat.ts` and `bigquery/qloo_cache.sql` (`git rm`).
+
+- [ ] **Step 5: Run tests and typecheck**
+
+Run: `npx vitest run test/cache.test.ts && npm run typecheck`
+Expected: PASS; typecheck clean (if `assertFirestoreCompat` fails to typecheck, adjust `FirestoreLike` to the real client's signatures — never add a cast — and note it in the report).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add -A cloud_run/qloo_gateway bigquery/qloo_cache.sql
+git commit -m "feat(gateway): tiered cache — in-memory LRU plus Firestore with TTL"
 ```
 
 ---
@@ -2324,17 +2575,19 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
 `src/server.ts`:
 
 ```ts
-import { BigQuery } from "@google-cloud/bigquery";
+import { Firestore } from "@google-cloud/firestore";
 import { BudgetGuard } from "./budget.js";
-import { BigQueryCache, MemoryCache, type BigQueryLike } from "./cache.js";
+import { FirestoreCache, MemoryCache, TieredCache } from "./cache.js";
 import { loadCities } from "./geo/cities.js";
 import { createApp } from "./http/app.js";
 import { QlooMcpClient, defaultFactory } from "./mcpClient.js";
 import { createQlooCaller } from "./qlooCall.js";
 
 const mcp = new QlooMcpClient({ factory: defaultFactory });
-const dataset = process.env.QLOO_CACHE_DATASET;
-const cache = dataset ? new BigQueryCache({ bq: new BigQuery() as unknown as BigQueryLike, dataset }) : new MemoryCache();
+const l1 = new MemoryCache();
+const cache = process.env.QLOO_CACHE_BACKEND === "firestore"
+  ? new TieredCache({ l1, l2: new FirestoreCache({ db: new Firestore() }) })
+  : l1;
 const budget = new BudgetGuard({ perSession: 60, perDay: Number(process.env.QLOO_DAILY_CEILING ?? 2000) });
 const app = createApp({ qloo: createQlooCaller({ mcp, cache, budget }), cities: loadCities(), health: () => mcp.health() });
 const port = Number(process.env.PORT ?? 8080);
@@ -2364,7 +2617,7 @@ git commit -m "feat(gateway): HTTP API with SSE streaming, abort on disconnect, 
 
 **Interfaces:**
 - Consumes: built `dist/` (T11).
-- Produces: a private Cloud Run service `qloo-gateway` (URL recorded in `cloud_run/qloo_gateway/CLAUDE.md`), BigQuery dataset `tour_intelligence_qloo` with `qloo_cache`.
+- Produces: a private Cloud Run service `qloo-gateway` (URL recorded in `cloud_run/qloo_gateway/CLAUDE.md`), Firestore (Native mode) collection `qloo_cache` with a TTL policy on `expireAt`.
 
 - [ ] **Step 1: Write the Dockerfile**
 
@@ -2418,19 +2671,20 @@ SA=qloo-gateway-sa@${PROJECT}.iam.gserviceaccount.com
 
 gcloud iam service-accounts describe "$SA" --project "$PROJECT" >/dev/null 2>&1 || \
   gcloud iam service-accounts create qloo-gateway-sa --project "$PROJECT" --display-name "qloo_gateway"
-bq --project_id "$PROJECT" show tour_intelligence_qloo >/dev/null 2>&1 || bq --project_id "$PROJECT" mk --location=US tour_intelligence_qloo
-bq --project_id "$PROJECT" query --use_legacy_sql=false < "$(dirname "$0")/../../../bigquery/qloo_cache.sql"
+gcloud services enable firestore.googleapis.com --project "$PROJECT"
+gcloud firestore databases describe --database="(default)" --project "$PROJECT" >/dev/null 2>&1 || \
+  gcloud firestore databases create --database="(default)" --location=nam5 --type=firestore-native --project "$PROJECT"
+gcloud firestore fields ttls update expireAt --collection-group=qloo_cache --enable-ttl --project "$PROJECT" --quiet
 gcloud secrets add-iam-policy-binding qloo-api-key --project "$PROJECT" --member "serviceAccount:$SA" --role roles/secretmanager.secretAccessor
-gcloud projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$SA" --role roles/bigquery.jobUser --condition=None
-bq --project_id "$PROJECT" add-iam-policy-binding --member "serviceAccount:$SA" --role roles/bigquery.dataEditor tour_intelligence_qloo
+gcloud projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$SA" --role roles/datastore.user --condition=None
 
 gcloud run deploy qloo-gateway --source "$(dirname "$0")/.." --region "$REGION" --project "$PROJECT" \
   --service-account "$SA" --no-allow-unauthenticated --min-instances 1 --max-instances 3 --memory 1Gi \
-  --set-secrets QLOO_API_KEY=qloo-api-key:latest --set-env-vars QLOO_CACHE_DATASET=tour_intelligence_qloo,QLOO_DAILY_CEILING=2000
+  --set-secrets QLOO_API_KEY=qloo-api-key:latest --set-env-vars QLOO_CACHE_BACKEND=firestore,QLOO_DAILY_CEILING=2000
 ```
 
 Prerequisite (Prateek, once): `! printf '%s' "$QLOO_API_KEY" | gcloud secrets create qloo-api-key --data-file=- --project liifecalling-academy`
-`roles/bigquery.jobUser` is project-level because BigQuery has no resource-level equivalent (per `cloud_run/CLAUDE.md`).
+`roles/datastore.user` is project-level because Firestore's default database has no resource-level IAM binding (document why per `cloud_run/CLAUDE.md`). If `databases describe` shows an existing **Datastore-mode** database, stop and ask Prateek before changing anything (mode cannot be switched in place).
 
 Run: `bash cloud_run/qloo_gateway/scripts/deploy.sh`
 Expected: deploy succeeds and prints a service URL.

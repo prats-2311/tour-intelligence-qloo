@@ -176,7 +176,7 @@ tour_data_api — Flask (existing)          qloo_gateway ★ NEW — Node 22 con
   ├ Parallel (live web)                     ├ Tour Strategist agent (Gemini via Vertex, tool-calling over allowlisted Qloo tools)
   ├ Gemini / Lyria / image                  ├ scoring module (pure, tested)
   └ new /qloo_* routes → gateway ───────────┤ SSE stream of tool calls + provenance
-                                            ├ cache: BigQuery `qloo_cache`
+                                            ├ cache: in-memory LRU + Firestore `qloo_cache`
 5 Dialogflow CX Playbooks (existing)        └ QLOO_API_KEY from Secret Manager
 delight_card_renderer (existing; Book gains new chapters)
 agent_mcp_server (existing; + taste tools, + public demo endpoint)
@@ -187,7 +187,7 @@ agent_mcp_server (existing; + taste tools, + public demo endpoint)
 |---|---|---|---|
 | `qloo_gateway/mcpClient` ★ | Own the `qloo mcp` process; restart on exit; health via `qloo_capabilities` | `callTool(name, args) → Envelope` | harness |
 | `qloo_gateway/validate` ★ | Allowlist + argument validation per tool (limits in §4) | `validate(name, args) → ok \| ValidationError` | — |
-| `qloo_gateway/cache` ★ | Request-hash cache, insert-only, TTL 7 d (trends 1 d) | `get(key)`, `put(key, envelope)` | BigQuery |
+| `qloo_gateway/cache` ★ | Request-hash cache: L1 in-memory LRU + L2 Firestore (TTL policy), TTL 7 d (trends 1 d) | `get(key)`, `put(key, envelope)` | Firestore |
 | `qloo_gateway/budget` ★ | Per-session (60 calls) and global daily ceilings | `reserve(sessionId, n)` | — |
 | `qloo_gateway/scoring` ★ | §5 formulas | pure functions | — |
 | `qloo_gateway/pipeline` ★ | Discover/Decide/Activate steps as code | `runTourBoard(brief)`, `runCityPlaybook(artist, city)` → async event stream | mcpClient, cache, budget, scoring |
@@ -289,7 +289,7 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 | `error` non-retryable | "Live Qloo data unavailable — showing cached results from <date>" | Cache fallback; **never** LLM-invented numbers |
 
 ### 9.2 Caching & quota
-- `qloo_cache` (BigQuery), key = hash(tool, normalised args); insert-only, latest wins; TTL 7 d (trends 1 d).
+- Two-tier cache: L1 in-memory LRU in the gateway (~0 ms) + L2 Firestore `qloo_cache` (~10–30 ms, native TTL on `expireAt`, shared across instances, survives restarts); key = hash(tool, normalised args); latest write wins; TTL 7 d (trends 1 d); L2 failures degrade to L1 only. BigQuery is not used for caching (point lookups are ~0.5–2 s and bill ≥ 10 MB each); it holds campaign data and analytics only.
 - Showcase artist + 3 control artists pre-warmed before submission.
 - Budget: 60 Qloo calls/session, global daily ceiling; exceeded → "Try the showcase".
 - City activation computed progressively for top 8 cities; city playbooks lazy-loaded and cached.
