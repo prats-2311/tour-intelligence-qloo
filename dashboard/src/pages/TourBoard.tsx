@@ -308,6 +308,7 @@ export default function TourBoard() {
                           type="checkbox"
                           checked={checked}
                           disabled={blocked}
+                          aria-describedby={blocked ? "max-stops-hint" : undefined}
                           onChange={() => toggleShortlist(c.id)}
                           className="size-5 accent-[#ffcc00]"
                         />
@@ -318,7 +319,7 @@ export default function TourBoard() {
                   );
                 })}
               </ul>
-              {eligible.some((c) => !shortlist.includes(c.id)) && atCap && <p className="text-[13px] text-canvas-muted">Max stops reached — raise it in the brief</p>}
+              {eligible.some((c) => !shortlist.includes(c.id)) && atCap && <p id="max-stops-hint" className="text-[13px] text-canvas-muted">Max stops reached — raise it in the brief</p>}
               {shortlist.length > 0
                 ? <Link to={bookHref} className="btn-gold inline-flex h-12 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10">Open Tour Book</Link>
                 : <button type="button" disabled className="btn-gold inline-flex h-12 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10">Open Tour Book</button>}

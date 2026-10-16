@@ -25,7 +25,7 @@ function MarginNote({ requests, claims }: { requests: number; claims?: CardClaim
   }, []);
   if (requests === 0 && !claims) return null;
   return (
-    <div ref={ref} data-margin-note className={`margin-note absolute left-full top-1 ml-[88px] hidden w-[160px] flex-col gap-1 text-[12px] tabular-nums transition-colors motion-reduce:transition-none lg:flex ${lit ? "text-bone" : "text-canvas-muted"}`}>
+    <div ref={ref} data-margin-note className={`margin-note flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] tabular-nums transition-colors motion-reduce:transition-none xl:absolute xl:left-full xl:top-1 xl:ml-[88px] xl:w-[160px] xl:flex-col xl:items-start ${lit ? "text-bone" : "text-canvas-muted"}`}>
       {requests > 0 && <span className="inline-flex h-6 w-fit items-center rounded-[4px] bg-paper-raised px-2 font-medium">Qloo · {requests} {requests === 1 ? "request" : "requests"}</span>}
       {claims && <span>{claims.verified.length} verified · {claims.removed.length} removed</span>}
     </div>

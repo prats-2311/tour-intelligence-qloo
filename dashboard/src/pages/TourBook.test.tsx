@@ -32,6 +32,12 @@ function RunNoWindow() {
   return null;
 }
 
+function EmptyShortlist() {
+  const { state, setShortlist } = useTourBoard();
+  useEffect(() => { if (state.status === "done") setShortlist([]); }, [state.status, setShortlist]);
+  return null;
+}
+
 const renderAt = (url: string, extra?: React.ReactNode) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -102,6 +108,35 @@ describe("TourBook", () => {
     renderAt("/tours/book", <RunNoWindow />);
     expect(await screen.findByRole("button", { name: "Calendar" })).toHaveProperty("disabled", true);
     expect(screen.getByText("Add a date window to export holds")).toBeTruthy();
+  });
+  it("one failed playbook becomes an incomplete chapter and the book still opens", async () => {
+    const real = client.streamCityPlaybook;
+    vi.spyOn(client, "streamCityPlaybook").mockImplementation((q, o) =>
+      o?.cityId === "4005539" ? (async function* () { yield { type: "error" as const, code: "BUDGET", message: "x" }; })() : real(q, o));
+    renderAt("/tours/book?sample=1");
+    expect(await screen.findByText("Playbook incomplete — Session limit reached")).toBeTruthy();
+    for (const name of ["Mexico City", "São Paulo", "Guadalajara", "Curitiba"]) expect(await screen.findByRole("heading", { name, level: 2 })).toBeTruthy();
+    expect(screen.getAllByText(/\d+ verified · \d+ removed/).length).toBeGreaterThan(0);
+  });
+  it("waits while the board is streaming", async () => {
+    vi.spyOn(client, "streamTourBoard").mockImplementation(() => (async function* () { await new Promise(() => {}); })());
+    renderAt("/tours/book?sample=1");
+    expect(await screen.findByText("Waiting for the board to finish…")).toBeTruthy();
+  });
+  it("an empty shortlist gets an honest state, not a progress line", async () => {
+    renderAt("/tours/book", <><RunNoWindow /><EmptyShortlist /></>);
+    expect(await screen.findByText("No markets shortlisted — pick cities in Build tour on the Tour Board")).toBeTruthy();
+    expect(screen.queryByText(/Preparing playbooks/)).toBeNull();
+    expect(screen.getByRole("link", { name: "Go to Tour Board" }).getAttribute("href")).toBe("/tours/board");
+  });
+  it("desktop grid tracks never hard-code a sum wider than the lg content width", async () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+    const { container } = renderAt("/tours/book?sample=1");
+    await screen.findByRole("heading", { name: "Market selection" });
+    const grid = container.querySelector(".book-page")!.parentElement!;
+    expect(grid.className).toContain("lg:grid-cols-[minmax(180px,240px)_minmax(0,720px)]");
+    expect(grid.className).toContain("xl:grid-cols-[minmax(180px,240px)_minmax(0,720px)_minmax(0,1fr)]");
+    expect(grid.className).not.toMatch(/grid-cols-\[240px_720px/);
   });
   it("Chapters opens the index sheet and lists every chapter with its verdict", async () => {
     renderAt("/tours/book?sample=1");

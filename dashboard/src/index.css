@@ -277,7 +277,7 @@ body {
   body:has(.tour-book) main { padding: 0 !important; }
   .tour-book { margin: 0 !important; background: #fff; color: #111; }
   .tour-book *:not(svg *):not([data-print-keep]) { color: #111 !important; background-color: transparent !important; box-shadow: none !important; }
-  .tour-book [data-noprint], .tour-book [role="dialog"], .tour-book [data-testid="sheet-overlay"], .tour-book .margin-note { display: none !important; }
+  .tour-book [data-noprint], .tour-book [role="dialog"], .tour-book [data-testid="sheet-overlay"] { display: none !important; }
   .tour-book .book-page { width: 100% !important; max-width: none !important; padding: 0 !important; gap: 0 !important; }
   .tour-book .book-chapter { break-before: page; padding: 0 !important; margin-top: 0 !important; }
   .tour-book .book-chapter:first-child { break-before: auto; }

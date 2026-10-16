@@ -92,7 +92,10 @@ export default function TourBook() {
   const weekQueries = useQueries({
     queries: picked.map((c) => ({
       queryKey: ["this-week", sample, c.id, dateWindow?.start, dateWindow?.end],
-      queryFn: (): Promise<ThisWeek> => fetchThisWeek({ city: c.name, country: c.country, window: dateWindow }, { sample, cityId: c.id }),
+      queryFn: async (): Promise<ThisWeek> => {
+        try { return await fetchThisWeek({ city: c.name, country: c.country, window: dateWindow }, { sample, cityId: c.id }); }
+        catch { return { status: "unavailable", reason: "error", message: "Live web context unavailable — search failed" }; }
+      },
       enabled: boardReady,
       staleTime: Infinity,
       retry: false,
@@ -139,6 +142,15 @@ export default function TourBook() {
     setChaptersOpen(false);
     document.getElementById(`chapter-${id}`)?.scrollIntoView?.({ behavior: reduce ? "auto" : "smooth", block: "start" });
   };
+
+  if (boardReady && picked.length === 0) {
+    return (
+      <Centered>
+        <h1 className="font-title text-[24px] leading-tight text-canvas-text">No markets shortlisted — pick cities in Build tour on the Tour Board</h1>
+        <Link to={`/tours/board${sampleQ}`} className="inline-flex h-12 items-center rounded-[10px] bg-paper-raised px-5 text-[15px] font-semibold text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Go to Tour Board</Link>
+      </Centered>
+    );
+  }
 
   if (!book) {
     if (!boardReady && !streaming) {
@@ -196,13 +208,13 @@ export default function TourBook() {
     <>
       <button type="button" onClick={() => void share()} className={btnSecondary}><Share2 size={16} aria-hidden />Share</button>
       <button type="button" onClick={() => window.print()} className={btnGold}><Printer size={16} aria-hidden />Download PDF</button>
-      <button type="button" onClick={downloadIcs} disabled={!dateWindow} className={btnSecondary}><CalendarPlus size={16} aria-hidden />Calendar</button>
+      <button type="button" onClick={downloadIcs} disabled={!dateWindow} aria-describedby={dateWindow ? undefined : "ics-hint"} className={btnSecondary}><CalendarPlus size={16} aria-hidden />Calendar</button>
     </>
   );
   const notes = (
     <>
       {copied && <p role="status" className="text-[13px] text-canvas-muted">Link copied</p>}
-      {!dateWindow && <p className="text-[13px] text-canvas-muted">Add a date window to export holds</p>}
+      {!dateWindow && <p id="ics-hint" className="text-[13px] text-canvas-muted">Add a date window to export holds</p>}
     </>
   );
 
@@ -226,7 +238,7 @@ export default function TourBook() {
         />
       </header>
 
-      <div className="lg:mt-6 lg:grid lg:grid-cols-[240px_720px_minmax(0,1fr)] lg:gap-x-8">
+      <div className="lg:mt-6 lg:grid lg:grid-cols-[minmax(180px,240px)_minmax(0,720px)] lg:gap-x-8 xl:grid-cols-[minmax(180px,240px)_minmax(0,720px)_minmax(0,1fr)]">
         {isDesktop && (
           <aside data-noprint className="sticky top-[calc(3.5rem+52px+1.5rem)] max-h-[calc(100dvh-10rem)] self-start overflow-y-auto">
             <ChapterIndex items={items} current={current} onJump={jump} />
