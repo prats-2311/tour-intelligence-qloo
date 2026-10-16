@@ -15,3 +15,6 @@ Dataset `tour_intelligence`, `US` multi-region, project `liifecalling-academy`. 
 ## Adding a new demo city
 1. Insert a row into `cities` (and `campaign_stops` if it's part of a campaign's route).
 2. Curated `culture_notes`/`fan_signals`/`local_delight` rows are optional — if omitted, the live system correctly falls back to Parallel Search via `tour_data_api`'s `/live_culture_search` route (see `/cloud_run/tour_data_api/CLAUDE.md`) rather than failing or hallucinating. Don't feel obligated to hand-curate every new city; that fallback is the point of the Parallel integration.
+
+## Shared dataset opt-in
+This project reuses the finished Google-hackathon dataset `tour_intelligence` via an explicit opt-in: run the migration as `ALLOW_SHARED_DATASET=1 bigquery/apply_migration.sh tour_intelligence bigquery/migrations/2026-10-17-qloo-tours.sql` (Prateek), and deploy `tour-data-api` with `BQ_DATASET=tour_intelligence,ALLOW_SHARED_DATASET=1,QLOO_GATEWAY_URL=<gateway>`. `apply_migration.sh` still refuses `tour_intelligence` by default; only the exact value `ALLOW_SHARED_DATASET=1` lifts that, and the bare-id check always runs first.

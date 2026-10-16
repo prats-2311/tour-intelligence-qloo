@@ -26,7 +26,7 @@ Tour Intelligence × Qloo: "Don't just find your fans. Win their city." A taste-
 - The finished Google-hackathon backends in `liifecalling-academy` (`tour-data-api`, `delight-card-renderer`, `agent-mcp-server`, Dialogflow CX agent, job `tour-campaign-orchestrator`) are reused; nothing is deleted.
 - The dashboard deploys as the new Cloud Run service `tour-intel-qloo` (`dashboard/scripts/deploy.sh`, refuses `tour-dashboard`), with `https://tour-intel-qloo.web.app` as a 302 short link to the Cloud Run address (Hosting rewrites cannot carry long SSE streams) (`firebase.json`, `.firebaserc`, `dashboard/scripts/deploy_web_app.sh`). Prateek runs both; see `dashboard/CLAUDE.md`.
 - The public MCP stays new: `cloud_run/agent_mcp_server/scripts/deploy_public.sh` (Plan 4) targets `tour-intel-mcp-public`.
-- Reusing dataset `tour_intelligence` (instead of `tour_intelligence_qloo`) is pending Prateek's decision; the dataset guards are unchanged until then.
+- This project reuses the finished Google-hackathon dataset `tour_intelligence` via an explicit opt-in: run the migration as `ALLOW_SHARED_DATASET=1 bigquery/apply_migration.sh tour_intelligence bigquery/migrations/2026-10-17-qloo-tours.sql` (Prateek), and deploy `tour-data-api` with `BQ_DATASET=tour_intelligence,ALLOW_SHARED_DATASET=1,QLOO_GATEWAY_URL=<gateway>`. Without the flag the default guards still refuse `tour_intelligence`.
 - Cloud Run reserves paths ending in `z`: the gateway health route is `/health`.
 
 ## Nested guides

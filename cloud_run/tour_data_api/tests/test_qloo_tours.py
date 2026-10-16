@@ -124,3 +124,38 @@ def test_qloo_tours_row_is_inserted_first_so_a_missing_table_writes_nothing_else
     assert res.status_code == 500
     assert mock_bq.insert_rows_json.call_count == 1
     assert mock_bq.insert_rows_json.call_args.args[0].endswith(".qloo_tours")
+
+
+def test_shared_dataset_opt_in_allows_tour_intelligence(client, mock_bq, monkeypatch):
+    monkeypatch.setenv("BQ_DATASET", "tour_intelligence")
+    monkeypatch.setenv("ALLOW_SHARED_DATASET", "1")
+    mock_bq.query.return_value.result.return_value = []
+    mock_bq.insert_rows_json.return_value = []
+    res = client.post("/qloo_tours", json=_body())
+    assert res.status_code == 201
+    assert mock_bq.insert_rows_json.call_args_list[0].args[0] == "test-project.tour_intelligence.qloo_tours"
+
+
+@pytest.mark.parametrize("flag", [None, "", "true", "yes", "0", "11", " 1"])
+def test_shared_dataset_flag_other_than_exactly_1_does_not_unlock(client, mock_bq, monkeypatch, flag):
+    monkeypatch.setenv("BQ_DATASET", "tour_intelligence")
+    if flag is None:
+        monkeypatch.delenv("ALLOW_SHARED_DATASET", raising=False)
+    else:
+        monkeypatch.setenv("ALLOW_SHARED_DATASET", flag)
+    res = client.post("/qloo_tours", json=_body())
+    assert res.status_code == 503
+    assert res.get_json() == {"error": "BQ_DATASET not configured"}
+    mock_bq.insert_rows_json.assert_not_called()
+
+
+@pytest.mark.parametrize("value", [None, "", "  "])
+def test_shared_dataset_flag_does_not_unlock_an_unset_dataset(client, mock_bq, monkeypatch, value):
+    monkeypatch.setenv("ALLOW_SHARED_DATASET", "1")
+    if value is None:
+        monkeypatch.delenv("BQ_DATASET", raising=False)
+    else:
+        monkeypatch.setenv("BQ_DATASET", value)
+    res = client.post("/qloo_tours", json=_body())
+    assert res.status_code == 503
+    mock_bq.insert_rows_json.assert_not_called()

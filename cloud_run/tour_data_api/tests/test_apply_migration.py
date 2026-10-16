@@ -44,3 +44,38 @@ def test_substitutes_the_dataset_for_a_bare_new_id(fake_bq):
     sql = fake_bq[1].read_text()
     assert "`tour_intelligence_qloo.qloo_tours`" in sql
     assert "{{DATASET}}" not in sql
+
+
+def _run_with_flag(dataset, fake_bq, flag):
+    bin_dir, _ = fake_bq
+    env = {**os.environ, "PATH": f"{bin_dir}:{os.environ['PATH']}"}
+    if flag is None:
+        env.pop("ALLOW_SHARED_DATASET", None)
+    else:
+        env["ALLOW_SHARED_DATASET"] = flag
+    return subprocess.run(["bash", str(SCRIPT), dataset, str(SQL)], env=env, capture_output=True, text=True)
+
+
+@pytest.mark.parametrize("dataset", ["tour_intelligence", "Tour_Intelligence"])
+def test_shared_dataset_opt_in_substitutes_tour_intelligence(dataset, fake_bq):
+    result = _run_with_flag(dataset, fake_bq, "1")
+    assert result.returncode == 0
+    sql = fake_bq[1].read_text()
+    assert f"`{dataset}.qloo_tours`" in sql
+    assert "{{DATASET}}" not in sql
+
+
+@pytest.mark.parametrize("flag", ["true", "yes", "0", "", "11"])
+def test_shared_dataset_flag_other_than_1_still_refuses(flag, fake_bq):
+    result = _run_with_flag("tour_intelligence", fake_bq, flag)
+    assert result.returncode == 1
+    assert "Refusing" in result.stdout
+    assert not fake_bq[1].exists()
+
+
+@pytest.mark.parametrize("dataset", ["liifecalling-academy.tour_intelligence", "a/b", "tour intelligence"])
+def test_shared_dataset_flag_does_not_bypass_the_bare_id_check(dataset, fake_bq):
+    result = _run_with_flag(dataset, fake_bq, "1")
+    assert result.returncode == 1
+    assert "Refusing" in result.stdout
+    assert not fake_bq[1].exists()

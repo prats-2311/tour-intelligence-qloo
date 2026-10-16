@@ -1790,8 +1790,14 @@ def _validate_qloo_tour(p: dict) -> str | None:
 
 def _qloo_dataset_missing() -> bool:
     """The Qloo routes write to / read from this project's own dataset only:
-    BQ_DATASET must be set and must not be the original hackathon dataset."""
-    return os.environ.get("BQ_DATASET", "").strip().lower() in ("", "tour_intelligence")
+    BQ_DATASET must be set and must not be the original hackathon dataset,
+    unless ALLOW_SHARED_DATASET is exactly "1" (explicit opt-in to reuse it)."""
+    name = os.environ.get("BQ_DATASET", "").strip().lower()
+    if name == "":
+        return True
+    if name == "tour_intelligence":
+        return os.environ.get("ALLOW_SHARED_DATASET") != "1"
+    return False
 
 
 @app.post("/qloo_tours")

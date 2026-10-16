@@ -95,3 +95,32 @@ def test_503_when_dataset_is_the_original_or_unset(client, mock_bq, monkeypatch,
     assert res.status_code == 503
     assert res.get_json() == {"error": "BQ_DATASET not configured"}
     mock_bq.query.assert_not_called()
+
+
+def test_shared_dataset_opt_in_allows_tour_intelligence_on_evidence(client, mock_bq, monkeypatch):
+    monkeypatch.setenv("BQ_DATASET", "tour_intelligence")
+    monkeypatch.setenv("ALLOW_SHARED_DATASET", "1")
+    monkeypatch.setenv("QLOO_GATEWAY_URL", "https://gw.test")
+    mock_bq.query.return_value.result.return_value = []  # no tour row -> 404 proves the guard passed
+    res = client.get("/qloo_city_evidence?campaign_id=c1&city_id=qloo_4005539")
+    assert res.status_code == 404
+    mock_bq.query.assert_called()
+
+
+@pytest.mark.parametrize("flag", ["true", "0", None])
+def test_shared_dataset_flag_other_than_1_still_503_on_evidence(client, mock_bq, monkeypatch, flag):
+    monkeypatch.setenv("BQ_DATASET", "tour_intelligence")
+    if flag is None:
+        monkeypatch.delenv("ALLOW_SHARED_DATASET", raising=False)
+    else:
+        monkeypatch.setenv("ALLOW_SHARED_DATASET", flag)
+    res = client.get("/qloo_city_evidence?campaign_id=c1&city_id=qloo_4005539")
+    assert res.status_code == 503
+    mock_bq.query.assert_not_called()
+
+
+def test_shared_dataset_flag_does_not_unlock_unset_dataset_on_evidence(client, mock_bq, monkeypatch):
+    monkeypatch.delenv("BQ_DATASET", raising=False)
+    monkeypatch.setenv("ALLOW_SHARED_DATASET", "1")
+    assert client.get("/qloo_city_evidence?campaign_id=c1&city_id=qloo_4005539").status_code == 503
+    mock_bq.query.assert_not_called()
