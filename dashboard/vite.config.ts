@@ -19,5 +19,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.{ts,tsx}", "server/**/*.test.js"],
+    setupFiles: ["src/test/setup.ts"],
+    css: { include: [/index\.css/] },
   },
 })

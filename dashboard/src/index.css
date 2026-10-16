@@ -68,6 +68,40 @@
   --color-saopaulo: #009e5c;
   --color-newyork: #7c4dff;
 
+  /* DESIGN.md tokens (docs/design/DESIGN.md section 2). */
+  --color-bone: #e9e4d6;
+  /* Verdicts: fills plus AA-safe text variants on the dark canvas. */
+  --color-verdict-play: #0f9d8a;
+  --color-verdict-play-text: #5fd3be;
+  --color-verdict-goldmine: #ffcc00;
+  --color-verdict-goldmine-mark: #b88a00;
+  --color-verdict-derisk: #e8606f;
+  --color-verdict-derisk-text: #ff9aa4;
+  --color-verdict-consider: #5a86e8;
+  --color-verdict-consider-text: #a8c0f4;
+  --color-verdict-skip: #8b877c;
+  --color-verdict-skip-text: #bdb8ab;
+  /* Heat ramp (single-hue warm neutral, low to high). */
+  --color-heat-1: #3a382f;
+  --color-heat-2: #555146;
+  --color-heat-3: #736e60;
+  --color-heat-4: #958f7f;
+  --color-heat-5: #bab3a1;
+  --color-heat-6: #e9e4d6;
+  /* States. */
+  --color-state-error: #fca5a5;
+  --color-state-error-bg: #2a1615;
+  --color-state-stale: #d9b45a;
+  /* City slots 1-8. */
+  --color-city-1: #ff3d00;
+  --color-city-2: #0091ea;
+  --color-city-3: #ff00aa;
+  --color-city-4: #009e5c;
+  --color-city-5: #7c4dff;
+  --color-city-6: #c27c00;
+  --color-city-7: #00a0b0;
+  --color-city-8: #a39200;
+
   /* Soft, generous corners (Premiere Noir) -- the Claude-app reference's
      calm rounding, replacing the old sharp 3-6px ticket-stub corners.
      Overridden at the token level so every rounded-* utility moves
@@ -102,37 +136,34 @@
 
 body {
   margin: 0;
-  /* Premiere-spotlight ambiance: two faint corner glows (gold house lights,
-     violet stage wash) over the near-black canvas -- subtle enough to read
-     as atmosphere, not decoration. Fixed so scrolling feels like moving
-     through one lit room rather than dragging a texture along. */
+  /* Only allowed wash: a faint gold house light (DESIGN.md section 9). */
   background:
-    radial-gradient(1100px 520px at 82% -12%, rgba(255, 204, 0, 0.07), transparent 60%),
-    radial-gradient(950px 540px at -8% 108%, rgba(124, 77, 255, 0.06), transparent 55%),
+    radial-gradient(1200px 600px at 100% 0%, rgba(255, 204, 0, 0.07), transparent 60%),
     var(--color-canvas);
   background-attachment: fixed;
   color: var(--color-canvas-text);
   font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Glossy ticket-gold CTA surface -- a vertical gold gradient with a top
-   highlight, replacing flat bg-gold on the primary action buttons only
-   (bubbles, chips, and tints keep the flat token). */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "cv11";
+}
+
+/* Flat gold CTA (no gradient, no glow -- DESIGN.md section 9). */
 .btn-gold {
-  background-image: linear-gradient(180deg, #ffdd55 0%, var(--color-gold) 55%, #efb900 100%);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  transition: filter 150ms ease, transform 120ms ease, box-shadow 150ms ease;
+  background: var(--color-gold);
+  color: var(--color-on-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: background-color 150ms ease, transform 120ms ease;
 }
 .btn-gold:hover:not(:disabled) {
-  filter: brightness(1.06);
-  box-shadow:
-    0 2px 10px rgba(255, 204, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  background: var(--color-gold-soft);
 }
 .btn-gold:active:not(:disabled) {
+  background: #efb900;
   transform: scale(0.98);
 }
 /* Unlayered .btn-gold outranks Tailwind's layered disabled: utilities, so
@@ -144,20 +175,9 @@ body {
   box-shadow: none;
 }
 
-/* Marquee-letter sheen for the big page titles: white at the cap line
-   falling to warm silver at the baseline, like a lit sign. Plain light text
-   where background-clip:text isn't supported, so the title can never
-   render invisible. */
+/* Solid title text (gradient-clipped text is banned); class kept for call sites. */
 .title-sheen {
   color: var(--color-canvas-text);
-}
-@supports ((-webkit-background-clip: text) or (background-clip: text)) {
-  .title-sheen {
-    background-image: linear-gradient(180deg, #ffffff 0%, #edebe4 55%, #b6b3a8 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
 }
 
 ::selection {
@@ -165,39 +185,34 @@ body {
   color: var(--color-on-gold);
 }
 
-/* Morphing gradient loader (hand-rolled after the 21st.dev
-   "loading-ui/morphing-infinity" registry item required auth): a gold-to
-   -violet conic blob whose silhouette continuously melts between
-   asymmetric border-radius states while it slowly spins. Used in the
-   full-page loading skeletons. */
-@keyframes morph-blob {
-  0%, 100% {
-    border-radius: 42% 58% 61% 39% / 45% 43% 57% 55%;
-    transform: rotate(0deg) scale(1);
-  }
-  33% {
-    border-radius: 58% 42% 37% 63% / 55% 61% 39% 45%;
-    transform: rotate(120deg) scale(1.06);
-  }
-  66% {
-    border-radius: 37% 63% 55% 45% / 61% 39% 45% 55%;
-    transform: rotate(240deg) scale(0.96);
-  }
+/* Level-meter loader: three 4px gold bars scaling in sequence. Class name
+   kept; MorphingLoader.tsx renders the bars via the child spans. */
+@keyframes meter-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
 }
 
 .morphing-loader {
-  width: 44px;
-  height: 44px;
-  background: conic-gradient(from 220deg, #ffcc00, #ff7a45, #7c4dff, #ffcc00);
-  filter: blur(0.5px) saturate(1.15);
-  animation: morph-blob 3.2s ease-in-out infinite;
-  box-shadow: 0 0 28px rgba(255, 204, 0, 0.22);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
 }
+.morphing-loader > span {
+  display: block;
+  width: 4px;
+  height: 100%;
+  background: var(--color-gold);
+  transform-origin: center;
+  animation: meter-bar 1s ease-in-out infinite;
+}
+.morphing-loader > span:nth-child(2) { animation-delay: 0.15s; }
+.morphing-loader > span:nth-child(3) { animation-delay: 0.3s; }
 
 @media (prefers-reduced-motion: reduce) {
-  .morphing-loader {
+  .morphing-loader > span {
     animation: none;
-    border-radius: 50%;
+    transform: scaleY(0.7);
   }
 }
 
