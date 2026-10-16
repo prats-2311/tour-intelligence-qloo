@@ -110,6 +110,15 @@ describe("marketsFromHeat metro anchoring", () => {
     expect(markets).toHaveLength(1);
     expect(markets[0]).toMatchObject({ city: { name: "Metro" }, affinity: 0.95, popularity: 0.2, pointIndexes: [0, 1] });
   });
+  it("falls back to the nearest 100k city within 50 km when none is within 30 km", () => {
+    const far: City[] = [
+      { id: "big", name: "Big", country: "XX", lat: 45.0, lon: -122.0, population: 5_000_000 },
+      { id: "mid", name: "Mid", country: "XX", lat: 45.4, lon: -122.0, population: 150_000 },
+    ];
+    // ~40 km from Mid (Big is ~88 km away)
+    const markets = marketsFromHeat([{ lat: 45.76, lon: -122.0, affinity: 1, popularity: 1, index: 0 }], far);
+    expect(markets.map((m) => m.city.name)).toEqual(["Mid"]);
+  });
   it("produces no market for a point with no 100k city within 50 km", () => {
     expect(marketsFromHeat([{ lat: 60, lon: 10, affinity: 1, popularity: 1, index: 0 }], cities)).toEqual([]);
   });
@@ -123,5 +132,10 @@ describe("marketsFromHeat on the real GeoNames dataset", () => {
     expect(nameFor(37.688, -122.47)).toBe("San Francisco"); // Daly City, CA
     expect(nameFor(19.4, -99.015)).toBe("Mexico City"); // Nezahualcoyotl
     expect(nameFor(-22.883, -43.104)).toBe("Rio de Janeiro"); // Niteroi
+  });
+  it("does not label the Santos/Guaruja coast as the Sao Paulo suburb Sao Bernardo do Campo", () => {
+    const name = nameFor(-23.994, -46.23);
+    expect(name).not.toBe("Sao Bernardo do Campo");
+    expect(["Santos", "Guarujá"]).toContain(name);
   });
 });

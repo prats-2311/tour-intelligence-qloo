@@ -1,11 +1,17 @@
 import { metroAnchor, nearestCity, type City } from "./cities.js";
 
+const METRO_KM = 30;
+
 export interface HeatPoint { lat: number; lon: number; affinity: number; popularity: number; index: number }
 
 export function marketsFromHeat(points: HeatPoint[], cities: City[], opts: { maxKm?: number; minPopulation?: number } = {}) {
   const byCity = new Map<string, { city: City; affinity: number; popularity: number; pointIndexes: number[] }>();
   for (const p of points) {
-    const city = metroAnchor(cities, p, { maxKm: opts.maxKm ?? 50, minPopulation: opts.minPopulation ?? 100_000 });
+    const minPopulation = opts.minPopulation ?? 100_000;
+    const fallbackKm = opts.maxKm ?? 50;
+    // Anchor to the biggest city within 30 km (suburb -> tour city); otherwise the nearest sizeable city within fallbackKm.
+    const city = metroAnchor(cities, p, { maxKm: Math.min(METRO_KM, fallbackKm), minPopulation })
+      ?? nearestCity(cities, p, { maxKm: fallbackKm, minPopulation });
     if (!city) continue;
     const m = byCity.get(city.id) ?? { city, affinity: -Infinity, popularity: -Infinity, pointIndexes: [] };
     m.affinity = Math.max(m.affinity, p.affinity);
