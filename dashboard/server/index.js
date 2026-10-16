@@ -4,7 +4,7 @@ import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { mountQlooProxy } from "./qlooProxy.js";
-import { mountTours } from "./tours.js";
+import { mountTours, statusFromCallTool } from "./tours.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TOUR_DATA_API = process.env.TOUR_DATA_API_URL || "https://tour-data-api-602700957663.us-central1.run.app";
@@ -329,6 +329,8 @@ function slugify(text) {
 
 const app = express();
 app.use(cors());
+// Before the app-wide parser: /api/tours parses its own (larger) body.
+mountTours(app, { callTool: statusFromCallTool(callTool) });
 app.use(express.json());
 
 app.get("/api/campaigns", async (req, res) => {
@@ -1034,21 +1036,6 @@ app.post("/api/rank-cities", async (req, res) => {
 
 mountQlooProxy(app, { gatewayUrl: QLOO_GATEWAY, getToken: getQlooGatewayToken });
 
-// callTool throws "<path> failed (<status>): <body>" on non-2xx; mountTours wants
-// { status, json } so a 400 validation message reaches the browser intact.
-mountTours(app, {
-  callTool: async (path, options) => {
-    try {
-      return { status: 201, json: await callTool(path, options) };
-    } catch (err) {
-      const m = /failed \((\d{3})\): ([\s\S]*)$/.exec(err?.message ?? "");
-      if (!m) throw err;
-      let json;
-      try { json = JSON.parse(m[2]); } catch { json = { error: m[2] }; }
-      return { status: Number(m[1]), json };
-    }
-  },
-});
 
 // Production: serve the built frontend and let client-side routing handle the rest.
 // Vite's hashed asset filenames (index-<hash>.js/css) are safe to cache forever —

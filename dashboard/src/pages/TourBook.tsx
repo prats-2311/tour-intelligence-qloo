@@ -17,7 +17,7 @@ import { SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { toIcs } from "@/lib/qloo/ics";
 import { getPlaybook, loadPlaybook, playbookKey, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { sortCities } from "@/lib/qloo/ranking";
-import { buildTourBook } from "@/lib/qloo/tourBook";
+import { buildTourBook, campaignTitle } from "@/lib/qloo/tourBook";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import type { ThisWeek } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
@@ -208,7 +208,7 @@ export default function TourBook() {
 
   // Live runs only: the snapshot that "Save as campaign" stores with the new campaign.
   const saveInput: SaveTourInput | null = sample ? null : {
-    title: `${artist!.name} — ${state.brief!.regions.join(", ")}`,
+    title: campaignTitle(artist!.name, state.brief!.regions),
     artist: artist!.name,
     artist_entity_id: artist!.entityId,
     regions: state.brief!.regions,

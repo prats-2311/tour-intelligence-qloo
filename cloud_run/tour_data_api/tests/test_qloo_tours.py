@@ -81,3 +81,16 @@ def test_writes_go_to_the_configured_dataset(client, mock_bq, monkeypatch):
     mock_bq.insert_rows_json.return_value = []
     client.post("/qloo_tours", json=_body())
     assert mock_bq.insert_rows_json.call_args_list[-1].args[0] == "test-project.tour_intelligence_qloo.qloo_tours"
+
+
+def test_rejects_a_non_object_body_with_400(client):
+    assert client.post("/qloo_tours", json=[1, 2]).status_code == 400
+
+
+def test_rejects_empty_or_overlong_regions_and_duplicate_cities(client):
+    assert client.post("/qloo_tours", json=_body(regions=[""])).status_code == 400
+    assert client.post("/qloo_tours", json=_body(regions=["x" * 121])).status_code == 400
+    dup = {"id": "4005539", "name": "Guadalajara", "country": "MX", "verdict": "hidden_goldmine", "winnability": 72}
+    res = client.post("/qloo_tours", json=_body(cities=[dup, dup]))
+    assert res.status_code == 400
+    assert "duplicate" in res.get_json()["error"]

@@ -1758,14 +1758,16 @@ def _validate_qloo_tour(p: dict) -> str | None:
         if not _is_text(p.get(field), 200):
             return f"{field} must be a non-empty string of at most 200 characters"
     regions = p.get("regions")
-    if not isinstance(regions, list) or not 1 <= len(regions) <= 6 or not all(isinstance(r, str) for r in regions):
-        return "regions must be 1-6 strings"
+    if not isinstance(regions, list) or not 1 <= len(regions) <= 6 or not all(_is_text(r, 120) for r in regions):
+        return "regions must be 1-6 non-empty strings of at most 120 characters"
     cities = p.get("cities")
     if not isinstance(cities, list) or not 1 <= len(cities) <= 20:
         return "cities must be 1-20 items"
     for c in cities:
         if not isinstance(c, dict) or not all(_is_text(c.get(k), 120) for k in ("id", "name", "country")):
             return "each city needs non-empty id, name and country (at most 120 characters)"
+    if len({c["id"] for c in cities}) != len(cities):
+        return "cities must not contain duplicate ids"
     window = p.get("date_window")
     if window is not None:
         start = window.get("start") if isinstance(window, dict) else None
@@ -1791,7 +1793,9 @@ def create_qloo_tour():
     become `qloo_<id>` rows in cities, then the campaign, its ordered stops and
     a snapshot of the Tour Book are inserted. Inserts are not transactional --
     a failure part-way returns 500 and may leave the earlier rows behind."""
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"error": "body must be a JSON object"}), 400
     problem = _validate_qloo_tour(payload)
     if problem:
         return jsonify({"error": problem}), 400

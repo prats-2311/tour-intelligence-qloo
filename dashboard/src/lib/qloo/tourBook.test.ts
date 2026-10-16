@@ -3,7 +3,7 @@ import { SAMPLE_ACCENT_ORDER } from "./cityAccent";
 import { LUMEN_VALE_SAMPLE, SAMPLE_BRIEF, SAMPLE_CITIES } from "./fixtures/lumenVale";
 import { samplePlaybookEvents, sampleThisWeek } from "./fixtures/lumenValePlaybooks";
 import { initialPlaybook, playbookReducer, type PlaybookState } from "./playbookReducer";
-import { buildTourBook, seasonLabel } from "./tourBook";
+import { buildTourBook, campaignTitle, seasonLabel } from "./tourBook";
 
 const done = (id: string): PlaybookState => samplePlaybookEvents(id)!.reduce((s, event) => playbookReducer(s, { type: "event", event }), playbookReducer(initialPlaybook, { type: "start", source: "sample" }));
 const shortlist = ["3530597", "3448439", "4005539", "3464975"];
@@ -55,5 +55,16 @@ describe("seasonLabel", () => {
     expect(seasonLabel({ start: "2027-03-12", end: "2027-04-18" })).toBe("Spring 2027");
     expect(seasonLabel({ start: "2026-12-05", end: "2027-01-10" })).toBe("Winter 2027");
     expect(seasonLabel(undefined)).toBe("");
+  });
+});
+
+describe("campaignTitle", () => {
+  it("joins artist and regions", () => {
+    expect(campaignTitle("Lumen Vale", ["Mexico", "Brazil"])).toBe("Lumen Vale — Mexico, Brazil");
+  });
+  it("never exceeds the API's 200-character cap and marks the cut", () => {
+    const t = campaignTitle("x".repeat(190), ["Mexico", "Brazil", "United States"]);
+    expect(t.length).toBe(200);
+    expect(t.endsWith("…")).toBe(true);
   });
 });

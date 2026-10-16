@@ -58,6 +58,28 @@ const renderLive = () =>
   );
 
 describe("Save as campaign", () => {
+  it("treats a failed campaign-list refresh after a successful save as saved (no duplicate retry)", async () => {
+    const save = vi.spyOn(api, "saveTourAsCampaign").mockResolvedValue({ campaign_id: "c1", stops: 4 });
+    refresh.mockRejectedValueOnce(new Error("list down"));
+    renderLive();
+    fireEvent.click(await screen.findByRole("button", { name: "Save as campaign" }));
+    expect(await screen.findByRole("link", { name: "Open campaign" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(setActiveCampaignId).toHaveBeenCalledWith("c1");
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+  it("says Saving… and ignores a second click while the save is in flight", async () => {
+    let resolve!: (v: { campaign_id: string; stops: number }) => void;
+    const save = vi.spyOn(api, "saveTourAsCampaign").mockImplementation(() => new Promise((r) => { resolve = r; }));
+    renderLive();
+    const btn = await screen.findByRole("button", { name: "Save as campaign" });
+    fireEvent.click(btn);
+    const saving = screen.getByRole("button", { name: "Saving…" });
+    fireEvent.click(saving);
+    expect(save).toHaveBeenCalledTimes(1);
+    resolve({ campaign_id: "c1", stops: 4 });
+    expect(await screen.findByRole("link", { name: "Open campaign" })).toBeTruthy();
+  });
   it("saves a live tour, refreshes campaigns before selecting the new one, and offers Open campaign", async () => {
     const save = vi.spyOn(api, "saveTourAsCampaign").mockResolvedValue({ campaign_id: "c1", stops: 4 });
     renderLive();

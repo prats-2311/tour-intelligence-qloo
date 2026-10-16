@@ -133,3 +133,10 @@ export function buildTourBook(input: {
     chapters, provenance: buildProvenance(logs),
   };
 }
+
+const CAMPAIGN_TITLE_MAX = 200;
+
+export function campaignTitle(artist: string, regions: string[]): string {
+  const t = `${artist} — ${regions.join(", ")}`;
+  return t.length <= CAMPAIGN_TITLE_MAX ? t : `${t.slice(0, CAMPAIGN_TITLE_MAX - 1)}…`;
+}

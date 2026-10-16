@@ -1,12 +1,13 @@
 import express from "express";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mountTours } from "./tours.js";
+import { mountTours, statusFromCallTool } from "./tours.js";
 
 let server;
 async function start(callTool) {
   const app = express();
-  app.use(express.json());
   mountTours(app, { callTool });
+  // Same order as index.js: the app-wide 100 kb parser comes after the tours route.
+  app.use(express.json());
   await new Promise((r) => { server = app.listen(0, r); });
   return `http://127.0.0.1:${server.address().port}`;
 }
@@ -55,5 +56,33 @@ describe("POST /api/tours", () => {
     const res = await post(await start(callTool), { source: "live", title: "T" });
     expect(res.status).toBe(502);
     expect(await res.json()).toEqual({ error: "tour_data_api unavailable" });
+  });
+});
+
+describe("POST /api/tours body size", () => {
+  it("accepts a ~150 kb Tour Book snapshot (board_json may be up to 200000 chars)", async () => {
+    const callTool = vi.fn(async () => ({ status: 201, json: { campaign_id: "c1", stops: 1 } }));
+    const res = await post(await start(callTool), { source: "live", title: "T", board_json: "x".repeat(150_000) });
+    expect(res.status).toBe(201);
+    expect(JSON.parse(callTool.mock.calls[0][1].body).board_json).toHaveLength(150_000);
+  });
+});
+
+describe("statusFromCallTool", () => {
+  it("returns 201 with the JSON on success", async () => {
+    const wrapped = statusFromCallTool(async () => ({ campaign_id: "c1" }));
+    expect(await wrapped("/qloo_tours", {})).toEqual({ status: 201, json: { campaign_id: "c1" } });
+  });
+  it("parses callTool's 'failed (NNN): body' error into status and JSON", async () => {
+    const wrapped = statusFromCallTool(async () => { throw new Error('/qloo_tours failed (400): {"error":"cities must be 1-20 items"}'); });
+    expect(await wrapped("/qloo_tours", {})).toEqual({ status: 400, json: { error: "cities must be 1-20 items" } });
+  });
+  it("keeps a non-JSON error body as the error text", async () => {
+    const wrapped = statusFromCallTool(async () => { throw new Error("/qloo_tours failed (500): upstream\nboom"); });
+    expect(await wrapped("/qloo_tours", {})).toEqual({ status: 500, json: { error: "upstream\nboom" } });
+  });
+  it("rethrows errors that are not HTTP failures", async () => {
+    const wrapped = statusFromCallTool(async () => { throw new Error("socket hang up"); });
+    await expect(wrapped("/qloo_tours", {})).rejects.toThrow("socket hang up");
   });
 });
