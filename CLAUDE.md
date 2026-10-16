@@ -22,6 +22,13 @@ Tour Intelligence × Qloo: "Don't just find your fans. Win their city." A taste-
 - "Save as campaign" (Book) writes via `POST /api/tours` to `tour_data_api` and is live-only; sample tours are refused.
 - No code defaults point at the original Google-hackathon services: set `TOUR_DATA_API_URL` (BFF, `agent_mcp_server`, orchestrator) and `DELIGHT_RENDERER_URL` (BFF, orchestrator). Unset, the BFF answers 503 `tour_data_api not configured`; the other two refuse to start.
 
+## Deploy topology (2026-10-16)
+- The finished Google-hackathon backends in `liifecalling-academy` (`tour-data-api`, `delight-card-renderer`, `agent-mcp-server`, Dialogflow CX agent, job `tour-campaign-orchestrator`) are reused; nothing is deleted.
+- The dashboard deploys as the new Cloud Run service `tour-intel-qloo` (`dashboard/scripts/deploy.sh`, refuses `tour-dashboard`), fronted by Firebase Hosting at `https://tour-intel-qloo.web.app` (`firebase.json`, `.firebaserc`, `dashboard/scripts/deploy_web_app.sh`). Prateek runs both; see `dashboard/CLAUDE.md`.
+- The public MCP stays new: `cloud_run/agent_mcp_server/scripts/deploy_public.sh` (Plan 4) targets `tour-intel-mcp-public`.
+- Reusing dataset `tour_intelligence` (instead of `tour_intelligence_qloo`) is pending Prateek's decision; the dataset guards are unchanged until then.
+- Cloud Run reserves paths ending in `z`: the gateway health route is `/health`.
+
 ## Nested guides
 Existing per-directory `CLAUDE.md` files remain authoritative for their services; `cloud_run/qloo_gateway/CLAUDE.md` covers the gateway.
 

@@ -206,7 +206,7 @@ agent_mcp_server (existing; + taste tools, + public demo endpoint)
 - `GET /v1/city-playbook?artist=&city=` → SSE (same event types) ending in a `playbook` payload.
 - `POST /v1/strategist` `{sessionId, messages[]}` → SSE.
 - `POST /v1/tools/:name` (internal only; allowlisted) → Envelope.
-- `GET /healthz` → capabilities + process state.
+- `GET /health` (and `/healthz` locally; Cloud Run reserves paths ending in `z`) → capabilities + process state.
 
 All payloads carry `provenance` (Qloo requests), `status`, and `warnings`.
 
@@ -215,6 +215,7 @@ All payloads carry `provenance` (Qloo requests), `status`, and `warnings`.
 - New BigQuery dataset `tour_intelligence_qloo` seeded from the same seed files; new Cloud Run service names; the original Google submission's services, data and URLs are untouched.
 - Node for the gateway (harness + MCP SDK are Node). Gemini (Vertex) for the strategist (already provisioned).
 - Only the gateway holds the Qloo key.
+- Implementation note (2026-10-16): the finished Google-hackathon backends (`tour-data-api`, `delight-card-renderer`, `agent-mcp-server`, the Dialogflow CX agent, the `tour-campaign-orchestrator` job) in project `liifecalling-academy` are reused. The judge-facing dashboard is a new Cloud Run service `tour-intel-qloo`, fronted by Firebase Hosting at `https://tour-intel-qloo.web.app`; the old `tour-dashboard` is untouched and must never be redeployed from this repo. The public MCP stays a new service, `tour-intel-mcp-public`. Whether to reuse the `tour_intelligence` dataset (this section's earlier `tour_intelligence_qloo` decision) is pending Prateek's decision.
 - The root `CLAUDE.md` (Google-hackathon era) is rewritten for this hackathon as the first plan task. Its rule "don't re-propose the Next.js/Node stack" is superseded **for the gateway only**: the Qloo harness and `qloo mcp` are Node-only. All other services keep their existing stacks.
 
 ---
