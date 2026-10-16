@@ -77,8 +77,10 @@ describe("runStrategist", () => {
     const events = await collect(runStrategist(input, deps(script(...many, { candidates: [{ content: { parts: [{ text: "" }] } }] }))));
     const msg = events.find((e) => e.type === "strategist_message") as { text: string; stoppedEarly: boolean };
     expect(msg.stoppedEarly).toBe(true);
-    expect(msg.text).toContain("I stopped after 6 tool calls — here is what I found.");
+    expect(msg.text).toContain("I stopped after 4 tool calls — here is what I found.");
+    expect(msg.text).not.toContain("6 tool calls");
     expect(msg.text).toContain("qloo_recommend");
+    expect((msg as unknown as { unsupportedNumbers: string[] }).unsupportedNumbers).toEqual([]);
   });
   it("flags numbers the tools never returned", async () => {
     const events = await collect(runStrategist(input, deps(script(text("Expect 5000 fans.")))));

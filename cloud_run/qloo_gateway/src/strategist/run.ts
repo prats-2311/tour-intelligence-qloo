@@ -52,8 +52,9 @@ export async function* runStrategist(input: { messages: ChatMessage[]; context: 
       throw e instanceof BudgetExceededError ? e : new ModelUnavailable();
     }
   };
-  const message = (text: string, model: string, stoppedEarly: boolean): GatewayEvent =>
-    ({ type: "strategist_message", text, unsupportedNumbers: unsupportedNumbers(text, collected, input.context), stoppedEarly, model });
+  // Only model text is number-checked; our own fallback summary is not model output.
+  const message = (text: string, model: string, stoppedEarly: boolean, check = true): GatewayEvent =>
+    ({ type: "strategist_message", text, unsupportedNumbers: check ? unsupportedNumbers(text, collected, input.context) : [], stoppedEarly, model });
 
   try {
     let id = 0;
@@ -88,8 +89,9 @@ export async function* runStrategist(input: { messages: ChatMessage[]; context: 
     if (aborted()) { yield* err("ABORTED", "client disconnected"); return; }
     forcedFinal = true;
     const last = await turn([]);
-    const text = last.text.trim() || `I stopped after ${STRATEGIST_LIMITS.toolCalls} tool calls — here is what I found.\n${summaries.map((s) => `- ${s}`).join("\n")}`;
-    yield message(text, last.model, true);
+    const modelText = last.text.trim();
+    const text = modelText || `I stopped after ${toolCalls} tool calls — here is what I found.\n${summaries.map((s) => `- ${s}`).join("\n")}`;
+    yield message(text, last.model, true, modelText !== "");
     yield { type: "done", summary: { rounds, toolCalls, forcedFinal } };
   } catch (e) {
     if (e instanceof BudgetExceededError) yield* err("CAPPED", CAPPED);
