@@ -31,6 +31,23 @@ beforeEach(() => { maps.length = 0; vi.stubGlobal("matchMedia", () => ({ matches
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); document.body.innerHTML = ""; });
 
 describe("TourMap", () => {
+  it("neutral mode renders one verdict-free, non-interactive marker per city", async () => {
+    const { default: TourMap } = await import("./TourMap");
+    const onSelect = vi.fn();
+    render(<TourMap cities={SAMPLE_CITIES.slice(0, 3)} onSelect={onSelect} neutral />);
+    const markers = [...document.querySelectorAll<HTMLButtonElement>("button[data-neutral]")];
+    expect(markers).toHaveLength(3);
+    for (const m of markers) {
+      expect(m.dataset.verdict).toBeUndefined();
+      expect(m.disabled).toBe(true);
+      expect(m.querySelector("svg")?.getAttribute("data-shape")).toBe("circle");
+      expect(m.querySelector("circle")?.getAttribute("fill")).toBe("#a4a094");
+      expect(m.getAttribute("aria-label")).not.toMatch(/,/);
+      expect(m.textContent).toBe("");
+      m.click();
+    }
+    expect(onSelect).not.toHaveBeenCalled();
+  });
   it("shows an honest overlay when the style fails to load and keeps the markers usable", async () => {
     const { default: TourMap } = await import("./TourMap");
     const onSelect = vi.fn();

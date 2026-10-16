@@ -11,6 +11,8 @@ interface Props {
   selectedId?: string | null;
   onSelect: (id: string) => void;
   zones?: Zone[];
+  /** Markers carry no verdict (shape, colour or label) and are not interactive. */
+  neutral?: boolean;
 }
 
 const ZONES = "zones";
@@ -28,7 +30,7 @@ function zoneData(zones: Zone[] | undefined) {
   };
 }
 
-export default function TourMap({ cities, selectedId, onSelect, zones }: Props) {
+export default function TourMap({ cities, selectedId, onSelect, zones, neutral = false }: Props) {
   const isDesktop = useIsDesktop();
   const [tilesFailed, setTilesFailed] = useState(false);
   const reduce = useMediaQuery("(prefers-reduced-motion: reduce)");
@@ -41,6 +43,8 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
   const citiesRef = useRef(cities);
   const selectedRef = useRef(selectedId);
   const reduceRef = useRef(reduce);
+  const neutralRef = useRef(neutral);
+  neutralRef.current = neutral;
   onSelectRef.current = onSelect;
   zonesRef.current = zones;
   citiesRef.current = cities;
@@ -49,8 +53,8 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
 
   const idKey = useMemo(() => cities.map((c) => c.id).sort().join("|"), [cities]);
   const sigKey = useMemo(
-    () => cityMarkers(cities).map((m, i) => markerSignature({ ...m, name: cities.find((c) => c.id === m.id)?.name ?? String(i) })).sort().join("\n"),
-    [cities],
+    () => cityMarkers(cities).map((m, i) => markerSignature({ ...m, name: cities.find((c) => c.id === m.id)?.name ?? String(i) }, neutral)).sort().join("\n"),
+    [cities, neutral],
   );
 
   const applyZones = (map: maplibregl.Map) => {
@@ -158,7 +162,7 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
     const byId = new Map(citiesRef.current.map((c) => [c.id, c]));
     const wanted = cityMarkers(citiesRef.current).map((m) => {
       const name = byId.get(m.id)!.name;
-      return { ...m, name, sig: markerSignature({ ...m, name }) };
+      return { ...m, name, sig: markerSignature({ ...m, name }, neutralRef.current) };
     });
     const keep = new Map(wanted.map((m) => [m.id, m.sig]));
     for (const [id, entry] of markers.current) {
@@ -175,6 +179,7 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
         label: m.label,
         selected: m.id === selectedRef.current,
         reduce: reduceRef.current,
+        neutral: neutralRef.current,
         onSelect: () => onSelectRef.current(m.id),
       });
       markers.current.set(m.id, { marker: new maplibregl.Marker({ element }).setLngLat(m.lngLat).addTo(map), element, sig: m.sig });

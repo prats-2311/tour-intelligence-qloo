@@ -25,6 +25,10 @@ describe("strategist samples", () => {
       for (const n of numbersIn(msg.text)) expect(known.has(n)).toBe(true);
     }
   });
+  it("sample answer 1 cites the in-city fan heat share from the sample data", () => {
+    const msg = sampleStrategistEvents(SAMPLE_QUESTIONS[0]!).find((e) => e.type === "strategist_message") as { text: string };
+    expect(msg.text).toContain("38% of in-city fan heat sits in Colonia Americana");
+  });
   it("a free-typed question in sample mode is an honest unavailable state", () => {
     expect(sampleStrategistEvents("anything else")[0]).toMatchObject({ type: "strategist_error", code: "UNAVAILABLE" });
   });

@@ -22,9 +22,9 @@ function svgEl(name: string, attrs: Record<string, string | number>): SVGElement
   return el;
 }
 
-function glyph(verdict: Verdict): SVGElement {
-  const { size, color, opacity } = SPEC[verdict];
-  const shape = VERDICT_SHAPE[verdict];
+function glyph(verdict: Verdict, neutral = false): SVGElement {
+  const { size, color, opacity } = SPEC[neutral ? "insufficient_data" : verdict];
+  const shape = neutral ? "circle" : VERDICT_SHAPE[verdict];
   const box = size + PAD * 2, c = box / 2, h = size / 2;
   const svg = svgEl("svg", { width: box, height: box, viewBox: `0 0 ${box} ${box}`, "aria-hidden": "true", "data-shape": shape });
   svg.style.overflow = "visible";
@@ -56,10 +56,13 @@ export interface MarkerOptions {
   selected: boolean;
   onSelect: () => void;
   reduce?: boolean;
+  /** One neutral circle, no verdict shape, label or interaction (the "Without Qloo" view). */
+  neutral?: boolean;
 }
 
 /** A focusable 44px button wrapping a small verdict-shaped glyph. Shape, not colour, carries the verdict. */
-export function markerElement({ verdict, city, label, selected, onSelect, reduce = false }: MarkerOptions): HTMLButtonElement {
+export function markerElement({ verdict, city, label, selected, onSelect, reduce = false, neutral = false }: MarkerOptions): HTMLButtonElement {
+  if (neutral) return neutralMarker(city);
   const el = document.createElement("button");
   el.type = "button";
   el.setAttribute("aria-label", `${city}, ${VERDICT_LABEL[verdict]}`);
@@ -101,8 +104,24 @@ export function markerElement({ verdict, city, label, selected, onSelect, reduce
   return el;
 }
 
+function neutralMarker(city: string): HTMLButtonElement {
+  const el = document.createElement("button");
+  el.type = "button";
+  el.disabled = true;
+  el.tabIndex = -1;
+  el.dataset.neutral = "true";
+  el.setAttribute("aria-label", city);
+  Object.assign(el.style, {
+    width: `${HIT}px`, height: `${HIT}px`, padding: "0", border: "0", background: "transparent",
+    pointerEvents: "none", display: "flex", alignItems: "center", justifyContent: "center",
+  });
+  el.append(glyph("insufficient_data", true));
+  return el;
+}
+
 /** Update selection visuals in place so the node (and keyboard focus) survives. */
 export function setMarkerSelected(el: HTMLElement, selected: boolean): void {
+  if (el.dataset.neutral) return;
   el.setAttribute("aria-pressed", String(selected));
   el.style.zIndex = selected ? "2" : "1";
   const inner = el.querySelector<HTMLElement>("[data-inner]");
@@ -125,6 +144,6 @@ export function setMarkerSelected(el: HTMLElement, selected: boolean): void {
 }
 
 /** Identity of everything a marker renders; a change means the marker must be rebuilt. */
-export function markerSignature(c: { id: string; name: string; verdict: Verdict; label: string | null }): string {
-  return [c.id, c.verdict, c.name, c.label ?? ""].join("|");
+export function markerSignature(c: { id: string; name: string; verdict: Verdict; label: string | null }, neutral = false): string {
+  return neutral ? [c.id, "neutral", c.name].join("|") : [c.id, c.verdict, c.name, c.label ?? ""].join("|");
 }

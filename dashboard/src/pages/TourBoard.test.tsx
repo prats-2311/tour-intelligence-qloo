@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import * as client from "@/lib/qloo/client";
 import { SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
-import { VERDICT_SHAPE } from "@/lib/qloo/labels";
+import { VERDICT_LABEL, VERDICT_SHAPE } from "@/lib/qloo/labels";
 import type { TourBrief } from "@/lib/qloo/types";
 import TourBoard from "./TourBoard";
 
@@ -59,6 +59,33 @@ const renderWithRun = (brief: TourBrief) =>
 
 
 describe("TourBoard", () => {
+  it("Without Qloo hides every verdict and score surface on the page", async () => {
+    renderPage("/tours/board?sample=1&mode=without");
+    await screen.findByRole("list", { name: "Generic ranking" });
+    for (const label of Object.values(VERDICT_LABEL)) expect(screen.queryByText(label as string)).toBeNull();
+    expect(screen.queryByText("Why this score?")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Why this score?" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Build tour" })).toBeNull();
+    expect(screen.queryByLabelText("Map legend")).toBeNull();
+    expect(screen.queryByText(/markets scored.*(Play|Hidden goldmine)/)).toBeNull();
+    expect(screen.getByText(/10 markets scored/).textContent).not.toMatch(/Play|Hidden goldmine|De-risk/);
+  });
+  it("?sample=long applies the long city names to the generic list", async () => {
+    renderPage("/tours/board?sample=long&mode=without");
+    const list = await screen.findByRole("list", { name: "Generic ranking" });
+    await waitFor(() => expect(within(list).getAllByText("Santiago de Querétaro").length).toBeGreaterThan(0));
+  });
+  it("a thrown live fetch shows the unavailable notice with Try again, not skeletons", async () => {
+    vi.spyOn(client, "fetchWithoutQloo").mockRejectedValue(new Error("boom"));
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield cityEvent(0); yield { type: "done", summary: {} }; });
+    renderPage("/tours/board");
+    submitArtist("Ada");
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    fireEvent.click(await screen.findByRole("tab", { name: "Without Qloo" }));
+    expect(await screen.findByText("Generic ranking unavailable")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+  });
+
   it("Without Qloo shows the generic list with no bars, verdicts or scores, and the banner", async () => {
     renderPage("/tours/board?sample=1&mode=without");
     expect(await screen.findByText("Generic LLM answer — no taste evidence")).toBeTruthy();

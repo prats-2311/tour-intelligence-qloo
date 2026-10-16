@@ -14,7 +14,7 @@ import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { VerdictGlyph } from "@/components/qloo/VerdictGlyph";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
 import { fetchWithoutQloo } from "@/lib/qloo/client";
-import { LONG_NAMES_BRIEF, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
+import { LONG_CITY_NAMES, LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_WITHOUT_QLOO } from "@/lib/qloo/fixtures/strategistSample";
 import { sortCities, summarize } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
@@ -163,7 +163,14 @@ export default function TourBoard() {
     staleTime: Infinity,
     retry: false,
   });
-  const withoutResult = isSample ? SAMPLE_WITHOUT_QLOO : withoutLive.data;
+  const withoutResult = isSample
+    ? (state.sampleSet === "long" && SAMPLE_WITHOUT_QLOO.status === "ok"
+      ? { ...SAMPLE_WITHOUT_QLOO, ranked: SAMPLE_WITHOUT_QLOO.ranked.map((r) => {
+          const id = SAMPLE_CITIES.find((c) => c.name === r.name)?.id;
+          return { ...r, name: (id && LONG_CITY_NAMES[id]) || r.name };
+        }) }
+      : SAMPLE_WITHOUT_QLOO)
+    : withoutLive.data;
   const selected = withoutMode ? undefined : state.cities.find((c) => c.id === selectedId);
   const whyCity = state.cities.find((c) => c.id === whyId);
   const summaryCity = selected ?? eligible.find((c) => c.verdict === "hidden_goldmine") ?? sorted[0];
@@ -258,7 +265,7 @@ export default function TourBoard() {
         <>
           <SegmentedControl mode={mode} onChange={setMode} />
           <p className="min-w-0 text-[12px] text-canvas-muted lg:text-[13px]">
-            {scored}{verdictBits.map((b, i) => <span key={i}>{" · "}{b}</span>)}
+            {scored}{!withoutMode && verdictBits.map((b, i) => <span key={i}>{" · "}{b}</span>)}
             {streaming && " · still scoring"}
           </p>
         </>
@@ -282,10 +289,10 @@ export default function TourBoard() {
                 <p role="status" className="text-[13px] text-canvas-muted">Waiting for the board to finish…</p>
               ) : withoutResult?.status === "ok" ? (
                 <GenericRanking ranked={withoutResult.ranked} />
-              ) : withoutResult?.status === "unavailable" ? (
+              ) : withoutResult?.status === "unavailable" || withoutLive.isError ? (
                 <Notice>
                   <CircleAlert size={14} className="text-state-error" aria-hidden />
-                  <span className="min-w-0">{withoutResult.message}</span>
+                  <span className="min-w-0">{withoutResult?.status === "unavailable" ? withoutResult.message : "Generic ranking unavailable"}</span>
                   <button type="button" onClick={() => void withoutLive.refetch()} className={smallBtn}>Try again</button>
                 </Notice>
               ) : (
@@ -319,7 +326,7 @@ export default function TourBoard() {
     </div>
   );
 
-  const footer = state.cities.length > 0 && (
+  const footer = state.cities.length > 0 && !withoutMode && (
     <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 flex items-center gap-3 bg-canvas-raised px-3 py-2 lg:bottom-0 lg:justify-between lg:py-3">
       <span className="hidden min-w-0 text-[13px] text-canvas-muted lg:block">
         {shortlist.length} {shortlist.length === 1 ? "market" : "markets"} shortlisted
@@ -412,9 +419,9 @@ export default function TourBoard() {
       <div className="grid grid-cols-1 lg:grid-cols-12">
         <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1">{header}</div>
         <section aria-label="Routing map" className="relative h-[32dvh] min-h-[168px] bg-canvas-raised lg:sticky lg:top-14 lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:h-[calc(100dvh-56px)] lg:self-start">
-          <Legend />
+          {!withoutMode && <Legend />}
           <Suspense fallback={<div className="size-full bg-canvas-raised" />}>
-            <TourMap cities={state.cities} selectedId={withoutMode ? null : selectedId} onSelect={selectFromMap} zones={selected?.zones} />
+            <TourMap cities={state.cities} selectedId={withoutMode ? null : selectedId} onSelect={selectFromMap} zones={selected?.zones} neutral={withoutMode} />
           </Suspense>
         </section>
         <section aria-label="Routing board" className="relative z-10 -mt-5 flex min-w-0 flex-col rounded-t-[18px] bg-canvas-raised lg:col-span-5 lg:col-start-8 lg:row-start-2 lg:mt-0 lg:rounded-none">
