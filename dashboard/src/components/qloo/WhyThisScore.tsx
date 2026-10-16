@@ -12,7 +12,13 @@ const WEIGHTS: Array<{ key: ComponentName; label: string; weight: string }> = [
 export function WhyThisScore({ city }: { city: ScoredCity }) {
   const w = city.winnability.value;
   const comps = city.activation.components;
-  const refs = [...city.fanHeat.refs, ...city.activation.refs, ...city.winnability.refs];
+  const seen = new Set<string>();
+  const refs = [...city.fanHeat.refs, ...city.activation.refs, ...city.winnability.refs].filter((r) => {
+    const k = `${r.tool}|${r.cacheKey}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
   return (
     <div className="flex flex-col gap-4 text-[14px] text-canvas-text">
       <div className="flex items-center gap-3">
@@ -44,11 +50,19 @@ export function WhyThisScore({ city }: { city: ScoredCity }) {
           <p className="text-[13px] text-canvas-muted">No evidence references.</p>
         ) : (
           <ul className="flex flex-col gap-0.5 font-mono text-[12px] text-canvas-muted">
-            {refs.map((r, i) => <li key={`${r.cacheKey}-${i}`}>{r.tool} · {r.cacheKey.slice(0, 8)}</li>)}
+            {refs.map((r) => <li key={`${r.tool}|${r.cacheKey}`}>{r.tool} · {r.cacheKey.slice(0, 8)}</li>)}
           </ul>
         )}
       </div>
-      <DataWarningBadge warnings={city.warnings} />
+      {city.warnings.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <h3 className="text-[13px] font-medium text-canvas-muted">Data notes</h3>
+          <DataWarningBadge warnings={city.warnings} />
+          <ul className="flex flex-col gap-0.5 text-[13px] text-canvas-text">
+            {city.warnings.map((w, i) => <li key={`${w.tool}|${w.kind}|${i}`}>{w.message ?? `${w.tool}: ${w.kind}`}</li>)}
+          </ul>
+        </div>
+      )}
       <p className="text-[12px] text-canvas-muted">Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.</p>
     </div>
   );

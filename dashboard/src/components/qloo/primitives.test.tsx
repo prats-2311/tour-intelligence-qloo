@@ -42,7 +42,7 @@ describe("primitives", () => {
   it("DualBars renders insufficient data honestly", () => {
     render(<DualBars fanHeat={{ value: null, reason: "insufficient_data", refs: [] }} activation={gdl.activation} />);
     expect(screen.getByText("Not enough data")).toBeTruthy();
-    expect(screen.getByRole("meter", { name: "Fan heat: not enough data" })).toBeTruthy();
+    expect(screen.getByRole("img", { name: "Fan heat: not enough data" })).toBeTruthy();
   });
   it("WhyThisScore shows formula, weights, components, refs and integrity line", () => {
     render(<WhyThisScore city={gdl} />);
@@ -92,4 +92,38 @@ describe("primitives", () => {
     rerender(<DataWarningBadge warnings={[{ tool: "qloo_recommend", kind: "partial", message: "3 of 4" }]} />);
     expect(screen.getByText("Partial data")).toBeTruthy();
   });
+
+  it("WhyThisScore lists warning messages visibly", () => {
+    render(<WhyThisScore city={bh} />);
+    expect(screen.getByText("Data notes")).toBeTruthy();
+    expect(screen.getByText("1 of 4 activation inputs returned data")).toBeTruthy();
+  });
+  it("WhyThisScore lists each evidence ref once", () => {
+    const ref = { tool: "qloo_recommend", cacheKey: "abcdef1234567890" };
+    const city = { ...gdl, fanHeat: { value: 62, refs: [ref] }, activation: { ...gdl.activation, refs: [ref] }, winnability: { value: 70, refs: [ref, ref] } } as typeof gdl;
+    render(<WhyThisScore city={city} />);
+    expect(screen.getAllByText("qloo_recommend · abcdef12")).toHaveLength(1);
+  });
+  it("Sheet has a Close button that closes", () => {
+    const onClose = vi.fn();
+    render(<Sheet open onClose={onClose} title="T"><p>x</p></Sheet>);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalled();
+  });
+  it("DualBars null score: img role, per-bar text, no meter without value", () => {
+    render(<DualBars fanHeat={{ value: null, reason: "insufficient_data", refs: [] }} activation={gdl.activation} />);
+    expect(screen.getByRole("img", { name: "Fan heat: not enough data" })).toBeTruthy();
+    expect(screen.getAllByRole("meter")).toHaveLength(1);
+    expect(screen.getAllByText("Not enough data")).toHaveLength(1);
+  });
+  it("DualBars clamps out-of-range values", () => {
+    render(<DualBars fanHeat={{ value: 140, refs: [] }} activation={{ value: -5, refs: [] }} />);
+    expect(screen.getByRole("meter", { name: "Fan heat 100 of 100" })).toBeTruthy();
+    expect(screen.getByRole("meter", { name: "Activation 0 of 100" })).toBeTruthy();
+  });
+  it.each([["error", "Qloo error"], ["partial", "Partial data"], ["degraded", "Partial data"], ["stale", "From cache"]] as const)(
+    "DataWarningBadge %s -> %s", (kind, label) => {
+      render(<DataWarningBadge warnings={[{ tool: "t", kind, message: "m" }]} />);
+      expect(screen.getByText(label)).toBeTruthy();
+    });
 });

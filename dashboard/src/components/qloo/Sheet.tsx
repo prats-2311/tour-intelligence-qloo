@@ -1,4 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { X } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
@@ -71,12 +72,17 @@ export function Sheet({ open, onClose, title, children, side }: { open: boolean;
             transition={{ duration: dur, ease: "easeOut" }}
             className={
               right
-                ? "absolute inset-y-0 right-0 flex w-[400px] max-w-full flex-col overflow-y-auto bg-canvas-raised p-6 outline-none"
-                : "absolute inset-x-0 bottom-0 flex max-h-[85vh] flex-col overflow-y-auto rounded-t-[18px] bg-canvas-raised p-4 outline-none"
+                ? "absolute inset-y-0 right-0 flex w-[400px] max-w-full flex-col overflow-y-auto bg-paper p-6 outline-none"
+                : "absolute inset-x-0 bottom-0 flex max-h-[85vh] flex-col overflow-y-auto rounded-t-[18px] bg-paper p-4 outline-none"
             }
           >
-            {!right && <span className="mx-auto mb-3 h-1 w-9 rounded-full bg-canvas-muted/50" aria-hidden />}
-            <h2 id={titleId} className="mb-3 text-[18px] font-semibold text-canvas-text">{title}</h2>
+            {!right && <span className="mx-auto mb-3 h-1 w-9 rounded-full bg-canvas-line" aria-hidden />}
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 id={titleId} className="text-[18px] font-semibold text-canvas-text">{title}</h2>
+              <button type="button" aria-label="Close" onClick={onClose} className="-mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] text-canvas-muted hover:text-canvas-text">
+                <X size={18} aria-hidden />
+              </button>
+            </div>
             {children}
           </motion.div>
         </div>
