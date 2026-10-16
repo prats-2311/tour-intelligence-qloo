@@ -8,13 +8,16 @@ const MAX_REGIONS = 6;
 const field = "h-12 w-full min-w-0 rounded-[10px] bg-paper-raised px-3 text-[15px] text-canvas-text placeholder:text-canvas-muted lg:h-10";
 
 export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBrief) => void; defaultBrief?: TourBrief }) {
-  const ids = { artist: useId(), stops: useId(), region: useId(), err: useId() };
+  const ids = { artist: useId(), stops: useId(), region: useId(), err: useId(), wStart: useId(), wEnd: useId(), wErr: useId() };
   const [artist, setArtist] = useState(defaultBrief?.artist ?? "");
   const [regions, setRegions] = useState<string[]>(defaultBrief?.regions ?? DEFAULT_REGIONS);
   const [custom, setCustom] = useState<string[]>(() => (defaultBrief?.regions ?? []).filter((r) => !PRESETS.includes(r)));
   const [draft, setDraft] = useState("");
   const [stops, setStops] = useState(String(defaultBrief?.maxStops ?? 6));
   const [error, setError] = useState<string | null>(null);
+  const [winStart, setWinStart] = useState(defaultBrief?.dateWindow?.start ?? "");
+  const [winEnd, setWinEnd] = useState(defaultBrief?.dateWindow?.end ?? "");
+  const [winError, setWinError] = useState<string | null>(null);
 
   const chips = [...PRESETS, ...custom];
   const has = (r: string) => regions.some((x) => x.toLowerCase() === r.toLowerCase());
@@ -44,8 +47,11 @@ export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBr
     if (!name) return setError("Enter an artist.");
     if (regions.length < 1) return setError("Pick at least one region.");
     if (!Number.isInteger(n) || n < 1 || n > 20) return setError("Max stops must be a whole number from 1 to 20.");
+    if ((winStart === "") !== (winEnd === "")) return setWinError("Add both dates or neither");
+    if (winStart && winEnd && winEnd < winStart) return setWinError("Window end must be on or after the start");
     setError(null);
-    onSubmit({ ...(defaultBrief?.artistEntityId && name === defaultBrief.artist ? { artistEntityId: defaultBrief.artistEntityId } : {}), artist: name, regions, maxStops: n });
+    setWinError(null);
+    onSubmit({ ...(defaultBrief?.artistEntityId && name === defaultBrief.artist ? { artistEntityId: defaultBrief.artistEntityId } : {}), artist: name, regions, maxStops: n, ...(winStart && winEnd ? { dateWindow: { start: winStart, end: winEnd } } : {}) });
   };
 
   return (
@@ -92,6 +98,24 @@ export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBr
         <label htmlFor={ids.stops} className="text-[13px] font-medium text-canvas-muted">Max stops</label>
         <input id={ids.stops} type="number" inputMode="numeric" min={1} max={20} value={stops} onChange={(e) => setStops(e.target.value)} className={`${field} sm:max-w-32`} />
       </div>
+      <fieldset className="flex min-w-0 flex-col gap-1.5" aria-describedby={winError ? ids.wErr : undefined}>
+        <legend className="mb-1.5 text-[13px] font-medium text-canvas-muted">Date window (optional)</legend>
+        <div className="flex flex-col gap-3 md:flex-row">
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <label htmlFor={ids.wStart} className="text-[13px] font-medium text-canvas-muted">Window start</label>
+            <input id={ids.wStart} type="date" value={winStart} onChange={(e) => { setWinStart(e.target.value); setWinError(null); }} className={field} />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <label htmlFor={ids.wEnd} className="text-[13px] font-medium text-canvas-muted">Window end</label>
+            <input id={ids.wEnd} type="date" value={winEnd} onChange={(e) => { setWinEnd(e.target.value); setWinError(null); }} className={field} />
+          </div>
+        </div>
+        {winError && (
+          <p id={ids.wErr} role="alert" className="flex items-center gap-2 text-[13px] text-state-error">
+            <CircleAlert size={14} aria-hidden />{winError}
+          </p>
+        )}
+      </fieldset>
       {error && (
         <p id={ids.err} role="alert" className="flex items-center gap-2 text-[13px] text-state-error">
           <CircleAlert size={14} aria-hidden />{error}

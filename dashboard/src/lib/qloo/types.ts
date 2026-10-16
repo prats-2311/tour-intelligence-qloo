@@ -16,13 +16,27 @@ export interface ScoredCity {
   zones: Zone[];
   warnings: DataWarning[];
 }
+export type CardKind = "sponsors" | "merch" | "promo_zones" | "local_moment" | "venue_fit" | "co_billing" | "talent";
 export interface PlaybookCard {
-  kind: "sponsors" | "promo_zones" | "local_moment" | "venue_fit" | "co_billing";
+  kind: CardKind;
   status: "ok" | "empty";
   items: Array<Record<string, unknown>>;
   refs: EvidenceRef[];
   warnings: DataWarning[];
+  summary?: Record<string, number | null>;
 }
+export interface Claim { text: string; entities: Array<{ name: string; entityId?: string }>; numbers: number[]; evidence_refs: string[] }
+export type RemovalReason = "no_refs" | "dangling_ref" | "unsupported_entity" | "unsupported_number" | "no_checkable_content";
+export interface CardClaims { verified: Claim[]; removed: Array<{ claim: Claim; reason: RemovalReason; detail: string }> }
+export interface MerchDirection { title: string; palette: string[]; motifs: string[]; products: string[] }
+export type Narrative =
+  | { status: "ok"; model: string; thoughtSummary: string | null; cards: Partial<Record<CardKind, CardClaims>>; merch: MerchDirection | null; cached: boolean }
+  | { status: "unavailable"; reason: "error" | "capped" | "disabled"; message: string };
+export interface DateWindow { start: string; end: string }
+export interface ThisWeekItem { text: string; date: string | null; entities: string[]; citations: string[] }
+export type ThisWeek =
+  | { status: "ok"; window: DateWindow; items: ThisWeekItem[]; removed: Array<{ item: ThisWeekItem; reason: string }>; citations: Array<{ id: string; url: string; title: string }>; summarised: boolean; cached: boolean }
+  | { status: "unavailable"; reason: "no_key" | "capped" | "error" | "no_window"; message: string };
 export interface ArtistProfile {
   demographics: unknown[];
   tags: Array<{ name: string; affinity: number | null }>;
@@ -40,6 +54,7 @@ export type GatewayEvent =
   | { type: "region_empty"; region: string }
   | { type: "city_scored"; city: ScoredCity }
   | { type: "playbook"; playbook: { city: { name: string; country: string }; cards: PlaybookCard[] } }
+  | { type: "narrative"; narrative: Narrative }
   | { type: "done"; summary: unknown }
   | { type: "error"; code: string; message: string };
-export interface TourBrief { artist: string; artistEntityId?: string; regions: string[]; maxStops: number }
+export interface TourBrief { artist: string; artistEntityId?: string; regions: string[]; maxStops: number; dateWindow?: DateWindow }

@@ -1,7 +1,8 @@
 import { LONG_NAMES_SAMPLE, LUMEN_VALE_SAMPLE } from "./fixtures/lumenVale";
 import { getSessionId } from "./session";
 import { SseParser } from "./sse";
-import type { GatewayEvent, TourBrief } from "./types";
+import { samplePlaybookEvents, sampleThisWeek } from "./fixtures/lumenValePlaybooks";
+import type { DateWindow, GatewayEvent, ThisWeek, TourBrief } from "./types";
 
 type StreamOpts = { signal?: AbortSignal; fetchImpl?: typeof fetch; sample?: boolean; sampleSet?: "default" | "long"; delayMs?: number };
 
@@ -47,9 +48,28 @@ export function streamTourBoard(brief: TourBrief, opts: StreamOpts = {}): AsyncG
   }, opts);
 }
 
-export function streamCityPlaybook(q: { artist: string; artistEntityId: string; city: string; country: string }, opts: StreamOpts = {}): AsyncGenerator<GatewayEvent> {
+export function streamCityPlaybook(q: { artist: string; artistEntityId: string; city: string; country: string }, opts: StreamOpts & { cityId?: string } = {}): AsyncGenerator<GatewayEvent> {
+  if (opts.sample) {
+    const events = opts.cityId ? samplePlaybookEvents(opts.cityId) : null;
+    return sample(events ?? [{ type: "error", code: "NO_SAMPLE", message: `No sample playbook for ${q.city}` }], opts);
+  }
   const qs = new URLSearchParams(q).toString();
   return stream(`/api/qloo/city-playbook?${qs}`, { method: "GET", headers: { "x-session-id": getSessionId() } }, opts);
+}
+
+const WEB_ERROR: ThisWeek = { status: "unavailable", reason: "error", message: "Live web context unavailable — search failed" };
+
+export async function fetchThisWeek(q: { city: string; country: string; window?: DateWindow }, opts: { sample?: boolean; cityId?: string; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<ThisWeek> {
+  if (opts.sample) return (opts.cityId ? sampleThisWeek(opts.cityId) : null) ?? { status: "unavailable", reason: "no_key", message: "No sample web context for this city" };
+  if (!q.window) return { status: "unavailable", reason: "no_window", message: "Add a date window to the brief to check this week in the city" };
+  const qs = new URLSearchParams({ city: q.city, country: q.country, start: q.window.start, end: q.window.end }).toString();
+  try {
+    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/this-week?${qs}`, { signal: opts.signal, headers: { "x-session-id": getSessionId() } });
+    if (!res.ok) return WEB_ERROR;
+    return (await res.json()) as ThisWeek;
+  } catch {
+    return WEB_ERROR;
+  }
 }
 
 export async function callQlooTool(name: string, args: Record<string, unknown>, opts: { fetchImpl?: typeof fetch; signal?: AbortSignal } = {}) {

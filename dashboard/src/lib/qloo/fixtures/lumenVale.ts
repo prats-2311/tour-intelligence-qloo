@@ -1,6 +1,6 @@
 import type { GatewayEvent, ScoredCity, TourBrief } from "../types";
 
-export const SAMPLE_BRIEF: TourBrief = { artist: "Lumen Vale", regions: ["Mexico", "Brazil", "United States"], maxStops: 8 };
+export const SAMPLE_BRIEF: TourBrief = { artist: "Lumen Vale", regions: ["Mexico", "Brazil", "United States"], maxStops: 8, dateWindow: { start: "2027-03-12", end: "2027-04-18" } };
 
 const ref = (tool: string, k: string) => [{ tool, cacheKey: `sample-${k}` }];
 const s = (v: number, k: string) => ({ value: v, refs: ref("qloo_where_popular", k) });
