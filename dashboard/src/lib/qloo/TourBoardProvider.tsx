@@ -10,10 +10,18 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
   const [state, dispatch] = useReducer(boardReducer, initialBoard);
   const controllerRef = useRef<AbortController | null>(null);
 
-  const abort = useCallback(() => { controllerRef.current?.abort(); controllerRef.current = null; }, []);
+  const silentAbort = useCallback((): boolean => {
+    const c = controllerRef.current;
+    controllerRef.current = null;
+    if (!c) return false;
+    c.abort();
+    return true;
+  }, []);
+
+  const abort = useCallback(() => { if (silentAbort()) dispatch({ type: "interrupted" }); }, [silentAbort]);
 
   const run = useCallback((brief: TourBrief, opts: { sample?: boolean } = {}) => {
-    abort();
+    silentAbort();
     const controller = new AbortController();
     controllerRef.current = controller;
     const sample = opts.sample ?? isSampleMode();
@@ -31,10 +39,10 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
       }
       if (!terminal && !controller.signal.aborted) dispatch({ type: "interrupted" });
     })();
-  }, [abort, sampleDelayMs]);
+  }, [silentAbort, sampleDelayMs]);
 
-  const reset = useCallback(() => { abort(); dispatch({ type: "reset" }); }, [abort]);
-  useEffect(() => abort, [abort]);
+  const reset = useCallback(() => { silentAbort(); dispatch({ type: "reset" }); }, [silentAbort]);
+  useEffect(() => () => { silentAbort(); }, [silentAbort]);
 
   const value = useMemo(() => ({ state, run, abort, reset }), [state, run, abort, reset]);
   return <TourBoardContext.Provider value={value}>{children}</TourBoardContext.Provider>;

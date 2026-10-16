@@ -8,9 +8,11 @@ type StreamOpts = { signal?: AbortSignal; fetchImpl?: typeof fetch; sample?: boo
 export const isSampleMode = (): boolean => import.meta.env.VITE_QLOO_FIXTURES === "1";
 
 const sleep = (ms: number, signal?: AbortSignal) => new Promise<void>((resolve, reject) => {
+  if (signal?.aborted) return reject(new DOMException("aborted", "AbortError"));
   if (ms <= 0) return resolve();
-  const t = setTimeout(resolve, ms);
-  signal?.addEventListener("abort", () => { clearTimeout(t); reject(new DOMException("aborted", "AbortError")); }, { once: true });
+  const onAbort = () => { clearTimeout(t); reject(new DOMException("aborted", "AbortError")); };
+  const t = setTimeout(() => { signal?.removeEventListener("abort", onAbort); resolve(); }, ms);
+  signal?.addEventListener("abort", onAbort, { once: true });
 });
 
 async function* sample(events: GatewayEvent[], opts: StreamOpts): AsyncGenerator<GatewayEvent> {

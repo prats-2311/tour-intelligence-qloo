@@ -40,4 +40,15 @@ describe("streamTourBoard", () => {
     for await (const e of streamTourBoard(SAMPLE_BRIEF, { fetchImpl: fetchImpl as unknown as typeof fetch })) out.push(e.type);
     expect(out).toEqual(["done"]);
   });
+  it("keeps multi-byte characters intact when bytes split across chunks", async () => {
+    const bytes = new TextEncoder().encode('event: resolve\ndata: {"type":"resolve","entity":{"entityId":"A","name":"Beyoncé 🎤"}}\n\n');
+    const cut = bytes.indexOf(0xc3) + 1; // mid-"é"
+    const cut2 = bytes.indexOf(0xf0) + 2; // mid-emoji
+    const parts = [bytes.slice(0, cut), bytes.slice(cut, cut2), bytes.slice(cut2)];
+    const body = new ReadableStream<Uint8Array>({ start(c) { parts.forEach((x) => c.enqueue(x)); c.close(); } });
+    const fetchImpl = vi.fn(async () => new Response(body, { status: 200 }));
+    const out = [];
+    for await (const e of streamTourBoard(SAMPLE_BRIEF, { fetchImpl: fetchImpl as unknown as typeof fetch })) out.push(e);
+    expect(out[0]).toMatchObject({ type: "resolve", entity: { name: "Beyoncé 🎤" } });
+  });
 });

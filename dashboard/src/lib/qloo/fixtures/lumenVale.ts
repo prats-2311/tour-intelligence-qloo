@@ -56,7 +56,7 @@ export const LUMEN_VALE_SAMPLE: GatewayEvent[] = [
       { label: "35–44", index: -0.18 }, { label: "45–54", index: -0.36 }, { label: "55+", index: -0.52 },
     ],
     tags: [{ name: "dream pop", affinity: 0.94 }, { name: "synthwave", affinity: 0.88 }, { name: "bedroom pop", affinity: 0.83 }, { name: "shoegaze", affinity: 0.77 }, { name: "neo-psychedelia", affinity: 0.71 }, { name: "city pop", affinity: 0.66 }],
-    trends: { series: [{ date: "2026-07-22", value: 0.41 }, { date: "2026-08-21", value: 0.46 }, { date: "2026-09-20", value: 0.52 }, { date: "2026-10-20", value: 0.59 }] },
+    trends: { series: [{ date: "2026-07-17", value: 0.41 }, { date: "2026-08-16", value: 0.46 }, { date: "2026-09-15", value: 0.52 }, { date: "2026-10-15", value: 0.59 }] },
     refs: [{ tool: "qloo_audience_demographics", cacheKey: "sample-demo" }], warnings: [],
   },
   ...SAMPLE_CITIES.flatMap((c) => call("qloo_recommend", { target_type: "brand", signal_location: `${c.name}, ${c.country}` }, 10, `brand-${c.id}`)),
