@@ -12,8 +12,12 @@ for (const [vp, size] of [["mobile", { width: 375, height: 812 }], ["desktop", {
       await page.getByRole("link", { name: /Insights/ }).first().click();
       await page.getByTestId("boxscore-row").first().waitFor({ timeout: 15000 });
     } else await page.goto(`http://localhost:5173${path}`);
-    if (name === "board") await page.getByTestId("city-row").first().waitFor({ timeout: 15000 });
-    await page.waitForTimeout(800);
+    if (name === "board") {
+      await page.getByText(/10 markets scored/).waitFor({ timeout: 15000 });
+      await page.getByRole("button", { name: "Stop" }).waitFor({ state: "detached", timeout: 15000 });
+    }
+    if (name === "landing") await page.getByRole("heading", { level: 1 }).waitFor();
+    if (name === "campaign") await page.waitForLoadState("networkidle");
     if (vp === "desktop") {
       // Markup only: strip dev-server <style>/<script> (the whole Tailwind/MapLibre sheet) so the lint sees what the route actually uses.
       const markup = await page.evaluate(() => {

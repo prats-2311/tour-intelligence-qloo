@@ -164,6 +164,7 @@ body {
 .btn-gold {
   background: var(--color-gold);
   color: var(--color-on-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25); /* material cue kept per DESIGN.md:262; lint exception */
   transition: background-color 150ms ease, transform 120ms ease;
 }
 .btn-gold:hover:not(:disabled) {

@@ -15,12 +15,13 @@ with the dev server up; writes `test-results/html`, `test-results/shots`, both g
 
 ## Fixes made
 
-1. `.btn-gold` had `box-shadow: inset 0 1px 0 rgba(255,255,255,.25)` (inspect `button-fx`). Removed; the CTA is now a flat fill (DESIGN.md 9).
+1. `.btn-gold` inset highlight (inspect `button-fx`): removed in round 1, restored in fix round 1 (R28) because DESIGN.md:262 keeps it as a material cue; recorded as an accepted exception below. No glow, no gradient.
 2. Map label markers used `text-shadow` (inspect `text-shadow`, 4 hits). Replaced by a stroke halo (`paint-order: stroke fill`, 3px `#151410` text stroke); same legibility, no shadow.
 3. Touch targets (layout spec, strict 44x44): the Winnability / Density-only tabs rendered 176x36 on mobile because the `h-11` tablist container with `p-1` squeezed them. Container is now `h-[52px]` on mobile (tabs 44px), unchanged at `lg`.
 
 ## Accepted exceptions (with reasons)
 
+- **button-fx / shadow on `.btn-gold`**: 1px inset top highlight `inset 0 1px 0 rgba(255,255,255,.25)`, a material cue kept by DESIGN.md:262; not a drop shadow or glow.
 - **mono / micro-label / small-text / body-size / font-count (JetBrains Mono, Fraunces, Inter, "Helvetica Neue")**: DESIGN.md spec'd the three faces; mono 11px tracked caps is the specified style for column heads, KPI numbers and field labels (DESIGN.md 4 and the Stitch prompt). "Helvetica Neue" comes from MapLibre's own CSS stack. Body 12px figure is the dense data rows from the references.
 - **eyebrow ("Hidden goldmine" above "72" on landing)**: false positive; it is the verdict chip in the real Tour Board row fragment, not a kicker above a heading.
 - **gradient**: (a) `body` faint gold house light, the single wash DESIGN.md 9 allows; (b) `.skeleton` shimmer, a loading state only (`li.skeleton`, visible only while streaming/empty). Legacy campaign components (`StatTile`, `StatMeter`, `CueCard`, `CompareCities` bar) also carry gradients/shadows; they are outside Plan 2's routes and untouched.
