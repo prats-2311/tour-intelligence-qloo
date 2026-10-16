@@ -49,7 +49,12 @@ describe("book components", () => {
     const { container } = render(<MarketChapter market={book.market} />);
     expect(screen.getByRole("heading", { name: "Market selection", level: 2 })).toBeTruthy();
     expect(container.querySelectorAll("tbody tr")).toHaveLength(10);
-    expect(container.querySelectorAll("[data-shortlisted-edge]")).toHaveLength(4);
+    expect(container.querySelectorAll("table [data-shortlisted-edge]")).toHaveLength(4);
+    // Below md the same rows render as a stacked list with its own gold rail.
+    const stacked = screen.getByRole("list", { name: "Scored markets" });
+    expect(stacked.querySelectorAll("li")).toHaveLength(10);
+    expect(stacked.querySelectorAll("[data-shortlisted-edge]")).toHaveLength(4);
+    expect(stacked.textContent).toMatch(/Heat \d+ · Act \d+ · Win \d+/);
     expect(screen.getByText("Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.")).toBeTruthy();
   });
 });

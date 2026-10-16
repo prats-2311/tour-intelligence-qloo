@@ -10,6 +10,8 @@ export function ProvenanceAppendix({ rows }: { rows: ProvenanceRow[] }) {
       {rows.length === 0 ? (
         <p className="text-[13px] text-canvas-muted">No Qloo requests were recorded for this book.</p>
       ) : (
+        <>
+        <p className="text-[13px] text-canvas-muted md:hidden">Table scrolls sideways</p>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[460px] border-collapse">
             <thead>
@@ -34,6 +36,7 @@ export function ProvenanceAppendix({ rows }: { rows: ProvenanceRow[] }) {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </section>
   );

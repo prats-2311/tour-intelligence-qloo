@@ -65,4 +65,8 @@ describe("boardReducer", () => {
     expect(s.cities.map((x) => x.id)).toEqual([c!.city.id, a!.city.id, b!.city.id]);
     expect(s.cities[1]!.name).toBe("Renamed");
   });
+  it("start records the sample set", () => {
+    expect(boardReducer(initialBoard, { type: "start", brief: SAMPLE_BRIEF, source: "sample", sampleSet: "long" }).sampleSet).toBe("long");
+    expect(boardReducer(initialBoard, { type: "start", brief: SAMPLE_BRIEF, source: "live" }).sampleSet).toBeUndefined();
+  });
 });

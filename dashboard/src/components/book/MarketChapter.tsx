@@ -12,7 +12,22 @@ export function MarketChapter({ market }: { market: TourBook["market"] }) {
   return (
     <section id="chapter-market" aria-labelledby="market-title" className="book-chapter flex min-w-0 flex-col gap-6 px-4 lg:px-0">
       <h2 id="market-title" className="font-title text-[32px] leading-[1.1] text-canvas-text">Market selection</h2>
-      <div className="overflow-x-auto">
+      <ul aria-label="Scored markets" className="flex flex-col gap-0.5 md:hidden">
+        {market.rows.map((c) => {
+          const on = market.shortlisted.has(c.id);
+          return (
+            <li key={c.id} className="relative flex min-w-0 flex-col gap-1 rounded-[10px] bg-paper px-4 py-2">
+              {on && <span data-shortlisted-edge data-print-keep aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-[#ffcc00]" />}
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <span className="min-w-0 truncate text-[15px] font-medium text-canvas-text">{c.name}{on && <span className="sr-only"> (shortlisted)</span>}</span>
+                <span className="shrink-0"><VerdictChip verdict={c.verdict} /></span>
+              </div>
+              <p className="text-[13px] tabular-nums text-canvas-muted">Heat {num(c.fanHeat)} · Act {num(c.activation)} · Win {num(c.winnability)}</p>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[420px] border-collapse">
           <caption className="sr-only">Scored markets; shortlisted markets carry a gold edge</caption>
           <thead>

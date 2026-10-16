@@ -66,6 +66,7 @@ playbook route and on a static capture of the loaded Book, because inspect only 
 
 ## Fixes made
 
+0. Book Market selection (fix round 1): stacked rows below `md` instead of a sideways-scrolling table (Review Focus 4).
 1. Book chapter: the rule above the "Removed claims" block (`border-t`) is gone; spacing carries the separation (inspect `hairline` 4 to 3 rows, all real tables).
 2. Layout gate found three touch-target failures, fixed in the owning components: the Landing "Guadalajara" stretched link (115x25, now `min-h-11`), and the Playbook "Add to tour" / "Remove from tour" button (collapsed to 23px because `flex-1` sat in a column flex; now `w-full`).
 
@@ -78,7 +79,7 @@ playbook route and on a static capture of the loaded Book, because inspect only 
 - **eyebrow (playbook)**: the mandatory "Sample data — illustrative, not Qloo output" banner sits above the city heading (spec 5.6, honesty rule). It carries information and cannot be folded into the headline.
 - **eyebrow (Book)**: false positive, "Sponsors · Cites missing evidence" is a card status line directly above a "Provenance" sub-heading.
 - **hairline (Book)**: `border-b` row rules in the Market selection and Provenance tables, and the 1px key line in the slope-chart legend. Real tables (DESIGN.md 4, same as boxscore).
-- **side-scroll at 375 (Book)**: the Market selection and Provenance tables scroll sideways inside their own container with a sticky city column; the page itself never scrolls horizontally (layout spec). Deliberate data-table pattern, same as the Insights boxscore.
+- **side-scroll at 375 (Book, Provenance appendix only)**: the audit table of mono hashes scrolls sideways inside its own container, with a plain-text hint above it below `md` ("Table scrolls sideways", no gradient fade). DESIGN.md §4.8 (real tables); the page itself never scrolls horizontally (layout spec). The Market selection table no longer scrolls: below `md` it renders as stacked rows (name + verdict chip, then "Heat N · Act N · Win N"), the table returns at `md`+.
 - **focal-point, few-pictures, no-footage, still-page**: a data tool whose picture is the deterministic typographic poster and the map; DESIGN.md 9 bans stock photos and decorative motion. Largest type is the Fraunces city or artist name.
 - **covered-text (Book, 375, from the static capture)**: artefact of the captured file, where the fixed chapter list and action bar lose their fixed positioning. Live screenshots at 375 show the header, action bar and tab bar over scrolled content with no heading covered.
 - **palette-cream / grey-body / font-fallback**: bone `#f2f0ea` and stone `#a4a094` are the spec'd tokens; fonts are declared and load in the live app (the static capture has no font files).

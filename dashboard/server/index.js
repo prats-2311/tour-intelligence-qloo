@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { mountQlooProxy } from "./qlooProxy.js";
 import { mountTours, statusFromCallTool } from "./tours.js";
+import { NOT_CONFIGURED, requireTourDataApi } from "./requireTourDataApi.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // No default URLs: the original Google-hackathon services must never be hit by accident.
@@ -131,7 +132,6 @@ async function getAccessToken() {
 // finish in ~1s; the slowest real path, live Parallel Search + Gemini
 // synthesis, finishes well under this) but still bounds every hang.
 const CALL_TOOL_TIMEOUT_MS = 30000;
-const NOT_CONFIGURED = "tour_data_api not configured";
 
 async function callTool(path, options = {}, _retried = false) {
   if (!TOUR_DATA_API) throw new Error(`${path} failed (503): ${JSON.stringify({ error: NOT_CONFIGURED })}`);
@@ -336,11 +336,7 @@ app.use(cors());
 // Before the app-wide parser: /api/tours parses its own (larger) body.
 mountTours(app, { callTool: statusFromCallTool(callTool) });
 app.use(express.json());
-// Everything under /api except the Qloo proxy talks to tour_data_api.
-app.use("/api", (req, res, next) => {
-  if (!TOUR_DATA_API && !req.path.startsWith("/qloo/")) return res.status(503).json({ error: NOT_CONFIGURED });
-  next();
-});
+app.use(requireTourDataApi(TOUR_DATA_API));
 
 app.get("/api/campaigns", async (req, res) => {
   try {
@@ -573,6 +569,7 @@ app.get("/api/campaigns/:campaignId/overview", async (req, res) => {
 // delight-card service's /tour_book path. Nothing in it is generated at
 // render time; this route only gathers and lays out real data.
 app.post("/api/tour-book", async (req, res) => {
+  if (!DELIGHT_RENDERER) return res.status(503).json({ error: "delight renderer not configured" });
   try {
     const campaignId = req.body?.campaign_id;
     if (!campaignId) return res.status(400).json({ error: "missing campaign_id" });
@@ -672,7 +669,6 @@ app.post("/api/tour-book", async (req, res) => {
       cities,
     };
 
-    if (!DELIGHT_RENDERER) return res.status(503).json({ error: "delight renderer not configured" });
     let renderRes;
     for (let attempt = 0; attempt < 2; attempt++) {
       renderRes = await fetch(`${DELIGHT_RENDERER}/tour_book`, {
