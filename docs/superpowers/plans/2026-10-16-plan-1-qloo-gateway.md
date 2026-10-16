@@ -20,7 +20,7 @@
 - Insights types: `artist, book, brand, movie, person, place, podcast, tv_show, videogame`. Search types add `locality, actor, album, author, director`.
 - Retries: at most 2, only when `error.retryable === true`.
 - Cache: L1 in-memory LRU (2000 entries) + L2 Firestore `qloo_cache` (TTL policy on `expireAt`); TTL 7 days, `qloo_trends` 1 day; latest write wins; L2 failures never fail a Qloo call.
-- Budget: 60 Qloo calls per session; global daily ceiling from env `QLOO_DAILY_CEILING` (default 2000). Cache hits never consume budget.
+- Budget: 100 Qloo calls per session (raised from 60 on 2026-10-16: a cold board is ~63 calls); global daily ceiling from env `QLOO_DAILY_CEILING` (default 2000). Cache hits never consume budget.
 - Scoring constants (initial): fan heat `0.7·affinity + 0.3·popularity`; activation weights `sponsor_fit 0.30, local_hooks 0.25, fan_concentration 0.25, venue_fit 0.20`; activation needs ≥ 2 components; winnability `0.5·fan + 0.5·activation`; verdicts per spec §5.3.
 - Missing inputs ⇒ `insufficient_data`; no scoring path calls an LLM.
 - `QLOO_API_KEY` only from env (Secret Manager in prod); never logged, never in responses.
@@ -2588,7 +2588,8 @@ const l1 = new MemoryCache();
 const cache = process.env.QLOO_CACHE_BACKEND === "firestore"
   ? new TieredCache({ l1, l2: new FirestoreCache({ db: new Firestore() }) })
   : l1;
-const budget = new BudgetGuard({ perSession: 60, perDay: Number(process.env.QLOO_DAILY_CEILING ?? 2000) });
+const ceiling = Number(process.env.QLOO_DAILY_CEILING);
+const budget = new BudgetGuard({ perSession: 100, perDay: Number.isFinite(ceiling) && ceiling > 0 ? ceiling : 2000 });
 const app = createApp({ qloo: createQlooCaller({ mcp, cache, budget }), cities: loadCities(), health: () => mcp.health() });
 const port = Number(process.env.PORT ?? 8080);
 app.listen(port, () => console.log(`qloo_gateway listening on ${port}`));
