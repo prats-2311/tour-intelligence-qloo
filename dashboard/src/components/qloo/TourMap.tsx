@@ -1,10 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { ScoredCity, Zone } from "@/lib/qloo/types";
 import { boundsFor, cityMarkers, MAP_STYLE } from "@/lib/qloo/geometry";
 import { useIsDesktop, useMediaQuery } from "@/lib/useMediaQuery";
-import { markerElement } from "./mapMarker";
+import { markerElement, setMarkerSelected } from "./mapMarker";
 
 interface Props {
   cities: ScoredCity[];
@@ -33,11 +33,40 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
   const reduce = useMediaQuery("(prefers-reduced-motion: reduce)");
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const markers = useRef<maplibregl.Marker[]>([]);
+  const markers = useRef<Map<string, { marker: maplibregl.Marker; element: HTMLButtonElement }>>(new Map());
+  const styleReady = useRef(false);
   const onSelectRef = useRef(onSelect);
   const zonesRef = useRef(zones);
+  const citiesRef = useRef(cities);
+  const selectedRef = useRef(selectedId);
+  const reduceRef = useRef(reduce);
   onSelectRef.current = onSelect;
   zonesRef.current = zones;
+  citiesRef.current = cities;
+  selectedRef.current = selectedId;
+  reduceRef.current = reduce;
+
+  const idKey = useMemo(() => cities.map((c) => c.id).sort().join("|"), [cities]);
+
+  const applyZones = (map: maplibregl.Map) => {
+    const data = zoneData(zonesRef.current);
+    const src = map.getSource(ZONES) as maplibregl.GeoJSONSource | undefined;
+    if (src) {
+      src.setData(data);
+      return;
+    }
+    map.addSource(ZONES, { type: "geojson", data });
+    map.addLayer({
+      id: ZONES,
+      type: "circle",
+      source: ZONES,
+      paint: {
+        "circle-color": "#e9e4d6",
+        "circle-opacity": 0.35,
+        "circle-radius": ["interpolate", ["linear"], ["get", "share"], 0, 6, 1, 32],
+      },
+    });
+  };
 
   // Create once; cooperative gestures keep the map from hijacking page scroll on phones.
   useEffect(() => {
@@ -49,60 +78,67 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
       cooperativeGestures: !isDesktop,
     });
     mapRef.current = map;
+    styleReady.current = false;
     map.on("load", () => {
-      map.addSource(ZONES, { type: "geojson", data: zoneData(zonesRef.current) });
-      map.addLayer({
-        id: ZONES,
-        type: "circle",
-        source: ZONES,
-        paint: {
-          "circle-color": "#e9e4d6",
-          "circle-opacity": 0.35,
-          "circle-radius": ["interpolate", ["linear"], ["get", "share"], 0, 6, 1, 32],
-        },
-      });
+      styleReady.current = true;
+      applyZones(map); // applies the latest zones, including ones queued before load
     });
     return () => {
-      markers.current.forEach((m) => m.remove());
-      markers.current = [];
+      markers.current.forEach(({ marker }) => marker.remove());
+      markers.current.clear();
       map.remove();
       mapRef.current = null;
+      styleReady.current = false;
     };
+    // applyZones only reads refs
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDesktop]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
-    const apply = () => (map.getSource(ZONES) as maplibregl.GeoJSONSource | undefined)?.setData(zoneData(zones));
-    if (map.isStyleLoaded()) apply();
-    else map.once("load", apply);
+    if (map && styleReady.current) applyZones(map); // otherwise the load handler picks up zonesRef
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zones, isDesktop]);
 
+  // Refit only when the set of cities changes, not on every new array identity.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const b = boundsFor(cities);
-    if (b) map.fitBounds(b, { padding: 48, animate: !reduce });
-    // Refit when the city set changes, not on every selection or motion-preference flip.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cities, isDesktop]);
+    const b = boundsFor(citiesRef.current);
+    if (b) map.fitBounds(b, { padding: 48, animate: !reduceRef.current });
+  }, [idKey, isDesktop]);
 
+  // Add/remove markers only when the city set changes (or the map is recreated).
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    markers.current.forEach((m) => m.remove());
-    const byId = new Map(cities.map((c) => [c.id, c]));
-    markers.current = cityMarkers(cities).map((m) => {
+    const byId = new Map(citiesRef.current.map((c) => [c.id, c]));
+    const wanted = cityMarkers(citiesRef.current);
+    const keep = new Set(wanted.map((m) => m.id));
+    for (const [id, { marker }] of markers.current) {
+      if (!keep.has(id)) {
+        marker.remove();
+        markers.current.delete(id);
+      }
+    }
+    for (const m of wanted) {
+      if (markers.current.has(m.id)) continue;
       const element = markerElement({
         verdict: m.verdict,
         city: byId.get(m.id)!.name,
         label: m.label,
-        selected: m.id === selectedId,
+        selected: m.id === selectedRef.current,
+        reduce: reduceRef.current,
         onSelect: () => onSelectRef.current(m.id),
       });
-      return new maplibregl.Marker({ element }).setLngLat(m.lngLat).addTo(map);
-    });
-  }, [cities, selectedId, isDesktop]);
+      markers.current.set(m.id, { marker: new maplibregl.Marker({ element }).setLngLat(m.lngLat).addTo(map), element });
+    }
+  }, [idKey, isDesktop]);
+
+  // Selection changes mutate in place so keyboard focus is preserved.
+  useEffect(() => {
+    markers.current.forEach(({ element }, id) => setMarkerSelected(element, id === selectedId));
+  }, [selectedId, idKey, isDesktop]);
 
   return <div ref={container} className="h-full min-h-[240px] w-full overflow-hidden rounded-[18px] bg-[#151410]" />;
 }

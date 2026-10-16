@@ -55,10 +55,11 @@ export interface MarkerOptions {
   label: string | null;
   selected: boolean;
   onSelect: () => void;
+  reduce?: boolean;
 }
 
 /** A focusable 44px button wrapping a small verdict-shaped glyph. Shape, not colour, carries the verdict. */
-export function markerElement({ verdict, city, label, selected, onSelect }: MarkerOptions): HTMLButtonElement {
+export function markerElement({ verdict, city, label, selected, onSelect, reduce = false }: MarkerOptions): HTMLButtonElement {
   const el = document.createElement("button");
   el.type = "button";
   el.setAttribute("aria-label", `${city}, ${VERDICT_LABEL[verdict]}`);
@@ -66,26 +67,18 @@ export function markerElement({ verdict, city, label, selected, onSelect }: Mark
   el.dataset.verdict = verdict;
   Object.assign(el.style, {
     width: `${HIT}px`, height: `${HIT}px`, padding: "0", border: "0", background: "transparent",
-    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
-    zIndex: selected ? "2" : "1",
+    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
   });
 
   const inner = document.createElement("span");
+  inner.dataset.inner = "true";
   Object.assign(inner.style, {
     display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
-    transform: selected ? "scale(1.25)" : "none", transition: "transform 120ms ease-out",
+    transition: reduce ? "none" : "transform 120ms ease-out",
   });
-  if (selected) {
-    const halo = document.createElement("span");
-    halo.dataset.halo = "true";
-    Object.assign(halo.style, {
-      position: "absolute", width: "26px", height: "26px", borderRadius: "50%",
-      border: `2px solid ${SPEC[verdict].color}4d`, // 30% of the verdict mark colour
-    });
-    inner.append(halo);
-  }
   inner.append(glyph(verdict));
   el.append(inner);
+  setMarkerSelected(el, selected);
 
   if (label) {
     const text = document.createElement("span");
@@ -106,4 +99,27 @@ export function markerElement({ verdict, city, label, selected, onSelect }: Mark
     }
   });
   return el;
+}
+
+/** Update selection visuals in place so the node (and keyboard focus) survives. */
+export function setMarkerSelected(el: HTMLElement, selected: boolean): void {
+  el.setAttribute("aria-pressed", String(selected));
+  el.style.zIndex = selected ? "2" : "1";
+  const inner = el.querySelector<HTMLElement>("[data-inner]");
+  if (!inner) return;
+  inner.style.transform = selected ? "scale(1.25)" : "none";
+  const halo = inner.querySelector("[data-halo]");
+  if (!selected) {
+    halo?.remove();
+    return;
+  }
+  if (halo) return;
+  const h = document.createElement("span");
+  h.dataset.halo = "true";
+  const verdict = el.dataset.verdict as Verdict;
+  Object.assign(h.style, {
+    position: "absolute", width: "26px", height: "26px", borderRadius: "50%",
+    border: `2px solid ${SPEC[verdict].color}4d`, // 30% of the verdict mark colour
+  });
+  inner.prepend(h);
 }

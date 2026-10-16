@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import { markerElement } from "./mapMarker";
+import { markerElement, setMarkerSelected } from "./mapMarker";
 import type { Verdict } from "@/lib/qloo/types";
 
 const VERDICTS: Verdict[] = ["play", "hidden_goldmine", "de_risk", "consider", "skip", "insufficient_data"];
@@ -45,5 +45,32 @@ describe("markerElement", () => {
     const b = markerElement({ verdict: "skip", city: "Lima", label: null, selected: false, onSelect: () => {} });
     expect(b.textContent).toBe("");
     expect(b.getAttribute("aria-pressed")).toBe("false");
+  });
+  it("sets no inline position (MapLibre's .maplibregl-marker owns it)", () => {
+    const el = markerElement({ verdict: "play", city: "X", label: "X", selected: false, onSelect: () => {} });
+    expect(el.style.position).toBe("");
+  });
+  it("setMarkerSelected updates state in place without replacing nodes", () => {
+    const el = markerElement({ verdict: "play", city: "X", label: null, selected: false, onSelect: () => {} });
+    const inner = el.querySelector("[data-inner]")!;
+    setMarkerSelected(el, true);
+    expect(el.querySelector("[data-inner]")).toBe(inner);
+    expect(el.getAttribute("aria-pressed")).toBe("true");
+    expect((inner as HTMLElement).style.transform).toBe("scale(1.25)");
+    expect(el.style.zIndex).toBe("2");
+    expect(el.querySelectorAll("[data-halo]").length).toBe(1);
+    setMarkerSelected(el, true);
+    expect(el.querySelectorAll("[data-halo]").length).toBe(1);
+    setMarkerSelected(el, false);
+    expect(el.getAttribute("aria-pressed")).toBe("false");
+    expect((inner as HTMLElement).style.transform).toBe("none");
+    expect(el.style.zIndex).toBe("1");
+    expect(el.querySelectorAll("[data-halo]").length).toBe(0);
+  });
+  it("disables the transition under reduced motion", () => {
+    const on = markerElement({ verdict: "play", city: "X", label: null, selected: false, onSelect: () => {}, reduce: true });
+    const off = markerElement({ verdict: "play", city: "X", label: null, selected: false, onSelect: () => {} });
+    expect((on.querySelector("[data-inner]") as HTMLElement).style.transition).toBe("none");
+    expect((off.querySelector("[data-inner]") as HTMLElement).style.transition).toContain("transform");
   });
 });
