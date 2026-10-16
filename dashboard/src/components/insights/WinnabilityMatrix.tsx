@@ -1,0 +1,146 @@
+import { useState, type KeyboardEvent } from "react";
+import { VERDICT_LABEL, VerdictChip } from "@/components/qloo/VerdictChip";
+import { linear, matrixPoints, QUADRANTS } from "@/lib/qloo/geometry";
+import type { ScoredCity, Verdict } from "@/lib/qloo/types";
+
+const W = 480, H = 320, PAD = 36;
+const COLOR: Record<Verdict, string> = {
+  play: "var(--color-verdict-play)", hidden_goldmine: "var(--color-verdict-goldmine)", de_risk: "var(--color-verdict-derisk)",
+  consider: "var(--color-verdict-consider)", skip: "var(--color-verdict-skip)", insufficient_data: "var(--color-verdict-skip)",
+};
+
+/** Shape carries the verdict, not colour alone (matches the map legend). */
+function Mark({ verdict, selected }: { verdict: Verdict; selected: boolean }) {
+  const c = COLOR[verdict];
+  const ring = "var(--color-canvas)";
+  let shape;
+  switch (verdict) {
+    case "play": shape = <circle r={6} fill={c} stroke={ring} strokeWidth={2} />; break;
+    case "hidden_goldmine": shape = <polygon points="0,-8 8,0 0,8 -8,0" fill={c} stroke={ring} strokeWidth={2} />; break;
+    case "de_risk": shape = <polygon points="0,-8 8,6 -8,6" fill={c} stroke={ring} strokeWidth={2} />; break;
+    case "consider": shape = <circle r={6} fill="none" stroke={c} strokeWidth={2.5} />; break;
+    case "skip": shape = <rect x={-5} y={-5} width={10} height={10} fill="none" stroke={c} strokeWidth={2.5} />; break;
+    default: shape = <circle r={6} fill="none" stroke={c} strokeWidth={2} strokeDasharray="3 2" />;
+  }
+  return <>{selected && <circle r={13} fill="none" stroke="var(--color-gold)" strokeWidth={2} />}{shape}</>;
+}
+
+function summary(cities: ScoredCity[], plotted: number): string {
+  const names = (v: Verdict) => cities.filter((c) => c.verdict === v && c.fanHeat.value !== null && c.activation.value !== null)
+    .map((c) => `${c.name} (heat ${Math.round(c.fanHeat.value!)}, activation ${Math.round(c.activation.value!)})`);
+  const parts = (["hidden_goldmine", "play"] as const).map((v) => names(v).length > 0 ? `${VERDICT_LABEL[v]}: ${names(v).join(", ")}` : null).filter(Boolean);
+  const skipped = cities.length - plotted;
+  return `Winnability matrix, fan heat on the x axis against activation on the y axis. ${plotted} ${plotted === 1 ? "market" : "markets"} plotted${skipped > 0 ? `, ${skipped} without activation data not plotted` : ""}. ${parts.join(". ")}${parts.length ? "." : ""}`;
+}
+
+export function WinnabilityMatrix({ cities, selectedId, onSelect, calls }: { cities: ScoredCity[]; selectedId: string | null; onSelect: (id: string) => void; calls: number }) {
+  const [view, setView] = useState<"matrix" | "table">("matrix");
+  const pts = matrixPoints(cities, { w: W, h: H, pad: PAD });
+  const sx = linear([0, 100], [PAD, W - PAD]);
+  const sy = linear([0, 100], [H - PAD, PAD]);
+  const [h1, h2] = QUADRANTS.heat;
+  const [a1, a2, a3] = QUADRANTS.activation;
+  const zone = (x0: number, x1: number, y0: number, y1: number, fill: string) =>
+    <rect x={sx(x0)} y={sy(y1)} width={sx(x1) - sx(x0)} height={sy(y0) - sy(y1)} fill={fill} />;
+  const keyActivate = (id: string) => (e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(id); } };
+  const tab = (on: boolean) => `h-8 min-w-14 rounded-[6px] px-3 text-[13px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${on ? "bg-paper-raised text-canvas-text" : "text-canvas-muted hover:text-canvas-text"}`;
+  const zoneText = { fontSize: 10, fill: "var(--color-canvas-muted)", letterSpacing: "0.08em" } as const;
+
+  return (
+    <section aria-label="Winnability matrix" className="flex min-w-0 flex-col gap-3 rounded-[14px] bg-paper p-3 lg:p-4">
+      <header className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="font-title text-[20px] leading-tight text-canvas-text">Winnability matrix</h2>
+          <p className="mt-1 text-[12px] text-canvas-muted">X: fan heat · Y: activation readiness</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-[6px] bg-canvas-raised px-2 py-1 font-mono text-[11px] text-canvas-muted">Qloo · {calls} requests</span>
+          <div className="flex rounded-[8px] bg-canvas p-0.5" role="group" aria-label="Matrix view">
+            <button type="button" aria-pressed={view === "matrix"} onClick={() => setView("matrix")} className={tab(view === "matrix")}>Matrix</button>
+            <button type="button" aria-pressed={view === "table"} onClick={() => setView("table")} className={tab(view === "table")}>Table</button>
+          </div>
+        </div>
+      </header>
+
+      {view === "matrix" ? (
+        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={summary(cities, pts.length)} className="h-auto w-full rounded-[10px] bg-canvas">
+          {zone(h1, h2, a3, 100, "rgba(255,204,0,0.10)")}
+          {zone(h2, 100, a2, 100, "rgba(15,157,138,0.10)")}
+          {zone(h2, 100, 0, a1, "rgba(232,96,111,0.10)")}
+          {zone(0, h1, 0, a2, "rgba(139,135,124,0.08)")}
+          {[0, 50, 100].map((t) => (
+            <g key={t}>
+              <line x1={sx(t)} x2={sx(t)} y1={sy(0)} y2={sy(100)} stroke="rgba(240,238,230,0.06)" />
+              <line x1={sx(0)} x2={sx(100)} y1={sy(t)} y2={sy(t)} stroke="rgba(240,238,230,0.06)" />
+              <text x={sx(t)} y={H - PAD + 14} textAnchor="middle" fontSize={11} fill="var(--color-canvas-muted)">{t}</text>
+              <text x={PAD - 6} y={sy(t) + 4} textAnchor="end" fontSize={11} fill="var(--color-canvas-muted)">{t}</text>
+            </g>
+          ))}
+          <text x={sx(h1) + 4} y={sy(100) + 12} {...zoneText}>GOLDMINE</text>
+          <text x={sx(100) - 4} y={sy(100) + 12} textAnchor="end" {...zoneText}>PLAY</text>
+          <text x={sx(100) - 4} y={sy(0) - 6} textAnchor="end" {...zoneText}>DE-RISK</text>
+          <text x={sx(0) + 4} y={sy(0) - 6} {...zoneText}>CONSIDER / SKIP</text>
+          <text x={W / 2} y={H - 4} textAnchor="middle" fontSize={11} fill="var(--color-canvas-muted)">Fan heat →</text>
+          <text transform={`translate(10 ${H / 2}) rotate(-90)`} textAnchor="middle" fontSize={11} fill="var(--color-canvas-muted)">Activation →</text>
+          {pts.map((p) => {
+            const on = p.id === selectedId;
+            const labelled = p.verdict === "play" || p.verdict === "hidden_goldmine";
+            const flip = p.x > W - PAD - 70;
+            return (
+              <g
+                key={p.id}
+                data-testid="matrix-point"
+                data-city-id={p.id}
+                role="button"
+                tabIndex={0}
+                aria-pressed={on}
+                aria-label={`${p.name}: ${VERDICT_LABEL[p.verdict]}`}
+                transform={`translate(${p.x} ${p.y})`}
+                className="cursor-pointer outline-none focus-visible:[&>circle:first-child]:stroke-gold"
+                onClick={() => onSelect(p.id)}
+                onKeyDown={keyActivate(p.id)}
+              >
+                <circle r={16} fill="transparent" stroke="none" />
+                <Mark verdict={p.verdict} selected={on} />
+                {labelled && (
+                  <text x={flip ? -12 : 12} y={4} textAnchor={flip ? "end" : "start"} fontSize={12} fontWeight={600} fill="var(--color-canvas-text)" stroke="var(--color-canvas)" strokeWidth={3} paintOrder="stroke">{p.name}</text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      ) : (
+        <div data-testid="matrix-table" className="overflow-x-auto">
+          <table className="w-full min-w-[360px] border-collapse text-[13px]">
+            <caption className="sr-only">Fan heat and activation by market</caption>
+            <thead>
+              <tr className="border-b border-canvas-line font-mono text-[11px] uppercase tracking-[0.08em] text-canvas-muted">
+                <th scope="col" className="py-2 text-left font-medium">City</th>
+                <th scope="col" className="py-2 text-right font-medium">Fan heat</th>
+                <th scope="col" className="py-2 text-right font-medium">Activation</th>
+                <th scope="col" className="py-2 text-right font-medium">Verdict</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cities.map((c) => (
+                <tr key={c.id} className="h-11 border-b border-canvas-line last:border-b-0 lg:h-10">
+                  <th scope="row" className="text-left font-normal text-canvas-text">{c.name}</th>
+                  <td className="text-right font-mono tabular text-canvas-text">{c.fanHeat.value === null ? "—" : Math.round(c.fanHeat.value)}</td>
+                  <td className="text-right font-mono tabular text-canvas-text">{c.activation.value === null ? "—" : Math.round(c.activation.value)}</td>
+                  <td className="text-right"><VerdictChip verdict={c.verdict} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-canvas-text" aria-label="Legend">
+        <li className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-verdict-play" aria-hidden />Play</li>
+        <li className="inline-flex items-center gap-1.5"><span className="size-2.5 rotate-45 bg-verdict-goldmine" aria-hidden />Hidden goldmine</li>
+        <li className="inline-flex items-center gap-1.5"><span className="size-0 border-x-[6px] border-b-[10px] border-x-transparent border-b-verdict-derisk" aria-hidden />De-risk</li>
+        <li className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full border-2 border-verdict-consider" aria-hidden />Consider</li>
+        <li className="inline-flex items-center gap-1.5"><span className="size-2.5 border-2 border-verdict-skip" aria-hidden />Skip</li>
+      </ul>
+    </section>
+  );
+}

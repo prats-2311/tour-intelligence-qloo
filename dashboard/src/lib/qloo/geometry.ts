@@ -1,4 +1,4 @@
-import type { ScoredCity, Verdict } from "./types";
+import type { GatewayEvent, ScoredCity, Verdict } from "./types";
 
 export function cityMarkers(cities: ScoredCity[]) {
   return cities
@@ -65,4 +65,28 @@ export function warmTint(map: TintableMap): void {
 export function shouldRefit(prev: { w: number; h: number }, next: { w: number; h: number }): boolean {
   if (next.w <= 0 || next.h <= 0) return false;
   return Math.abs(next.w - prev.w) >= 1 || Math.abs(next.h - prev.h) >= 1;
+}
+
+export const linear = ([d0, d1]: [number, number], [r0, r1]: [number, number]) => (x: number) => r0 + ((x - d0) / (d1 - d0)) * (r1 - r0);
+
+export function matrixPoints(cities: ScoredCity[], size: { w: number; h: number; pad: number }) {
+  const sx = linear([0, 100], [size.pad, size.w - size.pad]);
+  const sy = linear([0, 100], [size.h - size.pad, size.pad]);
+  return cities.flatMap((c) => c.fanHeat.value === null || c.activation.value === null ? [] : [{
+    id: c.id, name: c.name, verdict: c.verdict, x: sx(c.fanHeat.value), y: sy(c.activation.value),
+  }]);
+}
+
+export const QUADRANTS = { heat: [45, 70], activation: [45, 60, 75] } as const;
+
+export function dataQuality(log: GatewayEvent[]) {
+  const calls = log.filter((e) => e.type === "tool_call") as Extract<GatewayEvent, { type: "tool_call" }>[];
+  const results = log.filter((e) => e.type === "tool_result") as Extract<GatewayEvent, { type: "tool_result" }>[];
+  return {
+    calls: calls.length,
+    cached: calls.filter((c) => c.cached).length,
+    partial: results.filter((r) => r.status === "partial" || r.status === "degraded").length,
+    empty: results.filter((r) => r.status === "empty").length,
+    errors: results.filter((r) => r.status === "error").length,
+  };
 }

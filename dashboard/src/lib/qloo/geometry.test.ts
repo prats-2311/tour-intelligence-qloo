@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SAMPLE_CITIES } from "./fixtures/lumenVale";
-import { boundsFor, cityMarkers, MAP_STYLE_URL, shouldRefit, tintFor } from "./geometry";
+import { boundsFor, cityMarkers, linear, MAP_STYLE_URL, matrixPoints, shouldRefit, tintFor } from "./geometry";
 
 describe("map geometry", () => {
   it("markers use lon,lat and label only play/goldmine", () => {
@@ -39,5 +39,16 @@ describe("map geometry", () => {
     expect(shouldRefit({ w: 600, h: 460 }, { w: 600.4, h: 460 })).toBe(false);
     expect(shouldRefit({ w: 600, h: 460 }, { w: 0, h: 460 })).toBe(false);
     expect(shouldRefit({ w: 600, h: 460 }, { w: 320, h: 460 })).toBe(true);
+  });
+});
+
+describe("chart geometry", () => {
+  it("linear maps domain to range", () => { expect(linear([0, 100], [0, 200])(50)).toBe(100); });
+  it("matrix points invert y and skip nulls", () => {
+    const pts = matrixPoints([SAMPLE_CITIES[2]!, { ...SAMPLE_CITIES[0]!, id: "n", activation: { value: null, reason: "insufficient_data", refs: [], components: {} } }], { w: 220, h: 220, pad: 10 });
+    expect(pts).toHaveLength(1);
+    expect(pts[0]).toMatchObject({ name: "Guadalajara", verdict: "hidden_goldmine" });
+    expect(pts[0]!.x).toBeCloseTo(134);
+    expect(pts[0]!.y).toBeCloseTo(46);
   });
 });
