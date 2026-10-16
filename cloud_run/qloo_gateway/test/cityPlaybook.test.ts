@@ -65,6 +65,32 @@ describe("runCityPlaybook", () => {
     const sponsors = cardsOf(events).find((c) => c.kind === "sponsors")!;
     expect(sponsors.warnings).toContainEqual(expect.objectContaining({ kind: "partial" }));
   });
+  it("unknown overlap yields a partial warning per candidate and an empty co_billing card", async () => {
+    const events = await collect(runCityPlaybook(input, {
+      qloo: qloo((t, a) => (t === "qloo_compare_audiences" ? { operation: "compare_audiences", status: "ok", results: { something_else: 1 } } : happy(t, a))),
+      cities: CITIES,
+    }));
+    const co = cardsOf(events).find((c) => c.kind === "co_billing")!;
+    expect(co.status).toBe("empty");
+    const ws = (co.warnings as Array<{ kind: string; message?: string }>).filter((w) => w.kind === "partial");
+    expect(ws.map((w) => w.message)).toEqual(["overlap unavailable for Opener 1", "overlap unavailable for Opener 2", "overlap unavailable for Opener 3"]);
+  });
+  it("local_moment interleaves sources so artists do not crowd out the rest", async () => {
+    const names = (p: string, n: number) => Array.from({ length: n }, (_, i) => `${p}${i}`);
+    const events = await collect(runCityPlaybook(input, {
+      qloo: qloo((t, a) => {
+        if (t !== "qloo_recommend") return happy(t, a);
+        const m: Record<string, [string, number]> = { artist: ["Art", 10], movie: ["Film", 2], tv_show: ["Tv", 1], place: ["Place", 2] };
+        const [p, n] = m[String(a.target_type)] ?? ["Brand", 2];
+        return recs(names(p, n), names(p, n).map(() => 0.5));
+      }),
+      cities: CITIES,
+    }));
+    const items = cardsOf(events).find((c) => c.kind === "local_moment")!.items.map((i) => String(i.name));
+    expect(items).toHaveLength(9);
+    expect(items.filter((n) => n.startsWith("Art"))).toHaveLength(4);
+    for (const n of ["Film0", "Film1", "Tv0", "Place0", "Place1"]) expect(items).toContain(n);
+  });
   it("local_moment includes tv items when only tv returns results", async () => {
     const empty = (t: string): QlooEnvelope => ({ operation: t, status: "empty", results: [] });
     const events = await collect(runCityPlaybook(input, {

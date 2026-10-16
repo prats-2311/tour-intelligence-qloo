@@ -34,6 +34,14 @@ function warningsFor(tool: string, r: CallResult): DataWarning[] {
 
 const dedupe = (ws: DataWarning[]): DataWarning[] => [...new Map(ws.map((w) => [JSON.stringify(w), w])).values()];
 
+function interleave<T>(lists: T[][], max: number): T[] {
+  const out: T[] = [];
+  for (let i = 0; out.length < max && lists.some((l) => i < l.length); i += 1) {
+    for (const l of lists) if (i < l.length && out.length < max) out.push(l[i]!);
+  }
+  return out;
+}
+
 function card<T>(kind: PlaybookCard<T>["kind"], items: T[], refs: EvidenceRef[], warnings: DataWarning[]): PlaybookCard<T> {
   return { kind, status: items.length > 0 ? "ok" : "empty", items, refs, warnings: dedupe(warnings) };
 }
@@ -53,7 +61,9 @@ export async function* runCityPlaybook(
       const r = await trackedCall(deps, input.sessionId, "qloo_compare_audiences", { group_a: [input.artistEntityId], group_b: [c.entityId] }, events);
       const warnings = warningsFor("qloo_compare_audiences", r);
       const overlap = overlapOf(r.envelope.results);
-      if (Number.isNaN(overlap) || Number.isNaN(c.affinity)) return { warnings };
+      if (Number.isNaN(overlap) || Number.isNaN(c.affinity)) {
+        return { warnings: [...warnings, { tool: "qloo_compare_audiences", kind: "partial" as const, message: `overlap unavailable for ${c.name}` }] };
+      }
       return { warnings, lift: { name: c.name, entityId: c.entityId, overlap, localAffinity: c.affinity, lift: coBillLift(overlap, c.affinity), ref: ref("qloo_compare_audiences", r) } };
     }));
     while (events.length) yield events.shift()!;
@@ -67,7 +77,7 @@ export async function* runCityPlaybook(
       card("sponsors", extractEntities(raw.brands.envelope), [ref("qloo_recommend", raw.brands)], warningsFor("qloo_recommend", raw.brands)),
       card("promo_zones", a.zones.slice(0, 5), [ref("qloo_where_popular", raw.inCity)], warningsFor("qloo_where_popular", raw.inCity)),
       card("local_moment",
-        [...extractEntities(raw.artists.envelope), ...extractEntities(raw.films.envelope), ...extractEntities(raw.tv.envelope), ...extractEntities(raw.places.envelope)].slice(0, 9),
+        interleave([raw.artists, raw.films, raw.tv, raw.places].map((r) => extractEntities(r.envelope)), 9),
         [ref("qloo_recommend", raw.artists), ref("qloo_recommend", raw.films), ref("qloo_recommend", raw.tv), ref("qloo_recommend", raw.places)],
         [raw.artists, raw.films, raw.tv, raw.places].flatMap((r) => warningsFor("qloo_recommend", r))),
       card("venue_fit", raw.ranked ? extractEntities(raw.ranked.envelope).slice(0, 3) : [], raw.ranked ? [ref("qloo_rank", raw.ranked)] : [],
