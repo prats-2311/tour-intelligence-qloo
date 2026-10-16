@@ -92,7 +92,7 @@ export function createNarrator(deps: NarrativeDeps): NarrateFn {
         const r = verifyClaims(c.claims, evidence);
         out[c.kind] = { verified: [...prev.verified, ...r.verified], removed: [...prev.removed, ...r.removed] };
       }
-      const narrative = { status: "ok" as const, model, thoughtSummary, cards: out, merch: parsed.merch, cached: false };
+      const narrative = { status: "ok" as const, model, thoughtSummary, cards: out, merch: present.has("merch") ? parsed.merch : null, cached: false };
       try { await deps.cache.put(key, "gemini_narrative", { operation: "narrative", status: "ok", results: narrative }); } catch { /* not cached */ }
       return narrative;
     } catch {

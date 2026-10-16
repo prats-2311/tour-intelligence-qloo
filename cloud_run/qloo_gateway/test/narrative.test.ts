@@ -29,7 +29,8 @@ const good = {
 };
 const deps = (generate: GenerateFn, ceiling = new BudgetGuard({ perSession: 20, perDay: 300 })) =>
   ({ generate, models: ["primary", "fallback"], cache: new MemoryCache(), ceiling });
-const input = { artist: "Lumen Vale", city: { name: "Guadalajara", country: "MX" }, cards, sessionId: "s" };
+const merchCard: PlaybookCard = { kind: "merch", status: "ok", items: [{ entityId: "T0", name: "dream pop", affinity: 0.94, popularity: 0.5, index: 0 }], refs: [], warnings: [] };
+const input = { artist: "Lumen Vale", city: { name: "Guadalajara", country: "MX" }, cards: [...cards, merchCard], sessionId: "s" };
 
 describe("buildEvidence", () => {
   it("indexes every item by card kind and exposes zone shares as fractions and percents", () => {
@@ -55,6 +56,10 @@ describe("createNarrator", () => {
     expect(n.thoughtSummary).toBe("Compared sponsor fit with zones.");
     expect(n.merch?.title).toBe("Jacaranda season");
     expect(n.model).toBe("primary");
+  });
+  it("returns merch null when the playbook has no merch card, even if Gemini returns a direction", async () => {
+    const n = await createNarrator(deps(async () => answer(good)))({ ...input, cards });
+    expect(n.status === "ok" && n.merch).toBeNull();
   });
   it("drops claims filed under a card kind that is not in the playbook", async () => {
     const n = await createNarrator(deps(async () => answer({ cards: [{ kind: "venue_fit", claims: good.cards[0]!.claims }] })))(input);
