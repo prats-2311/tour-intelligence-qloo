@@ -24,9 +24,12 @@ export function haversineKm(a: { lat: number; lon: number }, b: { lat: number; l
 export function nearestCity(cities: City[], p: { lat: number; lon: number }, opts: { maxKm: number; minPopulation: number }): City | null {
   let best: City | null = null;
   let bestKm = opts.maxKm;
+  const dLat = opts.maxKm / 111;
+  const dLonMax = opts.maxKm / (111 * Math.max(Math.cos((p.lat * Math.PI) / 180), 0.01));
   for (const c of cities) {
     if (c.population < opts.minPopulation) continue;
-    if (Math.abs(c.lat - p.lat) > 1 || Math.abs(c.lon - p.lon) > 1.5) continue;
+    const dLonDeg = Math.abs(((c.lon - p.lon + 540) % 360) - 180);
+    if (Math.abs(c.lat - p.lat) > dLat || dLonDeg > dLonMax) continue;
     const km = haversineKm(c, p);
     if (km <= bestKm) { best = c; bestKm = km; }
   }

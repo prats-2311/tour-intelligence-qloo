@@ -28,6 +28,22 @@ describe("nearestCity", () => {
   });
 });
 
+describe("nearestCity bounds", () => {
+  const mk = (name: string, lat: number, lon: number): City => ({ id: name, name, country: "XX", lat, lon, population: 500_000 });
+  it("wraps across the antimeridian", () => {
+    const cities = [mk("West", 0, -179.95)];
+    expect(nearestCity(cities, { lat: 0, lon: 179.95 }, { maxKm: 50, minPopulation: 0 })?.name).toBe("West");
+  });
+  it("finds cities at high latitude where longitude degrees shrink", () => {
+    const cities = [mk("Arctic", 78, 11.8)];
+    expect(nearestCity(cities, { lat: 78, lon: 10 }, { maxKm: 50, minPopulation: 0 })?.name).toBe("Arctic");
+  });
+  it("does not cap maxKm at ~111 km", () => {
+    const cities = [mk("Far", 21.35, 0)];
+    expect(nearestCity(cities, { lat: 20, lon: 0 }, { maxKm: 200, minPopulation: 0 })?.name).toBe("Far");
+  });
+});
+
 describe("marketsFromHeat", () => {
   it("groups points by nearest major city taking max affinity/popularity", () => {
     const markets = marketsFromHeat([
