@@ -1,3 +1,4 @@
+import { fit } from "@/components/playbook/format";
 import { toDemographicBars } from "@/lib/qloo/adapters";
 import type { ArtistProfile } from "@/lib/qloo/types";
 
@@ -37,7 +38,7 @@ export function AudienceProfile({ profile }: { profile: ArtistProfile }) {
       <div>
         <div className="mb-2 flex items-baseline justify-between gap-3">
           <h3 className="font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-canvas-muted">Taste tags</h3>
-          {tags.some((t) => typeof t.affinity === "number" && Number.isFinite(t.affinity)) && <span className="text-[12px] text-canvas-muted">Affinity (0–100)</span>}
+          {tags.some((t) => typeof t.affinity === "number" && Number.isFinite(t.affinity)) && <span className="text-[12px] text-canvas-muted">Affinity (0–1)</span>}
         </div>
         {tags.length === 0 ? (
           <p className="text-[14px] text-canvas-muted">Qloo returned no taste tags for this artist</p>
@@ -46,7 +47,7 @@ export function AudienceProfile({ profile }: { profile: ArtistProfile }) {
             {tags.map((t) => (
               <li key={t.name} className="inline-flex min-h-8 items-center gap-2 rounded-full bg-paper-raised px-3 text-[13px] text-canvas-text">
                 <span>{t.name}</span>
-                {typeof t.affinity === "number" && Number.isFinite(t.affinity) && <span className="font-mono text-[12px] tabular text-canvas-muted">{Math.round(t.affinity * 100)}</span>}
+                {typeof t.affinity === "number" && Number.isFinite(t.affinity) && <span aria-label={`affinity ${fit(t.affinity)}`} className="font-mono text-[12px] tabular text-canvas-muted">{fit(t.affinity)} fit</span>}
               </li>
             ))}
           </ul>

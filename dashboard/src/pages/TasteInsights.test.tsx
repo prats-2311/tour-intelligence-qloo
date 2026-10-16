@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { matrixPoints } from "@/lib/qloo/geometry";
 import { SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
+import { loadPlaybook, resetPlaybooks } from "@/lib/qloo/playbookStore";
+import * as client from "@/lib/qloo/client";
 import TasteInsights from "./TasteInsights";
 
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
@@ -15,6 +17,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  resetPlaybooks();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   desktop = true;
@@ -144,5 +147,30 @@ describe("TasteInsights", () => {
     expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
     const text = new TextDecoder("utf-8", { ignoreBOM: true }).decode(bytes);
     expect(text).toContain("Guadalajara,MX,0.84,0.79,0.81,0.86,82,Hidden goldmine");
+  });
+  const pick = (name: RegExp) => fireEvent.click(screen.getAllByRole("button", { name }).find((b) => b.getAttribute("data-testid") === "matrix-point")!);
+  it("cross-domain taste renders the selected city's sample playbook in sample mode", async () => {
+    await seeded();
+    pick(/Guadalajara/);
+    expect(await screen.findByText("Bruma Nocturna")).toBeTruthy();
+    expect(screen.queryByText("Live taste lookups need a live run")).toBeNull();
+  });
+  it("cross-domain taste explains which cities have sample playbooks", async () => {
+    await seeded();
+    pick(/Chicago/);
+    expect(await screen.findByText("Sample playbooks cover Mexico City, São Paulo, Guadalajara and Curitiba")).toBeTruthy();
+  });
+  it("labels affinity numbers as fit", async () => {
+    await seeded();
+    expect((await screen.findAllByText(/0\.94 fit/)).length).toBeGreaterThan(0);
+  });
+  it("reuses a loaded playbook instead of streaming again", async () => {
+    await loadPlaybook({ artist: "Lumen Vale", artistEntityId: "sample-lumen-vale", city: { id: "4005539", name: "Guadalajara", country: "MX" }, sample: true, delayMs: 0 });
+    const spy = vi.spyOn(client, "streamCityPlaybook");
+    await seeded();
+    pick(/Guadalajara/);
+    await screen.findByText("Bruma Nocturna");
+    // The default focus city may stream its own sample playbook; Guadalajara's was already loaded.
+    expect(spy.mock.calls.filter((c) => c[0].city === "Guadalajara")).toHaveLength(0);
   });
 });
