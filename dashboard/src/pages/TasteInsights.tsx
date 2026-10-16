@@ -3,6 +3,11 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { ActivationBoxscore } from "@/components/insights/ActivationBoxscore";
+import { ArtistCompare } from "@/components/insights/ArtistCompare";
+import { AudienceProfile } from "@/components/insights/AudienceProfile";
+import { CrossDomainTaste } from "@/components/insights/CrossDomainTaste";
+import { MomentumChart } from "@/components/insights/MomentumChart";
+import { PromoZones } from "@/components/insights/PromoZones";
 import { DataQualityTiles } from "@/components/insights/DataQualityTiles";
 import { FiltersPanel } from "@/components/insights/FiltersPanel";
 import { WinnabilityMatrix } from "@/components/insights/WinnabilityMatrix";
@@ -19,7 +24,7 @@ const secondaryBtn = "inline-flex h-12 items-center justify-center gap-2 rounded
 export default function TasteInsights() {
   const { state } = useTourBoard();
   const isDesktop = useIsDesktop();
-  const { cities, log, status, source, brief, artist, regionsEmpty, regionsUnavailable, error } = state;
+  const { cities, log, profile, status, source, brief, artist, regionsEmpty, regionsUnavailable, error } = state;
   const streaming = status === "streaming";
   // Filters belong to a run's brief: changing them mid-stream sticks, a new brief resets them.
   const briefKey = `${source}|${brief?.artist ?? ""}|${brief?.regions.join(",") ?? ""}`;
@@ -33,6 +38,11 @@ export default function TasteInsights() {
   const selected = visible.some((c) => c.id === selectedId) ? selectedId : null;
   const calls = dataQuality(log).calls;
   const artistName = artist?.name ?? brief?.artist;
+  // Panels follow the selected market; default to the most winnable one in focus.
+  const focusCity = useMemo(
+    () => visible.find((c) => c.id === selected) ?? [...visible].sort((a, b) => (b.winnability.value ?? -1) - (a.winnability.value ?? -1))[0],
+    [visible, selected],
+  );
 
   if (cities.length === 0 && !streaming && status !== "idle") {
     return (
@@ -119,6 +129,21 @@ export default function TasteInsights() {
               </div>
             </section>
           </div>
+          {profile ? (
+            <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
+              <AudienceProfile profile={profile} />
+              <MomentumChart profile={profile} />
+            </div>
+          ) : (
+            <p className="rounded-[14px] bg-paper p-4 text-[14px] text-canvas-muted">{streaming ? "Loading the audience profile…" : "Qloo returned no audience profile for this artist"}</p>
+          )}
+          {focusCity && (
+            <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
+              <PromoZones city={focusCity} />
+              {artist ? <CrossDomainTaste artist={artist} city={focusCity} source={source} /> : null}
+            </div>
+          )}
+          {artist && <ArtistCompare artist={artist} source={source} />}
           <ActivationBoxscore cities={visible} selectedId={selected} onSelect={setSelectedId} />
           <p className="px-1 pb-2 text-[12px] text-canvas-muted">{INTEGRITY}</p>
         </div>
