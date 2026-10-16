@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { envelopeError, extractOverlap } from "@/lib/qloo/adapters";
 import { callQlooTool } from "@/lib/qloo/client";
 
-type Result = { name: string; overlap: number | null; error?: string; cached?: boolean; stale?: boolean };
+type Result = { id: number; name: string; overlap: number | null; error?: string; cached?: boolean; stale?: boolean };
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
@@ -12,6 +12,7 @@ export function ArtistCompare({ artist, source }: { artist: { entityId: string; 
   const [results, setResults] = useState<Result[]>([]);
   const [busy, setBusy] = useState(false);
   const ctl = useRef<AbortController | null>(null);
+  const nextId = useRef(0);
   useEffect(() => () => ctl.current?.abort(), []);
   const targets = names.map((n) => n.trim()).filter(Boolean);
 
@@ -24,12 +25,13 @@ export function ArtistCompare({ artist, source }: { artist: { entityId: string; 
     setResults([]);
     const out: Result[] = [];
     for (const name of targets) {
+      const id = ++nextId.current;
       try {
         const { envelope, cached, stale } = await callQlooTool("qloo_compare_audiences", { group_a: [artist.entityId], group_b: [name] }, { signal: c.signal });
-        out.push({ name, overlap: extractOverlap(envelope), error: envelopeError(envelope) ?? undefined, cached, stale });
+        out.push({ id, name, overlap: extractOverlap(envelope), error: envelopeError(envelope) ?? undefined, cached, stale });
       } catch (e) {
         if (c.signal.aborted) return;
-        out.push({ name, overlap: null, error: e instanceof Error ? e.message : "Comparison failed" });
+        out.push({ id, name, overlap: null, error: e instanceof Error ? e.message : "Comparison failed" });
       }
       setResults([...out]);
     }
@@ -54,7 +56,7 @@ export function ArtistCompare({ artist, source }: { artist: { entityId: string; 
           {results.map((r) => {
             const shown = r.overlap !== null ? pct(r.overlap) : null;
             return (
-              <li key={r.name} className="flex min-h-9 flex-wrap items-center justify-between gap-x-3 text-[14px]">
+              <li key={r.id} className="flex min-h-9 flex-wrap items-center justify-between gap-x-3 text-[14px]">
                 <span className="text-canvas-text">{artist.name} vs {r.name}{r.cached && <span className="ml-2 text-[12px] text-canvas-muted">From cache</span>}{r.stale && <span className="ml-2 text-[12px] text-state-stale">Stale</span>}</span>
                 {r.error ? <span role="alert" className="text-state-error">{r.error}</span>
                   : shown ? <span className="font-mono tabular text-canvas-text">{shown}</span>

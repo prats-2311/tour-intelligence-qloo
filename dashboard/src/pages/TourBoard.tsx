@@ -6,6 +6,7 @@ import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { BriefForm } from "@/components/qloo/BriefForm";
 import { CityRow, ROW_COLS_LG } from "@/components/qloo/CityRow";
 import { NeedsInputPicker } from "@/components/qloo/NeedsInputPicker";
+import { interruptedText, Notice, regionNoticeText } from "@/components/qloo/Notice";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { Sheet } from "@/components/qloo/Sheet";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
@@ -75,10 +76,6 @@ function Legend() {
       {LEGEND.map((v) => <span key={v} className="inline-flex items-center gap-1.5 text-[12px] text-canvas-text"><VerdictGlyph verdict={v} />{VERDICT_LABEL[v]}</span>)}
     </div>
   );
-}
-
-function Notice({ children }: { children: React.ReactNode }) {
-  return <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[10px] bg-canvas px-3 py-2 text-[13px] text-canvas-text">{children}</div>;
 }
 
 const secondaryBtn = "inline-flex h-12 items-center justify-center gap-2 rounded-[10px] bg-paper-raised px-5 text-[15px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:h-10";
@@ -179,7 +176,7 @@ export default function TourBoard() {
       {state.status === "interrupted" && (
         <Notice>
           <History size={14} className="text-state-stale" aria-hidden />
-          <span className="min-w-0">{state.interruptReason === "user" ? "Stopped — results so far shown" : "Connection lost — results so far shown"}</span>
+          <span className="min-w-0">{interruptedText(state.interruptReason)}</span>
           <button type="button" onClick={retry} className={smallBtn}>Retry</button>
         </Notice>
       )}
@@ -195,7 +192,7 @@ export default function TourBoard() {
       {!empty && (state.regionsEmpty.length > 0 || state.regionsUnavailable.length > 0) && (
         <Notice>
           <span className="min-w-0">
-            {[...state.regionsEmpty.map((r) => `No Qloo signal in ${r}`), ...state.regionsUnavailable.map((r) => `${r.region} unavailable`)].join(" · ")}
+            {regionNoticeText(state.regionsEmpty, state.regionsUnavailable)}
           </span>
         </Notice>
       )}

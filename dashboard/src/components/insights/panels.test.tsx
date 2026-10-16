@@ -150,4 +150,45 @@ describe("insight panels", () => {
     unmount();
     expect(signal!.aborted).toBe(true);
   });
+  it("artist compare keys results uniquely even when the same name is compared twice", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(client, "callQlooTool").mockResolvedValue({ envelope: { status: "ok", results: [{ overlap: 0.3 }] }, cached: false, stale: false });
+    render(<ArtistCompare artist={{ entityId: "E", name: "L" }} source="live" />);
+    fireEvent.change(screen.getByLabelText("Comparison artist 1"), { target: { value: "Bruma" } });
+    fireEvent.change(screen.getByLabelText("Comparison artist 2"), { target: { value: "Bruma" } });
+    fireEvent.click(screen.getByRole("button", { name: "Compare" }));
+    await waitFor(() => expect(screen.getAllByText("30%")).toHaveLength(2));
+    expect(err.mock.calls.some((c) => String(c[0]).includes("same key"))).toBe(false);
+  });
+  it("cross-domain taste: a stream that ends without done/error/playbook is a lost connection with Retry", async () => {
+    const spy = vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () {
+      yield { type: "tool_call", tool: "qloo_recommend", args: {}, cached: false };
+    });
+    render(<CrossDomainTaste artist={{ entityId: "E", name: "L" }} city={SAMPLE_CITIES[2]!} source="live" />);
+    fireEvent.click(screen.getByRole("button", { name: "Load taste for Guadalajara" }));
+    expect(await screen.findByText("Connection lost — try again")).toBeTruthy();
+    expect(screen.queryByText(/Qloo returned no taste data/)).toBeNull();
+    spy.mockImplementation(playbookEvents);
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(await screen.findByText("Bruma Nocturna")).toBeTruthy();
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+  it("cross-domain taste: done without a playbook keeps the honest no-data message", async () => {
+    vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () { yield { type: "done", summary: {} }; });
+    render(<CrossDomainTaste artist={{ entityId: "E", name: "L" }} city={SAMPLE_CITIES[2]!} source="live" />);
+    fireEvent.click(screen.getByRole("button", { name: "Load taste for Guadalajara" }));
+    expect(await screen.findByText("Qloo returned no taste data for this city")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+  });
+  it("cross-domain taste items carry an Affinity (0–100) caption", async () => {
+    vi.spyOn(client, "streamCityPlaybook").mockImplementation(playbookEvents);
+    render(<CrossDomainTaste artist={{ entityId: "E", name: "L" }} city={SAMPLE_CITIES[2]!} source="live" />);
+    fireEvent.click(screen.getByRole("button", { name: "Load taste for Guadalajara" }));
+    await screen.findByText("Bruma Nocturna");
+    expect(screen.getByText("Affinity (0–100)")).toBeTruthy();
+  });
+  it("audience tags carry an Affinity (0–100) caption", () => {
+    render(<AudienceProfile profile={P} />);
+    expect(screen.getByText("Affinity (0–100)")).toBeTruthy();
+  });
 });

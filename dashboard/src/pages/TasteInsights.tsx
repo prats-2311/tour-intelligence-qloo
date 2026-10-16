@@ -1,6 +1,7 @@
-import { Download } from "lucide-react";
+import { CircleAlert, Download, History } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { interruptedText, Notice, regionNoticeText } from "@/components/qloo/Notice";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { ActivationBoxscore } from "@/components/insights/ActivationBoxscore";
 import { ArtistCompare } from "@/components/insights/ArtistCompare";
@@ -25,7 +26,7 @@ const secondaryBtn = "inline-flex h-12 items-center justify-center gap-2 rounded
 export default function TasteInsights() {
   const { state } = useTourBoard();
   const isDesktop = useIsDesktop();
-  const { cities, log, profile, status, source, brief, artist, regionsEmpty, regionsUnavailable, error } = state;
+  const { cities, log, profile, status, source, brief, artist, regionsEmpty, regionsUnavailable, error, interruptReason } = state;
   const streaming = status === "streaming";
   // Filters belong to a run's brief: changing them mid-stream sticks, a new brief resets them.
   const briefKey = `${source}|${brief?.artist ?? ""}|${brief?.regions.join(",") ?? ""}`;
@@ -44,6 +45,20 @@ export default function TasteInsights() {
     () => visible.find((c) => c.id === selected) ?? sortCities(visible, "winnability")[0],
     [visible, selected],
   );
+
+  if (cities.length === 0 && (status === "needs_input" || status === "interrupted")) {
+    const message = status === "needs_input"
+      ? "Choose the artist on the Tour Board"
+      : interruptReason === "user" ? "Stopped before any market was scored" : "Connection lost before any market was scored";
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4 py-10">
+        <h1 className="font-title text-[32px] leading-tight text-canvas-text">Taste Insights</h1>
+        <h2 className="text-[18px] font-semibold text-canvas-text">{message}</h2>
+        {status === "needs_input" && <p className="text-[14px] text-canvas-muted">Qloo found more than one match for {brief?.artist ?? "this artist"}. Pick one to score markets.</p>}
+        <Link to="/tours/board" className={`${secondaryBtn} w-fit`}>Back to the Tour Board</Link>
+      </div>
+    );
+  }
 
   if (cities.length === 0 && !streaming && status !== "idle") {
     return (
@@ -106,6 +121,18 @@ export default function TasteInsights() {
           </button>
         </div>
       </header>
+      {status === "interrupted" && (
+        <Notice><History size={14} className="text-state-stale" aria-hidden /><span className="min-w-0">{interruptedText(interruptReason)}</span></Notice>
+      )}
+      {status === "error" && error && (
+        <Notice>
+          <CircleAlert size={14} className="text-state-error" aria-hidden /><span className="min-w-0">{error.message}</span>
+          {error.code === "BUDGET" && <Link to="/tours/board?sample=1" className="inline-flex min-h-11 items-center rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932]">Try the showcase tour</Link>}
+        </Notice>
+      )}
+      {(regionsEmpty.length > 0 || regionsUnavailable.length > 0) && (
+        <Notice><span className="min-w-0">{regionNoticeText(regionsEmpty, regionsUnavailable)}</span></Notice>
+      )}
 
       <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12">
         {isDesktop && <div className="lg:col-span-3">{panel}</div>}

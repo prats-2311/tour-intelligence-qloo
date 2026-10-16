@@ -4,7 +4,7 @@ import { streamCityPlaybook } from "@/lib/qloo/client";
 import type { PlaybookCard, ScoredCity } from "@/lib/qloo/types";
 
 type Items = ReturnType<typeof playbookCrossDomain>;
-type Load = { status: "idle" } | { status: "loading" } | { status: "done"; items: Items } | { status: "error"; message: string };
+type Load = { status: "idle" } | { status: "loading" } | { status: "done"; items: Items } | { status: "error"; message: string } | { status: "lost" };
 const LABELS: Record<CrossCategory, string> = { artist: "Artists", movie: "Movies", tv_show: "TV shows", place: "Places", brand: "Brands" };
 
 /** Streams one city playbook; aborts on unmount, city change and re-run so no stream leaks. */
@@ -19,17 +19,22 @@ export function useCityPlaybook(artist: { entityId: string; name: string }, city
     setLoad({ status: "loading" });
     let cards: PlaybookCard[] | null = null;
     let err: string | null = null;
+    let ended = false; // saw done or error: the gateway closed the stream on purpose
     try {
       for await (const e of streamCityPlaybook({ artist: artist.name, artistEntityId: artist.entityId, city: city.name, country: city.country }, { signal: c.signal })) {
         if (e.type === "playbook") cards = e.playbook.cards;
-        else if (e.type === "error") err = e.message;
+        else if (e.type === "error") { err = e.message; ended = true; }
+        else if (e.type === "done") ended = true;
       }
     } catch (e) {
       if (c.signal.aborted) return;
       err = e instanceof Error ? e.message : "Taste lookup failed";
     }
     if (c.signal.aborted) return;
-    setLoad(err ? { status: "error", message: err } : cards ? { status: "done", items: playbookCrossDomain(cards) } : { status: "error", message: "Qloo returned no taste data for this city" });
+    if (err) setLoad({ status: "error", message: err });
+    else if (cards) setLoad({ status: "done", items: playbookCrossDomain(cards) });
+    else if (!ended) setLoad({ status: "lost" });
+    else setLoad({ status: "error", message: "Qloo returned no taste data for this city" });
   }, [artist.entityId, artist.name, city.name, city.country]);
   return { load, run };
 }
@@ -52,10 +57,17 @@ export function CrossDomainTaste({ artist, city, source }: { artist: { entityId:
         {load.status === "loading" && <p role="status" className="text-[13px] text-canvas-muted">Loading taste…</p>}
       </div>
       {load.status === "error" && <p role="alert" className="text-[14px] text-state-error">{load.message}</p>}
+      {load.status === "lost" && (
+        <div role="alert" className="flex flex-wrap items-center gap-3">
+          <p className="text-[14px] text-state-error">Connection lost — try again</p>
+          <button type="button" onClick={() => void run()} className={`${btn} bg-paper-raised text-canvas-text hover:bg-[#3a3932]`}>Retry</button>
+        </div>
+      )}
       {load.status === "done" && (items.length === 0 ? (
         <p className="text-[14px] text-canvas-muted">Qloo returned no cross-domain taste for {city.name}</p>
       ) : (
         <>
+          <p className="text-[12px] text-canvas-muted">Affinity (0–100)</p>
           <div role="group" aria-label="Filter by type" className="flex flex-wrap gap-2">
             {(["all", ...cats] as const).map((c) => (
               <button key={c} type="button" aria-pressed={filter === c} onClick={() => setFilter(c)} className={`${btn} ${filter === c ? "bg-bone text-canvas" : "bg-paper-raised text-canvas-text"}`}>{c === "all" ? "All" : LABELS[c]}</button>
