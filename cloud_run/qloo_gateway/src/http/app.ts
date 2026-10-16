@@ -28,7 +28,8 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
   const app = express();
   app.use(express.json({ limit: "64kb" }));
 
-  app.get("/healthz", async (_req, res, next) => { try { res.json(await deps.health()); } catch (err) { next(err); } });
+  // Cloud Run reserves paths ending in "z" (Google answers 404 before the app), so /health is the deployed path; /healthz stays for local use.
+  app.get(["/health", "/healthz"], async (_req, res, next) => { try { res.json(await deps.health()); } catch (err) { next(err); } });
 
   app.post("/v1/tour-board", async (req, res) => {
     const sessionId = req.header("x-session-id");

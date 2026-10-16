@@ -2692,7 +2692,7 @@ Expected: deploy succeeds and prints a service URL.
 
 - [ ] **Step 4: Verify the deployed service**
 
-Run: `curl -s -H "Authorization: Bearer $(gcloud auth print-identity-token)" <SERVICE_URL>/healthz` and `curl -s -o /dev/null -w "%{http_code}" <SERVICE_URL>/healthz`
+Run: `curl -s -H "Authorization: Bearer $(gcloud auth print-identity-token)" <SERVICE_URL>/health` and `curl -s -o /dev/null -w "%{http_code}" <SERVICE_URL>/health`
 Expected: `{"connected":true,"ready":true}` and `403` respectively.
 
 - [ ] **Step 5: Record and commit**

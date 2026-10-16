@@ -16,8 +16,8 @@ const qloo: QlooCaller = {
 const app = createApp({ qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }) });
 
 describe("http", () => {
-  it("healthz", async () => {
-    expect((await request(app).get("/healthz")).body).toEqual({ connected: true, ready: true });
+  it.each(["/health", "/healthz"])("%s answers capabilities and process state", async (path) => {
+    expect((await request(app).get(path)).body).toEqual({ connected: true, ready: true });
   });
   it("streams tour-board events as SSE", async () => {
     const res = await request(app).post("/v1/tour-board").set("x-session-id", "s").send({ artist: "Test Artist", regions: ["Mexico"], maxStops: 4 });
@@ -46,7 +46,7 @@ describe("http", () => {
     expect(typeof res.body.error).toBe("string");
   });
   it("returns JSON 500 when health rejects", async () => {
-    const res = await request(createApp({ qloo, cities: CITIES, health: async () => { throw new Error("secret stack"); } })).get("/healthz");
+    const res = await request(createApp({ qloo, cities: CITIES, health: async () => { throw new Error("secret stack"); } })).get("/health");
     expect(res.status).toBe(500);
     expect(res.body).toEqual({ error: "internal error" });
   });

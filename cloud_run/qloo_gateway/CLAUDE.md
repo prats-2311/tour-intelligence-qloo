@@ -12,6 +12,11 @@ The only service that talks to Qloo. Holds one `qloo mcp` child process (stdio) 
 - The hackathon server (`https://hackathon.api.qloo.com`) is used through `QLOO_BASE_URL` and `QLOO_TRUSTED_BASE_URL` (both set by `deploy.sh`, overridable via `QLOO_BASE_URL` in the environment); for local runs set both to the same URL before starting. The gateway logs the active base URL (never a key) at startup.
 - `scripts/deploy.sh` is run by Prateek (not by agents) after creating the `qloo-api-key` secret: `printf '%s' "$QLOO_API_KEY" | gcloud secrets create qloo-api-key --data-file=- --project liifecalling-academy`
 
+## Deployed
+- URL `https://qloo-gateway-602700957663.us-central1.run.app`, first revision `qloo-gateway-00001-h4g`.
+- Health is `GET /health` (also `/healthz` for local use). Cloud Run reserves paths ending in `z`, so `/healthz` returns Google's 404 on the deployed service.
+- Verify (Prateek): `curl -H "Authorization: Bearer $(gcloud auth print-identity-token)" <url>/health` returns 200; the same call without the header returns 403.
+
 ## Narrative
 One Gemini call per playbook via Vertex REST (ADC token from `google-auth-library`). Claims are verified by `claims/verify.ts`; unverified ones are returned as `removed` with a reason. Besides the declared `entities[]`/`numbers[]`, the displayed `text` is checked: every numeric token (decimals, `%`, thousands separators) must be supported by a declared number, and every declared entity name must appear in the text. Undeclared proper nouns in the text remain uncheckable. Results are cached 7 d under tool `gemini_narrative`. Ceilings: 20 per session (in memory) and `GEMINI_DAILY_CEILING` (default 300) per day, persisted in Firestore doc `gemini_usage/<YYYY-MM>` (with `QLOO_USAGE_BACKEND=firestore`) so restarts and extra instances share it. Budget is reserved per actual Vertex attempt; only a failed Vertex call (non-2xx, network, timeout) falls back to `GEMINI_FALLBACK_MODEL`, never malformed JSON or a schema error. Any failure yields an `unavailable` narrative and never fails the playbook. Models: `GEMINI_MODEL` / `GEMINI_FALLBACK_MODEL`.
 
