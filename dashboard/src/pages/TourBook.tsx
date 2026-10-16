@@ -16,6 +16,7 @@ import { fetchThisWeek } from "@/lib/qloo/client";
 import { LONG_NAMES_BRIEF, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { toIcs } from "@/lib/qloo/ics";
 import { getPlaybook, loadPlaybook, playbookKey, type PlaybookRequest } from "@/lib/qloo/playbookStore";
+import { SAMPLE_TEXT } from "@/lib/qloo/labels";
 import { sortCities } from "@/lib/qloo/ranking";
 import { buildTourBook, campaignTitle } from "@/lib/qloo/tourBook";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
@@ -268,8 +269,9 @@ export default function TourBook() {
         <div className="book-page flex min-w-0 flex-col gap-12 pb-24 lg:col-start-2 lg:bg-paper lg:p-14 lg:pb-14">
           <BookCover artist={artist!.name} regions={state.brief!.regions} season={book.subtitle} chapters={book.chapters} sample={book.source === "sample"} />
           <MarketChapter market={book.market} />
-          {book.chapters.map((c) => <CityChapter key={c.city.id} chapter={c} />)}
-          <ProvenanceAppendix rows={book.provenance} />
+          {book.chapters.map((c) => <CityChapter key={c.city.id} chapter={c} sample={book.source === "sample"} />)}
+          <ProvenanceAppendix rows={book.provenance} sample={book.source === "sample"} />
+          {book.source === "sample" && <p data-print-footer className="print-footer">{SAMPLE_TEXT}</p>}
         </div>
       </div>
 

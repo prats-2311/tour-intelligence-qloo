@@ -270,6 +270,8 @@ body {
   .tour-book .page-turn-rail { animation: page-turn 240ms ease-out both; }
 }
 
+.tour-book .print-footer { display: none; }
+
 /* Print-to-PDF: white page, black text, one chapter per page, citations spelled out. Scoped to the Book. */
 @media print {
   body:has(.tour-book), body:has(.tour-book) #root > div { background: #fff !important; }
@@ -286,4 +288,6 @@ body {
   .tour-book .slope-chart line[data-highlight] { stroke: #111 !important; stroke-width: 3 !important; }
   .tour-book a[data-cite]::after { content: " (" attr(href) ")"; }
   .tour-book tr, .tour-book dl > div { break-inside: avoid; }
+  /* Sample books carry the label on every printed page. */
+  .tour-book .print-footer { display: block; position: fixed; bottom: 0; left: 0; right: 0; padding: 4px 0; text-align: center; font-size: 11px; }
 }

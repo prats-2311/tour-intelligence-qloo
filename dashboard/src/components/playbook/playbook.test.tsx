@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { samplePlaybookEvents, sampleThisWeek } from "@/lib/qloo/fixtures/lumenValePlaybooks";
 import type { GatewayEvent, PlaybookCard as Card } from "@/lib/qloo/types";
 import { AdvanceSheet } from "./AdvanceSheet";
@@ -11,13 +11,20 @@ import { KeyArtPoster } from "./KeyArtPoster";
 import { PlaybookCard } from "./PlaybookCard";
 import { ReasoningSummary } from "./ReasoningSummary";
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 const ev = samplePlaybookEvents("4005539")!;
 const cards = (ev.find((e) => e.type === "playbook") as Extract<GatewayEvent, { type: "playbook" }>).playbook.cards;
 const narrative = (ev.find((e) => e.type === "narrative") as Extract<GatewayEvent, { type: "narrative" }>).narrative;
 const card = (k: Card["kind"]) => cards.find((c) => c.kind === k)!;
 
 describe("playbook cards", () => {
+  it("renders two verified claims with identical text without a duplicate-key warning", () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const same = { text: "Same text.", entities: [{ name: "Same" }], numbers: [], evidence_refs: ["sponsors:0"] };
+    render(<PlaybookCard accent="#ff00aa" meta="m" title="Sponsors" claims={{ verified: [same, same], removed: [] }} narrativeStatus="ok" refsCount={0} hasEvidence><p>b</p></PlaybookCard>);
+    expect(screen.getAllByText("Same text.")).toHaveLength(2);
+    expect(err.mock.calls.flat().join(" ")).not.toMatch(/same key/);
+  });
   it("shows verified claims and a per-card badge that opens the audit", () => {
     let opened = false;
     render(<PlaybookCard accent="#ff00aa" meta="GDL · SPONSORS" title="Sponsors" claims={narrative.status === "ok" ? narrative.cards.sponsors : undefined} narrativeStatus="ok" refsCount={1} hasEvidence onAudit={() => { opened = true; }}><p>body</p></PlaybookCard>);

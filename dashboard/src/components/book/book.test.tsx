@@ -1,17 +1,18 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { SAMPLE_ACCENT_ORDER } from "@/lib/qloo/cityAccent";
 import { LUMEN_VALE_SAMPLE, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { samplePlaybookEvents, sampleThisWeek } from "@/lib/qloo/fixtures/lumenValePlaybooks";
 import { initialPlaybook, playbookReducer, type PlaybookState } from "@/lib/qloo/playbookReducer";
+import { SAMPLE_TEXT } from "@/lib/qloo/labels";
 import { buildTourBook } from "@/lib/qloo/tourBook";
 import { CityChapter } from "./CityChapter";
 import { MarketChapter } from "./MarketChapter";
 import { ProvenanceAppendix } from "./ProvenanceAppendix";
 import { SlopeChart } from "./SlopeChart";
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 const done = (id: string): PlaybookState => samplePlaybookEvents(id)!.reduce((s, event) => playbookReducer(s, { type: "event", event }), playbookReducer(initialPlaybook, { type: "start", source: "sample" }));
 const ids = ["3530597", "3448439", "4005539", "3464975"];
@@ -56,5 +57,30 @@ describe("book components", () => {
     expect(stacked.querySelectorAll("[data-shortlisted-edge]")).toHaveLength(4);
     expect(stacked.textContent).toMatch(/Heat \d+ · Act \d+ · Win \d+/);
     expect(screen.getByText("Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.")).toBeTruthy();
+  });
+  it("labels every sample chapter and the appendix, and nothing in a live book", () => {
+    const a = render(<CityChapter chapter={book.chapters[2]!} sample />);
+    expect(a.getAllByText(SAMPLE_TEXT)).toHaveLength(1);
+    a.unmount();
+    const b = render(<ProvenanceAppendix rows={book.provenance} sample />);
+    expect(b.getAllByText(SAMPLE_TEXT)).toHaveLength(1);
+    b.unmount();
+    const c = render(<><CityChapter chapter={book.chapters[2]!} /><ProvenanceAppendix rows={book.provenance} /></>);
+    expect(c.queryByText(SAMPLE_TEXT)).toBeNull();
+  });
+  it("labels an incomplete sample chapter too", () => {
+    render(<CityChapter sample chapter={{ ...book.chapters[0]!, status: "incomplete", incompleteReason: "x", playbook: undefined, claims: null }} />);
+    expect(screen.getAllByText(SAMPLE_TEXT)).toHaveLength(1);
+  });
+  it("keys duplicate claim text by index so React does not warn", () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const ch = book.chapters[2]!;
+    const dup = { text: "Dup claim.", entities: [{ name: "Dup" }], numbers: [], evidence_refs: ["sponsors:0"] };
+    const narrative = ch.playbook!.narrative;
+    if (narrative?.status !== "ok") throw new Error("expected ok");
+    const playbook = { ...ch.playbook!, narrative: { ...narrative, cards: { ...narrative.cards, sponsors: { verified: [dup, dup], removed: [] } } } };
+    render(<CityChapter chapter={{ ...ch, playbook }} />);
+    expect(screen.getAllByText("Dup claim.")).toHaveLength(2);
+    expect(err.mock.calls.flat().join(" ")).not.toMatch(/same key/);
   });
 });

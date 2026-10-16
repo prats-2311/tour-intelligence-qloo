@@ -63,7 +63,9 @@ describe("TourBook", () => {
     renderAt("/tours/book?sample=1");
     expect(await screen.findByRole("heading", { name: "Market selection" })).toBeTruthy();
     for (const name of ["Mexico City", "São Paulo", "Guadalajara", "Curitiba"]) expect(await screen.findByRole("heading", { name, level: 2 })).toBeTruthy();
-    expect(screen.getByText("Sample data — illustrative, not Qloo output")).toBeTruthy();
+    // cover + four chapters + provenance appendix + the print-only running footer
+    expect(screen.getAllByText("Sample data — illustrative, not Qloo output")).toHaveLength(7);
+    expect(document.querySelectorAll(".tour-book [data-print-footer]")).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "Lumen Vale", level: 1 })).toBeTruthy();
     expect(screen.getByText("Don't just find your fans. Win their city.")).toBeTruthy();
   });

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { Notice } from "@/components/qloo/Notice";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { AdvanceSheet } from "@/components/playbook/AdvanceSheet";
@@ -34,7 +35,7 @@ function MarginNote({ requests, claims }: { requests: number; claims?: CardClaim
 
 const H3 = "font-title text-[20px] leading-tight text-canvas-text";
 
-export function CityChapter({ chapter }: { chapter: BookCityChapter }) {
+export function CityChapter({ chapter, sample = false }: { chapter: BookCityChapter; sample?: boolean }) {
   const { city, accent, playbook, week } = chapter;
   const narrative = playbook?.narrative;
   const ok = chapter.status === "ready";
@@ -59,6 +60,7 @@ export function CityChapter({ chapter }: { chapter: BookCityChapter }) {
       </div>
       <div className="flex min-w-0 flex-col gap-4 px-4 lg:px-0">
         <div className="flex min-w-0 flex-col gap-2">
+          {sample && <SampleBanner compact />}
           <h2 id={`title-${city.id}`} className="font-title break-words text-[32px] leading-[1.1] text-canvas-text">{city.name}</h2>
           <div className="flex items-center gap-3"><VerdictChip verdict={city.verdict} size="md" /><span className="text-[13px] text-canvas-muted">{city.country}</span></div>
         </div>
@@ -75,7 +77,7 @@ export function CityChapter({ chapter }: { chapter: BookCityChapter }) {
               return (
                 <section key={kind} data-section={kind} className="relative flex min-w-0 flex-col gap-3">
                   <h3 className={H3}>{TITLE[kind]}</h3>
-                  {claims && claims.verified.map((c) => <p key={c.text} className="text-[15px] leading-[1.5] text-canvas-text">{c.text}</p>)}
+                  {claims && claims.verified.map((c, i) => <p key={`${i}-${c.text}`} className="text-[15px] leading-[1.5] text-canvas-text">{c.text}</p>)}
                   {claims && card.status === "ok" && claims.verified.length === 0 && <p className="text-[13px] text-canvas-muted">Narrative removed: no claim passed verification.</p>}
                   <CardBody card={card} merch={merch} city={city.name} />
                   <MarginNote requests={card.refs.length} claims={claims} />

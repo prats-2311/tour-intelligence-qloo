@@ -28,7 +28,7 @@ export function PlaybookCard({ accent, meta, title, claims, narrativeStatus, ref
         {narrativeStatus === "pending" && <div className="skeleton mt-3 h-4 w-4/5 rounded-[4px]" aria-hidden />}
         {narrativeStatus === "ok" && verified.length > 0 && (
           <ul className="mt-3 space-y-2 text-[15px] leading-[1.45] text-canvas-text">
-            {verified.map((c) => <li key={c.text}>{c.text}</li>)}
+            {verified.map((c, i) => <li key={`${i}-${c.text}`}>{c.text}</li>)}
           </ul>
         )}
         {narrativeStatus === "ok" && claims && hasEvidence && verified.length === 0 && (
