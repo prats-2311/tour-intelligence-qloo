@@ -37,7 +37,7 @@ describe("insight panels", () => {
     expect(screen.getByText("dream pop")).toBeTruthy();
   });
   it("tag with null affinity renders without NaN/null", () => {
-    const { container } = render(<AudienceProfile profile={{ ...P, tags: [{ name: "odd", affinity: null }] }} />);
+    const { container } = render(<AudienceProfile profile={{ ...P, tags: [{ name: "odd", affinity: null as unknown as number }] }} />);
     expect(screen.getByText("odd")).toBeTruthy();
     expect(container.textContent).not.toMatch(/NaN|null/);
   });
@@ -87,6 +87,46 @@ describe("insight panels", () => {
     fireEvent.change(screen.getByLabelText("Comparison artist 1"), { target: { value: "B" } });
     fireEvent.click(screen.getByRole("button", { name: "Compare" }));
     expect(await screen.findByText(shown ?? "Not enough shared taste data")).toBeTruthy();
+  });
+  const needsInput = { status: "needs_input", summary: "Choose or correct the unresolved comparison inputs.", resolution: { issues: [
+    { input: "Beach", field: "group_b", candidates: [
+      { id: "ID-ARTIST", name: "Beach House", type: "urn:entity:artist", description: "American dream pop duo." },
+      { id: "ID-PLACE", name: "Beach House", type: "urn:entity:place", description: "Beachfront bar." },
+    ] },
+  ] } };
+  it("artist compare: needs_input shows a picker, never 'Not enough shared taste data'; picking re-calls once with the id", async () => {
+    const spy = vi.spyOn(client, "callQlooTool")
+      .mockResolvedValueOnce({ envelope: needsInput, cached: false, stale: false })
+      .mockResolvedValueOnce({ envelope: { status: "ok", results: tagResults(0.5) }, cached: false, stale: false });
+    render(<ArtistCompare artist={{ entityId: "ENT-1", name: "L" }} source="live" />);
+    fireEvent.change(screen.getByLabelText("Comparison artist 1"), { target: { value: "Beach" } });
+    fireEvent.click(screen.getByRole("button", { name: "Compare" }));
+    expect(await screen.findByText("Did you mean…?")).toBeTruthy();
+    expect(screen.getByText("Choose or correct the unresolved comparison inputs.")).toBeTruthy();
+    expect(screen.getByText("American dream pop duo.")).toBeTruthy();
+    expect(screen.queryByText("Not enough shared taste data")).toBeNull();
+    expect(spy).toHaveBeenCalledWith("qloo_compare_audiences", { group_a: ["ENT-1"], group_b: ["Beach"] }, expect.anything());
+    const options = screen.getAllByRole("button").filter((b) => b.textContent?.includes("Beach House"));
+    expect(options).toHaveLength(2);
+    expect(options[0]!.className).toContain("min-h-11");
+    fireEvent.click(options[0]!);
+    expect(await screen.findByText("0.50")).toBeTruthy();
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenLastCalledWith("qloo_compare_audiences", { group_a: ["ENT-1"], group_b: ["ID-ARTIST"] }, expect.anything());
+    expect(screen.queryByText("Did you mean…?")).toBeNull();
+  });
+  it.each(["partial", "degraded"])("artist compare: %s envelope shows its summary, not 'Not enough shared taste data'", async (status) => {
+    vi.spyOn(client, "callQlooTool").mockResolvedValue({ envelope: { status, summary: `Qloo said ${status}` }, cached: false, stale: false });
+    render(<ArtistCompare artist={{ entityId: "E", name: "L" }} source="live" />);
+    fireEvent.change(screen.getByLabelText("Comparison artist 1"), { target: { value: "B" } });
+    fireEvent.click(screen.getByRole("button", { name: "Compare" }));
+    expect(await screen.findByText(`Qloo said ${status}`)).toBeTruthy();
+    expect(screen.queryByText("Not enough shared taste data")).toBeNull();
+  });
+  it("audience profile with gender-only data renders 2 bars and no NaN", () => {
+    const { container } = render(<AudienceProfile profile={{ ...P, demographics: [{ query: { gender: { male: -0.2, female: 0.2 } } }] }} />);
+    expect(screen.getAllByTestId("demo-bar")).toHaveLength(2);
+    expect(container.textContent).not.toMatch(/NaN/);
   });
   it("artist compare shows error-status envelope message", async () => {
     vi.spyOn(client, "callQlooTool").mockResolvedValue({ envelope: { status: "error", summary: "Qloo is down" }, cached: false, stale: false });

@@ -39,7 +39,7 @@ export type ThisWeek =
   | { status: "unavailable"; reason: "no_key" | "capped" | "error" | "no_window"; message: string };
 export interface ArtistProfile {
   demographics: unknown[];
-  tags: Array<{ name: string; affinity: number | null }>;
+  tags: Array<{ name: string; affinity: number }>;
   trends: Array<{ date: string; value: number }>;
   refs: EvidenceRef[];
   warnings: DataWarning[];
