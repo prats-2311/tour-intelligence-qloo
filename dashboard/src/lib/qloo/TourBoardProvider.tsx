@@ -3,9 +3,9 @@ import { SAMPLE_ACCENT_ORDER } from "./cityAccent";
 import { isSampleMode, streamTourBoard } from "./client";
 import { defaultShortlist } from "./ranking";
 import { boardReducer, initialBoard, type BoardState } from "./tourBoardReducer";
-import type { TourBrief } from "./types";
+import type { StrategistContext, TourBrief } from "./types";
 
-type Ctx = { state: BoardState; shortlist: string[]; accentOrder: string[]; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: "default" | "long" }): void; abort(): void; reset(): void };
+type Ctx = { state: BoardState; strategistContext: StrategistContext; shortlist: string[]; accentOrder: string[]; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: "default" | "long" }): void; abort(): void; reset(): void };
 const TourBoardContext = createContext<Ctx | null>(null);
 
 export function TourBoardProvider({ children, sampleDelayMs }: { children: ReactNode; sampleDelayMs?: number }) {
@@ -55,7 +55,20 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
     setShortlist(shortlist.includes(id) ? shortlist.filter((x) => x !== id) : [...shortlist, id]);
   }, [shortlist, setShortlist]);
 
-  const value = useMemo(() => ({ state, shortlist, accentOrder, setShortlist, toggleShortlist, run, abort, reset }), [state, shortlist, accentOrder, setShortlist, toggleShortlist, run, abort, reset]);
+  const strategistContext = useMemo<StrategistContext>(() => {
+    const ctx: StrategistContext = {};
+    if (state.artist) ctx.artist = { name: state.artist.name, entityId: state.artist.entityId };
+    if (state.brief?.regions) ctx.regions = state.brief.regions;
+    if (state.cities.length > 0) {
+      ctx.cities = state.cities.slice(0, 20).map((c) => ({
+        id: c.id, name: c.name, country: c.country, verdict: c.verdict,
+        fanHeat: c.fanHeat?.value ?? null, activation: c.activation?.value ?? null, winnability: c.winnability?.value ?? null,
+      }));
+    }
+    return ctx;
+  }, [state.artist, state.brief?.regions, state.cities]);
+
+  const value = useMemo(() => ({ state, strategistContext, shortlist, accentOrder, setShortlist, toggleShortlist, run, abort, reset }), [state, strategistContext, shortlist, accentOrder, setShortlist, toggleShortlist, run, abort, reset]);
   return <TourBoardContext.Provider value={value}>{children}</TourBoardContext.Provider>;
 }
 

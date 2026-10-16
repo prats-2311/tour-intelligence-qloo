@@ -5,7 +5,7 @@ import { useIsDesktop } from "@/lib/useMediaQuery";
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-export function Sheet({ open, onClose, title, children, side }: { open: boolean; onClose: () => void; title: string; children: ReactNode; side?: "bottom" | "right" }) {
+export function Sheet({ open, onClose, title, children, side, full }: { open: boolean; onClose: () => void; title: string; children: ReactNode; side?: "bottom" | "right"; full?: boolean }) {
   const isDesktop = useIsDesktop();
   const reduce = useReducedMotion();
   const right = (side ?? (isDesktop ? "right" : "bottom")) === "right";
@@ -73,7 +73,9 @@ export function Sheet({ open, onClose, title, children, side }: { open: boolean;
             className={
               right
                 ? "absolute inset-y-0 right-0 flex w-[400px] max-w-full flex-col overflow-y-auto bg-paper p-6 outline-none"
-                : "absolute inset-x-0 bottom-0 flex max-h-[85vh] flex-col overflow-y-auto rounded-t-[18px] bg-paper p-4 outline-none"
+                : full
+                  ? "absolute inset-0 flex flex-col overflow-hidden bg-paper p-4 pt-[max(1rem,env(safe-area-inset-top))] outline-none"
+                  : "absolute inset-x-0 bottom-0 flex max-h-[85vh] flex-col overflow-y-auto rounded-t-[18px] bg-paper p-4 outline-none"
             }
           >
             {!right && <span className="mx-auto mb-3 h-1 w-9 rounded-full bg-canvas-line" aria-hidden />}

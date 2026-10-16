@@ -2,6 +2,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import { AppShell } from "./AppShell";
 
 vi.mock("@/lib/campaignContext", () => ({ useCampaignContext: () => ({ campaigns: [], activeCampaignId: "x", activeCampaign: undefined, setActiveCampaignId() {}, refresh() {} }) }));
@@ -13,7 +14,7 @@ afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 describe("AppShell", () => {
   it("mobile renders a bottom tab bar with four tabs and no sidebar", () => {
     mm(false);
-    render(<MemoryRouter initialEntries={["/tours/board"]}><AppShell><p>child</p></AppShell></MemoryRouter>);
+    render(<MemoryRouter initialEntries={["/tours/board"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
     const nav = screen.getByRole("navigation", { name: "Primary" });
     expect(nav.querySelectorAll("a")).toHaveLength(4);
     expect(screen.getByRole("link", { name: /Tours/ }).getAttribute("aria-current")).toBe("page");
@@ -21,13 +22,13 @@ describe("AppShell", () => {
   });
   it("desktop renders the top bar wordmark and links", () => {
     mm(true);
-    render(<MemoryRouter initialEntries={["/"]}><AppShell><p>child</p></AppShell></MemoryRouter>);
+    render(<MemoryRouter initialEntries={["/"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
     expect(screen.getByText("Tour Intelligence")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Insights" })).toBeTruthy();
   });
   it("campaign routes expose Compare and Add Cities links", () => {
     mm(true);
-    render(<MemoryRouter initialEntries={["/campaign"]}><AppShell><p>child</p></AppShell></MemoryRouter>);
+    render(<MemoryRouter initialEntries={["/campaign"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
     const compare = screen.getByRole("link", { name: /Compare/ });
     expect(compare.getAttribute("href")).toBe("/compare");
     expect(compare.getAttribute("data-tour")).toBe("compare-cities-nav");
@@ -35,7 +36,7 @@ describe("AppShell", () => {
   });
   it("switcher toggle reports aria-expanded and closes on Escape", () => {
     mm(true);
-    render(<MemoryRouter initialEntries={["/campaign"]}><AppShell><p>child</p></AppShell></MemoryRouter>);
+    render(<MemoryRouter initialEntries={["/campaign"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
     const btn = screen.getByRole("button", { name: /Active Campaign/ });
     expect(btn.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(btn);

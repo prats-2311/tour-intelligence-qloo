@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Clapperboard, Compass, Route, ChartColumn, ChevronsUpDown, Plus, Check, HelpCircle, ArrowLeftRight, Globe2 } from "lucide-react";
 import { useCampaignContext } from "../lib/campaignContext";
 import { useIsDesktop } from "@/lib/useMediaQuery";
+import { StrategistDock, StrategistFab, StrategistToggle, showsStrategist, useStrategistDock } from "./strategist/StrategistLauncher";
 import { TourGuide, hasSeenTour } from "./ui/TourGuide";
 
 const NAV_ITEMS = [
@@ -109,6 +110,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
   const [tourActive, setTourActive] = useState(false);
+  const dock = useStrategistDock();
+  const strategistRoute = showsStrategist(location.pathname);
+  const docked = isDesktop && strategistRoute && dock.open;
   const inCampaign = CAMPAIGN_PREFIXES.some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`));
 
   function replayTour() {
@@ -183,7 +187,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               ))}
             </nav>
           </div>
-          {campaignTools}
+          <div className="flex items-center gap-2">
+            {strategistRoute && <StrategistToggle open={dock.open} onToggle={() => dock.setOpen(!dock.open)} />}
+            {campaignTools}
+          </div>
         </header>
       ) : (
         <nav
@@ -216,10 +223,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
       )}
 
-      <main className={`min-w-0 flex-1 px-4 py-6 lg:px-8 lg:py-8 ${isDesktop ? "" : "pb-[calc(5rem+env(safe-area-inset-bottom))]"}`}>
+      <main className={`min-w-0 flex-1 px-4 py-6 lg:px-8 lg:py-8 ${isDesktop ? "" : "pb-[calc(5rem+env(safe-area-inset-bottom))]"} ${docked ? "lg:pr-[380px]" : ""}`}>
         {!isDesktop && campaignTools && <div className="mb-4">{campaignTools}</div>}
         {children}
       </main>
+
+      {strategistRoute && !isDesktop && <StrategistFab />}
+      {docked && <StrategistDock onClose={() => dock.setOpen(false)} />}
     </div>
   );
 }
