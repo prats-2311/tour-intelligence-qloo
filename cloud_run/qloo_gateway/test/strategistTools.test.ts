@@ -59,4 +59,12 @@ describe("strategist tools", () => {
     expect(await executeTool({ name: "get_city_playbook", args: { artist: "A", artistEntityId: "Q1", city: "<x>", country: "MX" } }, deps(okQloo()))).toMatchObject({ status: "rejected", summary: "Unsafe argument: city" });
     expect(await executeTool({ name: "get_city_playbook", args: { artist: "A", artistEntityId: "bad id!", city: "Lima", country: "PE" } }, deps(okQloo()))).toMatchObject({ summary: "Unsafe argument: artistEntityId" });
   });
+  it("every required parameter of every declaration exists in its properties", () => {
+    const check = (schema: Record<string, unknown>, where: string) => {
+      const props = (schema.properties ?? {}) as Record<string, Record<string, unknown>>;
+      for (const r of (schema.required ?? []) as string[]) expect(Object.keys(props), `${where}.${r}`).toContain(r);
+      for (const [k, v] of Object.entries(props)) if (v.type === "OBJECT") check(v, `${where}.${k}`);
+    };
+    for (const d of STRATEGIST_DECLARATIONS) check(d.parameters, d.name);
+  });
 });

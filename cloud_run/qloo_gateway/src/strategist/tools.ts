@@ -48,7 +48,7 @@ export const STRATEGIST_DECLARATIONS: FunctionDeclaration[] = [
       include_tags: list("Tags results must have", 10), exclude_tags: list("Tags results must not have", 10),
     }, ["options", "option_type"]),
   decl("qloo_compare_audiences", "Compare the audiences of two groups of entities and report how much they overlap.",
-    { group_a: list("First group of entities", 10), group_b: list("Second group of entities", 10), target_type: str("Type of entity to compare on", INSIGHTS_TYPES), limit }, ["group_a", "group_b", "signal_tags", "include_tags", "exclude_tags"]),
+    { group_a: list("First group of entities", 10), group_b: list("Second group of entities", 10), target_type: str("Type of entity to compare on", INSIGHTS_TYPES), limit }, ["group_a", "group_b"]),
   decl("qloo_find_tags", "Search Qloo taste tags by keyword or meaning.",
     { query: str("Search text"), semantic: bool("Match by meaning instead of keyword"), limit }, ["query"]),
   decl("get_city_playbook", "Build the activation playbook evidence (sponsors, merch tags, promo zones, local moment, venues, co-billing, talent) for the artist in one city.",

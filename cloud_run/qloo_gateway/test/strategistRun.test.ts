@@ -43,8 +43,33 @@ describe("runStrategist", () => {
     const events = await collect(runStrategist(input, deps(generate)));
     expect(events.filter((e) => e.type === "strategist_tool_call").length).toBeLessThanOrEqual(STRATEGIST_LIMITS.toolCalls);
     expect(events.find((e) => e.type === "strategist_message")).toMatchObject({ stoppedEarly: true });
-    const last = generate.mock.calls.at(-1)![1] as { tools: Array<{ functionDeclarations: unknown[] }> };
-    expect(last.tools[0]!.functionDeclarations).toEqual([]);
+    const last = generate.mock.calls.at(-1)![1] as Record<string, unknown>;
+    expect(last).not.toHaveProperty("tools");
+    expect(last.toolConfig).toEqual({ functionCallingConfig: { mode: "NONE" } });
+    expect(events.at(-1)).toMatchObject({ type: "done", summary: { rounds: 4, forcedFinal: true } });
+  });
+  it("caps tool calls within one round and answers the skipped calls as not run", async () => {
+    const eight: GeminiResponse = { candidates: [{ content: { parts: Array.from({ length: 8 }, () => ({ functionCall: { name: "qloo_recommend", args: { target_type: "brand" } } })) } }] };
+    const generate = script(eight, text("Done."));
+    const q = qloo();
+    const events = await collect(runStrategist(input, deps(generate, q)));
+    expect(events.filter((e) => e.type === "strategist_tool_call")).toHaveLength(6);
+    expect(q.call).toHaveBeenCalledTimes(6);
+    const second = generate.mock.calls[1]![1] as { contents: Array<{ parts: Array<{ functionResponse?: { response: { summary: string } } }> }> };
+    const resp = second.contents.at(-1)!.parts;
+    expect(resp).toHaveLength(8);
+    expect(resp.slice(6).map((p) => p.functionResponse!.response.summary)).toEqual(["Tool-call limit reached", "Tool-call limit reached"]);
+    expect(events.at(-1)).toMatchObject({ type: "done", summary: { toolCalls: 6 } });
+  });
+  it("logs only the error name on an internal failure", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const signal = { get aborted(): boolean { throw new TypeError("secret payload"); } } as unknown as AbortSignal;
+    const bad = { ...deps(script(text("x"))), signal };
+    const events = await collect(runStrategist(input, bad));
+    expect(events[0]).toMatchObject({ type: "strategist_error", code: "INTERNAL" });
+    expect(warn).toHaveBeenCalledWith("[strategist] internal:", "TypeError");
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("secret");
+    warn.mockRestore();
   });
   it("falls back to the tool summaries when the forced final answer is empty", async () => {
     const many = Array.from({ length: 4 }, () => call("qloo_recommend", { target_type: "brand" }));
@@ -60,7 +85,7 @@ describe("runStrategist", () => {
   });
   it("reports UNAVAILABLE instead of a blank answer when the turn is empty (e.g. safety-blocked)", async () => {
     const events = await collect(runStrategist(input, deps(script({ candidates: [{ content: { parts: [] } }] }))));
-    expect(events).toEqual([{ type: "strategist_error", code: "UNAVAILABLE", message: "Strategist unavailable right now" }, { type: "done", summary: { rounds: 1, toolCalls: 0 } }]);
+    expect(events).toEqual([{ type: "strategist_error", code: "UNAVAILABLE", message: "Strategist unavailable right now" }, { type: "done", summary: { rounds: 1, toolCalls: 0, forcedFinal: false } }]);
   });
   it("reports UNAVAILABLE when every model fails", async () => {
     const events = await collect(runStrategist(input, deps(vi.fn(async () => { throw new Error("503"); }))));
@@ -68,7 +93,7 @@ describe("runStrategist", () => {
   });
   it("reports CAPPED when the Gemini ceiling is spent", async () => {
     const events = await collect(runStrategist(input, deps(script(text("x")), qloo(), 0)));
-    expect(events).toEqual([{ type: "strategist_error", code: "CAPPED", message: "Strategist limit reached — try again tomorrow or use the showcase" }, { type: "done", summary: { rounds: 0, toolCalls: 0 } }]);
+    expect(events).toEqual([{ type: "strategist_error", code: "CAPPED", message: "Strategist limit reached — try again tomorrow or use the showcase" }, { type: "done", summary: { rounds: 0, toolCalls: 0, forcedFinal: false } }]);
   });
   it("reports UNAVAILABLE without a generate function and ABORTED on an aborted signal", async () => {
     expect((await collect(runStrategist(input, { ...deps(script()), generate: undefined })))[0]).toMatchObject({ type: "strategist_error", code: "UNAVAILABLE" });

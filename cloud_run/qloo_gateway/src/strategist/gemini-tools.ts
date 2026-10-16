@@ -8,11 +8,13 @@ export async function generateTurn(
   req: { system: string; contents: Array<{ role: "user" | "model"; parts: GeminiPart[] }>; tools: FunctionDeclaration[] },
   opts: { beforeAttempt?: () => void | Promise<void> } = {},
 ): Promise<TurnResult> {
+  // No declarations means a forced text answer: omit tools (Vertex may reject an empty list) and set mode NONE.
+  const forceText = req.tools.length === 0;
   const body = {
     systemInstruction: { parts: [{ text: req.system }] },
     contents: req.contents,
-    tools: [{ functionDeclarations: req.tools }],
-    toolConfig: { functionCallingConfig: { mode: "AUTO" } },
+    ...(forceText ? {} : { tools: [{ functionDeclarations: req.tools }] }),
+    toolConfig: { functionCallingConfig: { mode: forceText ? "NONE" : "AUTO" } },
     generationConfig: { temperature: 0.3, thinkingConfig: { includeThoughts: true } },
   };
   let last: unknown = new Error("no model configured");

@@ -31,10 +31,11 @@ function systemPrompt(context: StrategistContext): string {
 export async function* runStrategist(input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, deps: StrategistDeps): AsyncGenerator<GatewayEvent> {
   let rounds = 0;
   let toolCalls = 0;
+  let forcedFinal = false;
   const collected: unknown[] = [];
   const summaries: string[] = [];
   const err = (code: "CAPPED" | "UNAVAILABLE" | "ABORTED" | "INTERNAL", message: string): GatewayEvent[] => [
-    { type: "strategist_error", code, message }, { type: "done", summary: { rounds, toolCalls } },
+    { type: "strategist_error", code, message }, { type: "done", summary: { rounds, toolCalls, forcedFinal } },
   ];
   const aborted = () => deps.signal?.aborted === true;
   if (!deps.generate) { yield* err("UNAVAILABLE", UNAVAILABLE); return; }
@@ -45,7 +46,7 @@ export async function* runStrategist(input: { messages: ChatMessage[]; context: 
   const turn = async (tools: typeof STRATEGIST_DECLARATIONS): Promise<TurnResult> => {
     try {
       const t = await generateTurn(generate, deps.models, { system, contents, tools }, { beforeAttempt: reserveAttempt(deps.ceiling, input.sessionId) });
-      rounds += 1;
+      if (!forcedFinal) rounds += 1;
       return t;
     } catch (e) {
       throw e instanceof BudgetExceededError ? e : new ModelUnavailable();
@@ -63,7 +64,7 @@ export async function* runStrategist(input: { messages: ChatMessage[]; context: 
       if (t.calls.length === 0) {
         if (!t.text.trim()) { yield* err("UNAVAILABLE", UNAVAILABLE); return; }
         yield message(t.text, t.model, false);
-        yield { type: "done", summary: { rounds, toolCalls } };
+        yield { type: "done", summary: { rounds, toolCalls, forcedFinal } };
         return;
       }
       const responses: GeminiPart[] = [];
@@ -85,14 +86,15 @@ export async function* runStrategist(input: { messages: ChatMessage[]; context: 
       contents.push({ role: "model", parts: t.parts }, { role: "user", parts: responses });
     }
     if (aborted()) { yield* err("ABORTED", "client disconnected"); return; }
+    forcedFinal = true;
     const last = await turn([]);
     const text = last.text.trim() || `I stopped after ${STRATEGIST_LIMITS.toolCalls} tool calls — here is what I found.\n${summaries.map((s) => `- ${s}`).join("\n")}`;
     yield message(text, last.model, true);
-    yield { type: "done", summary: { rounds, toolCalls } };
+    yield { type: "done", summary: { rounds, toolCalls, forcedFinal } };
   } catch (e) {
     if (e instanceof BudgetExceededError) yield* err("CAPPED", CAPPED);
     else if (aborted()) yield* err("ABORTED", "client disconnected");
     else if (e instanceof ModelUnavailable) yield* err("UNAVAILABLE", UNAVAILABLE);
-    else yield* err("INTERNAL", "Strategist failed");
+    else { console.warn("[strategist] internal:", (e as Error)?.name); yield* err("INTERNAL", "Strategist failed"); }
   }
 }
