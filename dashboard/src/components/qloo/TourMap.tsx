@@ -92,7 +92,7 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
     // loaded leaves a usable map, so it must not raise the overlay (R31).
     map.on("style.load", () => { styleSeen = true; });
     map.on("error", () => { if (!styleSeen) setTilesFailed(true); });
-    const watchdog = setTimeout(() => { if (!map.isStyleLoaded()) setTilesFailed(true); }, 8000);
+    const watchdog = setTimeout(() => { if (!styleSeen) setTilesFailed(true); }, 8000);
     map.on("idle", () => setTilesFailed(false));
     const refit = () => {
       const b = boundsFor(citiesRef.current);

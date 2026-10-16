@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { mountQlooProxy } from "./qlooProxy.js";
 import { mountTours, statusFromCallTool } from "./tours.js";
+import { requireOrchestratorJob } from "./requireOrchestratorJob.js";
 import { NOT_CONFIGURED, requireTourDataApi } from "./requireTourDataApi.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -14,8 +15,9 @@ const TOUR_DATA_API = process.env.TOUR_DATA_API_URL || "";
 const DELIGHT_RENDERER = process.env.DELIGHT_RENDERER_URL || "";
 const QLOO_GATEWAY = process.env.QLOO_GATEWAY_URL;
 const PORT = process.env.PORT || 8787;
-const RUN_JOBS_API =
-  "https://run.googleapis.com/v2/projects/liifecalling-academy/locations/us-central1/jobs/tour-campaign-orchestrator:run";
+// Full Cloud Run Admin API ":run" URL of THIS project's orchestrator job. No default: unset means
+// generate-briefs answers 503 rather than triggering the original hackathon job.
+const ORCHESTRATOR_JOB_URL = process.env.ORCHESTRATOR_JOB_URL || "";
 
 // On Cloud Run, fetch an ID token from the instance metadata server using the
 // service's own attached identity — no credential file needed. Locally (no
@@ -766,7 +768,7 @@ app.get("/api/campaigns/:campaignId/cities/:cityId", async (req, res) => {
   }
 });
 
-app.post("/api/campaigns/:campaignId/generate-briefs", async (req, res) => {
+app.post("/api/campaigns/:campaignId/generate-briefs", requireOrchestratorJob(ORCHESTRATOR_JOB_URL), async (req, res) => {
   try {
     const { campaignId } = req.params;
     if (isGenerationInFlight(campaignId)) {
@@ -777,7 +779,7 @@ app.post("/api/campaigns/:campaignId/generate-briefs", async (req, res) => {
     // execution has *started*, not once it finishes (real orchestration takes
     // several minutes per city) — so this responds immediately and the
     // dashboard polls the campaign overview to watch Pending flip to Final.
-    const runRes = await fetch(RUN_JOBS_API, {
+    const runRes = await fetch(ORCHESTRATOR_JOB_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${await getAccessToken()}`,

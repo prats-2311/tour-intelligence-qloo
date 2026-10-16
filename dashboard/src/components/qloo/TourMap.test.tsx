@@ -8,11 +8,12 @@ const maps: FakeMap[] = [];
 class FakeMap {
   handlers = new Map<string, Handler[]>();
   styleLoaded = false;
+  tilesPending = false; // MapLibre reports isStyleLoaded() false while tiles are still loading
   constructor() { maps.push(this); }
   on(ev: string, h: Handler) { this.handlers.set(ev, [...(this.handlers.get(ev) ?? []), h]); return this; }
   once(ev: string, h: Handler) { return this.on(ev, h); }
   emit(ev: string, e?: unknown) { if (ev === "style.load") this.styleLoaded = true; (this.handlers.get(ev) ?? []).forEach((h) => h(e)); }
-  isStyleLoaded() { return this.styleLoaded; }
+  isStyleLoaded() { return this.styleLoaded && !this.tilesPending; }
   getStyle() { return { layers: [] }; } setLayoutProperty() {} setPaintProperty() {}
   resize() {} fitBounds() {} remove() {} getSource() { return undefined; } addSource() {} addLayer() {}
 }
@@ -54,6 +55,16 @@ describe("TourMap", () => {
       act(() => { vi.advanceTimersByTime(8000); });
       expect(screen.getByText("Map tiles unavailable")).toBeTruthy();
       act(() => { maps[0]!.emit("style.load"); maps[0]!.emit("load"); });
+      expect(screen.queryByText("Map tiles unavailable")).toBeNull();
+    } finally { vi.useRealTimers(); }
+  });
+  it("does not flag the map when the style loaded but tiles are still slow at 8 seconds", async () => {
+    vi.useFakeTimers();
+    try {
+      const { default: TourMap } = await import("./TourMap");
+      render(<TourMap cities={SAMPLE_CITIES.slice(0, 2)} onSelect={() => {}} />);
+      maps[0]!.tilesPending = true;
+      act(() => { maps[0]!.emit("style.load"); vi.advanceTimersByTime(8000); });
       expect(screen.queryByText("Map tiles unavailable")).toBeNull();
     } finally { vi.useRealTimers(); }
   });
