@@ -356,6 +356,18 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 4. **Build:** scaffold from the chosen Stitch screens (`stitch-build:react-components` / `shadcn-ui`), finish with Sonnet agents applying `frontend-design`, `ui-ux-pro-max`, `taste-skill`, `dataviz`, and `dashboard/CLAUDE.md`.
 5. **Verify:** Playwright screenshots at 375/1280 compared against the approved mockups; `design:accessibility-review`; reduced-motion check.
 
+**taste-skill suite (github.com/Leonxlnx/taste-skill, latest; installed plugin is older — agents use the fresh copy until updated):**
+| Skill | Use |
+|---|---|
+| `taste-skill` (v2, design-taste-frontend) | Landing-page art direction from its researched library; its `references/tells.md` and `scripts/lint.mjs` are a **mandatory gate** on every screen |
+| `redesign-skill` | Audit-first upgrade of the existing Premiere Noir app screens (Tour Board, City Playbook, Insights) |
+| `soft-skill` | Agency-grade spacing, shadow, card and motion polish |
+| `stitch-skill` | DESIGN.md for Stitch generation (step 1) |
+| `brutalist-skill` | One competing variant direction for the Taste Insights dashboard |
+| `output-skill` | Loaded by every UI implementer: complete code, no placeholders |
+| `brandkit` | Devpost thumbnail / gallery brand board |
+Not used: `gpt-tasteskill` (scroll-GSAP marketing pages), `minimalist-skill` (conflicts with the committed dark identity).
+
 **Anti-"AI look" rules (acceptance criteria for every screen):**
 - One committed identity, not defaults: Premiere Noir's marquee-meets-call-sheet language (Fraunces display + JetBrains Mono labels + Inter body). No stock shadcn look, no purple/indigo gradients, no generic glassmorphism, no emoji-as-icons, no "centered hero + three feature cards".
 - Speak the touring industry's language in layout and copy: advance sheets, routing boards, boxscores, settlement-style tables, tour-poster key art — not generic SaaS dashboards. Microcopy written for promoters ("Hold", "Avails", "Market heat"), never marketing filler.
