@@ -46,6 +46,7 @@ def stream_events(path: str, *, method: str = "GET", params: dict | None = None,
         with ctx as resp:
             if resp.status_code != 200:
                 raise GatewayError(_UNAVAILABLE)
+            resp.encoding = "utf-8"  # text/event-stream has no charset; requests would guess latin-1
             for line in resp.iter_lines(decode_unicode=True):
                 if not line or not line.startswith("data:"):
                     continue

@@ -12,15 +12,16 @@ import requests  # noqa: F401  (tests patch taste_tools.requests.post/get; same 
 
 from gateway import GatewayError, call_tool, stream_events
 
-_NAME = re.compile(r"^[\w\s'.,&()-]{1,100}$")
+_NAME = re.compile(r"[\w '.,&()-]{1,100}")
 _INTEGRITY = "Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals."
 _FORMULA = "lift = audience overlap × local affinity"
 
 
 def _check_name(label: str, value) -> str:
-    if not isinstance(value, str) or not _NAME.match(value):
+    stripped = value.strip() if isinstance(value, str) else None
+    if stripped is None or not _NAME.fullmatch(stripped):
         raise ValueError(f"{label} must be 1-100 characters: letters, digits, spaces and '.,&()-")
-    return value
+    return stripped
 
 
 def _check_place(city, country) -> None:
@@ -82,6 +83,7 @@ def find_tour_markets(artist: str, regions: list[str], max_stops: int = 8, *, se
     cities = []
     requests_made = 0
     error = None
+    finished = False
     for ev in events:
         t = ev.get("type")
         if t == "tool_result":
@@ -92,12 +94,15 @@ def find_tour_markets(artist: str, regions: list[str], max_stops: int = 8, *, se
                 "name": c.get("name"), "country": c.get("country"), "verdict": c.get("verdict"),
                 "fan_heat": _val(c.get("fanHeat")), "activation": _val(c.get("activation")), "winnability": _val(c.get("winnability")),
             })
+        elif t == "done":
+            finished = True
         elif t == "error":
             error = ev
+            finished = True
     if error and not cities and error.get("code") != "BUDGET":
         return {"status": "error", "message": "Qloo gateway could not score markets"}
     return {
-        "status": "partial" if error else "ok",
+        "status": "ok" if finished and not error else "partial",
         "artist": {"id": who["id"], "name": who["name"]},
         "cities": cities[:max_stops],
         "qloo_requests": requests_made,

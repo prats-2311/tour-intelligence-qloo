@@ -25,6 +25,8 @@ control does.
 
 from __future__ import annotations
 
+import contextvars
+import hashlib
 import os
 import subprocess
 import sys
@@ -35,6 +37,7 @@ from uuid import uuid4
 
 import requests
 from mcp.server.mcpserver import MCPServer
+from starlette.responses import JSONResponse
 
 # Load sibling modules relative to this file, regardless of cwd or how main was imported.
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -43,10 +46,17 @@ if _HERE not in sys.path:
 
 import taste_tools  # noqa: E402
 from gateway import gateway_url  # noqa: E402
+from ratelimit import SlidingWindow  # noqa: E402
+
+# Public demo mode: only the five taste tools, per-IP rate limit and gateway budget.
+PUBLIC = os.environ.get("MCP_PUBLIC") == "1"
+PUBLIC_MAX_REGIONS = 2
+LIMITER = SlidingWindow(limit=30, window_s=600)
+_REQUEST_IP: contextvars.ContextVar[str] = contextvars.ContextVar("request_ip", default="unknown")
 
 # No default URL: the original Google-hackathon service must never be hit by accident.
 TOUR_DATA_API = os.environ.get("TOUR_DATA_API_URL", "")
-if not TOUR_DATA_API:
+if not PUBLIC and not TOUR_DATA_API:
     raise RuntimeError("TOUR_DATA_API_URL is not set; refusing to start without this project's tour_data_api URL")
 _METADATA_SA_BASE = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default"
 
@@ -95,31 +105,36 @@ def _post(path: str, payload: dict) -> dict:
     return resp.json()
 
 
-@mcp.tool()
+def _private_tool(fn):
+    """Register a campaign tool; skipped in public mode (returns fn unchanged either way)."""
+    return fn if PUBLIC else mcp.tool()(fn)
+
+
+@_private_tool
 def list_campaigns() -> dict:
     """List every tour campaign: title, genre, campaign type, and status."""
     return _get("/campaigns_list")
 
 
-@mcp.tool()
+@_private_tool
 def get_campaign(campaign_id: str) -> dict:
     """Get one campaign's title, genre, campaign type, talent roster, and status."""
     return _get("/campaigns", {"campaign_id": campaign_id})
 
 
-@mcp.tool()
+@_private_tool
 def get_campaign_stops(campaign_id: str) -> dict:
     """List a campaign's city stops in sequence order, with their dates."""
     return _get("/campaign_stops", {"campaign_id": campaign_id})
 
 
-@mcp.tool()
+@_private_tool
 def get_culture_notes(city_id: str) -> dict:
     """Get a city's press/fan etiquette guidance: greeting style, dos and donts, humor boundaries."""
     return _get("/culture_notes", {"city_id": city_id})
 
 
-@mcp.tool()
+@_private_tool
 def get_fan_signals(city_id: str, genre: str = "", artist_type: str = "") -> dict:
     """Get a city's raw fan-enthusiasm signal inputs, optionally scoped to a genre/artist type."""
     params: dict[str, str] = {"city_id": city_id}
@@ -130,13 +145,13 @@ def get_fan_signals(city_id: str, genre: str = "", artist_type: str = "") -> dic
     return _get("/fan_signals", params)
 
 
-@mcp.tool()
+@_private_tool
 def get_local_delight(city_id: str) -> dict:
     """Get a city's local delight content: phrases, cultural references, beloved icons."""
     return _get("/local_delight", {"city_id": city_id})
 
 
-@mcp.tool()
+@_private_tool
 def get_city_briefs(campaign_id: str, city_id: str = "") -> dict:
     """Get talent briefs (pending or finalized) for a campaign, optionally scoped to one city."""
     params: dict[str, str] = {"campaign_id": campaign_id}
@@ -145,7 +160,7 @@ def get_city_briefs(campaign_id: str, city_id: str = "") -> dict:
     return _get("/city_briefs", params)
 
 
-@mcp.tool()
+@_private_tool
 def get_stop_safety_checklist(campaign_id: str, city_id: str) -> dict:
     """Get the planner-filled day-of-show safety checklist for one campaign stop:
     showstop manager assignment/name and venue capacity confirmation. Not
@@ -153,15 +168,27 @@ def get_stop_safety_checklist(campaign_id: str, city_id: str) -> dict:
     return _get("/stop_safety_checklist", {"campaign_id": campaign_id, "city_id": city_id})
 
 
-@mcp.tool()
+@_private_tool
 def rank_cities(cities: list[dict]) -> dict:
     """Rank a list of cities by enthusiasm score and importance tier. Pure compute -- no data lookup, no side effects."""
     return _post("/rank_cities", {"cities": cities})
 
 
+def public_session_id(ip: str) -> str:
+    """Stable per-IP session id (hashed, so the IP never reaches the gateway)."""
+    return "mcp-public-" + hashlib.sha256(ip.encode()).hexdigest()[:16]
+
+
+def _request_ip() -> str:
+    return _REQUEST_IP.get()
+
+
 def _gw() -> dict:
-    """Per-call gateway kwargs: a private session id and an ID-token provider."""
-    return {"session_id": f"mcp-{uuid4().hex[:16]}", "token_fn": lambda: _identity_token(gateway_url())}
+    """Per-call gateway kwargs: a session id and an ID-token provider.
+    Private mode: a fresh id per call. Public mode: one id per client IP, so the
+    gateway's per-session budget applies per IP."""
+    sid = public_session_id(_request_ip()) if PUBLIC else f"mcp-{uuid4().hex[:16]}"
+    return {"session_id": sid, "token_fn": lambda: _identity_token(gateway_url())}
 
 
 @mcp.tool()
@@ -170,7 +197,8 @@ def find_tour_markets(artist: str, regions: list[str], max_stops: int = 8) -> di
     taste data. Returns cities with a verdict plus fan heat, activation and
     winnability scores. Affinity signal only, not a ticket forecast. If the artist
     name is ambiguous, returns candidates to choose from instead."""
-    return taste_tools.find_tour_markets(artist, regions, max_stops, **_gw())
+    extra = {"max_regions": PUBLIC_MAX_REGIONS} if PUBLIC else {}
+    return taste_tools.find_tour_markets(artist, regions, max_stops, **extra, **_gw())
 
 
 @mcp.tool()
@@ -205,3 +233,43 @@ def get_local_moment(artist: str, city: str, country: str) -> dict:
 # would break under Cloud Run's stateless autoscaling, which can route
 # consecutive requests to different instances with no shared session state.
 app = mcp.streamable_http_app(host="0.0.0.0", stateless_http=True)
+
+
+def registered_tool_names() -> list[str]:
+    import asyncio
+    return [t.name for t in asyncio.run(mcp.list_tools())]
+
+
+def client_ip(scope) -> str:
+    """First X-Forwarded-For entry (Cloud Run sets it), else the socket peer."""
+    for k, v in scope.get("headers") or []:
+        if k == b"x-forwarded-for":
+            first = v.decode("latin-1").split(",")[0].strip()
+            if first:
+                return first
+    client = scope.get("client")
+    return client[0] if client else "unknown"
+
+
+class RateLimitMiddleware:
+    """Pure ASGI middleware: per-IP sliding window, 429 when exceeded."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        ip = client_ip(scope)
+        if not LIMITER.allow(ip):
+            resp = JSONResponse({"error": "Rate limit reached — try again in a few minutes"}, status_code=429)
+            return await resp(scope, receive, send)
+        token = _REQUEST_IP.set(ip)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            _REQUEST_IP.reset(token)
+
+
+if PUBLIC:
+    app.add_middleware(RateLimitMiddleware)

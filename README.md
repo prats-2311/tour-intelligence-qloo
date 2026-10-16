@@ -128,6 +128,27 @@ The five Playbooks are provisioned in Dialogflow CX (Agent Builder) from `agent_
 .venv/bin/python orchestration_driver/run_campaign.py <campaign_id>
 ```
 
+### Connect an MCP client
+
+A public, rate-limited demo MCP server exposes the five Qloo taste tools (deployed with `cloud_run/agent_mcp_server/scripts/deploy_public.sh <qloo-gateway-url>`; it prints the URL).
+
+```bash
+claude mcp add --transport http tour-intel <url>/mcp
+```
+
+Other clients: add it as a custom connector / remote MCP server with the same `<url>/mcp` (streamable HTTP, no auth).
+
+| Tool | What it does |
+| --- | --- |
+| `find_tour_markets` | Score and rank touring markets for an artist in up to 2 regions |
+| `get_city_playbook` | Compact taste playbook for one artist in one city |
+| `suggest_support_acts` | Support acts with audience overlap, local affinity and lift |
+| `rank_venues` | Rank up to 10 candidate venues by taste fit |
+| `get_local_moment` | Local events, scenes and places that fit the audience |
+
+Limits: 30 requests per 10 minutes per IP, 2 regions per board, cached results.
+Every result is an affinity signal from aggregate taste data, not a ticket forecast or a claim about individuals.
+
 ---
 
 ## Google Cloud stack
