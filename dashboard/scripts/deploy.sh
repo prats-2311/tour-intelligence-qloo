@@ -3,7 +3,7 @@
 set -euo pipefail
 PROJECT=liifecalling-academy
 REGION=us-central1
-SERVICE=tour-intel-qloo
+SERVICE="${SERVICE:-tour-intel-qloo}"
 SA=dashboard-sa@${PROJECT}.iam.gserviceaccount.com
 if [[ "$SERVICE" =~ ^tour-dashboard ]]; then echo "Refusing: tour-dashboard is the original Google-hackathon submission"; exit 1; fi
 : "${QLOO_GATEWAY_URL:?set QLOO_GATEWAY_URL to the qloo-gateway Cloud Run URL (e.g. https://qloo-gateway-602700957663.us-central1.run.app)}"

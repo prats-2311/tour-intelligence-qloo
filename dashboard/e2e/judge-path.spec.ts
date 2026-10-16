@@ -63,5 +63,10 @@ test("Without Qloo shows the generic list with the banner and no verdicts", asyn
   await page.goto("/tours/board?sample=1");
   await page.getByRole("tab", { name: "Without Qloo" }).click();
   await expect(page.getByText("Generic LLM answer — no taste evidence")).toBeVisible();
-  await expect(page.getByRole("list", { name: "Generic ranking" }).getByText("Hidden goldmine")).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Generic ranking" })).toBeVisible();
+  // Page-wide, not just inside the list: no verdict label and no map legend anywhere.
+  for (const label of ["Play", "Hidden goldmine", "De-risk", "Consider", "Skip", "Not enough data"]) {
+    await expect(page.getByText(label, { exact: true }), `verdict label "${label}"`).toHaveCount(0);
+  }
+  await expect(page.getByLabel("Map legend")).toHaveCount(0);
 });
