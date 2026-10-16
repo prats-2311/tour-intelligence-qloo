@@ -1,4 +1,4 @@
-export function NeedsInputPicker({ candidates, onPick, artist }: { candidates: Array<{ id: string; name: string; type?: string }>; onPick: (id: string, name: string) => void; artist?: string }) {
+export function NeedsInputPicker({ candidates, onPick, artist, onSearchAgain }: { candidates: Array<{ id: string; name: string; type?: string }>; onPick: (id: string, name: string) => void; artist?: string; onSearchAgain?: () => void }) {
   return (
     <section aria-labelledby="needs-input-title" className="mx-auto flex w-full max-w-xl flex-col gap-3">
       <h1 id="needs-input-title" className="font-title text-[24px] text-canvas-text">{artist ? `Which ${artist}?` : "Which artist?"}</h1>
@@ -17,6 +17,11 @@ export function NeedsInputPicker({ candidates, onPick, artist }: { candidates: A
           </li>
         ))}
       </ul>
+      {onSearchAgain && (
+        <button type="button" onClick={onSearchAgain} className="inline-flex min-h-11 w-fit items-center px-1 text-[14px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
+          Search a different artist
+        </button>
+      )}
     </section>
   );
 }

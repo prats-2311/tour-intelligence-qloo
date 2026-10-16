@@ -55,10 +55,18 @@ describe("narrate", () => {
     ]);
     expect(steps[0]!.detail).toBe("5 hotspots · degraded");
   });
-  it("ok with resultCount 0 produces 'no results'", () => {
+  it("ok with resultCount 0 is 'done', not 'no results' (gateway counts non-array results as 0)", () => {
     const steps = narrate([
       { type: "tool_call", tool: "qloo_trends", args: {}, cached: false },
       { type: "tool_result", tool: "qloo_trends", status: "ok", resultCount: 0, cacheKey: "k", stale: false },
+    ]);
+    expect(steps[0]!.status).toBe("success");
+    expect(steps[0]!.detail).toBe("done");
+  });
+  it("only status 'empty' produces 'no results'", () => {
+    const steps = narrate([
+      { type: "tool_call", tool: "qloo_trends", args: {}, cached: false },
+      { type: "tool_result", tool: "qloo_trends", status: "empty", resultCount: 0, cacheKey: "k", stale: false },
     ]);
     expect(steps[0]!.detail).toBe("no results");
   });

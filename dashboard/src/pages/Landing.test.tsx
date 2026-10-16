@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sortCities } from "@/lib/qloo/ranking";
@@ -24,10 +24,18 @@ describe("Landing", () => {
     expect(screen.getByRole("link", { name: "Try the showcase tour" }).getAttribute("href")).toBe("/tours/board?sample=1");
     expect(screen.getByRole("link", { name: "Plan your own" }).getAttribute("href")).toBe("/tours/board");
   });
-  it("labels the proof card as sample data and shows no LIVE badge", () => {
+  it("labels the proof card with the verbatim sample banner and integrity line, and shows no LIVE badge", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
-    expect(screen.getByText("Sample")).toBeTruthy();
+    const card = screen.getByRole("region", { name: "Guadalajara sample routing row" });
+    expect(within(card).getByText("Sample data — illustrative, not Qloo output")).toBeTruthy();
+    expect(within(card).getByText("Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.")).toBeTruthy();
+    expect(screen.queryByText("Affinity signal from aggregate taste data — not a ticket forecast.")).toBeNull();
     expect(screen.queryByText(/\blive\b/i)).toBeNull();
+  });
+  it("shows the fixture's winnability, never a filler", () => {
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    const card = screen.getByRole("region", { name: "Guadalajara sample routing row" });
+    expect(within(card).getByTestId("proof-winnability").textContent).toBe(String(Math.round(SAMPLE_CITIES[2]!.winnability.value!)));
   });
   it("shows the Guadalajara fragment from the sample fixture and omits the backtest link", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);

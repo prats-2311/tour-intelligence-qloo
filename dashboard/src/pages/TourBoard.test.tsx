@@ -97,11 +97,15 @@ describe("TourBoard", () => {
   it("interrupted stream keeps results and offers Retry for the same brief", async () => {
     const spy = vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
       yield { type: "resolve", entity: { entityId: "A1", name: "Ada" } };
+      yield cityEvent(2);
     });
     renderPage("/tours/board");
     fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "Ada" } });
     fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
     expect(await screen.findByText("Connection lost — results so far shown")).toBeTruthy();
+    const rows = screen.getAllByTestId("city-row");
+    expect(rows).toHaveLength(1);
+    expect(within(rows[0]!).getByText("Guadalajara")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
     expect(spy.mock.calls[1]![0]).toMatchObject({ artist: "Ada" });
@@ -215,5 +219,24 @@ describe("TourBoard", () => {
       const item = within(legend).getByText(label);
       expect(item.querySelector("[data-shape]")!.getAttribute("data-shape")).toBe(VERDICT_SHAPE[v]);
     }
+  });
+  it("needs_input picker offers 'Search a different artist' that returns to the brief with the artist kept", async () => {
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
+      yield { type: "needs_input", field: "entity", summary: "Choose", candidates: [{ id: "P1", name: "Pedro Infante" }] };
+    });
+    renderPage("/tours/board");
+    submitArtist("Pedro");
+    fireEvent.click(await screen.findByRole("button", { name: "Search a different artist" }));
+    expect((await screen.findByLabelText("Artist") as HTMLInputElement).value).toBe("Pedro");
+  });
+  it("empty state 'Try other regions' returns to the brief and keeps the artist", async () => {
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
+      yield { type: "region_empty", region: "Atlantis" };
+      yield { type: "done", summary: {} };
+    });
+    renderPage("/tours/board");
+    submitArtist("Beyoncé");
+    fireEvent.click(await screen.findByRole("button", { name: "Try other regions" }));
+    expect((await screen.findByLabelText("Artist") as HTMLInputElement).value).toBe("Beyoncé");
   });
 });

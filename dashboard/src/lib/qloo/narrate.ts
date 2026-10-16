@@ -75,7 +75,8 @@ export function narrate(events: GatewayEvent[]): LogStep[] {
           if (e.status === "empty") {
             step.detail = "no results";
           } else if (e.status === "ok" && e.resultCount === 0) {
-            step.detail = "no results";
+            // The gateway reports resultCount 0 for non-array results, so 0 is not "nothing found".
+            step.detail = "done";
           } else if (e.status === "partial" || e.status === "degraded") {
             step.detail = detailFor(e.tool, args, e.status, e.resultCount);
           } else {

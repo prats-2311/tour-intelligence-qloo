@@ -91,3 +91,26 @@ export function CityDetailSkeleton() {
     </div>
   );
 }
+
+/** Fixed-height fallback while the Tour Board chunk loads, so the page never paints blank or jumps. */
+export function TourBoardSkeleton() {
+  return (
+    <div aria-hidden="true" className="mx-auto flex h-[560px] w-full max-w-2xl flex-col gap-3 overflow-hidden">
+      <Block className="h-12 w-full" />
+      <CardBlock className="h-[88px] w-full" />
+      <CardBlock className="h-[88px] w-full" />
+      <CardBlock className="h-[88px] w-full" />
+    </div>
+  );
+}
+
+/** Fixed-height fallback while the Taste Insights chunk loads. */
+export function TasteInsightsSkeleton() {
+  return (
+    <div aria-hidden="true" className="flex h-[640px] w-full flex-col gap-4 overflow-hidden">
+      <Block className="h-10 w-64" />
+      <CardBlock className="h-[96px] w-full" />
+      <CardBlock className="h-[320px] w-full" />
+    </div>
+  );
+}

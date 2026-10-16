@@ -153,6 +153,7 @@ export default function TourBoard() {
         artist={state.brief?.artist}
         candidates={state.needsInput.candidates}
         onPick={(id) => { if (state.brief) run({ ...state.brief, artistEntityId: id }, { sample: state.source === "sample" }); }}
+        onSearchAgain={newBrief}
       />
     );
   }
@@ -208,7 +209,7 @@ export default function TourBoard() {
           <div className="flex flex-col gap-0.5 opacity-40" aria-hidden>
             {[0, 1, 2].map((i) => <div key={i} className="h-[72px] rounded-[10px] border border-dashed border-canvas-muted" />)}
           </div>
-          <button type="button" onClick={reset} className={secondaryBtn}>Try other regions</button>
+          <button type="button" onClick={newBrief} className={secondaryBtn}>Try other regions</button>
         </section>
       )}
 

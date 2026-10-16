@@ -2,7 +2,9 @@ import { lazy, Suspense, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { DualBars } from "@/components/qloo/DualBars";
+import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
+import { INTEGRITY_LINE } from "@/lib/qloo/labels";
 import { ordinal, sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { useIsDesktop } from "@/lib/useMediaQuery";
@@ -28,7 +30,7 @@ function ProofCard() {
             <h2 className="font-title text-[20px] leading-tight text-bone lg:text-[22px]">{GDL.name}</h2>
             <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-canvas-muted">{GDL.country}</span>
           </div>
-          <span className="mt-1 block font-mono text-[11px] uppercase tracking-[0.08em] text-canvas-muted">Sample</span>
+          <div className="mt-2"><SampleBanner compact /></div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
           <motion.div
@@ -38,11 +40,12 @@ function ProofCard() {
           >
             <VerdictChip verdict={GDL.verdict} />
           </motion.div>
-          <span className="font-mono text-[28px] font-bold leading-none text-canvas-text tabular lg:text-4xl">{Math.round(GDL.winnability.value ?? 0)}</span>
+          <span data-testid="proof-winnability" className="font-mono text-[28px] font-bold leading-none text-canvas-text tabular lg:text-4xl">{GDL.winnability.value === null ? "—" : Math.round(GDL.winnability.value)}</span>
         </div>
       </div>
       <div className="mt-4"><DualBars fanHeat={GDL.fanHeat} activation={GDL.activation} /></div>
       <p className="mt-3 text-[13px] text-canvas-muted">{line}</p>
+      <p className="mt-2 text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
     </section>
   );
 }
@@ -78,7 +81,6 @@ export default function Landing() {
           <Link to="/tours/board?sample=1" className={`${CTA} bg-gold font-semibold text-on-gold hover:bg-gold-soft active:bg-[#efb900]`}>Try the showcase tour</Link>
           <Link to="/tours/board" className={`${CTA} bg-paper-raised font-medium text-canvas-text hover:bg-[#3a3932]`}>Plan your own</Link>
         </div>
-        <p className="mt-4 text-[13px] leading-relaxed text-canvas-muted lg:mt-6">Affinity signal from aggregate taste data — not a ticket forecast.</p>
       </div>
     </div>
   );
