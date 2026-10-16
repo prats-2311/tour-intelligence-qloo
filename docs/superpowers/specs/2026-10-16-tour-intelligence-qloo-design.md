@@ -20,6 +20,36 @@ A taste-powered planning system for live music tours that answers one question: 
 - **Primary:** promoters, booking agents, artist managers and label marketing teams planning tours for mid-tier and emerging artists — teams without a ticketing data warehouse, entering markets with no sales history.
 - **Secondary ("also works for"):** film press tours (the original Tour Intelligence use case) — routing is fixed by the studio; the open problem is how to show up.
 
+### 1.2b The promoter story (added 2026-10-17; owned by Plans 5 and 6)
+The product is judged as a product, not a SaaS business (Devpost "Design": "a complete, coherent product experience, not just a technical proof of concept"; "Potential Impact": "a credible, specific case for solving a real problem for a real audience … based on what's demonstrated"). No accounts, billing or tenancy are built. The impact case is carried by one story told the same way everywhere:
+
+- **Who:** a promoter or booking agent routing a mid-tier artist through markets with no ticket-sales history.
+- **The decision:** which cities to hold dates in, and how to win each one (sponsor to pitch, merch angle, where to spend promo, which local act to put on the bill).
+- **What goes wrong today:** routing on fan density alone books the obvious big markets and misses cities where local taste makes the show winnable. Activation ideas come from guesswork or a generic LLM.
+- **What the product does:** the Tour Board ranks by winnability and shows the cities density misses. Each city playbook turns Qloo taste into a pitchable plan. The Tour Book is the document the promoter takes into the sponsor or venue conversation.
+- **Why it's credible:** `/proof` checks the playbook against activations real tours actually ran.
+
+**Story rules (acceptance criteria):**
+1. Every example in the story comes from data the product actually shows: the committed showcase (`dashboard/src/lib/qloo/fixtures/showcase.json`, currently Mac DeMarco: Guadalajara and Oaxaca as hidden goldmines, Portland density #2 → winnability #1) or the committed backtest results JSON. If the showcase is re-recorded, the copy is regenerated from it, never hand-edited to stale numbers.
+2. No invented customers, testimonials, quotes, revenue or dollar figures, and no "trusted by" claims. Money is described by the decision it informs ("which sponsor to pitch"), not by made-up amounts.
+3. Promoter language, not product language: holds, avails, market heat, routing, the bill, advance. Never "AI-powered insights".
+4. Shared taste is never called "audience overlap" or shown as a percent (see §5.4).
+
+**Plan 5 (proof and calibration) owns:**
+- `/proof` headline phrased as the promoter's question, e.g. "Would this have found the sponsor, merch collab or local act the real tour used?", with the hit rates against both baselines and the sample size next to it.
+- Each proof case card says which decision it maps to (sponsor / merch / local act) and links its sources.
+- A "Checked against real tours →" link from the Tour Board header and from the City Playbook to `/proof`, so the evidence sits at the decision point.
+- Verdict-threshold calibration: live activation clusters at 71–76, so the Hidden-goldmine cut at 75 flips on one point. Calibrate the §5.3 thresholds on the showcase plus control artists, never on backtest cases (§12 #9). Re-record the showcase if verdicts change, and update the story copy from the new recording.
+
+**Plan 6 (polish and submission) owns:**
+- Landing: a three-beat narrative above the fold (the decision → winnability finds the city density misses → the playbook that wins it), each beat backed by a real showcase number, with "Try the showcase tour" as the primary action.
+- Judge path (§7.1) told as the promoter's job: board → spot a hidden goldmine → open its playbook → Tour Book → proof, in ≤ 2 minutes, covered by the Playwright judge-path test.
+- Tour Book cover and intro framed as the advance / sponsor-pitch document.
+- Microcopy pass across board, playbook, book and strategist against rule 3.
+- README and Devpost description lead with who / decision / proof before the architecture, and answer the existing-project field openly (forked from the Google-hackathon project; Qloo work began 2026-10-16).
+- Live-path resilience: a judge who types their own artist gets a working board or a clear route to the showcase when budget or quota runs out, never a dead end.
+- A test asserting that the landing story numbers equal the values in the committed showcase JSON (rule 1).
+
 ### 1.3 Success criteria (judging-aligned)
 | Criterion (equal weight; tie-break order) | What success looks like |
 |---|---|
@@ -434,3 +464,4 @@ Not used: `gpt-tasteskill` (scroll-GSAP marketing pages), `minimalist-skill` (co
 - "When did you begin": 2026-07-30 (original); upgrade field explains the Qloo work started 2026-10-16.
 - README: problem, Qloo tools and why, request→result walkthrough with entity/tag choices, setup from clean env, limitations, provenance, data handling.
 - MCP demo endpoint documented; showcase pre-warmed; no credentials in repo or screenshots.
+- Promoter story (§1.2b) consistent across Landing, judge path, Tour Book, `/proof`, README and Devpost text; every story number traceable to the committed showcase or backtest JSON.
