@@ -3,10 +3,15 @@ import type { City } from "../src/geo/cities.js";
 import { runCityPlaybook } from "../src/pipeline/cityPlaybook.js";
 import type { QlooCaller } from "../src/qlooCall.js";
 import type { GatewayEvent, QlooEnvelope } from "../src/types.js";
+import { readFileSync } from "node:fs";
 import { cityHeat, recs } from "./fixtures/envelopes.js";
 
 const CITIES: City[] = [{ id: "3", name: "Coyoacan", country: "MX", lat: 19.35, lon: -99.162, population: 600_000 }];
-const compare: QlooEnvelope = { operation: "compare_audiences", status: "ok", results: { overlap: 0.4 } };
+const liveEnv = (name: string): QlooEnvelope => ({ operation: name, ...JSON.parse(readFileSync(new URL(`./fixtures/live/${name}.json`, import.meta.url), "utf8")) }) as QlooEnvelope;
+const tag = (name: string, score: number) => ({ tag_id: `urn:tag:genre:music:${name}`, name, type: "urn:tag", query: { score } });
+const compareOf = (...tags: Array<[string, number]>): QlooEnvelope => ({ operation: "compare_audiences", status: "ok", results: { a: [], b: [], matchEntities: [], tags: tags.map(([n, sc]) => tag(n, sc)) } });
+// mean of the top-5 scores is 0.5
+const compare = compareOf(["Funk", 0.9], ["Soul", 0.7], ["Pop", 0.5], ["Rock", 0.3], ["Jazz", 0.1], ["Folk", 0.05]);
 
 function qloo(route: (t: string, a: Record<string, unknown>) => QlooEnvelope): QlooCaller {
   let n = 0;
@@ -15,10 +20,11 @@ function qloo(route: (t: string, a: Record<string, unknown>) => QlooEnvelope): Q
 const proxies = (names: string[], affs: number[]): QlooEnvelope => ({ operation: "recommend", status: "ok", results: names.map((name, i) => ({ entity_id: `P${i}`, name, affinity: affs[i] })) });
 const happy = (t: string, a: Record<string, unknown>): QlooEnvelope => {
   if (t === "qloo_where_popular") return cityHeat;
-  if (t === "qloo_entity_tags") return recs(["dream pop", "synthwave"], [0.94, 0.88]);
+  if (t === "qloo_entity_tags") return liveEnv("entity-tags");
   if (t === "qloo_recommend" && !a.signals) return proxies(["Proxy 1", "Proxy 2"], [0.7, 0.6]);
   if (t === "qloo_compare_audiences") return compare;
   if (t === "qloo_rank") return recs(["Venue A", "Venue B"], [0.8, 0.6]);
+  if (t === "qloo_recommend" && a.target_type === "place") return recs(["Place 1", "Place 2", "Place 3", "Place 4"], [0.5, 0.9, 0.7, 0.8]);
   if (t === "qloo_recommend" && a.target_type === "artist") return recs(["Opener 1", "Opener 2", "Opener 3", "Opener 4"], [0.9, 0.8, 0.7, 0.6]);
   return recs(["X", "Y"], [0.7, 0.5]);
 };
@@ -38,10 +44,12 @@ describe("runCityPlaybook", () => {
   it("talent compares the artist with the city's mainstream proxy, not with its own recs", async () => {
     const seen: Array<Record<string, unknown>> = [];
     const events = await collect(runCityPlaybook(input, { qloo: qloo((t, a) => { if (t === "qloo_recommend" && !a.signals) seen.push(a); return happy(t, a); }), cities: CITIES }));
-    expect(seen).toEqual([{ target_type: "artist", filter_location: "Mexico City, MX", limit: 5 }]);
-    const talent = cardsOf(events).find((c) => c.kind === "talent")! as unknown as { items: Array<{ name: string }>; summary: { overlap: number | null } };
+    expect(seen).toEqual([{ target_type: "artist", signal_location: "Mexico City, MX", limit: 5 }]);
+    const talent = cardsOf(events).find((c) => c.kind === "talent")! as unknown as { items: Array<{ name: string }>; summary: { sharedTaste: number | null; sharedTags: string[] } };
     expect(talent.items.map((i) => i.name)).toEqual(["Proxy 1", "Proxy 2"]);
-    expect(talent.summary.overlap).toBe(0.4);
+    expect(talent.summary.sharedTaste).toBeCloseTo(0.5, 10);
+    expect(talent.summary.sharedTags).toEqual(["Funk", "Soul", "Pop"]);
+    expect(talent.summary).not.toHaveProperty("overlap");
   });
   it("talent with no proxy artists is empty and makes no compare call", async () => {
     let compares = 0;
@@ -57,7 +65,9 @@ describe("runCityPlaybook", () => {
   it("merch carries the artist tags and cites both tags and brands", async () => {
     const events = await collect(runCityPlaybook(input, { qloo: qloo(happy), cities: CITIES }));
     const merch = cardsOf(events).find((c) => c.kind === "merch")! as unknown as { items: Array<{ name: string }>; refs: Array<{ tool: string }> };
-    expect(merch.items.map((i) => i.name)).toEqual(["dream pop", "synthwave"]);
+    expect(merch.items.length).toBeGreaterThan(0);
+    expect(merch.items.every((i) => /^urn:tag:(genre:music|subgenre:|artist:qloo)/.test(String((i as unknown as { id: string }).id)))).toBe(true);
+    expect(merch.items.map((i) => i.name)).not.toContain("Discover");
     expect(merch.refs.map((r) => r.tool)).toEqual(["qloo_entity_tags", "qloo_recommend"]);
   });
   it("co-billing compares only the top 3 candidates and ranks by lift", async () => {
@@ -66,6 +76,9 @@ describe("runCityPlaybook", () => {
     expect(seen).toEqual(["E0", "E1", "E2"]);
     const co = cardsOf(events).find((c) => c.kind === "co_billing")!;
     expect(co.items[0]!.lift as number).toBeGreaterThanOrEqual(co.items[1]!.lift as number);
+    expect(co.items[0]).toMatchObject({ sharedTaste: 0.5, sharedTags: ["Funk", "Soul", "Pop"] });
+    expect(co.items[0]).not.toHaveProperty("overlap");
+    expect(co.items[0]!.lift as number).toBeCloseTo(0.5 * (co.items[0]!.localAffinity as number), 10);
   });
   it("marks cards empty instead of inventing items", async () => {
     const events = await collect(runCityPlaybook(input, { qloo: qloo((t) => ({ operation: t, status: "empty", results: [] })), cities: CITIES }));
@@ -126,15 +139,37 @@ describe("runCityPlaybook", () => {
     const sponsors = cardsOf(events).find((c) => c.kind === "sponsors")!;
     expect(sponsors.warnings).toContainEqual(expect.objectContaining({ kind: "partial" }));
   });
-  it("unknown overlap yields a partial warning per candidate and an empty co_billing card", async () => {
+  it("a compare with no shared tags yields a partial warning per candidate and an empty co_billing card", async () => {
     const events = await collect(runCityPlaybook(input, {
-      qloo: qloo((t, a) => (t === "qloo_compare_audiences" ? { operation: "compare_audiences", status: "ok", results: { something_else: 1 } } : happy(t, a))),
+      qloo: qloo((t, a) => (t === "qloo_compare_audiences" ? compareOf() : happy(t, a))),
       cities: CITIES,
     }));
     const co = cardsOf(events).find((c) => c.kind === "co_billing")!;
     expect(co.status).toBe("empty");
     const ws = (co.warnings as Array<{ kind: string; message?: string }>).filter((w) => w.kind === "partial");
-    expect(ws.map((w) => w.message)).toEqual(["overlap unavailable for Opener 1", "overlap unavailable for Opener 2", "overlap unavailable for Opener 3"]);
+    expect(ws.map((w) => w.message)).toEqual(["shared taste unavailable for Opener 1", "shared taste unavailable for Opener 2", "shared taste unavailable for Opener 3"]);
+  });
+  it("talent with a compare that has no tags keeps the proxies with a null shared taste and a warning", async () => {
+    const events = await collect(runCityPlaybook(input, {
+      qloo: qloo((t, a) => (t === "qloo_compare_audiences" ? compareOf() : happy(t, a))),
+      cities: CITIES,
+    }));
+    const talent = cardsOf(events).find((c) => c.kind === "talent")! as unknown as { summary: { sharedTaste: number | null; sharedTags: string[] }; warnings: Array<{ message?: string }> };
+    expect(talent.summary).toEqual({ sharedTaste: null, sharedTags: [] });
+    expect(talent.warnings.map((w) => w.message)).toContain("shared taste unavailable for city mainstream");
+  });
+  it("venue rank is called with place entity ids, not names", async () => {
+    const seen: Array<Record<string, unknown>> = [];
+    const events = await collect(runCityPlaybook(input, { qloo: qloo((t, a) => { if (t === "qloo_rank") seen.push(a); return happy(t, a); }), cities: CITIES }));
+    expect(seen[0]!.options).toEqual(["E0", "E1", "E2", "E3"]);
+    expect(cardsOf(events).find((c) => c.kind === "venue_fit")!.items.map((i) => i.name)).toEqual(["Venue A", "Venue B"]);
+  });
+  it("a rank needs_input keeps the top 3 place recommendations by affinity with a partial warning", async () => {
+    const events = await collect(runCityPlaybook(input, { qloo: qloo((t, a) => (t === "qloo_rank" ? liveEnv("rank-needs-input") : happy(t, a))), cities: CITIES }));
+    const venue = cardsOf(events).find((c) => c.kind === "venue_fit")!;
+    expect(venue.status).toBe("ok");
+    expect(venue.items.map((i) => i.name)).toEqual(["Place 2", "Place 4", "Place 3"]);
+    expect(venue.warnings).toContainEqual(expect.objectContaining({ kind: "partial", message: "venue ranking unresolved — showing place recommendations" }));
   });
   it("local_moment interleaves sources so artists do not crowd out the rest", async () => {
     const names = (p: string, n: number) => Array.from({ length: n }, (_, i) => `${p}${i}`);

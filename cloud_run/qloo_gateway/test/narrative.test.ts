@@ -12,7 +12,7 @@ afterEach(() => { vi.restoreAllMocks(); });
 const cards: PlaybookCard[] = [
   { kind: "sponsors", status: "ok", items: [{ entityId: "B1", name: "Cerro Alto Mezcal", affinity: 0.91, popularity: 0.4, index: 0 }], refs: [{ tool: "qloo_recommend", cacheKey: "k1" }], warnings: [] },
   { kind: "promo_zones", status: "ok", items: [{ label: "Colonia Americana", lat: 20.67, lon: -103.36, affinity: 0.6, index: 0, share: 0.38 }], refs: [], warnings: [] },
-  { kind: "talent", status: "ok", items: [{ entityId: "P0", name: "Clara Sol", affinity: 0.61, popularity: 0.5, index: 0 }], refs: [], warnings: [], summary: { overlap: 0.12 } },
+  { kind: "talent", status: "ok", items: [{ entityId: "P0", name: "Clara Sol", affinity: 0.61, popularity: 0.5, index: 0 }], refs: [], warnings: [], summary: { sharedTaste: 0.12, sharedTags: ["Funk"] } },
 ];
 const answer = (json: unknown, thought = "Compared sponsor fit with zones."): GeminiResponse => ({
   candidates: [{ content: { parts: [{ text: thought, thought: true }, { text: JSON.stringify(json) }] } }],
@@ -38,12 +38,12 @@ const input = { artist: "Lumen Vale", city: { name: "Guadalajara", country: "MX"
 describe("buildEvidence", () => {
   it("indexes every item by card kind and exposes zone shares as fractions and percents", () => {
     const ev = buildEvidence(cards);
-    expect(ev.map((e) => e.id)).toEqual(["sponsors:0", "promo_zones:0", "talent:0", "talent:overlap"]);
+    expect(ev.map((e) => e.id)).toEqual(["sponsors:0", "promo_zones:0", "talent:0", "talent:sharedTaste"]);
     expect(ev[1]).toMatchObject({ names: ["Colonia Americana"], numbers: expect.arrayContaining([0.38, 38]) });
     expect(ev[3]).toMatchObject({ names: [], numbers: [0.12] });
   });
-  it("omits talent:overlap when the overlap is null", () => {
-    const ev = buildEvidence([{ ...cards[2]!, summary: { overlap: null } }]);
+  it("omits talent:sharedTaste when shared taste is null", () => {
+    const ev = buildEvidence([{ ...cards[2]!, summary: { sharedTaste: null, sharedTags: [] } }]);
     expect(ev.map((e) => e.id)).toEqual(["talent:0"]);
   });
 });

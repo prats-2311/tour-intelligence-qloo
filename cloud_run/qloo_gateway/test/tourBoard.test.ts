@@ -3,6 +3,7 @@ import type { City } from "../src/geo/cities.js";
 import { runTourBoard, type TourBrief } from "../src/pipeline/tourBoard.js";
 import type { QlooCaller } from "../src/qlooCall.js";
 import type { GatewayEvent, QlooEnvelope } from "../src/types.js";
+import { readFileSync } from "node:fs";
 import { cityHeat, describeAmbiguous, describeOk, heatEmpty, heatMexico, recs } from "./fixtures/envelopes.js";
 
 const CITIES: City[] = [
@@ -18,6 +19,8 @@ function fakeQloo(route: (tool: string, args: Record<string, unknown>) => QlooEn
 const brief: TourBrief = { artist: "Test Artist", regions: ["Mexico"], maxStops: 8, sessionId: "s", today: "2026-10-20" };
 
 async function collect(gen: AsyncGenerator<GatewayEvent>) { const out: GatewayEvent[] = []; for await (const e of gen) out.push(e); return out; }
+
+const liveEnv = (name: string): QlooEnvelope => ({ operation: name, ...JSON.parse(readFileSync(new URL(`./fixtures/live/${name}.json`, import.meta.url), "utf8")) }) as QlooEnvelope;
 
 const happy = (tool: string, args: Record<string, unknown>): QlooEnvelope => {
   if (tool === "qloo_describe") return describeOk;
@@ -83,6 +86,36 @@ describe("runTourBoard", () => {
     const seen: Array<Record<string, unknown>> = [];
     await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => { if (t === "qloo_trends") seen.push(a); return happy(t, a); }), cities: CITIES }));
     expect(seen[0]).toMatchObject({ start_date: "2026-07-22", end_date: "2026-10-20", entity_type: "artist" });
+  });
+
+  it("artist_profile.trends is the point array from series[0].points; an empty live series is []", async () => {
+    const profile = (events: GatewayEvent[]) => events.find((e) => e.type === "artist_profile") as unknown as { trends: unknown };
+    const empty = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => (t === "qloo_trends" ? liveEnv("trends-empty") : happy(t, a))), cities: CITIES }));
+    expect(profile(empty).trends).toEqual([]);
+    const withPoints: QlooEnvelope = { operation: "trends", status: "ok", series: [{ entity: {}, points: [{ date: "2026-10-01", value: 0.4 }] }] };
+    const some = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => (t === "qloo_trends" ? withPoints : happy(t, a))), cities: CITIES }));
+    expect(profile(some).trends).toEqual([{ date: "2026-10-01", value: 0.4 }]);
+  });
+
+  it("artist_profile.tags drops non-music tags from live entity_tags", async () => {
+    const events = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => (t === "qloo_entity_tags" ? liveEnv("entity-tags") : happy(t, a))), cities: CITIES }));
+    const tags = (events.find((e) => e.type === "artist_profile") as unknown as { tags: Array<{ name: string }> }).tags;
+    expect(tags.length).toBeGreaterThan(0);
+    expect(tags.map((t) => t.name)).not.toContain("Discover");
+  });
+
+  it("ranks venues by place entity ids, not names", async () => {
+    const seen: Array<Record<string, unknown>> = [];
+    await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => { if (t === "qloo_rank") seen.push(a); return happy(t, a); }), cities: CITIES }));
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen[0]!.options).toEqual(["E0", "E1", "E2"]);
+  });
+
+  it("a rank needs_input leaves venue fit unscored but still scores the city", async () => {
+    const events = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => (t === "qloo_rank" ? liveEnv("rank-needs-input") : happy(t, a))), cities: CITIES }));
+    const c = (events.filter((e) => e.type === "city_scored") as Array<{ city: { activation: { components: Record<string, number> } } }>)[0]!.city;
+    expect(c.activation.components.venue_fit).toBeUndefined();
+    expect(events.at(-1)?.type).toBe("done");
   });
 
   it("is not capped by maxStops: shortlists the top 8 by fan heat", async () => {

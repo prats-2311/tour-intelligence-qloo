@@ -1,4 +1,4 @@
-import { extractEntities } from "../extract.js";
+import { extractEntities, extractMusicTags, extractSharedTaste } from "../extract.js";
 import type { City } from "../geo/cities.js";
 import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { coBillLift } from "../scoring/winnability.js";
@@ -6,12 +6,6 @@ import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narra
 import { activationInputs, Aborted, BudgetStop, trackedCall } from "./tourBoard.js";
 
 export type { PlaybookCard } from "../types.js";
-
-function overlapOf(results: unknown): number {
-  const r = results as Record<string, unknown> | undefined;
-  const v = r && typeof r === "object" ? (r.overlap ?? r.similarity ?? r.score) : undefined;
-  return typeof v === "number" && Number.isFinite(v) ? v : Number.NaN;
-}
 
 function warningsFor(tool: string, r: CallResult): DataWarning[] {
   const e = r.envelope;
@@ -54,22 +48,25 @@ export async function* runCityPlaybook(
     const settled = await Promise.allSettled(candidates.map(async (c) => {
       const r = await trackedCall(deps, input.sessionId, "qloo_compare_audiences", { group_a: [input.artistEntityId], group_b: [c.entityId] }, events);
       const warnings = warningsFor("qloo_compare_audiences", r);
-      const overlap = overlapOf(r.envelope.results);
-      if (Number.isNaN(overlap) || Number.isNaN(c.affinity)) {
-        return { warnings: [...warnings, { tool: "qloo_compare_audiences", kind: "partial" as const, message: `overlap unavailable for ${c.name}` }] };
+      const { value: sharedTaste, tags } = extractSharedTaste(r.envelope);
+      if (sharedTaste === null || Number.isNaN(c.affinity)) {
+        return { warnings: [...warnings, { tool: "qloo_compare_audiences", kind: "partial" as const, message: `shared taste unavailable for ${c.name}` }] };
       }
-      return { warnings, lift: { name: c.name, entityId: c.entityId, overlap, localAffinity: c.affinity, lift: coBillLift(overlap, c.affinity), ref: ref("qloo_compare_audiences", r) } };
+      return {
+        warnings,
+        lift: { name: c.name, entityId: c.entityId, sharedTaste, localAffinity: c.affinity, lift: coBillLift(sharedTaste, c.affinity), sharedTags: tags.slice(0, 3).map((t) => t.name), ref: ref("qloo_compare_audiences", r) },
+      };
     }));
     while (events.length) yield events.shift()!;
     const bad = settled.filter((s): s is PromiseRejectedResult => s.status === "rejected").map((s) => s.reason);
     if (bad.length) throw bad.find((b) => b instanceof Aborted || b instanceof BudgetStop) ?? bad[0];
-    const compared = settled.map((s) => (s as PromiseFulfilledResult<{ warnings: DataWarning[]; lift?: { name: string; entityId: string; overlap: number; localAffinity: number; lift: number; ref: EvidenceRef } }>).value);
+    const compared = settled.map((s) => (s as PromiseFulfilledResult<{ warnings: DataWarning[]; lift?: { name: string; entityId: string; sharedTaste: number; localAffinity: number; lift: number; sharedTags: string[]; ref: EvidenceRef } }>).value);
     const coBill = compared.flatMap((c) => (c.lift ? [c.lift] : [])).sort((x, y) => y.lift - x.lift);
 
     const where = `${input.city.name}, ${input.city.country}`;
     const [tagsS, proxyS] = await Promise.allSettled([
       trackedCall(deps, input.sessionId, "qloo_entity_tags", { entities: [input.artistEntityId], entity_type: "artist", limit: 10 }, events),
-      trackedCall(deps, input.sessionId, "qloo_recommend", { target_type: "artist", filter_location: where, limit: 5 }, events),
+      trackedCall(deps, input.sessionId, "qloo_recommend", { target_type: "artist", signal_location: where, limit: 5 }, events),
     ]);
     while (events.length) yield events.shift()!;
     const failed = [tagsS, proxyS].filter((s): s is PromiseRejectedResult => s.status === "rejected").map((s) => s.reason);
@@ -77,22 +74,22 @@ export async function* runCityPlaybook(
     const tags = (tagsS as PromiseFulfilledResult<CallResult>).value;
     const proxyRecs = (proxyS as PromiseFulfilledResult<CallResult>).value;
     const proxies = extractEntities(proxyRecs.envelope).slice(0, 5);
-    let talentOverlap: number | null = null;
+    let talentShared: { value: number | null; tags: string[] } = { value: null, tags: [] };
     const talentWarnings: DataWarning[] = [...warningsFor("qloo_recommend", proxyRecs)];
     const talentRefs: EvidenceRef[] = [ref("qloo_recommend", proxyRecs)];
     if (proxies.length > 0) {
       const cmp = await trackedCall(deps, input.sessionId, "qloo_compare_audiences", { group_a: [input.artistEntityId], group_b: proxies.map((p) => p.entityId) }, events);
       talentRefs.push(ref("qloo_compare_audiences", cmp));
       talentWarnings.push(...warningsFor("qloo_compare_audiences", cmp));
-      const o = overlapOf(cmp.envelope.results);
-      if (Number.isNaN(o)) talentWarnings.push({ tool: "qloo_compare_audiences", kind: "partial", message: "overlap unavailable for city mainstream" });
-      else talentOverlap = o;
+      const st = extractSharedTaste(cmp.envelope);
+      if (st.value === null) talentWarnings.push({ tool: "qloo_compare_audiences", kind: "partial", message: "shared taste unavailable for city mainstream" });
+      else talentShared = { value: st.value, tags: st.tags.slice(0, 3).map((t) => t.name) };
     }
     while (events.length) yield events.shift()!;
 
     const { raw } = a;
     const sponsors = extractEntities(raw.brands.envelope);
-    const artistTags = extractEntities(tags.envelope);
+    const artistTags = extractMusicTags(tags.envelope);
     const cards: PlaybookCard[] = [
       card("sponsors", sponsors, [ref("qloo_recommend", raw.brands)], warningsFor("qloo_recommend", raw.brands)),
       card("merch", artistTags, [ref("qloo_entity_tags", tags), ref("qloo_recommend", raw.brands)],
@@ -102,10 +99,9 @@ export async function* runCityPlaybook(
         interleave([raw.artists, raw.films, raw.tv, raw.places].map((r) => extractEntities(r.envelope)), 9),
         [ref("qloo_recommend", raw.artists), ref("qloo_recommend", raw.films), ref("qloo_recommend", raw.tv), ref("qloo_recommend", raw.places)],
         [raw.artists, raw.films, raw.tv, raw.places].flatMap((r) => warningsFor("qloo_recommend", r))),
-      card("venue_fit", raw.ranked ? extractEntities(raw.ranked.envelope).slice(0, 3) : [], raw.ranked ? [ref("qloo_rank", raw.ranked)] : [],
-        raw.ranked ? warningsFor("qloo_rank", raw.ranked) : []),
+      card("venue_fit", a.venues.items, a.venues.refs, [...(raw.ranked ? warningsFor("qloo_rank", raw.ranked) : []), ...a.venues.warnings]),
       card("co_billing", coBill, coBill.map((c) => c.ref), compared.flatMap((c) => c.warnings)),
-      { ...card("talent", proxies, talentRefs, talentWarnings), summary: { overlap: talentOverlap } },
+      { ...card("talent", proxies, talentRefs, talentWarnings), summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags } },
     ];
     yield { type: "playbook", playbook: { city: input.city, cards } };
     if (input.narrative !== false && deps.narrate) {

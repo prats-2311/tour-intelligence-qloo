@@ -12,12 +12,12 @@ export function buildEvidence(cards: PlaybookCard[]): EvidenceItem[] {
       const it = rec(raw);
       const name = typeof it.name === "string" ? it.name : typeof it.label === "string" ? it.label : "";
       const numbers: number[] = [];
-      for (const k of ["affinity", "overlap", "localAffinity", "lift"]) if (finite(it[k])) numbers.push(it[k] as number);
+      for (const k of ["affinity", "sharedTaste", "localAffinity", "lift"]) if (finite(it[k])) numbers.push(it[k] as number);
       if (finite(it.share)) numbers.push(it.share as number, Math.round((it.share as number) * 100));
       out.push({ id: `${card.kind}:${i}`, entityIds: typeof it.entityId === "string" ? [it.entityId] : [], names: name ? [name] : [], numbers });
     });
-    const overlap = card.summary?.overlap;
-    if (card.kind === "talent" && finite(overlap)) out.push({ id: "talent:overlap", entityIds: [], names: [], numbers: [overlap] });
+    const sharedTaste = card.summary?.sharedTaste;
+    if (card.kind === "talent" && finite(sharedTaste)) out.push({ id: "talent:sharedTaste", entityIds: [], names: [], numbers: [sharedTaste] });
   }
   return out;
 }

@@ -1,3 +1,4 @@
+import { extractCandidates, extractSharedTaste, extractTrendPoints } from "../extract.js";
 import type { City } from "../geo/cities.js";
 import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
@@ -43,11 +44,11 @@ export const STRATEGIST_DECLARATIONS: FunctionDeclaration[] = [
     }, ["target_type"]),
   decl("qloo_rank", "Rank the given options of option_type by how well they fit the given signals.",
     {
-      options: list("Entities to rank", 10), option_type: str("Type of the options", INSIGHTS_TYPES), signals: list("Entities whose fans to rank for", 10),
+      options: list("Qloo entity ids of the entities to rank (names are not resolved; find ids with qloo_describe first)", 10), option_type: str("Type of the options", INSIGHTS_TYPES), signals: list("Entities whose fans to rank for", 10),
       signal_location: str("Place whose audience to rank for"), demographic: str("Demographic to focus on"),
       include_tags: list("Tags results must have", 10), exclude_tags: list("Tags results must not have", 10),
     }, ["options", "option_type"]),
-  decl("qloo_compare_audiences", "Compare the audiences of two groups of entities and report how much they overlap.",
+  decl("qloo_compare_audiences", "Compare the audiences of two groups of entities and report the taste tags they share, with a 0-1 score for each.",
     { group_a: list("First group of entities", 10), group_b: list("Second group of entities", 10), target_type: str("Type of entity to compare on", INSIGHTS_TYPES), limit }, ["group_a", "group_b"]),
   decl("qloo_find_tags", "Search Qloo taste tags by keyword or meaning.",
     { query: str("Search text"), semantic: bool("Match by meaning instead of keyword"), limit }, ["query"]),
@@ -92,13 +93,13 @@ export function compactResults(results: unknown, max = 8): unknown {
       const out = pick(o, ["name", "entity_id", "affinity", "popularity", "subtype", "type"]);
       const loc = pick(rec(o.location), ["latitude", "longitude", "geohash"]);
       if (Object.keys(loc).length) out.location = loc;
-      const q = pick(rec(o.query), ["affinity", "popularity"]);
+      const q = pick(rec(o.query), ["affinity", "popularity", "age", "gender"]);
       if (Object.keys(q).length) out.query = q;
       return out;
     });
   }
-  const summary = pick(rec(results), ["overlap", "similarity", "score"]);
-  return Object.keys(summary).length ? summary : null;
+  const shared = extractSharedTaste({ operation: "compare_audiences", status: "ok", results });
+  return shared.value === null ? null : { sharedTaste: shared.value, sharedTags: shared.tags.slice(0, 3).map((t) => t.name) };
 }
 
 const rejected = (name: string, summary: string): ToolOutcome => ({ name, status: "rejected", summary, data: null });
@@ -149,7 +150,10 @@ export async function executeTool(call: { name: string; args: Record<string, unk
     const r = await deps.qloo.call(name, args, deps.sessionId);
     const e = r.envelope;
     const n = Array.isArray(e.results) ? e.results.length : 0;
-    return { name, status: e.status, summary: e.summary ?? `${n} results`, data: compactResults(e.results), cacheKey: r.cacheKey, cached: r.cached };
+    const data = name === "qloo_trends" ? extractTrendPoints(e).slice(0, 8)
+      : e.status === "needs_input" ? extractCandidates(e).slice(0, 5) // F6: ids the model can retry with
+      : compactResults(e.results);
+    return { name, status: e.status, summary: e.summary ?? `${n} results`, data, cacheKey: r.cacheKey, cached: r.cached };
   } catch (err) {
     return err instanceof ValidationError ? rejected(name, err.message) : failed(name, err);
   }

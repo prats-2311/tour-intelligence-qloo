@@ -35,7 +35,7 @@ export interface PlaybookCard<T = unknown> {
   items: T[];
   refs: EvidenceRef[];
   warnings: DataWarning[];
-  summary?: Record<string, number | null>;
+  summary?: Record<string, number | null | string[]>;
 }
 
 export interface Claim { text: string; entities: Array<{ name: string; entityId?: string }>; numbers: number[]; evidence_refs: string[] }
@@ -57,7 +57,7 @@ export type ThisWeek =
 
 export type GatewayEvent =
   | { type: "resolve"; entity: { entityId: string; name: string } }
-  | { type: "artist_profile"; demographics: unknown[]; tags: Array<{ name: string; affinity: number }>; trends: unknown; refs: EvidenceRef[]; warnings: DataWarning[] }
+  | { type: "artist_profile"; demographics: unknown[]; tags: Array<{ name: string; affinity: number }>; trends: Array<{ date: string; value: number }>; refs: EvidenceRef[]; warnings: DataWarning[] }
   | { type: "region_unavailable"; region: string; code: string; message: string }
   | { type: "needs_input"; field: string; candidates: Array<{ id: string; name: string; type?: string }>; summary: string }
   | { type: "tool_call"; tool: string; args: Record<string, unknown>; cached: boolean }

@@ -1,4 +1,4 @@
-import { extractEntities, extractHeatPoints, extractIssues } from "../extract.js";
+import { extractEntities, extractHeatPoints, extractIssues, extractMusicTags, extractTrendPoints } from "../extract.js";
 import type { City } from "../geo/cities.js";
 import { marketsFromHeat, zonesFromHeat } from "../geo/heat.js";
 import type { CallResult, QlooCaller } from "../qlooCall.js";
@@ -72,10 +72,18 @@ export async function activationInputs(artist: string, city: { name: string; cou
     call(deps, sessionId, "qloo_where_popular", { entity: artist, entity_type: "artist", within: where, limit: 20 }, events),
   ] as const);
   const placeEntities = extractEntities(places.envelope);
-  const venueNames = placeEntities.slice(0, 10).map((e) => e.name);
-  const ranked = venueNames.length > 0
-    ? await call(deps, sessionId, "qloo_rank", { options: venueNames, option_type: "place", signals: [artist], signal_location: where }, events)
+  // F6: qloo_rank needs entity ids; names come back as needs_input with candidates.
+  const venueIds = placeEntities.slice(0, 10).map((e) => e.entityId);
+  const ranked = venueIds.length > 0
+    ? await call(deps, sessionId, "qloo_rank", { options: venueIds, option_type: "place", signals: [artist], signal_location: where }, events)
     : undefined;
+  const rankedVenues = ranked ? extractEntities(ranked.envelope) : [];
+  const venueFallback = ranked !== undefined && rankedVenues.length === 0;
+  const venues = {
+    items: venueFallback ? [...placeEntities].sort((a, b) => (Number.isNaN(b.affinity) ? -1 : b.affinity) - (Number.isNaN(a.affinity) ? -1 : a.affinity)).slice(0, 3) : rankedVenues.slice(0, 3),
+    refs: ranked && !venueFallback ? [ref("qloo_rank", ranked)] : placeEntities.length > 0 ? [ref("qloo_recommend", places)] : [],
+    warnings: venueFallback ? [{ tool: "qloo_rank", kind: "partial" as const, message: "venue ranking unresolved — showing place recommendations" }] : [],
+  };
 
   const zones = zonesFromHeat(extractHeatPoints(inCity.envelope), deps.cities);
   const components: Partial<Record<ComponentName, { value: number; refs: EvidenceRef[] }>> = {};
@@ -85,15 +93,16 @@ export async function activationInputs(artist: string, city: { name: string; cou
   if (hooks !== null) components.local_hooks = { value: hooks, refs: [ref("qloo_recommend", places), ref("qloo_recommend", films), ref("qloo_recommend", artists), ref("qloo_recommend", tv)] };
   const conc = fanConcentration(zones.map((z) => z.share));
   if (conc !== null) components.fan_concentration = { value: conc, refs: [ref("qloo_where_popular", inCity)] };
-  const venue = ranked ? meanTopK(extractEntities(ranked.envelope).map((e) => e.affinity), 1) : null;
+  const venue = ranked ? meanTopK(rankedVenues.map((e) => e.affinity), 1) : null;
   if (venue !== null && ranked) components.venue_fit = { value: venue, refs: [ref("qloo_rank", ranked)] };
 
   const warnings = dedupeWarnings([
     ...warningsOf("qloo_recommend", brands), ...warningsOf("qloo_recommend", places), ...warningsOf("qloo_recommend", films),
     ...warningsOf("qloo_recommend", artists), ...warningsOf("qloo_recommend", tv), ...warningsOf("qloo_where_popular", inCity),
     ...(ranked ? warningsOf("qloo_rank", ranked) : []),
+    ...venues.warnings,
   ]);
-  return { components, zones, warnings, raw: { brands, places, films, artists, tv, inCity, ranked } };
+  return { components, zones, warnings, venues, raw: { brands, places, films, artists, tv, inCity, ranked } };
 }
 
 export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerator<GatewayEvent> {
@@ -146,8 +155,8 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
     yield {
       type: "artist_profile",
       demographics: Array.isArray(demo.envelope.results) ? demo.envelope.results : [],
-      tags: extractEntities(tags.envelope).map((t) => ({ name: t.name, affinity: t.affinity })),
-      trends: trends.envelope.results ?? null,
+      tags: extractMusicTags(tags.envelope).map((t) => ({ name: t.name, affinity: t.affinity })),
+      trends: extractTrendPoints(trends.envelope),
       refs: [ref("qloo_audience_demographics", demo), ref("qloo_entity_tags", tags), ref("qloo_trends", trends)],
       warnings: dedupeWarnings([...warningsOf("qloo_audience_demographics", demo), ...warningsOf("qloo_entity_tags", tags), ...warningsOf("qloo_trends", trends)]),
     };
