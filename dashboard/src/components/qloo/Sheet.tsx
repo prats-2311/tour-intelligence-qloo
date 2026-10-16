@@ -74,7 +74,7 @@ export function Sheet({ open, onClose, title, children, side, full }: { open: bo
               right
                 ? "absolute inset-y-0 right-0 flex w-[400px] max-w-full flex-col overflow-y-auto bg-paper p-6 outline-none"
                 : full
-                  ? "absolute inset-0 flex flex-col overflow-hidden bg-paper p-4 pt-[max(1rem,env(safe-area-inset-top))] outline-none"
+                  ? "absolute inset-0 flex flex-col overflow-hidden bg-paper p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)] outline-none"
                   : "absolute inset-x-0 bottom-0 flex max-h-[85vh] flex-col overflow-y-auto rounded-t-[18px] bg-paper p-4 outline-none"
             }
           >

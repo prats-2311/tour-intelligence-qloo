@@ -3,6 +3,7 @@ import { useLocation, matchPath } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
 import { Sheet } from "@/components/qloo/Sheet";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
+import { isSampleMode } from "@/lib/qloo/client";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { StrategistPanel } from "./StrategistPanel";
 
@@ -29,7 +30,7 @@ function useLauncherModel() {
   const { pathname, search } = useLocation();
   const { state, strategistContext } = useTourBoard();
   const sampleParam = new URLSearchParams(search).get("sample");
-  const sample = state.source === "sample" || (state.status === "idle" && (sampleParam === "1" || sampleParam === "long"));
+  const sample = state.source === "sample" || (state.status === "idle" && (isSampleMode() || sampleParam === "1" || sampleParam === "long"));
   const focusCityId = matchPath("/tours/playbook/:cityId", pathname)?.params.cityId;
   const cityName = focusCityId
     ? (state.cities.find((c) => c.id === focusCityId)?.name ?? (sample && state.cities.length === 0 ? SAMPLE_CITIES.find((c) => c.id === focusCityId)?.name : undefined))
@@ -55,7 +56,7 @@ export function StrategistFab() {
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Ask the strategist" full>
         <div className="-mx-4 -mb-4 min-h-0 flex-1">
-          <StrategistPanel context={context} sample={sample} title={title} />
+          <StrategistPanel context={context} sample={sample} title={title} hideHeading />
         </div>
       </Sheet>
     </>

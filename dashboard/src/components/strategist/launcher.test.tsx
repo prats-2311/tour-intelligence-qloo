@@ -4,8 +4,11 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "../AppShell";
 import { SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
+import * as client from "@/lib/qloo/client";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 
+const panelProps = vi.hoisted(() => ({ last: undefined as undefined | { sample: boolean } }));
+vi.mock("./StrategistPanel", () => ({ StrategistPanel: (p: { sample: boolean; title: string }) => { panelProps.last = p; return <div>{p.title}</div>; } }));
 vi.mock("@/lib/campaignContext", () => ({ useCampaignContext: () => ({ campaigns: [], activeCampaignId: "x", activeCampaign: undefined, setActiveCampaignId() {}, refresh() {} }) }));
 
 const mm = (desktop: boolean) => vi.stubGlobal("matchMedia", () => ({ matches: desktop, addEventListener() {}, removeEventListener() {} }));
@@ -66,6 +69,50 @@ function Probe() {
     </>
   );
 }
+
+function RunButtons() {
+  const { run } = useTourBoard();
+  return <><button onClick={() => run(SAMPLE_BRIEF, { sample: true })}>sample-run</button><button onClick={() => run(SAMPLE_BRIEF, { sample: false })}>live-run</button></>;
+}
+const withRunner = (path: string) => render(<MemoryRouter initialEntries={[path]}><TourBoardProvider sampleDelayMs={0}><RunButtons /><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
+
+describe("launcher sample flag", () => {
+  beforeEach(() => { panelProps.last = undefined; mm(false); });
+  it("is true after a sample run, and the title names the artist", async () => {
+    withRunner("/tours/board");
+    act(() => screen.getByText("sample-run").click());
+    fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
+    await waitFor(() => expect(screen.getByText("About Lumen Vale")).toBeTruthy());
+    expect(panelProps.last!.sample).toBe(true);
+  });
+  it("is true when idle in a fixtures build", async () => {
+    vi.spyOn(client, "isSampleMode").mockReturnValue(true);
+    shell("/tours/board");
+    fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
+    expect(panelProps.last!.sample).toBe(true);
+  });
+  it("is false idle in a live build", async () => {
+    vi.spyOn(client, "isSampleMode").mockReturnValue(false);
+    shell("/tours/board");
+    fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
+    expect(panelProps.last!.sample).toBe(false);
+  });
+  it("is false after a live run", async () => {
+    vi.spyOn(client, "isSampleMode").mockReturnValue(true);
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { /* no events */ });
+    withRunner("/tours/board");
+    act(() => screen.getByText("live-run").click());
+    fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
+    expect(panelProps.last!.sample).toBe(false);
+  });
+  it("survives localStorage.getItem throwing", async () => {
+    mm(true);
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("blocked"); });
+    shell("/insights");
+    expect(await screen.findByRole("button", { name: "Strategist" })).toBeTruthy();
+    expect(screen.queryByRole("complementary")).toBeNull();
+  });
+});
 
 describe("strategistContext", () => {
   it("carries the board's cities with scores", async () => {
