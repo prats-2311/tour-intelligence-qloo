@@ -3,7 +3,16 @@
     "site": "tour-intel-qloo",
     "public": "dashboard/firebase-public",
     "redirects": [
-      { "source": "/:path*", "destination": "https://tour-intel-qloo-602700957663.us-central1.run.app/:path*", "type": 302 }
+      {
+        "source": "/",
+        "destination": "https://tour-intel-qloo-602700957663.us-central1.run.app/",
+        "type": 302
+      },
+      {
+        "source": "/:path*",
+        "destination": "https://tour-intel-qloo-602700957663.us-central1.run.app/:path*",
+        "type": 302
+      }
     ]
   }
 }
