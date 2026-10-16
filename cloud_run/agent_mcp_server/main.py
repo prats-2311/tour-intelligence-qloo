@@ -34,7 +34,10 @@ import urllib.request
 import requests
 from mcp.server.mcpserver import MCPServer
 
-TOUR_DATA_API = os.environ.get("TOUR_DATA_API_URL", "https://tour-data-api-602700957663.us-central1.run.app")
+# No default URL: the original Google-hackathon service must never be hit by accident.
+TOUR_DATA_API = os.environ.get("TOUR_DATA_API_URL", "")
+if not TOUR_DATA_API:
+    raise RuntimeError("TOUR_DATA_API_URL is not set; refusing to start without this project's tour_data_api URL")
 _METADATA_SA_BASE = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default"
 
 mcp = MCPServer(

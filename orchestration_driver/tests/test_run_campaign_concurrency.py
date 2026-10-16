@@ -16,6 +16,7 @@ import run_campaign
 def _tour_data_api_url(monkeypatch):
     # run_campaign() refuses to start without TOUR_DATA_API_URL (no default URL).
     monkeypatch.setattr(run_campaign, "TOUR_DATA_API", "https://tour-data-api.test")
+    monkeypatch.setattr(run_campaign, "DELIGHT_RENDERER", "https://delight.test")
 
 
 def _stop(city_id, city_name="City", stop_date="2027-01-01"):

@@ -13,6 +13,9 @@ import importlib.util
 import os
 import sys
 
+# main.py refuses to import without a tour_data_api URL (no default); tests never call it.
+os.environ.setdefault("TOUR_DATA_API_URL", "https://tour-data-api.test")
+
 _SERVICE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _SERVICE_DIR)
 

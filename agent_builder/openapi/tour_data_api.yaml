@@ -7,6 +7,7 @@ info:
     grounding-check SDK tools. Used in place of a native Data Store tool
     because these are exact-key structured lookups, not semantic search.
   version: "1.0.0"
+# NOTE: this URL is the original hackathon service. Change it to THIS project's service before provisioning.
 servers:
   - url: https://tour-data-api-602700957663.us-central1.run.app
 

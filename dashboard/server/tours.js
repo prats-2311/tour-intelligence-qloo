@@ -33,7 +33,7 @@ export function mountTours(app, { callTool }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (status === 201 || status === 400) return res.status(status).json(json);
+      if (status === 201 || status === 400 || status === 503) return res.status(status).json(json);
       return res.status(502).json({ error: json?.error ?? "tour_data_api error" });
     } catch (err) {
       console.error("[tours]", err?.message ?? String(err));

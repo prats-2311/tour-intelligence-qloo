@@ -7,8 +7,10 @@ import { mountQlooProxy } from "./qlooProxy.js";
 import { mountTours, statusFromCallTool } from "./tours.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TOUR_DATA_API = process.env.TOUR_DATA_API_URL || "https://tour-data-api-602700957663.us-central1.run.app";
-const DELIGHT_RENDERER = process.env.DELIGHT_RENDERER_URL || "https://delight-card-renderer-602700957663.us-central1.run.app";
+// No default URLs: the original Google-hackathon services must never be hit by accident.
+// Unset means the routes that need them answer 503 (see callTool and the /api guard below).
+const TOUR_DATA_API = process.env.TOUR_DATA_API_URL || "";
+const DELIGHT_RENDERER = process.env.DELIGHT_RENDERER_URL || "";
 const QLOO_GATEWAY = process.env.QLOO_GATEWAY_URL;
 const PORT = process.env.PORT || 8787;
 const RUN_JOBS_API =
@@ -129,8 +131,10 @@ async function getAccessToken() {
 // finish in ~1s; the slowest real path, live Parallel Search + Gemini
 // synthesis, finishes well under this) but still bounds every hang.
 const CALL_TOOL_TIMEOUT_MS = 30000;
+const NOT_CONFIGURED = "tour_data_api not configured";
 
 async function callTool(path, options = {}, _retried = false) {
+  if (!TOUR_DATA_API) throw new Error(`${path} failed (503): ${JSON.stringify({ error: NOT_CONFIGURED })}`);
   const res = await fetch(`${TOUR_DATA_API}${path}`, {
     ...options,
     signal: options.signal ?? AbortSignal.timeout(CALL_TOOL_TIMEOUT_MS),
@@ -332,6 +336,11 @@ app.use(cors());
 // Before the app-wide parser: /api/tours parses its own (larger) body.
 mountTours(app, { callTool: statusFromCallTool(callTool) });
 app.use(express.json());
+// Everything under /api except the Qloo proxy talks to tour_data_api.
+app.use("/api", (req, res, next) => {
+  if (!TOUR_DATA_API && !req.path.startsWith("/qloo/")) return res.status(503).json({ error: NOT_CONFIGURED });
+  next();
+});
 
 app.get("/api/campaigns", async (req, res) => {
   try {
@@ -663,6 +672,7 @@ app.post("/api/tour-book", async (req, res) => {
       cities,
     };
 
+    if (!DELIGHT_RENDERER) return res.status(503).json({ error: "delight renderer not configured" });
     let renderRes;
     for (let attempt = 0; attempt < 2; attempt++) {
       renderRes = await fetch(`${DELIGHT_RENDERER}/tour_book`, {
@@ -1067,5 +1077,5 @@ app.get(/(.*)/, (_req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`BFF listening on :${PORT}, proxying to ${TOUR_DATA_API}`);
+  console.log(`BFF listening on :${PORT}, proxying to ${TOUR_DATA_API || "(TOUR_DATA_API_URL unset)"}`);
 });

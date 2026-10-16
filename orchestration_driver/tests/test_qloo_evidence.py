@@ -45,3 +45,10 @@ def test_run_campaign_refuses_to_start_without_tour_data_api_url(monkeypatch):
     monkeypatch.setattr(run_campaign, "TOUR_DATA_API", "")
     with pytest.raises(SystemExit, match="TOUR_DATA_API_URL is not set"):
         run_campaign.run_campaign("c1")
+
+
+def test_run_campaign_refuses_to_start_without_delight_renderer_url(monkeypatch):
+    monkeypatch.setattr(run_campaign, "TOUR_DATA_API", "https://tda.test")
+    monkeypatch.setattr(run_campaign, "DELIGHT_RENDERER", "")
+    with pytest.raises(SystemExit, match="DELIGHT_RENDERER_URL is not set"):
+        run_campaign.run_campaign("c1")

@@ -86,3 +86,14 @@ describe("statusFromCallTool", () => {
     await expect(wrapped("/qloo_tours", {})).rejects.toThrow("socket hang up");
   });
 });
+
+describe("tour_data_api not configured", () => {
+  it("statusFromCallTool maps a 503 from callTool so POST /api/tours answers 503 with the reason", async () => {
+    const callTool = statusFromCallTool(async (path) => {
+      throw new Error(`${path} failed (503): ${JSON.stringify({ error: "tour_data_api not configured" })}`);
+    });
+    const res = await post(await start(callTool), { source: "live", title: "T" });
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: "tour_data_api not configured" });
+  });
+});

@@ -3,6 +3,7 @@ info:
   title: Delight Card Renderer
   description: Renders a finalized talent brief into a city delight card and uploads it to Cloud Storage.
   version: "1.0.0"
+# NOTE: this URL is the original hackathon service. Change it to THIS project's service before provisioning.
 servers:
   - url: https://delight-card-renderer-602700957663.us-central1.run.app
 

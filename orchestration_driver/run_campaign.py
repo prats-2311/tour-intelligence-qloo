@@ -42,7 +42,7 @@ API_BASE = f"https://{LOCATION}-dialogflow.googleapis.com/v3beta1"
 DATASET = "tour_intelligence"
 # No default URL: the original Google-hackathon service must never be hit by accident.
 TOUR_DATA_API = os.environ.get("TOUR_DATA_API_URL", "")
-DELIGHT_RENDERER = "https://delight-card-renderer-602700957663.us-central1.run.app"
+DELIGHT_RENDERER = os.environ.get("DELIGHT_RENDERER_URL", "")
 
 _METADATA_SA_BASE = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default"
 
@@ -797,6 +797,8 @@ def run_campaign(campaign_id: str) -> dict[str, str | None]:
     in parallel."""
     if not TOUR_DATA_API:
         raise SystemExit("TOUR_DATA_API_URL is not set")
+    if not DELIGHT_RENDERER:
+        raise SystemExit("DELIGHT_RENDERER_URL is not set")
     lookup_token = _auth_token("identity", audience=TOUR_DATA_API)
     campaign_title = _fetch_campaign_title(campaign_id, lookup_token)
     stops = _fetch_campaign_stops(campaign_id, lookup_token)
