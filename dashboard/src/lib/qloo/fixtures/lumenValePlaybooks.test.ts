@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { SAMPLE_CITIES } from "./lumenVale";
 import { SAMPLE_PLAYBOOK_CITY_IDS, samplePlaybookEvents, sampleThisWeek } from "./lumenValePlaybooks";
 import type { GatewayEvent, PlaybookCard } from "../types";
+// The sample data is checked with the gateway's own verifiers so it can never drift from what they accept.
+import { verifyClaims, type EvidenceItem } from "../../../../../cloud_run/qloo_gateway/src/claims/verify";
+import { buildEvidence } from "../../../../../cloud_run/qloo_gateway/src/narrative/evidence";
+import { verifyWebItems } from "../../../../../cloud_run/qloo_gateway/src/web/verifyWeb";
 
 const cardsOf = (ev: GatewayEvent[]) => (ev.find((e) => e.type === "playbook") as Extract<GatewayEvent, { type: "playbook" }>).playbook.cards;
 const narrativeOf = (ev: GatewayEvent[]) => (ev.find((e) => e.type === "narrative") as Extract<GatewayEvent, { type: "narrative" }>).narrative;
@@ -52,5 +56,32 @@ describe("long-name sample playbooks", () => {
     expect(nameOf(samplePlaybookEvents("3464975"))).toBe("Curitiba");
     expect(nameOf(samplePlaybookEvents("3464975", { long: true }))).toBe("San Juan de los Lagos");
     expect(nameOf(samplePlaybookEvents("4005539", { long: true }))).toBe("Guadalajara");
+  });
+});
+
+describe("sample data passes the gateway verifiers", () => {
+  it.each(SAMPLE_PLAYBOOK_CITY_IDS)("city %s: every verified claim re-verifies and every removed claim is still removed for its reason", (id) => {
+    const ev = samplePlaybookEvents(id)!;
+    const n = narrativeOf(ev);
+    if (n.status !== "ok") throw new Error("expected ok");
+    const evidence: EvidenceItem[] = buildEvidence(cardsOf(ev) as never);
+    for (const cc of Object.values(n.cards)) {
+      const again = verifyClaims(cc!.verified, evidence);
+      expect(again.removed).toEqual([]);
+      for (const r of cc!.removed) {
+        expect(verifyClaims([r.claim], evidence).removed[0]).toMatchObject({ reason: r.reason, detail: r.detail });
+      }
+    }
+  });
+  it.each(SAMPLE_PLAYBOOK_CITY_IDS)("city %s: every this-week item survives verifyWebItems against its sample citations", (id) => {
+    const w = sampleThisWeek(id)!;
+    expect(w.status).toBe("ok");
+    if (w.status !== "ok") return;
+    const results = w.citations.map((c) => ({ id: c.id, url: c.url, title: c.title, content: "" }));
+    const r = verifyWebItems(w.items as never, results, w.window);
+    expect(r.removed).toEqual([]);
+    expect(r.verified).toHaveLength(w.items.length);
+    for (const it of w.items) expect(it.entities.length).toBeGreaterThan(0);
+    for (const c of w.citations) expect(c.title.startsWith("Sample source — ")).toBe(true);
   });
 });

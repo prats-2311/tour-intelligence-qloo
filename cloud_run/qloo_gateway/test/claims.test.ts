@@ -14,11 +14,11 @@ describe("normaliseName", () => {
 
 describe("verifyClaims", () => {
   it("keeps a fully supported claim", () => {
-    const r = verifyClaims([claim({ entities: [{ name: "cafe tacuba" }], numbers: [82] })], evidence);
+    const r = verifyClaims([claim({ text: "Cafe Tacuba scores 82.", entities: [{ name: "cafe tacuba" }], numbers: [82] })], evidence);
     expect(r.verified).toHaveLength(1);
   });
   it("matches by entity id when given", () => {
-    expect(verifyClaims([claim({ entities: [{ name: "Anything", entityId: "q-123" }] })], evidence).verified).toHaveLength(1);
+    expect(verifyClaims([claim({ text: "Anything is a fit.", entities: [{ name: "Anything", entityId: "q-123" }] })], evidence).verified).toHaveLength(1);
   });
   it("removes a fabricated entity", () => {
     const r = verifyClaims([claim({ entities: [{ name: "Heineken" }] })], evidence);
@@ -97,5 +97,39 @@ describe("empty names and uncheckable claims", () => {
     const r = verifyClaims([claim({})], evidence);
     expect(r.removed[0]?.reason).toBe("no_checkable_content");
     expect(verifyClaims([claim({ evidence_refs: ["nope"] })], evidence).removed[0]?.reason).toBe("dangling_ref");
+  });
+});
+
+describe("displayed text checks", () => {
+  const ev: EvidenceItem[] = [{ id: "e1", entityIds: [], names: ["Colonia Americana"], numbers: [38, 0.38, 0.91] }];
+  const c = (over: Partial<Claim>): Claim => ({ text: "t", entities: [], numbers: [], evidence_refs: ["e1"], ...over });
+  it("removes a claim whose text states a number that is not declared", () => {
+    const r = verifyClaims([c({ text: "Colonia Americana holds 52% of heat.", entities: [{ name: "Colonia Americana" }], numbers: [38] })], ev);
+    expect(r.verified).toEqual([]);
+    expect(r.removed[0]).toMatchObject({ reason: "unsupported_number", detail: "52%" });
+  });
+  it("accepts 38% in text when 38 or 0.38 is declared, and a thousands separator", () => {
+    const a = c({ text: "Colonia Americana holds 38% of heat.", entities: [{ name: "Colonia Americana" }], numbers: [38] });
+    const b = c({ text: "Colonia Americana holds 38% of heat.", entities: [{ name: "Colonia Americana" }], numbers: [0.38] });
+    expect(verifyClaims([a, b], ev).verified).toHaveLength(2);
+    const big = verifyClaims([c({ text: "Colonia Americana: 1,200 fans.", entities: [{ name: "Colonia Americana" }], numbers: [1200] })], [{ ...ev[0]!, numbers: [1200] }]);
+    expect(big.verified).toHaveLength(1);
+  });
+  it("removes a claim with an undeclared number even when it declares no numbers", () => {
+    const r = verifyClaims([c({ text: "Colonia Americana has 7 venues.", entities: [{ name: "Colonia Americana" }] })], ev);
+    expect(r.removed[0]).toMatchObject({ reason: "unsupported_number", detail: "7" });
+  });
+  it("removes a claim whose declared entity is not in its text", () => {
+    const r = verifyClaims([c({ text: "A strong zone for posters.", entities: [{ name: "Colonia Americana" }] })], ev);
+    expect(r.removed[0]).toMatchObject({ reason: "unsupported_entity", detail: "Colonia Americana" });
+  });
+  it("matches the entity in text accent- and case-insensitively", () => {
+    const r = verifyClaims([c({ text: "colonia américana is hot.", entities: [{ name: "Colonia Americana" }] })], ev);
+    expect(r.verified).toHaveLength(1);
+  });
+  it("does not read digits that belong to a declared entity name as stated numbers", () => {
+    const e: EvidenceItem[] = [{ id: "e1", entityIds: [], names: ["C3 Stage"], numbers: [0.91] }];
+    const r = verifyClaims([c({ text: "c3 stage ranks first at 0.91.", entities: [{ name: "C3 Stage" }], numbers: [0.91] })], e);
+    expect(r.verified).toHaveLength(1);
   });
 });

@@ -21,10 +21,24 @@ describe("verifyWebItems", () => {
       { text: "a", date: null, entities: [], citations: [] },
       { text: "b", date: null, entities: [], citations: ["w9"] },
       { text: "c", date: null, entities: ["Rival Arena"], citations: ["w1"] },
-      { text: "d", date: "2027-05-01", entities: [], citations: ["w1"] },
-      { text: "e", date: "13 March", entities: [], citations: ["w1"] },
+      { text: "d", date: "2027-05-01", entities: ["Festival de Cine en Guadalajara"], citations: ["w1"] },
+      { text: "e", date: "13 March", entities: ["Festival de Cine en Guadalajara"], citations: ["w1"] },
     ], results, window);
     expect(r.verified).toEqual([]);
     expect(r.removed.map((x) => x.reason)).toEqual(["no citation", "unknown citation w9", "entity not in cited source: Rival Arena", "date outside window", "date not ISO"]);
+  });
+  it("removes an item with no entities as nothing checkable", () => {
+    const r = verifyWebItems([{ text: "Something is on", date: null, entities: [], citations: ["w1"] }], results, window);
+    expect(r.verified).toEqual([]);
+    expect(r.removed[0]!.reason).toBe("nothing checkable");
+  });
+  it("removes an item whose text states a number absent from the cited source", () => {
+    const item = { text: "Festival runs 13-21 March", date: "2027-03-13", entities: ["Festival de Cine en Guadalajara"], citations: ["w1"] };
+    const r = verifyWebItems([item], results, window);
+    expect(r.removed[0]!.reason).toBe("number not in cited source: 21");
+  });
+  it("keeps an item whose numbers all appear in the cited source", () => {
+    const item = { text: "Festival runs 13-19 March", date: "2027-03-13", entities: ["Festival de Cine en Guadalajara"], citations: ["w1"] };
+    expect(verifyWebItems([item], results, window).verified).toEqual([item]);
   });
 });

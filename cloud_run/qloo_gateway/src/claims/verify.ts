@@ -44,6 +44,19 @@ function numberSupported(n: number, pool: number[]): boolean {
   return pool.some((v) => numberMatches(n, v));
 }
 
+export interface NumberToken { raw: string; value: number; percent: boolean }
+
+/** Numeric tokens in free text: decimals, thousands separators ("1,200") and a trailing "%". */
+export function numberTokens(text: string): NumberToken[] {
+  const out: NumberToken[] = [];
+  for (const m of text.matchAll(/\d{1,3}(?:,\d{3})+(?:\.\d+)?%?|\d+(?:\.\d+)?%?/g)) {
+    const raw = m[0];
+    const percent = raw.endsWith("%");
+    out.push({ raw, value: Number(raw.replace(/[,%]/g, "")), percent });
+  }
+  return out;
+}
+
 export function verifyClaims(claims: Claim[], evidence: EvidenceItem[]) {
   const byId = new Map(evidence.map((e) => [e.id, e]));
   const verified: Claim[] = [];
@@ -70,6 +83,17 @@ export function verifyClaims(claims: Claim[], evidence: EvidenceItem[]) {
     if (badEntity) { removed.push({ claim, reason: "unsupported_entity", detail: badEntity.name }); continue; }
     const badNumber = claim.numbers.find((n) => !numberSupported(n, numbers));
     if (badNumber !== undefined) { removed.push({ claim, reason: "unsupported_number", detail: String(badNumber) }); continue; }
+    // The displayed text must not state anything the declarations do not: undeclared numbers and
+    // declared entities missing from the text both remove the claim. (Undeclared proper nouns stay uncheckable.)
+    // Digits inside a declared entity's own name ("C3 Stage") are not stated numbers.
+    let stated = claim.text.toLowerCase();
+    for (const e of claim.entities) if (e.name.trim() !== "") stated = stated.split(e.name.toLowerCase()).join(" ");
+    const badToken = numberTokens(stated).find((t) =>
+      !claim.numbers.some((d) => numberMatches(t.value, d) || (t.percent && numberMatches(t.value / 100, d))));
+    if (badToken) { removed.push({ claim, reason: "unsupported_number", detail: badToken.raw }); continue; }
+    const text = normaliseName(claim.text);
+    const absent = claim.entities.find((e) => !text.includes(normaliseName(e.name)));
+    if (absent) { removed.push({ claim, reason: "unsupported_entity", detail: absent.name }); continue; }
     verified.push(claim);
   }
   return { verified, removed };

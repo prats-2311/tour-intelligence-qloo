@@ -7,7 +7,7 @@ type Zone = [label: string, lat: number, lon: number, share: number];
 type Co = [name: string, overlap: number, localAffinity: number];
 type ClaimRow = [text: string, refs: string[], entities: string[], numbers: number[]];
 type RemovedRow = [...ClaimRow, reason: CardClaims["removed"][number]["reason"], detail: string];
-type WeekRow = [text: string, date: string, citations: string[]];
+type WeekRow = [text: string, date: string, citations: string[], entities: string[]];
 
 interface CityData {
   id: string; name: string; country: string; code: string;
@@ -17,6 +17,7 @@ interface CityData {
   claims: Partial<Record<CardKind, ClaimRow[]>>;
   removed: Partial<Record<CardKind, RemovedRow[]>>;
   week: WeekRow[];
+  sources: Record<string, string>;
 }
 
 const TAGS: Ent[] = [["dream pop", 0.94], ["synthwave", 0.88], ["bedroom pop", 0.83], ["shoegaze", 0.77], ["neo-psychedelia", 0.71], ["city pop", 0.66]];
@@ -51,10 +52,11 @@ const CITIES: CityData[] = [
       venue_fit: [["Foro Alameda is an alternative room.", ["venue_fit:0"], ["Foro Alameda"], [], "unsupported_entity", "Foro Alameda"]],
     },
     week: [
-      ["Film festival week in the city, 13–19 Mar", "2027-03-13", ["w1", "w2"]],
-      ["Long weekend: Benito Juárez holiday observed 15 Mar", "2027-03-15", ["w3"]],
-      ["No rival 1,000–2,500 cap show listed for 14 Mar", "2027-03-14", ["w4"]],
+      ["Film festival week in the city, 13–19 Mar", "2027-03-13", ["w1", "w2"], ["Guadalajara film festival"]],
+      ["Long weekend: Benito Juárez holiday observed 15 Mar", "2027-03-15", ["w3"], ["Benito Juárez holiday"]],
+      ["No rival 1,000–2,500 cap show listed for 14 Mar", "2027-03-14", ["w4"], ["Guadalajara rival listings"]],
     ],
+    sources: { w1: "Guadalajara film festival, 13–19 Mar", w2: "Guadalajara film festival programme", w3: "Benito Juárez holiday observed 15 Mar", w4: "Guadalajara rival listings for 14 Mar, 1,000–2,500 cap shows" },
   },
   {
     id: "3464975", name: "Curitiba", country: "BR", code: "cwb",
@@ -76,7 +78,8 @@ const CITIES: CityData[] = [
     removed: {
       sponsors: [["Garoa Outerwear is the top sponsor.", ["sponsors:9"], ["Garoa Outerwear"], [], "dangling_ref", "sponsors:9"]],
     },
-    week: [["City theatre festival runs 24 Mar – 5 Apr", "2027-03-24", ["w1"]]],
+    week: [["City theatre festival runs 24 Mar – 5 Apr", "2027-03-24", ["w1"], ["Curitiba theatre festival"]]],
+    sources: { w1: "Curitiba theatre festival, 24 Mar – 5 Apr" },
   },
   {
     id: "3530597", name: "Mexico City", country: "MX", code: "cdmx",
@@ -99,9 +102,10 @@ const CITIES: CityData[] = [
       local_moment: [["Fans here love Café Tacuba.", ["local_moment:0"], ["Café Tacuba"], [], "unsupported_entity", "Café Tacuba"]],
     },
     week: [
-      ["Large rock festival weekend, 13–14 Mar", "2027-03-13", ["w1"]],
-      ["Benito Juárez holiday observed 15 Mar", "2027-03-15", ["w2"]],
+      ["Large rock festival weekend, 13–14 Mar", "2027-03-13", ["w1"], ["Mexico City rock festival"]],
+      ["Benito Juárez holiday observed 15 Mar", "2027-03-15", ["w2"], ["Benito Juárez holiday"]],
     ],
+    sources: { w1: "Mexico City rock festival, 13–14 Mar", w2: "Benito Juárez holiday observed 15 Mar" },
   },
   {
     id: "3448439", name: "São Paulo", country: "BR", code: "sp",
@@ -121,7 +125,8 @@ const CITIES: CityData[] = [
       local_moment: [["Fans here also love Cinemateca Brasileira (0.76).", ["local_moment:1"], ["Cinemateca Brasileira"], [0.76]]],
     },
     removed: {},
-    week: [["Major festival weekend, 26–28 Mar", "2027-03-26", ["w1"]]],
+    week: [["Major festival weekend, 26–28 Mar", "2027-03-26", ["w1"], ["São Paulo festival weekend"]]],
+    sources: { w1: "São Paulo festival weekend, 26–28 Mar" },
   },
 ];
 
@@ -179,11 +184,11 @@ function eventsFor(c: CityData): GatewayEvent[] {
 
 function thisWeekFor(c: CityData): ThisWeek {
   const urlOf = (id: string) => `https://example.com/sample/${c.code}-${id.slice(1)}`;
-  const items: ThisWeekItem[] = c.week.map(([text, date, citations]) => ({ text, date, entities: [], citations }));
+  const items: ThisWeekItem[] = c.week.map(([text, date, citations, entities]) => ({ text, date, entities, citations }));
   const ids = [...new Set(items.flatMap((it) => it.citations))];
   return {
     status: "ok", window: WINDOW, items, removed: [], summarised: true, cached: true,
-    citations: ids.map((id) => ({ id, url: urlOf(id), title: `Sample source — ${c.name} listing ${id.slice(1)}` })),
+    citations: ids.map((id) => ({ id, url: urlOf(id), title: `Sample source — ${c.sources[id]}` })),
   };
 }
 
