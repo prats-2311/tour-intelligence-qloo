@@ -3,11 +3,11 @@ import type { ProvenanceRow } from "@/lib/qloo/tourBook";
 
 const TH = "px-2 py-2 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-canvas-muted";
 
-export function ProvenanceAppendix({ rows, sample = false }: { rows: ProvenanceRow[]; sample?: boolean }) {
+export function ProvenanceAppendix({ rows, sample = false, showcase = false }: { rows: ProvenanceRow[]; sample?: boolean; showcase?: boolean }) {
   const title = `Provenance · ${rows.length} Qloo ${rows.length === 1 ? "request" : "requests"}`;
   return (
     <section id="chapter-provenance" aria-labelledby="provenance-title" className="book-chapter flex min-w-0 flex-col gap-4 px-4 lg:px-0">
-      {sample && <SampleBanner compact />}
+      {sample && <SampleBanner compact source={showcase ? "showcase" : "sample"} />}
       <h2 id="provenance-title" className="font-title text-[32px] leading-[1.1] text-canvas-text">{title}</h2>
       {rows.length === 0 ? (
         <p className="text-[13px] text-canvas-muted">No Qloo requests were recorded for this book.</p>

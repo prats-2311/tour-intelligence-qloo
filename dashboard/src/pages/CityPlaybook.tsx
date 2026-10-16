@@ -24,7 +24,8 @@ import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks
 import { INTEGRITY_LINE } from "@/lib/qloo/labels";
 import { loadPlaybook, usePlaybook, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
-import type { CardKind, PlaybookCard as Card } from "@/lib/qloo/types";
+import { showcaseBrief, showcaseCities, showcasePlaybookCities } from "@/lib/qloo/showcase";
+import type { CardKind, PlaybookCard as Card, SampleSet } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
 type Tab = "activate" | "culture" | "delight" | "talent";
@@ -61,9 +62,10 @@ export default function CityPlaybook() {
   const [params] = useSearchParams();
   const sampleParam = params.get("sample");
   const wantLong = sampleParam === "long";
-  const wantSample = sampleParam === "1" || wantLong;
-  const wantSet = wantLong ? "long" : "default";
-  const sampleQ = wantLong ? "?sample=long" : wantSample ? "?sample=1" : "";
+  const wantShowcase = params.get("showcase") === "1";
+  const wantSample = sampleParam === "1" || wantLong || wantShowcase;
+  const wantSet: SampleSet = wantShowcase ? "showcase" : wantLong ? "long" : "default";
+  const sampleQ = wantShowcase ? "?showcase=1" : wantLong ? "?sample=long" : wantSample ? "?sample=1" : "";
   const isDesktop = useIsDesktop();
   const started = useRef<string | null>(null); // the sample set this page already asked the board for
   const [tab, setTab] = useState<Tab>("activate");
@@ -79,14 +81,14 @@ export default function CityPlaybook() {
   useEffect(() => {
     if (!wantSample || started.current === wantSet) return;
     started.current = wantSet;
-    if (state.source !== "sample" || (state.sampleSet ?? "default") !== wantSet) run(wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
+    if (state.source === "live" || (state.sampleSet ?? "default") !== wantSet) run(wantShowcase ? showcaseBrief() : wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
   }, [wantSample, wantLong, wantSet, state.source, state.sampleSet, run]);
 
-  const sample = state.source === "sample";
+  const sample = state.source !== "live";
   // While a requested sample run has not started, nothing from an earlier live run is shown.
   const ready = !wantSample || (sample && (state.sampleSet ?? "default") === wantSet);
   const city = ready ? state.cities.find((c) => c.id === cityId) : undefined;
-  const shownCity = city ?? (wantSample ? SAMPLE_CITIES.find((c) => c.id === cityId) : undefined);
+  const shownCity = city ?? (wantSample ? (wantShowcase ? showcaseCities() : SAMPLE_CITIES).find((c) => c.id === cityId) : undefined);
   const artist = ready ? state.artist : undefined;
   const req: PlaybookRequest | null = shownCity && artist
     ? { artist: artist.name, artistEntityId: artist.entityId, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country }, sample, sampleSet: state.sampleSet, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined }
@@ -94,8 +96,8 @@ export default function CityPlaybook() {
   const pb = usePlaybook(req);
   const window = state.brief?.dateWindow;
   const week = useQuery({
-    queryKey: ["this-week", sample, cityId, window?.start, window?.end],
-    queryFn: () => fetchThisWeek({ city: shownCity!.name, country: shownCity!.country, window }, { sample, cityId }),
+    queryKey: ["this-week", sample, state.sampleSet, cityId, window?.start, window?.end],
+    queryFn: () => fetchThisWeek({ city: shownCity!.name, country: shownCity!.country, window }, { sample, sampleSet: state.sampleSet, cityId }),
     enabled: !!shownCity && !!artist,
     staleTime: Infinity,
     retry: false,
@@ -202,10 +204,10 @@ export default function CityPlaybook() {
 
   const noSamplePanel = (
     <section aria-label="No sample playbook" className="flex flex-col items-start gap-3 rounded-[18px] bg-paper p-4">
-      <p className="text-[15px] text-canvas-text">{pb.error?.message ?? `No sample playbook for ${shownCity.name}`}</p>
+      <p className="text-[15px] text-canvas-text">{pb.error?.message ?? `No ${wantShowcase ? "recorded" : "sample"} playbook for ${shownCity.name}`}</p>
       <ul className="flex flex-col">
-        {SAMPLE_PLAYBOOK_CITY_IDS.map((id) => {
-          const c = SAMPLE_CITIES.find((x) => x.id === id);
+        {(wantShowcase ? showcasePlaybookCities().map((x) => x.id) : [...SAMPLE_PLAYBOOK_CITY_IDS]).map((id) => {
+          const c = (wantShowcase ? showcaseCities() : SAMPLE_CITIES).find((x) => x.id === id);
           return c ? <li key={id}><Link to={`/tours/playbook/${id}${sampleQ || "?sample=1"}`} className="inline-flex min-h-11 items-center text-[15px] text-canvas-text underline decoration-canvas-muted underline-offset-4">{c.name}</Link></li> : null;
         })}
       </ul>
@@ -235,7 +237,7 @@ export default function CityPlaybook() {
 
   return (
     <div className="-mx-4 -mt-6 lg:mx-0 lg:mt-0">
-      {(sample || wantSample) && <SampleBanner />}
+      {(sample || wantSample) && <SampleBanner source={wantShowcase || state.source === "showcase" ? "showcase" : "sample"} />}
       <header className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-x-8 lg:pt-4">
         <div className="relative lg:order-2 lg:col-span-7 [&_svg]:rounded-none lg:[&_svg]:rounded-[18px]">
           <KeyArtPoster city={shownCity.name} accent={accent} ratio={isDesktop ? "16:9" : "4:5"} />

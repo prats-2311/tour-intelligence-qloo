@@ -21,7 +21,7 @@ describe("Landing", () => {
   it("has the headline and both entry points", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
     expect(screen.getByRole("heading", { level: 1, name: "Win their city." })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Try the showcase tour" }).getAttribute("href")).toBe("/tours/board?sample=1");
+    expect(screen.getByRole("link", { name: "Try the showcase tour" }).getAttribute("href")).toBe("/tours/board?showcase=1");
     expect(screen.getByRole("link", { name: "Plan your own" }).getAttribute("href")).toBe("/tours/board");
   });
   it("labels the proof card with the verbatim sample banner and integrity line, and shows no LIVE badge", () => {

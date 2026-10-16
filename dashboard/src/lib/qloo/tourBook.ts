@@ -1,4 +1,4 @@
-import type { CardKind, GatewayEvent, PlaybookCard, ScoredCity, ThisWeek, TourBrief } from "./types";
+import type { CardKind, GatewayEvent, PlaybookCard, ScoredCity, Source, ThisWeek, TourBrief } from "./types";
 import { accentFor } from "./cityAccent";
 import type { PlaybookState } from "./playbookReducer";
 import { sortCities } from "./ranking";
@@ -11,7 +11,7 @@ export interface BookCityChapter {
 }
 export interface ProvenanceRow { n: number; tool: string; inputs: string; status: string; cached: boolean; cacheKey: string; hash: string }
 export interface TourBook {
-  title: string; subtitle: string; source: "live" | "sample";
+  title: string; subtitle: string; source: Source;
   market: { rows: ScoredCity[]; shortlisted: Set<string>; slope: Array<{ id: string; name: string; densityRank: number; winRank: number; highlight: boolean }> };
   chapters: BookCityChapter[];
   provenance: ProvenanceRow[];
@@ -104,7 +104,7 @@ function buildProvenance(logs: GatewayEvent[][]): ProvenanceRow[] {
 }
 
 export function buildTourBook(input: {
-  brief: TourBrief; artistName: string; source: "live" | "sample"; cities: ScoredCity[]; shortlist: string[]; accentOrder: string[];
+  brief: TourBrief; artistName: string; source: Source; cities: ScoredCity[]; shortlist: string[]; accentOrder: string[];
   boardLog: GatewayEvent[]; playbooks: Record<string, PlaybookState | undefined>; weeks: Record<string, ThisWeek | undefined>;
 }): TourBook {
   const byWin = sortCities(input.cities, "winnability");

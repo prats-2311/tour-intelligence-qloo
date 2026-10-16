@@ -2,11 +2,11 @@ import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { KeyArtPoster } from "@/components/playbook/KeyArtPoster";
 import type { BookCityChapter } from "@/lib/qloo/tourBook";
 
-export function BookCover({ artist, regions, season, chapters, sample }: { artist: string; regions: string[]; season: string; chapters: BookCityChapter[]; sample: boolean }) {
+export function BookCover({ artist, regions, season, chapters, sample, showcase }: { artist: string; regions: string[]; season: string; chapters: BookCityChapter[]; sample: boolean; showcase?: boolean }) {
   const tiles = chapters.slice(0, 6);
   return (
     <section id="chapter-cover" aria-label="Cover" className="book-chapter flex min-w-0 flex-col gap-4">
-      {sample && <SampleBanner />}
+      {sample && <SampleBanner source={showcase ? "showcase" : "sample"} />}
       {tiles.length > 0 && (
         <div className="grid grid-cols-2 gap-[2px] bg-canvas" aria-hidden>
           {tiles.map((c) => (

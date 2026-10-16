@@ -3,9 +3,12 @@ import { getSessionId } from "./session";
 import { SseParser } from "./sse";
 import { samplePlaybookEvents, sampleThisWeek } from "./fixtures/lumenValePlaybooks";
 import { SAMPLE_WITHOUT_QLOO, sampleStrategistEvents } from "./fixtures/strategistSample";
-import type { ChatMessage, DateWindow, GatewayEvent, StrategistContext, ThisWeek, TourBrief, WithoutQloo } from "./types";
+import { showcaseBoardEvents, showcasePlaybookEvents, showcaseThisWeek } from "./showcase";
+import type { ChatMessage, DateWindow, GatewayEvent, SampleSet, StrategistContext, ThisWeek, TourBrief, WithoutQloo } from "./types";
 
-type StreamOpts = { signal?: AbortSignal; fetchImpl?: typeof fetch; sample?: boolean; sampleSet?: "default" | "long"; delayMs?: number };
+export const SHOWCASE_STRATEGIST_NOTE = "The live strategist needs a live run";
+
+type StreamOpts = { signal?: AbortSignal; fetchImpl?: typeof fetch; sample?: boolean; sampleSet?: SampleSet; delayMs?: number };
 
 export const isSampleMode = (): boolean => import.meta.env.VITE_QLOO_FIXTURES === "1";
 
@@ -41,6 +44,7 @@ async function* stream(url: string, init: RequestInit, opts: StreamOpts): AsyncG
 }
 
 export function streamTourBoard(brief: TourBrief, opts: StreamOpts = {}): AsyncGenerator<GatewayEvent> {
+  if (opts.sample && opts.sampleSet === "showcase") return sample(showcaseBoardEvents(), opts);
   if (opts.sample) return sample(opts.sampleSet === "long" ? LONG_NAMES_SAMPLE : LUMEN_VALE_SAMPLE, opts);
   return stream("/api/qloo/tour-board", {
     method: "POST",
@@ -51,6 +55,10 @@ export function streamTourBoard(brief: TourBrief, opts: StreamOpts = {}): AsyncG
 
 export function streamCityPlaybook(q: { artist: string; artistEntityId: string; city: string; country: string }, opts: StreamOpts & { cityId?: string } = {}): AsyncGenerator<GatewayEvent> {
   if (opts.sample) {
+    if (opts.sampleSet === "showcase") {
+      const rec = opts.cityId ? showcasePlaybookEvents(opts.cityId) : null;
+      return sample(rec ?? [{ type: "error", code: "NO_SAMPLE", message: `No recorded playbook for ${q.city}` }], opts);
+    }
     const events = opts.cityId ? samplePlaybookEvents(opts.cityId, { long: opts.sampleSet === "long" }) : null;
     return sample(events ?? [{ type: "error", code: "NO_SAMPLE", message: `No sample playbook for ${q.city}` }], opts);
   }
@@ -59,6 +67,12 @@ export function streamCityPlaybook(q: { artist: string; artistEntityId: string; 
 }
 
 export function streamStrategist(body: { messages: ChatMessage[]; context: StrategistContext }, opts: StreamOpts = {}): AsyncGenerator<GatewayEvent> {
+  if (opts.sample && opts.sampleSet === "showcase") {
+    return sample([
+      { type: "strategist_error", code: "UNAVAILABLE", message: SHOWCASE_STRATEGIST_NOTE },
+      { type: "done", summary: {} },
+    ], opts);
+  }
   if (opts.sample) {
     const lastUser = [...body.messages].reverse().find((m) => m.role === "user");
     return sample(sampleStrategistEvents(lastUser?.text ?? ""), opts);
@@ -92,7 +106,8 @@ function parseWithoutQloo(v: unknown): WithoutQloo | null {
   return null;
 }
 
-export async function fetchWithoutQloo(body: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }> }, opts: { sample?: boolean; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<WithoutQloo> {
+export async function fetchWithoutQloo(body: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }> }, opts: { sample?: boolean; sampleSet?: SampleSet; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<WithoutQloo> {
+  if (opts.sample && opts.sampleSet === "showcase") return { status: "unavailable", reason: "disabled", message: "The generic ranking needs a live run" };
   if (opts.sample) return SAMPLE_WITHOUT_QLOO;
   try {
     const res = await (opts.fetchImpl ?? fetch)("/api/qloo/without-qloo", {
@@ -110,7 +125,8 @@ export async function fetchWithoutQloo(body: { artist: string; regions: string[]
 
 const WEB_ERROR: ThisWeek = { status: "unavailable", reason: "error", message: "Live web context unavailable — search failed" };
 
-export async function fetchThisWeek(q: { city: string; country: string; window?: DateWindow }, opts: { sample?: boolean; cityId?: string; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<ThisWeek> {
+export async function fetchThisWeek(q: { city: string; country: string; window?: DateWindow }, opts: { sample?: boolean; sampleSet?: SampleSet; cityId?: string; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<ThisWeek> {
+  if (opts.sample && opts.sampleSet === "showcase") return (opts.cityId ? showcaseThisWeek(opts.cityId) : null) ?? { status: "unavailable", reason: "no_window", message: "No recorded web context for this city" };
   if (opts.sample) return (opts.cityId ? sampleThisWeek(opts.cityId) : null) ?? { status: "unavailable", reason: "no_key", message: "No sample web context for this city" };
   if (!q.window) return { status: "unavailable", reason: "no_window", message: "Add a date window to the brief to check this week in the city" };
   const qs = new URLSearchParams({ city: q.city, country: q.country, start: q.window.start, end: q.window.end }).toString();

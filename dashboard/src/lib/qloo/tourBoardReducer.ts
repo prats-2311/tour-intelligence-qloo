@@ -1,9 +1,9 @@
-import type { ArtistProfile, GatewayEvent, ScoredCity, TourBrief } from "./types";
+import type { ArtistProfile, GatewayEvent, SampleSet, ScoredCity, Source, TourBrief } from "./types";
 
 export type BoardState = {
   status: "idle" | "streaming" | "needs_input" | "done" | "error" | "interrupted";
-  source: "live" | "sample";
-  sampleSet?: "default" | "long";
+  source: Source;
+  sampleSet?: SampleSet;
   brief?: TourBrief;
   artist?: { entityId: string; name: string };
   profile?: ArtistProfile;
@@ -19,7 +19,7 @@ export type BoardState = {
 };
 
 export type BoardAction =
-  | { type: "start"; brief: TourBrief; source: "live" | "sample"; sampleSet?: "default" | "long" }
+  | { type: "start"; brief: TourBrief; source: Source; sampleSet?: SampleSet }
   | { type: "event"; event: GatewayEvent }
   | { type: "interrupted"; reason?: "user" | "connection" }
   | { type: "shortlist"; ids: string[] }

@@ -15,7 +15,7 @@ test("judge path: landing → showcase → board → why → insights", async ({
   await expect(page.getByTestId("city-row").nth(5)).toContainText("Guadalajara");
   await page.getByRole("tab", { name: "Winnability" }).click();
   await page.getByTestId("city-row").nth(2).getByText("Guadalajara").click();
-  await expect(page).toHaveURL(/\/tours\/playbook\/4005539\?sample=1/);
+  await expect(page).toHaveURL(/\/tours\/playbook\/4005539\?(sample|showcase)=1/);
   await expect(page.getByText(/\d+ verified · \d+ removed/).first()).toBeVisible({ timeout: 15_000 }); // stream finished
   await page.getByRole("button", { name: "Why this score?" }).first().click();
   await expect(page.getByRole("dialog", { name: /Guadalajara/ })).toContainText("0.5 × fan heat + 0.5 × activation");
@@ -69,4 +69,23 @@ test("Without Qloo shows the generic list with the banner and no verdicts", asyn
     await expect(page.getByText(label, { exact: true }), `verdict label "${label}"`).toHaveCount(0);
   }
   await expect(page.getByLabel("Map legend")).toHaveCount(0);
+});
+
+// Placeholder recording (Lumen Vale) until the real one is committed: the banner is then the sample text, otherwise the recorded label.
+const SHOWCASE_BANNER = /Sample data — illustrative, not Qloo output|Recorded Qloo run · \d{4}-\d{2}-\d{2} — not live/;
+
+test("showcase mode replays the recording with zero gateway calls", async ({ page }) => {
+  const api: string[] = [];
+  page.on("request", (r) => { if (r.url().includes("/api/qloo/")) api.push(r.url()); });
+  await page.goto("/tours/board?showcase=1");
+  await expect(page.getByText(SHOWCASE_BANNER).first()).toBeVisible();
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 15_000 });
+  await page.getByTestId("city-row").first().getByRole("button").first().click();
+  await expect(page).toHaveURL(/\/tours\/playbook\/\d+\?showcase=1/);
+  await expect(page.getByText(SHOWCASE_BANNER).first()).toBeVisible();
+  const open = page.getByRole("button", { name: /Ask the strategist|Strategist/ }).first();
+  await open.click();
+  await page.getByRole("button", { name: /^Why is .* ranked here\?$/ }).click();
+  await expect(page.getByText("The live strategist needs a live run")).toBeVisible();
+  expect(api).toEqual([]);
 });

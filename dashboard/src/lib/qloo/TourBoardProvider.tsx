@@ -3,9 +3,9 @@ import { SAMPLE_ACCENT_ORDER } from "./cityAccent";
 import { isSampleMode, streamTourBoard } from "./client";
 import { defaultShortlist } from "./ranking";
 import { boardReducer, initialBoard, type BoardState } from "./tourBoardReducer";
-import type { StrategistContext, TourBrief } from "./types";
+import type { SampleSet, StrategistContext, TourBrief } from "./types";
 
-type Ctx = { state: BoardState; strategistContext: StrategistContext; shortlist: string[]; accentOrder: string[]; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: "default" | "long" }): void; abort(): void; reset(): void };
+type Ctx = { state: BoardState; strategistContext: StrategistContext; shortlist: string[]; accentOrder: string[]; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: SampleSet }): void; abort(): void; reset(): void };
 const TourBoardContext = createContext<Ctx | null>(null);
 
 export function TourBoardProvider({ children, sampleDelayMs }: { children: ReactNode; sampleDelayMs?: number }) {
@@ -22,12 +22,12 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
 
   const abort = useCallback(() => { if (silentAbort()) dispatch({ type: "interrupted", reason: "user" }); }, [silentAbort]);
 
-  const run = useCallback((brief: TourBrief, opts: { sample?: boolean; sampleSet?: "default" | "long" } = {}) => {
+  const run = useCallback((brief: TourBrief, opts: { sample?: boolean; sampleSet?: SampleSet } = {}) => {
     silentAbort();
     const controller = new AbortController();
     controllerRef.current = controller;
     const sample = opts.sample ?? isSampleMode();
-    dispatch({ type: "start", brief, source: sample ? "sample" : "live", sampleSet: opts.sampleSet });
+    dispatch({ type: "start", brief, source: !sample ? "live" : opts.sampleSet === "showcase" ? "showcase" : "sample", sampleSet: opts.sampleSet });
     void (async () => {
       let terminal = false;
       try {

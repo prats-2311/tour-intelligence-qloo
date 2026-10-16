@@ -34,20 +34,21 @@ function useLauncherModel() {
   const { pathname, search } = useLocation();
   const { state, strategistContext } = useTourBoard();
   const sampleParam = new URLSearchParams(search).get("sample");
-  const sample = state.source === "sample" || (state.status === "idle" && (isSampleMode() || sampleParam === "1" || sampleParam === "long"));
+  const showcase = state.source === "showcase" || (state.status === "idle" && new URLSearchParams(search).get("showcase") === "1");
+  const sample = showcase || state.source === "sample" || (state.status === "idle" && (isSampleMode() || sampleParam === "1" || sampleParam === "long"));
   const focusCityId = matchPath("/tours/playbook/:cityId", pathname)?.params.cityId;
   const cityName = focusCityId
     ? (state.cities.find((c) => c.id === focusCityId)?.name ?? (sample && state.cities.length === 0 ? SAMPLE_CITIES.find((c) => c.id === focusCityId)?.name : undefined))
     : undefined;
   const title = cityName ? `About ${cityName}` : state.artist ? `About ${state.artist.name}` : "Ask about a tour";
   const context = focusCityId ? { ...strategistContext, focusCityId } : strategistContext;
-  return { sample, title, context };
+  return { sample, showcase, title, context };
 }
 
 /** Phones: a 56 px FAB above the tab bar that opens a full-height sheet. */
 export function StrategistFab() {
   const [open, setOpen] = useState(false);
-  const { sample, title, context } = useLauncherModel();
+  const { sample, showcase, title, context } = useLauncherModel();
   const { pathname } = useLocation();
   const lift = hasStickyFooter(pathname) ? "bottom-[calc(9.5rem+env(safe-area-inset-bottom))]" : "bottom-[calc(5rem+env(safe-area-inset-bottom))]";
   return (
@@ -62,7 +63,7 @@ export function StrategistFab() {
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Ask the strategist" full>
         <div className="-mx-4 -mb-4 min-h-0 flex-1">
-          <StrategistPanel context={context} sample={sample} title={title} hideHeading />
+          <StrategistPanel context={context} sample={sample} showcase={showcase} title={title} hideHeading />
         </div>
       </Sheet>
     </>
@@ -85,10 +86,10 @@ export function StrategistToggle({ open, onToggle }: { open: boolean; onToggle()
 
 /** Desktop docked right panel; the main area pads itself to make room. */
 export function StrategistDock({ onClose }: { onClose(): void }) {
-  const { sample, title, context } = useLauncherModel();
+  const { sample, showcase, title, context } = useLauncherModel();
   return (
     <aside aria-label="Ask the strategist" style={{ width: DOCK_WIDTH }} className="fixed bottom-0 right-0 top-14 z-20 border-l border-canvas-line bg-canvas">
-      <StrategistPanel context={context} sample={sample} title={title} onClose={onClose} />
+      <StrategistPanel context={context} sample={sample} showcase={showcase} title={title} onClose={onClose} />
     </aside>
   );
 }

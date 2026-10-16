@@ -1,10 +1,10 @@
-import type { GatewayEvent, Narrative, PlaybookCard } from "./types";
+import type { GatewayEvent, Narrative, PlaybookCard, Source } from "./types";
 
 export type PlaybookState = {
-  status: "idle" | "streaming" | "done" | "error" | "interrupted"; source: "live" | "sample";
+  status: "idle" | "streaming" | "done" | "error" | "interrupted"; source: Source;
   cards: PlaybookCard[]; narrative?: Narrative; log: GatewayEvent[]; error?: { code: string; message: string };
 };
-export type PlaybookAction = { type: "start"; source: "live" | "sample" } | { type: "event"; event: GatewayEvent } | { type: "interrupted" };
+export type PlaybookAction = { type: "start"; source: Source } | { type: "event"; event: GatewayEvent } | { type: "interrupted" };
 export const initialPlaybook: PlaybookState = { status: "idle", source: "live", cards: [], log: [] };
 
 export function playbookReducer(s: PlaybookState, a: PlaybookAction): PlaybookState {

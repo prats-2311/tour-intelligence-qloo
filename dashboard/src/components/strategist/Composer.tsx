@@ -5,7 +5,7 @@ import { liveSuggestions } from "@/lib/qloo/strategistSuggestions";
 import type { StrategistContext } from "@/lib/qloo/types";
 import { CHAT_INPUT_CLASS, CHAT_SEND_CLASS, MicButton, SuggestionChips } from "@/components/ui/ChatBits";
 
-export function Composer({ busy, empty, sample, context, onAsk, onStop }: { busy: boolean; empty: boolean; sample: boolean; context: StrategistContext; onAsk: (q: string) => void; onStop: () => void }) {
+export function Composer({ busy, empty, sample, showcase = false, context, onAsk, onStop }: { busy: boolean; empty: boolean; sample: boolean; showcase?: boolean; context: StrategistContext; onAsk: (q: string) => void; onStop: () => void }) {
   const [text, setText] = useState("");
   function send() {
     const q = text.trim();
@@ -15,7 +15,7 @@ export function Composer({ busy, empty, sample, context, onAsk, onStop }: { busy
   }
   return (
     <div className="px-4 pb-4 pt-2">
-      {empty && <SuggestionChips suggestions={sample ? [...SAMPLE_QUESTIONS] : liveSuggestions(context)} onPick={(q) => { if (!busy) onAsk(q); }} />}
+      {empty && <SuggestionChips suggestions={sample && !showcase ? [...SAMPLE_QUESTIONS] : liveSuggestions(context)} onPick={(q) => { if (!busy) onAsk(q); }} />}
       <form className="flex items-end gap-2" onSubmit={(e) => { e.preventDefault(); send(); }}>
         <input type="text" aria-label="Ask the strategist" maxLength={1000} value={text} onChange={(e) => setText(e.target.value)} placeholder="Ask about a city, a sponsor or a co-bill" className={`${CHAT_INPUT_CLASS} min-h-11`} />
         <MicButton onTranscript={(t) => setText((cur) => (cur ? `${cur} ${t}` : t))} />

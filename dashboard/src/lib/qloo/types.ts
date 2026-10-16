@@ -1,3 +1,6 @@
+/** Where a board or playbook came from. "sample" is the fictional Lumen Vale replay; "showcase" is a recorded run. */
+export type Source = "live" | "sample" | "showcase";
+export type SampleSet = "default" | "long" | "showcase";
 export type QlooStatus = "ok" | "empty" | "needs_input" | "partial" | "degraded" | "error";
 export interface EvidenceRef { tool: string; cacheKey: string; resultIndex?: number }
 export type Score =

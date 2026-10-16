@@ -16,10 +16,11 @@ import { WhyThisScore } from "@/components/qloo/WhyThisScore";
 import { fetchWithoutQloo } from "@/lib/qloo/client";
 import { LONG_CITY_NAMES, LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_WITHOUT_QLOO } from "@/lib/qloo/fixtures/strategistSample";
+import { showcaseBrief } from "@/lib/qloo/showcase";
 import { sortCities, summarize } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { INTEGRITY_LINE, VERDICT_LABEL } from "@/lib/qloo/labels";
-import type { TourBrief, Verdict } from "@/lib/qloo/types";
+import type { TourBrief, Verdict, WithoutQloo } from "@/lib/qloo/types";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
@@ -30,6 +31,8 @@ const MODES: Array<{ id: Mode; label: string }> = [
   { id: "without", label: "Without Qloo" },
 ];
 const PANEL_LABEL: Record<Mode, string> = { winnability: "Winnability ranking", density: "Density-only ranking", without: "Without Qloo ranking" };
+// The recording has no generic-LLM answer to replay, and the page makes no live call in the showcase.
+const WITHOUT_SHOWCASE: WithoutQloo = { status: "unavailable", reason: "disabled", message: "The generic ranking needs a live run" };
 const SHORTLIST_VERDICTS = new Set(["play", "hidden_goldmine"]);
 
 function SegmentedControl({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
@@ -107,7 +110,8 @@ export default function TourBoard() {
   const navigate = useNavigate();
   const sampleParam = params.get("sample");
   const wantLong = sampleParam === "long";
-  const wantSample = sampleParam === "1" || wantLong;
+  const wantShowcase = params.get("showcase") === "1";
+  const wantSample = sampleParam === "1" || wantLong || wantShowcase;
   const started = useRef(false);
   const modeParam = params.get("mode");
   const mode: Mode = modeParam === "density" || modeParam === "without" ? modeParam : "winnability";
@@ -127,8 +131,10 @@ export default function TourBoard() {
   useEffect(() => {
     if (!wantSample || started.current) return;
     started.current = true;
-    if (state.source !== "sample") run(wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantLong ? "long" : "default" });
-  }, [wantSample, wantLong, state.source, run]);
+    if (wantShowcase) {
+      if (state.source !== "showcase") run(showcaseBrief(), { sample: true, sampleSet: "showcase" });
+    } else if (state.source !== "sample") run(wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantLong ? "long" : "default" });
+  }, [wantSample, wantLong, wantShowcase, state.source, run]);
 
   // A new run starts clean: no stale selection (the provider's reducer clears the shortlist on start).
   useEffect(() => {
@@ -140,7 +146,7 @@ export default function TourBoard() {
   const newBrief = () => {
     setLastBrief(state.brief);
     reset();
-    if (params.has("sample") || params.has("mode")) setParams((p) => { const n = new URLSearchParams(p); n.delete("sample"); n.delete("mode"); return n; }, { replace: true });
+    if (params.has("sample") || params.has("showcase") || params.has("mode")) setParams((p) => { const n = new URLSearchParams(p); n.delete("sample"); n.delete("showcase"); n.delete("mode"); return n; }, { replace: true });
   };
 
   const sorted = useMemo(() => sortCities(state.cities, mode === "density" ? "density" : "winnability"), [state.cities, mode]);
@@ -148,10 +154,10 @@ export default function TourBoard() {
   const eligible = useMemo(() => sortCities(state.cities, "winnability").filter((c) => SHORTLIST_VERDICTS.has(c.verdict)), [state.cities]);
   const maxStops = state.brief?.maxStops ?? 8;
   const atCap = shortlist.length >= maxStops;
-  const sampleQ = state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
+  const sampleQ = state.source === "showcase" ? "?showcase=1" : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
   const bookHref = `/tours/book${sampleQ}`;
   const withoutMode = mode === "without";
-  const isSample = state.source === "sample";
+  const isSample = state.source !== "live";
   const withoutLive = useQuery({
     queryKey: ["without-qloo", state.artist?.entityId ?? state.brief?.artistEntityId ?? state.brief?.artist, state.cities.map((c) => c.id).join("|")],
     queryFn: ({ signal }) => fetchWithoutQloo({
@@ -163,7 +169,9 @@ export default function TourBoard() {
     staleTime: Infinity,
     retry: false,
   });
-  const withoutResult = isSample
+  const withoutResult = state.source === "showcase"
+    ? WITHOUT_SHOWCASE
+    : isSample
     ? (state.sampleSet === "long" && SAMPLE_WITHOUT_QLOO.status === "ok"
       ? { ...SAMPLE_WITHOUT_QLOO, ranked: SAMPLE_WITHOUT_QLOO.ranked.map((r) => {
           const id = SAMPLE_CITIES.find((c) => c.name === r.name)?.id;
@@ -175,7 +183,7 @@ export default function TourBoard() {
   const whyCity = state.cities.find((c) => c.id === whyId);
   const summaryCity = selected ?? eligible.find((c) => c.verdict === "hidden_goldmine") ?? sorted[0];
 
-  const retry = () => { if (state.brief) run(state.brief, { sample: state.source === "sample", sampleSet: wantLong ? "long" : "default" }); };
+  const retry = () => { if (state.brief) run(state.brief, { sample: isSample, sampleSet: state.source === "showcase" ? "showcase" : wantLong ? "long" : "default" }); };
   const showcase = () => run(SAMPLE_BRIEF, { sample: true });
   const openRow = (id: string) => navigate(`/tours/playbook/${id}${sampleQ}`);
   const selectFromMap = (id: string) => {
@@ -200,7 +208,7 @@ export default function TourBoard() {
       <NeedsInputPicker
         artist={state.brief?.artist}
         candidates={state.needsInput.candidates}
-        onPick={(id) => { if (state.brief) run({ ...state.brief, artistEntityId: id }, { sample: state.source === "sample" }); }}
+        onPick={(id) => { if (state.brief) run({ ...state.brief, artistEntityId: id }, { sample: isSample, sampleSet: state.source === "showcase" ? "showcase" : undefined }); }}
         onSearchAgain={newBrief}
       />
     );
@@ -405,7 +413,7 @@ export default function TourBoard() {
   if (!hasMap) {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
-        {state.source === "sample" && <SampleBanner />}
+        {isSample && <SampleBanner source={state.source} />}
         {header}
         {body}
         {sheets}
@@ -415,7 +423,7 @@ export default function TourBoard() {
 
   return (
     <div className="-mx-4 -mt-6 lg:-mx-8 lg:-my-8">
-      {state.source === "sample" && <SampleBanner />}
+      {isSample && <SampleBanner source={state.source} />}
       <div className="grid grid-cols-1 lg:grid-cols-12">
         <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1">{header}</div>
         <section aria-label="Routing map" className="relative h-[32dvh] min-h-[168px] bg-canvas-raised lg:sticky lg:top-14 lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:h-[calc(100dvh-56px)] lg:self-start">

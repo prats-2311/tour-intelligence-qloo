@@ -20,7 +20,8 @@ import { SAMPLE_TEXT } from "@/lib/qloo/labels";
 import { sortCities } from "@/lib/qloo/ranking";
 import { buildTourBook, campaignTitle } from "@/lib/qloo/tourBook";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
-import type { ThisWeek } from "@/lib/qloo/types";
+import { showcaseBannerText, showcaseBrief } from "@/lib/qloo/showcase";
+import type { SampleSet, ThisWeek } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
 // Same pacing CityPlaybook uses so sample books do not feel slow.
@@ -40,9 +41,10 @@ export default function TourBook() {
   const [params] = useSearchParams();
   const sampleParam = params.get("sample");
   const wantLong = sampleParam === "long";
-  const wantSample = sampleParam === "1" || wantLong;
-  const wantSet = wantLong ? "long" : "default";
-  const sampleQ = wantLong ? "?sample=long" : wantSample ? "?sample=1" : "";
+  const wantShowcase = params.get("showcase") === "1";
+  const wantSample = sampleParam === "1" || wantLong || wantShowcase;
+  const wantSet: SampleSet = wantShowcase ? "showcase" : wantLong ? "long" : "default";
+  const sampleQ = wantShowcase ? "?showcase=1" : wantLong ? "?sample=long" : wantSample ? "?sample=1" : "";
   const isDesktop = useIsDesktop();
   const reduce = useReducedMotion();
   const started = useRef(false);
@@ -58,10 +60,10 @@ export default function TourBook() {
   useEffect(() => {
     if (!wantSample || started.current) return;
     started.current = true;
-    if (state.source !== "sample" || (state.sampleSet ?? "default") !== wantSet) run(wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
+    if (state.source === "live" || (state.sampleSet ?? "default") !== wantSet) run(wantShowcase ? showcaseBrief() : wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
   }, [wantSample, wantLong, wantSet, state.source, state.sampleSet, run]);
 
-  const sample = state.source === "sample";
+  const sample = state.source !== "live";
   const ready = !wantSample || (sample && (state.sampleSet ?? "default") === wantSet);
   const artist = ready ? state.artist : undefined;
   const streaming = state.status === "streaming" || !ready;
@@ -97,9 +99,9 @@ export default function TourBook() {
 
   const weekQueries = useQueries({
     queries: picked.map((c) => ({
-      queryKey: ["this-week", sample, c.id, dateWindow?.start, dateWindow?.end],
+      queryKey: ["this-week", sample, state.sampleSet, c.id, dateWindow?.start, dateWindow?.end],
       queryFn: async (): Promise<ThisWeek> => {
-        try { return await fetchThisWeek({ city: c.name, country: c.country, window: dateWindow }, { sample, cityId: c.id }); }
+        try { return await fetchThisWeek({ city: c.name, country: c.country, window: dateWindow }, { sample, sampleSet: state.sampleSet, cityId: c.id }); }
         catch { return { status: "unavailable", reason: "error", message: "Live web context unavailable — search failed" }; }
       },
       enabled: boardReady,
@@ -267,11 +269,11 @@ export default function TourBook() {
           </aside>
         )}
         <div className="book-page flex min-w-0 flex-col gap-12 pb-24 lg:col-start-2 lg:bg-paper lg:p-14 lg:pb-14">
-          <BookCover artist={artist!.name} regions={state.brief!.regions} season={book.subtitle} chapters={book.chapters} sample={book.source === "sample"} />
+          <BookCover artist={artist!.name} regions={state.brief!.regions} season={book.subtitle} chapters={book.chapters} sample={book.source !== "live"} showcase={book.source === "showcase"} />
           <MarketChapter market={book.market} />
-          {book.chapters.map((c) => <CityChapter key={c.city.id} chapter={c} sample={book.source === "sample"} />)}
-          <ProvenanceAppendix rows={book.provenance} sample={book.source === "sample"} />
-          {book.source === "sample" && <p data-print-footer className="print-footer">{SAMPLE_TEXT}</p>}
+          {book.chapters.map((c) => <CityChapter key={c.city.id} chapter={c} sample={book.source !== "live"} showcase={book.source === "showcase"} />)}
+          <ProvenanceAppendix rows={book.provenance} sample={book.source !== "live"} showcase={book.source === "showcase"} />
+          {book.source !== "live" && <p data-print-footer className="print-footer">{book.source === "showcase" ? showcaseBannerText() : SAMPLE_TEXT}</p>}
         </div>
       </div>
 

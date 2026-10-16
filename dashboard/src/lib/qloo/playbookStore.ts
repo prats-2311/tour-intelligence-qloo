@@ -1,8 +1,9 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { streamCityPlaybook } from "./client";
+import type { SampleSet } from "./types";
 import { initialPlaybook, playbookReducer, type PlaybookState } from "./playbookReducer";
 
-export interface PlaybookRequest { artist: string; artistEntityId: string; city: { id: string; name: string; country: string }; sample: boolean; sampleSet?: "default" | "long"; delayMs?: number }
+export interface PlaybookRequest { artist: string; artistEntityId: string; city: { id: string; name: string; country: string }; sample: boolean; sampleSet?: SampleSet; delayMs?: number }
 
 const states = new Map<string, PlaybookState>();
 const inflight = new Map<string, Promise<PlaybookState>>();
@@ -11,7 +12,7 @@ const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 
-export const playbookKey = (artistEntityId: string, cityId: string, sampleSet?: "default" | "long"): string => `${artistEntityId}|${cityId}|${sampleSet ?? "default"}`;
+export const playbookKey = (artistEntityId: string, cityId: string, sampleSet?: SampleSet): string => `${artistEntityId}|${cityId}|${sampleSet ?? "default"}`;
 const keyOf = (r: PlaybookRequest) => playbookKey(r.artistEntityId, r.city.id, r.sampleSet);
 
 export function getPlaybook(key: string): PlaybookState | undefined { return states.get(key); }
@@ -29,7 +30,7 @@ export function loadPlaybook(req: PlaybookRequest): Promise<PlaybookState> {
   const born = epoch;
   const put = (k: string, v: PlaybookState): PlaybookState => (born === epoch ? putState(k, v) : v);
   const job = (async () => {
-    let s = put(key, playbookReducer(initialPlaybook, { type: "start", source: req.sample ? "sample" : "live" }));
+    let s = put(key, playbookReducer(initialPlaybook, { type: "start", source: !req.sample ? "live" : req.sampleSet === "showcase" ? "showcase" : "sample" }));
     let terminal = false;
     try {
       const events = streamCityPlaybook(

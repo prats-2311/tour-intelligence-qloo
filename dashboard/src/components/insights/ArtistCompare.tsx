@@ -29,7 +29,7 @@ function outcomeOf(envelope: unknown): Pick<Result, "error" | "note" | "candidat
 }
 
 export function ArtistCompare({ artist, source }: { artist: { entityId: string; name: string }; source: "live" | "sample" | string }) {
-  const sample = source === "sample";
+  const sample = source !== "live";
   const [names, setNames] = useState(["", ""]);
   const [results, setResults] = useState<Result[]>([]);
   const [busy, setBusy] = useState(false);

@@ -3,18 +3,21 @@ import { fit } from "@/components/playbook/format";
 import { CROSS_CATEGORIES, playbookCrossDomain, type CrossCategory } from "@/lib/qloo/adapters";
 import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks";
 import { loadPlaybook, playbookKey, usePlaybook, usePlaybookSnapshot, type PlaybookRequest } from "@/lib/qloo/playbookStore";
+import { showcasePlaybookEvents } from "@/lib/qloo/showcase";
 import type { ScoredCity } from "@/lib/qloo/types";
 
 const LABELS: Record<CrossCategory, string> = { artist: "Artists", movie: "Movies", tv_show: "TV shows", place: "Places", brand: "Brands" };
 const SAMPLE_COVERAGE = "Sample playbooks cover Mexico City, São Paulo, Guadalajara and Curitiba";
 
 export function CrossDomainTaste({ artist, city, source }: { artist: { entityId: string; name: string }; city: ScoredCity; source: "live" | "sample" | string }) {
-  const sample = source === "sample";
-  const covered = (SAMPLE_PLAYBOOK_CITY_IDS as readonly string[]).includes(city.id);
-  const key = playbookKey(artist.entityId, city.id);
+  const sample = source !== "live";
+  const showcase = source === "showcase";
+  const sampleSet = showcase ? "showcase" : undefined;
+  const covered = showcase ? showcasePlaybookEvents(city.id) !== null : (SAMPLE_PLAYBOOK_CITY_IDS as readonly string[]).includes(city.id);
+  const key = playbookKey(artist.entityId, city.id, sampleSet);
   // Live lookups cost Qloo calls, so they wait for a click, unless the Playbook page already loaded this one.
   const [clicked, setClicked] = useState<string | null>(null);
-  const request: PlaybookRequest = { artist: artist.name, artistEntityId: artist.entityId, city: { id: city.id, name: city.name, country: city.country }, sample, delayMs: sample ? 10 : undefined };
+  const request: PlaybookRequest = { artist: artist.name, artistEntityId: artist.entityId, city: { id: city.id, name: city.name, country: city.country }, sample, sampleSet, delayMs: sample ? 10 : undefined };
   const existing = usePlaybookSnapshot(key)?.status;
   // Failed or interrupted entries never restart on their own: that would be an unasked live call.
   const enabled = sample ? covered : clicked === key || existing === "done" || existing === "streaming";
@@ -31,7 +34,7 @@ export function CrossDomainTaste({ artist, city, source }: { artist: { entityId:
       <h2 className="font-title text-[20px] leading-tight text-canvas-text">Cross-domain taste · {city.name}</h2>
       <div className="flex flex-wrap items-center gap-3">
         {!sample && <button type="button" disabled={pb.status === "streaming"} onClick={run} className={`${btn} bg-paper-raised text-canvas-text hover:bg-[#3a3932] disabled:opacity-50`}>Load taste for {city.name}</button>}
-        {sample && !covered && <p className="text-[13px] text-canvas-muted">{SAMPLE_COVERAGE}</p>}
+        {sample && !covered && <p className="text-[13px] text-canvas-muted">{showcase ? "Recorded playbooks cover only the cities the run flagged as worth a closer look" : SAMPLE_COVERAGE}</p>}
         {pb.status === "streaming" && <p role="status" className="text-[13px] text-canvas-muted">Loading taste…</p>}
       </div>
       {pb.status === "error" && <p role="alert" className="text-[14px] text-state-error">{pb.error?.message ?? "Taste lookup failed"}</p>}

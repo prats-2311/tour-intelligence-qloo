@@ -47,6 +47,7 @@ export function QlooWebMcpTools() {
 
     const sampleQuery = (): string => {
       const { board: b, location: l } = live.current;
+      if (b.state.source === "showcase" || new URLSearchParams(l.search).get("showcase") === "1") return "showcase=1";
       const fromUrl = new URLSearchParams(l.search).get("sample");
       const flag = fromUrl ?? (b.state.source === "sample" ? (b.state.sampleSet === "long" ? "long" : "1") : null);
       return flag ? `sample=${flag}` : "";
@@ -99,7 +100,7 @@ export function QlooWebMcpTools() {
         const city = findCity(city_id);
         const { state } = live.current.board;
         if (!city || !state.artist) return { ok: false, error: "Unknown city" };
-        const sample = state.source === "sample";
+        const sample = state.source !== "live";
         const pb = await loadPlaybook({
           artist: state.artist.name, artistEntityId: state.artist.entityId,
           city: { id: city.id, name: city.name, country: city.country }, sample, sampleSet: state.sampleSet, delayMs: sample ? 0 : undefined,

@@ -5,8 +5,8 @@ import type { StrategistContext } from "@/lib/qloo/types";
 import { Composer } from "./Composer";
 import { MessageList } from "./MessageList";
 
-export function StrategistPanel({ context, sample, title, onClose, hideHeading }: { context: StrategistContext; sample: boolean; title: string; onClose?: () => void; hideHeading?: boolean }) {
-  const { state, ask, stop, busy } = useStrategist(context, { sample });
+export function StrategistPanel({ context, sample, showcase = false, title, onClose, hideHeading }: { context: StrategistContext; sample: boolean; showcase?: boolean; title: string; onClose?: () => void; hideHeading?: boolean }) {
+  const { state, ask, stop, busy } = useStrategist(context, { sample, showcase });
   return (
     <section aria-label="Strategist" className="flex h-full min-h-0 flex-col bg-canvas text-canvas-text">
       <header className="flex items-start justify-between gap-3 px-4 pt-4">
@@ -20,9 +20,9 @@ export function StrategistPanel({ context, sample, title, onClose, hideHeading }
           </button>
         )}
       </header>
-      {sample && <div className="px-4 pt-2"><SampleBanner compact /></div>}
+      {sample && <div className="px-4 pt-2"><SampleBanner compact source={showcase ? "showcase" : "sample"} /></div>}
       <MessageList turns={state.turns} onRetry={ask} busy={busy} />
-      <Composer busy={busy} empty={state.turns.length === 0} sample={sample} context={context} onAsk={ask} onStop={stop} />
+      <Composer busy={busy} empty={state.turns.length === 0} sample={sample} showcase={showcase} context={context} onAsk={ask} onStop={stop} />
     </section>
   );
 }

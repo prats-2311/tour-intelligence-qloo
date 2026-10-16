@@ -105,7 +105,7 @@ export default function TasteInsights() {
   const scored = `${cities.length} ${cities.length === 1 ? "market" : "markets"} scored`;
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      {source === "sample" && <SampleBanner />}
+      {source !== "live" && <SampleBanner source={source} />}
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-title text-[32px] leading-[1.1] text-canvas-text lg:text-[40px]">Taste Insights</h1>

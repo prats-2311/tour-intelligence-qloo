@@ -7,6 +7,8 @@ export const VERDICT_LABEL: Record<Verdict, string> = {
 
 export const INTEGRITY_LINE = "Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.";
 export const SAMPLE_TEXT = "Sample data — illustrative, not Qloo output";
+/** Label for a recorded run. A placeholder recording (no date) is honestly the sample. */
+export const recordedText = (recordedAt: string | null): string => (recordedAt ? `Recorded Qloo run · ${recordedAt.slice(0, 10)} — not live` : SAMPLE_TEXT);
 
 /** Activation component weights as the gateway applies them (display only). */
 export const ACTIVATION_WEIGHTS: ReadonlyArray<{ key: ComponentName; label: string; short: string; weight: string }> = [

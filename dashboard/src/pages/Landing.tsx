@@ -7,32 +7,39 @@ import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { INTEGRITY_LINE } from "@/lib/qloo/labels";
 import { ordinal, sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
+import { proofFor, SHOWCASE, showcaseCities } from "@/lib/qloo/showcase";
+import type { ScoredCity } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
 const GDL = SAMPLE_CITIES[2]!;
-const PREVIEW_CITIES = SAMPLE_CITIES.filter((c) => c.verdict !== "insufficient_data");
+// A real recording drives the card from its own data; the committed placeholder keeps the Guadalajara sample card.
+const RECORDED = SHOWCASE.recordedAt !== null;
+const PREVIEW_CITIES = (RECORDED ? showcaseCities() : SAMPLE_CITIES).filter((c) => c.verdict !== "insufficient_data");
+const SAMPLE_LINE = (): string => {
+  const rank = (mode: "density" | "winnability") => sortCities(PREVIEW_CITIES, mode).findIndex((c) => c.id === GDL.id) + 1;
+  return `Ranked ${ordinal(rank("density"))} on fan density alone. ${ordinal(rank("winnability"))} on winnability.`;
+};
 const noop = () => {};
 const CTA = "flex min-h-[52px] items-center justify-center rounded-[10px] px-6 font-sans text-[16px] outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold active:scale-[0.98] motion-reduce:active:scale-100 lg:min-h-12 lg:text-[15px]";
 
 function ProofCard() {
   const reduce = useReducedMotion();
-  const line = useMemo(() => {
-    const rank = (mode: "density" | "winnability") => sortCities(PREVIEW_CITIES, mode).findIndex((c) => c.id === GDL.id) + 1;
-    return `Ranked ${ordinal(rank("density"))} on fan density alone. ${ordinal(rank("winnability"))} on winnability.`;
-  }, []);
+  const proof = useMemo<{ city: ScoredCity; line: string } | null>(() => (RECORDED ? proofFor(PREVIEW_CITIES) : { city: GDL, line: SAMPLE_LINE() }), []);
+  if (!proof) return null;
+  const { city: hero, line } = proof;
   return (
-    <section aria-label="Guadalajara sample routing row" className="relative -mx-4 bg-paper px-4 py-4 hover:bg-paper-raised lg:mx-0 lg:rounded-[18px] lg:p-5">
+    <section aria-label={`${hero.name} ${RECORDED ? "recorded" : "sample"} routing row`} className="relative -mx-4 bg-paper px-4 py-4 hover:bg-paper-raised lg:mx-0 lg:rounded-[18px] lg:p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-baseline gap-2">
             <h2 className="font-title text-[20px] leading-tight text-bone lg:text-[22px]">
-              <Link to={`/tours/playbook/${GDL.id}?sample=1`} className="inline-flex min-h-11 items-center outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-gold lg:after:rounded-[18px]">{GDL.name}</Link>
+              <Link to={`/tours/playbook/${hero.id}?${RECORDED ? "showcase" : "sample"}=1`} className="inline-flex min-h-11 items-center outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-gold lg:after:rounded-[18px]">{hero.name}</Link>
             </h2>
-            <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-canvas-muted">{GDL.country}</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-canvas-muted">{hero.country}</span>
           </div>
-          <div className="mt-2"><SampleBanner compact /></div>
+          <div className="mt-2"><SampleBanner compact source={RECORDED ? "showcase" : "sample"} /></div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
           <motion.div
@@ -40,12 +47,12 @@ function ProofCard() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.18, ease: "easeOut" }}
           >
-            <VerdictChip verdict={GDL.verdict} />
+            <VerdictChip verdict={hero.verdict} />
           </motion.div>
-          <span data-testid="proof-winnability" className="font-mono text-[28px] font-bold leading-none text-canvas-text tabular lg:text-4xl">{GDL.winnability.value === null ? "—" : Math.round(GDL.winnability.value)}</span>
+          <span data-testid="proof-winnability" className="font-mono text-[28px] font-bold leading-none text-canvas-text tabular lg:text-4xl">{hero.winnability.value === null ? "—" : Math.round(hero.winnability.value)}</span>
         </div>
       </div>
-      <div className="mt-4"><DualBars fanHeat={GDL.fanHeat} activation={GDL.activation} /></div>
+      <div className="mt-4"><DualBars fanHeat={hero.fanHeat} activation={hero.activation} /></div>
       <p className="mt-3 text-[13px] text-canvas-muted">{line}</p>
       <p className="mt-2 text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
     </section>
@@ -80,7 +87,7 @@ export default function Landing() {
       </div>
       <div className="lg:col-span-5 lg:col-start-1 lg:row-start-2 lg:mt-8 lg:self-start">
         <div className="flex flex-col gap-2.5 lg:flex-row lg:gap-4">
-          <Link to="/tours/board?sample=1" className={`${CTA} bg-gold font-semibold text-on-gold hover:bg-gold-soft active:bg-[#efb900]`}>Try the showcase tour</Link>
+          <Link to="/tours/board?showcase=1" className={`${CTA} bg-gold font-semibold text-on-gold hover:bg-gold-soft active:bg-[#efb900]`}>Try the showcase tour</Link>
           <Link to="/tours/board" className={`${CTA} bg-paper-raised font-medium text-canvas-text hover:bg-[#3a3932]`}>Plan your own</Link>
         </div>
       </div>

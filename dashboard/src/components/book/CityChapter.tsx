@@ -35,7 +35,7 @@ function MarginNote({ requests, claims }: { requests: number; claims?: CardClaim
 
 const H3 = "font-title text-[20px] leading-tight text-canvas-text";
 
-export function CityChapter({ chapter, sample = false }: { chapter: BookCityChapter; sample?: boolean }) {
+export function CityChapter({ chapter, sample = false, showcase = false }: { chapter: BookCityChapter; sample?: boolean; showcase?: boolean }) {
   const { city, accent, playbook, week } = chapter;
   const narrative = playbook?.narrative;
   const ok = chapter.status === "ready";
@@ -60,7 +60,7 @@ export function CityChapter({ chapter, sample = false }: { chapter: BookCityChap
       </div>
       <div className="flex min-w-0 flex-col gap-4 px-4 lg:px-0">
         <div className="flex min-w-0 flex-col gap-2">
-          {sample && <SampleBanner compact />}
+          {sample && <SampleBanner compact source={showcase ? "showcase" : "sample"} />}
           <h2 id={`title-${city.id}`} className="font-title break-words text-[32px] leading-[1.1] text-canvas-text">{city.name}</h2>
           <div className="flex items-center gap-3"><VerdictChip verdict={city.verdict} size="md" /><span className="text-[13px] text-canvas-muted">{city.country}</span></div>
         </div>
