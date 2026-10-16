@@ -91,7 +91,7 @@ export function createNarrator(deps: NarrativeDeps): NarrateFn {
       for (const c of parsed.cards) {
         if (!present.has(c.kind)) continue;
         const prev = out[c.kind] ?? { verified: [], removed: [] };
-        const r = verifyClaims(c.claims, evidence);
+        const r = verifyClaims(c.claims, evidence, [city.name, city.country]);
         out[c.kind] = { verified: [...prev.verified, ...r.verified], removed: [...prev.removed, ...r.removed] };
       }
       const narrative = { status: "ok" as const, model, thoughtSummary, cards: out, merch: present.has("merch") ? parsed.merch : null, cached: false };

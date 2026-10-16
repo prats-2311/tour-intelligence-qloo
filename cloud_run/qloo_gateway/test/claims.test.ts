@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normaliseName, verifyClaims, type Claim, type EvidenceItem } from "../src/claims/verify.js";
+import { normaliseName, numberTokens, tokenSupported, verifyClaims, type Claim, type EvidenceItem } from "../src/claims/verify.js";
 
 const evidence: EvidenceItem[] = [
   { id: "e1", entityIds: ["q-123"], names: ["Café Tacuba", "Corona"], numbers: [82, 0.82] },
@@ -189,5 +189,36 @@ describe("verifyClaims: rounded display of live evidence", () => {
     expect(a.verified).toHaveLength(1);
     const b = verifyClaims([{ text: "Zona Rosa holds 5% of the city's fan heat.", entities: [{ name: "Zona Rosa" }], numbers: [5], evidence_refs: ["promo_zones:0"] }], ev);
     expect(b.verified).toHaveLength(1);
+  });
+});
+
+describe("raw decimals of the stated text", () => {
+  const textClaim = (text: string, n: number, v: number) =>
+    verifyClaims([claim({ text, evidence_refs: ["n"], numbers: [n] })], [{ id: "n", entityIds: [], names: [], numbers: [v] }]);
+  it("keeps 1.00 against 0.9988710049238372", () => {
+    expect(textClaim("Quirky aesthetic (1.00)", 1, 0.9988710049238372).verified).toHaveLength(1);
+  });
+  it("rejects a bare 1 against 0.9988", () => {
+    expect(textClaim("Quirky aesthetic (1)", 1, 0.9988).removed[0]).toMatchObject({ reason: "unsupported_number", detail: "1" });
+  });
+  it("rejects 1.0 against 0.9988 (coarser than the 3-decimal cap allows)", () => {
+    expect(textClaim("Quirky aesthetic (1.0)", 1, 0.9988).removed[0]?.reason).toBe("unsupported_number");
+  });
+  it("still keeps 0.98 against 0.98317", () => {
+    expect(textClaim("Fit of 0.98", 0.98, 0.98317).verified).toHaveLength(1);
+  });
+  it("rejects 1.00 against a value that does not round to 1.00", () => {
+    expect(textClaim("Fit of 1.00", 1, 0.99).removed[0]?.reason).toBe("unsupported_number");
+  });
+  it("applies raw decimals to percent tokens", () => {
+    const pct = (raw: string, v: number) => tokenSupported(numberTokens(raw)[0]!, [v]);
+    expect(pct("100%", 0.9988)).toBe(true);
+    expect(pct("100.0%", 0.9988)).toBe(false);
+    expect(pct("1%", 0.9988)).toBe(false);
+    expect(pct("98%", 0.98317)).toBe(true);
+  });
+  it("applies raw decimals to plain tokens outside a claim", () => {
+    expect(tokenSupported(numberTokens("1.00")[0]!, [0.9988710049238372])).toBe(true);
+    expect(tokenSupported(numberTokens("1")[0]!, [0.9988])).toBe(false);
   });
 });

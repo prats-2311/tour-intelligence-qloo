@@ -54,6 +54,16 @@ describe("buildEvidence", () => {
 });
 
 describe("createNarrator", () => {
+  it("knows the playbook city as an entity, but not other cities", async () => {
+    const json = { cards: [{ kind: "promo_zones", claims: [
+      { text: "Colonia Americana accounts for 38% of Guadalajara's fan heat.", entities: [{ name: "Colonia Americana" }, { name: "Guadalajara" }], numbers: [38], evidence_refs: ["promo_zones:0"] },
+      { text: "Colonia Americana accounts for 38% of Monterrey's fan heat.", entities: [{ name: "Colonia Americana" }, { name: "Monterrey" }], numbers: [38], evidence_refs: ["promo_zones:0"] },
+    ] }] };
+    const n = await createNarrator(deps(async () => answer(json)))(input);
+    if (n.status !== "ok") throw new Error("expected ok");
+    expect(n.cards.promo_zones!.verified.map((c) => c.text)).toEqual(["Colonia Americana accounts for 38% of Guadalajara's fan heat."]);
+    expect(n.cards.promo_zones!.removed[0]).toMatchObject({ reason: "unsupported_entity", detail: "Monterrey" });
+  });
   it("keeps verified claims, removes fabricated ones with reasons, and passes the thought summary through", async () => {
     const n = await createNarrator(deps(async () => answer(good)))(input);
     expect(n.status).toBe("ok");
