@@ -1,6 +1,13 @@
 import json
 import sys
 
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _qloo_dataset(monkeypatch):
+    monkeypatch.setenv("BQ_DATASET", "tour_intelligence_qloo")
+
 
 def _body(**over):
     body = {
@@ -21,17 +28,17 @@ def test_creates_cities_campaign_stops_and_tour_row(client, mock_bq):
     assert res.status_code == 201
     assert res.get_json()["stops"] == 2
     tables = [c.args[0].split(".")[-1] for c in mock_bq.insert_rows_json.call_args_list]
-    assert tables == ["cities", "campaigns", "campaign_stops", "qloo_tours"]
-    cities = mock_bq.insert_rows_json.call_args_list[0].args[1]
+    assert tables == ["qloo_tours", "cities", "campaigns", "campaign_stops"]
+    cities = mock_bq.insert_rows_json.call_args_list[1].args[1]
     assert cities[0] == {"city_id": "qloo_4005539", "city_name": "Guadalajara", "country": "MX", "primary_language": "und", "timezone": "UTC", "region": "qloo_import"}
-    campaign = mock_bq.insert_rows_json.call_args_list[1].args[1][0]
+    campaign = mock_bq.insert_rows_json.call_args_list[2].args[1][0]
     assert campaign["campaign_type"] == "music_tour" and campaign["genre"] == "music"
     assert campaign["talent_roster"] == ["Lumen Vale"] and campaign["selected_metrics"] == []
     assert campaign["campaign_id"] == res.get_json()["campaign_id"]
-    stops = mock_bq.insert_rows_json.call_args_list[2].args[1]
+    stops = mock_bq.insert_rows_json.call_args_list[3].args[1]
     assert [s["city_id"] for s in stops] == ["qloo_4005539", "qloo_3464975"]
     assert [s["sequence_order"] for s in stops] == [1, 2]
-    tour = mock_bq.insert_rows_json.call_args_list[3].args[1][0]
+    tour = mock_bq.insert_rows_json.call_args_list[0].args[1][0]
     assert tour["date_window_start"] == "2027-03-12" and tour["artist_entity_id"] == "Q1"
 
 
@@ -40,7 +47,7 @@ def test_skips_cities_that_already_exist(client, mock_bq):
     mock_bq.insert_rows_json.return_value = []
     client.post("/qloo_tours", json=_body())
     tables = [c.args[0].split(".")[-1] for c in mock_bq.insert_rows_json.call_args_list]
-    assert tables == ["campaigns", "campaign_stops", "qloo_tours"]
+    assert tables == ["qloo_tours", "campaigns", "campaign_stops"]
 
 
 def test_null_date_window_is_accepted(client, mock_bq):
@@ -48,7 +55,7 @@ def test_null_date_window_is_accepted(client, mock_bq):
     mock_bq.insert_rows_json.return_value = []
     res = client.post("/qloo_tours", json=_body(date_window=None))
     assert res.status_code == 201
-    tour = mock_bq.insert_rows_json.call_args_list[3].args[1][0]
+    tour = mock_bq.insert_rows_json.call_args_list[0].args[1][0]
     assert tour["date_window_start"] is None and tour["date_window_end"] is None
 
 
@@ -69,6 +76,7 @@ def test_insert_failure_is_a_500_with_details(client, mock_bq):
 
 def test_dataset_comes_from_env(monkeypatch):
     main = sys.modules["tour_data_api_main"]
+    monkeypatch.delenv("BQ_DATASET", raising=False)
     assert main._dataset() == "tour_intelligence"
     monkeypatch.setenv("BQ_DATASET", "tour_intelligence_qloo")
     # read at call time so tests and the deploy can switch datasets without re-import
@@ -80,7 +88,7 @@ def test_writes_go_to_the_configured_dataset(client, mock_bq, monkeypatch):
     mock_bq.query.return_value.result.return_value = []
     mock_bq.insert_rows_json.return_value = []
     client.post("/qloo_tours", json=_body())
-    assert mock_bq.insert_rows_json.call_args_list[-1].args[0] == "test-project.tour_intelligence_qloo.qloo_tours"
+    assert mock_bq.insert_rows_json.call_args_list[0].args[0] == "test-project.tour_intelligence_qloo.qloo_tours"
 
 
 def test_rejects_a_non_object_body_with_400(client):
@@ -94,3 +102,25 @@ def test_rejects_empty_or_overlong_regions_and_duplicate_cities(client):
     res = client.post("/qloo_tours", json=_body(cities=[dup, dup]))
     assert res.status_code == 400
     assert "duplicate" in res.get_json()["error"]
+
+
+@pytest.mark.parametrize("value", [None, "", "tour_intelligence", "TOUR_INTELLIGENCE", " Tour_Intelligence "])
+def test_refuses_to_write_without_a_dedicated_dataset(client, mock_bq, monkeypatch, value):
+    if value is None:
+        monkeypatch.delenv("BQ_DATASET", raising=False)
+    else:
+        monkeypatch.setenv("BQ_DATASET", value)
+    res = client.post("/qloo_tours", json=_body())
+    assert res.status_code == 503
+    assert res.get_json() == {"error": "BQ_DATASET not configured"}
+    mock_bq.insert_rows_json.assert_not_called()
+    mock_bq.query.assert_not_called()
+
+
+def test_qloo_tours_row_is_inserted_first_so_a_missing_table_writes_nothing_else(client, mock_bq):
+    mock_bq.query.return_value.result.return_value = []
+    mock_bq.insert_rows_json.side_effect = [[{"index": 0, "errors": ["table not found"]}]]
+    res = client.post("/qloo_tours", json=_body())
+    assert res.status_code == 500
+    assert mock_bq.insert_rows_json.call_count == 1
+    assert mock_bq.insert_rows_json.call_args.args[0].endswith(".qloo_tours")

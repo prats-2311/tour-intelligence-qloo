@@ -37,3 +37,6 @@ Called by Dialogflow CX Playbooks (via the OpenAPI Tool), the dashboard BFF, `or
 
 ## IAM
 `tour-data-api-sa` has a **custom minimal BigQuery role** (`projects/liifecalling-academy/roles/tourDataApiDataAccess`: `datasets.get`, `tables.get`, `tables.getData`, `tables.updateData` only — no schema create/delete/alter/export), applied via the dataset ACL, not a predefined broad role like `WRITER`. See the IAM hardening finding in project memory for why this replaced the original `WRITER` grant.
+
+## Qloo routes and the dataset
+`/qloo_tours` and `/qloo_city_evidence` answer 503 `{"error":"BQ_DATASET not configured"}` unless `BQ_DATASET` is set and is not `tour_intelligence` (case-insensitive), so they can never touch the original hackathon dataset. `/qloo_tours` inserts the `qloo_tours` row first, so a missing table fails before anything else is written. Other routes still default `_dataset()` to `tour_intelligence`.

@@ -1788,6 +1788,12 @@ def _validate_qloo_tour(p: dict) -> str | None:
     return None
 
 
+def _qloo_dataset_missing() -> bool:
+    """The Qloo routes write to / read from this project's own dataset only:
+    BQ_DATASET must be set and must not be the original hackathon dataset."""
+    return os.environ.get("BQ_DATASET", "").strip().lower() in ("", "tour_intelligence")
+
+
 @app.post("/qloo_tours")
 def create_qloo_tour():
     """Save a live Qloo tour as a campaign: any Qloo cities we have not seen
@@ -1800,6 +1806,8 @@ def create_qloo_tour():
     problem = _validate_qloo_tour(payload)
     if problem:
         return jsonify({"error": problem}), 400
+    if _qloo_dataset_missing():
+        return jsonify({"error": "BQ_DATASET not configured"}), 503
 
     ds = _dataset()
     project = _bq.project
@@ -1825,7 +1833,19 @@ def create_qloo_tour():
     now = now_dt.isoformat()
     campaign_id = f"{_slugify(payload['title'])}_{_to_base36(int(now_dt.timestamp() * 1000))}"
     window = payload.get("date_window")
+    # qloo_tours goes first: if its table is missing nothing else has been written.
     writes = []
+    writes.append(("qloo_tours", [{
+        "campaign_id": campaign_id,
+        "artist": payload["artist"],
+        "artist_entity_id": payload["artist_entity_id"],
+        "regions": payload["regions"],
+        "date_window_start": window["start"] if window else None,
+        "date_window_end": window["end"] if window else None,
+        "cities_json": json.dumps(cities),
+        "board_json": payload["board_json"],
+        "created_at": now,
+    }]))
     if new_city_rows:
         writes.append(("cities", new_city_rows))
     writes.append(("campaigns", [{
@@ -1846,17 +1866,6 @@ def create_qloo_tour():
         }
         for i, cid in enumerate(city_ids, start=1)
     ]))
-    writes.append(("qloo_tours", [{
-        "campaign_id": campaign_id,
-        "artist": payload["artist"],
-        "artist_entity_id": payload["artist_entity_id"],
-        "regions": payload["regions"],
-        "date_window_start": window["start"] if window else None,
-        "date_window_end": window["end"] if window else None,
-        "cities_json": json.dumps(cities),
-        "board_json": payload["board_json"],
-        "created_at": now,
-    }]))
     for table, rows in writes:
         errors = _bq.insert_rows_json(f"{project}.{ds}.{table}", rows)
         if errors:
@@ -2207,6 +2216,8 @@ def qloo_city_evidence():
     city_id = request.args.get("city_id")
     if not campaign_id or not city_id:
         return jsonify({"error": "missing required query params: campaign_id, city_id"}), 400
+    if _qloo_dataset_missing():
+        return jsonify({"error": "BQ_DATASET not configured"}), 503
     rows = _query(
         f"SELECT artist, artist_entity_id, cities_json FROM `{_dataset()}.qloo_tours` "
         f"WHERE campaign_id = @campaign_id ORDER BY created_at DESC LIMIT 1",
@@ -2227,34 +2238,34 @@ def qloo_city_evidence():
 
     unavailable = (jsonify({"error": "Qloo gateway unavailable"}), 502)
     try:
-        resp = requests.get(
+        with requests.get(
             f"{gateway}/v1/city-playbook?" + urllib.parse.urlencode({
                 "artist": rows[0]["artist"], "artistEntityId": rows[0]["artist_entity_id"],
                 "city": city.get("name") or "", "country": city.get("country") or "", "narrative": "0",
             }),
             headers={"Authorization": f"Bearer {_gateway_id_token(gateway)}", "x-session-id": f"stage2-{campaign_id}"[:128]},
             stream=True, timeout=120,
-        )
-        if resp.status_code != 200:
-            return unavailable
-        playbook = None
-        tool_results = 0
-        for line in resp.iter_lines(decode_unicode=True):
-            if not line or not line.startswith("data:"):
-                continue
-            try:
-                event = json.loads(line[5:].strip())
-            except ValueError:
-                continue
-            kind = event.get("type")
-            if kind == "tool_result":
-                tool_results += 1
-            elif kind == "playbook":
-                playbook = event.get("playbook")
-            elif kind == "error":
+        ) as resp:
+            if resp.status_code != 200:
                 return unavailable
-            elif kind == "done":
-                break
+            playbook = None
+            tool_results = 0
+            for line in resp.iter_lines(decode_unicode=True):
+                if not line or not line.startswith("data:"):
+                    continue
+                try:
+                    event = json.loads(line[5:].strip())
+                except ValueError:
+                    continue
+                kind = event.get("type")
+                if kind == "tool_result":
+                    tool_results += 1
+                elif kind == "playbook":
+                    playbook = event.get("playbook")
+                elif kind == "error":
+                    return unavailable
+                elif kind == "done":
+                    break
     except requests.RequestException:
         return unavailable
     if not isinstance(playbook, dict):
