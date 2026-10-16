@@ -186,6 +186,29 @@ def get_local_moment(artist: str, city: str, country: str, *, session_id: str, t
     return {"status": "ok", "artist": who, "moments": moments, "integrity": _INTEGRITY}
 
 
+_PLACE_KEYS = {"address", "locality", "city", "neighborhood", "region", "geocode", "location"}
+
+
+def _place_text(node, depth=0) -> list[str]:
+    """Strings under address-like keys of a describe result (name is deliberately excluded)."""
+    out: list[str] = []
+    if depth > 3 or not isinstance(node, dict):
+        return out
+    for k, v in node.items():
+        if k == "properties":
+            out += _place_text(v, depth + 1)
+        elif k in _PLACE_KEYS:
+            if isinstance(v, str):
+                out.append(v)
+            elif isinstance(v, dict):
+                out += [s for s in (x for x in v.values()) if isinstance(s, str)]
+    return out
+
+
+def _in_city(entity: dict, city: str) -> bool:
+    return any(city.lower() in text.lower() for text in _place_text(entity))
+
+
 @_guarded
 def rank_venues(artist: str, city: str, country: str, venues: list[str], *, session_id: str, token_fn) -> dict:
     artist = _check_name("artist", artist)
@@ -206,7 +229,7 @@ def rank_venues(artist: str, city: str, country: str, venues: list[str], *, sess
         d = d if isinstance(d, dict) else {}
         results = d.get("results")
         first = results[0] if isinstance(results, list) and results and isinstance(results[0], dict) else None
-        if d.get("status") == "ok" and first and first.get("entity_id") and first["entity_id"] not in ids:
+        if d.get("status") == "ok" and first and first.get("entity_id") and first["entity_id"] not in ids and _in_city(first, city):
             ids[first["entity_id"]] = venue
         else:
             unresolved.append(venue)  # ambiguous or unknown: never guess between candidates

@@ -20,6 +20,10 @@ function warningsFor(tool: string, r: CallResult): DataWarning[] {
   return out;
 }
 
+/** needs_input is not an error, but the card would otherwise be silently empty: say why. */
+const needsInputWarning = (tool: string, r: CallResult): DataWarning[] =>
+  r.envelope.status === "needs_input" ? [{ tool, kind: "partial", message: r.envelope.summary ?? "Qloo needs more input for this lookup" }] : [];
+
 const dedupe = (ws: DataWarning[]): DataWarning[] => [...new Map(ws.map((w) => [JSON.stringify(w), w])).values()];
 
 function interleave<T>(lists: T[][], max: number): T[] {
@@ -47,7 +51,7 @@ export async function* runCityPlaybook(
     const candidates = extractEntities(a.raw.artists.envelope).slice(0, 3);
     const settled = await Promise.allSettled(candidates.map(async (c) => {
       const r = await trackedCall(deps, input.sessionId, "qloo_compare_audiences", { group_a: [input.artistEntityId], group_b: [c.entityId] }, events);
-      const warnings = warningsFor("qloo_compare_audiences", r);
+      const warnings = [...warningsFor("qloo_compare_audiences", r), ...needsInputWarning("qloo_compare_audiences", r)];
       const { value: sharedTaste, tags } = extractSharedTaste(r.envelope);
       if (sharedTaste === null || Number.isNaN(c.affinity)) {
         return { warnings: [...warnings, { tool: "qloo_compare_audiences", kind: "partial" as const, message: `shared taste unavailable for ${c.name}` }] };
@@ -75,12 +79,12 @@ export async function* runCityPlaybook(
     const proxyRecs = (proxyS as PromiseFulfilledResult<CallResult>).value;
     const proxies = extractEntities(proxyRecs.envelope).slice(0, 5);
     let talentShared: { value: number | null; tags: string[] } = { value: null, tags: [] };
-    const talentWarnings: DataWarning[] = [...warningsFor("qloo_recommend", proxyRecs)];
+    const talentWarnings: DataWarning[] = [...warningsFor("qloo_recommend", proxyRecs), ...needsInputWarning("qloo_recommend", proxyRecs)];
     const talentRefs: EvidenceRef[] = [ref("qloo_recommend", proxyRecs)];
     if (proxies.length > 0) {
       const cmp = await trackedCall(deps, input.sessionId, "qloo_compare_audiences", { group_a: [input.artistEntityId], group_b: proxies.map((p) => p.entityId) }, events);
       talentRefs.push(ref("qloo_compare_audiences", cmp));
-      talentWarnings.push(...warningsFor("qloo_compare_audiences", cmp));
+      talentWarnings.push(...warningsFor("qloo_compare_audiences", cmp), ...needsInputWarning("qloo_compare_audiences", cmp));
       const st = extractSharedTaste(cmp.envelope);
       if (st.value === null) talentWarnings.push({ tool: "qloo_compare_audiences", kind: "partial", message: "shared taste unavailable for city mainstream" });
       else talentShared = { value: st.value, tags: st.tags.slice(0, 3).map((t) => t.name) };

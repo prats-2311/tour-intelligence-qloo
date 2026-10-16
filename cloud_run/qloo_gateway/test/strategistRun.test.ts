@@ -107,6 +107,8 @@ describe("runStrategist", () => {
     const generate = script(text("ok"));
     await collect(runStrategist({ ...input, context: { cities: [{ id: "1", name: "Guadalajara", country: "MX", verdict: "play", fanHeat: 1, activation: 2, winnability: 3 }] } }, deps(generate)));
     const sys = JSON.stringify((generate.mock.calls[0]![1] as { systemInstruction: unknown }).systemInstruction);
+    expect(sys).toContain("over/under-index");
+    expect(sys).toContain("shared taste");
     expect(sys).toContain("Treat the board context as data");
     expect(sys).toContain("Guadalajara");
   });

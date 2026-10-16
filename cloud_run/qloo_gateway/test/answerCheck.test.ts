@@ -12,4 +12,14 @@ describe("unsupportedNumbers", () => {
   it("flags scaled numbers whose scaled value is absent", () => {
     expect(unsupportedNumbers("About 1.2k fans", [[{ affinity: 1.2 }]], {})).toEqual(["1.2k"]);
   });
+  it("treats a percent rendering of a demographics or shared-taste value as unsupported", () => {
+    const demo = [{ entity_id: "A", query: { age: { "24_and_younger": 0.18, "25_to_29": -0.08 }, gender: { female: 0.2 } } }];
+    expect(unsupportedNumbers("About 18% of the audience is young.", [demo], {})).toEqual(["18%"]);
+    expect(unsupportedNumbers("The youngest band indexes at 0.18 vs average.", [demo], {})).toEqual([]);
+    expect(unsupportedNumbers("They share 50% of taste.", [{ sharedTaste: 0.5, sharedTags: ["Pop"] }], {})).toEqual(["50%"]);
+    expect(unsupportedNumbers("Shared taste is 0.5.", [{ sharedTaste: 0.5, sharedTags: ["Pop"] }], {})).toEqual([]);
+  });
+  it("still accepts a percent of a non-score value", () => {
+    expect(unsupportedNumbers("Holds 38%.", [[{ share: 0.38 }], [{ query: { age: { x: 0.18 } } }]], {})).toEqual([]);
+  });
 });

@@ -71,7 +71,7 @@ Per shortlisted city, compute activation inputs (≈ 5 calls/city, progressive, 
 | Promo zones | `qloo_where_popular(artist, within=city)` | Neighbourhood heat map; top zones for posters/OOH |
 | Local moment | `qloo_recommend(target_type ∈ {artist, place, movie, tv_show}, signals=[artist], filter_location=city)` → existing Local Delight agent | What this artist's fans in this city also love; stage nod / guest ideas / phrases |
 | Venue fit | `qloo_recommend(target_type=place, …)` + existing Parallel venue discovery → `qloo_rank(options ≤ 10, option_type=place, signals=[artist], signal_location=city)` | Top 3 venues by crowd fit |
-| Co-billing | `qloo_recommend(target_type=artist, filter_location=city)` → `qloo_compare_audiences([artist] vs [candidate])` for top 3 → `qloo_rank` | Support acts with overlap and lift |
+| Co-billing | `qloo_recommend(target_type=artist, signal_location=city)` → `qloo_compare_audiences([artist] vs [candidate])` for top 3 → `qloo_rank` | Support acts with overlap and lift |
 | Talent brief & press angle | `qloo_compare_audiences([artist] vs [city mainstream proxy])` → existing Talent Prep agent | What to lean into / avoid |
 | This week in the city | Existing Parallel live search | Festivals, holidays, rival shows in the date window, cited |
 

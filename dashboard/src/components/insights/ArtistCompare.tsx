@@ -89,8 +89,8 @@ export function ArtistCompare({ artist, source }: { artist: { entityId: string; 
         ))}
         <button type="button" onClick={() => void compare()} disabled={sample || busy || targets.length === 0} className="inline-flex h-12 items-center justify-center rounded-[10px] bg-paper-raised px-5 text-[15px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:opacity-50">Compare</button>
       </div>
-      <p className="text-[12px] text-canvas-muted">{sample ? "Live comparisons need a live run" : "Each comparison uses 1 Qloo call"}</p>
-      {sample && <p className="sr-only">Each comparison uses 1 Qloo call</p>}
+      <p className="text-[12px] text-canvas-muted">{sample ? "Live comparisons need a live run" : "Each comparison uses 1 Qloo call, plus 1 more if you pick a suggested name"}</p>
+      {sample && <p className="sr-only">Each comparison uses 1 Qloo call, plus 1 more if you pick a suggested name</p>}
       {results.length > 0 && (
         <ul className="flex flex-col gap-1" aria-live="polite">
           {results.map((r) => {

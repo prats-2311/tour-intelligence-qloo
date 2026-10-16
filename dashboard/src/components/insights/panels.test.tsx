@@ -70,7 +70,7 @@ describe("insight panels", () => {
       .mockResolvedValueOnce({ envelope: { status: "ok", results: tagResults(0.42) }, cached: true, stale: true })
       .mockResolvedValueOnce({ envelope: { data: { stuff: 1 } }, cached: false, stale: false });
     render(<ArtistCompare artist={{ entityId: "E", name: "Lumen Vale" }} source="live" />);
-    expect(screen.getByText("Each comparison uses 1 Qloo call")).toBeTruthy();
+    expect(screen.getByText("Each comparison uses 1 Qloo call, plus 1 more if you pick a suggested name")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Comparison artist 1"), { target: { value: "Bruma" } });
     fireEvent.change(screen.getByLabelText("Comparison artist 2"), { target: { value: "Other" } });
     fireEvent.click(screen.getByRole("button", { name: "Compare" }));

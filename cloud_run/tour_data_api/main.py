@@ -2189,6 +2189,18 @@ def _gateway_id_token(url: str) -> str:
     return id_token.fetch_id_token(google.auth.transport.requests.Request(), url)
 
 
+def _strings(v) -> list[str]:
+    return [x for x in v if isinstance(x, str)] if isinstance(v, list) else []
+
+
+def _entity_category(item: dict):
+    """Category of a gateway entity item: `category` first, else the raw type with the urn prefix removed."""
+    cat = item.get("category") or item.get("type")
+    if isinstance(cat, str):
+        return cat.removeprefix("urn:entity:") or None
+    return None
+
+
 def _compact_qloo_playbook(cards: list[dict]) -> dict:
     by_kind = {c.get("kind"): c for c in cards if isinstance(c, dict)}
 
@@ -2199,15 +2211,18 @@ def _compact_qloo_playbook(cards: list[dict]) -> dict:
     shared_taste = (talent.get("summary") or {}).get("sharedTaste")
     return {
         "sponsors": [{"name": i.get("name"), "affinity": i.get("affinity")} for i in items("sponsors")[:5]],
-        "local_moment": [{"name": i.get("name"), "type": i.get("type"), "affinity": i.get("affinity")} for i in items("local_moment")[:5]],
+        "local_moment": [{"name": i.get("name"), "category": _entity_category(i), "affinity": i.get("affinity")} for i in items("local_moment")[:5]],
         "venues": [{"name": i.get("name"), "affinity": i.get("affinity")} for i in items("venue_fit")[:3]],
+        # True when qloo_rank did not resolve: the venues above are unranked place recommendations.
+        "venues_fallback": any(isinstance(w, dict) and w.get("tool") == "qloo_rank" and w.get("kind") == "partial" for w in ((by_kind.get("venue_fit") or {}).get("warnings") or [])),
         "co_billing": [
-            {"name": i.get("name"), "shared_taste": i.get("sharedTaste"), "local_affinity": i.get("localAffinity"), "lift": i.get("lift"), "shared_tags": list(i.get("sharedTags") or [])[:3]}
+            {"name": i.get("name"), "shared_taste": i.get("sharedTaste"), "local_affinity": i.get("localAffinity"), "lift": i.get("lift"), "shared_tags": _strings(i.get("sharedTags"))[:3]}
             for i in items("co_billing")[:3]
         ],
         "talent": {
             "proxies": [{"name": i.get("name"), "affinity": i.get("affinity")} for i in items("talent")[:3]],
             "shared_taste": shared_taste if isinstance(shared_taste, (int, float)) else None,
+            "shared_tags": _strings((talent.get("summary") or {}).get("sharedTags"))[:3],
         },
         "promo_zones": [{"label": i.get("label"), "share": i.get("share")} for i in items("promo_zones")[:3]],
     }

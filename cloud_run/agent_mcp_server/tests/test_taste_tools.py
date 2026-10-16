@@ -100,8 +100,8 @@ def test_get_local_moment_returns_items(monkeypatch):
     out = taste_tools.get_local_moment("Lumen Vale", "Guadalajara", "MX", **KW)
     assert out["moments"] == [{"name": "Mariachi night", "category": "event", "affinity": 0.7}]
 
-def _place(entity_id, name):
-    return _resp(payload={"envelope": {"status": "ok", "results": [{"entity_id": entity_id, "name": name}]}})
+def _place(entity_id, name, address="Av. Chapultepec, Guadalajara, Jalisco"):
+    return _resp(payload={"envelope": {"status": "ok", "results": [{"entity_id": entity_id, "name": name, "properties": {"address": address}}]}})
 
 # Live shape: tests/../.superpowers datacheck/09a-rank-names.json (resolution.issues, results []).
 AMBIGUOUS = {"envelope": {"status": "needs_input", "resolution": {"issues": [{"input": "Teatro Diana", "kind": "ambiguous", "candidates": [
@@ -128,6 +128,16 @@ def test_rank_venues_lists_ambiguous_names_as_unresolved_and_ranks_the_rest(monk
     assert out["status"] == "ok" and out["unresolved"] == ["Teatro Diana"]
     assert out["ranked"] == [{"name": "Arena", "affinity": 0.5}]
     assert post.call_args.kwargs["json"]["options"] == ["V2"]
+
+def test_rank_venues_rejects_a_describe_hit_outside_the_requested_city(monkeypatch):
+    rank = {"envelope": {"status": "ok", "results": [{"entity_id": "V2", "name": "Arena", "affinity": 0.5}]}}
+    wrong = _place("V1", "Teatro Diana", address="Via Roma 1, Napoli")
+    no_address = _resp(payload={"envelope": {"status": "ok", "results": [{"entity_id": "V3", "name": "Foro"}]}})
+    post = MagicMock(side_effect=[_resp(payload=DESCRIBE), wrong, no_address, _place("V2", "Arena", address="CALLE 5, GUADALAJARA"), _resp(payload=rank)])
+    monkeypatch.setattr(taste_tools.requests, "post", post)
+    out = taste_tools.rank_venues("Lumen Vale", "Guadalajara", "MX", ["Teatro Diana", "Foro", "Arena"], **KW)
+    assert out["unresolved"] == ["Teatro Diana", "Foro"]
+    assert post.call_args.kwargs["json"]["options"] == ["V2"]  # the Napoli hit is never ranked
 
 def test_rank_venues_with_nothing_resolved_is_needs_input_and_never_ranks(monkeypatch):
     post = MagicMock(side_effect=[_resp(payload=DESCRIBE), _resp(payload=AMBIGUOUS)])

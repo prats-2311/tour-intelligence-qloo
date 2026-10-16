@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StrategistPanel } from "@/components/strategist/StrategistPanel";
+import { showcaseBannerText } from "@/lib/qloo/showcase";
 import { resetPlaybooks } from "@/lib/qloo/playbookStore";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import type { GatewayEvent, ScoredCity } from "@/lib/qloo/types";
@@ -90,7 +91,7 @@ describe("recorded showcase", () => {
   it("the strategist builds chips from the recorded board and answers with the honest note", async () => {
     const context = { cities: [{ id: "d", name: "Delta", country: "MX", verdict: "hidden_goldmine", fanHeat: 60, activation: 50, winnability: 95 }] };
     render(<StrategistPanel context={context} sample showcase title="About Hand Made" />);
-    expect(screen.getByText("Sample data — illustrative, not Qloo output")).toBeTruthy(); // placeholder module here, not the mocked recording
+    expect(screen.getByText(showcaseBannerText())).toBeTruthy(); // the statically imported json: placeholder today, a real recording later
     expect(screen.queryByRole("button", { name: "Why is Guadalajara a hidden goldmine?" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Why is Delta ranked here?" }));
     await waitFor(() => expect(screen.getByText("The live strategist needs a live run")).toBeTruthy());

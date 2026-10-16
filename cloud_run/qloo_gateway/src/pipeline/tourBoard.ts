@@ -61,7 +61,7 @@ async function call(deps: Deps, sessionId: string, tool: string, args: Record<st
 
 export { call as trackedCall };
 
-export async function activationInputs(artist: string, city: { name: string; country: string }, deps: Deps, sessionId: string, events: GatewayEvent[]) {
+export async function activationInputs(artist: string, city: { name: string; country: string }, deps: Deps, sessionId: string, events: GatewayEvent[], venueFallbackMessage = "venue ranking unresolved — showing place recommendations") {
   const where = `${city.name}, ${city.country}`;
   const [brands, places, films, artists, tv, inCity] = await settleAll([
     call(deps, sessionId, "qloo_recommend", { target_type: "brand", signals: [artist], signal_location: where, limit: 10 }, events),
@@ -82,7 +82,7 @@ export async function activationInputs(artist: string, city: { name: string; cou
   const venues = {
     items: venueFallback ? [...placeEntities].sort((a, b) => (Number.isNaN(b.affinity) ? -1 : b.affinity) - (Number.isNaN(a.affinity) ? -1 : a.affinity)).slice(0, 3) : rankedVenues.slice(0, 3),
     refs: ranked && !venueFallback ? [ref("qloo_rank", ranked)] : placeEntities.length > 0 ? [ref("qloo_recommend", places)] : [],
-    warnings: venueFallback ? [{ tool: "qloo_rank", kind: "partial" as const, message: "venue ranking unresolved — showing place recommendations" }] : [],
+    warnings: venueFallback ? [{ tool: "qloo_rank", kind: "partial" as const, message: venueFallbackMessage }] : [],
   };
 
   const zones = zonesFromHeat(extractHeatPoints(inCity.envelope), deps.cities);
@@ -197,7 +197,7 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
         const fan = heat.get(m.city.id)!;
         const base = { id: m.city.id, name: m.city.name, country: m.city.country, lat: m.city.lat, lon: m.city.lon };
         try {
-          const inputs = await activationInputs(signalArtist, m.city, deps, brief.sessionId, events);
+          const inputs = await activationInputs(signalArtist, m.city, deps, brief.sessionId, events, "venue ranking unresolved — venue fit not scored");
           const act = activation(inputs.components);
           const win = winnability(fan, act);
           return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]) } };

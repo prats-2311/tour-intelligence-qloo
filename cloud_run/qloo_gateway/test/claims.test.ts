@@ -162,3 +162,19 @@ describe("R15: declared names cannot launder numbers", () => {
     expect(verifyClaims([c({ text: "C3 Stage ranks first at 0.91", entities: [{ name: "C3 Stage" }], numbers: [0.91] })], ev).verified).toHaveLength(1);
   });
 });
+
+describe("verifyClaims: percent renderings of 0-1 scores", () => {
+  const taste: EvidenceItem[] = [{ id: "talent:sharedTaste", entityIds: [], names: [], numbers: [0.5], noPercent: true, label: "shared taste (0-1 score)" }];
+  const c = (text: string, numbers: number[]): Claim => ({ text, entities: [], numbers, evidence_refs: ["talent:sharedTaste"] });
+  it("rejects 50% audience overlap against shared taste 0.5", () => {
+    expect(verifyClaims([c("There is 50% audience overlap.", [0.5])], taste).removed[0]).toMatchObject({ reason: "unsupported_number" });
+    expect(verifyClaims([c("There is 50% audience overlap.", [50])], taste).removed).toHaveLength(1);
+  });
+  it("accepts 0.50 shared taste", () => {
+    expect(verifyClaims([c("Shared taste is 0.50.", [0.5])], taste).verified).toHaveLength(1);
+  });
+  it("keeps today's percent tolerance for other evidence", () => {
+    const zone: EvidenceItem[] = [{ id: "z", entityIds: [], names: [], numbers: [0.38, 38] }];
+    expect(verifyClaims([{ text: "Holds 38% of heat.", entities: [], numbers: [38], evidence_refs: ["z"] }], zone).verified).toHaveLength(1);
+  });
+});

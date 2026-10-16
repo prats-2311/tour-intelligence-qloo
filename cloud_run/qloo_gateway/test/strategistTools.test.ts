@@ -82,3 +82,17 @@ describe("strategist tools", () => {
     for (const d of STRATEGIST_DECLARATIONS) check(d.parameters, d.name);
   });
 });
+
+describe("strategist declarations: score wording", () => {
+  const desc = (n: string) => STRATEGIST_DECLARATIONS.find((d) => d.name === n)!.description;
+  it("demographics are signed over/under-index, not shares or percentages", () => {
+    expect(desc("qloo_audience_demographics")).toMatch(/over\/under-index/);
+    expect(desc("qloo_audience_demographics")).toMatch(/-1\.\.1|−1\.\.1/);
+    expect(desc("qloo_audience_demographics")).toMatch(/not shares or percentages/);
+  });
+  it("compare is a 0-1 shared taste score, not overlap or a percentage", () => {
+    expect(desc("qloo_compare_audiences")).toMatch(/0-1 score/);
+    expect(desc("qloo_compare_audiences")).toMatch(/not (an )?(audience )?overlap/);
+    expect(desc("qloo_compare_audiences")).toMatch(/not a percentage/);
+  });
+});

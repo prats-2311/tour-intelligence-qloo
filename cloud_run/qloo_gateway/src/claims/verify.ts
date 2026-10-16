@@ -1,4 +1,10 @@
-export interface EvidenceItem { id: string; entityIds: string[]; names: string[]; numbers: number[] }
+export interface EvidenceItem {
+  id: string; entityIds: string[]; names: string[]; numbers: number[];
+  /** What the numbers are, shown to the model. */
+  label?: string;
+  /** Numbers are 0-1 scores or signed indexes (shared taste, lift, demographics): never stated as a percentage. */
+  noPercent?: boolean;
+}
 import type { Claim, RemovalReason } from "../types.js";
 export type { Claim, RemovalReason } from "../types.js";
 
@@ -89,6 +95,7 @@ export function verifyClaims(claims: Claim[], evidence: EvidenceItem[]) {
     const items = claim.evidence_refs.map((id) => byId.get(id)!);
     const names = new Set(items.flatMap((e) => e.names.map(normaliseName)).filter((n) => n !== ""));
     const numbers = items.flatMap((e) => e.numbers);
+    const percentPool = items.some((e) => e.noPercent) ? items.filter((e) => !e.noPercent).flatMap((e) => e.numbers) : null;
 
     const badEntity = claim.entities.find((e) => {
       const n = normaliseName(e.name);
@@ -105,7 +112,7 @@ export function verifyClaims(claims: Claim[], evidence: EvidenceItem[]) {
     const evidenceNames = items.flatMap((e) => e.names).filter((n) => matched.has(normaliseName(n)) && n.trim() !== "");
     let stated = claim.text.toLowerCase();
     for (const n of evidenceNames) stated = stated.split(n.toLowerCase()).join(" ");
-    const badToken = numberTokens(stated).find((t) => !tokenSupported(t, claim.numbers));
+    const badToken = numberTokens(stated).find((t) => !tokenSupported(t, claim.numbers) || (t.percent && percentPool !== null && !tokenSupported(t, percentPool)));
     if (badToken) { removed.push({ claim, reason: "unsupported_number", detail: badToken.raw }); continue; }
     const text = normaliseName(claim.text);
     const absent = claim.entities.find((e) => !text.includes(normaliseName(e.name)));

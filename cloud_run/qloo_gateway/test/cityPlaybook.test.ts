@@ -172,6 +172,16 @@ describe("runCityPlaybook", () => {
     expect(venue.items.map((i) => i.name)).toEqual(["Place 2", "Place 4", "Place 3"]);
     expect(venue.warnings).toContainEqual(expect.objectContaining({ kind: "partial", message: "venue ranking unresolved — showing place recommendations" }));
   });
+  it("a needs_input talent proxy or co-bill compare adds a partial warning instead of failing silently", async () => {
+    const ni = (t: string): QlooEnvelope => ({ operation: t, status: "needs_input", summary: "Provide at least one entity, tag, location, or demographic taste signal.", results: null } as unknown as QlooEnvelope);
+    const proxyEvents = await collect(runCityPlaybook(input, { qloo: qloo((t, a) => (t === "qloo_recommend" && !a.signals ? ni(t) : happy(t, a))), cities: CITIES }));
+    const talent = cardsOf(proxyEvents).find((c) => c.kind === "talent")!;
+    expect(talent.warnings).toContainEqual(expect.objectContaining({ tool: "qloo_recommend", kind: "partial", message: expect.stringContaining("Provide at least one") }));
+    const cmpEvents = await collect(runCityPlaybook(input, { qloo: qloo((t, a) => (t === "qloo_compare_audiences" ? ni(t) : happy(t, a))), cities: CITIES }));
+    const cards = cardsOf(cmpEvents);
+    expect(cards.find((c) => c.kind === "co_billing")!.warnings).toContainEqual(expect.objectContaining({ tool: "qloo_compare_audiences", kind: "partial", message: expect.stringContaining("Provide at least one") }));
+    expect(cards.find((c) => c.kind === "talent")!.warnings).toContainEqual(expect.objectContaining({ tool: "qloo_compare_audiences", kind: "partial", message: expect.stringContaining("Provide at least one") }));
+  });
   it("local_moment interleaves sources so artists do not crowd out the rest", async () => {
     const names = (p: string, n: number) => Array.from({ length: n }, (_, i) => `${p}${i}`);
     const events = await collect(runCityPlaybook(input, {
