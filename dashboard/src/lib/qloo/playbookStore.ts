@@ -56,4 +56,9 @@ export function usePlaybook(req: PlaybookRequest | null): PlaybookState {
   return state;
 }
 
+/** Subscribed read of one entry without triggering a load (for callers that gate loading themselves). */
+export function usePlaybookSnapshot(key: string): PlaybookState | undefined {
+  return useSyncExternalStore(subscribe, () => states.get(key));
+}
+
 export function resetPlaybooks(): void { epoch++; states.clear(); inflight.clear(); notify(); }

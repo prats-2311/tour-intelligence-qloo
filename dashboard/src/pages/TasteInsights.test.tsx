@@ -169,7 +169,7 @@ describe("TasteInsights", () => {
     const spy = vi.spyOn(client, "streamCityPlaybook");
     await seeded();
     pick(/Guadalajara/);
-    await screen.findByText("Bruma Nocturna");
+    expect(await screen.findByText("Bruma Nocturna")).toBeTruthy();
     // The default focus city may stream its own sample playbook; Guadalajara's was already loaded.
     expect(spy.mock.calls.filter((c) => c[0].city === "Guadalajara")).toHaveLength(0);
   });

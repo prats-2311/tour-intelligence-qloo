@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { fit } from "@/components/playbook/format";
 import { CROSS_CATEGORIES, playbookCrossDomain, type CrossCategory } from "@/lib/qloo/adapters";
 import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks";
-import { getPlaybook, loadPlaybook, playbookKey, usePlaybook, type PlaybookRequest } from "@/lib/qloo/playbookStore";
+import { loadPlaybook, playbookKey, usePlaybook, usePlaybookSnapshot, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import type { ScoredCity } from "@/lib/qloo/types";
 
 const LABELS: Record<CrossCategory, string> = { artist: "Artists", movie: "Movies", tv_show: "TV shows", place: "Places", brand: "Brands" };
@@ -15,7 +15,9 @@ export function CrossDomainTaste({ artist, city, source }: { artist: { entityId:
   // Live lookups cost Qloo calls, so they wait for a click, unless the Playbook page already loaded this one.
   const [clicked, setClicked] = useState<string | null>(null);
   const request: PlaybookRequest = { artist: artist.name, artistEntityId: artist.entityId, city: { id: city.id, name: city.name, country: city.country }, sample, delayMs: sample ? 10 : undefined };
-  const enabled = sample ? covered : clicked === key || getPlaybook(key) !== undefined;
+  const existing = usePlaybookSnapshot(key)?.status;
+  // Failed or interrupted entries never restart on their own: that would be an unasked live call.
+  const enabled = sample ? covered : clicked === key || existing === "done" || existing === "streaming";
   const pb = usePlaybook(enabled ? request : null);
   const run = () => { setClicked(key); void loadPlaybook(request); };
   const items = pb.status === "done" ? playbookCrossDomain(pb.cards) : [];

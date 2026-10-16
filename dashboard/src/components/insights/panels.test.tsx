@@ -130,6 +130,26 @@ describe("insight panels", () => {
     expect(await screen.findByText("Bruma Nocturna")).toBeTruthy();
     expect(spy).toHaveBeenCalledTimes(1);
   });
+  it.each([
+    ["interrupted", async function* (): AsyncGenerator<GatewayEvent> { yield { type: "tool_call", tool: "qloo_recommend", args: {}, cached: false }; }],
+    ["error", async function* (): AsyncGenerator<GatewayEvent> { yield { type: "error", code: "X", message: "boom" }; }],
+  ])("a %s store entry does not restart a live stream on mount", async (_n, gen) => {
+    const spy = vi.spyOn(client, "streamCityPlaybook").mockImplementation(gen);
+    const city = { id: SAMPLE_CITIES[2]!.id, name: "Guadalajara", country: "MX" };
+    await loadPlaybook({ artist: "L", artistEntityId: "E", city, sample: false });
+    expect(spy).toHaveBeenCalledTimes(1);
+    render(<CrossDomainTaste artist={{ entityId: "E", name: "L" }} city={SAMPLE_CITIES[2]!} source="live" />);
+    await new Promise((r) => setTimeout(r, 30));
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: /Retry|Load taste for Guadalajara/ })).toBeTruthy();
+  });
+  it("a playbook finishing elsewhere while mounted shows up without a click", async () => {
+    vi.spyOn(client, "streamCityPlaybook").mockImplementation(playbookEvents);
+    render(<CrossDomainTaste artist={{ entityId: "E", name: "L" }} city={SAMPLE_CITIES[2]!} source="live" />);
+    expect(screen.queryByText("Bruma Nocturna")).toBeNull();
+    await loadPlaybook({ artist: "L", artistEntityId: "E", city: { id: SAMPLE_CITIES[2]!.id, name: "Guadalajara", country: "MX" }, sample: false });
+    expect(await screen.findByText("Bruma Nocturna")).toBeTruthy();
+  });
   it("error after playbook is shown", async () => {
     vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () {
       yield { type: "playbook", playbook: { city: { name: "G", country: "MX" }, cards: [] } };
