@@ -14,6 +14,7 @@ function Probe() {
     <span data-testid="artist">{state.artist?.name ?? ""}</span>
     <span data-testid="log">{state.log.length}</span>
     <button onClick={() => run(SAMPLE_BRIEF, { sample: true })}>run</button>
+    <button onClick={() => run(SAMPLE_BRIEF, { sample: true, sampleSet: "long" })}>runlong</button>
     <button onClick={abort}>abort</button>
   </div>);
 }
@@ -26,6 +27,12 @@ describe("TourBoardProvider", () => {
     act(() => screen.getByText("run").click());
     await waitFor(() => expect(screen.getByTestId("status").textContent).toBe("done"));
     expect(screen.getByTestId("count").textContent).toBe("10");
+  });
+  it("run({sampleSet:'long'}) streams the long-names sample", async () => {
+    render(<TourBoardProvider sampleDelayMs={0}><Probe /></TourBoardProvider>);
+    act(() => screen.getByText("runlong").click());
+    await waitFor(() => expect(screen.getByTestId("status").textContent).toBe("done"));
+    expect(screen.getByTestId("artist").textContent).toBe("Lumen Vale & The Extraordinarily Long Orchestra");
   });
   it("a second run aborts the first (never two streams — Review Focus 5)", async () => {
     const spy = vi.spyOn(client, "streamTourBoard");

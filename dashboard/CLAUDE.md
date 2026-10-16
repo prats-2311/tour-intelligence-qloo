@@ -26,3 +26,6 @@ Premiere Noir now follows [`docs/design/DESIGN.md`](../docs/design/DESIGN.md); i
 
 ## Screens
 Campaign Dashboard (city grid, live enthusiasm scores) → City Detail (3 tabs: Culture Intelligence / Delight Card / Talent Brief) → Compare Cities (ranked bar chart + table toggle, calls the real `rank_cities` tool). All populated from live `tour_data_api` data — never mocked.
+
+## E2E (Playwright)
+`npx playwright install chromium` once, then `npm run e2e` (judge path and layout guards at 375 mobile and 1280 desktop). The config starts `npm run dev` with `VITE_QLOO_FIXTURES=1` and reuses an existing server on :5173, so stop any non-fixture dev server first (the judge-path spec asserts the sample banner to catch this). Tests never wait for map tiles. `?sample=long` runs the long-names fixture for layout checks. `node e2e/snapshots.mjs` (dev server up) writes rendered HTML and screenshots into `test-results/` for the taste-skill lint gate; results live in `docs/design/lint-report.md`.

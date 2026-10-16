@@ -10,7 +10,7 @@ import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { Sheet } from "@/components/qloo/Sheet";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
-import { SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
+import { LONG_NAMES_BRIEF, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { sortCities, summarize } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import type { TourBrief } from "@/lib/qloo/types";
@@ -36,7 +36,7 @@ function SegmentedControl({ mode, onChange }: { mode: Mode; onChange: (m: Mode) 
     document.getElementById(`${base}-${next.id}`)?.focus();
   };
   return (
-    <div role="tablist" aria-label="Ranking" onKeyDown={onKey} className="flex h-11 w-full rounded-[10px] bg-canvas p-1 lg:h-10">
+    <div role="tablist" aria-label="Ranking" onKeyDown={onKey} className="flex h-[52px] w-full rounded-[10px] bg-canvas p-1 lg:h-10">
       {MODES.map((m) => {
         const on = m.id === mode;
         return (
@@ -89,7 +89,9 @@ export default function TourBoard() {
   const { state, run, abort, reset } = useTourBoard();
   const reduce = useReducedMotion();
   const [params, setParams] = useSearchParams();
-  const wantSample = params.get("sample") === "1";
+  const sampleParam = params.get("sample");
+  const wantLong = sampleParam === "long";
+  const wantSample = sampleParam === "1" || wantLong;
   const started = useRef(false);
   const [mode, setMode] = useState<Mode>("winnability");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -104,8 +106,8 @@ export default function TourBoard() {
   useEffect(() => {
     if (!wantSample || started.current) return;
     started.current = true;
-    if (state.source !== "sample") run(SAMPLE_BRIEF, { sample: true });
-  }, [wantSample, state.source, run]);
+    if (state.source !== "sample") run(wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantLong ? "long" : "default" });
+  }, [wantSample, wantLong, state.source, run]);
 
   // A new run starts clean: no stale selection or shortlist exclusions.
   useEffect(() => {
@@ -129,7 +131,7 @@ export default function TourBoard() {
   const whyCity = state.cities.find((c) => c.id === whyId);
   const summaryCity = selected ?? eligible.find((c) => c.verdict === "hidden_goldmine") ?? sorted[0];
 
-  const retry = () => { if (state.brief) run(state.brief, { sample: state.source === "sample" }); };
+  const retry = () => { if (state.brief) run(state.brief, { sample: state.source === "sample", sampleSet: wantLong ? "long" : "default" }); };
   const showcase = () => run(SAMPLE_BRIEF, { sample: true });
   const openRow = (id: string) => { setSelectedId(id); setWhyId(id); };
   const selectFromMap = (id: string) => {

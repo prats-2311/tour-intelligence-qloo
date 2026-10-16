@@ -1,9 +1,9 @@
-import { LUMEN_VALE_SAMPLE } from "./fixtures/lumenVale";
+import { LONG_NAMES_SAMPLE, LUMEN_VALE_SAMPLE } from "./fixtures/lumenVale";
 import { getSessionId } from "./session";
 import { SseParser } from "./sse";
 import type { GatewayEvent, TourBrief } from "./types";
 
-type StreamOpts = { signal?: AbortSignal; fetchImpl?: typeof fetch; sample?: boolean; delayMs?: number };
+type StreamOpts = { signal?: AbortSignal; fetchImpl?: typeof fetch; sample?: boolean; sampleSet?: "default" | "long"; delayMs?: number };
 
 export const isSampleMode = (): boolean => import.meta.env.VITE_QLOO_FIXTURES === "1";
 
@@ -39,7 +39,7 @@ async function* stream(url: string, init: RequestInit, opts: StreamOpts): AsyncG
 }
 
 export function streamTourBoard(brief: TourBrief, opts: StreamOpts = {}): AsyncGenerator<GatewayEvent> {
-  if (opts.sample) return sample(LUMEN_VALE_SAMPLE, opts);
+  if (opts.sample) return sample(opts.sampleSet === "long" ? LONG_NAMES_SAMPLE : LUMEN_VALE_SAMPLE, opts);
   return stream("/api/qloo/tour-board", {
     method: "POST",
     headers: { "content-type": "application/json", "x-session-id": getSessionId() },

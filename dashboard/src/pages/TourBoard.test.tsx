@@ -36,6 +36,14 @@ describe("TourBoard", () => {
     expect(screen.getByText("Sample data — illustrative, not Qloo output")).toBeTruthy();
     expect(screen.getByText(/10 markets scored/)).toBeTruthy();
   });
+  it("?sample=long starts a long-names sample run with the banner", async () => {
+    const spy = vi.spyOn(client, "streamTourBoard");
+    renderPage("/tours/board?sample=long");
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    expect(spy.mock.calls[0]![1]).toMatchObject({ sample: true, sampleSet: "long" });
+    expect(screen.getByText("Sample data — illustrative, not Qloo output")).toBeTruthy();
+    expect(screen.getAllByText("Santiago de Querétaro").length).toBeGreaterThan(0);
+  });
   it("density-only re-sorts the list", async () => {
     renderPage();
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));

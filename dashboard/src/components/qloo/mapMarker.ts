@@ -86,7 +86,7 @@ export function markerElement({ verdict, city, label, selected, onSelect, reduce
     Object.assign(text.style, {
       position: "absolute", left: "100%", top: "50%", transform: "translateY(-50%)", marginLeft: "-8px",
       fontFamily: '"Fraunces", ui-serif, Georgia, serif', fontSize: "13px", fontWeight: "600",
-      color: "#e9e4d6", whiteSpace: "nowrap", pointerEvents: "none", textShadow: "0 0 3px #151410, 0 0 3px #151410",
+      color: "#e9e4d6", whiteSpace: "nowrap", pointerEvents: "none", paintOrder: "stroke fill", webkitTextStroke: "3px #151410", // halo for legibility on tiles, not a shadow
     });
     el.append(text);
   }

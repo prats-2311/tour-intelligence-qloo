@@ -3,7 +3,7 @@ import { isSampleMode, streamTourBoard } from "./client";
 import { boardReducer, initialBoard, type BoardState } from "./tourBoardReducer";
 import type { TourBrief } from "./types";
 
-type Ctx = { state: BoardState; run(brief: TourBrief, opts?: { sample?: boolean }): void; abort(): void; reset(): void };
+type Ctx = { state: BoardState; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: "default" | "long" }): void; abort(): void; reset(): void };
 const TourBoardContext = createContext<Ctx | null>(null);
 
 export function TourBoardProvider({ children, sampleDelayMs }: { children: ReactNode; sampleDelayMs?: number }) {
@@ -20,7 +20,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
 
   const abort = useCallback(() => { if (silentAbort()) dispatch({ type: "interrupted", reason: "user" }); }, [silentAbort]);
 
-  const run = useCallback((brief: TourBrief, opts: { sample?: boolean } = {}) => {
+  const run = useCallback((brief: TourBrief, opts: { sample?: boolean; sampleSet?: "default" | "long" } = {}) => {
     silentAbort();
     const controller = new AbortController();
     controllerRef.current = controller;
@@ -29,7 +29,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
     void (async () => {
       let terminal = false;
       try {
-        for await (const event of streamTourBoard(brief, { signal: controller.signal, sample, delayMs: sampleDelayMs })) {
+        for await (const event of streamTourBoard(brief, { signal: controller.signal, sample, sampleSet: opts.sampleSet, delayMs: sampleDelayMs })) {
           if (controller.signal.aborted) return;
           dispatch({ type: "event", event });
           if (event.type === "done" || event.type === "error" || event.type === "needs_input") terminal = true;

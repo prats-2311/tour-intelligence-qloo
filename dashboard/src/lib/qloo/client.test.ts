@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { streamTourBoard } from "./client";
-import { SAMPLE_BRIEF } from "./fixtures/lumenVale";
+import { LONG_NAMES_SAMPLE, LUMEN_VALE_SAMPLE, SAMPLE_BRIEF } from "./fixtures/lumenVale";
 
 function sseResponse(chunks: string[], status = 200) {
   const body = new ReadableStream<Uint8Array>({
@@ -33,6 +33,26 @@ describe("streamTourBoard", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(types.at(-1)).toBe("done");
     expect(types.filter((t) => t === "city_scored")).toHaveLength(10);
+  });
+  it("sampleSet 'long' yields the long-names fixture; default yields the standard one", async () => {
+    const names = async (sampleSet?: "default" | "long") => {
+      const out: string[] = [];
+      for await (const e of streamTourBoard(SAMPLE_BRIEF, { sample: true, sampleSet, delayMs: 0 })) if (e.type === "city_scored") out.push(e.city.name);
+      return out;
+    };
+    expect(await names()).toContain("Mexico City");
+    expect(await names("default")).toContain("Los Angeles");
+    const long = await names("long");
+    expect(long).toHaveLength(10);
+    expect(long).toEqual(expect.arrayContaining(["Santiago de Querétaro", "Los Angeles–Long Beach", "San Juan de los Lagos"]));
+    expect(long).not.toContain("Monterrey");
+  });
+  it("LONG_NAMES_SAMPLE keeps coordinates and scores, renames the artist", () => {
+    const scored = (evs: typeof LUMEN_VALE_SAMPLE) => evs.flatMap((e) => (e.type === "city_scored" ? [e.city] : []));
+    const a = scored(LUMEN_VALE_SAMPLE), b = scored(LONG_NAMES_SAMPLE);
+    expect(b.map((c) => [c.lat, c.lon, c.winnability.value])).toEqual(a.map((c) => [c.lat, c.lon, c.winnability.value]));
+    const resolve = LONG_NAMES_SAMPLE.find((e) => e.type === "resolve");
+    expect(resolve && resolve.type === "resolve" && resolve.entity.name).toBe("Lumen Vale & The Extraordinarily Long Orchestra");
   });
   it("skips malformed JSON payloads instead of throwing", async () => {
     const fetchImpl = vi.fn(async () => sseResponse(["event: resolve\ndata: {not json\n\n", 'event: done\ndata: {"type":"done","summary":{}}\n\n']));

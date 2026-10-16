@@ -63,3 +63,25 @@ export const LUMEN_VALE_SAMPLE: GatewayEvent[] = [
   ...SAMPLE_CITIES.map((c): GatewayEvent => ({ type: "city_scored", city: c })),
   { type: "done", summary: { artist: { entityId: "sample-lumen-vale", name: "Lumen Vale" }, cities: SAMPLE_CITIES.length } },
 ];
+
+// Layout-stress variant (?sample=long): same coordinates and scores, three long city names and a long artist name.
+export const LONG_ARTIST_NAME = "Lumen Vale & The Extraordinarily Long Orchestra";
+export const LONG_NAMES_BRIEF: TourBrief = { ...SAMPLE_BRIEF, artist: LONG_ARTIST_NAME };
+const LONG_CITY_NAMES: Record<string, string> = {
+  "3995465": "Santiago de Querétaro",
+  "5368361": "Los Angeles–Long Beach",
+  "3464975": "San Juan de los Lagos",
+};
+const renameCity = (c: ScoredCity): ScoredCity => {
+  const name = LONG_CITY_NAMES[c.id];
+  if (!name) return c;
+  return { ...c, name, zones: c.zones.map((z) => ({ ...z, label: z.label.replace(c.name, name) })) };
+};
+export const LONG_NAMES_SAMPLE: GatewayEvent[] = LUMEN_VALE_SAMPLE.map((e): GatewayEvent => {
+  switch (e.type) {
+    case "resolve": return { ...e, entity: { ...e.entity, name: LONG_ARTIST_NAME } };
+    case "city_scored": return { ...e, city: renameCity(e.city) };
+    case "done": return { ...e, summary: { artist: { entityId: "sample-lumen-vale", name: LONG_ARTIST_NAME }, cities: SAMPLE_CITIES.length } };
+    default: return e;
+  }
+});
