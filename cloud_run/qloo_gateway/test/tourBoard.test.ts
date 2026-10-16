@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { City } from "../src/geo/cities.js";
-import { runTourBoard, type TourBrief } from "../src/pipeline/tourBoard.js";
+import { pickCandidates, runTourBoard, type TourBrief } from "../src/pipeline/tourBoard.js";
 import type { QlooCaller } from "../src/qlooCall.js";
 import type { GatewayEvent, QlooEnvelope } from "../src/types.js";
 import { readFileSync } from "node:fs";
@@ -159,11 +159,27 @@ describe("runTourBoard", () => {
       expect(mid.every((c) => c.fanHeat.value >= 45 && c.fanHeat.value < 70)).toBe(true);
     });
 
-    it("fills remaining slots with the next hottest when the mid band is short", async () => {
-      // 6 markets with maxStops 6: hot=3; only few in the band; all 6 end up scored without duplicates.
-      const { where } = await run(6, 6);
-      expect(where).toHaveLength(6);
-      expect(new Set(where).size).toBe(6);
+    it("with no mid-band markets, scores exactly the top 8 by fan heat", async () => {
+      const desired = [100, 98, 96, 94, 92, 90, 88, 86, 84, 0];
+      const cities: City[] = desired.map((_, i) => ({ id: `c${i}`, name: `City${i}`, country: "MX", lat: 10 + i * 2, lon: -100, population: 1_000_000 }));
+      const raw = (d: number) => 0.2 + 0.008 * d;
+      const heat: QlooEnvelope = { operation: "where_popular", status: "ok", results: cities.map((c, i) => ({ location: { latitude: c.lat, longitude: c.lon }, query: { affinity: raw(desired[i]!), popularity: raw(desired[i]!) } })) };
+      const where: string[] = [];
+      await collect(runTourBoard({ ...brief, maxStops: 8 }, {
+        qloo: fakeQloo((t, a) => {
+          if (t === "qloo_where_popular" && a.within === "Mexico") return heat;
+          if (t === "qloo_recommend" && a.target_type === "brand") where.push(String(a.signal_location).split(",")[0]!);
+          return happy(t, a);
+        }), cities,
+      }));
+      expect([...where].sort()).toEqual(Array.from({ length: 8 }, (_, i) => `City${i}`).sort());
+    });
+
+    it("pickCandidates: 4 hot, the lone mid-band market, then the next 3 hottest", () => {
+      const values: Record<string, number> = { a: 100, b: 95, c: 90, d: 85, e: 80, f: 75, g: 72, h: 55, i: 30, j: 10 };
+      const pooled = Object.keys(values).map((id) => ({ city: { id } }));
+      const heat = new Map(Object.entries(values).map(([id, value]) => [id, { value, refs: [] }]));
+      expect(pickCandidates(pooled, heat, 8).map((m) => m.city.id)).toEqual(["a", "b", "c", "d", "h", "e", "f", "g"]);
     });
 
     it("scores max(8, maxStops) markets, capped by the pool", async () => {
