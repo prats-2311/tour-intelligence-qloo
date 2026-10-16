@@ -34,14 +34,14 @@ function decimals(n: number): number {
 }
 
 // n is supported by v iff n is v correctly rounded to n's own decimal places, n is not
-// more than one decimal coarser than v, and a sub-1 evidence value is never claimed as an integer.
+// more than one decimal coarser than v (v's precision counts up to 3 decimals, so 0.98 supports a raw 0.9831760003625828), and a sub-1 evidence value is never claimed as an integer.
 function numberMatches(n: number, v: number): boolean {
   if (!Number.isFinite(n) || !Number.isFinite(v)) return false;
   if (n === v) return true;
   const d = decimals(n);
   const dv = decimals(v);
   if (d > 100) return false;
-  if (d < dv - 1) return false;
+  if (d < Math.min(dv, 3) - 1) return false;
   if (Math.abs(v) < 1 && d < 1) return false;
   return Number(v.toFixed(d)) === n;
 }

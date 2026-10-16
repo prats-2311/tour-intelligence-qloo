@@ -122,6 +122,22 @@ describe("createNarrator", () => {
     expect(prompt).toContain("audience overlap");
     expect(prompt).toContain("shared taste × local affinity");
   });
+  it("tells the model to round scores to 2 dp, state zone share as a whole percent, and keep claims to one point", async () => {
+    const generate = vi.fn<GenerateFn>(async () => answer(good));
+    await createNarrator(deps(generate))(input);
+    const prompt = String((generate.mock.calls[0]![1] as { contents: Array<{ parts: Array<{ text: string }> }> }).contents[0]!.parts[0]!.text);
+    expect(prompt).toContain("rounded to 2 decimal places (e.g. 0.98)");
+    expect(prompt).toContain("never more than 2 decimals");
+    expect(prompt).toContain("whole-number percent of the city's fan heat");
+    expect(prompt).toContain("5% of Guadalajara's fan heat");
+    expect(prompt).toContain("Never list the raw affinity, share and index together");
+    expect(prompt).toContain("one useful point and cites at most two numbers");
+    expect(prompt).toContain("Vans (0.98) and Converse (0.97) lead the sponsor fit");
+    expect(prompt).toContain("never a percentage");
+  });
+  it("labels promo zone evidence so the share reads as a fraction of fan heat", () => {
+    expect(buildEvidence(cards).find((e) => e.id === "promo_zones:0")?.label).toContain("fan heat");
+  });
   it("does not spend a second Vertex attempt on malformed JSON", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const generate = vi.fn(async () => ({ candidates: [{ content: { parts: [{ text: "not json" }] } }] }));

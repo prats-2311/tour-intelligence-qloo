@@ -178,3 +178,16 @@ describe("verifyClaims: percent renderings of 0-1 scores", () => {
     expect(verifyClaims([{ text: "Holds 38% of heat.", entities: [], numbers: [38], evidence_refs: ["z"] }], zone).verified).toHaveLength(1);
   });
 });
+
+describe("verifyClaims: rounded display of live evidence", () => {
+  it("accepts 0.98 against 0.9831760003625828 and 5% against a zone share of 0.0509", () => {
+    const ev: EvidenceItem[] = [
+      { id: "sponsors:0", entityIds: [], names: ["Vans"], numbers: [0.9831760003625828] },
+      { id: "promo_zones:0", entityIds: [], names: ["Zona Rosa"], numbers: [0.0509, Math.round(0.0509 * 100)] },
+    ];
+    const a = verifyClaims([{ text: "Vans leads sponsor fit at 0.98.", entities: [{ name: "Vans" }], numbers: [0.98], evidence_refs: ["sponsors:0"] }], ev);
+    expect(a.verified).toHaveLength(1);
+    const b = verifyClaims([{ text: "Zona Rosa holds 5% of the city's fan heat.", entities: [{ name: "Zona Rosa" }], numbers: [5], evidence_refs: ["promo_zones:0"] }], ev);
+    expect(b.verified).toHaveLength(1);
+  });
+});
