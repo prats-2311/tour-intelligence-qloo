@@ -3,11 +3,13 @@ import cors from "cors";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { mountQlooProxy } from "./qlooProxy.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TOUR_DATA_API = process.env.TOUR_DATA_API_URL || "https://tour-data-api-602700957663.us-central1.run.app";
 const DELIGHT_RENDERER = process.env.DELIGHT_RENDERER_URL || "https://delight-card-renderer-602700957663.us-central1.run.app";
-const PORT = process.env.PORT || 8787;
+const QLOO_GATEWAY = process.env.QLOO_GATEWAY_URL;
+const PORT =process.env.PORT || 8787;
 const RUN_JOBS_API =
   "https://run.googleapis.com/v2/projects/liifecalling-academy/locations/us-central1/jobs/tour-campaign-orchestrator:run";
 
@@ -69,6 +71,24 @@ async function getRendererToken() {
   }
   cachedRendererAt = now;
   return cachedRendererToken;
+}
+
+let cachedQlooToken = null;
+let cachedQlooAt = 0;
+
+async function getQlooGatewayToken() {
+  const now = Date.now();
+  if (cachedQlooToken && now - cachedQlooAt < TOKEN_TTL_MS) return cachedQlooToken;
+  try {
+    const url = `http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=${encodeURIComponent(QLOO_GATEWAY)}`;
+    const res = await fetch(url, { headers: { "Metadata-Flavor": "Google" }, signal: AbortSignal.timeout(1000) });
+    if (!res.ok) throw new Error(`metadata server returned ${res.status}`);
+    cachedQlooToken = (await res.text()).trim();
+  } catch {
+    cachedQlooToken = execSync("gcloud auth print-identity-token").toString().trim();
+  }
+  cachedQlooAt = now;
+  return cachedQlooToken;
 }
 
 // The Cloud Run Admin API (run.googleapis.com) is a Google API, not a
@@ -1010,6 +1030,8 @@ app.post("/api/rank-cities", async (req, res) => {
     res.status(502).json({ error: String(err) });
   }
 });
+
+mountQlooProxy(app, { gatewayUrl: QLOO_GATEWAY, getToken: getQlooGatewayToken });
 
 // Production: serve the built frontend and let client-side routing handle the rest.
 // Vite's hashed asset filenames (index-<hash>.js/css) are safe to cache forever —
