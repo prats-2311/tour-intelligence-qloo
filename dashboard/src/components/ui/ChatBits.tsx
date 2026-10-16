@@ -9,7 +9,7 @@ import { Mic, Square } from "lucide-react";
 /** Three-dot "assistant is thinking" bubble, styled like an assistant message. */
 export function TypingIndicator() {
   return (
-    <div className="flex justify-start">
+    <div className="flex justify-start" aria-label="Strategist is typing" role="status">
       <span className="flex items-center gap-1 rounded-lg rounded-bl-[2px] border border-white/[0.07] bg-paper-raised px-3 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
         {[0, 1, 2].map((i) => (
           <span
