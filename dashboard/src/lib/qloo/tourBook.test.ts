@@ -34,9 +34,9 @@ describe("buildTourBook", () => {
     expect(gdl.advance.find((r) => r.label === "Merch drop")?.value).toBe("Jacaranda season");
   });
   it("provenance lists each Qloo request once with a truncated hash", () => {
-    const keys = book.provenance.map((r) => r.hash);
+    const keys = book.provenance.map((r) => r.cacheKey);
     expect(new Set(keys).size).toBe(keys.length);
-    expect(book.provenance[0]!.hash).toMatch(/^.{4}….{2}$/);
+    expect(book.provenance.every((r) => /^.{4}….{2}$/.test(r.hash))).toBe(true);
     expect(book.provenance.every((r) => r.n >= 1)).toBe(true);
   });
   it("marks chapters incomplete with the reason when a playbook failed or is missing", () => {

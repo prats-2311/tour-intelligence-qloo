@@ -9,7 +9,7 @@ export interface BookCityChapter {
   advance: Array<{ label: string; value: string }>;
   claims: { verified: number; removed: number } | null;
 }
-export interface ProvenanceRow { n: number; tool: string; inputs: string; status: string; cached: boolean; hash: string }
+export interface ProvenanceRow { n: number; tool: string; inputs: string; status: string; cached: boolean; cacheKey: string; hash: string }
 export interface TourBook {
   title: string; subtitle: string; source: "live" | "sample";
   market: { rows: ScoredCity[]; shortlisted: Set<string>; slope: Array<{ id: string; name: string; densityRank: number; winRank: number; highlight: boolean }> };
@@ -85,15 +85,6 @@ function summariseArgs(args: Record<string, unknown>): string {
 function buildProvenance(logs: GatewayEvent[][]): ProvenanceRow[] {
   const rows: ProvenanceRow[] = [];
   const seen = new Set<string>();
-  const hashes = new Set<string>();
-  // First 4 + last 2 chars; widen the prefix only when two distinct keys would otherwise show the same hash.
-  const shortHash = (key: string) => {
-    for (let head = 4; head < key.length; head++) {
-      const h = `${key.slice(0, head)}…${key.slice(-2)}`;
-      if (!hashes.has(h)) { hashes.add(h); return h; }
-    }
-    return key;
-  };
   for (const log of logs) {
     const pending: Array<{ tool: string; args: Record<string, unknown>; cached: boolean }> = [];
     for (const e of log) {
@@ -105,7 +96,7 @@ function buildProvenance(logs: GatewayEvent[][]): ProvenanceRow[] {
       seen.add(e.cacheKey);
       rows.push({
         n: rows.length + 1, tool: e.tool, inputs: call ? summariseArgs(call.args) : "", status: e.status,
-        cached: call?.cached ?? false, hash: shortHash(e.cacheKey),
+        cached: call?.cached ?? false, cacheKey: e.cacheKey, hash: `${e.cacheKey.slice(0, 4)}…${e.cacheKey.slice(-2)}`,
       });
     }
   }
