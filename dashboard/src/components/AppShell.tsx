@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Clapperboard, LayoutGrid, ArrowLeftRight, ChevronsUpDown, Plus, Check, HelpCircle, Globe2 } from "lucide-react";
+import { Clapperboard, Compass, Route, ChartColumn, ChevronsUpDown, Plus, Check, HelpCircle } from "lucide-react";
 import { useCampaignContext } from "../lib/campaignContext";
+import { useIsDesktop } from "@/lib/useMediaQuery";
 import { TourGuide, hasSeenTour } from "./ui/TourGuide";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Campaign", icon: LayoutGrid, end: true },
-  { to: "/compare", label: "Compare Cities", icon: ArrowLeftRight, end: false },
-  { to: "/cities/add", label: "Add Cities", icon: Globe2, end: false },
+  { to: "/", label: "Discover", icon: Compass, end: true },
+  { to: "/tours/board", label: "Tours", icon: Route, end: false },
+  { to: "/insights", label: "Insights", icon: ChartColumn, end: false },
+  { to: "/campaign", label: "Campaigns", icon: Clapperboard, end: false },
 ];
+
+const CAMPAIGN_PREFIXES = ["/campaign", "/city", "/compare", "/cities"];
 
 function typeLabel(campaignType: string) {
   return campaignType.replace(/_/g, " ");
@@ -29,9 +33,9 @@ function CampaignSwitcher() {
   }, []);
 
   return (
-    <div ref={rootRef} data-tour="campaign-switcher" className="relative mt-auto">
+    <div ref={rootRef} data-tour="campaign-switcher" className="relative">
       {open && (
-        <div className="absolute bottom-full left-0 mb-2 w-full overflow-hidden rounded-lg border border-canvas-line bg-canvas-raised shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6)]">
+        <div className="absolute right-0 top-full z-40 mt-2 w-64 overflow-hidden rounded-lg bg-paper-raised shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6)]">
           <div className="max-h-56 overflow-y-auto py-1">
             {campaigns.map((c) => (
               <button
@@ -39,7 +43,7 @@ function CampaignSwitcher() {
                 onClick={() => {
                   setActiveCampaignId(c.campaign_id);
                   setOpen(false);
-                  navigate("/");
+                  navigate("/campaign");
                 }}
                 className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left font-sans text-[12px] text-canvas-text hover:bg-canvas-line/50"
               >
@@ -65,7 +69,7 @@ function CampaignSwitcher() {
 
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 rounded-lg border border-canvas-line bg-canvas-raised px-3 py-3 text-left transition-colors hover:border-gold/40"
+        className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg bg-paper-raised px-3 py-2 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold"
       >
         <span className="min-w-0">
           <span className="block font-sans text-[10px] uppercase tracking-[0.1em] text-canvas-muted">
@@ -89,76 +93,112 @@ function CampaignSwitcher() {
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const isDesktop = useIsDesktop();
   const [tourActive, setTourActive] = useState(false);
+  const inCampaign = CAMPAIGN_PREFIXES.some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`));
 
   function replayTour() {
-    if (location.pathname !== "/") {
-      navigate("/");
+    if (location.pathname !== "/campaign") {
+      navigate("/campaign");
       setTimeout(() => setTourActive(true), 300);
     } else {
       setTourActive(true);
     }
   }
 
-  // Only auto-launch from the Dashboard landing route -- that's where every
+  // Only auto-launch from the Dashboard route -- that's where every
   // step's target actually lives; deep-linking in mid-tour on another page
   // would just point at nothing.
   useEffect(() => {
-    if (location.pathname === "/" && !hasSeenTour()) {
+    if (location.pathname === "/campaign" && !hasSeenTour()) {
       const t = setTimeout(() => setTourActive(true), 500);
       return () => clearTimeout(t);
     }
   }, [location.pathname]);
 
+  const campaignTools = inCampaign && (
+    <div className="flex items-center gap-2">
+      <div className="w-56 max-w-full"><CampaignSwitcher /></div>
+      <button
+        onClick={replayTour}
+        aria-label="Replay product tour"
+        title="Replay product tour"
+        className="flex size-11 shrink-0 items-center justify-center rounded-lg text-canvas-muted outline-none hover:text-gold focus-visible:ring-2 focus-visible:ring-gold"
+      >
+        <HelpCircle size={16} />
+      </button>
+    </div>
+  );
+
   return (
-    <div className="flex min-h-screen bg-canvas">
+    <div className="flex min-h-screen flex-col bg-canvas">
       <TourGuide active={tourActive} onClose={() => setTourActive(false)} />
-      <aside className="flex w-60 shrink-0 flex-col border-r border-canvas-line bg-gradient-to-b from-white/[0.03] to-transparent px-5 py-6">
-        <div className="mb-10 flex items-center justify-between gap-2.5 px-1">
-          <div className="flex items-center gap-2.5">
-            <Clapperboard size={20} className="text-gold" aria-hidden />
-            <div>
-              <p className="font-title text-[17px] leading-tight text-canvas-text">Tour Intelligence</p>
-              <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-canvas-muted">
-                Agentic Cinema OS
-              </p>
+
+      {isDesktop ? (
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-canvas-raised px-8">
+          <div className="flex items-center gap-8">
+            <div className="flex items-baseline gap-2">
+              <span className="font-title text-[18px] font-semibold text-bone">Tour Intelligence</span>
+              <span className="font-sans text-[13px] font-medium text-canvas-muted">× Qloo</span>
             </div>
+            <nav aria-label="Primary" className="flex items-center gap-6">
+              {NAV_ITEMS.map(({ to, label, end }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  className={({ isActive }) =>
+                    `relative flex h-14 items-center font-sans text-[14px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold ${
+                      isActive ? "text-bone" : "text-canvas-muted hover:text-bone"
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      {label}
+                      {isActive && <span aria-hidden className="absolute inset-x-0 bottom-2 h-0.5 bg-gold" />}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </nav>
           </div>
-          <button
-            onClick={replayTour}
-            aria-label="Replay product tour"
-            title="Replay product tour"
-            className="shrink-0 text-canvas-muted hover:text-gold"
-          >
-            <HelpCircle size={16} />
-          </button>
-        </div>
-
-        <nav className="flex flex-col gap-1">
-          {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              data-tour={to === "/compare" ? "compare-cities-nav" : undefined}
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 rounded-lg px-3 py-2 font-sans text-[13px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold/50 ${
-                  isActive
-                    ? "bg-canvas-raised text-canvas-text shadow-[inset_2.5px_0_0_0_var(--color-gold)]"
-                    : "text-canvas-muted hover:bg-canvas-raised/60 hover:text-canvas-text"
-                }`
-              }
-            >
-              <Icon size={15} />
-              {label}
-            </NavLink>
-          ))}
+          {campaignTools}
+        </header>
+      ) : (
+        <nav
+          aria-label="Primary"
+          className="fixed inset-x-0 bottom-0 z-40 bg-canvas-raised pb-[env(safe-area-inset-bottom)]"
+        >
+          <div className="flex h-16 items-stretch justify-around">
+            {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                className={({ isActive }) =>
+                  `relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold ${
+                    isActive ? "text-bone" : "text-canvas-muted"
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && <span aria-hidden className="absolute top-2 h-[3px] w-5 bg-gold" />}
+                    <Icon size={22} aria-hidden className="mt-1" />
+                    <span className="font-display text-[11px] uppercase tracking-[0.08em]">{label}</span>
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </div>
         </nav>
+      )}
 
-        <CampaignSwitcher />
-      </aside>
-
-      <main className="min-w-0 flex-1 px-10 py-8">{children}</main>
+      <main className={`min-w-0 flex-1 px-4 py-6 lg:px-8 lg:py-8 ${isDesktop ? "" : "pb-[calc(5rem+env(safe-area-inset-bottom))]"}`}>
+        {!isDesktop && campaignTools && <div className="mb-4">{campaignTools}</div>}
+        {children}
+      </main>
     </div>
   );
 }

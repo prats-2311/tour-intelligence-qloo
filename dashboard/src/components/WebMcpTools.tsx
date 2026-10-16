@@ -177,7 +177,7 @@ export function WebMcpTools() {
         // campaignContext reverts it right back.
         await refresh();
         setActiveCampaignId(result.campaign_id);
-        navigate("/");
+        navigate("/campaign");
         return textResult(result);
       },
     });

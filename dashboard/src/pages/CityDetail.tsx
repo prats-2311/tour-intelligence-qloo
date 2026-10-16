@@ -800,7 +800,7 @@ export function CityDetail() {
       transition={{ duration: 0.28, ease: "easeOut" }}
     >
       <Link
-        to="/"
+        to="/campaign"
         className="mb-6 inline-flex items-center gap-1.5 rounded font-sans text-[13px] text-canvas-muted outline-none transition-colors hover:text-canvas-text focus-visible:ring-2 focus-visible:ring-gold"
       >
         <ArrowLeft size={14} aria-hidden /> Back to campaign

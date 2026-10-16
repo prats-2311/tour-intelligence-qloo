@@ -414,7 +414,7 @@ export function NewCampaign() {
       );
       await refresh();
       setActiveCampaignId(result.campaign_id);
-      navigate("/");
+      navigate("/campaign");
     } catch (err) {
       setError(String(err));
       setSubmitting(false);
@@ -424,7 +424,7 @@ export function NewCampaign() {
   return (
     <div className="mx-auto max-w-2xl">
       <Link
-        to="/"
+        to="/campaign"
         className="mb-6 inline-flex items-center gap-1.5 rounded font-sans text-[13px] text-canvas-muted outline-none transition-colors hover:text-canvas-text focus-visible:ring-2 focus-visible:ring-gold"
       >
         <ArrowLeft size={14} aria-hidden /> Back to campaign
