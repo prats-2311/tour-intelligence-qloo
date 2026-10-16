@@ -15,7 +15,7 @@ export function createTavilySearch(opts: { apiKey: string; fetchImpl?: typeof fe
     if (!res.ok) throw new Error(`Tavily ${res.status}`);
     const json = (await res.json()) as { results?: Array<{ url?: unknown; title?: unknown; content?: unknown }> };
     return (json.results ?? []).slice(0, 5).flatMap((r, i) =>
-      typeof r.url === "string" && typeof r.title === "string"
+      typeof r.url === "string" && /^https?:\/\//i.test(r.url) && typeof r.title === "string"
         ? [{ id: `w${i + 1}`, url: r.url, title: r.title, content: typeof r.content === "string" ? r.content.slice(0, 1500) : "" }] : []);
   };
 }

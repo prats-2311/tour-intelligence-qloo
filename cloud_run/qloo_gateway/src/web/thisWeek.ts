@@ -1,7 +1,7 @@
 import type { BudgetGuard } from "../budget.js";
 import { cacheKey, type Cache } from "../cache.js";
 import { generateJson, type GenerateFn } from "../narrative/gemini.js";
-import type { ThisWeek, ThisWeekItem } from "../types.js";
+import type { ThisWeek, ThisWeekItem, WebResult } from "../types.js";
 import { TAVILY_CAPS, type UsageStore } from "./usage.js";
 import type { WebSearch } from "./tavily.js";
 import { verifyWebItems } from "./verifyWeb.js";
@@ -39,22 +39,34 @@ export async function thisWeek(input: { city: string; country: string; start: st
     const hit = await deps.cache.get(key);
     if (hit?.envelope.results) return { ...(hit.envelope.results as Extract<ThisWeek, { status: "ok" }>), cached: true };
   } catch { /* treat as miss */ }
-  if (!deps.search) return { status: "unavailable", reason: "no_key", message: "Live web context unavailable — search is not configured" };
+  const rawKey = cacheKey("tavily_raw", { city: input.city, country: input.country, start: input.start, end: input.end });
+  let results: WebResult[] | undefined;
+  try {
+    const raw = await deps.cache.get(rawKey);
+    if (Array.isArray(raw?.envelope.results)) results = raw.envelope.results as WebResult[];
+  } catch { /* treat as miss */ }
 
-  const now = new Date((deps.now ?? Date.now)());
-  const day = now.toISOString().slice(0, 10);
-  const used = await deps.usage.tryIncrement(day, day.slice(0, 7));
-  if (!used.ok) {
-    return { status: "unavailable", reason: "capped", message: `Live web context unavailable — ${used.scope === "day" ? "daily" : "monthly"} search limit reached` };
-  }
-  log(`[tavily] call ${used.day}/${TAVILY_CAPS.perDay} today, ${used.month}/${TAVILY_CAPS.perMonth} this month`);
+  if (!results) {
+    if (!deps.search) return { status: "unavailable", reason: "no_key", message: "Live web context unavailable — search is not configured" };
+    const now = new Date((deps.now ?? Date.now)());
+    const day = now.toISOString().slice(0, 10);
+    let used;
+    try { used = await deps.usage.tryIncrement(day, day.slice(0, 7)); } catch (err) {
+      warn(`[this-week] usage store failed: ${msg(err)}`);
+      return { status: "unavailable", reason: "error", message: "Live web context unavailable — search failed" };
+    }
+    if (!used.ok) {
+      return { status: "unavailable", reason: "capped", message: `Live web context unavailable — ${used.scope === "day" ? "daily" : "monthly"} search limit reached` };
+    }
+    log(`[tavily] call ${used.day}/${TAVILY_CAPS.perDay} today, ${used.month}/${TAVILY_CAPS.perMonth} this month`);
 
-  const start = new Date(`${input.start}T00:00:00Z`);
-  const query = `${input.city} ${input.country} concerts festivals holidays events ${MONTHS[start.getUTCMonth()]} ${start.getUTCFullYear()}`;
-  let results;
-  try { results = await deps.search(query); } catch (err) {
-    warn(`[this-week] search failed: ${msg(err)}`);
-    return { status: "unavailable", reason: "error", message: "Live web context unavailable — search failed" };
+    const start = new Date(`${input.start}T00:00:00Z`);
+    const query = `${input.city} ${input.country} concerts festivals holidays events ${MONTHS[start.getUTCMonth()]} ${start.getUTCFullYear()}`;
+    try { results = await deps.search(query); } catch (err) {
+      warn(`[this-week] search failed: ${msg(err)}`);
+      return { status: "unavailable", reason: "error", message: "Live web context unavailable — search failed" };
+    }
+    try { await deps.cache.put(rawKey, "tavily_raw", { operation: "this_week_raw", status: "ok", results }); } catch { /* not cached */ }
   }
   const citations = results.map(({ id, url, title }) => ({ id, url, title }));
   let items: ThisWeekItem[] = [];
@@ -82,6 +94,7 @@ export async function thisWeek(input: { city: string; country: string; start: st
     }
   }
   const out: ThisWeek = { status: "ok", window, items, removed, citations, summarised, cached: false };
-  try { await deps.cache.put(key, "tavily_this_week", { operation: "this_week", status: "ok", results: out }); } catch { /* not cached */ }
+  // A degraded (unsummarised) result is not frozen for a week; the raw results are cached separately.
+  if (summarised || results.length === 0) try { await deps.cache.put(key, "tavily_this_week", { operation: "this_week", status: "ok", results: out }); } catch { /* not cached */ }
   return out;
 }
