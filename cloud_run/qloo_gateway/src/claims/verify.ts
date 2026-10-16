@@ -61,6 +61,18 @@ export function numberTokens(text: string): NumberToken[] {
   return out;
 }
 
+function tokenMatches(t: NumberToken, d: number): boolean {
+  if (!t.percent) return numberMatches(t.value, d);
+  // "38%" is 38 or 0.38; "0.38%" is neither 0.38 nor 0.0038 as declared.
+  if (t.value > 1) return numberMatches(t.value, d) || (Math.abs(d) <= 1 && numberMatches(t.value / 100, d));
+  return Math.abs(d) > 1 && numberMatches(t.value, d);
+}
+
+/** Whether a stated number token is supported by some value in the evidence pool (percent, scale words and decimal rules included). */
+export function tokenSupported(t: NumberToken, pool: number[]): boolean {
+  return pool.some((d) => tokenMatches(t, d));
+}
+
 export function verifyClaims(claims: Claim[], evidence: EvidenceItem[]) {
   const byId = new Map(evidence.map((e) => [e.id, e]));
   const verified: Claim[] = [];
@@ -93,13 +105,7 @@ export function verifyClaims(claims: Claim[], evidence: EvidenceItem[]) {
     const evidenceNames = items.flatMap((e) => e.names).filter((n) => matched.has(normaliseName(n)) && n.trim() !== "");
     let stated = claim.text.toLowerCase();
     for (const n of evidenceNames) stated = stated.split(n.toLowerCase()).join(" ");
-    const tokenOk = (t: NumberToken, d: number): boolean => {
-      if (!t.percent) return numberMatches(t.value, d);
-      // "38%" is 38 or 0.38; "0.38%" is neither 0.38 nor 0.0038 as declared.
-      if (t.value > 1) return numberMatches(t.value, d) || (Math.abs(d) <= 1 && numberMatches(t.value / 100, d));
-      return Math.abs(d) > 1 && numberMatches(t.value, d);
-    };
-    const badToken = numberTokens(stated).find((t) => !claim.numbers.some((d) => tokenOk(t, d)));
+    const badToken = numberTokens(stated).find((t) => !tokenSupported(t, claim.numbers));
     if (badToken) { removed.push({ claim, reason: "unsupported_number", detail: badToken.raw }); continue; }
     const text = normaliseName(claim.text);
     const absent = claim.entities.find((e) => !text.includes(normaliseName(e.name)));

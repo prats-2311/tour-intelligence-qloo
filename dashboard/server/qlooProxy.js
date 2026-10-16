@@ -45,6 +45,14 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch })
   const PLAYBOOK_PARAMS = ["artist", "artistEntityId", "city", "country", "narrative"];
 
   app.post("/api/qloo/tour-board", (req, res) => forward(req, res, { route: "tour-board", path: "/v1/tour-board", method: "POST", body: req.body ?? {}, stream: true }));
+  // Strategist chat: cheap shape checks here, full validation at the gateway.
+  const MAX_STRATEGIST_BYTES = 64 * 1024;
+  app.post("/api/qloo/strategist", (req, res) => {
+    const body = req.body ?? {};
+    if (!Array.isArray(body.messages) || body.messages.length > 12) return res.status(400).json({ error: "messages must be an array of at most 12" });
+    if (Buffer.byteLength(JSON.stringify(body)) > MAX_STRATEGIST_BYTES) return res.status(400).json({ error: "request too large" });
+    return forward(req, res, { route: "strategist", path: "/v1/strategist", method: "POST", body, stream: true });
+  });
   app.get("/api/qloo/city-playbook", (req, res) => {
     const params = new URLSearchParams();
     for (const k of PLAYBOOK_PARAMS) if (typeof req.query[k] === "string") params.set(k, req.query[k]);

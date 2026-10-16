@@ -1,0 +1,15 @@
+import { describe, expect, it } from "vitest";
+import { unsupportedNumbers } from "../src/strategist/answerCheck.js";
+
+describe("unsupportedNumbers", () => {
+  const ctx = { cities: [{ id: "1", name: "Guadalajara", country: "MX", verdict: "hidden_goldmine", fanHeat: 62, activation: 82, winnability: 72 }] };
+  it("accepts numbers present in tool data or the board context, incl. percent of a share", () => {
+    expect(unsupportedNumbers("Guadalajara scores 72; Cerro Alto fits at 0.91 and Colonia Americana holds 38%.", [[{ affinity: 0.91 }, { share: 0.38 }]], ctx)).toEqual([]);
+  });
+  it("flags numbers found nowhere", () => {
+    expect(unsupportedNumbers("Expect 5,000 fans and a 0.97 fit.", [[{ affinity: 0.91 }]], ctx)).toEqual(["5,000", "0.97"]);
+  });
+  it("flags scaled numbers whose scaled value is absent", () => {
+    expect(unsupportedNumbers("About 1.2k fans", [[{ affinity: 1.2 }]], {})).toEqual(["1.2k"]);
+  });
+});

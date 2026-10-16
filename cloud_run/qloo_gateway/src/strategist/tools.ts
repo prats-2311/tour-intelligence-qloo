@@ -3,6 +3,7 @@ import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
 import { INSIGHTS_TYPES, SEARCH_TYPES } from "../validate.js";
 import type { FunctionDeclaration } from "./gemini-tools.js";
+import type { StrategistToolStatus } from "../types.js";
 import { isSafeName } from "./safety.js";
 
 export const STRATEGIST_QLOO_TOOLS: readonly string[] = [
@@ -47,7 +48,7 @@ export const STRATEGIST_DECLARATIONS: FunctionDeclaration[] = [
       include_tags: list("Tags results must have", 10), exclude_tags: list("Tags results must not have", 10),
     }, ["options", "option_type"]),
   decl("qloo_compare_audiences", "Compare the audiences of two groups of entities and report how much they overlap.",
-    { group_a: list("First group of entities", 10), group_b: list("Second group of entities", 10), target_type: str("Type of entity to compare on", INSIGHTS_TYPES), limit }, ["group_a", "group_b"]),
+    { group_a: list("First group of entities", 10), group_b: list("Second group of entities", 10), target_type: str("Type of entity to compare on", INSIGHTS_TYPES), limit }, ["group_a", "group_b", "signal_tags", "include_tags", "exclude_tags"]),
   decl("qloo_find_tags", "Search Qloo taste tags by keyword or meaning.",
     { query: str("Search text"), semantic: bool("Match by meaning instead of keyword"), limit }, ["query"]),
   decl("get_city_playbook", "Build the activation playbook evidence (sponsors, merch tags, promo zones, local moment, venues, co-billing, talent) for the artist in one city.",
@@ -57,16 +58,16 @@ export const STRATEGIST_DECLARATIONS: FunctionDeclaration[] = [
 
 export interface ToolOutcome {
   name: string;
-  status: "ok" | "empty" | "partial" | "degraded" | "error" | "rejected";
+  status: StrategistToolStatus;
   summary: string;
   data: unknown;
   cacheKey?: string;
   cached?: boolean;
 }
 
-const ID = /^[A-Za-z0-9-]{1,64}$/;
-const STRING_KEYS = ["entity", "within", "filter_location", "signal_location", "query"];
-const LIST_KEYS = ["entities", "signals", "options", "group_a", "group_b"];
+const ID = /^[A-Za-z0-9:_.-]{1,128}$/;
+const STRING_KEYS = ["entity", "within", "filter_location", "signal_location", "query", "demographic"];
+const LIST_KEYS = ["entities", "signals", "options", "group_a", "group_b", "signal_tags", "include_tags", "exclude_tags"];
 const safe = (v: unknown) => typeof v === "string" && (isSafeName(v) || ID.test(v));
 
 function unsafeKey(args: Record<string, unknown>): string | null {
@@ -108,16 +109,20 @@ interface Deps { qloo: QlooCaller; cities: City[]; sessionId: string; signal?: A
 async function playbook(args: Record<string, unknown>, deps: Deps): Promise<ToolOutcome> {
   const name = "get_city_playbook";
   const { artist, artistEntityId, city, country } = args;
-  if (![artist, city, country].every(isSafeName) || typeof artistEntityId !== "string" || !ID.test(artistEntityId)) return rejected(name, "Unsafe argument: get_city_playbook");
+  const badKey = (["artist", "city", "country"] as const).find((k) => !isSafeName(args[k])) ?? (typeof artistEntityId !== "string" || !ID.test(artistEntityId) ? "artistEntityId" : null);
+  if (badKey) return rejected(name, `Unsafe argument: ${badKey}`);
   try {
-    let cards: Array<{ kind: string; status: string; items: unknown[] }> = [];
+    type Card = { kind: string; status: string; items: unknown[] };
+    const got: { cards: Card[] | null } = { cards: null };
     for await (const ev of runCityPlaybook(
-      { artist: artist as string, artistEntityId, city: { name: city as string, country: country as string }, sessionId: deps.sessionId, narrative: false },
+      { artist: artist as string, artistEntityId: artistEntityId as string, city: { name: city as string, country: country as string }, sessionId: deps.sessionId, narrative: false },
       { qloo: deps.qloo, cities: deps.cities, ...(deps.signal ? { signal: deps.signal } : {}) },
     )) {
       if (ev.type === "error") return { name, status: "error", summary: ev.message, data: null };
-      if (ev.type === "playbook") cards = (ev.playbook as { cards: typeof cards }).cards;
+      if (ev.type === "playbook") got.cards = (ev.playbook as { cards: Card[] }).cards;
     }
+    const cards = got.cards;
+    if (!cards) return { name, status: "error", summary: "playbook stream ended without results", data: null };
     const data = cards.map((c) => ({
       kind: c.kind, status: c.status,
       top: c.items.slice(0, 3).map((it) => {
@@ -144,7 +149,7 @@ export async function executeTool(call: { name: string; args: Record<string, unk
     const r = await deps.qloo.call(name, args, deps.sessionId);
     const e = r.envelope;
     const n = Array.isArray(e.results) ? e.results.length : 0;
-    return { name, status: e.status === "needs_input" ? "partial" : e.status as ToolOutcome["status"], summary: e.summary ?? `${n} results`, data: compactResults(e.results), cacheKey: r.cacheKey, cached: r.cached };
+    return { name, status: e.status, summary: e.summary ?? `${n} results`, data: compactResults(e.results), cacheKey: r.cacheKey, cached: r.cached };
   } catch (err) {
     return err instanceof ValidationError ? rejected(name, err.message) : failed(name, err);
   }

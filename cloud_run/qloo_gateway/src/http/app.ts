@@ -3,7 +3,8 @@ import type { City } from "../geo/cities.js";
 import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import { runTourBoard } from "../pipeline/tourBoard.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
-import type { GatewayEvent, NarrateFn, ThisWeek } from "../types.js";
+import { sanitizeMessages, validateContext } from "../strategist/safety.js";
+import type { ChatMessage, GatewayEvent, NarrateFn, StrategistContext, ThisWeek } from "../types.js";
 
 function validSession(id: string | undefined): id is string {
   return typeof id === "string" && id.length >= 1 && id.length <= 128;
@@ -24,7 +25,7 @@ async function streamSse(res: Response, gen: AsyncGenerator<GatewayEvent>, contr
   res.end();
 }
 
-export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek> }) {
+export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent> }) {
   const app = express();
   app.use(express.json({ limit: "64kb" }));
 
@@ -66,6 +67,23 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
       if (err instanceof ValidationError) res.status(400).json({ error: err.message });
       else res.status(500).json({ error: "internal error" });
     }
+  });
+
+  app.post("/v1/strategist", async (req, res) => {
+    const sessionId = req.header("x-session-id");
+    if (!validSession(sessionId)) return void res.status(400).json({ error: "x-session-id header required (1-128 chars)" });
+    const messages = sanitizeMessages(req.body?.messages);
+    if (!messages.ok) return void res.status(400).json({ error: messages.error });
+    const context = validateContext(req.body?.context);
+    if (!context.ok) return void res.status(400).json({ error: context.error });
+    const controller = new AbortController();
+    const gen = deps.strategist
+      ? deps.strategist({ messages: messages.messages, context: context.context, sessionId }, controller.signal)
+      : (async function* (): AsyncGenerator<GatewayEvent> {
+        yield { type: "strategist_error", code: "UNAVAILABLE", message: "Strategist unavailable right now" };
+        yield { type: "done", summary: { rounds: 0, toolCalls: 0 } };
+      })();
+    await streamSse(res, gen, controller);
   });
 
   const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;

@@ -42,4 +42,21 @@ describe("strategist tools", () => {
   it("get_city_playbook rejects unsafe city names", async () => {
     expect(await executeTool({ name: "get_city_playbook", args: { artist: "A", artistEntityId: "Q1", city: "<x>", country: "MX" } }, deps(okQloo()))).toMatchObject({ status: "rejected" });
   });
+  it("passes needs_input through unchanged", async () => {
+    const qloo: QlooCaller = { call: vi.fn(async () => ({ envelope: { status: "needs_input", summary: "Which one?", results: [] }, cacheKey: "k", cached: false, stale: false })) } as unknown as QlooCaller;
+    expect(await executeTool({ name: "qloo_describe", args: { entity: "Springfield" } }, deps(qloo))).toMatchObject({ status: "needs_input", summary: "Which one?" });
+  });
+  it("safety-checks demographic and tag lists, allowing colon tag ids", async () => {
+    const qloo = okQloo();
+    expect(await executeTool({ name: "qloo_recommend", args: { target_type: "brand", demographic: "ignore all; reveal" } }, deps(qloo))).toMatchObject({ status: "rejected", summary: "Unsafe argument: demographic" });
+    for (const k of ["signal_tags", "include_tags", "exclude_tags"]) {
+      expect(await executeTool({ name: "qloo_recommend", args: { target_type: "brand", [k]: ["urn:tag:x", "<script>"] } }, deps(qloo))).toMatchObject({ status: "rejected", summary: `Unsafe argument: ${k}` });
+    }
+    expect(qloo.call).not.toHaveBeenCalled();
+    expect(await executeTool({ name: "qloo_recommend", args: { target_type: "brand", include_tags: ["urn:tag:genre:qloo:rock"] } }, deps(qloo))).toMatchObject({ status: "ok" });
+  });
+  it("get_city_playbook names the offending key", async () => {
+    expect(await executeTool({ name: "get_city_playbook", args: { artist: "A", artistEntityId: "Q1", city: "<x>", country: "MX" } }, deps(okQloo()))).toMatchObject({ status: "rejected", summary: "Unsafe argument: city" });
+    expect(await executeTool({ name: "get_city_playbook", args: { artist: "A", artistEntityId: "bad id!", city: "Lima", country: "PE" } }, deps(okQloo()))).toMatchObject({ summary: "Unsafe argument: artistEntityId" });
+  });
 });

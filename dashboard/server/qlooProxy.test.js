@@ -177,4 +177,17 @@ describe("qlooProxy", () => {
     await (await fetch(`${base}/api/qloo/city-playbook?artist=A&narrative=0`, { headers: { "x-session-id": "s" } })).text();
     expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/city-playbook?artist=A&narrative=0");
   });
+  it("streams /api/qloo/strategist and rejects bad bodies before forwarding", async () => {
+    const fetchImpl = vi.fn(async () => sse(["event: done\ndata: {}\n\n"]));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const post = (body) => fetch(`${base}/api/qloo/strategist`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify(body) });
+    expect((await post({ messages: Array.from({ length: 13 }, () => ({ role: "user", text: "x" })) })).status).toBe(400);
+    expect((await post({ messages: "nope" })).status).toBe(400);
+    expect((await post({ messages: [{ role: "user", text: "x".repeat(70_000) }] })).status).toBe(400);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    const ok = await post({ messages: [{ role: "user", text: "hi" }], context: {} });
+    expect(ok.headers.get("content-type")).toContain("text/event-stream");
+    await ok.text();
+    expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/strategist");
+  });
 });

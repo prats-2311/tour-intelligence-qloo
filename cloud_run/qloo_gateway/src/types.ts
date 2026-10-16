@@ -66,6 +66,11 @@ export type GatewayEvent =
   | { type: "city_scored"; city: unknown }
   | { type: "playbook"; playbook: unknown }
   | { type: "narrative"; narrative: Narrative }
+  | { type: "strategist_thinking"; summary: string }
+  | { type: "strategist_tool_call"; id: string; name: string; args: Record<string, unknown> }
+  | { type: "strategist_tool_result"; id: string; name: string; status: StrategistToolStatus; summary: string; cached: boolean }
+  | { type: "strategist_message"; text: string; unsupportedNumbers: string[]; stoppedEarly: boolean; model: string }
+  | { type: "strategist_error"; code: "CAPPED" | "UNAVAILABLE" | "ABORTED" | "INTERNAL"; message: string }
   | { type: "done"; summary: unknown }
   | { type: "error"; code: string; message: string };
 
@@ -76,3 +81,5 @@ export interface StrategistContext {
   cities?: Array<{ id: string; name: string; country: string; verdict: string; fanHeat: number | null; activation: number | null; winnability: number | null }>;
   focusCityId?: string;
 }
+
+export type StrategistToolStatus = "ok" | "empty" | "needs_input" | "partial" | "degraded" | "error" | "rejected";

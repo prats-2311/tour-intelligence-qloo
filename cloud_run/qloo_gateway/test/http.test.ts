@@ -114,3 +114,23 @@ describe("http", () => {
     expect(ok.body).toEqual({ status: "unavailable", reason: "no_key", message: "x" });
   });
 });
+
+describe("strategist route", () => {
+  const base = { qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }) };
+  it("POST /v1/strategist validates messages and streams events", async () => {
+    const strategist = vi.fn(async function* () { yield { type: "strategist_message", text: "hi", unsupportedNumbers: [], stoppedEarly: false, model: "m" } as const; yield { type: "done", summary: {} } as const; });
+    const app = createApp({ ...base, strategist });
+    expect((await request(app).post("/v1/strategist").set("x-session-id", "s").send({ messages: [] })).status).toBe(400);
+    expect((await request(app).post("/v1/strategist").set("x-session-id", "s").send({ messages: [{ role: "user", text: "hi" }], context: { cities: "x" } })).status).toBe(400);
+    expect((await request(app).post("/v1/strategist").send({ messages: [{ role: "user", text: "hi" }] })).status).toBe(400);
+    const ok = await request(app).post("/v1/strategist").set("x-session-id", "s").send({ messages: [{ role: "user", text: "hi" }] });
+    expect(ok.headers["content-type"]).toContain("text/event-stream");
+    expect(ok.text).toContain("event: strategist_message");
+  });
+  it("streams UNAVAILABLE then done when the strategist is not configured", async () => {
+    const res = await request(createApp(base)).post("/v1/strategist").set("x-session-id", "s").send({ messages: [{ role: "user", text: "hi" }] });
+    expect(res.text).toContain("event: strategist_error");
+    expect(res.text).toContain("UNAVAILABLE");
+    expect(res.text).toContain("event: done");
+  });
+});
