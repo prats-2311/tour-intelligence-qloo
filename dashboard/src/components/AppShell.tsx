@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Clapperboard, Compass, Route, ChartColumn, ChevronsUpDown, Plus, Check, HelpCircle } from "lucide-react";
+import { Clapperboard, Compass, Route, ChartColumn, ChevronsUpDown, Plus, Check, HelpCircle, ArrowLeftRight, Globe2 } from "lucide-react";
 import { useCampaignContext } from "../lib/campaignContext";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 import { TourGuide, hasSeenTour } from "./ui/TourGuide";
@@ -11,6 +11,11 @@ const NAV_ITEMS = [
   { to: "/insights", label: "Insights", icon: ChartColumn, end: false },
   { to: "/campaign", label: "Campaigns", icon: Clapperboard, end: false },
 ];
+
+const toolLink = ({ isActive }: { isActive: boolean }) =>
+  `flex min-h-11 items-center gap-1.5 rounded-lg px-2 font-sans text-[13px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold ${
+    isActive ? "text-bone" : "text-canvas-muted hover:text-bone"
+  }`;
 
 const CAMPAIGN_PREFIXES = ["/campaign", "/city", "/compare", "/cities"];
 
@@ -28,8 +33,15 @@ function CampaignSwitcher() {
     function onClickAway(e: MouseEvent) {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
     }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
     document.addEventListener("mousedown", onClickAway);
-    return () => document.removeEventListener("mousedown", onClickAway);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClickAway);
+      document.removeEventListener("keydown", onKey);
+    };
   }, []);
 
   return (
@@ -45,7 +57,7 @@ function CampaignSwitcher() {
                   setOpen(false);
                   navigate("/campaign");
                 }}
-                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left font-sans text-[12px] text-canvas-text hover:bg-canvas-line/50"
+                className="flex min-h-11 w-full items-center justify-between gap-2 px-3 py-2 text-left font-sans text-[12px] text-canvas-text hover:bg-canvas-line/50"
               >
                 <span className="min-w-0">
                   <span className="block truncate font-display text-[13px]">{c.title}</span>
@@ -60,7 +72,7 @@ function CampaignSwitcher() {
           <NavLink
             to="/campaigns/new"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 border-t border-canvas-line px-3 py-2.5 font-sans text-[12px] text-gold hover:bg-canvas-line/50"
+            className="flex min-h-11 items-center gap-2 border-t border-canvas-line px-3 py-2.5 font-sans text-[12px] text-gold hover:bg-canvas-line/50"
           >
             <Plus size={13} /> New Campaign
           </NavLink>
@@ -69,6 +81,8 @@ function CampaignSwitcher() {
 
       <button
         onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
         className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg bg-paper-raised px-3 py-2 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold"
       >
         <span className="min-w-0">
@@ -117,7 +131,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [location.pathname]);
 
   const campaignTools = inCampaign && (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
+      <NavLink to="/compare" data-tour="compare-cities-nav" className={toolLink}>
+        <ArrowLeftRight size={15} aria-hidden /> Compare
+      </NavLink>
+      <NavLink to="/cities/add" className={toolLink}>
+        <Globe2 size={15} aria-hidden /> Add cities
+      </NavLink>
       <div className="w-56 max-w-full"><CampaignSwitcher /></div>
       <button
         onClick={replayTour}

@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "./AppShell";
 
 vi.mock("@/lib/campaignContext", () => ({ useCampaignContext: () => ({ campaigns: [], activeCampaignId: "x", activeCampaign: undefined, setActiveCampaignId() {}, refresh() {} }) }));
 
 const mm = (desktop: boolean) => vi.stubGlobal("matchMedia", () => ({ matches: desktop, addEventListener() {}, removeEventListener() {} }));
+
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("AppShell", () => {
   it("mobile renders a bottom tab bar with four tabs and no sidebar", () => {
@@ -22,5 +24,23 @@ describe("AppShell", () => {
     render(<MemoryRouter initialEntries={["/"]}><AppShell><p>child</p></AppShell></MemoryRouter>);
     expect(screen.getByText("Tour Intelligence")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Insights" })).toBeTruthy();
+  });
+  it("campaign routes expose Compare and Add Cities links", () => {
+    mm(true);
+    render(<MemoryRouter initialEntries={["/campaign"]}><AppShell><p>child</p></AppShell></MemoryRouter>);
+    const compare = screen.getByRole("link", { name: /Compare/ });
+    expect(compare.getAttribute("href")).toBe("/compare");
+    expect(compare.getAttribute("data-tour")).toBe("compare-cities-nav");
+    expect(screen.getByRole("link", { name: /Add cities/i }).getAttribute("href")).toBe("/cities/add");
+  });
+  it("switcher toggle reports aria-expanded and closes on Escape", () => {
+    mm(true);
+    render(<MemoryRouter initialEntries={["/campaign"]}><AppShell><p>child</p></AppShell></MemoryRouter>);
+    const btn = screen.getByRole("button", { name: /Active Campaign/ });
+    expect(btn.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(btn);
+    expect(btn.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(btn.getAttribute("aria-expanded")).toBe("false");
   });
 });
