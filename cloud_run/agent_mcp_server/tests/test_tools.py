@@ -177,4 +177,9 @@ def test_all_read_tools_are_registered_with_the_mcp_server():
         "get_city_briefs",
         "get_stop_safety_checklist",
         "rank_cities",
+        "find_tour_markets",
+        "get_city_playbook",
+        "suggest_support_acts",
+        "rank_venues",
+        "get_local_moment",
     }

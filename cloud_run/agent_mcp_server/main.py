@@ -27,12 +27,22 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+from uuid import uuid4
 
 import requests
 from mcp.server.mcpserver import MCPServer
+
+# Load sibling modules relative to this file, regardless of cwd or how main was imported.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+
+import taste_tools  # noqa: E402
+from gateway import gateway_url  # noqa: E402
 
 # No default URL: the original Google-hackathon service must never be hit by accident.
 TOUR_DATA_API = os.environ.get("TOUR_DATA_API_URL", "")
@@ -147,6 +157,48 @@ def get_stop_safety_checklist(campaign_id: str, city_id: str) -> dict:
 def rank_cities(cities: list[dict]) -> dict:
     """Rank a list of cities by enthusiasm score and importance tier. Pure compute -- no data lookup, no side effects."""
     return _post("/rank_cities", {"cities": cities})
+
+
+def _gw() -> dict:
+    """Per-call gateway kwargs: a private session id and an ID-token provider."""
+    return {"session_id": f"mcp-{uuid4().hex[:16]}", "token_fn": lambda: _identity_token(gateway_url())}
+
+
+@mcp.tool()
+def find_tour_markets(artist: str, regions: list[str], max_stops: int = 8) -> dict:
+    """Score and rank touring markets for an artist in the given regions using Qloo
+    taste data. Returns cities with a verdict plus fan heat, activation and
+    winnability scores. Affinity signal only, not a ticket forecast. If the artist
+    name is ambiguous, returns candidates to choose from instead."""
+    return taste_tools.find_tour_markets(artist, regions, max_stops, **_gw())
+
+
+@mcp.tool()
+def get_city_playbook(artist: str, city: str, country: str) -> dict:
+    """Get a compact taste playbook for one artist in one city: each card's kind,
+    status and its top three items with their affinity, share or lift."""
+    return taste_tools.get_city_playbook(artist, city, country, **_gw())
+
+
+@mcp.tool()
+def suggest_support_acts(artist: str, city: str, country: str) -> dict:
+    """Suggest support acts for an artist in a city. Each act shows audience overlap,
+    local affinity and their product as lift, so both factors are visible."""
+    return taste_tools.suggest_support_acts(artist, city, country, **_gw())
+
+
+@mcp.tool()
+def rank_venues(artist: str, city: str, country: str, venues: list[str]) -> dict:
+    """Rank up to 10 candidate venues in a city by taste fit with an artist's
+    audience. Scores are comparable only within this one call."""
+    return taste_tools.rank_venues(artist, city, country, venues, **_gw())
+
+
+@mcp.tool()
+def get_local_moment(artist: str, city: str, country: str) -> dict:
+    """Get local cultural moments (events, scenes, places) in a city that fit an
+    artist's audience, each with its type and affinity."""
+    return taste_tools.get_local_moment(artist, city, country, **_gw())
 
 
 # stateless_http=True: a streamable-http session tied to one server instance
