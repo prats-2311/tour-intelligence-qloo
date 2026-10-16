@@ -18,7 +18,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
     return true;
   }, []);
 
-  const abort = useCallback(() => { if (silentAbort()) dispatch({ type: "interrupted" }); }, [silentAbort]);
+  const abort = useCallback(() => { if (silentAbort()) dispatch({ type: "interrupted", reason: "user" }); }, [silentAbort]);
 
   const run = useCallback((brief: TourBrief, opts: { sample?: boolean } = {}) => {
     silentAbort();

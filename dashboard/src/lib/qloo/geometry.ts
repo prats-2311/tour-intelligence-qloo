@@ -1,4 +1,3 @@
-import type { StyleSpecification } from "maplibre-gl";
 import type { ScoredCity, Verdict } from "./types";
 
 export function cityMarkers(cities: ScoredCity[]) {
@@ -20,18 +19,44 @@ export function boundsFor(cities: ScoredCity[]): [[number, number], [number, num
   return [[Math.min(...lons) - pad, Math.min(...lats) - pad], [Math.max(...lons) + pad, Math.max(...lats) + pad]];
 }
 
-export const MAP_STYLE: StyleSpecification = {
-  version: 8,
-  sources: {
-    carto: {
-      type: "raster",
-      tiles: ["a", "b", "c", "d"].map((s) => `https://${s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}@2x.png`),
-      tileSize: 256,
-      attribution: "© OpenStreetMap contributors © CARTO",
-    },
-  },
-  layers: [
-    { id: "bg", type: "background", paint: { "background-color": "#151410" } },
-    { id: "carto", type: "raster", source: "carto", paint: { "raster-saturation": -0.6, "raster-brightness-max": 0.75, "raster-hue-rotate": 15 } },
-  ],
-};
+/** OpenFreeMap: keyless vector tiles (© OpenFreeMap © OpenMapTiles, data © OpenStreetMap contributors; the style carries the attribution). */
+export const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
+
+export interface Tint { paint?: Record<string, string | number>; hide?: true }
+
+const LAND = "#1c1b18";
+const WATER = "#12110e";
+const ROAD = "#2a2924";
+
+/** Pure mapping from a style layer to its warm-noir override (testable without a map). */
+export function tintFor(layer: { id: string; type: string }): Tint {
+  const { id, type } = layer;
+  const water = /^water/.test(id);
+  switch (type) {
+    case "background": return { paint: { "background-color": "#151410" } };
+    case "fill": return { paint: { "fill-color": water ? WATER : LAND } };
+    case "line":
+      if (water) return { paint: { "line-color": WATER } };
+      if (/^boundary/.test(id)) return { paint: { "line-color": "#3a382f" } };
+      return { paint: { "line-color": ROAD } };
+    case "symbol":
+      if (/^place_country/.test(id)) return { paint: { "text-color": "#a4a094", "text-opacity": 0.5, "text-halo-color": "#151410" } };
+      return { hide: true };
+    default: return {};
+  }
+}
+
+interface TintableMap {
+  getStyle(): { layers?: Array<{ id: string; type: string }> };
+  setPaintProperty(layer: string, prop: string, value: unknown): unknown;
+  setLayoutProperty(layer: string, prop: string, value: unknown): unknown;
+}
+
+/** Apply the warm tint to every layer of the loaded style. */
+export function warmTint(map: TintableMap): void {
+  for (const layer of map.getStyle().layers ?? []) {
+    const t = tintFor(layer);
+    if (t.hide) map.setLayoutProperty(layer.id, "visibility", "none");
+    for (const [k, v] of Object.entries(t.paint ?? {})) map.setPaintProperty(layer.id, k, v);
+  }
+}

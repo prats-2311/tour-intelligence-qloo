@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SAMPLE_CITIES } from "./fixtures/lumenVale";
-import { boundsFor, cityMarkers } from "./geometry";
+import { boundsFor, cityMarkers, MAP_STYLE_URL, tintFor } from "./geometry";
 
 describe("map geometry", () => {
   it("markers use lon,lat and label only play/goldmine", () => {
@@ -16,5 +16,21 @@ describe("map geometry", () => {
   });
   it("bounds is null with no cities (Review Focus 3)", () => {
     expect(boundsFor([])).toBeNull();
+  });
+  it("uses OpenFreeMap's keyless dark style, not CARTO", () => {
+    expect(MAP_STYLE_URL).toBe("https://tiles.openfreemap.org/styles/dark");
+    expect(MAP_STYLE_URL).not.toMatch(/carto/i);
+  });
+  it("warm tint maps layers to canvas tones and hides labels except country names", () => {
+    expect(tintFor({ id: "background", type: "background" })).toEqual({ paint: { "background-color": "#151410" } });
+    expect(tintFor({ id: "water", type: "fill" })).toEqual({ paint: { "fill-color": "#12110e" } });
+    expect(tintFor({ id: "waterway", type: "line" })).toEqual({ paint: { "line-color": "#12110e" } });
+    expect(tintFor({ id: "landuse_park", type: "fill" })).toEqual({ paint: { "fill-color": "#1c1b18" } });
+    expect(tintFor({ id: "highway_minor", type: "line" })).toEqual({ paint: { "line-color": "#2a2924" } });
+    expect(tintFor({ id: "highway_name_motorway", type: "symbol" })).toEqual({ hide: true });
+    expect(tintFor({ id: "place_city", type: "symbol" })).toEqual({ hide: true });
+    const country = tintFor({ id: "place_country_major", type: "symbol" });
+    expect(country.hide).toBeUndefined();
+    expect(country.paint?.["text-opacity"]).toBeLessThan(1);
   });
 });

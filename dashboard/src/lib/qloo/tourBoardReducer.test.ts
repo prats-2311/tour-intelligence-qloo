@@ -42,6 +42,12 @@ describe("boardReducer", () => {
     expect(boardReducer(streaming, { type: "interrupted" }).status).toBe("interrupted");
     expect(boardReducer(run(LUMEN_VALE_SAMPLE), { type: "interrupted" }).status).toBe("done");
   });
+  it("interrupted records why: user stop vs connection loss", () => {
+    const streaming = boardReducer(initialBoard, { type: "start", brief: SAMPLE_BRIEF, source: "live" });
+    expect(boardReducer(streaming, { type: "interrupted", reason: "user" }).interruptReason).toBe("user");
+    expect(boardReducer(streaming, { type: "interrupted" }).interruptReason).toBe("connection");
+    expect(boardReducer(boardReducer(streaming, { type: "interrupted", reason: "user" }), { type: "start", brief: SAMPLE_BRIEF, source: "live" }).interruptReason).toBeUndefined();
+  });
   it("de-duplicates a re-sent city by id", () => {
     const c = LUMEN_VALE_SAMPLE.find((e) => e.type === "city_scored")!;
     expect(run([c, c]).cities).toHaveLength(1);

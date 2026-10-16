@@ -12,12 +12,13 @@ export type BoardState = {
   regionsUnavailable: Array<{ region: string; code: string; message: string }>;
   needsInput?: Extract<GatewayEvent, { type: "needs_input" }>;
   error?: { code: string; message: string };
+  interruptReason?: "user" | "connection";
 };
 
 export type BoardAction =
   | { type: "start"; brief: TourBrief; source: "live" | "sample" }
   | { type: "event"; event: GatewayEvent }
-  | { type: "interrupted" }
+  | { type: "interrupted"; reason?: "user" | "connection" }
   | { type: "reset" };
 
 export const initialBoard: BoardState = { status: "idle", source: "live", cities: [], log: [], regionsEmpty: [], regionsUnavailable: [] };
@@ -29,7 +30,7 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
     case "start":
       return { ...initialBoard, status: "streaming", source: action.source, brief: action.brief };
     case "interrupted":
-      return state.status === "streaming" ? { ...state, status: "interrupted" } : state;
+      return state.status === "streaming" ? { ...state, status: "interrupted", interruptReason: action.reason ?? "connection" } : state;
     case "event": {
       const e = action.event;
       const log = [...state.log, e];

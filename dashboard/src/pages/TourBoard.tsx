@@ -4,7 +4,7 @@ import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type Keybo
 import { Link, useSearchParams } from "react-router-dom";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { BriefForm } from "@/components/qloo/BriefForm";
-import { CityRow } from "@/components/qloo/CityRow";
+import { CityRow, ROW_COLS_LG } from "@/components/qloo/CityRow";
 import { NeedsInputPicker } from "@/components/qloo/NeedsInputPicker";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { Sheet } from "@/components/qloo/Sheet";
@@ -88,7 +88,7 @@ const smallBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-pap
 export default function TourBoard() {
   const { state, run, abort, reset } = useTourBoard();
   const reduce = useReducedMotion();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const wantSample = params.get("sample") === "1";
   const started = useRef(false);
   const [mode, setMode] = useState<Mode>("winnability");
@@ -97,12 +97,29 @@ export default function TourBoard() {
   const [logOpen, setLogOpen] = useState(false);
   const [buildOpen, setBuildOpen] = useState(false);
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
+  const [lastBrief, setLastBrief] = useState<TourBrief | undefined>(undefined);
 
+  // ?sample=1 starts the showcase unless the provider already holds a sample run
+  // (back-navigation). The ref only guards the StrictMode double effect.
   useEffect(() => {
     if (!wantSample || started.current) return;
     started.current = true;
-    if (state.status === "idle") run(SAMPLE_BRIEF, { sample: true });
-  }, [wantSample, state.status, run]);
+    if (state.source !== "sample") run(SAMPLE_BRIEF, { sample: true });
+  }, [wantSample, state.source, run]);
+
+  // A new run starts clean: no stale selection or shortlist exclusions.
+  useEffect(() => {
+    if (state.status !== "streaming") return;
+    setExcluded(new Set());
+    setSelectedId(null);
+    setWhyId(null);
+  }, [state.status, state.brief]);
+
+  const newBrief = () => {
+    setLastBrief(state.brief);
+    reset();
+    if (params.has("sample")) setParams((p) => { const n = new URLSearchParams(p); n.delete("sample"); return n; }, { replace: true });
+  };
 
   const sorted = useMemo(() => sortCities(state.cities, mode), [state.cities, mode]);
   const counts = useMemo(() => summarize(state.cities), [state.cities]);
@@ -123,7 +140,7 @@ export default function TourBoard() {
   if (state.status === "idle") {
     return (
       <div className="flex flex-col gap-6">
-        <BriefForm onSubmit={(b: TourBrief) => run(b)} defaultBrief={state.brief} />
+        <BriefForm onSubmit={(b: TourBrief) => run(b)} defaultBrief={lastBrief} />
         <div className="mx-auto flex w-full max-w-xl flex-col gap-2 border-t border-canvas-line pt-4">
           <p className="text-[13px] text-canvas-muted">Want to see it first? The showcase tour runs on sample data.</p>
           <button type="button" onClick={showcase} className={secondaryBtn}>Try the showcase tour</button>
@@ -161,7 +178,7 @@ export default function TourBoard() {
       {state.status === "interrupted" && (
         <Notice>
           <History size={14} className="text-state-stale" aria-hidden />
-          <span className="min-w-0">Connection lost — results so far shown</span>
+          <span className="min-w-0">{state.interruptReason === "user" ? "Stopped — results so far shown" : "Connection lost — results so far shown"}</span>
           <button type="button" onClick={retry} className={smallBtn}>Retry</button>
         </Notice>
       )}
@@ -174,8 +191,12 @@ export default function TourBoard() {
             : <button type="button" onClick={retry} className={smallBtn}>Retry</button>}
         </Notice>
       )}
-      {state.status === "streaming" && state.regionsUnavailable.length > 0 && (
-        <Notice><span>{state.regionsUnavailable.map((r) => `${r.region} unavailable`).join(" · ")}</span></Notice>
+      {!empty && (state.regionsEmpty.length > 0 || state.regionsUnavailable.length > 0) && (
+        <Notice>
+          <span className="min-w-0">
+            {[...state.regionsEmpty.map((r) => `No Qloo signal in ${r}`), ...state.regionsUnavailable.map((r) => `${r.region} unavailable`)].join(" · ")}
+          </span>
+        </Notice>
       )}
 
       {empty && (
@@ -210,6 +231,11 @@ export default function TourBoard() {
 
       {(state.cities.length > 0 || streaming) && (
         <div role="tabpanel" aria-label={mode === "density" ? "Density-only ranking" : "Winnability ranking"}>
+          {state.cities.length > 0 && (
+            <div aria-hidden className={`mb-1 hidden grid-cols-1 gap-x-3 px-3 font-mono text-[11px] uppercase tracking-[0.08em] text-canvas-muted lg:grid ${ROW_COLS_LG}`}>
+              <span>City</span><span>Fan heat · Activation</span><span className="text-right">Verdict</span><span className="text-right">Win</span>
+            </div>
+          )}
           <ul className="flex flex-col gap-0.5">
             {sorted.map((c) => (
               <CityRow key={c.id} city={c} selected={c.id === selectedId} dimActivation={mode === "density"} onOpen={openRow} />
@@ -223,7 +249,7 @@ export default function TourBoard() {
       {state.cities.length > 0 && (
         <div className="flex flex-col gap-1 pb-2">
           <p className="px-1 text-[12px] text-canvas-muted">{INTEGRITY}</p>
-          {!streaming && <button type="button" onClick={reset} className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">New brief</button>}
+          {!streaming && <button type="button" onClick={newBrief} className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">New brief</button>}
         </div>
       )}
     </div>
@@ -244,9 +270,9 @@ export default function TourBoard() {
   );
 
   const header = (
-    <header className={`flex min-w-0 items-center justify-between gap-3 bg-canvas-raised px-4 py-2 lg:flex-col lg:items-start lg:gap-3 lg:px-6 lg:pb-3 lg:pt-8 ${hasMap ? "min-h-[52px]" : "rounded-[14px]"}`}>
+    <header className={`flex min-w-0 items-center justify-between gap-3 bg-canvas-raised px-4 py-2 lg:px-6 lg:pb-2 lg:pt-5 ${hasMap ? "min-h-[48px]" : "rounded-[14px]"}`}>
       <div className="min-w-0 max-w-full">
-        <h1 className="font-title truncate text-[17px] leading-tight text-canvas-text lg:text-[40px] lg:leading-[1.1]">{artistName}</h1>
+        <h1 className="font-title truncate text-[17px] leading-tight text-canvas-text lg:text-[32px] lg:leading-[1.1]">{artistName}</h1>
         {regionsLine && <p className="truncate text-[13px] text-canvas-muted">{regionsLine}</p>}
       </div>
       <div className="flex shrink-0 items-center gap-2">
@@ -308,14 +334,14 @@ export default function TourBoard() {
       {state.source === "sample" && <SampleBanner />}
       <div className="grid grid-cols-1 lg:grid-cols-12">
         <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1">{header}</div>
-        <section aria-label="Routing map" className="relative h-[22vh] min-h-[168px] bg-canvas-raised lg:sticky lg:top-14 lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:h-[calc(100vh-56px)] lg:self-start">
+        <section aria-label="Routing map" className="relative h-[32dvh] min-h-[168px] bg-canvas-raised lg:sticky lg:top-14 lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:h-[calc(100dvh-56px)] lg:self-start">
           <Legend />
           <Suspense fallback={<div className="size-full bg-canvas-raised" />}>
             <TourMap cities={state.cities} selectedId={selectedId} onSelect={selectFromMap} zones={selected?.zones} />
           </Suspense>
         </section>
         <section aria-label="Routing board" className="relative z-10 -mt-5 flex min-w-0 flex-col rounded-t-[18px] bg-canvas-raised lg:col-span-5 lg:col-start-8 lg:row-start-2 lg:mt-0 lg:rounded-none">
-          <span className="mx-auto mb-1 mt-2.5 h-1 w-9 rounded-full bg-[#47443c] lg:hidden" aria-hidden />
+          <span className="mx-auto mb-0.5 mt-2 h-1 w-9 rounded-full bg-[#47443c] lg:hidden" aria-hidden />
           <div className="flex-1 px-2 pb-3 pt-1 lg:px-6">{body}</div>
           {footer}
         </section>

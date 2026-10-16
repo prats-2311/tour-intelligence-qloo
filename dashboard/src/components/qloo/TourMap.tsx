@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { ScoredCity, Zone } from "@/lib/qloo/types";
-import { boundsFor, cityMarkers, MAP_STYLE } from "@/lib/qloo/geometry";
+import { boundsFor, cityMarkers, MAP_STYLE_URL, warmTint } from "@/lib/qloo/geometry";
 import { useIsDesktop, useMediaQuery } from "@/lib/useMediaQuery";
 import { markerElement, markerSignature, setMarkerSelected } from "./mapMarker";
 
@@ -77,12 +77,13 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
     if (!container.current) return;
     const map = new maplibregl.Map({
       container: container.current,
-      style: MAP_STYLE,
+      style: MAP_STYLE_URL,
       attributionControl: { compact: true },
       cooperativeGestures: !isDesktop,
     });
     mapRef.current = map;
     styleReady.current = false;
+    map.once("style.load", () => warmTint(map));
     map.on("load", () => {
       styleReady.current = true;
       applyZones(map); // applies the latest zones, including ones queued before load

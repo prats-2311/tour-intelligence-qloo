@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import * as client from "@/lib/qloo/client";
+import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import TourBoard from "./TourBoard";
 
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
@@ -17,9 +18,15 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const Where = () => <span data-testid="search">{useLocation().search}</span>;
 const wrap = (page: React.ReactNode, url: string) => (
-  <MemoryRouter initialEntries={[url]}><TourBoardProvider sampleDelayMs={0}>{page}</TourBoardProvider></MemoryRouter>
+  <TourBoardProvider sampleDelayMs={0}><MemoryRouter initialEntries={[url]} key={url}>{page}<Where /></MemoryRouter></TourBoardProvider>
 );
+const submitArtist = (name: string) => {
+  fireEvent.change(screen.getByLabelText("Artist"), { target: { value: name } });
+  fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
+};
+const cityEvent = (i: number) => ({ type: "city_scored" as const, city: SAMPLE_CITIES[i]! });
 const renderPage = (url = "/tours/board?sample=1") => render(wrap(<TourBoard />, url));
 
 describe("TourBoard", () => {
@@ -99,7 +106,8 @@ describe("TourBoard", () => {
     fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "Ada" } });
     fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
     fireEvent.click(await screen.findByRole("button", { name: "Stop" }));
-    expect(await screen.findByText("Connection lost — results so far shown")).toBeTruthy();
+    expect(await screen.findByText("Stopped — results so far shown")).toBeTruthy();
+    expect(screen.queryByText("Connection lost — results so far shown")).toBeNull();
   });
   it("navigating away and back does not start a second stream", async () => {
     const spy = vi.spyOn(client, "streamTourBoard");
@@ -117,5 +125,77 @@ describe("TourBoard", () => {
     const dialog = await screen.findByRole("dialog", { name: "Shortlist" });
     expect(within(dialog).getAllByRole("checkbox")).toHaveLength(4);
     expect(within(dialog).getByRole("link", { name: "Compare in Taste Insights" }).getAttribute("href")).toBe("/insights");
+  });
+  it("passes the typed artist unchanged to the stream (Beyoncé)", async () => {
+    const spy = vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield { type: "done", summary: {} }; });
+    renderPage("/tours/board");
+    submitArtist("Beyoncé");
+    await waitFor(() => expect(spy).toHaveBeenCalled());
+    expect(spy.mock.calls[0]![0].artist).toBe("Beyoncé");
+  });
+  it("?sample=1 starts the showcase even when a live run is already held", async () => {
+    vi.spyOn(client, "streamTourBoard").mockImplementationOnce(async function* () { yield { type: "done", summary: {} }; });
+    const { rerender } = render(wrap(<TourBoard />, "/tours/board"));
+    submitArtist("Ada");
+    await screen.findByText("No markets scored");
+    rerender(wrap(<TourBoard />, "/tours/board?sample=1"));
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    expect(screen.getByText("Sample data — illustrative, not Qloo output")).toBeTruthy();
+  });
+  it("keeps region notices visible after the run finishes with cities", async () => {
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
+      yield { type: "region_empty", region: "Atlantis" };
+      yield { type: "region_unavailable", region: "Brazil", code: "QLOO_AUTH", message: "no access" };
+      yield cityEvent(0);
+      yield { type: "done", summary: {} };
+    });
+    renderPage("/tours/board");
+    submitArtist("Ada");
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(1));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    expect(screen.getByText(/No Qloo signal in Atlantis/)).toBeTruthy();
+    expect(screen.getByText(/Brazil unavailable/)).toBeTruthy();
+  });
+  it("keeps region notices after an interruption", async () => {
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
+      yield { type: "region_empty", region: "Atlantis" };
+      yield cityEvent(0);
+    });
+    renderPage("/tours/board");
+    submitArtist("Ada");
+    await screen.findByText("Connection lost — results so far shown");
+    expect(screen.getByText(/No Qloo signal in Atlantis/)).toBeTruthy();
+  });
+  it("New brief pre-fills the last brief and drops ?sample from the URL", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    expect(screen.getByTestId("search").textContent).toBe("?sample=1");
+    fireEvent.click(screen.getByRole("button", { name: "New brief" }));
+    expect((await screen.findByLabelText("Artist") as HTMLInputElement).value).toBe("Lumen Vale");
+    expect(screen.getByTestId("search").textContent).toBe("");
+  });
+  it("a new run clears the shortlist exclusions", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: /Build tour/ }));
+    fireEvent.click(within(await screen.findByRole("dialog", { name: "Shortlist" })).getAllByRole("checkbox")[0]!);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "New brief" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Try the showcase tour" }));
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: /Build tour/ }));
+    const boxes = within(await screen.findByRole("dialog", { name: "Shortlist" })).getAllByRole("checkbox") as HTMLInputElement[];
+    expect(boxes.every((b) => b.checked)).toBe(true);
+  });
+  it("row aria-label includes the data warning label", async () => {
+    const warned = { ...SAMPLE_CITIES[0]!, warnings: [{ tool: "qloo_recommend", kind: "partial" as const }] };
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield { type: "city_scored", city: warned }; yield { type: "done", summary: {} }; });
+    renderPage("/tours/board");
+    submitArtist("Ada");
+    const row = (await screen.findAllByTestId("city-row"))[0]!;
+    expect(within(row).getByRole("button").getAttribute("aria-label")).toMatch(/Partial data/);
   });
 });
