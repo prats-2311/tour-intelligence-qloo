@@ -1,0 +1,68 @@
+import request from "supertest";
+import { describe, expect, it } from "vitest";
+import { createApp } from "../src/http/app.js";
+import type { QlooCaller } from "../src/qlooCall.js";
+import { describeOk, heatMexico, recs, cityHeat } from "./fixtures/envelopes.js";
+import type { City } from "../src/geo/cities.js";
+
+const CITIES: City[] = [{ id: "1", name: "Mexico City", country: "MX", lat: 19.4326, lon: -99.1332, population: 9_000_000 }];
+const qloo: QlooCaller = {
+  async call(tool, args) {
+    const envelope = tool === "qloo_describe" ? describeOk : tool === "qloo_where_popular" ? (args.within === "Mexico" ? heatMexico : cityHeat) : recs(["A"], [0.5]);
+    return { envelope, cacheKey: "k", cached: false, stale: false };
+  },
+};
+const app = createApp({ qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }) });
+
+describe("http", () => {
+  it("healthz", async () => {
+    expect((await request(app).get("/healthz")).body).toEqual({ connected: true, ready: true });
+  });
+  it("streams tour-board events as SSE", async () => {
+    const res = await request(app).post("/v1/tour-board").set("x-session-id", "s").send({ artist: "Test Artist", regions: ["Mexico"], maxStops: 4 });
+    expect(res.headers["content-type"]).toContain("text/event-stream");
+    expect(res.text).toContain("event: resolve");
+    expect(res.text).toContain("event: done");
+  });
+  it("rejects a malformed brief with 400", async () => {
+    const res = await request(app).post("/v1/tour-board").set("x-session-id", "s").send({ artist: "", regions: [] });
+    expect(res.status).toBe(400);
+  });
+  it("requires a session id", async () => {
+    expect((await request(app).post("/v1/tour-board").send({ artist: "x", regions: ["Mexico"], maxStops: 3 })).status).toBe(400);
+  });
+  it("tools endpoint validates via the caller", async () => {
+    const bad: QlooCaller = { async call() { throw new Error("tool not allowlisted: qloo_api"); } };
+    const res = await request(createApp({ qloo: bad, cities: CITIES, health: async () => ({ connected: true, ready: true }) }))
+      .post("/v1/tools/qloo_api").set("x-session-id", "s").send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("not allowlisted");
+  });
+  it("stops issuing Qloo calls when the client disconnects (Review Focus 3)", async () => {
+    let starts = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    const blocking: QlooCaller = { async call(tool, args) { starts += 1; await gate; return qloo.call(tool, args, "s"); } };
+    const server = createApp({ qloo: blocking, cities: CITIES, health: async () => ({ connected: true, ready: true }) }).listen(0);
+    try {
+      const port = (server.address() as { port: number }).port;
+      const controller = new AbortController();
+      const res = fetch(`http://127.0.0.1:${port}/v1/tour-board`, {
+        method: "POST", signal: controller.signal, headers: { "content-type": "application/json", "x-session-id": "s" },
+        body: JSON.stringify({ artist: "Test Artist", regions: ["Mexico"], maxStops: 4 }),
+      }).catch(() => undefined);
+      for (let i = 0; i < 200 && starts === 0; i++) await new Promise((r) => setTimeout(r, 10));
+      expect(starts).toBeGreaterThan(0);
+      controller.abort();
+      await res;
+      await new Promise((r) => setTimeout(r, 100)); // let the server observe the socket close
+      const startsAtRelease = starts;
+      release();
+      await new Promise((r) => setTimeout(r, 200));
+      expect(starts).toBe(startsAtRelease); // nothing new started after disconnect
+    } finally {
+      release();
+      server.close();
+    }
+  });
+});

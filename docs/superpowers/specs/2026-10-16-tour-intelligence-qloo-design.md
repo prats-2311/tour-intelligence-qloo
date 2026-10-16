@@ -201,7 +201,7 @@ agent_mcp_server (existing; + taste tools, + public demo endpoint)
 
 ### 6.2 Gateway HTTP contract (initial)
 - `POST /v1/tour-board` `{artist, regions[], capacityTier, maxStops, dateWindow}` → SSE events: `resolve`, `needs_input`, `tool_call`, `tool_result`, `city_scored`, `done`, `error`.
-- `POST /v1/resolve` `{choiceId}` → resumes after `needs_input`.
+- After `needs_input`, the client re-submits `POST /v1/tour-board` with `artistEntityId` set to the chosen candidate (stateless).
 - `GET /v1/city-playbook?artist=&city=` → SSE (same event types) ending in a `playbook` payload.
 - `POST /v1/strategist` `{sessionId, messages[]}` → SSE.
 - `POST /v1/tools/:name` (internal only; allowlisted) → Envelope.
