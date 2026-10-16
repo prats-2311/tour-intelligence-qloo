@@ -18,7 +18,7 @@ describe("verifyClaims", () => {
     expect(r.verified).toHaveLength(1);
   });
   it("matches by entity id when given", () => {
-    expect(verifyClaims([claim({ text: "Anything is a fit.", entities: [{ name: "Anything", entityId: "q-123" }] })], evidence).verified).toHaveLength(1);
+    expect(verifyClaims([claim({ text: "Corona is a fit.", entities: [{ name: "Corona", entityId: "q-123" }] })], evidence).verified).toHaveLength(1);
   });
   it("removes a fabricated entity", () => {
     const r = verifyClaims([claim({ entities: [{ name: "Heineken" }] })], evidence);
@@ -131,5 +131,34 @@ describe("displayed text checks", () => {
     const e: EvidenceItem[] = [{ id: "e1", entityIds: [], names: ["C3 Stage"], numbers: [0.91] }];
     const r = verifyClaims([c({ text: "c3 stage ranks first at 0.91.", entities: [{ name: "C3 Stage" }], numbers: [0.91] })], e);
     expect(r.verified).toHaveLength(1);
+  });
+});
+
+describe("R15: declared names cannot launder numbers", () => {
+  const ev: EvidenceItem[] = [{ id: "e1", entityIds: ["Q1"], names: ["C3 Stage"], numbers: [38, 0.38, 0.91, 1.2] }];
+  const c = (over: Partial<Claim>): Claim => ({ text: "t", entities: [], numbers: [], evidence_refs: ["e1"], ...over });
+  it("removes the probe: entityId matches but declared name is the whole sentence", () => {
+    const r = verifyClaims([c({ text: "C3 Stage holds 5000 fans", entities: [{ name: "C3 Stage holds 5000 fans", entityId: "Q1" }] })], ev);
+    expect(r.verified).toEqual([]);
+    expect(r.removed[0]).toMatchObject({ reason: "unsupported_entity" });
+  });
+  it("checks text numbers when entityId and name both match", () => {
+    const r = verifyClaims([c({ text: "C3 Stage holds 5000 fans", entities: [{ name: "C3 Stage", entityId: "Q1" }] })], ev);
+    expect(r.removed[0]).toMatchObject({ reason: "unsupported_number", detail: "5000" });
+  });
+  it("removes a scaled text number unless the scaled value matches", () => {
+    const e = [{ name: "C3 Stage" }];
+    expect(verifyClaims([c({ text: "C3 Stage has 1.2k fans", entities: e, numbers: [1.2] })], ev).removed[0]?.reason).toBe("unsupported_number");
+    expect(verifyClaims([c({ text: "C3 Stage has 38 thousand fans", entities: e, numbers: [38] })], ev).removed[0]?.reason).toBe("unsupported_number");
+    const big: EvidenceItem[] = [{ ...ev[0]!, numbers: [1200] }];
+    expect(verifyClaims([c({ text: "C3 Stage has 1.2k fans", entities: e, numbers: [1200] })], big).verified).toHaveLength(1);
+  });
+  it("percent tokens: 0.38% does not match 0.38, 38% still does", () => {
+    const e = [{ name: "C3 Stage" }];
+    expect(verifyClaims([c({ text: "C3 Stage holds 0.38% of heat", entities: e, numbers: [0.38] })], ev).removed[0]?.reason).toBe("unsupported_number");
+    expect(verifyClaims([c({ text: "C3 Stage holds 38% of heat", entities: e, numbers: [0.38] })], ev).verified).toHaveLength(1);
+  });
+  it("still accepts an evidence name containing digits", () => {
+    expect(verifyClaims([c({ text: "C3 Stage ranks first at 0.91", entities: [{ name: "C3 Stage" }], numbers: [0.91] })], ev).verified).toHaveLength(1);
   });
 });
