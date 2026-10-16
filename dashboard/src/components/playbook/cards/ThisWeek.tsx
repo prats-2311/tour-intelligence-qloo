@@ -1,12 +1,14 @@
+import { History } from "lucide-react";
 import type { ThisWeek as Week } from "@/lib/qloo/types";
 
-const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const day = (iso: string | null): string | null => {
   if (!iso) return null;
-  const d = new Date(`${iso}T00:00:00Z`);
-  return Number.isNaN(d.getTime()) ? null : DATE.format(d);
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  const mon = m ? MONTHS[Number(m[2]) - 1] : undefined;
+  return m && mon ? `${Number(m[3])} ${mon}` : null;
 };
-const LINK = "inline-flex min-h-11 min-w-8 items-center justify-center text-[13px] tabular-nums text-canvas-text underline decoration-canvas-muted underline-offset-4 hover:decoration-canvas-text";
+const LINK = "inline-flex min-h-11 min-w-11 items-center justify-center text-[13px] tabular-nums text-canvas-text underline decoration-canvas-muted underline-offset-4 hover:decoration-canvas-text";
 
 export function ThisWeekBody({ week }: { week: Week | undefined }) {
   if (!week) return <p className="text-[13px] text-canvas-muted">Looking up this week…</p>;
@@ -14,7 +16,7 @@ export function ThisWeekBody({ week }: { week: Week | undefined }) {
   const url = (id: string) => week.citations.find((c) => c.id === id)?.url;
   return (
     <div>
-      {week.cached && <p className="mb-2 text-[13px] text-state-stale">From cache</p>}
+      {week.cached && <p className="mb-2 inline-flex items-center gap-1.5 text-[13px] text-state-stale"><History size={14} strokeWidth={1.75} aria-hidden />From cache</p>}
       {!week.summarised ? (
         <>
           <p className="text-[15px] text-canvas-text">Sources found; summary unavailable</p>

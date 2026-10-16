@@ -31,6 +31,15 @@ describe("playbook cards", () => {
     expect(screen.getByText("Narrative removed: no claim passed verification.")).toBeTruthy();
     expect(screen.getByText("evidence")).toBeTruthy();
   });
+  it("does not claim a removed narrative when the card has no evidence", () => {
+    render(<PlaybookCard accent="#ff00aa" meta="m" title="Venue fit" claims={{ verified: [], removed: [] }} narrativeStatus="ok" refsCount={1} hasEvidence={false}><p>empty</p></PlaybookCard>);
+    expect(screen.queryByText("Narrative removed: no claim passed verification.")).toBeNull();
+  });
+  it("this week uses a fixed three-letter month and 44px source links", () => {
+    render(<ThisWeekBody week={{ status: "ok", window: { start: "2027-09-01", end: "2027-09-07" }, items: [{ text: "Event", date: "2027-09-03", entities: [], citations: ["a"] }], removed: [], citations: [{ id: "a", url: "https://example.com", title: "t" }], summarised: true, cached: false }} />);
+    expect(screen.getByText("3 Sep")).toBeTruthy();
+    expect(screen.getByRole("link").className).toContain("min-w-11");
+  });
   it("shows evidence only (no claim list) when the narrative is unavailable", () => {
     render(<PlaybookCard accent="#ff00aa" meta="m" title="Sponsors" narrativeStatus="unavailable" refsCount={1}><p>evidence</p></PlaybookCard>);
     expect(screen.queryByText(/verified/)).toBeNull();
