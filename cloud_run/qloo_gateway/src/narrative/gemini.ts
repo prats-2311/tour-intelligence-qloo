@@ -1,4 +1,4 @@
-export interface GeminiPart { text?: string; thought?: boolean }
+export interface GeminiPart { text?: string; thought?: boolean; thoughtSignature?: string; functionCall?: { name: string; args?: Record<string, unknown> }; functionResponse?: { name: string; response: Record<string, unknown> } }
 export interface GeminiResponse { candidates?: Array<{ content?: { parts?: GeminiPart[] } }> }
 export type GenerateFn = (model: string, body: Record<string, unknown>) => Promise<GeminiResponse>;
 
