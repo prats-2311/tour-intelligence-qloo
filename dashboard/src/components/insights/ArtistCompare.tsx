@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { extractOverlap } from "@/lib/qloo/adapters";
+import { envelopeError, extractOverlap } from "@/lib/qloo/adapters";
 import { callQlooTool } from "@/lib/qloo/client";
 
-type Result = { name: string; overlap: number | null; error?: string };
+type Result = { name: string; overlap: number | null; error?: string; cached?: boolean; stale?: boolean };
 
-const pct = (v: number) => (v >= 0 && v <= 1 ? `${Math.round(v * 100)}%` : v > 1 && v <= 100 ? `${Math.round(v)}%` : null);
+const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 export function ArtistCompare({ artist, source }: { artist: { entityId: string; name: string }; source: "live" | "sample" | string }) {
   const sample = source === "sample";
@@ -25,8 +25,8 @@ export function ArtistCompare({ artist, source }: { artist: { entityId: string; 
     const out: Result[] = [];
     for (const name of targets) {
       try {
-        const { envelope } = await callQlooTool("qloo_compare_audiences", { group_a: [artist.entityId], group_b: [name] }, { signal: c.signal });
-        out.push({ name, overlap: extractOverlap(envelope) });
+        const { envelope, cached, stale } = await callQlooTool("qloo_compare_audiences", { group_a: [artist.entityId], group_b: [name] }, { signal: c.signal });
+        out.push({ name, overlap: extractOverlap(envelope), error: envelopeError(envelope) ?? undefined, cached, stale });
       } catch (e) {
         if (c.signal.aborted) return;
         out.push({ name, overlap: null, error: e instanceof Error ? e.message : "Comparison failed" });
@@ -55,7 +55,7 @@ export function ArtistCompare({ artist, source }: { artist: { entityId: string; 
             const shown = r.overlap !== null ? pct(r.overlap) : null;
             return (
               <li key={r.name} className="flex min-h-9 flex-wrap items-center justify-between gap-x-3 text-[14px]">
-                <span className="text-canvas-text">{artist.name} vs {r.name}</span>
+                <span className="text-canvas-text">{artist.name} vs {r.name}{r.cached && <span className="ml-2 text-[12px] text-canvas-muted">From cache</span>}{r.stale && <span className="ml-2 text-[12px] text-state-stale">Stale</span>}</span>
                 {r.error ? <span role="alert" className="text-state-error">{r.error}</span>
                   : shown ? <span className="font-mono tabular text-canvas-text">{shown}</span>
                   : <span className="text-canvas-muted">Overlap unavailable</span>}

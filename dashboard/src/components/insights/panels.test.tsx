@@ -60,7 +60,7 @@ describe("insight panels", () => {
   });
   it("artist compare: finite overlap shown, else honest, errors visible, 1-call note", async () => {
     const spy = vi.spyOn(client, "callQlooTool")
-      .mockResolvedValueOnce({ envelope: { data: { overlap: 0.42 } }, cached: false, stale: false })
+      .mockResolvedValueOnce({ envelope: { status: "ok", results: [{ overlap: 0.42 }] }, cached: true, stale: true })
       .mockResolvedValueOnce({ envelope: { data: { stuff: 1 } }, cached: false, stale: false });
     render(<ArtistCompare artist={{ entityId: "E", name: "Lumen Vale" }} source="live" />);
     expect(screen.getByText("Each comparison uses 1 Qloo call")).toBeTruthy();
@@ -68,8 +68,25 @@ describe("insight panels", () => {
     fireEvent.change(screen.getByLabelText("Comparison artist 2"), { target: { value: "Other" } });
     fireEvent.click(screen.getByRole("button", { name: "Compare" }));
     expect(await screen.findByText("42%")).toBeTruthy();
+    expect(screen.getByText("From cache")).toBeTruthy();
+    expect(screen.getByText("Stale")).toBeTruthy();
     expect(await screen.findByText("Overlap unavailable")).toBeTruthy();
     expect(spy).toHaveBeenCalledWith("qloo_compare_audiences", { group_a: ["E"], group_b: ["Bruma"] }, expect.anything());
+  });
+  it.each([[{ overlap: 0 }, "0%"], [{ overlap: 1 }, "100%"], [{ overlap: 1.2 }, null], [{ overlap: 50 }, null], [{ overlap: -0.1 }, null]])("overlap %j -> %s", async (results, shown) => {
+    vi.spyOn(client, "callQlooTool").mockResolvedValue({ envelope: { status: "ok", results }, cached: false, stale: false });
+    render(<ArtistCompare artist={{ entityId: "E", name: "L" }} source="live" />);
+    fireEvent.change(screen.getByLabelText("Comparison artist 1"), { target: { value: "B" } });
+    fireEvent.click(screen.getByRole("button", { name: "Compare" }));
+    expect(await screen.findByText(shown ?? "Overlap unavailable")).toBeTruthy();
+  });
+  it("artist compare shows error-status envelope message", async () => {
+    vi.spyOn(client, "callQlooTool").mockResolvedValue({ envelope: { status: "error", summary: "Qloo is down" }, cached: false, stale: false });
+    render(<ArtistCompare artist={{ entityId: "E", name: "L" }} source="live" />);
+    fireEvent.change(screen.getByLabelText("Comparison artist 1"), { target: { value: "B" } });
+    fireEvent.click(screen.getByRole("button", { name: "Compare" }));
+    expect(await screen.findByText("Qloo is down")).toBeTruthy();
+    expect(screen.queryByText("Overlap unavailable")).toBeNull();
   });
   it("artist compare surfaces thrown errors", async () => {
     vi.spyOn(client, "callQlooTool").mockRejectedValue(new Error("Unexpected token <"));
@@ -93,6 +110,32 @@ describe("insight panels", () => {
     expect(btn.disabled).toBe(true);
     fireEvent.click(btn);
     expect(spy).not.toHaveBeenCalled();
+  });
+  it("error after playbook is shown", async () => {
+    vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () {
+      yield { type: "playbook", playbook: { city: { name: "G", country: "MX" }, cards: [] } };
+      yield { type: "error", code: "X", message: "late failure" };
+    });
+    render(<CrossDomainTaste artist={{ entityId: "E", name: "L" }} city={SAMPLE_CITIES[2]!} source="live" />);
+    fireEvent.click(screen.getByRole("button", { name: "Load taste for Guadalajara" }));
+    expect(await screen.findByText("late failure")).toBeTruthy();
+  });
+  it("city change aborts previous stream and drops stale items", async () => {
+    const signals: AbortSignal[] = [];
+    vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* (_q, opts) {
+      signals.push(opts!.signal!);
+      await new Promise((r) => setTimeout(r, 20));
+      yield* playbookEvents();
+    });
+    const a = { entityId: "E", name: "L" };
+    const { rerender } = render(<CrossDomainTaste artist={a} city={SAMPLE_CITIES[2]!} source="live" />);
+    fireEvent.click(screen.getByRole("button", { name: "Load taste for Guadalajara" }));
+    await waitFor(() => expect(signals).toHaveLength(1));
+    rerender(<CrossDomainTaste artist={a} city={SAMPLE_CITIES[0]!} source="live" />);
+    expect(signals[0]!.aborted).toBe(true);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByText("Bruma Nocturna")).toBeNull();
+    expect(screen.getByRole("button", { name: "Load taste for Mexico City" })).toBeTruthy();
   });
   it("cross-domain taste aborts the stream on unmount", async () => {
     let signal: AbortSignal | undefined;

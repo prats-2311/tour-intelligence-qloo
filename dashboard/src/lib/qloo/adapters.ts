@@ -64,15 +64,23 @@ export function playbookCrossDomain(cards: PlaybookCard[]): Array<{ category: Cr
   return out;
 }
 
-/** Find a finite overlap/similarity/score near the top of a tool envelope; null when absent. */
+/** Overlap is a share in [0,1]; read from envelope.results (object or first element), then shallow fallbacks. */
 export function extractOverlap(envelope: unknown): number | null {
-  const spots: unknown[] = [envelope];
-  if (isRec(envelope)) spots.push(envelope.data, envelope.summary, envelope.result);
+  const spots: unknown[] = [];
+  if (isRec(envelope)) spots.push(envelope.results, envelope.data, envelope.summary);
+  spots.push(envelope);
   for (const s of [...spots]) if (Array.isArray(s)) spots.push(s[0]);
   for (const s of spots) {
     if (!isRec(s)) continue;
-    const v = num(firstOf(s, ["overlap", "similarity", "score"]));
-    if (v !== null) return v;
+    const v = num(firstOf(s, ["overlap", "similarity"]));
+    if (v !== null) return v >= 0 && v <= 1 ? v : null;
   }
   return null;
+}
+
+/** Message of an error-status envelope, else null. */
+export function envelopeError(envelope: unknown): string | null {
+  if (!isRec(envelope) || envelope.status !== "error") return null;
+  for (const k of ["summary", "error", "message"]) if (typeof envelope[k] === "string" && envelope[k]) return envelope[k] as string;
+  return "Qloo returned an error for this comparison";
 }

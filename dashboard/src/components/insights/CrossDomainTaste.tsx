@@ -29,7 +29,7 @@ export function useCityPlaybook(artist: { entityId: string; name: string }, city
       err = e instanceof Error ? e.message : "Taste lookup failed";
     }
     if (c.signal.aborted) return;
-    setLoad(cards ? { status: "done", items: playbookCrossDomain(cards) } : { status: "error", message: err ?? "Qloo returned no taste data for this city" });
+    setLoad(err ? { status: "error", message: err } : cards ? { status: "done", items: playbookCrossDomain(cards) } : { status: "error", message: "Qloo returned no taste data for this city" });
   }, [artist.entityId, artist.name, city.name, city.country]);
   return { load, run };
 }
@@ -38,6 +38,7 @@ export function CrossDomainTaste({ artist, city, source }: { artist: { entityId:
   const sample = source === "sample";
   const { load, run } = useCityPlaybook(artist, city);
   const [filter, setFilter] = useState<CrossCategory | "all">("all");
+  useEffect(() => { setFilter("all"); }, [city.id]);
   const items = load.status === "done" ? load.items : [];
   const cats = CROSS_CATEGORIES.filter((c) => items.some((i) => i.category === c));
   const shown = filter === "all" ? cats : cats.filter((c) => c === filter);
