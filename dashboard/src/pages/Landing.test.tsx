@@ -6,6 +6,7 @@ import { sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import Landing from "./Landing";
 
+vi.mock("@/lib/qloo/fixtures/showcase.json", async () => ({ default: (await import("@/test/placeholderShowcase")).PLACEHOLDER_SHOWCASE }));
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
 
 beforeEach(() => {

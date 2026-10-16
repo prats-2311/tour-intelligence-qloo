@@ -89,4 +89,27 @@ describe("record-showcase", () => {
     expect(text).toContain("Beta");
     expect(text).toMatch(/Beta.*hidden_goldmine.*density #2.*winnability #1/);
   });
+
+  it("keeps signals, arrays and plain objects but drops anything secret-looking", () => {
+    const e = sanitizeEvent({ type: "tool_call", tool: "qloo_recommend", cached: false, args: {
+      signals: { location: "Mexico City, MX", weight: 2, apiKey: "k", auth_token: "t", nested: { a: 1 } },
+      entity: ["A", "B"], within: ["x", 3], query: { text: "dream pop", secret: "s", token: TOKEN }, token: TOKEN, authorization: TOKEN,
+    } });
+    expect(e.args).toEqual({ signals: { location: "Mexico City, MX", weight: 2 }, entity: ["A", "B"], query: { text: "dream pop" } });
+    expect(JSON.stringify(e)).not.toContain(TOKEN);
+  });
+
+  it("leaves out a playbook that never finished or ended in an error, and warns", async () => {
+    const warnings = [];
+    const bad = { 1: [{ type: "tool_call", tool: "t", args: {}, cached: false }], 2: [{ type: "playbook", playbook: {} }, { type: "done", summary: {} }, { type: "error", code: "X", message: "m" }] };
+    const base = mockFetch([]);
+    const fetchImpl = async (url, init) => {
+      const u = new URL(String(url));
+      if (u.pathname !== "/v1/city-playbook") return base(url, init);
+      return new Response(sse(bad[u.searchParams.get("city") === "Alpha" ? 1 : 2]), { status: 200 });
+    };
+    const out = await record({ artist: "Test Artist", regions: ["Mexico"], maxPlaybooks: 4, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl, warn: (m) => warnings.push(m) });
+    expect(out.playbooks).toEqual({});
+    expect(warnings).toHaveLength(2);
+  });
 });

@@ -91,6 +91,8 @@ async function* friendlyStrategistErrors(events: AsyncGenerator<GatewayEvent>): 
   }
 }
 
+/** The recording has no generic-LLM answer to replay, so the showcase says so. */
+export const WITHOUT_SHOWCASE: WithoutQloo = { status: "unavailable", reason: "disabled", message: "The generic ranking needs a live run" };
 const WITHOUT_QLOO_ERROR: WithoutQloo = { status: "unavailable", reason: "error", message: "Generic ranking unavailable" };
 
 const isStr = (v: unknown): v is string => typeof v === "string";
@@ -107,7 +109,7 @@ function parseWithoutQloo(v: unknown): WithoutQloo | null {
 }
 
 export async function fetchWithoutQloo(body: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }> }, opts: { sample?: boolean; sampleSet?: SampleSet; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<WithoutQloo> {
-  if (opts.sample && opts.sampleSet === "showcase") return { status: "unavailable", reason: "disabled", message: "The generic ranking needs a live run" };
+  if (opts.sample && opts.sampleSet === "showcase") return WITHOUT_SHOWCASE;
   if (opts.sample) return SAMPLE_WITHOUT_QLOO;
   try {
     const res = await (opts.fetchImpl ?? fetch)("/api/qloo/without-qloo", {

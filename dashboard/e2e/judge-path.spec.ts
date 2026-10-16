@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/
 test("judge path: landing → showcase → board → why → insights", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1, name: "Win their city." })).toBeVisible();
-  await page.getByRole("link", { name: "Try the showcase tour" }).click();
+  await page.goto("/tours/board?sample=1"); // the Lumen Vale sample: its cities are asserted below
   await expect(page.getByText("Sample data — illustrative, not Qloo output").first()).toBeVisible();
   await expect(page.getByTestId("city-row")).toHaveCount(10, { timeout: 15_000 });
   await expect(page.getByTestId("city-row").nth(2)).toContainText("Guadalajara");
@@ -15,7 +15,7 @@ test("judge path: landing → showcase → board → why → insights", async ({
   await expect(page.getByTestId("city-row").nth(5)).toContainText("Guadalajara");
   await page.getByRole("tab", { name: "Winnability" }).click();
   await page.getByTestId("city-row").nth(2).getByText("Guadalajara").click();
-  await expect(page).toHaveURL(/\/tours\/playbook\/4005539\?(sample|showcase)=1/);
+  await expect(page).toHaveURL(/\/tours\/playbook\/4005539\?sample=1/);
   await expect(page.getByText(/\d+ verified · \d+ removed/).first()).toBeVisible({ timeout: 15_000 }); // stream finished
   await page.getByRole("button", { name: "Why this score?" }).first().click();
   await expect(page.getByRole("dialog", { name: /Guadalajara/ })).toContainText("0.5 × fan heat + 0.5 × activation");
@@ -27,9 +27,8 @@ test("judge path: landing → showcase → board → why → insights", async ({
 });
 
 test("showcase → Guadalajara playbook → Build tour → Book", async ({ page }) => {
-  await page.goto("/");
   const t0 = Date.now();
-  await page.getByRole("link", { name: "Try the showcase tour" }).click();
+  await page.goto("/tours/board?sample=1"); // the Lumen Vale sample: its cities are asserted below
   await expect(page.getByText("Sample data — illustrative, not Qloo output").first()).toBeVisible();
   // Scoped to the board rows: map markers carry the same "Guadalajara, Hidden goldmine" name and come first in the DOM.
   await expect(page.getByTestId("city-row")).toHaveCount(10, { timeout: 15_000 });
@@ -77,11 +76,14 @@ const SHOWCASE_BANNER = /Sample data — illustrative, not Qloo output|Recorded 
 test("showcase mode replays the recording with zero gateway calls", async ({ page }) => {
   const api: string[] = [];
   page.on("request", (r) => { if (r.url().includes("/api/qloo/")) api.push(r.url()); });
-  await page.goto("/tours/board?showcase=1");
+  await page.goto("/");
+  await page.getByRole("link", { name: "Try the showcase tour" }).click();
+  await expect(page).toHaveURL(/\/tours\/board\?showcase=1/);
   await expect(page.getByText(SHOWCASE_BANNER).first()).toBeVisible();
   await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 15_000 });
+  expect(await page.getByTestId("city-row").count()).toBeGreaterThan(0);
   await page.getByTestId("city-row").first().getByRole("button").first().click();
-  await expect(page).toHaveURL(/\/tours\/playbook\/\d+\?showcase=1/);
+  await expect(page).toHaveURL(/\/tours\/playbook\/[^?]+\?showcase=1/);
   await expect(page.getByText(SHOWCASE_BANNER).first()).toBeVisible();
   const open = page.getByRole("button", { name: /Ask the strategist|Strategist/ }).first();
   await open.click();

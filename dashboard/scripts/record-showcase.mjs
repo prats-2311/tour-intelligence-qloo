@@ -14,7 +14,8 @@ import { fileURLToPath } from "node:url";
 
 const SHORTLIST_VERDICTS = new Set(["hidden_goldmine", "play"]);
 // The only tool_call arg keys the UI shows (see narrate.ts); everything else is dropped from the recording.
-const VISIBLE_ARG_KEYS = ["entity", "within", "signal_location", "filter_location", "target_type", "query"];
+const VISIBLE_ARG_KEYS = ["entity", "within", "signal_location", "filter_location", "target_type", "query", "signals"];
+const SECRET_KEY = /token|key|auth|secret/i;
 
 export function parseArgs(argv) {
   const get = (flag) => { const i = argv.indexOf(flag); return i === -1 ? undefined : argv[i + 1]; };
@@ -35,11 +36,30 @@ export function parseArgs(argv) {
   return { artist, regions, out, ...(window ? { window } : {}), maxPlaybooks };
 }
 
+const isPlain = (v) => !!v && typeof v === "object" && !Array.isArray(v);
+/** Strings, arrays of strings, and plain objects of strings and numbers survive; anything else, and any secret-looking key, does not. */
+function cleanArg(v) {
+  if (typeof v === "string") return v;
+  if (Array.isArray(v)) return v.every((x) => typeof x === "string") ? [...v] : undefined;
+  if (isPlain(v)) {
+    const out = {};
+    for (const [k, x] of Object.entries(v)) {
+      if (SECRET_KEY.test(k)) continue;
+      if (typeof x === "string" || (typeof x === "number" && Number.isFinite(x))) out[k] = x;
+    }
+    return out;
+  }
+  return undefined;
+}
+
 /** tool_call args keep only the keys the UI already shows, as strings. */
 export function sanitizeEvent(e) {
   if (e?.type !== "tool_call") return e;
   const args = {};
-  for (const k of VISIBLE_ARG_KEYS) if (typeof e.args?.[k] === "string") args[k] = e.args[k];
+  for (const k of VISIBLE_ARG_KEYS) {
+    const v = cleanArg(e.args?.[k]);
+    if (v !== undefined) args[k] = v;
+  }
   return { type: "tool_call", tool: e.tool, args, cached: Boolean(e.cached) };
 }
 
@@ -65,7 +85,7 @@ async function* readSse(res) {
   for (const data of frames()) { try { yield JSON.parse(data); } catch { /* skip */ } }
 }
 
-export async function record({ artist, regions, window, maxPlaybooks = 4, gatewayUrl, token, fetchImpl = fetch, now = new Date(), log = () => {} }) {
+export async function record({ artist, regions, window, maxPlaybooks = 4, gatewayUrl, token, fetchImpl = fetch, now = new Date(), log = () => {}, warn = (m) => console.error(`warning: ${m}`) }) {
   if (!gatewayUrl) throw new Error("QLOO_GATEWAY_URL is not set");
   if (!token) throw new Error("no identity token");
   const base = gatewayUrl.replace(/\/+$/, "");
@@ -100,7 +120,12 @@ export async function record({ artist, regions, window, maxPlaybooks = 4, gatewa
   for (const c of picks) {
     log(`Recording the playbook for ${c.name}...`);
     const qs = new URLSearchParams({ artist, artistEntityId: resolved.entity.entityId, city: c.name, country: c.country }).toString();
-    playbooks[c.id] = await events(`/v1/city-playbook?${qs}`, { method: "GET", headers });
+    const pbEvents = await events(`/v1/city-playbook?${qs}`, { method: "GET", headers });
+    if (!pbEvents.some((e) => e.type === "done") || pbEvents.at(-1)?.type === "error") {
+      warn(`playbook for ${c.name} did not finish cleanly; leaving it out`);
+      continue;
+    }
+    playbooks[c.id] = pbEvents;
     if (window) {
       const wq = new URLSearchParams({ city: c.name, country: c.country, start: window.start, end: window.end }).toString();
       thisWeek[c.id] = await (await call(`/v1/this-week?${wq}`, { method: "GET", headers })).json();

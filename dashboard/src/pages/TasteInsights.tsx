@@ -83,7 +83,7 @@ export default function TasteInsights() {
         <h2 className="text-[18px] font-semibold text-canvas-text">Run a Tour Board to see insights</h2>
         <p className="text-[14px] text-canvas-muted">Winnability, activation and data quality are built from the markets a Tour Board run scores.</p>
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-          <Link to="/tours/board?sample=1" className={secondaryBtn}>Try the showcase tour</Link>
+          <Link to="/tours/board?showcase=1" className={secondaryBtn}>Try the showcase tour</Link>
           <Link to="/tours/board" className={secondaryBtn}>Plan your own</Link>
         </div>
       </div>
@@ -127,7 +127,7 @@ export default function TasteInsights() {
       {status === "error" && error && (
         <Notice>
           <CircleAlert size={14} className="text-state-error" aria-hidden /><span className="min-w-0">{error.message}</span>
-          {error.code === "BUDGET" && <Link to="/tours/board?sample=1" className="inline-flex min-h-11 items-center rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932]">Try the showcase tour</Link>}
+          {error.code === "BUDGET" && <Link to="/tours/board?showcase=1" className="inline-flex min-h-11 items-center rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932]">Try the showcase tour</Link>}
         </Notice>
       )}
       {(regionsEmpty.length > 0 || regionsUnavailable.length > 0) && (

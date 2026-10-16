@@ -1,6 +1,6 @@
 import raw from "./fixtures/showcase.json";
 import { recordedText } from "./labels";
-import { ordinal, sortCities } from "./ranking";
+import { ordinal } from "./ranking";
 import type { GatewayEvent, ScoredCity, ThisWeek, TourBrief } from "./types";
 
 /** One recorded Tour Board run (see scripts/record-showcase.mjs). `recordedAt: null` marks the committed placeholder built from the Lumen Vale sample. */
@@ -56,16 +56,19 @@ export const showcasePlaybookCities = (): ScoredCity[] => showcaseCities().filte
 export interface Proof { city: ScoredCity; line: string }
 
 /**
- * The Landing proof card. Picks the city that climbs furthest from its fan-density rank to its winnability rank;
- * when nothing climbs, the top winnability city with no claim about a rank shift. Null when no city is scored.
+ * The Landing proof card. Ranks use the whole board (the Density tab's set) and only a strictly higher score
+ * ranks ahead, so ties never count. Candidates are the cities with a recorded playbook (`withPlaybook`; all
+ * scored cities when omitted), because the card links to that playbook. Picks the largest climb from the
+ * fan-density rank to the winnability rank; with no climb, the top-winnability candidate with no claim about a shift.
  */
-export function proofFor(all: ScoredCity[]): Proof | null {
+export function proofFor(all: ScoredCity[], withPlaybook?: readonly string[]): Proof | null {
   const scored = all.filter((c) => c.winnability.value !== null && c.fanHeat.value !== null);
-  if (scored.length === 0) return null;
-  const dens = sortCities(scored, "density");
-  const win = sortCities(scored, "winnability");
-  const rows = win.map((c, i) => ({ city: c, w: i + 1, d: dens.findIndex((x) => x.id === c.id) + 1 }));
+  const pool = withPlaybook ? scored.filter((c) => withPlaybook.includes(c.id)) : scored;
+  if (pool.length === 0) return null;
+  const rankOf = (c: ScoredCity, key: "fanHeat" | "winnability") => 1 + scored.filter((x) => x[key].value! > c[key].value!).length;
+  const rows = pool.map((c) => ({ city: c, d: rankOf(c, "fanHeat"), w: rankOf(c, "winnability") }));
   const best = rows.reduce((a, b) => (b.d - b.w > a.d - a.w ? b : a));
   if (best.d - best.w > 0) return { city: best.city, line: `Ranked ${ordinal(best.d)} on fan density alone. ${ordinal(best.w)} on winnability.` };
-  return { city: win[0]!, line: `Top of ${scored.length} scored ${scored.length === 1 ? "market" : "markets"} on winnability.` };
+  const top = rows.reduce((a, b) => (b.w < a.w ? b : a));
+  return { city: top.city, line: `Ranked ${ordinal(top.w)} of ${scored.length} scored ${scored.length === 1 ? "market" : "markets"} on winnability.` };
 }

@@ -270,7 +270,7 @@ export default function CityPlaybook() {
           {budget && (
             <Notice>
               <span className="min-w-0">Session limit reached — try the showcase tour</span>
-              <Link to="/tours/board?sample=1" className={smallBtn}>Try the showcase tour</Link>
+              <Link to="/tours/board?showcase=1" className={smallBtn}>Try the showcase tour</Link>
             </Notice>
           )}
           {failed && (

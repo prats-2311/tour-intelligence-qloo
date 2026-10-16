@@ -26,7 +26,7 @@ const CTA = "flex min-h-[52px] items-center justify-center rounded-[10px] px-6 f
 
 function ProofCard() {
   const reduce = useReducedMotion();
-  const proof = useMemo<{ city: ScoredCity; line: string } | null>(() => (RECORDED ? proofFor(PREVIEW_CITIES) : { city: GDL, line: SAMPLE_LINE() }), []);
+  const proof = useMemo<{ city: ScoredCity; line: string } | null>(() => (RECORDED ? proofFor(showcaseCities(), Object.keys(SHOWCASE.playbooks)) : { city: GDL, line: SAMPLE_LINE() }), []);
   if (!proof) return null;
   const { city: hero, line } = proof;
   return (

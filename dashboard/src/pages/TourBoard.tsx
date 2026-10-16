@@ -13,14 +13,14 @@ import { Sheet } from "@/components/qloo/Sheet";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { VerdictGlyph } from "@/components/qloo/VerdictGlyph";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
-import { fetchWithoutQloo } from "@/lib/qloo/client";
+import { fetchWithoutQloo, WITHOUT_SHOWCASE } from "@/lib/qloo/client";
 import { LONG_CITY_NAMES, LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_WITHOUT_QLOO } from "@/lib/qloo/fixtures/strategistSample";
-import { showcaseBrief } from "@/lib/qloo/showcase";
+import { SHOWCASE, showcaseBrief } from "@/lib/qloo/showcase";
 import { sortCities, summarize } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { INTEGRITY_LINE, VERDICT_LABEL } from "@/lib/qloo/labels";
-import type { TourBrief, Verdict, WithoutQloo } from "@/lib/qloo/types";
+import type { TourBrief, Verdict } from "@/lib/qloo/types";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
@@ -31,8 +31,6 @@ const MODES: Array<{ id: Mode; label: string }> = [
   { id: "without", label: "Without Qloo" },
 ];
 const PANEL_LABEL: Record<Mode, string> = { winnability: "Winnability ranking", density: "Density-only ranking", without: "Without Qloo ranking" };
-// The recording has no generic-LLM answer to replay, and the page makes no live call in the showcase.
-const WITHOUT_SHOWCASE: WithoutQloo = { status: "unavailable", reason: "disabled", message: "The generic ranking needs a live run" };
 const SHORTLIST_VERDICTS = new Set(["play", "hidden_goldmine"]);
 
 function SegmentedControl({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
@@ -184,7 +182,7 @@ export default function TourBoard() {
   const summaryCity = selected ?? eligible.find((c) => c.verdict === "hidden_goldmine") ?? sorted[0];
 
   const retry = () => { if (state.brief) run(state.brief, { sample: isSample, sampleSet: state.source === "showcase" ? "showcase" : wantLong ? "long" : "default" }); };
-  const showcase = () => run(SAMPLE_BRIEF, { sample: true });
+  const showcase = () => run(showcaseBrief(), { sample: true, sampleSet: "showcase" });
   const openRow = (id: string) => navigate(`/tours/playbook/${id}${sampleQ}`);
   const selectFromMap = (id: string) => {
     setSelectedId(id);
@@ -196,7 +194,7 @@ export default function TourBoard() {
       <div className="flex flex-col gap-6">
         <BriefForm onSubmit={(b: TourBrief) => run(b)} defaultBrief={lastBrief} />
         <div className="mx-auto flex w-full max-w-xl flex-col gap-2 border-t border-canvas-line pt-4">
-          <p className="text-[13px] text-canvas-muted">Want to see it first? The showcase tour runs on sample data.</p>
+          <p className="text-[13px] text-canvas-muted">Want to see it first? {SHOWCASE.recordedAt ? "The showcase tour replays a recorded Qloo run." : "The showcase tour runs on sample data."}</p>
           <button type="button" onClick={showcase} className={secondaryBtn}>Try the showcase tour</button>
         </div>
       </div>

@@ -58,7 +58,7 @@ describe("recorded showcase", () => {
     const { Landing } = await load(NO_CLIMB);
     render(<MemoryRouter><Landing /></MemoryRouter>);
     const card = screen.getByRole("region", { name: "Alpha recorded routing row" });
-    expect(within(card).getByText("Top of 2 scored markets on winnability.")).toBeTruthy();
+    expect(within(card).getByText("Ranked 1st of 2 scored markets on winnability.")).toBeTruthy();
     expect(within(card).queryByText(/fan density/)).toBeNull();
   });
   it("the board replays the recording with the recorded banner, zero fetches, and skips the unknown event", async () => {

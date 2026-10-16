@@ -11,6 +11,7 @@ import { VERDICT_LABEL, VERDICT_SHAPE } from "@/lib/qloo/labels";
 import type { TourBrief } from "@/lib/qloo/types";
 import TourBoard from "./TourBoard";
 
+vi.mock("@/lib/qloo/fixtures/showcase.json", async () => ({ default: (await import("@/test/placeholderShowcase")).PLACEHOLDER_SHOWCASE }));
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
 
 beforeEach(() => {

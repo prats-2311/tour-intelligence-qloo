@@ -5,6 +5,8 @@ import { recordedText, SAMPLE_TEXT } from "./labels";
 import { cleanEvents, parseShowcase, proofFor, SHOWCASE, showcaseBannerText } from "./showcase";
 import type { GatewayEvent, ScoredCity } from "./types";
 
+vi.mock("./fixtures/showcase.json", async () => ({ default: (await import("@/test/placeholderShowcase")).PLACEHOLDER_SHOWCASE }));
+
 const collect = async (g: AsyncGenerator<GatewayEvent>) => { const out: GatewayEvent[] = []; for await (const e of g) out.push(e); return out; };
 const c = (id: string, fan: number, win: number | null): ScoredCity => ({
   ...SAMPLE_CITIES[0]!, id, name: `City ${id}`,
@@ -72,12 +74,26 @@ describe("proofFor", () => {
   it("makes no shift claim when no city climbs", () => {
     const p = proofFor([c("a", 90, 95), c("b", 80, 50), c("c", 70, 40)])!;
     expect(p.city.id).toBe("a");
-    expect(p.line).toBe("Top of 3 scored markets on winnability.");
+    expect(p.line).toBe("Ranked 1st of 3 scored markets on winnability.");
     expect(p.line).not.toMatch(/density/);
   });
   it("ignores cities without a score and returns null when nothing is scored", () => {
     expect(proofFor([c("a", 90, null)])).toBeNull();
     expect(proofFor([])).toBeNull();
-    expect(proofFor([c("a", 90, null), c("b", 50, 50)])!.line).toBe("Top of 1 scored market on winnability.");
+    expect(proofFor([c("a", 90, null), c("b", 50, 50)])!.line).toBe("Ranked 1st of 1 scored market on winnability.");
+  });
+  it("only offers cities that have a recorded playbook, ranked against the whole board", () => {
+    const all = [c("a", 90, 60), c("b", 80, 50), c("c", 70, 40), c("d", 60, 95)];
+    const p = proofFor(all, ["a", "b"])!;
+    expect(p.city.id).not.toBe("d");
+    expect(p.line).toBe("Ranked 1st of 4 scored markets on winnability.".replace("1st", "2nd"));
+    expect(proofFor(all, ["zzz"])).toBeNull();
+  });
+  it("ties never count as a climb", () => {
+    // b ties a on fan heat and wins on name; its density rank is shared 1st, so no climb is claimed for b
+    const p = proofFor([c("a", 90, 80), c("b", 90, 50)])!;
+    expect(p.line).toBe("Ranked 1st of 2 scored markets on winnability.");
+    const q = proofFor([c("a", 90, 50), c("b", 90, 50)])!;
+    expect(q.line).toMatch(/^Ranked 1st of 2/);
   });
 });
