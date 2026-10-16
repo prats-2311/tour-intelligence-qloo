@@ -9,9 +9,11 @@ const list = (env: QlooEnvelope): unknown[] => (Array.isArray(env.results) ? env
 export function extractEntities(env: QlooEnvelope) {
   return list(env).flatMap((raw, index) => {
     const e = rec(raw);
-    if (!e || typeof e.name !== "string") return [];
+    if (!e || typeof e.name !== "string" || e.name.trim() === "") return [];
+    const entityId = String(e.entity_id ?? e.id ?? "");
+    if (entityId === "") return [];
     return [{
-      entityId: String(e.entity_id ?? e.id ?? ""), name: e.name,
+      entityId, name: e.name,
       ...(typeof e.subtype === "string" ? { type: e.subtype } : typeof e.type === "string" ? { type: e.type } : {}),
       affinity: num(e.affinity), popularity: num(e.popularity), index,
     }];

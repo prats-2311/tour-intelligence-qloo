@@ -20,4 +20,10 @@ describe("extract", () => {
   it("extracts needs_input issues and candidates", () => {
     expect(extractIssues(describeAmbiguous)).toEqual([{ field: "entity", candidates: [{ id: "P1", name: "Pedro Infante" }, { id: "P2", name: "Pedro Capó" }] }]);
   });
+  it("drops entities with an empty name or empty id", () => {
+    const e = extractEntities({ operation: "recommend", status: "ok", results: [
+      { entity_id: "1", name: "" }, { entity_id: "2", name: "   " }, { entity_id: "", name: "NoId" }, { name: "AlsoNoId" }, { entity_id: "3", name: "Ok" },
+    ] });
+    expect(e.map((x) => x.name)).toEqual(["Ok"]);
+  });
 });

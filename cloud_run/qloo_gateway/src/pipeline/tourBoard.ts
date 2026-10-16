@@ -5,13 +5,14 @@ import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { activation, fanConcentration, meanTopK, type ComponentName } from "../scoring/activation.js";
 import { fanHeat } from "../scoring/fanHeat.js";
 import { verdict, winnability } from "../scoring/winnability.js";
-import type { EvidenceRef, GatewayEvent, Score, Verdict } from "../types.js";
+import type { DataWarning, EvidenceRef, GatewayEvent, Score, Verdict } from "../types.js";
 
 export interface TourBrief { artist: string; artistEntityId?: string; regions: string[]; maxStops: number; sessionId: string; today: string }
 export interface ScoredCity {
   id: string; name: string; country: string; lat: number; lon: number;
   fanHeat: Score; activation: Score & { components: Partial<Record<ComponentName, number>> }; winnability: Score; verdict: Verdict;
   zones: ReturnType<typeof zonesFromHeat>;
+  warnings: DataWarning[];
 }
 interface Deps { qloo: QlooCaller; cities: City[]; signal?: AbortSignal; concurrency?: number }
 
@@ -19,24 +20,55 @@ const SHORTLIST = 8;
 const ref = (tool: string, r: CallResult, resultIndex?: number): EvidenceRef => ({ tool, cacheKey: r.cacheKey, ...(resultIndex !== undefined ? { resultIndex } : {}) });
 
 class Aborted extends Error {}
+class BudgetStop extends Error {}
+const budgetHit = new WeakSet<object>();
+
+function warningsOf(tool: string, r: CallResult): DataWarning[] {
+  const e = r.envelope;
+  const out: DataWarning[] = [];
+  if (e.status === "error") {
+    const message = e.summary ?? e.error?.recovery;
+    out.push({ tool, kind: "error", ...(e.error?.code ? { code: e.error.code } : {}), ...(message ? { message } : {}) });
+  } else if (e.status === "partial" || e.status === "degraded") {
+    out.push({ tool, kind: e.status, ...(e.summary ? { message: e.summary } : {}) });
+  }
+  if (r.stale) out.push({ tool, kind: "stale" });
+  return out;
+}
+
+const dedupeWarnings = (ws: DataWarning[]): DataWarning[] => [...new Map(ws.map((w) => [JSON.stringify(w), w])).values()];
+
+/** Like Promise.all, but waits for every sibling to settle before rejecting (no events pushed after we return). */
+async function settleAll<T extends readonly unknown[]>(ps: { [K in keyof T]: Promise<T[K]> }): Promise<T> {
+  const settled = await Promise.allSettled(ps as readonly Promise<unknown>[]);
+  const bad = settled.filter((s): s is PromiseRejectedResult => s.status === "rejected").map((s) => s.reason);
+  if (bad.length) throw bad.find((b) => b instanceof Aborted || b instanceof BudgetStop) ?? bad[0];
+  return settled.map((s) => (s as PromiseFulfilledResult<unknown>).value) as unknown as T;
+}
 
 async function call(deps: Deps, sessionId: string, tool: string, args: Record<string, unknown>, events: GatewayEvent[]): Promise<CallResult> {
   if (deps.signal?.aborted) throw new Aborted();
+  if (budgetHit.has(deps)) throw new BudgetStop("session budget exhausted");
   const r = await deps.qloo.call(tool, args, sessionId);
   events.push({ type: "tool_call", tool, args, cached: r.cached });
   events.push({ type: "tool_result", tool, status: r.envelope.status, resultCount: Array.isArray(r.envelope.results) ? r.envelope.results.length : 0, cacheKey: r.cacheKey, stale: r.stale });
+  if (r.envelope.status === "error" && r.envelope.error?.code === "BUDGET") {
+    budgetHit.add(deps);
+    throw new BudgetStop(r.envelope.summary ?? "session budget exhausted");
+  }
   return r;
 }
 
 export async function activationInputs(artist: string, city: { name: string; country: string }, deps: Deps, sessionId: string, events: GatewayEvent[]) {
   const where = `${city.name}, ${city.country}`;
-  const [brands, places, films, artists, inCity] = await Promise.all([
+  const [brands, places, films, artists, tv, inCity] = await settleAll([
     call(deps, sessionId, "qloo_recommend", { target_type: "brand", signals: [artist], signal_location: where, limit: 10 }, events),
     call(deps, sessionId, "qloo_recommend", { target_type: "place", signals: [artist], filter_location: where, limit: 10 }, events),
     call(deps, sessionId, "qloo_recommend", { target_type: "movie", signals: [artist], signal_location: where, limit: 10 }, events),
     call(deps, sessionId, "qloo_recommend", { target_type: "artist", signals: [artist], signal_location: where, limit: 10 }, events),
+    call(deps, sessionId, "qloo_recommend", { target_type: "tv_show", signals: [artist], signal_location: where, limit: 10 }, events),
     call(deps, sessionId, "qloo_where_popular", { entity: artist, entity_type: "artist", within: where, limit: 20 }, events),
-  ]);
+  ] as const);
   const placeEntities = extractEntities(places.envelope);
   const venueNames = placeEntities.slice(0, 10).map((e) => e.name);
   const ranked = venueNames.length > 0
@@ -47,27 +79,43 @@ export async function activationInputs(artist: string, city: { name: string; cou
   const components: Partial<Record<ComponentName, { value: number; refs: EvidenceRef[] }>> = {};
   const sponsor = meanTopK(extractEntities(brands.envelope).map((e) => e.affinity), 5);
   if (sponsor !== null) components.sponsor_fit = { value: sponsor, refs: [ref("qloo_recommend", brands)] };
-  const hooks = meanTopK([...placeEntities, ...extractEntities(films.envelope), ...extractEntities(artists.envelope)].map((e) => e.affinity), 5);
-  if (hooks !== null) components.local_hooks = { value: hooks, refs: [ref("qloo_recommend", places), ref("qloo_recommend", films), ref("qloo_recommend", artists)] };
+  const hooks = meanTopK([...placeEntities, ...extractEntities(films.envelope), ...extractEntities(artists.envelope), ...extractEntities(tv.envelope)].map((e) => e.affinity), 5);
+  if (hooks !== null) components.local_hooks = { value: hooks, refs: [ref("qloo_recommend", places), ref("qloo_recommend", films), ref("qloo_recommend", artists), ref("qloo_recommend", tv)] };
   const conc = fanConcentration(zones.map((z) => z.share));
   if (conc !== null) components.fan_concentration = { value: conc, refs: [ref("qloo_where_popular", inCity)] };
   const venue = ranked ? meanTopK(extractEntities(ranked.envelope).map((e) => e.affinity), 1) : null;
   if (venue !== null && ranked) components.venue_fit = { value: venue, refs: [ref("qloo_rank", ranked)] };
 
-  return { components, zones, raw: { brands, places, films, artists, inCity, ranked } };
+  const warnings = dedupeWarnings([
+    ...warningsOf("qloo_recommend", brands), ...warningsOf("qloo_recommend", places), ...warningsOf("qloo_recommend", films),
+    ...warningsOf("qloo_recommend", artists), ...warningsOf("qloo_recommend", tv), ...warningsOf("qloo_where_popular", inCity),
+    ...(ranked ? warningsOf("qloo_rank", ranked) : []),
+  ]);
+  return { components, zones, warnings, raw: { brands, places, films, artists, tv, inCity, ranked } };
 }
 
 export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerator<GatewayEvent> {
   const events: GatewayEvent[] = [];
   const flush = function* () { while (events.length) yield events.shift()!; };
+  const scored: ScoredCity[] = [];
+  const byWinnability = () => scored.sort((a, b) => (b.winnability.value ?? -1) - (a.winnability.value ?? -1));
   try {
     let artistName = brief.artist;
     let entityId = brief.artistEntityId;
     if (!entityId) {
-      const d = await deps.qloo.call("qloo_describe", { entity: brief.artist, type: "artist" }, brief.sessionId);
+      let d: CallResult;
+      try {
+        d = await call(deps, brief.sessionId, "qloo_describe", { entity: brief.artist, type: "artist" }, events);
+      } finally {
+        yield* flush();
+      }
       if (d.envelope.status === "needs_input") {
         const issue = extractIssues(d.envelope)[0];
         yield { type: "needs_input", field: issue?.field ?? "entity", candidates: issue?.candidates ?? [], summary: d.envelope.summary ?? "Choose the intended artist." };
+        return;
+      }
+      if (d.envelope.status === "error") {
+        yield { type: "error", code: d.envelope.error?.code ?? "UNKNOWN", message: d.envelope.summary ?? d.envelope.error?.recovery ?? "Live Qloo data unavailable" };
         return;
       }
       const top = extractEntities(d.envelope)[0];
@@ -80,54 +128,94 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
 
     const end = new Date(`${brief.today}T00:00:00Z`);
     const start = new Date(end.getTime() - 90 * 86_400_000).toISOString().slice(0, 10);
-    const [demo, tags, trends, heatCalls] = await Promise.all([
-      call(deps, brief.sessionId, "qloo_audience_demographics", { entity: signalArtist, entity_type: "artist" }, events),
-      call(deps, brief.sessionId, "qloo_entity_tags", { entities: [signalArtist], entity_type: "artist", limit: 10 }, events),
-      call(deps, brief.sessionId, "qloo_trends", { entities: [signalArtist], entity_type: "artist", start_date: start, end_date: brief.today }, events),
-      Promise.all(brief.regions.map(async (region) => ({
-        region, r: await call(deps, brief.sessionId, "qloo_where_popular", { entity: signalArtist, entity_type: "artist", within: region, limit: 20 }, events),
-      }))),
-    ]);
-    yield* flush();
+    let demo!: CallResult, tags!: CallResult, trends!: CallResult;
+    let heatCalls!: Array<{ region: string; r: CallResult }>;
+    try {
+      [demo, tags, trends, heatCalls] = await settleAll([
+        call(deps, brief.sessionId, "qloo_audience_demographics", { entity: signalArtist, entity_type: "artist" }, events),
+        call(deps, brief.sessionId, "qloo_entity_tags", { entities: [signalArtist], entity_type: "artist", limit: 10 }, events),
+        call(deps, brief.sessionId, "qloo_trends", { entities: [signalArtist], entity_type: "artist", start_date: start, end_date: brief.today }, events),
+        settleAll(brief.regions.map(async (region) => ({
+          region, r: await call(deps, brief.sessionId, "qloo_where_popular", { entity: signalArtist, entity_type: "artist", within: region, limit: 20 }, events),
+        }))),
+      ] as const);
+    } finally {
+      yield* flush();
+    }
     yield {
       type: "artist_profile",
       demographics: Array.isArray(demo.envelope.results) ? demo.envelope.results : [],
       tags: extractEntities(tags.envelope).map((t) => ({ name: t.name, affinity: t.affinity })),
       trends: trends.envelope.results ?? null,
       refs: [ref("qloo_audience_demographics", demo), ref("qloo_entity_tags", tags), ref("qloo_trends", trends)],
+      warnings: dedupeWarnings([...warningsOf("qloo_audience_demographics", demo), ...warningsOf("qloo_entity_tags", tags), ...warningsOf("qloo_trends", trends)]),
     };
 
-    const pooled = heatCalls.flatMap(({ region, r }) => {
+    type Market = { city: City; affinity: number; popularity: number; refs: EvidenceRef[]; warnings: DataWarning[] };
+    const byId = new Map<string, Market>();
+    for (const { region, r } of heatCalls) {
       const points = extractHeatPoints(r.envelope);
-      if (points.length === 0) { events.push({ type: "region_empty", region }); return []; }
-      return marketsFromHeat(points, deps.cities).map((m) => ({ ...m, refs: [ref("qloo_where_popular", r)] }));
-    });
-    yield* flush();
+      if (points.length === 0) {
+        if (r.envelope.status === "error") {
+          yield { type: "region_unavailable", region, code: r.envelope.error?.code ?? "UNKNOWN", message: r.envelope.summary ?? r.envelope.error?.recovery ?? "Live Qloo data unavailable" };
+        } else {
+          yield { type: "region_empty", region };
+        }
+        continue;
+      }
+      const warnings = warningsOf("qloo_where_popular", r);
+      for (const m of marketsFromHeat(points, deps.cities)) {
+        const prev = byId.get(m.city.id);
+        if (!prev) { byId.set(m.city.id, { city: m.city, affinity: m.affinity, popularity: m.popularity, refs: [ref("qloo_where_popular", r)], warnings: [...warnings] }); continue; }
+        prev.affinity = Math.max(prev.affinity, m.affinity);
+        prev.popularity = Math.max(prev.popularity, m.popularity);
+        prev.refs.push(ref("qloo_where_popular", r));
+        prev.warnings = dedupeWarnings([...prev.warnings, ...warnings]);
+      }
+    }
+    const pooled = [...byId.values()];
 
     const heat = fanHeat(pooled.map((m) => ({ id: m.city.id, affinity: m.affinity, popularity: m.popularity, refs: m.refs })));
     const shortlist = [...pooled]
       .sort((a, b) => (heat.get(b.city.id)?.value ?? -1) - (heat.get(a.city.id)?.value ?? -1))
-      .slice(0, Math.min(SHORTLIST, Math.max(brief.maxStops, 1) + 2));
+      .slice(0, SHORTLIST);
 
-    const scored: ScoredCity[] = [];
-    const limit = deps.concurrency ?? 3;
+    type CityOutcome = { ok: ScoredCity } | { stop: unknown };
+    const limit = Math.max(deps.concurrency ?? 3, 1);
     for (let i = 0; i < shortlist.length; i += limit) {
-      const batch = await Promise.all(shortlist.slice(i, i + limit).map(async (m) => {
-        const inputs = await activationInputs(signalArtist, m.city, deps, brief.sessionId, events);
+      const batch: CityOutcome[] = await Promise.all(shortlist.slice(i, i + limit).map(async (m): Promise<CityOutcome> => {
         const fan = heat.get(m.city.id)!;
-        const act = activation(inputs.components);
-        const win = winnability(fan, act);
-        return { id: m.city.id, name: m.city.name, country: m.city.country, lat: m.city.lat, lon: m.city.lon, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win), zones: inputs.zones } satisfies ScoredCity;
+        const base = { id: m.city.id, name: m.city.name, country: m.city.country, lat: m.city.lat, lon: m.city.lon };
+        try {
+          const inputs = await activationInputs(signalArtist, m.city, deps, brief.sessionId, events);
+          const act = activation(inputs.components);
+          const win = winnability(fan, act);
+          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]) } };
+        } catch (err) {
+          if (err instanceof Aborted || err instanceof BudgetStop) return { stop: err };
+          const act = activation({});
+          const win = winnability(fan, act);
+          const warning: DataWarning = { tool: "pipeline", kind: "error", code: "INTERNAL", message: (err as Error).message };
+          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win), zones: [], warnings: dedupeWarnings([...m.warnings, warning]) } };
+        }
       }));
       yield* flush();
-      scored.push(...batch);
+      let stop: unknown;
+      for (const o of batch) { if ("ok" in o) scored.push(o.ok); else stop ??= o.stop; }
+      if (stop) throw stop;
     }
-    scored.sort((a, b) => (b.winnability.value ?? -1) - (a.winnability.value ?? -1));
+    byWinnability();
     for (const city of scored) yield { type: "city_scored", city };
     yield { type: "done", summary: { artist: { entityId, name: artistName }, cities: scored.length } };
   } catch (err) {
     yield* flush();
     if (err instanceof Aborted) { yield { type: "error", code: "ABORTED", message: "client disconnected" }; return; }
+    if (err instanceof BudgetStop) {
+      byWinnability();
+      for (const city of scored) yield { type: "city_scored", city };
+      yield { type: "error", code: "BUDGET", message: err.message };
+      return;
+    }
     yield { type: "error", code: "INTERNAL", message: (err as Error).message };
   }
 }

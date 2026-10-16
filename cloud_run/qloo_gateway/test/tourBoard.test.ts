@@ -30,7 +30,8 @@ const happy = (tool: string, args: Record<string, unknown>): QlooEnvelope => {
 describe("runTourBoard", () => {
   it("emits resolve, scored cities sorted by winnability, and done", async () => {
     const events = await collect(runTourBoard(brief, { qloo: fakeQloo(happy), cities: CITIES }));
-    expect(events[0]).toMatchObject({ type: "resolve", entity: { entityId: "A1", name: "Test Artist" } });
+    expect(events.find((e) => e.type === "resolve")).toMatchObject({ type: "resolve", entity: { entityId: "A1", name: "Test Artist" } });
+    expect(events.some((e) => e.type === "tool_call" && e.tool === "qloo_describe")).toBe(true);
     expect(events.some((e) => e.type === "artist_profile")).toBe(true);
     const scored = events.filter((e) => e.type === "city_scored");
     expect(scored.map((e) => (e as { city: { name: string } }).city.name)).toEqual(["Mexico City", "Monterrey"]);
@@ -39,8 +40,8 @@ describe("runTourBoard", () => {
 
   it("stops with needs_input for ambiguous artists (Review Focus 1)", async () => {
     const events = await collect(runTourBoard({ ...brief, artist: "Pedro" }, { qloo: fakeQloo((t) => (t === "qloo_describe" ? describeAmbiguous : happy(t, {}))), cities: CITIES }));
-    expect(events).toHaveLength(1);
-    expect(events[0]).toMatchObject({ type: "needs_input", candidates: [{ id: "P1" }, { id: "P2" }] });
+    expect(events.map((e) => e.type)).toEqual(["tool_call", "tool_result", "needs_input"]);
+    expect(events.at(-1)).toMatchObject({ type: "needs_input", candidates: [{ id: "P1" }, { id: "P2" }] });
   });
 
   it("uses artistEntityId when the user picked a candidate", async () => {
@@ -82,5 +83,103 @@ describe("runTourBoard", () => {
     const seen: Array<Record<string, unknown>> = [];
     await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => { if (t === "qloo_trends") seen.push(a); return happy(t, a); }), cities: CITIES }));
     expect(seen[0]).toMatchObject({ start_date: "2026-07-22", end_date: "2026-10-20", entity_type: "artist" });
+  });
+
+  it("is not capped by maxStops: shortlists the top 8 by fan heat", async () => {
+    const many: City[] = Array.from({ length: 10 }, (_, i) => ({ id: `c${i}`, name: `City${i}`, country: "MX", lat: 10 + i * 2, lon: -100, population: 1_000_000 }));
+    const heat: QlooEnvelope = { operation: "where_popular", status: "ok", results: many.map((c, i) => ({ location: { latitude: c.lat, longitude: c.lon }, query: { affinity: 0.95 - i * 0.05, popularity: 0.3 } })) };
+    const events = await collect(runTourBoard({ ...brief, maxStops: 2 }, { qloo: fakeQloo((t, a) => (t === "qloo_where_popular" && a.within === "Mexico" ? heat : happy(t, a))), cities: many }));
+    expect(events.filter((e) => e.type === "city_scored")).toHaveLength(8);
+  });
+
+  it("dedupes a city appearing in two regions", async () => {
+    const events = await collect(runTourBoard({ ...brief, regions: ["Mexico", "Mexico2"] }, { qloo: fakeQloo((t, a) => (t === "qloo_where_popular" && String(a.within).startsWith("Mexico") ? heatMexico : happy(t, a))), cities: CITIES }));
+    const names = events.filter((e) => e.type === "city_scored").map((e) => (e as { city: { name: string } }).city.name);
+    expect(names).toEqual(["Mexico City", "Monterrey"]);
+  });
+
+  it("adds a tv_show recommend to local hooks", async () => {
+    const targets: unknown[] = [];
+    await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => { if (t === "qloo_recommend") targets.push(a.target_type); return happy(t, a); }), cities: CITIES }));
+    expect(targets).toContain("tv_show");
+  });
+
+  it("reports a describe error honestly instead of NOT_FOUND", async () => {
+    const err: QlooEnvelope = { operation: "describe", status: "error", summary: "bad key", error: { code: "QLOO_AUTH", retryable: false, recovery: "check key" } };
+    const events = await collect(runTourBoard(brief, { qloo: fakeQloo(() => err), cities: CITIES }));
+    expect(events.filter((e) => e.type === "error")).toEqual([{ type: "error", code: "QLOO_AUTH", message: "bad key" }]);
+    expect(events.some((e) => e.type === "resolve")).toBe(false);
+  });
+
+  it("marks an errored region unavailable (not empty) and still finishes", async () => {
+    const err: QlooEnvelope = { operation: "where_popular", status: "error", summary: "boom", error: { code: "QLOO_HTTP", retryable: false, recovery: "retry" } };
+    const events = await collect(runTourBoard({ ...brief, regions: ["Broken", "Mexico"] }, { qloo: fakeQloo((t, a) => (t === "qloo_where_popular" && a.within === "Broken" ? err : happy(t, a))), cities: CITIES }));
+    expect(events).toContainEqual({ type: "region_unavailable", region: "Broken", code: "QLOO_HTTP", message: "boom" });
+    expect(events.some((e) => e.type === "region_empty")).toBe(false);
+    expect(events.at(-1)?.type).toBe("done");
+  });
+
+  const cityOf = (events: GatewayEvent[], name: string) => (events.filter((e) => e.type === "city_scored") as Array<{ city: { name: string; warnings: Array<Record<string, unknown>>; verdict: string } }>).map((e) => e.city).find((c) => c.name === name)!;
+
+  it("attaches an error warning when a city brand recommend errors", async () => {
+    const err: QlooEnvelope = { operation: "recommend", status: "error", summary: "x", error: { code: "QLOO_HTTP", retryable: false, recovery: "r" } };
+    const events = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => (t === "qloo_recommend" && a.target_type === "brand" ? err : happy(t, a))), cities: CITIES }));
+    expect(cityOf(events, "Mexico City").warnings).toContainEqual(expect.objectContaining({ tool: "qloo_recommend", kind: "error", code: "QLOO_HTTP" }));
+  });
+
+  it("attaches partial warnings to cities", async () => {
+    const partial: QlooEnvelope = { ...recs(["One", "Two"], [0.9, 0.7]), status: "partial", summary: "some failed" };
+    const events = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => (t === "qloo_recommend" && a.target_type === "brand" ? partial : happy(t, a))), cities: CITIES }));
+    expect(cityOf(events, "Monterrey").warnings).toContainEqual(expect.objectContaining({ tool: "qloo_recommend", kind: "partial", message: "some failed" }));
+  });
+
+  it("attaches stale warnings from a stale regional heatmap to each derived city", async () => {
+    const qloo: QlooCaller = { async call(tool, args) { const stale = tool === "qloo_where_popular" && args.within === "Mexico"; return { envelope: happy(tool, args), cacheKey: `${tool}-k`, cached: stale, stale }; } };
+    const events = await collect(runTourBoard(brief, { qloo, cities: CITIES }));
+    for (const n of ["Mexico City", "Monterrey"]) expect(cityOf(events, n).warnings).toContainEqual(expect.objectContaining({ tool: "qloo_where_popular", kind: "stale" }));
+  });
+
+  it("stops on BUDGET: emits cities scored so far, then error BUDGET, no done", async () => {
+    const four: City[] = [
+      { id: "a", name: "Alpha", country: "MX", lat: 19, lon: -99, population: 1_000_000 },
+      { id: "b", name: "Bravo", country: "MX", lat: 22, lon: -102, population: 1_000_000 },
+      { id: "c", name: "Charlie", country: "MX", lat: 25, lon: -105, population: 1_000_000 },
+      { id: "d", name: "Delta", country: "MX", lat: 28, lon: -108, population: 1_000_000 },
+    ];
+    const heat: QlooEnvelope = { operation: "where_popular", status: "ok", results: four.map((c, i) => ({ location: { latitude: c.lat, longitude: c.lon }, query: { affinity: 0.9 - i * 0.1, popularity: 0.3 } })) };
+    const budget: QlooEnvelope = { operation: "x", status: "error", summary: "session budget exhausted", error: { code: "BUDGET", retryable: false, recovery: "new session" } };
+    const log: string[] = [];
+    const qloo = fakeQloo((t, a) => {
+      const where = String(a.within ?? a.filter_location ?? a.signal_location ?? "");
+      if (t === "qloo_where_popular" && a.within === "Mexico") return heat;
+      if (where.startsWith("Bravo") || where.startsWith("Charlie") || where.startsWith("Delta")) return budget;
+      return happy(t, a);
+    }, log);
+    const events = await collect(runTourBoard(brief, { qloo, cities: four, concurrency: 1 }));
+    const scored = events.filter((e) => e.type === "city_scored").map((e) => (e as { city: { name: string } }).city.name);
+    expect(scored).toEqual(["Alpha"]);
+    expect(events.at(-1)).toMatchObject({ type: "error", code: "BUDGET", message: "session budget exhausted" });
+    expect(events.some((e) => e.type === "done")).toBe(false);
+    expect(log.some((l) => l.includes("Charlie") || l.includes("Delta"))).toBe(false);
+  });
+
+  it("isolates a throwing city: INTERNAL warning, others scored, done", async () => {
+    const qloo: QlooCaller = { async call(tool, args) {
+      if (String(args.signal_location ?? args.filter_location ?? args.within ?? "").startsWith("Monterrey")) throw new Error("kaboom");
+      return { envelope: happy(tool, args), cacheKey: `${tool}-k`, cached: false, stale: false };
+    } };
+    const events = await collect(runTourBoard(brief, { qloo, cities: CITIES }));
+    const mty = cityOf(events, "Monterrey");
+    expect(mty.verdict).toBe("insufficient_data");
+    expect(mty.warnings).toContainEqual(expect.objectContaining({ tool: "pipeline", kind: "error", code: "INTERNAL", message: "kaboom" }));
+    expect(cityOf(events, "Mexico City").verdict).not.toBe("insufficient_data");
+    expect(events.at(-1)?.type).toBe("done");
+  });
+
+  it("attaches profile warnings for errored profile calls", async () => {
+    const err: QlooEnvelope = { operation: "tags", status: "error", summary: "t", error: { code: "QLOO_HTTP", retryable: false, recovery: "r" } };
+    const events = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => (t === "qloo_entity_tags" ? err : happy(t, a))), cities: CITIES }));
+    const prof = events.find((e) => e.type === "artist_profile") as { warnings: Array<Record<string, unknown>> };
+    expect(prof.warnings).toContainEqual(expect.objectContaining({ tool: "qloo_entity_tags", kind: "error", code: "QLOO_HTTP" }));
   });
 });
