@@ -90,6 +90,11 @@ describe("record-showcase", () => {
     expect(text).toMatch(/Beta.*hidden_goldmine.*density #2.*winnability #1/);
   });
 
+  it("passes a scoring event through unchanged", () => {
+    const e = { type: "scoring", scoring: { version: "v" } };
+    expect(sanitizeEvent(e)).toEqual(e);
+  });
+
   it("keeps signals, arrays and plain objects but drops anything secret-looking", () => {
     const e = sanitizeEvent({ type: "tool_call", tool: "qloo_recommend", cached: false, args: {
       signals: { location: "Mexico City, MX", weight: 2, apiKey: "k", auth_token: "t", nested: { a: 1 } },

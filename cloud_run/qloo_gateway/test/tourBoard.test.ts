@@ -5,6 +5,8 @@ import { pickCandidates, runTourBoard, type TourBrief } from "../src/pipeline/to
 import type { QlooCaller } from "../src/qlooCall.js";
 import type { GatewayEvent, QlooEnvelope } from "../src/types.js";
 import { readFileSync } from "node:fs";
+import { rescaleAffinity } from "../src/scoring/config.js";
+import { SCORING } from "../src/scoring/calibration.js";
 import { cityHeat, describeAmbiguous, describeOk, heatEmpty, heatMexico, recs } from "./fixtures/envelopes.js";
 
 const CITIES: City[] = [
@@ -329,5 +331,30 @@ describe("runTourBoard", () => {
     const events = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => (t === "qloo_entity_tags" ? err : happy(t, a))), cities: CITIES }));
     const prof = events.find((e) => e.type === "artist_profile") as { warnings: Array<Record<string, unknown>> };
     expect(prof.warnings).toContainEqual(expect.objectContaining({ tool: "qloo_entity_tags", kind: "error", code: "QLOO_HTTP" }));
+  });
+  describe("scoring config", () => {
+    it("emits the applied scoring config right after resolve", async () => {
+      const events = await collect(runTourBoard(brief, { qloo: fakeQloo(happy), cities: CITIES }));
+      const i = events.findIndex((e) => e.type === "resolve");
+      expect(events[i + 1]).toEqual({ type: "scoring", scoring: SCORING });
+      expect(events.filter((e) => e.type === "scoring")).toHaveLength(1);
+    });
+
+    it("attaches rawComponents with the same keys as components, and components follow SCORING", async () => {
+      const events = await collect(runTourBoard(brief, { qloo: fakeQloo(happy), cities: CITIES }));
+      const cities = events.filter((e) => e.type === "city_scored") as Array<{ city: { activation: { components: Record<string, number>; rawComponents: Record<string, number> } } }>;
+      expect(cities.length).toBeGreaterThan(0);
+      for (const { city } of cities) {
+        const { components, rawComponents } = city.activation;
+        expect(Object.keys(rawComponents).sort()).toEqual(Object.keys(components).sort());
+        for (const k of ["sponsor_fit", "local_hooks", "venue_fit"] as const) {
+          if (rawComponents[k] === undefined) continue;
+          expect(components[k]).toBeCloseTo(rescaleAffinity(rawComponents[k]!, SCORING.affinityFloors[k]));
+        }
+        if (SCORING.concentration === "raw" && rawComponents.fan_concentration !== undefined) {
+          expect(components.fan_concentration).toBeCloseTo(rawComponents.fan_concentration);
+        }
+      }
+    });
   });
 });

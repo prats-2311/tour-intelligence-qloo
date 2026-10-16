@@ -1,0 +1,50 @@
+import { describe, expect, it } from "vitest";
+import { concentrationValue, DEFAULT_SCORING, rescaleAffinity } from "../src/scoring/config.js";
+import { SCORING } from "../src/scoring/calibration.js";
+import { activation } from "../src/scoring/activation.js";
+import { verdict } from "../src/scoring/winnability.js";
+
+const s = (value: number) => ({ value, refs: [] });
+
+describe("scoring config", () => {
+  it("default config reproduces the original rule table", () => {
+    expect(DEFAULT_SCORING.thresholds).toEqual({ playFan: 70, playAct: 60, goldmineFanMin: 45, goldmineFanMax: 70, goldmineAct: 75, deRiskFan: 70, deRiskAct: 45, considerWin: 55 });
+    expect(DEFAULT_SCORING.weights).toEqual({ sponsor_fit: 0.3, local_hooks: 0.25, fan_concentration: 0.25, venue_fit: 0.2 });
+    expect(DEFAULT_SCORING.affinityFloors).toEqual({ sponsor_fit: 0, local_hooks: 0, venue_fit: 0 });
+    expect(DEFAULT_SCORING.concentration).toBe("raw");
+  });
+
+  it("the committed SCORING is a valid config", () => {
+    expect(Object.keys(SCORING.weights).sort()).toEqual(["fan_concentration", "local_hooks", "sponsor_fit", "venue_fit"]);
+    for (const f of Object.values(SCORING.affinityFloors)) expect(f >= 0 && f < 1).toBe(true);
+  });
+
+  it("rescales affinity from the floor", () => {
+    expect(rescaleAffinity(0.95, 0)).toBe(0.95);
+    expect(rescaleAffinity(0.95, 0.9)).toBeCloseTo(0.5);
+    expect(rescaleAffinity(0.85, 0.9)).toBe(0);
+    expect(rescaleAffinity(1, 0.9)).toBe(1);
+    expect(rescaleAffinity(Number.NaN, 0.9)).toBeNaN();
+  });
+
+  it("re-bases concentration against a uniform spread", () => {
+    const uniform = Array(20).fill(0.05);
+    expect(concentrationValue(uniform, "raw")).toBeCloseTo(0.15);
+    expect(concentrationValue(uniform, "vs_uniform")).toBeCloseTo(0);
+    expect(concentrationValue([0.5, 0.3, 0.2, 0, 0, 0, 0, 0, 0, 0], "vs_uniform")).toBeCloseTo(1);
+    expect(concentrationValue([0.5, 0.5, 0], "vs_uniform")).toBeNull();
+    expect(concentrationValue([], "raw")).toBeNull();
+  });
+
+  it("ignores weight-0 components, including for the two-component minimum", () => {
+    const w = { ...DEFAULT_SCORING.weights, fan_concentration: 0 };
+    expect(activation({ sponsor_fit: s(0.8), fan_concentration: s(0.1) }, w).value).toBeNull();
+    expect(activation({ sponsor_fit: s(0.8), local_hooks: s(0.6), fan_concentration: s(0.1) }, w).value).toBeCloseTo(100 * (0.3 * 0.8 + 0.25 * 0.6) / 0.55);
+  });
+
+  it("verdict applies injected thresholds", () => {
+    const t = { ...DEFAULT_SCORING.thresholds, goldmineAct: 40 };
+    expect(verdict(s(60), s(41), s(50.5), t)).toBe("hidden_goldmine");
+    expect(verdict(s(60), s(41), s(50.5))).toBe("skip");
+  });
+});

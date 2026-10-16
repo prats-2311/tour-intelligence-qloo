@@ -17,7 +17,7 @@ export function activation(
   components: Partial<Record<ComponentName, { value: number; refs: EvidenceRef[] }>>,
   weights: Record<ComponentName, number> = DEFAULT_WEIGHTS,
 ): Score & { components: Partial<Record<ComponentName, number>> } {
-  const present = (Object.keys(components) as ComponentName[]).filter((k) => Number.isFinite(components[k]?.value));
+  const present = (Object.keys(components) as ComponentName[]).filter((k) => Number.isFinite(components[k]?.value) && weights[k] > 0);
   const refs = present.flatMap((k) => components[k]!.refs);
   const values = Object.fromEntries(present.map((k) => [k, Math.min(1, Math.max(0, components[k]!.value))])) as Partial<Record<ComponentName, number>>;
   if (present.length < 2) return { value: null, reason: "insufficient_data", refs, components: values };

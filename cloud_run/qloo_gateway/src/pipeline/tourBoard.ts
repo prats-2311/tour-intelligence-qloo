@@ -3,6 +3,8 @@ import type { City } from "../geo/cities.js";
 import { marketsFromHeat, zonesFromHeat } from "../geo/heat.js";
 import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { activation, fanConcentration, meanTopK, type ComponentName } from "../scoring/activation.js";
+import { SCORING } from "../scoring/calibration.js";
+import { concentrationValue, rescaleAffinity } from "../scoring/config.js";
 import { fanHeat } from "../scoring/fanHeat.js";
 import { verdict, winnability } from "../scoring/winnability.js";
 import { artistTasteArgs } from "./recArgs.js";
@@ -102,15 +104,28 @@ export async function activationInputs(artist: string, city: { name: string; cou
   };
 
   const zones = zonesFromHeat(extractHeatPoints(inCity.envelope), deps.cities);
+  const rawComponents: Partial<Record<ComponentName, number>> = {};
   const components: Partial<Record<ComponentName, { value: number; refs: EvidenceRef[] }>> = {};
   const sponsor = meanTopK(extractEntities(brands.envelope).map((e) => e.affinity), 5);
-  if (sponsor !== null) components.sponsor_fit = { value: sponsor, refs: [ref("qloo_recommend", brands)] };
+  if (sponsor !== null) {
+    rawComponents.sponsor_fit = sponsor;
+    components.sponsor_fit = { value: rescaleAffinity(sponsor, SCORING.affinityFloors.sponsor_fit), refs: [ref("qloo_recommend", brands)] };
+  }
   const hooks = meanTopK([...placeEntities, ...extractEntities(films.envelope), ...extractEntities(artists.envelope), ...extractEntities(tv.envelope)].map((e) => e.affinity), 5);
-  if (hooks !== null) components.local_hooks = { value: hooks, refs: [ref("qloo_recommend", places), ref("qloo_recommend", films), ref("qloo_recommend", artists), ref("qloo_recommend", tv)] };
-  const conc = fanConcentration(zones.map((z) => z.share));
-  if (conc !== null) components.fan_concentration = { value: conc, refs: [ref("qloo_where_popular", inCity)] };
+  if (hooks !== null) {
+    rawComponents.local_hooks = hooks;
+    components.local_hooks = { value: rescaleAffinity(hooks, SCORING.affinityFloors.local_hooks), refs: [ref("qloo_recommend", places), ref("qloo_recommend", films), ref("qloo_recommend", artists), ref("qloo_recommend", tv)] };
+  }
+  const shares = zones.map((z) => z.share);
+  const conc = fanConcentration(shares);
+  if (conc !== null) rawComponents.fan_concentration = conc;
+  const concScored = concentrationValue(shares, SCORING.concentration);
+  if (concScored !== null) components.fan_concentration = { value: concScored, refs: [ref("qloo_where_popular", inCity)] };
   const venue = ranked ? meanTopK(rankedVenues.map((e) => e.affinity), 1) : null;
-  if (venue !== null && ranked) components.venue_fit = { value: venue, refs: [ref("qloo_rank", ranked)] };
+  if (venue !== null && ranked) {
+    rawComponents.venue_fit = venue;
+    components.venue_fit = { value: rescaleAffinity(venue, SCORING.affinityFloors.venue_fit), refs: [ref("qloo_rank", ranked)] };
+  }
 
   const warnings = dedupeWarnings([
     ...warningsOf("qloo_recommend", brands), ...warningsOf("qloo_recommend", places), ...warningsOf("qloo_recommend", films),
@@ -118,7 +133,7 @@ export async function activationInputs(artist: string, city: { name: string; cou
     ...(ranked ? warningsOf("qloo_rank", ranked) : []),
     ...venues.warnings,
   ]);
-  return { components, zones, warnings, venues, raw: { brands, places, films, artists, tv, inCity, ranked } };
+  return { components, rawComponents, zones, warnings, venues, raw: { brands, places, films, artists, tv, inCity, ranked } };
 }
 
 export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerator<GatewayEvent> {
@@ -150,6 +165,7 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
       artistName = top.name;
     }
     yield { type: "resolve", entity: { entityId, name: artistName } };
+    yield { type: "scoring", scoring: SCORING };
     const signalArtist = entityId; // harness accepts Qloo UUIDs as entity inputs
 
     const end = new Date(`${brief.today}T00:00:00Z`);
@@ -212,15 +228,15 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
         const base = { id: m.city.id, name: m.city.name, country: m.city.country, lat: m.city.lat, lon: m.city.lon };
         try {
           const inputs = await activationInputs(signalArtist, m.city, deps, brief.sessionId, events, "venue ranking unresolved — venue fit not scored");
-          const act = activation(inputs.components);
+          const act = { ...activation(inputs.components, SCORING.weights), rawComponents: inputs.rawComponents };
           const win = winnability(fan, act);
-          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]) } };
+          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]) } };
         } catch (err) {
           if (err instanceof Aborted || err instanceof BudgetStop) return { stop: err };
-          const act = activation({});
+          const act = { ...activation({}, SCORING.weights), rawComponents: {} as Partial<Record<ComponentName, number>> };
           const win = winnability(fan, act);
           const warning: DataWarning = { tool: "pipeline", kind: "error", code: "INTERNAL", message: (err as Error).message };
-          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win), zones: [], warnings: dedupeWarnings([...m.warnings, warning]) } };
+          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), zones: [], warnings: dedupeWarnings([...m.warnings, warning]) } };
         }
       }));
       yield* flush();

@@ -1,3 +1,4 @@
+import type { ScoringConfig } from "./scoring/config.js";
 export type QlooStatus = "ok" | "empty" | "needs_input" | "partial" | "degraded" | "error";
 
 export interface QlooRequestPreview { method: "GET"; path: string; query: unknown }
@@ -57,6 +58,7 @@ export type ThisWeek =
 
 export type GatewayEvent =
   | { type: "resolve"; entity: { entityId: string; name: string } }
+  | { type: "scoring"; scoring: ScoringConfig }
   | { type: "artist_profile"; demographics: unknown[]; tags: Array<{ name: string; affinity: number }>; trends: Array<{ date: string; value: number }>; refs: EvidenceRef[]; warnings: DataWarning[] }
   | { type: "region_unavailable"; region: string; code: string; message: string }
   | { type: "needs_input"; field: string; candidates: Array<{ id: string; name: string; type?: string }>; summary: string }
