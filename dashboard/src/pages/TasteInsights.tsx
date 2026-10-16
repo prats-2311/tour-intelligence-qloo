@@ -13,12 +13,13 @@ import { FiltersPanel } from "@/components/insights/FiltersPanel";
 import { WinnabilityMatrix } from "@/components/insights/WinnabilityMatrix";
 import { dataQuality } from "@/lib/qloo/geometry";
 import { applyFilters, boxscoreCsv, csvFilename, defaultFilters, type InsightsFilters } from "@/lib/qloo/insightsFilters";
+import { INTEGRITY_LINE } from "@/lib/qloo/labels";
+import { sortCities } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
-const INTEGRITY = "Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.";
 const secondaryBtn = "inline-flex h-12 items-center justify-center gap-2 rounded-[10px] bg-paper-raised px-5 text-[15px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:h-10";
 
 export default function TasteInsights() {
@@ -40,7 +41,7 @@ export default function TasteInsights() {
   const artistName = artist?.name ?? brief?.artist;
   // Panels follow the selected market; default to the most winnable one in focus.
   const focusCity = useMemo(
-    () => visible.find((c) => c.id === selected) ?? [...visible].sort((a, b) => (b.winnability.value ?? -1) - (a.winnability.value ?? -1))[0],
+    () => visible.find((c) => c.id === selected) ?? sortCities(visible, "winnability")[0],
     [visible, selected],
   );
 
@@ -145,7 +146,7 @@ export default function TasteInsights() {
           )}
           {artist && <ArtistCompare artist={artist} source={source} />}
           <ActivationBoxscore cities={visible} selectedId={selected} onSelect={setSelectedId} />
-          <p className="px-1 pb-2 text-[12px] text-canvas-muted">{INTEGRITY}</p>
+          <p className="px-1 pb-2 text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
         </div>
       </div>
     </div>

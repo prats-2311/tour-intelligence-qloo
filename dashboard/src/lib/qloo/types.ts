@@ -25,7 +25,7 @@ export interface PlaybookCard {
 }
 export interface ArtistProfile {
   demographics: unknown[];
-  tags: Array<{ name: string; affinity: number }>;
+  tags: Array<{ name: string; affinity: number | null }>;
   trends: unknown;
   refs: EvidenceRef[];
   warnings: DataWarning[];

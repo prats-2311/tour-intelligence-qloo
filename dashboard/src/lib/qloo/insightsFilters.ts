@@ -1,3 +1,4 @@
+import { VERDICT_LABEL } from "./labels";
 import { sortCities } from "./ranking";
 import type { ScoredCity, Verdict } from "./types";
 
@@ -24,10 +25,6 @@ export function activeFilterCount(f: InsightsFilters): number {
 /** Activation high to low, null activation last. Shared by the boxscore and the CSV. */
 export const byActivation = (a: ScoredCity, b: ScoredCity): number => (b.activation.value ?? -1) - (a.activation.value ?? -1);
 
-const VERDICT_TEXT: Record<Verdict, string> = {
-  play: "Play", hidden_goldmine: "Hidden goldmine", de_risk: "De-risk", consider: "Consider", skip: "Skip", insufficient_data: "Not enough data",
-};
-
 const cell = (v: string | number | null | undefined): string => {
   if (v === null || v === undefined) return "";
   // Text cells that a spreadsheet could read as a formula get a leading apostrophe.
@@ -40,7 +37,7 @@ export function boxscoreCsv(cities: ScoredCity[]): string {
   const header = ["City", "Country", "Sponsor fit", "Local hooks", "Fan concentration", "Venue fit", "Activation", "Verdict"];
   const rows = sortCities(cities, "winnability").sort(byActivation).map((c) => {
     const k = c.activation.components;
-    return [c.name, c.country, k.sponsor_fit, k.local_hooks, k.fan_concentration, k.venue_fit, c.activation.value, VERDICT_TEXT[c.verdict]];
+    return [c.name, c.country, k.sponsor_fit, k.local_hooks, k.fan_concentration, k.venue_fit, c.activation.value, VERDICT_LABEL[c.verdict]];
   });
   return "\uFEFF" + [header, ...rows].map((r) => r.map(cell).join(",")).join("\r\n");
 }

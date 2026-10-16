@@ -126,4 +126,23 @@ describe("primitives", () => {
       render(<DataWarningBadge warnings={[{ tool: "t", kind, message: "m" }]} />);
       expect(screen.getByText(label)).toBeTruthy();
     });
+  it("WhyThisScore leads with the fan heat and activation bars and their thresholds", () => {
+    render(<WhyThisScore city={gdl} />);
+    expect(screen.getByRole("meter", { name: "Fan heat 62 of 100" })).toBeTruthy();
+    expect(screen.getByRole("meter", { name: "Activation 82 of 100" })).toBeTruthy();
+    expect(screen.getByTestId("bar-fanheat")).toBeTruthy();
+  });
+  it("WhyThisScore lists the verdict rules and the renormalisation note", () => {
+    render(<WhyThisScore city={gdl} />);
+    const rules = screen.getByRole("list", { name: "Verdict rules" });
+    const text = rules.textContent ?? "";
+    for (const r of ["Play", "fan ≥70 & activation ≥60", "Hidden goldmine", "45≤fan<70 & activation ≥75", "De-risk", "fan ≥70 & activation <45", "Consider", "winnability ≥55", "Skip", "otherwise", "Not enough data", "inputs are missing"]) expect(text).toContain(r);
+    expect(screen.getByText("Weights are renormalised over the components that returned data.")).toBeTruthy();
+  });
+  it("WhyThisScore with null scores shows Not enough data bars, still no NaN", () => {
+    const { container } = render(<WhyThisScore city={bh} />);
+    expect(screen.getByRole("img", { name: "Activation: not enough data" })).toBeTruthy();
+    expect(screen.getByRole("meter", { name: "Fan heat 55 of 100" })).toBeTruthy();
+    expect(container.textContent).not.toMatch(/NaN|null|undefined/);
+  });
 });

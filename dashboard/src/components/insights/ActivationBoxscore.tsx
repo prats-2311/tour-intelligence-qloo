@@ -1,14 +1,11 @@
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { byActivation } from "@/lib/qloo/insightsFilters";
 import { sortCities } from "@/lib/qloo/ranking";
-import type { ComponentName, ScoredCity } from "@/lib/qloo/types";
+import { ACTIVATION_WEIGHTS } from "@/lib/qloo/labels";
+import type { ScoredCity } from "@/lib/qloo/types";
 
-const COLS: Array<{ key: ComponentName; label: string; weight: string }> = [
-  { key: "sponsor_fit", label: "Sponsor", weight: "0.30" },
-  { key: "local_hooks", label: "Hooks", weight: "0.25" },
-  { key: "fan_concentration", label: "Concentration", weight: "0.25" },
-  { key: "venue_fit", label: "Venue", weight: "0.20" },
-];
+const COLS = ACTIVATION_WEIGHTS;
+const WEIGHTS_LINE = COLS.map((c) => `${c.short.toLowerCase()} ${c.weight}`).join(" · ");
 
 const th = "px-3 py-2 text-right align-bottom font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-canvas-muted";
 
@@ -30,13 +27,13 @@ export function ActivationBoxscore({ cities, selectedId, onSelect }: { cities: S
   return (
     <section aria-label="Activation boxscore" className="rounded-[14px] bg-paper p-3 lg:p-4">
       <h2 className="font-title text-[20px] leading-tight text-canvas-text">Activation breakdown</h2>
-      <p className="mb-3 mt-1 text-[12px] text-canvas-muted">Sorted by activation, high to low. Weights: sponsor 0.30 · hooks 0.25 · concentration 0.25 · venue 0.20.</p>
+      <p className="mb-3 mt-1 text-[12px] text-canvas-muted">Sorted by activation, high to low. Weights: {WEIGHTS_LINE}.</p>
       <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Activation boxscore table, scrolls horizontally">
         <table className="w-full min-w-[680px] border-collapse">
           <thead>
             <tr className="border-b border-canvas-line">
               <th scope="col" className={`${th} sticky left-0 z-10 bg-paper text-left`}>City</th>
-              {COLS.map((c) => <th key={c.key} scope="col" className={th}>{c.label}<br /><span className="normal-case">({c.weight})</span></th>)}
+              {COLS.map((c) => <th key={c.key} scope="col" className={th}>{c.short}<br /><span className="normal-case">({c.weight})</span></th>)}
               <th scope="col" className={`${th} text-gold`}>Activation</th>
               <th scope="col" className={th}>Verdict</th>
             </tr>

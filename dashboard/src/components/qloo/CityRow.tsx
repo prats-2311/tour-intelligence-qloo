@@ -1,7 +1,8 @@
 import { motion, useReducedMotion } from "framer-motion";
 import type { Score, ScoredCity } from "@/lib/qloo/types";
 import { DataWarningBadge, warningLabel } from "./DataWarningBadge";
-import { VERDICT_LABEL, VerdictChip } from "./VerdictChip";
+import { VERDICT_LABEL } from "@/lib/qloo/labels";
+import { VerdictChip } from "./VerdictChip";
 
 /** Column template shared with the desktop header row in TourBoard. */
 export const ROW_COLS_LG = "lg:grid-cols-[minmax(0,1fr)_minmax(0,110px)_132px_36px]";

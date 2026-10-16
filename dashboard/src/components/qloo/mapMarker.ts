@@ -1,20 +1,19 @@
 import type { Verdict } from "@/lib/qloo/types";
-import { VERDICT_LABEL } from "./VerdictChip";
+import { VERDICT_LABEL, VERDICT_SHAPE } from "@/lib/qloo/labels";
 
 const NS = "http://www.w3.org/2000/svg";
 const RING = "#1c1b18";
 const HIT = 44; // WCAG-comfortable hit area, independent of the visual size
 const PAD = 4; // room for the 2px canvas ring on every side
 
-type Shape = "circle" | "diamond" | "triangle" | "ring" | "x" | "square";
-// DESIGN.md section 2.5: shape, size and mark hex per verdict.
-const SPEC: Record<Verdict, { shape: Shape; size: number; color: string; opacity: number }> = {
-  play: { shape: "circle", size: 10, color: "#0f9d8a", opacity: 1 },
-  hidden_goldmine: { shape: "diamond", size: 12, color: "#ffcc00", opacity: 1 },
-  de_risk: { shape: "triangle", size: 11, color: "#e8606f", opacity: 1 },
-  consider: { shape: "ring", size: 10, color: "#5a86e8", opacity: 1 },
-  skip: { shape: "x", size: 8, color: "#8b877c", opacity: 1 },
-  insufficient_data: { shape: "square", size: 8, color: "#a4a094", opacity: 0.5 },
+// DESIGN.md section 2.5: size and mark hex per verdict; the shape comes from the shared VERDICT_SHAPE.
+const SPEC: Record<Verdict, { size: number; color: string; opacity: number }> = {
+  play: { size: 10, color: "#0f9d8a", opacity: 1 },
+  hidden_goldmine: { size: 12, color: "#ffcc00", opacity: 1 },
+  de_risk: { size: 11, color: "#e8606f", opacity: 1 },
+  consider: { size: 10, color: "#5a86e8", opacity: 1 },
+  skip: { size: 8, color: "#8b877c", opacity: 1 },
+  insufficient_data: { size: 8, color: "#a4a094", opacity: 0.5 },
 };
 
 function svgEl(name: string, attrs: Record<string, string | number>): SVGElement {
@@ -24,7 +23,8 @@ function svgEl(name: string, attrs: Record<string, string | number>): SVGElement
 }
 
 function glyph(verdict: Verdict): SVGElement {
-  const { shape, size, color, opacity } = SPEC[verdict];
+  const { size, color, opacity } = SPEC[verdict];
+  const shape = VERDICT_SHAPE[verdict];
   const box = size + PAD * 2, c = box / 2, h = size / 2;
   const svg = svgEl("svg", { width: box, height: box, viewBox: `0 0 ${box} ${box}`, "aria-hidden": "true", "data-shape": shape });
   svg.style.overflow = "visible";

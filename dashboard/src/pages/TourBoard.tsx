@@ -9,11 +9,13 @@ import { NeedsInputPicker } from "@/components/qloo/NeedsInputPicker";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { Sheet } from "@/components/qloo/Sheet";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
+import { VerdictGlyph } from "@/components/qloo/VerdictGlyph";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
 import { LONG_NAMES_BRIEF, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { sortCities, summarize } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
-import type { TourBrief } from "@/lib/qloo/types";
+import { INTEGRITY_LINE, VERDICT_LABEL } from "@/lib/qloo/labels";
+import type { TourBrief, Verdict } from "@/lib/qloo/types";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
@@ -22,7 +24,6 @@ const MODES: Array<{ id: Mode; label: string }> = [
   { id: "winnability", label: "Winnability" },
   { id: "density", label: "Density-only" },
 ];
-const INTEGRITY = "Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.";
 const SHORTLIST_VERDICTS = new Set(["play", "hidden_goldmine"]);
 
 function SegmentedControl({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
@@ -66,14 +67,12 @@ function SegmentedControl({ mode, onChange }: { mode: Mode; onChange: (m: Mode) 
   );
 }
 
+const LEGEND: Verdict[] = ["play", "hidden_goldmine", "de_risk", "consider", "skip", "insufficient_data"];
+
 function Legend() {
-  const item = "inline-flex items-center gap-1.5 text-[12px] text-canvas-text";
   return (
-    <div className="pointer-events-none absolute left-4 top-4 z-10 hidden items-center gap-4 rounded-[8px] bg-canvas-raised px-3 py-2 lg:flex" aria-label="Map legend">
-      <span className={item}><span className="size-2.5 rounded-full bg-verdict-play" aria-hidden />Play</span>
-      <span className={item}><span className="size-2.5 rotate-45 bg-verdict-goldmine" aria-hidden />Hidden goldmine</span>
-      <span className={item}><span className="size-0 border-x-[6px] border-b-[10px] border-x-transparent border-b-verdict-derisk" aria-hidden />De-risk</span>
-      <span className={item}><span className="size-2.5 rounded-full border-2 border-verdict-consider" aria-hidden />Consider</span>
+    <div className="pointer-events-none absolute left-4 top-4 z-10 hidden flex-wrap items-center gap-x-4 gap-y-1 rounded-[8px] bg-canvas-raised px-3 py-2 lg:flex" aria-label="Map legend">
+      {LEGEND.map((v) => <span key={v} className="inline-flex items-center gap-1.5 text-[12px] text-canvas-text"><VerdictGlyph verdict={v} />{VERDICT_LABEL[v]}</span>)}
     </div>
   );
 }
@@ -250,7 +249,7 @@ export default function TourBoard() {
       )}
       {state.cities.length > 0 && (
         <div className="flex flex-col gap-1 pb-2">
-          <p className="px-1 text-[12px] text-canvas-muted">{INTEGRITY}</p>
+          <p className="px-1 text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
           {!streaming && <button type="button" onClick={newBrief} className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">New brief</button>}
         </div>
       )}

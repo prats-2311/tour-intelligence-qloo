@@ -1,12 +1,17 @@
-import type { ComponentName, ScoredCity } from "@/lib/qloo/types";
+import { ACTIVATION_WEIGHTS, INTEGRITY_LINE, VERDICT_LABEL } from "@/lib/qloo/labels";
+import type { ScoredCity, Verdict } from "@/lib/qloo/types";
 import { DataWarningBadge } from "./DataWarningBadge";
+import { DualBars } from "./DualBars";
 import { VerdictChip } from "./VerdictChip";
 
-const WEIGHTS: Array<{ key: ComponentName; label: string; weight: string }> = [
-  { key: "sponsor_fit", label: "Sponsor fit", weight: "0.30" },
-  { key: "local_hooks", label: "Local hooks", weight: "0.25" },
-  { key: "fan_concentration", label: "Fan concentration", weight: "0.25" },
-  { key: "venue_fit", label: "Venue fit", weight: "0.20" },
+/** The gateway's verdict rules, shown for transparency (display only — never recomputed here). */
+const RULES: Array<{ verdict: Verdict; rule: string }> = [
+  { verdict: "play", rule: "fan ≥70 & activation ≥60" },
+  { verdict: "hidden_goldmine", rule: "45≤fan<70 & activation ≥75" },
+  { verdict: "de_risk", rule: "fan ≥70 & activation <45" },
+  { verdict: "consider", rule: "winnability ≥55" },
+  { verdict: "skip", rule: "otherwise" },
+  { verdict: "insufficient_data", rule: "when inputs are missing" },
 ];
 
 export function WhyThisScore({ city }: { city: ScoredCity }) {
@@ -26,13 +31,14 @@ export function WhyThisScore({ city }: { city: ScoredCity }) {
         <span className="font-mono text-[24px] font-bold tabular">{w === null ? "—" : Math.round(w)}</span>
         <span className="text-[13px] text-canvas-muted">{w === null ? "Not enough data to score" : "winnability"}</span>
       </div>
+      <DualBars fanHeat={city.fanHeat} activation={city.activation} />
       <p className="font-mono text-[13px] text-canvas-muted">winnability = 0.5 × fan heat + 0.5 × activation</p>
       <table className="w-full text-left text-[13px]">
         <thead className="text-canvas-muted">
           <tr><th className="py-1 font-medium">Component</th><th className="py-1 text-right font-medium">Weight</th><th className="py-1 text-right font-medium">Value</th></tr>
         </thead>
         <tbody>
-          {WEIGHTS.map(({ key, label, weight }) => {
+          {ACTIVATION_WEIGHTS.map(({ key, label, weight }) => {
             const v = comps[key];
             return (
               <tr key={key} className="border-t border-canvas-line">
@@ -44,6 +50,17 @@ export function WhyThisScore({ city }: { city: ScoredCity }) {
           })}
         </tbody>
       </table>
+      <p className="text-[12px] text-canvas-muted">Weights are renormalised over the components that returned data.</p>
+      <div>
+        <h3 className="mb-1 text-[13px] font-medium text-canvas-muted">Verdict rules</h3>
+        <ul aria-label="Verdict rules" className="flex flex-col gap-0.5 text-[13px]">
+          {RULES.map(({ verdict, rule }) => (
+            <li key={verdict} className={`flex flex-wrap gap-x-2 ${verdict === city.verdict ? "text-canvas-text" : "text-canvas-muted"}`}>
+              <span className="font-medium">{VERDICT_LABEL[verdict]}:</span><span className="tabular">{rule}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
       <div>
         <h3 className="mb-1 text-[13px] font-medium text-canvas-muted">Evidence</h3>
         {refs.length === 0 ? (
@@ -63,7 +80,7 @@ export function WhyThisScore({ city }: { city: ScoredCity }) {
           </ul>
         </div>
       )}
-      <p className="text-[12px] text-canvas-muted">Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.</p>
+      <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
     </div>
   );
 }

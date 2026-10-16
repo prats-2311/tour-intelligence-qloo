@@ -1,28 +1,16 @@
 import { useId, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
-import { VERDICT_LABEL, VerdictChip } from "@/components/qloo/VerdictChip";
+import { VerdictChip } from "@/components/qloo/VerdictChip";
+import { VerdictGlyph, VerdictMark } from "@/components/qloo/VerdictGlyph";
+import { VERDICT_LABEL } from "@/lib/qloo/labels";
 import { linear, matrixPoints, nearestPoint, QUADRANTS } from "@/lib/qloo/geometry";
 import type { ScoredCity, Verdict } from "@/lib/qloo/types";
 
 const W = 480, H = 320, PAD = 36;
-const COLOR: Record<Verdict, string> = {
-  play: "var(--color-verdict-play)", hidden_goldmine: "var(--color-verdict-goldmine)", de_risk: "var(--color-verdict-derisk)",
-  consider: "var(--color-verdict-consider)", skip: "var(--color-verdict-skip)", insufficient_data: "var(--color-verdict-skip)",
-};
+const LEGEND: Verdict[] = ["play", "hidden_goldmine", "de_risk", "consider", "skip", "insufficient_data"];
 
-/** Shape carries the verdict, not colour alone (matches the map legend). */
+/** Shape carries the verdict, not colour alone: same VERDICT_SHAPE map as the Tour Board map markers. */
 function Mark({ verdict, selected }: { verdict: Verdict; selected: boolean }) {
-  const c = COLOR[verdict];
-  const ring = "var(--color-canvas)";
-  let shape;
-  switch (verdict) {
-    case "play": shape = <circle r={6} fill={c} stroke={ring} strokeWidth={2} />; break;
-    case "hidden_goldmine": shape = <polygon points="0,-8 8,0 0,8 -8,0" fill={c} stroke={ring} strokeWidth={2} />; break;
-    case "de_risk": shape = <polygon points="0,-8 8,6 -8,6" fill={c} stroke={ring} strokeWidth={2} />; break;
-    case "consider": shape = <circle r={6} fill="none" stroke={c} strokeWidth={2.5} />; break;
-    case "skip": shape = <rect x={-5} y={-5} width={10} height={10} fill="none" stroke={c} strokeWidth={2.5} />; break;
-    default: shape = <circle r={6} fill="none" stroke={c} strokeWidth={2} strokeDasharray="3 2" />;
-  }
-  return <>{selected && <circle r={13} fill="none" stroke="var(--color-gold)" strokeWidth={2} />}{shape}</>;
+  return <>{selected && <circle r={13} fill="none" stroke="var(--color-gold)" strokeWidth={2} />}<VerdictMark verdict={verdict} /></>;
 }
 
 function summary(cities: ScoredCity[], plotted: number): string {
@@ -154,11 +142,7 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls, onReset
         </div>
       )}
       <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-canvas-text" aria-label="Legend">
-        <li className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-verdict-play" aria-hidden />Play</li>
-        <li className="inline-flex items-center gap-1.5"><span className="size-2.5 rotate-45 bg-verdict-goldmine" aria-hidden />Hidden goldmine</li>
-        <li className="inline-flex items-center gap-1.5"><span className="size-0 border-x-[6px] border-b-[10px] border-x-transparent border-b-verdict-derisk" aria-hidden />De-risk</li>
-        <li className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full border-2 border-verdict-consider" aria-hidden />Consider</li>
-        <li className="inline-flex items-center gap-1.5"><span className="size-2.5 border-2 border-verdict-skip" aria-hidden />Skip</li>
+        {LEGEND.map((v) => <li key={v} className="inline-flex items-center gap-1.5"><VerdictGlyph verdict={v} />{VERDICT_LABEL[v]}</li>)}
       </ul>
     </section>
   );

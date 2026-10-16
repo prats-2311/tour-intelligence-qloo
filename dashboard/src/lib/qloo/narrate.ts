@@ -1,8 +1,7 @@
+import { VERDICT_LABEL } from "./labels";
 import type { GatewayEvent } from "./types";
 
 export type LogStep = { id: string; sentence: string; tool?: string; status: "active" | "success" | "error" | "info"; detail?: string; cached?: boolean; stale?: boolean };
-
-const VERDICT_LABEL: Record<string, string> = { play: "Play", hidden_goldmine: "Hidden goldmine", de_risk: "De-risk", consider: "Consider", skip: "Skip", insufficient_data: "Not enough data" };
 
 const where = (a: Record<string, unknown>) => String(a.signal_location ?? a.filter_location ?? a.within ?? "");
 

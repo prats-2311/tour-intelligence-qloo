@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import * as client from "@/lib/qloo/client";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
+import { VERDICT_SHAPE } from "@/lib/qloo/labels";
 import TourBoard from "./TourBoard";
 
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
@@ -205,5 +206,14 @@ describe("TourBoard", () => {
     submitArtist("Ada");
     const row = (await screen.findAllByTestId("city-row"))[0]!;
     expect(within(row).getByRole("button").getAttribute("aria-label")).toMatch(/Partial data/);
+  });
+  it("map legend shows all six verdicts with the shared shapes", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    const legend = screen.getByLabelText("Map legend");
+    for (const [v, label] of [["play", "Play"], ["hidden_goldmine", "Hidden goldmine"], ["de_risk", "De-risk"], ["consider", "Consider"], ["skip", "Skip"], ["insufficient_data", "Not enough data"]] as const) {
+      const item = within(legend).getByText(label);
+      expect(item.querySelector("[data-shape]")!.getAttribute("data-shape")).toBe(VERDICT_SHAPE[v]);
+    }
   });
 });

@@ -1,7 +1,7 @@
 import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { Sheet } from "@/components/qloo/Sheet";
-import { VERDICT_LABEL } from "@/components/qloo/VerdictChip";
+import { VERDICT_LABEL } from "@/lib/qloo/labels";
 import { ALL_VERDICTS, activeFilterCount, defaultFilters, type InsightsFilters } from "@/lib/qloo/insightsFilters";
 import type { ScoredCity, Verdict } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";

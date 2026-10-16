@@ -31,7 +31,7 @@ describe("insight panels", () => {
     expect(screen.getByText("dream pop")).toBeTruthy();
   });
   it("tag with null affinity renders without NaN/null", () => {
-    const { container } = render(<AudienceProfile profile={{ ...P, tags: [{ name: "odd", affinity: null as unknown as number }] }} />);
+    const { container } = render(<AudienceProfile profile={{ ...P, tags: [{ name: "odd", affinity: null }] }} />);
     expect(screen.getByText("odd")).toBeTruthy();
     expect(container.textContent).not.toMatch(/NaN|null/);
   });
