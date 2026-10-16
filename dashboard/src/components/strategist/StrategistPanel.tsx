@@ -22,7 +22,7 @@ export function StrategistPanel({ context, sample, title, onClose, hideHeading }
       </header>
       {sample && <div className="px-4 pt-2"><SampleBanner compact /></div>}
       <MessageList turns={state.turns} onRetry={ask} busy={busy} />
-      <Composer busy={busy} empty={state.turns.length === 0} onAsk={ask} onStop={stop} />
+      <Composer busy={busy} empty={state.turns.length === 0} sample={sample} context={context} onAsk={ask} onStop={stop} />
     </section>
   );
 }

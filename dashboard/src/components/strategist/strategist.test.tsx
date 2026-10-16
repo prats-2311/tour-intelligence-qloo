@@ -22,6 +22,16 @@ describe("StrategistPanel", () => {
     expect(screen.getByText("Compared fan heat with activation inputs for Guadalajara.")).toBeTruthy();
     expect(screen.getByText("Sample data — illustrative, not Qloo output")).toBeTruthy();
   });
+  it("sample mode shows the sample questions; live mode shows board-aware ones instead", () => {
+    const ctx = { cities: [{ id: "1", name: "Guadalajara", country: "MX", verdict: "hidden_goldmine", fanHeat: 62, activation: 82, winnability: 72 }] };
+    const { unmount } = render(<StrategistPanel context={ctx} sample title="t" />);
+    for (const q of SAMPLE_QUESTIONS) expect(screen.getByRole("button", { name: q })).toBeTruthy();
+    unmount();
+    render(<StrategistPanel context={ctx} sample={false} title="t" />);
+    for (const q of SAMPLE_QUESTIONS) expect(screen.queryByRole("button", { name: q })).toBeNull();
+    expect(screen.getByRole("button", { name: "Why is Guadalajara ranked here?" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Which market is riskiest?" })).toBeTruthy();
+  });
   it("flags numbers not found in tool results", async () => {
     vi.spyOn(client, "streamStrategist").mockImplementation(async function* () {
       yield { type: "strategist_message", text: "Expect 5000 fans.", unsupportedNumbers: ["5000"], stoppedEarly: false, model: "m" } as const;
