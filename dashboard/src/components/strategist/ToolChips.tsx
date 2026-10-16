@@ -9,21 +9,23 @@ export function toolLabel(name: string): string {
   return plain.charAt(0).toUpperCase() + plain.slice(1);
 }
 
-function StatusIcon({ status }: { status: ToolChip["status"] }) {
+function StatusIcon({ status, streaming }: { status: ToolChip["status"]; streaming: boolean }) {
+  if (!status && !streaming) return <CircleAlert size={14} aria-hidden className="text-state-stale" />;
   if (!status) return <Loader size={14} aria-hidden className="animate-spin motion-reduce:animate-none" />;
   if (status === "ok") return <Check size={14} aria-hidden className="text-verdict-play-text" />;
   if (status === "rejected") return <Ban size={14} aria-hidden className="text-state-error" />;
   return <CircleAlert size={14} aria-hidden className="text-state-stale" />;
 }
 
-function Chip({ chip }: { chip: ToolChip }) {
+function Chip({ chip, streaming }: { chip: ToolChip; streaming: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <li>
       <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-canvas-raised px-3 text-[13px] font-semibold text-canvas-text outline-none focus-visible:ring-2 focus-visible:ring-gold/50">
-        <StatusIcon status={chip.status} />
+        <StatusIcon status={chip.status} streaming={streaming} />
         {toolLabel(chip.name)}
         {chip.cached && <span className="font-normal text-canvas-muted">From cache</span>}
+        {!chip.status && !streaming && <span className="font-normal text-canvas-muted">No result</span>}
       </button>
       {open && (
         <div className="mt-1 rounded-[10px] bg-canvas-raised px-3 py-2 text-[12px] leading-[1.5] text-canvas-muted">
@@ -35,11 +37,11 @@ function Chip({ chip }: { chip: ToolChip }) {
   );
 }
 
-export function ToolChips({ tools }: { tools: ToolChip[] }) {
+export function ToolChips({ tools, streaming }: { tools: ToolChip[]; streaming: boolean }) {
   if (tools.length === 0) return null;
   return (
     <ul aria-label="Tools used" className="flex flex-wrap items-start gap-2">
-      {tools.map((c) => <Chip key={c.id} chip={c} />)}
+      {tools.map((c) => <Chip key={c.id} chip={c} streaming={streaming} />)}
     </ul>
   );
 }

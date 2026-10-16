@@ -7,9 +7,9 @@ import { Mic, Square } from "lucide-react";
 // copy-pasting bubble/indicator markup between them.
 
 /** Three-dot "assistant is thinking" bubble, styled like an assistant message. */
-export function TypingIndicator() {
+export function TypingIndicator({ label = "Assistant is thinking…" }: { label?: string } = {}) {
   return (
-    <div className="flex justify-start" aria-label="Strategist is typing" role="status">
+    <div className="flex justify-start" aria-label={label} role="status">
       <span className="flex items-center gap-1 rounded-lg rounded-bl-[2px] border border-white/[0.07] bg-paper-raised px-3 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
         {[0, 1, 2].map((i) => (
           <span
@@ -18,7 +18,7 @@ export function TypingIndicator() {
             style={{ animationDelay: `${i * 160}ms` }}
           />
         ))}
-        <span className="sr-only">Assistant is thinking…</span>
+        <span className="sr-only">{label}</span>
       </span>
     </div>
   );

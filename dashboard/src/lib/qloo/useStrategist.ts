@@ -23,34 +23,41 @@ export function useStrategist(context: StrategistContext, opts: { sample: boolea
       if (t.answer) messages.push({ role: "user", text: t.question }, { role: "assistant", text: t.answer.text });
     }
     messages.push({ role: "user", text: q });
+    // Keep the last 12, but never start with an assistant message (Gemini wants a user first).
+    let window = messages.slice(-MAX_MESSAGES);
+    while (window[0]?.role === "assistant") window = window.slice(1);
     const ac = new AbortController();
     abortRef.current = ac;
     dispatch({ type: "ask", question: q });
     void (async () => {
       let finished = false;
       try {
-        for await (const event of streamStrategist({ messages: messages.slice(-MAX_MESSAGES), context: ctxRef.current.context }, { signal: ac.signal, sample: ctxRef.current.sample })) {
+        for await (const event of streamStrategist({ messages: window, context: ctxRef.current.context }, { signal: ac.signal, sample: ctxRef.current.sample })) {
           if (ac.signal.aborted) break;
           dispatch({ type: "event", event });
           if (event.type === "done") finished = true;
         }
-        if (!finished && !ac.signal.aborted) dispatch({ type: "interrupted", note: LOST_NOTE });
+        if (!finished && abortRef.current === ac) dispatch({ type: "interrupted", note: LOST_NOTE });
       } catch {
-        dispatch({ type: "interrupted", note: ac.signal.aborted ? STOPPED_NOTE : LOST_NOTE });
+        // stop()/reset() already handled an aborted turn; only a live, unaborted turn is "lost".
+        if (abortRef.current === ac) dispatch({ type: "interrupted", note: LOST_NOTE });
       } finally {
-        if (abortRef.current === ac) abortRef.current = null;
-        busyRef.current = false;
+        if (abortRef.current === ac) { abortRef.current = null; busyRef.current = false; }
       }
     })();
   }, []);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
+    abortRef.current = null;
+    busyRef.current = false;
     dispatch({ type: "interrupted", note: STOPPED_NOTE });
   }, []);
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
+    abortRef.current = null;
+    busyRef.current = false;
     dispatch({ type: "reset" });
   }, []);
 

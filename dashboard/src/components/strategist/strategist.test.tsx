@@ -93,7 +93,38 @@ describe("StrategistPanel", () => {
       await vi.waitFor(() => expect(screen.getAllByText("a")).toHaveLength(i + 1));
     }
     const msgs = spy.mock.calls[7]![0].messages;
-    expect(msgs).toHaveLength(12);
+    expect(msgs).toHaveLength(11); // <=12 and user-first
     expect(msgs.at(-1)).toEqual({ role: "user", text: "q7" });
+    expect(msgs[0]!.role).toBe("user");
+  });
+  it("Stop mid-tool leaves no spinning chip", async () => {
+    vi.spyOn(client, "streamStrategist").mockImplementation(async function* (_b, o) {
+      yield { type: "strategist_tool_call", id: "t1", name: "qloo_recommend", args: {} } as const;
+      await new Promise((_, rej) => o?.signal?.addEventListener("abort", () => rej(new Error("aborted"))));
+    });
+    const { container } = render(<StrategistPanel context={{}} sample={false} title="t" />);
+    ask("q");
+    await screen.findByRole("button", { name: /recommend/ });
+    expect(container.querySelector(".animate-spin")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    expect(await screen.findByText("Stopped")).toBeTruthy();
+    expect(container.querySelector(".animate-spin")).toBeNull();
+    expect(screen.getByText("No result")).toBeTruthy();
+  });
+  it("a follow-up ask right after Stop is not dropped", async () => {
+    const spy = vi.spyOn(client, "streamStrategist").mockImplementation(async function* (_b, o) { await new Promise((_, rej) => o?.signal?.addEventListener("abort", () => rej(new Error("aborted")))); });
+    render(<StrategistPanel context={{}} sample={false} title="t" />);
+    ask("one");
+    fireEvent.click(await screen.findByRole("button", { name: "Stop" }));
+    ask("two");
+    await vi.waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
+    expect(screen.getByText("two")).toBeTruthy();
+  });
+  it("done without a message or error says no answer came back, with Try again", async () => {
+    vi.spyOn(client, "streamStrategist").mockImplementation(async function* () { yield { type: "done", summary: {} } as const; });
+    render(<StrategistPanel context={{}} sample={false} title="t" />);
+    ask("q");
+    expect(await screen.findByText("No answer came back — try again")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
   });
 });

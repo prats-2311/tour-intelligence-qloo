@@ -10,10 +10,11 @@ export function numbersNote(tokens: string[]): string {
 
 function Turn({ turn, onRetry, retryDisabled }: { turn: StrategistTurn; onRetry: (q: string) => void; retryDisabled: boolean }) {
   const { answer } = turn;
+  const failure = turn.status === "error" && turn.error ? turn.error.message : turn.status === "done" && !answer ? "No answer came back — try again" : undefined;
   return (
     <li className="flex flex-col gap-2">
       <ChatBubble role="user">{turn.question}</ChatBubble>
-      <ToolChips tools={turn.tools} />
+      <ToolChips tools={turn.tools} streaming={turn.status === "streaming"} />
       <StrategistThinking summaries={turn.thinking} />
       {answer && (
         <div className="flex flex-col gap-1.5">
@@ -22,11 +23,11 @@ function Turn({ turn, onRetry, retryDisabled }: { turn: StrategistTurn; onRetry:
           {answer.stoppedEarly && <p className="text-[13px] text-state-stale">Stopped after the tool limit</p>}
         </div>
       )}
-      {turn.status === "streaming" && !answer && <TypingIndicator />}
+      {turn.status === "streaming" && !answer && <TypingIndicator label="Strategist is typing" />}
       {turn.status === "interrupted" && <p className="text-[13px] text-canvas-muted">{turn.note}</p>}
-      {turn.status === "error" && turn.error && (
+      {failure && (
         <div className="flex flex-wrap items-center gap-3 rounded-[14px] bg-state-error-bg px-4 py-2 text-[14px] text-state-error">
-          <p className="flex-1">{turn.error.message}</p>
+          <p className="flex-1">{failure}</p>
           <button type="button" disabled={retryDisabled} onClick={() => onRetry(turn.question)} className="min-h-11 rounded-[10px] px-3 font-semibold underline outline-none focus-visible:ring-2 focus-visible:ring-gold/50 disabled:opacity-50">Try again</button>
         </div>
       )}
