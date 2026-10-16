@@ -24,15 +24,19 @@ export function splitResponse(r: GeminiResponse): { thoughtSummary: string | nul
   return { thoughtSummary: thoughts.length ? thoughts.join("\n\n") : null, text };
 }
 
-export async function generateJson(generate: GenerateFn, models: string[], body: Record<string, unknown>) {
+/**
+ * Tries each model in order. Only a failure of the Vertex call itself (non-2xx, network, timeout)
+ * moves on to the next model; an unparseable answer is final. `beforeAttempt` runs before every
+ * Vertex call so budgets are reserved per real attempt, and may throw to stop.
+ */
+export async function generateJson(generate: GenerateFn, models: string[], body: Record<string, unknown>, opts: { beforeAttempt?: () => void | Promise<void> } = {}) {
   let last: unknown = new Error("no model configured");
   for (const model of models) {
-    try {
-      const { thoughtSummary, text } = splitResponse(await generate(model, body));
-      return { model, thoughtSummary, json: JSON.parse(text) as unknown };
-    } catch (err) {
-      last = err;
-    }
+    await opts.beforeAttempt?.();
+    let response: GeminiResponse;
+    try { response = await generate(model, body); } catch (err) { last = err; continue; }
+    const { thoughtSummary, text } = splitResponse(response);
+    return { model, thoughtSummary, json: JSON.parse(text) as unknown };
   }
   throw last;
 }

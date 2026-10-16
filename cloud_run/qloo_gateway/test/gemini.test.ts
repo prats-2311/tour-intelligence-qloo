@@ -26,4 +26,20 @@ describe("gemini", () => {
   it("generateJson throws when every model fails", async () => {
     await expect(generateJson(async () => { throw new Error("down"); }, ["a", "b"], {})).rejects.toThrow("down");
   });
+  it("generateJson does not fall back on malformed JSON from the first model", async () => {
+    const gen = vi.fn(async () => ({ candidates: [{ content: { parts: [{ text: "not json" }] } }] }));
+    await expect(generateJson(gen, ["a", "b"], {})).rejects.toThrow();
+    expect(gen).toHaveBeenCalledTimes(1);
+  });
+  it("generateJson calls beforeAttempt once per Vertex attempt, including the fallback", async () => {
+    const gen = vi.fn(async (m: string) => { if (m === "a") throw new Error("Vertex 503"); return { candidates: [{ content: { parts: [{ text: "{}" }] } }] }; });
+    const before = vi.fn();
+    await generateJson(gen, ["a", "b"], {}, { beforeAttempt: before });
+    expect(before).toHaveBeenCalledTimes(2);
+  });
+  it("generateJson stops without calling Vertex when beforeAttempt refuses", async () => {
+    const gen = vi.fn(async () => ({}));
+    await expect(generateJson(gen, ["a", "b"], {}, { beforeAttempt: () => { throw new Error("capped"); } })).rejects.toThrow("capped");
+    expect(gen).not.toHaveBeenCalled();
+  });
 });

@@ -37,4 +37,13 @@ describe("usage caps", () => {
     expect(await b.tryIncrement("2026-10-17", "2026-10")).toEqual({ ok: false, scope: "day" });
     expect(db.docs.get("tavily_usage/2026-10")).toMatchObject({ month: 2, days: { "2026-10-17": 2 } });
   });
+  it("firestore store takes a doc prefix and caps, so Gemini counts live in gemini_usage/<YYYY-MM>", async () => {
+    const db = fakeDb();
+    const a = new FirestoreUsageStore({ db, prefix: "gemini_usage", caps: { perDay: 1, perMonth: 10000 } });
+    expect((await a.tryIncrement("2026-10-17", "2026-10")).ok).toBe(true);
+    expect(db.docs.get("gemini_usage/2026-10")).toMatchObject({ month: 1 });
+    expect(db.docs.has("tavily_usage/2026-10")).toBe(false);
+    const b = new FirestoreUsageStore({ db, prefix: "gemini_usage", caps: { perDay: 1, perMonth: 10000 } });
+    expect(await b.tryIncrement("2026-10-17", "2026-10")).toEqual({ ok: false, scope: "day" });
+  });
 });

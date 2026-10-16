@@ -26,14 +26,18 @@ const generate = project
   ? createVertexGenerate({ project, getToken: async () => String((await auth.getAccessToken()) ?? "") })
   : undefined;
 const narratorModels = [process.env.GEMINI_MODEL ?? "gemini-3.8-flash", process.env.GEMINI_FALLBACK_MODEL ?? "gemini-2.5-flash"];
-const geminiBudget = new BudgetGuard({ perSession: 20, perDay: Number.isFinite(geminiCeiling) && geminiCeiling > 0 ? geminiCeiling : 300 });
-const narrate = createNarrator({ ...(generate ? { generate } : {}), models: narratorModels, cache, ceiling: geminiBudget });
+// Per-session limit is in memory; the daily count is persisted (gemini_usage/<YYYY-MM>) so restarts and extra instances share it.
+const geminiBudget = new BudgetGuard({ perSession: 20, perDay: Number.MAX_SAFE_INTEGER });
+const geminiCaps = { perDay: Number.isFinite(geminiCeiling) && geminiCeiling > 0 ? geminiCeiling : 300, perMonth: 20_000 };
+const firestoreUsage = process.env.QLOO_USAGE_BACKEND === "firestore";
+const dailyUsage = firestoreUsage ? new FirestoreUsageStore({ db: new Firestore(), prefix: "gemini_usage", caps: geminiCaps }) : new MemoryUsageStore(geminiCaps);
+const narrate = createNarrator({ ...(generate ? { generate } : {}), models: narratorModels, cache, ceiling: geminiBudget, dailyUsage });
 
-const usage = process.env.QLOO_USAGE_BACKEND === "firestore" ? new FirestoreUsageStore({ db: new Firestore() }) : new MemoryUsageStore();
+const usage = firestoreUsage ? new FirestoreUsageStore({ db: new Firestore() }) : new MemoryUsageStore();
 const tavilyKey = process.env.TAVILY_API_KEY;
 const webDeps = {
   ...(tavilyKey ? { search: createTavilySearch({ apiKey: tavilyKey }) } : {}),
-  usage, cache, models: narratorModels, ceiling: geminiBudget,
+  usage, cache, models: narratorModels, ceiling: geminiBudget, dailyUsage,
   ...(generate ? { generate } : {}),
 };
 const app = createApp({ qloo: createQlooCaller({ mcp, cache, budget }), cities: loadCities(), health: () => mcp.health(), narrate, thisWeek: (input) => thisWeek(input, webDeps) });

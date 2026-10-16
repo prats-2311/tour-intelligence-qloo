@@ -28,13 +28,14 @@ export interface TxDb {
   runTransaction<T>(fn: (tx: { get(ref: TxDocRef): Promise<{ exists: boolean; data(): Record<string, unknown> | undefined }>; set(ref: TxDocRef, data: Record<string, unknown>): void }) => Promise<T>): Promise<T>;
 }
 
-/** Counter in Firestore doc tavily_usage/<YYYY-MM> so caps survive restarts and span instances. */
+/** Counter in Firestore doc <prefix>/<YYYY-MM> (default tavily_usage) so caps survive restarts and span instances. */
 export class FirestoreUsageStore implements UsageStore {
   private readonly db: TxDb;
   private readonly caps: Caps;
-  constructor(opts: { db: TxDb; caps?: Caps }) { this.db = opts.db; this.caps = opts.caps ?? TAVILY_CAPS; }
+  private readonly prefix: string;
+  constructor(opts: { db: TxDb; caps?: Caps; prefix?: string }) { this.db = opts.db; this.caps = opts.caps ?? TAVILY_CAPS; this.prefix = opts.prefix ?? "tavily_usage"; }
   async tryIncrement(day: string, month: string): Promise<Result> {
-    const ref = this.db.doc(`tavily_usage/${month}`);
+    const ref = this.db.doc(`${this.prefix}/${month}`);
     return this.db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       const raw = snap.exists ? snap.data() ?? {} : {};

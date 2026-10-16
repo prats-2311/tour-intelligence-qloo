@@ -110,4 +110,11 @@ describe("thisWeek", () => {
     expect(JSON.parse((fetchImpl.mock.calls[0]![1] as RequestInit).body as string)).toEqual({ query: "q", search_depth: "basic", max_results: 5, include_answer: false, include_raw_content: false });
     expect(r).toEqual([{ id: "w1", url: "https://x", title: "T", content: "C" }]);
   });
+  it("reserves the persisted daily Gemini budget per attempt and keeps the sources when it is spent", async () => {
+    const dailyUsage = new MemoryUsageStore({ perDay: 0, perMonth: 100 });
+    const generate = vi.fn(gemini);
+    const r = await thisWeek(input, deps({ generate, dailyUsage }));
+    expect(generate).not.toHaveBeenCalled();
+    expect(r).toMatchObject({ status: "ok", summarised: false });
+  });
 });
