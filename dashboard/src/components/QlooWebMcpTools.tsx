@@ -146,6 +146,7 @@ export function QlooWebMcpTools() {
           if (!Array.isArray(city_ids)) return { ok: false, error: "city_ids must be an array" };
           const eligible = new Set(b.state.cities.filter((c) => c.verdict === "play" || c.verdict === "hidden_goldmine").map((c) => c.id));
           shortlist = city_ids.filter((id): id is string => typeof id === "string" && eligible.has(id)).slice(0, b.state.brief?.maxStops ?? 8);
+          if (shortlist.length === 0) return { ok: false, error: "No eligible cities" };
           b.setShortlist(shortlist);
         }
         go("/tours/book");

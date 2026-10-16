@@ -112,6 +112,14 @@ describe("QlooWebMcpTools", () => {
     await waitFor(() => expect(screen.getByTestId("where").textContent).toBe("/tours/book?sample=1"));
     expect((await out("get_tour_board")).shortlist).toEqual([eligible[0]]);
   });
+  it("build_tour_from_shortlist with no eligible ids errors and leaves the shortlist and page unchanged", async () => {
+    await withBoard("/tours/board?sample=1");
+    const before = (await out("get_tour_board")).shortlist;
+    const res = await out("build_tour_from_shortlist", { city_ids: ["nope"] });
+    expect(res).toEqual({ ok: false, error: "No eligible cities" });
+    expect((await out("get_tour_board")).shortlist).toEqual(before);
+    expect(screen.getByTestId("where").textContent).toBe("/tours/board?sample=1");
+  });
   it("aborts the registration on unmount", async () => {
     const { unmount } = renderWithProviders(<QlooWebMcpTools />, "/tours/board?sample=1");
     await waitFor(() => expect(tools.size).toBe(6));
