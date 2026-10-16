@@ -25,7 +25,7 @@ describe("sample playbooks", () => {
   it("every verified sample claim cites an existing card item", () => {
     for (const id of SAMPLE_PLAYBOOK_CITY_IDS) {
       const ev = samplePlaybookEvents(id)!;
-      const ids = new Set(cardsOf(ev).flatMap((c) => [...c.items.map((_, i) => `${c.kind}:${i}`), ...(c.kind === "talent" ? ["talent:overlap"] : [])]));
+      const ids = new Set(cardsOf(ev).flatMap((c) => [...c.items.map((_, i) => `${c.kind}:${i}`), ...(c.kind === "talent" ? ["talent:sharedTaste"] : [])]));
       const n = narrativeOf(ev);
       if (n.status !== "ok") continue;
       for (const cc of Object.values(n.cards)) for (const claim of cc!.verified) for (const r of claim.evidence_refs) expect(ids.has(r)).toBe(true);
@@ -39,7 +39,7 @@ describe("sample playbooks", () => {
     expect(all.reduce((s, c) => s + c!.verified.length, 0)).toBe(7);
     expect(all.reduce((s, c) => s + c!.removed.length, 0)).toBe(2);
     const co = cardsOf(ev).find((c) => c.kind === "co_billing")!;
-    expect(co.items[0]).toMatchObject({ name: "Bruma Nocturna", overlap: 0.34, localAffinity: 0.88 });
+    expect(co.items[0]).toMatchObject({ name: "Bruma Nocturna", sharedTaste: 0.34, localAffinity: 0.88 });
   });
   it("Curitiba's promo zones card is empty (the brief's honest empty state)", () => {
     expect(cardsOf(samplePlaybookEvents("3464975")!).find((c) => c.kind === "promo_zones")!.status).toBe("empty");

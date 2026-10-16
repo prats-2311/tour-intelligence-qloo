@@ -68,6 +68,7 @@ describe("runCityPlaybook", () => {
     expect(merch.items.length).toBeGreaterThan(0);
     expect(merch.items.every((i) => /^urn:tag:(genre:music|subgenre:|artist:qloo)/.test(String((i as unknown as { id: string }).id)))).toBe(true);
     expect(merch.items.map((i) => i.name)).not.toContain("Discover");
+    expect(merch.items.every((i, n) => (i as unknown as { entityId: string; index: number }).entityId === (i as unknown as { id: string }).id && (i as unknown as { index: number }).index === n)).toBe(true);
     expect(merch.refs.map((r) => r.tool)).toEqual(["qloo_entity_tags", "qloo_recommend"]);
   });
   it("co-billing compares only the top 3 candidates and ranks by lift", async () => {

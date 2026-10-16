@@ -9,7 +9,7 @@ export function LocalMoment({ card }: { card: PlaybookCard }) {
   return (
     <Rows>
       {card.items.map((it, i) => (
-        <Row key={i} name={str(it.name)} sub={TYPE_LABEL[str(it.type)]} aside={fit(num(it.affinity))} />
+        <Row key={i} name={str(it.name)} sub={TYPE_LABEL[str(it.category)]} aside={fit(num(it.affinity))} />
       ))}
     </Rows>
   );

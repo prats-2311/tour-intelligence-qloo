@@ -105,7 +105,7 @@ describe("CityPlaybook", () => {
     activate.focus();
     fireEvent.keyDown(activate, { key: "ArrowLeft" });
     expect(screen.getByRole("tab", { name: "Talent" }).getAttribute("aria-selected")).toBe("true");
-    expect(await screen.findByText(/Overlap with Guadalajara's mainstream/)).toBeTruthy();
+    expect(await screen.findByText(/Shared taste with Guadalajara's mainstream/)).toBeTruthy();
   });
   it("Culture and Delight tabs say the briefs come after saving a campaign", async () => {
     renderAt("/tours/playbook/4005539?sample=1");

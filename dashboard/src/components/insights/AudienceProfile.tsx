@@ -12,16 +12,16 @@ export function AudienceProfile({ profile }: { profile: ArtistProfile }) {
     <section aria-label="Audience profile" className="flex min-w-0 flex-col gap-3 rounded-[14px] bg-paper p-3 lg:p-4">
       <h2 className="font-title text-[20px] leading-tight text-canvas-text">Audience profile</h2>
       {bars.length === 0 ? (
-        <p className="text-[14px] text-canvas-muted">Qloo returned no age breakdown for this artist</p>
+        <p className="text-[14px] text-canvas-muted">Qloo returned no age or gender breakdown for this artist</p>
       ) : (
         <>
-          <p className="text-[12px] text-canvas-muted">Index vs. the average listener: over-index to the right, under-index to the left.</p>
+          <p className="text-[12px] text-canvas-muted">Over/under-index vs average (Qloo)</p>
           <ul className="flex flex-col gap-2">
             {bars.map((b) => {
               const over = b.index >= 0;
               const w = (Math.abs(b.index) / max) * 50;
               return (
-                <li key={b.label} data-testid="demo-bar" className="grid min-h-8 grid-cols-[3.5rem_1fr_6.5rem] items-center gap-2 text-[13px]">
+                <li key={`${b.group}-${b.label}`} data-testid="demo-bar" className="grid min-h-8 grid-cols-[6rem_1fr_6.5rem] items-center gap-2 text-[13px]">
                   <span className="text-canvas-text">{b.label}</span>
                   <svg viewBox="0 0 100 10" preserveAspectRatio="none" className="h-3 w-full" role="img" aria-label={`${b.label}: ${over ? "over" : "under"}-index ${fmt(b.index)}`}>
                     <rect x="0" y="0" width="100" height="10" fill="var(--color-canvas)" />

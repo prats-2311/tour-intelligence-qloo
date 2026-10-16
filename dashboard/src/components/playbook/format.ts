@@ -2,7 +2,7 @@ import type { CardKind, PlaybookCard, RemovalReason } from "@/lib/qloo/types";
 
 export const fit = (v: unknown): string => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(2) : "—");
 export const pct = (share: number): string => `${Math.round(share * 100)}%`;
-export const liftLine = (o: number, a: number, lift: number): string => `${o.toFixed(2)} × ${a.toFixed(2)} = ${lift.toFixed(2)}`;
+export const liftLine = (sharedTaste: number, a: number, lift: number): string => `${sharedTaste.toFixed(2)} × ${a.toFixed(2)} = ${lift.toFixed(2)}`;
 
 export const CARD_TITLE: Record<CardKind | "this_week", string> = {
   sponsors: "Sponsors", merch: "Merch", promo_zones: "Promo zones", local_moment: "Local moment",

@@ -4,14 +4,14 @@ import { LONG_CITY_NAMES } from "./lumenVale";
 // Illustrative sample data for the labelled Lumen Vale showcase. Only neighbourhood and venue names are real.
 type Ent = [name: string, affinity: number, type?: string];
 type Zone = [label: string, lat: number, lon: number, share: number];
-type Co = [name: string, overlap: number, localAffinity: number];
+type Co = [name: string, sharedTaste: number, localAffinity: number];
 type ClaimRow = [text: string, refs: string[], entities: string[], numbers: number[]];
 type RemovedRow = [...ClaimRow, reason: CardClaims["removed"][number]["reason"], detail: string];
 type WeekRow = [text: string, date: string, citations: string[], entities: string[]];
 
 interface CityData {
   id: string; name: string; country: string; code: string;
-  sponsors: Ent[]; zones: Zone[]; local: Ent[]; venues: Ent[]; co: Co[]; proxies: Ent[]; overlap: number;
+  sponsors: Ent[]; zones: Zone[]; local: Ent[]; venues: Ent[]; co: Co[]; proxies: Ent[]; sharedTaste: number;
   merch: MerchDirection;
   thought: string;
   claims: Partial<Record<CardKind, ClaimRow[]>>;
@@ -25,7 +25,7 @@ const WINDOW = { start: "2027-03-12", end: "2027-04-18" };
 
 const ref = (tool: string, k: string) => ({ tool, cacheKey: `sample-${k}` });
 const ents = (code: string, kind: string, list: Ent[]) =>
-  list.map(([name, affinity, type], index) => ({ entityId: `sample-${code}-${kind}-${index}`, name, ...(type ? { type } : {}), affinity, popularity: 0.5, index }));
+  list.map(([name, affinity, type], index) => ({ entityId: `sample-${code}-${kind}-${index}`, name, ...(type ? { type: `urn:entity:${type}`, category: type } : {}), affinity, popularity: 0.5, index }));
 const claim = ([text, refs, entities, numbers]: ClaimRow): Claim =>
   ({ text, evidence_refs: refs, numbers, entities: entities.map((name) => ({ name })) });
 
@@ -37,14 +37,14 @@ const CITIES: CityData[] = [
     local: [["Bruma Nocturna", 0.88, "artist"], ["Cine Foro", 0.84, "place"], ["Mercado San Juan de Dios", 0.80, "place"]],
     venues: [["C3 Stage", 0.91], ["Teatro Diana", 0.86], ["Foro Independencia", 0.79]],
     co: [["Bruma Nocturna", 0.34, 0.88], ["Sala Cóndor", 0.29, 0.81], ["Hilo Rojo", 0.22, 0.74]],
-    proxies: [["Los Arcos del Sur", 0.69], ["Banda Altamira", 0.66], ["Clara Sol", 0.61]], overlap: 0.12,
+    proxies: [["Los Arcos del Sur", 0.69], ["Banda Altamira", 0.66], ["Clara Sol", 0.61]], sharedTaste: 0.12,
     merch: { title: "Jacaranda season", palette: ["lilac", "bone"], motifs: ["papel-picado line motif"], products: ["heavyweight boxy tee", "tote"] },
     thought: "Sponsor fit is high and concentrated in a few brands; fan heat sits in three adjacent colonias, so posters and the venue can share one walkable zone.",
     claims: {
       sponsors: [["Cerro Alto Mezcal is the strongest sponsor fit at 0.91.", ["sponsors:0"], ["Cerro Alto Mezcal"], [0.91]], ["Brisa Vinyl Bar follows at 0.87.", ["sponsors:1"], ["Brisa Vinyl Bar"], [0.87]]],
       promo_zones: [["Colonia Americana holds 38% of in-city fan heat.", ["promo_zones:0"], ["Colonia Americana"], [38]], ["Chapultepec adds another 26%.", ["promo_zones:1"], ["Chapultepec"], [26]]],
       venue_fit: [["C3 Stage ranks first for crowd fit at 0.91.", ["venue_fit:0"], ["C3 Stage"], [0.91]]],
-      co_billing: [["Bruma Nocturna gives the best co-bill lift, 0.34 overlap × 0.88 local affinity.", ["co_billing:0"], ["Bruma Nocturna"], [0.34, 0.88]]],
+      co_billing: [["Bruma Nocturna gives the best co-bill lift, 0.34 shared taste × 0.88 local affinity.", ["co_billing:0"], ["Bruma Nocturna"], [0.34, 0.88]]],
       local_moment: [["Fans here also love Bruma Nocturna (0.88).", ["local_moment:0"], ["Bruma Nocturna"], [0.88]]],
     },
     removed: {
@@ -65,15 +65,15 @@ const CITIES: CityData[] = [
     local: [["Neblina Azul", 0.84, "artist"], ["Ópera de Arame", 0.81, "place"], ["Jardim Botânico de Curitiba", 0.78, "place"]],
     venues: [["Ópera de Arame", 0.82], ["Teatro Guaíra", 0.79], ["Tork n' Roll", 0.74]],
     co: [["Neblina Azul", 0.31, 0.84], ["Sala Fria", 0.27, 0.77]],
-    proxies: [["Banda Paraná", 0.64], ["Duo Capivara", 0.58]], overlap: 0.15,
+    proxies: [["Banda Paraná", 0.64], ["Duo Capivara", 0.58]], sharedTaste: 0.15,
     merch: { title: "Garoa", palette: ["lagoon", "bone"], motifs: ["araucária pine silhouette"], products: ["rain shell", "tote"] },
     thought: "Activation is strong but Qloo returned no neighbourhood heat, so promo zoning has to wait for a wider query; venues and sponsors carry the plan.",
     claims: {
       sponsors: [["Pinhão Roasters leads sponsor fit at 0.86.", ["sponsors:0"], ["Pinhão Roasters"], [0.86]]],
       venue_fit: [["Ópera de Arame is the best crowd fit at 0.82.", ["venue_fit:0"], ["Ópera de Arame"], [0.82]]],
-      co_billing: [["Neblina Azul is the strongest support act, 0.31 overlap × 0.84 local affinity.", ["co_billing:0"], ["Neblina Azul"], [0.31, 0.84]]],
+      co_billing: [["Neblina Azul is the strongest support act, 0.31 shared taste × 0.84 local affinity.", ["co_billing:0"], ["Neblina Azul"], [0.31, 0.84]]],
       local_moment: [["Fans here also love Neblina Azul (0.84).", ["local_moment:0"], ["Neblina Azul"], [0.84]]],
-      talent: [["Overlap with the city's mainstream is low at 0.15, so lean into the niche.", ["talent:overlap"], [], [0.15]]],
+      talent: [["Shared taste with the city's mainstream is low at 0.15, so lean into the niche.", ["talent:sharedTaste"], [], [0.15]]],
     },
     removed: {
       sponsors: [["Garoa Outerwear is the top sponsor.", ["sponsors:9"], ["Garoa Outerwear"], [], "dangling_ref", "sponsors:9"]],
@@ -88,7 +88,7 @@ const CITIES: CityData[] = [
     local: [["Eco Lunar", 0.81, "artist"], ["Cineteca Nacional", 0.79, "place"], ["Mercado Roma", 0.75, "place"]],
     venues: [["Foro Indie Rocks", 0.80], ["Lunario", 0.77], ["Teatro Metropólitan", 0.72]],
     co: [["Eco Lunar", 0.30, 0.81], ["Mar de Fondo", 0.26, 0.78]],
-    proxies: [["Grupo Centella", 0.67], ["Rayo Norte", 0.60]], overlap: 0.10,
+    proxies: [["Grupo Centella", 0.67], ["Rayo Norte", 0.60]], sharedTaste: 0.10,
     merch: { title: "Ciudad de neón", palette: ["vermilion", "bone"], motifs: ["metro-map lines"], products: ["long-sleeve tee", "poster"] },
     thought: "The largest market; fan heat spreads across Roma Norte and Condesa, and the venue shortlist favours mid-size rooms.",
     claims: {
@@ -96,7 +96,7 @@ const CITIES: CityData[] = [
       promo_zones: [["Roma Norte holds 31% of in-city fan heat.", ["promo_zones:0"], ["Roma Norte"], [31]], ["Condesa adds 24%.", ["promo_zones:1"], ["Condesa"], [24]]],
       venue_fit: [["Foro Indie Rocks ranks first at 0.80.", ["venue_fit:0"], ["Foro Indie Rocks"], [0.80]]],
       co_billing: [["Eco Lunar gives the best co-bill lift, 0.30 × 0.81.", ["co_billing:0"], ["Eco Lunar"], [0.30, 0.81]]],
-      talent: [["Overlap with the city's mainstream is 0.10.", ["talent:overlap"], [], [0.10]]],
+      talent: [["Shared taste with the city's mainstream is 0.10.", ["talent:sharedTaste"], [], [0.10]]],
     },
     removed: {
       local_moment: [["Fans here love Café Tacuba.", ["local_moment:0"], ["Café Tacuba"], [], "unsupported_entity", "Café Tacuba"]],
@@ -114,7 +114,7 @@ const CITIES: CityData[] = [
     local: [["Céu Aberto", 0.78, "artist"], ["Cinemateca Brasileira", 0.76, "place"], ["Mercado de Pinheiros", 0.72, "place"]],
     venues: [["Cine Joia", 0.78], ["Audio", 0.74], ["Casa Natura Musical", 0.71]],
     co: [["Céu Aberto", 0.28, 0.78], ["Linha Sete", 0.24, 0.73]],
-    proxies: [["Trio Avenida", 0.63], ["Samba Leve", 0.57]], overlap: 0.09,
+    proxies: [["Trio Avenida", 0.63], ["Samba Leve", 0.57]], sharedTaste: 0.09,
     merch: { title: "Garoa paulistana", palette: ["pitch green", "bone"], motifs: ["Copan building curves"], products: ["tee", "bucket hat"] },
     thought: "Heat clusters in Pinheiros and Vila Madalena; sponsor fit is moderate, so co-billing carries more of the plan.",
     claims: {
@@ -135,7 +135,7 @@ const byId = (id: string): CityData | undefined => CITIES.find((c) => c.id === i
 function cardsFor(c: CityData): PlaybookCard[] {
   const k = (n: string) => `${c.code}-${n}`;
   const co = c.co
-    .map(([name, overlap, localAffinity], i) => ({ name, entityId: `sample-${c.code}-co-${i}`, overlap, localAffinity, lift: Math.round(overlap * localAffinity * 10000) / 10000, ref: ref("qloo_compare_audiences", `${c.code}-co-${i}`) }))
+    .map(([name, sharedTaste, localAffinity], i) => ({ name, entityId: `sample-${c.code}-co-${i}`, sharedTaste, localAffinity, lift: Math.round(sharedTaste * localAffinity * 10000) / 10000, sharedTags: TAGS.slice(i % 3, (i % 3) + 3).map(([t]) => t), ref: ref("qloo_compare_audiences", `${c.code}-co-${i}`) }))
     .sort((a, b) => b.lift - a.lift);
   const zones = c.zones.map(([label, lat, lon, share], index) => ({ label, lat, lon, affinity: share, index, share }));
   return [
@@ -147,7 +147,7 @@ function cardsFor(c: CityData): PlaybookCard[] {
     { kind: "local_moment", status: "ok", items: ents(c.code, "local", c.local), refs: [ref("qloo_recommend", k("2"))], warnings: [] },
     { kind: "venue_fit", status: "ok", items: ents(c.code, "venue", c.venues), refs: [ref("qloo_rank", k("rank"))], warnings: [] },
     { kind: "co_billing", status: "ok", items: co, refs: c.co.map((_, i) => ref("qloo_compare_audiences", k(`co-${i}`))), warnings: [] },
-    { kind: "talent", status: "ok", items: ents(c.code, "talent", c.proxies), refs: [ref("qloo_recommend", k("3"))], warnings: [], summary: { overlap: c.overlap } },
+    { kind: "talent", status: "ok", items: ents(c.code, "talent", c.proxies), refs: [ref("qloo_recommend", k("3"))], warnings: [], summary: { sharedTaste: c.sharedTaste, sharedTags: TAGS.slice(0, 3).map(([t]) => t) } },
   ];
 }
 

@@ -13,7 +13,7 @@ function sentenceFor(tool: string, a: Record<string, unknown>): string {
     case "qloo_trends": return "Checking momentum over the last 90 days";
     case "qloo_where_popular": return `Finding where fans concentrate in ${String(a.within ?? "the region")}`;
     case "qloo_rank": return `Ranking venues${where(a) ? ` in ${where(a)}` : ""}`;
-    case "qloo_compare_audiences": return "Comparing audience overlap with a possible support act";
+    case "qloo_compare_audiences": return "Comparing shared taste with a possible support act";
     case "qloo_find_tags": return `Searching Qloo tags for "${String(a.query ?? "")}"`;
     case "qloo_recommend": {
       const t = String(a.target_type ?? "");

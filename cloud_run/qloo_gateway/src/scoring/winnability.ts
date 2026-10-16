@@ -16,6 +16,6 @@ export function verdict(fan: Score, act: Score, win: Score): Verdict {
   return "skip";
 }
 
-export function coBillLift(overlap: number, localAffinity: number): number {
-  return Math.min(1, Math.max(0, overlap * localAffinity));
+export function coBillLift(sharedTaste: number, localAffinity: number): number {
+  return Math.min(1, Math.max(0, sharedTaste * localAffinity));
 }

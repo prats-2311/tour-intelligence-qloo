@@ -23,7 +23,7 @@ export interface PlaybookCard {
   items: Array<Record<string, unknown>>;
   refs: EvidenceRef[];
   warnings: DataWarning[];
-  summary?: Record<string, number | null>;
+  summary?: Record<string, number | null | string[]>;
 }
 export interface Claim { text: string; entities: Array<{ name: string; entityId?: string }>; numbers: number[]; evidence_refs: string[] }
 export type RemovalReason = "no_refs" | "dangling_ref" | "unsupported_entity" | "unsupported_number" | "no_checkable_content";
@@ -40,7 +40,7 @@ export type ThisWeek =
 export interface ArtistProfile {
   demographics: unknown[];
   tags: Array<{ name: string; affinity: number | null }>;
-  trends: unknown;
+  trends: Array<{ date: string; value: number }>;
   refs: EvidenceRef[];
   warnings: DataWarning[];
 }

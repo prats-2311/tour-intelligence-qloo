@@ -85,11 +85,12 @@ describe("playbook cards", () => {
   it("co-billing shows both lift factors", () => {
     render(<CardBody card={card("co_billing")} city="Guadalajara" />);
     expect(screen.getByText("0.34 × 0.88 = 0.30")).toBeTruthy();
-    expect(screen.getByText("lift = audience overlap × local affinity")).toBeTruthy();
+    expect(screen.getByText("lift = shared taste × local affinity")).toBeTruthy();
   });
-  it("talent shows overlap and the proxy list", () => {
+  it("talent shows shared taste, tags and the proxy list", () => {
     render(<CardBody card={card("talent")} city="Guadalajara" />);
-    expect(screen.getByText("Overlap with Guadalajara's mainstream: 0.12")).toBeTruthy();
+    expect(screen.getByText("Shared taste with Guadalajara's mainstream: 0.12")).toBeTruthy();
+    expect(screen.getByText("dream pop")).toBeTruthy();
     expect(screen.getByText("City mainstream = top artists in the city without the artist signal")).toBeTruthy();
   });
   it("local moment labels entity types", () => {

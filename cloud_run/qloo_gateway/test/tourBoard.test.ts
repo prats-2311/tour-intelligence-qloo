@@ -115,6 +115,7 @@ describe("runTourBoard", () => {
     const events = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => (t === "qloo_rank" ? liveEnv("rank-needs-input") : happy(t, a))), cities: CITIES }));
     const c = (events.filter((e) => e.type === "city_scored") as Array<{ city: { activation: { components: Record<string, number> } } }>)[0]!.city;
     expect(c.activation.components.venue_fit).toBeUndefined();
+    expect((events.filter((e) => e.type === "city_scored") as Array<{ city: { warnings: unknown[] } }>)[0]!.city.warnings).toContainEqual(expect.objectContaining({ tool: "qloo_rank", kind: "partial", message: "venue ranking unresolved — showing place recommendations" }));
     expect(events.at(-1)?.type).toBe("done");
   });
 

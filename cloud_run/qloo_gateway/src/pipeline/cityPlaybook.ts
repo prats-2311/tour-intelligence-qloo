@@ -89,7 +89,7 @@ export async function* runCityPlaybook(
 
     const { raw } = a;
     const sponsors = extractEntities(raw.brands.envelope);
-    const artistTags = extractMusicTags(tags.envelope);
+    const artistTags = extractMusicTags(tags.envelope).map((t, index) => ({ ...t, entityId: t.id, index }));
     const cards: PlaybookCard[] = [
       card("sponsors", sponsors, [ref("qloo_recommend", raw.brands)], warningsFor("qloo_recommend", raw.brands)),
       card("merch", artistTags, [ref("qloo_entity_tags", tags), ref("qloo_recommend", raw.brands)],

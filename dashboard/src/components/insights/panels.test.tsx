@@ -15,11 +15,14 @@ const profileEvt = LUMEN_VALE_SAMPLE.find((e) => e.type === "artist_profile") as
 const { type: _t, ...profile } = profileEvt;
 const P = profile as ArtistProfile;
 
+/** F1 compare shape: shared tags carry query.score; the first three names are shown. */
+const tagResults = (score: number) => ({ a: [], b: [], matchEntities: [], tags: ["dream pop", "synthwave", "shoegaze"].map((name) => ({ name, query: { score } })) });
+
 afterEach(() => { cleanup(); resetPlaybooks(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 const playbookEvents = async function* (): AsyncGenerator<GatewayEvent> {
   yield { type: "playbook", playbook: { city: { name: "Guadalajara", country: "MX" }, cards: [
-    { kind: "local_moment", status: "ok", refs: [], warnings: [], items: [{ name: "Bruma Nocturna", type: "urn:entity:artist", affinity: 0.9 }] },
+    { kind: "local_moment", status: "ok", refs: [], warnings: [], items: [{ name: "Bruma Nocturna", type: "urn:entity", category: "artist", affinity: 0.9 }] },
     { kind: "sponsors", status: "ok", refs: [], warnings: [], items: [{ name: "Cerro Alto Mezcal", affinity: 0.91 }] },
   ] } };
   yield { type: "done", summary: {} };
@@ -28,7 +31,9 @@ const playbookEvents = async function* (): AsyncGenerator<GatewayEvent> {
 describe("insight panels", () => {
   it("audience bars and tags", () => {
     render(<AudienceProfile profile={P} />);
-    expect(screen.getAllByTestId("demo-bar")).toHaveLength(6);
+    expect(screen.getAllByTestId("demo-bar")).toHaveLength(8);
+    expect(screen.getByText("Over/under-index vs average (Qloo)")).toBeTruthy();
+    expect(screen.getByText("Women")).toBeTruthy();
     expect(screen.getByText("dream pop")).toBeTruthy();
   });
   it("tag with null affinity renders without NaN/null", () => {
@@ -40,10 +45,11 @@ describe("insight panels", () => {
     const { container, rerender } = render(<MomentumChart profile={P} />);
     expect(container.querySelector("path")).toBeTruthy();
     expect(container.querySelector("svg")?.getAttribute("role")).toBe("img");
-    rerender(<MomentumChart profile={{ ...P, trends: null }} />);
-    expect(screen.getByText("Qloo returned no trend series for this artist")).toBeTruthy();
-    rerender(<MomentumChart profile={{ ...P, trends: "garbage" }} />);
-    expect(screen.getByText("Qloo returned no trend series for this artist")).toBeTruthy();
+    rerender(<MomentumChart profile={{ ...P, trends: [] }} />);
+    expect(screen.getByText("No trend data from Qloo for this window")).toBeTruthy();
+    expect(container.querySelector("path")).toBeNull();
+    rerender(<MomentumChart profile={{ ...P, trends: "garbage" as unknown as ArtistProfile["trends"] }} />);
+    expect(screen.getByText("No trend data from Qloo for this window")).toBeTruthy();
   });
   it("promo zones with shares", () => {
     render(<PromoZones city={SAMPLE_CITIES[2]!} />);
@@ -59,27 +65,28 @@ describe("insight panels", () => {
     fireEvent.click(btn);
     expect(spy).not.toHaveBeenCalled();
   });
-  it("artist compare: finite overlap shown, else honest, errors visible, 1-call note", async () => {
+  it("artist compare: shared taste shown, else honest, errors visible, 1-call note", async () => {
     const spy = vi.spyOn(client, "callQlooTool")
-      .mockResolvedValueOnce({ envelope: { status: "ok", results: [{ overlap: 0.42 }] }, cached: true, stale: true })
+      .mockResolvedValueOnce({ envelope: { status: "ok", results: tagResults(0.42) }, cached: true, stale: true })
       .mockResolvedValueOnce({ envelope: { data: { stuff: 1 } }, cached: false, stale: false });
     render(<ArtistCompare artist={{ entityId: "E", name: "Lumen Vale" }} source="live" />);
     expect(screen.getByText("Each comparison uses 1 Qloo call")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Comparison artist 1"), { target: { value: "Bruma" } });
     fireEvent.change(screen.getByLabelText("Comparison artist 2"), { target: { value: "Other" } });
     fireEvent.click(screen.getByRole("button", { name: "Compare" }));
-    expect(await screen.findByText("42%")).toBeTruthy();
+    expect(await screen.findByText("0.42")).toBeTruthy();
+    expect(screen.getByText("shared taste · dream pop, synthwave, shoegaze")).toBeTruthy();
     expect(screen.getByText("From cache")).toBeTruthy();
     expect(screen.getByText("Stale")).toBeTruthy();
-    expect(await screen.findByText("Overlap unavailable")).toBeTruthy();
+    expect(await screen.findByText("Not enough shared taste data")).toBeTruthy();
     expect(spy).toHaveBeenCalledWith("qloo_compare_audiences", { group_a: ["E"], group_b: ["Bruma"] }, expect.anything());
   });
-  it.each([[{ overlap: 0 }, "0%"], [{ overlap: 1 }, "100%"], [{ overlap: 1.2 }, null], [{ overlap: 50 }, null], [{ overlap: -0.1 }, null]])("overlap %j -> %s", async (results, shown) => {
+  it.each([[tagResults(0), "0.00"], [tagResults(1), "1.00"], [{ a: [], b: [], tags: [] }, null], [{ tags: [{ name: "x", query: { score: 1.2 } }] }, null], [{ tags: [{ name: "x", query: { score: 0.1 } }] }, "0.10"]])("shared taste %j -> %s", async (results, shown) => {
     vi.spyOn(client, "callQlooTool").mockResolvedValue({ envelope: { status: "ok", results }, cached: false, stale: false });
     render(<ArtistCompare artist={{ entityId: "E", name: "L" }} source="live" />);
     fireEvent.change(screen.getByLabelText("Comparison artist 1"), { target: { value: "B" } });
     fireEvent.click(screen.getByRole("button", { name: "Compare" }));
-    expect(await screen.findByText(shown ?? "Overlap unavailable")).toBeTruthy();
+    expect(await screen.findByText(shown ?? "Not enough shared taste data")).toBeTruthy();
   });
   it("artist compare shows error-status envelope message", async () => {
     vi.spyOn(client, "callQlooTool").mockResolvedValue({ envelope: { status: "error", summary: "Qloo is down" }, cached: false, stale: false });
@@ -87,7 +94,7 @@ describe("insight panels", () => {
     fireEvent.change(screen.getByLabelText("Comparison artist 1"), { target: { value: "B" } });
     fireEvent.click(screen.getByRole("button", { name: "Compare" }));
     expect(await screen.findByText("Qloo is down")).toBeTruthy();
-    expect(screen.queryByText("Overlap unavailable")).toBeNull();
+    expect(screen.queryByText("Not enough shared taste data")).toBeNull();
   });
   it("artist compare surfaces thrown errors", async () => {
     vi.spyOn(client, "callQlooTool").mockRejectedValue(new Error("Unexpected token <"));
@@ -171,12 +178,12 @@ describe("insight panels", () => {
   });
   it("artist compare keys results uniquely even when the same name is compared twice", async () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
-    vi.spyOn(client, "callQlooTool").mockResolvedValue({ envelope: { status: "ok", results: [{ overlap: 0.3 }] }, cached: false, stale: false });
+    vi.spyOn(client, "callQlooTool").mockResolvedValue({ envelope: { status: "ok", results: tagResults(0.3) }, cached: false, stale: false });
     render(<ArtistCompare artist={{ entityId: "E", name: "L" }} source="live" />);
     fireEvent.change(screen.getByLabelText("Comparison artist 1"), { target: { value: "Bruma" } });
     fireEvent.change(screen.getByLabelText("Comparison artist 2"), { target: { value: "Bruma" } });
     fireEvent.click(screen.getByRole("button", { name: "Compare" }));
-    await waitFor(() => expect(screen.getAllByText("30%")).toHaveLength(2));
+    await waitFor(() => expect(screen.getAllByText("0.30")).toHaveLength(2));
     expect(err.mock.calls.some((c) => String(c[0]).includes("same key"))).toBe(false);
   });
   it("cross-domain taste: a stream that ends without done/error/playbook is a lost connection with Retry", async () => {

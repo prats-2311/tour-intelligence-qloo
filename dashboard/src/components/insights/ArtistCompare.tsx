@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { envelopeError, extractOverlap } from "@/lib/qloo/adapters";
+import { fit } from "@/components/playbook/format";
+import { envelopeError, extractSharedTaste } from "@/lib/qloo/adapters";
 import { callQlooTool } from "@/lib/qloo/client";
 
-type Result = { id: number; name: string; overlap: number | null; error?: string; cached?: boolean; stale?: boolean };
-
-const pct = (v: number) => `${Math.round(v * 100)}%`;
+type Result = { id: number; name: string; sharedTaste: number | null; tags: string[]; error?: string; cached?: boolean; stale?: boolean };
 
 export function ArtistCompare({ artist, source }: { artist: { entityId: string; name: string }; source: "live" | "sample" | string }) {
   const sample = source === "sample";
@@ -28,10 +27,11 @@ export function ArtistCompare({ artist, source }: { artist: { entityId: string; 
       const id = ++nextId.current;
       try {
         const { envelope, cached, stale } = await callQlooTool("qloo_compare_audiences", { group_a: [artist.entityId], group_b: [name] }, { signal: c.signal });
-        out.push({ id, name, overlap: extractOverlap(envelope), error: envelopeError(envelope) ?? undefined, cached, stale });
+        const shared = extractSharedTaste(envelope);
+        out.push({ id, name, sharedTaste: shared.value, tags: shared.tags, error: envelopeError(envelope) ?? undefined, cached, stale });
       } catch (e) {
         if (c.signal.aborted) return;
-        out.push({ id, name, overlap: null, error: e instanceof Error ? e.message : "Comparison failed" });
+        out.push({ id, name, sharedTaste: null, tags: [], error: e instanceof Error ? e.message : "Comparison failed" });
       }
       setResults([...out]);
     }
@@ -54,13 +54,12 @@ export function ArtistCompare({ artist, source }: { artist: { entityId: string; 
       {results.length > 0 && (
         <ul className="flex flex-col gap-1" aria-live="polite">
           {results.map((r) => {
-            const shown = r.overlap !== null ? pct(r.overlap) : null;
             return (
               <li key={r.id} className="flex min-h-9 flex-wrap items-center justify-between gap-x-3 text-[14px]">
                 <span className="text-canvas-text">{artist.name} vs {r.name}{r.cached && <span className="ml-2 text-[12px] text-canvas-muted">From cache</span>}{r.stale && <span className="ml-2 text-[12px] text-state-stale">Stale</span>}</span>
                 {r.error ? <span role="alert" className="text-state-error">{r.error}</span>
-                  : shown ? <span className="font-mono tabular text-canvas-text">{shown}</span>
-                  : <span className="text-canvas-muted">Overlap unavailable</span>}
+                  : r.sharedTaste !== null ? <span className="text-right"><span className="font-mono tabular text-canvas-text">{fit(r.sharedTaste)}</span><span className="block text-[12px] text-canvas-muted">shared taste{r.tags.length > 0 ? ` · ${r.tags.join(", ")}` : ""}</span></span>
+                  : <span className="text-canvas-muted">Not enough shared taste data</span>}
               </li>
             );
           })}

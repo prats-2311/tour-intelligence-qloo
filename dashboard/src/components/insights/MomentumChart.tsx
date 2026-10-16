@@ -10,7 +10,7 @@ export function MomentumChart({ profile }: { profile: ArtistProfile }) {
     <section aria-label="Momentum" className="flex min-w-0 flex-col gap-3 rounded-[14px] bg-paper p-3 lg:p-4">
       <h2 className="font-title text-[20px] leading-tight text-canvas-text">Momentum</h2>
       {s.length === 0 ? (
-        <p className="text-[14px] text-canvas-muted">Qloo returned no trend series for this artist</p>
+        <p className="text-[14px] text-canvas-muted">No trend data from Qloo for this window</p>
       ) : (() => {
         const vs = s.map((p) => p.value);
         const lo = Math.min(...vs), hi = Math.max(...vs), span = hi - lo || 1;
