@@ -85,11 +85,18 @@ async function* readSse(res) {
   for (const data of frames()) { try { yield JSON.parse(data); } catch { /* skip */ } }
 }
 
-export async function record({ artist, regions, window, maxPlaybooks = 4, gatewayUrl, token, fetchImpl = fetch, now = new Date(), log = () => {}, warn = (m) => console.error(`warning: ${m}`) }) {
+// One budget per recording: the gateway caps Qloo calls per session id, so a shared daily id starves later runs.
+function makeSessionId(artist, now) {
+  const slug = String(artist).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40).replace(/-+$/g, "") || "artist";
+  const rand = Array.from({ length: 6 }, () => Math.floor(Math.random() * 36).toString(36)).join("");
+  return `showcase-${now.toISOString().slice(0, 10)}-${slug}-${rand}`;
+}
+
+export async function record({ artist, regions, window, maxPlaybooks = 4, gatewayUrl, token, fetchImpl = fetch, now = new Date(), sessionId = makeSessionId(artist, now), log = () => {}, warn = (m) => console.error(`warning: ${m}`) }) {
   if (!gatewayUrl) throw new Error("QLOO_GATEWAY_URL is not set");
   if (!token) throw new Error("no identity token");
   const base = gatewayUrl.replace(/\/+$/, "");
-  const headers = { authorization: `Bearer ${token}`, "x-session-id": `showcase-${now.toISOString().slice(0, 10)}` };
+  const headers = { authorization: `Bearer ${token}`, "x-session-id": sessionId };
   // Errors name the route and status only, never a response body that could echo a header.
   const call = async (path, init) => {
     const res = await fetchImpl(`${base}${path}`, init);

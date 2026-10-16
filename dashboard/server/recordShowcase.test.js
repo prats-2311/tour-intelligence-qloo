@@ -51,7 +51,7 @@ describe("record-showcase", () => {
     const q = new URL(pb.url).searchParams;
     expect([q.get("artist"), q.get("artistEntityId"), q.get("city"), q.get("country")]).toEqual(["Test Artist", "E1", "Beta", "MX"]);
     expect(pb.init.headers.authorization).toBe(`Bearer ${TOKEN}`);
-    expect(pb.init.headers["x-session-id"]).toBe("showcase-2026-10-16");
+    expect(pb.init.headers["x-session-id"]).toMatch(/^showcase-2026-10-16-test-artist-[a-z0-9]{6}$/);
     expect(new URL(calls.find((c) => c.url.includes("/v1/this-week")).url).searchParams.get("start")).toBe("2027-03-12");
   });
 
@@ -116,5 +116,30 @@ describe("record-showcase", () => {
     const out = await record({ artist: "Test Artist", regions: ["Mexico"], maxPlaybooks: 4, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl, warn: (m) => warnings.push(m) });
     expect(out.playbooks).toEqual({});
     expect(warnings).toHaveLength(2);
+  });
+
+  describe("session id", () => {
+    const run = async (artist, extra = {}) => {
+      const calls = [];
+      await record({ artist, regions: ["Mexico"], maxPlaybooks: 1, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl: mockFetch(calls), now: new Date("2026-10-16T10:00:00Z"), ...extra });
+      return calls[0].init.headers["x-session-id"];
+    };
+
+    it("is unique per record() call even with the same day and artist", async () => {
+      const a = await run("Test Artist");
+      const b = await run("Test Artist");
+      expect(a).not.toBe(b);
+    });
+
+    it("is readable, well-formed and at most 128 chars for a very long artist name", async () => {
+      const id = await run("Ä ".repeat(100) + "x".repeat(200));
+      expect(id).toMatch(/^showcase-\d{4}-\d{2}-\d{2}-[a-z0-9-]+-[a-z0-9]{6}$/);
+      expect(id.length).toBeLessThanOrEqual(128);
+      expect((await run("Test Artist!!")).startsWith("showcase-2026-10-16-test-artist-")).toBe(true);
+    });
+
+    it("uses an injected sessionId as given", async () => {
+      expect(await run("Test Artist", { sessionId: "pinned-123" })).toBe("pinned-123");
+    });
   });
 });
