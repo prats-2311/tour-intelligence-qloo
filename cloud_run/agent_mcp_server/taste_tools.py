@@ -14,7 +14,7 @@ from gateway import GatewayError, call_tool, stream_events
 
 _NAME = re.compile(r"[\w '.,&()-]{1,100}")
 _INTEGRITY = "Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals."
-_FORMULA = "lift = audience overlap × local affinity"
+_FORMULA = "lift = shared taste × local affinity"
 
 
 def _check_name(label: str, value) -> str:
@@ -28,18 +28,24 @@ def _check_place(city, country) -> tuple[str, str]:
     return _check_name("city", city), _check_name("country", country)
 
 
+def _candidates(env: dict) -> list[dict]:
+    """Candidates from `issues` or the live `resolution.issues` shape."""
+    resolution = env.get("resolution") if isinstance(env.get("resolution"), dict) else {}
+    issues = env.get("issues") or resolution.get("issues") or []
+    return [
+        {"id": c.get("id"), "name": c.get("name")}
+        for issue in issues if isinstance(issue, dict)
+        for c in issue.get("candidates") or [] if isinstance(c, dict)
+    ]
+
+
 def _resolve_artist(artist: str, *, session_id: str, token_fn) -> dict:
     """Returns {"id", "name"} or an early-return dict with a "status" key."""
     env = call_tool("qloo_describe", {"entity": artist, "type": "artist"}, session_id=session_id, token_fn=token_fn)["envelope"]
     env = env if isinstance(env, dict) else {}
     status = env.get("status")
     if status == "needs_input":
-        candidates = [
-            {"id": c.get("id"), "name": c.get("name")}
-            for issue in env.get("issues") or [] if isinstance(issue, dict)
-            for c in issue.get("candidates") or [] if isinstance(c, dict)
-        ]
-        return {"status": "needs_input", "candidates": candidates}
+        return {"status": "needs_input", "candidates": _candidates(env)}
     results = env.get("results")
     first = results[0] if isinstance(results, list) and results and isinstance(results[0], dict) else None
     if status == "error" or not first or not first.get("entity_id"):
@@ -164,7 +170,8 @@ def suggest_support_acts(artist: str, city: str, country: str, *, session_id: st
     if cards is None:
         return who
     acts = [
-        {"name": i.get("name"), "overlap": i.get("overlap"), "local_affinity": i.get("localAffinity"), "lift": i.get("lift")}
+        {"name": i.get("name"), "shared_taste": i.get("sharedTaste"), "local_affinity": i.get("localAffinity"),
+         "lift": i.get("lift"), "shared_tags": i.get("sharedTags") if isinstance(i.get("sharedTags"), list) else []}
         for i in _card_items(cards, "co_billing")
     ]
     return {"status": "ok", "artist": who, "acts": acts, "formula": _FORMULA, "integrity": _INTEGRITY}
@@ -175,7 +182,7 @@ def get_local_moment(artist: str, city: str, country: str, *, session_id: str, t
     who, cards = _playbook_cards(artist, city, country, session_id=session_id, token_fn=token_fn)
     if cards is None:
         return who
-    moments = [{"name": i.get("name"), "type": i.get("type"), "affinity": i.get("affinity")} for i in _card_items(cards, "local_moment")]
+    moments = [{"name": i.get("name"), "category": i.get("category"), "affinity": i.get("affinity")} for i in _card_items(cards, "local_moment")]
     return {"status": "ok", "artist": who, "moments": moments, "integrity": _INTEGRITY}
 
 
@@ -189,13 +196,36 @@ def rank_venues(artist: str, city: str, country: str, venues: list[str], *, sess
     who = _resolve_artist(artist, session_id=session_id, token_fn=token_fn)
     if "status" in who:
         return who
+    ids: dict[str, str] = {}  # entity id -> the venue name the caller gave
+    unresolved: list[str] = []
+    candidates: list[dict] = []
+    for venue in venues:
+        text = f"{venue} {city}"
+        d = call_tool("qloo_describe", {"entity": text if len(text) <= 100 else venue, "type": "place"},
+                      session_id=session_id, token_fn=token_fn)["envelope"]
+        d = d if isinstance(d, dict) else {}
+        results = d.get("results")
+        first = results[0] if isinstance(results, list) and results and isinstance(results[0], dict) else None
+        if d.get("status") == "ok" and first and first.get("entity_id") and first["entity_id"] not in ids:
+            ids[first["entity_id"]] = venue
+        else:
+            unresolved.append(venue)  # ambiguous or unknown: never guess between candidates
+            candidates += _candidates(d)
+    if not ids:
+        return {"status": "needs_input", "candidates": candidates, "unresolved": unresolved}
     env = call_tool(
         "qloo_rank",
-        {"options": venues, "option_type": "place", "signals": [who["id"]], "signal_location": f"{city}, {country}"},
+        {"options": list(ids), "option_type": "place", "signals": [who["id"]], "signal_location": f"{city}, {country}"},
         session_id=session_id, token_fn=token_fn,
     )["envelope"]
     env = env if isinstance(env, dict) else {}
+    if env.get("status") == "needs_input":
+        return {"status": "needs_input", "candidates": _candidates(env), "unresolved": unresolved}
     if env.get("status") == "error":
         return {"status": "error", "message": "Qloo could not rank those venues"}
-    ranked = [{"name": r.get("name"), "score": r.get("score")} for r in env.get("results") or [] if isinstance(r, dict)]
-    return {"status": "ok", "artist": who, "ranked": ranked, "note": "Scores are comparable only within this call", "integrity": _INTEGRITY}
+    ranked = [
+        {"name": ids.get(str(r.get("entity_id") or r.get("id")), r.get("name")), "affinity": r.get("affinity")}
+        for r in env.get("results") or [] if isinstance(r, dict)
+    ]
+    return {"status": "ok", "artist": who, "ranked": ranked, "unresolved": unresolved,
+            "note": "Affinity is comparable only within this call", "integrity": _INTEGRITY}

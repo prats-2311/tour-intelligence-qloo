@@ -37,7 +37,7 @@ def test_find_tour_markets_returns_scored_cities_with_integrity_line(monkeypatch
     assert "not a ticket forecast" in out["integrity"]
 
 def test_needs_input_returns_candidates(monkeypatch):
-    monkeypatch.setattr(taste_tools.requests, "post", MagicMock(return_value=_resp(payload={"envelope": {"status": "needs_input", "issues": [{"candidates": [{"id": "A", "name": "Lumen"}, {"id": "B", "name": "Lumen Vale"}]}]}})))
+    monkeypatch.setattr(taste_tools.requests, "post", MagicMock(return_value=_resp(payload={"envelope": {"status": "needs_input", "resolution": {"issues": [{"candidates": [{"id": "A", "name": "Lumen"}, {"id": "B", "name": "Lumen Vale"}]}]}}})))
     assert taste_tools.get_city_playbook("Lumen", "Guadalajara", "MX", **KW) == {"status": "needs_input", "candidates": [{"id": "A", "name": "Lumen"}, {"id": "B", "name": "Lumen Vale"}]}
 
 def test_budget_error_mid_board_is_partial(monkeypatch):
@@ -57,12 +57,12 @@ def test_rejects_unsafe_names_and_too_many_regions():
 
 def test_suggest_support_acts_shows_both_lift_factors(monkeypatch):
     playbook = {"type": "playbook", "playbook": {"city": {"name": "Guadalajara", "country": "MX"}, "cards": [
-        {"kind": "co_billing", "status": "ok", "items": [{"name": "Bruma Nocturna", "overlap": 0.34, "localAffinity": 0.88, "lift": 0.2992}], "refs": [], "warnings": []}]}}
+        {"kind": "co_billing", "status": "ok", "items": [{"name": "Bruma Nocturna", "entityId": "E1", "sharedTaste": 0.34, "localAffinity": 0.88, "lift": 0.2992, "sharedTags": ["dream pop", "shoegaze"]}], "refs": [], "warnings": []}]}}
     monkeypatch.setattr(taste_tools.requests, "post", MagicMock(return_value=_resp(payload=DESCRIBE)))
     monkeypatch.setattr(taste_tools.requests, "get", MagicMock(return_value=_resp(lines=_sse(playbook, {"type": "done", "summary": {}}))))
     out = taste_tools.suggest_support_acts("Lumen Vale", "Guadalajara", "MX", **KW)
-    assert out["acts"][0] == {"name": "Bruma Nocturna", "overlap": 0.34, "local_affinity": 0.88, "lift": 0.2992}
-    assert out["formula"] == "lift = audience overlap × local affinity"
+    assert out["acts"][0] == {"name": "Bruma Nocturna", "shared_taste": 0.34, "local_affinity": 0.88, "lift": 0.2992, "shared_tags": ["dream pop", "shoegaze"]}
+    assert out["formula"] == "lift = shared taste × local affinity"
 
 def test_gateway_failure_is_a_safe_runtime_error(monkeypatch):
     monkeypatch.setattr(taste_tools.requests, "post", MagicMock(return_value=_resp(status=502)))
@@ -94,20 +94,48 @@ def test_get_city_playbook_compacts_cards(monkeypatch):
 
 def test_get_local_moment_returns_items(monkeypatch):
     playbook = {"type": "playbook", "playbook": {"cards": [
-        {"kind": "local_moment", "status": "ok", "items": [{"name": "Mariachi night", "type": "event", "affinity": 0.7}]}]}}
+        {"kind": "local_moment", "status": "ok", "items": [{"name": "Mariachi night", "category": "event", "affinity": 0.7}]}]}}
     monkeypatch.setattr(taste_tools.requests, "post", MagicMock(return_value=_resp(payload=DESCRIBE)))
     monkeypatch.setattr(taste_tools.requests, "get", MagicMock(return_value=_resp(lines=_sse(playbook, {"type": "done", "summary": {}}))))
     out = taste_tools.get_local_moment("Lumen Vale", "Guadalajara", "MX", **KW)
-    assert out["moments"] == [{"name": "Mariachi night", "type": "event", "affinity": 0.7}]
+    assert out["moments"] == [{"name": "Mariachi night", "category": "event", "affinity": 0.7}]
 
-def test_rank_venues_sends_place_options_and_returns_scores(monkeypatch):
-    rank = {"envelope": {"status": "ok", "results": [{"name": "Teatro Diana", "score": 0.9}, {"name": "Arena", "score": 0.4}]}}
-    post = MagicMock(side_effect=[_resp(payload=DESCRIBE), _resp(payload=rank)])
+def _place(entity_id, name):
+    return _resp(payload={"envelope": {"status": "ok", "results": [{"entity_id": entity_id, "name": name}]}})
+
+# Live shape: tests/../.superpowers datacheck/09a-rank-names.json (resolution.issues, results []).
+AMBIGUOUS = {"envelope": {"status": "needs_input", "resolution": {"issues": [{"input": "Teatro Diana", "kind": "ambiguous", "candidates": [
+    {"id": "6DBC", "name": "Teatro Diana", "type": "urn:entity:place", "address": "Guadalajara"},
+    {"id": "C40E", "name": "Teatro Diana", "type": "urn:entity:place", "address": "Napoli"}]}]}, "results": []}}
+
+def test_rank_venues_resolves_ids_then_ranks_by_affinity(monkeypatch):
+    rank = {"envelope": {"status": "ok", "results": [{"entity_id": "V2", "name": "Arena Oficial", "affinity": 0.9}, {"entity_id": "V1", "name": "Teatro", "affinity": 0.4}]}}
+    post = MagicMock(side_effect=[_resp(payload=DESCRIBE), _place("V1", "Teatro"), _place("V2", "Arena Oficial"), _resp(payload=rank)])
     monkeypatch.setattr(taste_tools.requests, "post", post)
     out = taste_tools.rank_venues("Lumen Vale", "Guadalajara", "MX", ["Teatro Diana", "Arena"], **KW)
-    assert out["ranked"] == [{"name": "Teatro Diana", "score": 0.9}, {"name": "Arena", "score": 0.4}]
+    assert out["ranked"] == [{"name": "Arena", "affinity": 0.9}, {"name": "Teatro Diana", "affinity": 0.4}]
+    assert out["unresolved"] == []
     assert "comparable only within this call" in out["note"]
-    assert post.call_args.kwargs["json"] == {"options": ["Teatro Diana", "Arena"], "option_type": "place", "signals": ["Q1"], "signal_location": "Guadalajara, MX"}
+    bodies = [c.kwargs["json"] for c in post.call_args_list]
+    assert bodies[1] == {"entity": "Teatro Diana Guadalajara", "type": "place"}
+    assert bodies[3] == {"options": ["V1", "V2"], "option_type": "place", "signals": ["Q1"], "signal_location": "Guadalajara, MX"}
+
+def test_rank_venues_lists_ambiguous_names_as_unresolved_and_ranks_the_rest(monkeypatch):
+    rank = {"envelope": {"status": "ok", "results": [{"entity_id": "V2", "name": "Arena", "affinity": 0.5}]}}
+    post = MagicMock(side_effect=[_resp(payload=DESCRIBE), _resp(payload=AMBIGUOUS), _place("V2", "Arena"), _resp(payload=rank)])
+    monkeypatch.setattr(taste_tools.requests, "post", post)
+    out = taste_tools.rank_venues("Lumen Vale", "Guadalajara", "MX", ["Teatro Diana", "Arena"], **KW)
+    assert out["status"] == "ok" and out["unresolved"] == ["Teatro Diana"]
+    assert out["ranked"] == [{"name": "Arena", "affinity": 0.5}]
+    assert post.call_args.kwargs["json"]["options"] == ["V2"]
+
+def test_rank_venues_with_nothing_resolved_is_needs_input_and_never_ranks(monkeypatch):
+    post = MagicMock(side_effect=[_resp(payload=DESCRIBE), _resp(payload=AMBIGUOUS)])
+    monkeypatch.setattr(taste_tools.requests, "post", post)
+    out = taste_tools.rank_venues("Lumen Vale", "Guadalajara", "MX", ["Teatro Diana"], **KW)
+    assert out["status"] == "needs_input" and out["unresolved"] == ["Teatro Diana"]
+    assert [c["id"] for c in out["candidates"]] == ["6DBC", "C40E"]
+    assert post.call_count == 2
 
 def test_token_failure_does_not_leak(monkeypatch):
     def boom():

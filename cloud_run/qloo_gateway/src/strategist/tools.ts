@@ -48,7 +48,7 @@ export const STRATEGIST_DECLARATIONS: FunctionDeclaration[] = [
       signal_location: str("Place whose audience to rank for"), demographic: str("Demographic to focus on"),
       include_tags: list("Tags results must have", 10), exclude_tags: list("Tags results must not have", 10),
     }, ["options", "option_type"]),
-  decl("qloo_compare_audiences", "Compare the audiences of two groups of entities and report the taste tags they share, with a 0-1 score for each.",
+  decl("qloo_compare_audiences", "Compare the shared taste (common tags) of two groups of entities, with a 0-1 score for each shared tag.",
     { group_a: list("First group of entities", 10), group_b: list("Second group of entities", 10), target_type: str("Type of entity to compare on", INSIGHTS_TYPES), limit }, ["group_a", "group_b"]),
   decl("qloo_find_tags", "Search Qloo taste tags by keyword or meaning.",
     { query: str("Search text"), semantic: bool("Match by meaning instead of keyword"), limit }, ["query"]),
