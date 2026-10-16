@@ -57,20 +57,7 @@ export function ThinkingTrace({
         className="flex w-full items-center gap-2.5 px-5 py-4 text-left"
       >
         <Sparkles size={15} className={working ? "text-gold" : "text-canvas-muted"} />
-        {working ? (
-          <span
-            className="bg-clip-text font-sans text-[13px] font-medium text-transparent"
-            style={{
-              backgroundImage: "linear-gradient(90deg, var(--color-canvas-muted) 35%, var(--color-canvas-text) 50%, var(--color-canvas-muted) 65%)",
-              backgroundSize: "200% 100%",
-              animation: reduceMotion ? undefined : "shimmer 1.4s linear infinite",
-            }}
-          >
-            {title}
-          </span>
-        ) : (
-          <span className="font-sans text-[13px] font-medium text-canvas-text">{title}</span>
-        )}
+        <span className="font-sans text-[13px] font-medium text-canvas-text">{title}</span>
         <span className="ml-auto flex items-center gap-2">
           <span className="font-sans text-[11px] tabular-nums text-canvas-muted">{steps.length} steps</span>
           <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: reduceMotion ? 0 : 0.2 }}>
