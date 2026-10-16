@@ -10,7 +10,7 @@ import { Mic, Square } from "lucide-react";
 export function TypingIndicator({ label = "Assistant is thinking…" }: { label?: string } = {}) {
   return (
     <div className="flex justify-start" aria-label={label} role="status">
-      <span className="flex items-center gap-1 rounded-lg rounded-bl-[2px] border border-white/[0.07] bg-paper-raised px-3 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+      <span className="flex items-center gap-1 rounded-lg rounded-bl-[2px] border border-white/[0.07] bg-paper-raised px-3 py-2.5">
         {[0, 1, 2].map((i) => (
           <span
             key={i}
@@ -33,7 +33,7 @@ export function SuggestionChips({ suggestions, onPick }: { suggestions: string[]
           key={s}
           type="button"
           onClick={() => onPick(s)}
-          className="rounded-full border border-ink/15 bg-paper-raised px-3 py-1.5 font-sans text-[11.5px] text-ink-muted outline-none transition-colors hover:border-gold hover:text-ink focus-visible:ring-2 focus-visible:ring-gold/50"
+          className="min-h-11 rounded-full border border-ink/15 bg-paper-raised px-3 py-1.5 font-sans text-[11.5px] text-ink-muted outline-none transition-colors hover:border-gold hover:text-ink focus-visible:ring-2 focus-visible:ring-gold/50"
         >
           {s}
         </button>
@@ -59,8 +59,8 @@ export function ChatBubble({
       <div
         className={`max-w-[85%] px-3 py-2 font-sans text-[12.5px] leading-relaxed ${
           role === "user"
-            ? "rounded-lg rounded-br-[2px] bg-gold font-medium text-on-gold shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
-            : "rounded-lg rounded-bl-[2px] border border-white/[0.07] bg-paper-raised text-ink shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+            ? "rounded-lg rounded-br-[2px] bg-gold font-medium text-on-gold"
+            : "rounded-lg rounded-bl-[2px] border border-white/[0.07] bg-paper-raised text-ink"
         }`}
       >
         {children}
@@ -87,10 +87,10 @@ export function ChatBubble({
 
 /** Shared input styling for the chat composer row. */
 export const CHAT_INPUT_CLASS =
-  "flex-1 resize-none rounded-lg border border-ink/15 bg-paper-raised px-3 py-2.5 font-sans text-[13px] text-ink shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] outline-none transition-colors placeholder:text-ink-muted/60 focus:border-gold focus:ring-2 focus:ring-gold/25";
+  "flex-1 resize-none rounded-lg border border-ink/15 bg-paper-raised px-3 py-2.5 font-sans text-[13px] text-ink outline-none transition-colors placeholder:text-ink-muted/60 focus:border-gold focus:ring-2 focus:ring-gold/25";
 
 export const CHAT_SEND_CLASS =
-  "flex shrink-0 items-center justify-center rounded-lg btn-gold p-2.5 text-on-gold shadow-[0_1px_2px_rgba(0,0,0,0.15)] outline-none transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:bg-none disabled:bg-white/10 disabled:text-ink/35 disabled:shadow-none";
+  "flex shrink-0 items-center justify-center rounded-lg btn-gold p-2.5 text-on-gold outline-none transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:bg-none disabled:bg-white/10 disabled:text-ink/35";
 
 /** Voice input via the browser's Web Speech API -- transcription happens
  * client-side in the browser and lands in the composer as editable text;
@@ -141,7 +141,7 @@ export function MicButton({ onTranscript }: { onTranscript: (text: string) => vo
       onClick={toggle}
       aria-label={listening ? "Stop voice input" : "Start voice input"}
       title={listening ? "Stop voice input" : "Speak instead of typing"}
-      className={`flex shrink-0 items-center justify-center rounded-lg border p-2.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold/50 ${
+      className={`flex size-11 shrink-0 items-center justify-center rounded-lg border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold/50 ${
         listening
           ? "animate-pulse border-red-400/60 bg-red-400/10 text-red-300 motion-reduce:animate-none"
           : "border-ink/15 bg-paper-raised text-ink-muted hover:border-ink/40 hover:text-ink"

@@ -13,6 +13,11 @@ const boardDone = async (page: Page) => {
   await expect(page.getByRole("button", { name: "Stop" })).toHaveCount(0);
 };
 // The playbook has finished streaming (heading + verification summary), or the Book has prepared every chapter.
+// Without Qloo mode: the generic list and its banner are showing.
+const withoutDone = async (page: Page) => {
+  await expect(page.getByText("Generic LLM answer — no taste evidence")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("list", { name: "Generic ranking" })).toBeVisible();
+};
 const playbookDone = async (page: Page, city: string) => {
   await expect(page.getByRole("heading", { name: city }).first()).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText(/\d+ verified · \d+ removed/).first()).toBeVisible({ timeout: 15_000 });
@@ -35,10 +40,11 @@ const smallTargets = (page: Page) => page.evaluate(() => [...document.querySelec
   .filter(({ r }) => r.height < 43.5 || r.width < 43.5)
   .map(({ el, r }) => `${el.tagName} "${(el.textContent ?? "").trim().slice(0, 30)}" ${Math.round(r.width)}x${Math.round(r.height)}`));
 
-for (const path of ["/", "/tours/board?sample=1", "/tours/board?sample=long", "/insights", "/campaign"]) {
+for (const path of ["/", "/tours/board?sample=1", "/tours/board?sample=long", "/tours/board?sample=1&mode=without", "/tours/board?sample=long&mode=without", "/insights", "/campaign"]) {
   test(`no horizontal scroll at this viewport: ${path}`, async ({ page }) => {
     await page.goto(path);
-    if (path.includes("sample")) await boardDone(page);
+    if (path.includes("mode=without")) await withoutDone(page);
+    else if (path.includes("sample")) await boardDone(page);
     await noHorizontalScroll(page);
   });
 }
@@ -92,6 +98,30 @@ test.describe("touch targets are at least 44x44 on mobile", () => {
     await boardDone(page);
     await toInsights(page);
     expect(await smallTargets(page)).toEqual([]);
+  });
+  for (const path of ["/tours/board?sample=1&mode=without", "/tours/board?sample=long&mode=without"]) {
+    test(`Without Qloo: ${path}`, async ({ page }) => {
+      await page.goto(path);
+      await withoutDone(page);
+      expect(await smallTargets(page)).toEqual([]);
+    });
+  }
+  test("open strategist sheet: no horizontal scroll and 44px targets inside the dialog", async ({ page }) => {
+    await page.goto("/tours/board?sample=1");
+    await boardDone(page);
+    await page.getByRole("button", { name: "Ask the strategist" }).click();
+    const dialog = page.getByRole("dialog", { name: "Ask the strategist" });
+    await expect(dialog).toBeVisible();
+    await noHorizontalScroll(page);
+    const small = await dialog.evaluate((root) => [...root.querySelectorAll("button, a, [role=tab], textarea, input")]
+      .map((el) => ({ el, r: el.getBoundingClientRect() }))
+      .filter(({ el, r }) => r.width > 1 && r.height > 1 && !/\bsr-only\b/.test(el.className))
+      .filter(({ r }) => r.height < 43.5 || r.width < 43.5)
+      .map(({ el, r }) => `${el.tagName} "${(el.textContent ?? "").trim().slice(0, 30)}" ${Math.round(r.width)}x${Math.round(r.height)}`));
+    expect(small).toEqual([]);
+    await page.getByRole("button", { name: "Why is Guadalajara a hidden goldmine?" }).click();
+    await expect(page.getByText(/Hidden goldmine verdict means/)).toBeVisible();
+    await noHorizontalScroll(page);
   });
   for (const [path, done] of NEW_ROUTES) {
     test(`playbook and book: ${path}`, async ({ page }) => {

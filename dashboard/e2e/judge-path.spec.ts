@@ -49,3 +49,19 @@ test("showcase → Guadalajara playbook → Build tour → Book", async ({ page 
   expect(Date.now() - t0).toBeLessThan(120_000); // spec §7.1: judge path in two minutes
   await page.screenshot({ path: `test-results/judge-path-book-${test.info().project.name}.png`, fullPage: true });
 });
+
+test("strategist answers a suggested question with tool chips in the showcase", async ({ page }) => {
+  await page.goto("/tours/board?sample=1");
+  const open = page.getByRole("button", { name: /Ask the strategist|Strategist/ }).first();
+  await open.click();
+  await page.getByRole("button", { name: "Why is Guadalajara a hidden goldmine?" }).click();
+  await expect(page.getByText(/Hidden goldmine verdict means/)).toBeVisible();
+  await expect(page.getByRole("button", { name: /Playbook/ })).toBeVisible();
+});
+
+test("Without Qloo shows the generic list with the banner and no verdicts", async ({ page }) => {
+  await page.goto("/tours/board?sample=1");
+  await page.getByRole("tab", { name: "Without Qloo" }).click();
+  await expect(page.getByText("Generic LLM answer — no taste evidence")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Generic ranking" }).getByText("Hidden goldmine")).toHaveCount(0);
+});
