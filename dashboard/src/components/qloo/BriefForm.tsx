@@ -5,6 +5,7 @@ import type { TourBrief } from "@/lib/qloo/types";
 const PRESETS = ["Mexico", "Brazil", "United States", "Colombia", "Argentina", "United Kingdom", "Spain", "Japan", "India"];
 const DEFAULT_REGIONS = ["Mexico", "Brazil", "United States"];
 const MAX_REGIONS = 6;
+const MAX_WINDOW_DAYS = 62; // the gateway rejects longer This week windows
 const field = "h-12 w-full min-w-0 rounded-[10px] bg-paper-raised px-3 text-[15px] text-canvas-text placeholder:text-canvas-muted lg:h-10";
 
 export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBrief) => void; defaultBrief?: TourBrief }) {
@@ -49,6 +50,7 @@ export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBr
     if (!Number.isInteger(n) || n < 1 || n > 20) return setError("Max stops must be a whole number from 1 to 20.");
     if ((winStart === "") !== (winEnd === "")) return setWinError("Add both dates or neither");
     if (winStart && winEnd && winEnd < winStart) return setWinError("Window end must be on or after the start");
+    if (winStart && winEnd && (Date.parse(winEnd) - Date.parse(winStart)) / 86_400_000 > MAX_WINDOW_DAYS) return setWinError(`Date window can be at most ${MAX_WINDOW_DAYS} days`);
     setError(null);
     setWinError(null);
     onSubmit({ ...(defaultBrief?.artistEntityId && name === defaultBrief.artist ? { artistEntityId: defaultBrief.artistEntityId } : {}), artist: name, regions, maxStops: n, ...(winStart && winEnd ? { dateWindow: { start: winStart, end: winEnd } } : {}) });

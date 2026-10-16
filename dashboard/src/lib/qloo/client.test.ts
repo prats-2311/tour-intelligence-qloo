@@ -121,6 +121,11 @@ describe("streamCityPlaybook sample mode and fetchThisWeek", () => {
     expect(await fetchThisWeek({ city: "G", country: "MX", window: { start: "2027-03-12", end: "2027-04-18" } }, { fetchImpl }))
       .toEqual({ status: "unavailable", reason: "error", message: "Live web context unavailable — search failed" });
   });
+  it("fetchThisWeek maps a 400 to a window-too-long unavailable state", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ error: "bad" }), { status: 400 }));
+    expect(await fetchThisWeek({ city: "G", country: "MX", window: { start: "2027-01-01", end: "2027-06-01" } }, { fetchImpl }))
+      .toEqual({ status: "unavailable", reason: "error", message: "Date window too long (max 62 days)" });
+  });
   it("fetchThisWeek in sample mode returns the fixture", async () => {
     expect((await fetchThisWeek({ city: "Guadalajara", country: "MX", window: { start: "2027-03-12", end: "2027-04-18" } }, { sample: true, cityId: "4005539" })).status).toBe("ok");
   });

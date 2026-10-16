@@ -65,7 +65,7 @@ export default function CityPlaybook() {
   const wantSet = wantLong ? "long" : "default";
   const sampleQ = wantLong ? "?sample=long" : wantSample ? "?sample=1" : "";
   const isDesktop = useIsDesktop();
-  const started = useRef(false);
+  const started = useRef<string | null>(null); // the sample set this page already asked the board for
   const [tab, setTab] = useState<Tab>("activate");
   const [whyOpen, setWhyOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
@@ -75,10 +75,10 @@ export default function CityPlaybook() {
   const tabBase = useId();
 
   // ?sample=1 starts the showcase unless the board already holds a sample run. The ref only
-  // guards the StrictMode double effect.
+  // guards the StrictMode double effect; it remembers the requested set so switching sets re-runs.
   useEffect(() => {
-    if (!wantSample || started.current) return;
-    started.current = true;
+    if (!wantSample || started.current === wantSet) return;
+    started.current = wantSet;
     if (state.source !== "sample" || (state.sampleSet ?? "default") !== wantSet) run(wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
   }, [wantSample, wantLong, wantSet, state.source, state.sampleSet, run]);
 
@@ -206,7 +206,7 @@ export default function CityPlaybook() {
       <ul className="flex flex-col">
         {SAMPLE_PLAYBOOK_CITY_IDS.map((id) => {
           const c = SAMPLE_CITIES.find((x) => x.id === id);
-          return c ? <li key={id}><Link to={`/tours/playbook/${id}?sample=1`} className="inline-flex min-h-11 items-center text-[15px] text-canvas-text underline decoration-canvas-muted underline-offset-4">{c.name}</Link></li> : null;
+          return c ? <li key={id}><Link to={`/tours/playbook/${id}${sampleQ || "?sample=1"}`} className="inline-flex min-h-11 items-center text-[15px] text-canvas-text underline decoration-canvas-muted underline-offset-4">{c.name}</Link></li> : null;
         })}
       </ul>
     </section>

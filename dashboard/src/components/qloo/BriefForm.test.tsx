@@ -22,6 +22,19 @@ describe("BriefForm date window", () => {
     submit();
     expect(onSubmit.mock.calls[0]![0].dateWindow).toEqual({ start: "2027-03-12", end: "2027-04-18" });
   });
+  it("rejects a window longer than 62 days but accepts exactly 62", () => {
+    const onSubmit = vi.fn();
+    render(<BriefForm onSubmit={onSubmit} />);
+    fill();
+    fireEvent.change(screen.getByLabelText("Window start"), { target: { value: "2027-03-01" } });
+    fireEvent.change(screen.getByLabelText("Window end"), { target: { value: "2027-05-03" } }); // 63 days
+    submit();
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText("Date window can be at most 62 days")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Window end"), { target: { value: "2027-05-02" } }); // 62 days
+    submit();
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
   it("omits dateWindow when both dates are empty", () => {
     const onSubmit = vi.fn();
     render(<BriefForm onSubmit={onSubmit} />);

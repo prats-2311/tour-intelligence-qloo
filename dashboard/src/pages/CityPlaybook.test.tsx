@@ -2,7 +2,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as client from "@/lib/qloo/client";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
@@ -31,6 +31,11 @@ function FillShortlist({ except }: { except: string }) {
     if (state.status === "done") setShortlist(SAMPLE_CITIES.filter((c) => c.id !== except).map((c) => c.id));
   }, [state.status, except, setShortlist]);
   return null;
+}
+
+function Switch({ to }: { to: string }) {
+  const navigate = useNavigate();
+  return <button type="button" onClick={() => navigate(to)}>switch</button>;
 }
 
 const renderAt = (url: string, extra?: React.ReactNode) =>
@@ -69,6 +74,19 @@ describe("CityPlaybook", () => {
     expect(await screen.findByText("No sample playbook for Chicago")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Guadalajara" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Chicago" })).toBeTruthy();
+  });
+  it("re-runs when ?sample=long is switched to ?sample=1 on the same page", async () => {
+    renderAt("/tours/playbook/3464975?sample=long", <Switch to="/tours/playbook/3464975?sample=1" />);
+    expect(await screen.findByRole("heading", { name: "San Juan de los Lagos" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "switch" }));
+    expect(await screen.findByRole("heading", { name: "Curitiba" })).toBeTruthy();
+    // the board was re-run with the default set, so the playbook itself loads
+    expect(await screen.findByText("Pinhão Roasters leads sponsor fit at 0.86.")).toBeTruthy();
+  });
+  it("keeps the current sample set in the NO_SAMPLE links", async () => {
+    renderAt("/tours/playbook/4887398?sample=long");
+    const link = await screen.findByRole("link", { name: "Guadalajara" });
+    expect(link.getAttribute("href")).toBe("/tours/playbook/4005539?sample=long");
   });
   it("Add to tour toggles the city in the shortlist", async () => {
     renderAt("/tours/playbook/3995465?sample=1");

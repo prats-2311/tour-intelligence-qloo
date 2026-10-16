@@ -65,6 +65,7 @@ export async function fetchThisWeek(q: { city: string; country: string; window?:
   const qs = new URLSearchParams({ city: q.city, country: q.country, start: q.window.start, end: q.window.end }).toString();
   try {
     const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/this-week?${qs}`, { signal: opts.signal, headers: { "x-session-id": getSessionId() } });
+    if (res.status === 400) return { status: "unavailable", reason: "error", message: "Date window too long (max 62 days)" };
     if (!res.ok) return WEB_ERROR;
     return (await res.json()) as ThisWeek;
   } catch {
