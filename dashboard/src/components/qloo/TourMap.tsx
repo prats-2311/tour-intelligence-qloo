@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { ScoredCity, Zone } from "@/lib/qloo/types";
@@ -30,6 +30,7 @@ function zoneData(zones: Zone[] | undefined) {
 
 export default function TourMap({ cities, selectedId, onSelect, zones }: Props) {
   const isDesktop = useIsDesktop();
+  const [tilesFailed, setTilesFailed] = useState(false);
   const reduce = useMediaQuery("(prefers-reduced-motion: reduce)");
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -85,6 +86,8 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
     mapRef.current = map;
     styleReady.current = false;
     map.once("style.load", () => warmTint(map));
+    // Tile or style failures (offline, provider down): say so; the markers and the list keep working.
+    map.on("error", () => setTilesFailed(true));
     const refit = () => {
       const b = boundsFor(citiesRef.current);
       if (b) map.fitBounds(b, { padding: 48, animate: false, maxZoom: 6 });
@@ -174,5 +177,12 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
     markers.current.forEach(({ element }, id) => setMarkerSelected(element, id === selectedId));
   }, [selectedId, sigKey, isDesktop]);
 
-  return <div ref={container} className="h-full min-h-[240px] w-full overflow-hidden rounded-[18px] bg-[#151410]" />;
+  return (
+    <div className="relative size-full">
+      <div ref={container} className="size-full overflow-hidden rounded-[18px] bg-[#151410]" />
+      {tilesFailed && (
+        <p role="status" className="pointer-events-none absolute bottom-2 left-2 z-10 rounded-[6px] bg-canvas-raised px-2 py-1 text-[12px] text-canvas-muted">Map tiles unavailable</p>
+      )}
+    </div>
+  );
 }

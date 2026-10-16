@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+// Runs must not depend on the network: map tile/style requests are blocked (the map shows its "tiles unavailable" note).
+test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); });
+
 test("judge path: landing → showcase → board → why → insights", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1, name: "Win their city." })).toBeVisible();

@@ -1,5 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
+// Runs must not depend on the network: map tile/style requests are blocked (the map shows its "tiles unavailable" note).
+test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); });
+
 const noHorizontalScroll = async (page: Page) =>
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 

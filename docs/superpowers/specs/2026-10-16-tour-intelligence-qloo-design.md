@@ -243,7 +243,7 @@ Landing → **Try the showcase tour** (pre-cached) → Tour Board → tap a **Hi
 - Map gestures don't fight scroll (dedicated map area; two-finger pan inside sheets).
 - `needs_input` always shows a picker; nothing is silently guessed. Thin data shows an honest empty state.
 - Premiere Noir system per `dashboard/CLAUDE.md` (warm dark only, Fraunces/JetBrains Mono/Inter, validated city palette, reduced motion).
-- Map: MapLibre GL + CARTO dark basemap (no token).
+- Map: MapLibre GL + OpenFreeMap dark vector style (keyless, no token), warm-tinted.
 
 ### 7.4 Visible AI reasoning (honest by construction)
 The UI shows the system thinking while it works — but only reasoning that actually happened. Nothing is reconstructed or invented.
@@ -381,7 +381,7 @@ Not used: `gpt-tasteskill` (scroll-GSAP marketing pages), `minimalist-skill` (co
 - One committed identity, not defaults: Premiere Noir's marquee-meets-call-sheet language (Fraunces display + JetBrains Mono labels + Inter body). No stock shadcn look, no purple/indigo gradients, no generic glassmorphism, no emoji-as-icons, no "centered hero + three feature cards".
 - Speak the touring industry's language in layout and copy: advance sheets, routing boards, boxscores, settlement-style tables, tour-poster key art — not generic SaaS dashboards. Microcopy written for promoters ("Hold", "Avails", "Market heat"), never marketing filler.
 - Real data density with clear hierarchy (Pollstar/Bloomberg-terminal confidence), asymmetric grids, purposeful whitespace; every chart earns its place (dataviz rules).
-- Custom-styled map (dark CARTO base re-tinted to the palette), city accent colours from the validated palette, real generated key art per city — no placeholder illustrations or stock imagery.
+- Custom-styled map (OpenFreeMap dark vector style, keyless, warm-tinted to the palette), city accent colours from the validated palette, real generated key art per city — no placeholder illustrations or stock imagery.
 - Motion only where it explains state (agent steps streaming in, verdict reveal, sheet transitions); springs, not fades-everywhere; reduced-motion respected.
 - Details that signal craft: tabular numerals, consistent 4/8 spacing, optical alignment, honest empty/partial states with designed illustrations of the actual data shape, focus states, 44 px touch targets.
 
