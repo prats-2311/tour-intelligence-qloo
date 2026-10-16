@@ -11,6 +11,7 @@ import { WebMcpTools } from "./components/WebMcpTools";
 // no benefit. The other three are only needed once the user navigates to
 // them, so they ship as separate chunks instead of bloating the initial
 // bundle every visitor downloads.
+const Landing = lazy(() => import("./pages/Landing"));
 const TourBoard = lazy(() => import("./pages/TourBoard"));
 const TasteInsights = lazy(() => import("./pages/TasteInsights"));
 const CityDetail = lazy(() => import("./pages/CityDetail").then((m) => ({ default: m.CityDetail })));
@@ -29,7 +30,7 @@ export default function App() {
             a totally blank page for however long that route's JS chunk took
             to fetch, indistinguishable from the app being broken. */}
         <Routes>
-          <Route path="/" element={<h1>Win their city.</h1>} />
+          <Route path="/" element={<Suspense fallback={null}><Landing /></Suspense>} />
           <Route path="/tours/board" element={<Suspense fallback={null}><TourBoard /></Suspense>} />
           <Route path="/insights" element={<Suspense fallback={null}><TasteInsights /></Suspense>} />
           <Route path="/campaign" element={<Dashboard />} />
