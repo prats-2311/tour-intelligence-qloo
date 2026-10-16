@@ -35,6 +35,7 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch })
         return;
       }
       const text = await upstream.text();
+      if (!upstream.ok && !type.includes("json")) return res.status(upstream.status).json({ error: "Qloo gateway unavailable" });
       res.status(upstream.status).type(type.includes("json") ? "application/json" : "text/plain").send(text);
     } catch (err) {
       fail(err);
@@ -50,5 +51,16 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch })
     const qs = params.toString();
     return forward(req, res, { route: "city-playbook", path: `/v1/city-playbook?${qs}`, method: "GET", stream: true });
   });
-  app.post("/api/qloo/tools/:name", (req, res) => forward(req, res, { route: "tools", path: `/v1/tools/${encodeURIComponent(req.params.name)}`, method: "POST", body: req.body ?? {}, stream: false }));
+  // Spec §8: raw Qloo tools are never exposed publicly — only the compare panel's tool is reachable.
+  const PUBLIC_TOOLS = new Set(["qloo_compare_audiences"]);
+  const MAX_GROUP = 3;
+
+  app.post("/api/qloo/tools/:name", (req, res) => {
+    if (!PUBLIC_TOOLS.has(req.params.name)) return res.status(404).json({ error: "Unknown tool" });
+    const body = req.body ?? {};
+    for (const k of ["group_a", "group_b"]) {
+      if (Array.isArray(body[k]) && body[k].length > MAX_GROUP) return res.status(400).json({ error: "group_a and group_b allow at most 3 entries" });
+    }
+    return forward(req, res, { route: "tools", path: `/v1/tools/${encodeURIComponent(req.params.name)}`, method: "POST", body, stream: false });
+  });
 }

@@ -58,7 +58,8 @@ export async function callQlooTool(name: string, args: Record<string, unknown>, 
     headers: { "content-type": "application/json", "x-session-id": getSessionId() },
     body: JSON.stringify(args),
   });
-  const json = (await res.json()) as { envelope?: unknown; cached?: boolean; stale?: boolean; error?: string };
+  let json: { envelope?: unknown; cached?: boolean; stale?: boolean; error?: string };
+  try { json = (await res.json()) as typeof json; } catch { throw new Error("Qloo gateway unavailable"); }
   if (!res.ok) throw new Error(json.error ?? `tool ${name} failed: ${res.status}`);
   return { envelope: json.envelope, cached: Boolean(json.cached), stale: Boolean(json.stale) };
 }

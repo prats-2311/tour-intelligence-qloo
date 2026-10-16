@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { streamTourBoard } from "./client";
+import { callQlooTool, streamTourBoard } from "./client";
 import { LONG_NAMES_SAMPLE, LUMEN_VALE_SAMPLE, SAMPLE_BRIEF } from "./fixtures/lumenVale";
 
 function sseResponse(chunks: string[], status = 200) {
@@ -70,5 +70,22 @@ describe("streamTourBoard", () => {
     const out = [];
     for await (const e of streamTourBoard(SAMPLE_BRIEF, { fetchImpl: fetchImpl as unknown as typeof fetch })) out.push(e);
     expect(out[0]).toMatchObject({ type: "resolve", entity: { name: "Beyoncé 🎤" } });
+  });
+});
+
+describe("callQlooTool", () => {
+  const ff = (r: Response) => vi.fn(async () => r) as unknown as typeof fetch;
+  it("returns the envelope on success", async () => {
+    const r = await callQlooTool("qloo_compare_audiences", { group_a: ["A"], group_b: ["B"] }, { fetchImpl: ff(new Response(JSON.stringify({ envelope: { status: "ok" }, cached: true }), { status: 200 })) });
+    expect(r).toEqual({ envelope: { status: "ok" }, cached: true, stale: false });
+  });
+  it("throws the JSON error message on a non-OK JSON response", async () => {
+    await expect(callQlooTool("qloo_compare_audiences", {}, { fetchImpl: ff(new Response(JSON.stringify({ error: "Unknown tool" }), { status: 404 })) })).rejects.toThrow("Unknown tool");
+  });
+  it("throws 'Qloo gateway unavailable' on a non-OK non-JSON body", async () => {
+    await expect(callQlooTool("qloo_compare_audiences", {}, { fetchImpl: ff(new Response("<html>502 Bad Gateway</html>", { status: 502 })) })).rejects.toThrow("Qloo gateway unavailable");
+  });
+  it("throws 'Qloo gateway unavailable' on an OK non-JSON body", async () => {
+    await expect(callQlooTool("qloo_compare_audiences", {}, { fetchImpl: ff(new Response("not json", { status: 200 })) })).rejects.toThrow("Qloo gateway unavailable");
   });
 });

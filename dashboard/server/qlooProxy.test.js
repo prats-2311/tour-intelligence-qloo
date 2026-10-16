@@ -44,13 +44,14 @@ describe("qlooProxy", () => {
     const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
     await (await fetch(`${base}/api/qloo/city-playbook?artist=A&artistEntityId=E&city=Lima&country=PE`, { headers: { "x-session-id": "s" } })).text();
     expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/city-playbook?artist=A&artistEntityId=E&city=Lima&country=PE");
-    const tool = await fetch(`${base}/api/qloo/tools/qloo_describe`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify({ entity: "A" }) });
+    const tool = await fetch(`${base}/api/qloo/tools/qloo_compare_audiences`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify({ group_a: ["A"], group_b: ["B"] }) });
     expect(await tool.json()).toMatchObject({ envelope: { status: "ok" } });
+    expect(fetchImpl.mock.calls[1][0]).toBe("https://gw/v1/tools/qloo_compare_audiences");
   });
   it("502 with a generic message when the gateway is unreachable", async () => {
     const fetchImpl = vi.fn(async () => { throw new Error("ECONNREFUSED 10.0.0.1"); });
     const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
-    const res = await fetch(`${base}/api/qloo/tools/qloo_describe`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
+    const res = await fetch(`${base}/api/qloo/tools/qloo_compare_audiences`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify({ group_a: ["A"], group_b: ["B"] }) });
     expect(res.status).toBe(502);
     expect(await res.json()).toEqual({ error: "Qloo gateway unavailable" });
   });
@@ -67,7 +68,7 @@ describe("qlooProxy", () => {
     await res.body.getReader().read();
     ac.abort();
     await vi.waitFor(() => expect(signal.aborted).toBe(true));
-    const next = await fetch(`${base}/api/qloo/tools/x`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
+    const next = await fetch(`${base}/api/qloo/tools/qloo_compare_audiences`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify({ group_a: ["A"], group_b: ["B"] }) });
     expect(next.status).toBe(200);
   });
   it("ends the response cleanly when the upstream stream errors mid-way", async () => {
@@ -76,7 +77,7 @@ describe("qlooProxy", () => {
     const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
     const res = await fetch(`${base}/api/qloo/tour-board`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
     await res.text().catch(() => {});
-    const again = await fetch(`${base}/api/qloo/tools/x`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
+    const again = await fetch(`${base}/api/qloo/tools/qloo_compare_audiences`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify({ group_a: ["A"], group_b: ["B"] }) });
     expect(again.status).toBeGreaterThan(0);
     expect(err).toHaveBeenCalledWith("[qlooProxy]", "tour-board", "boom");
   });
@@ -84,7 +85,7 @@ describe("qlooProxy", () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const fetchImpl = vi.fn();
     const base = await start({ gatewayUrl: "https://gw", getToken: async () => { throw new Error("no creds"); }, fetchImpl });
-    const res = await fetch(`${base}/api/qloo/tools/qloo_describe`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
+    const res = await fetch(`${base}/api/qloo/tools/qloo_compare_audiences`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify({ group_a: ["A"], group_b: ["B"] }) });
     expect(res.status).toBe(502);
     expect(await res.json()).toEqual({ error: "Qloo gateway unavailable" });
     expect(err).toHaveBeenCalledWith("[qlooProxy]", "tools", "no creds");
@@ -105,5 +106,47 @@ describe("qlooProxy", () => {
     const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
     await (await fetch(`${base}/api/qloo/city-playbook?artist=A&city=Lima&evil=1&country=PE&country=MX`, { headers: { "x-session-id": "s" } })).text();
     expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/city-playbook?artist=A&city=Lima");
+  });
+  it.each(["qloo_describe", "qloo_recommend", "qloo_where_popular", "x"])("404 for non-public tool %s before getToken", async (name) => {
+    const getToken = vi.fn(async () => "t");
+    const fetchImpl = vi.fn();
+    const base = await start({ gatewayUrl: "https://gw", getToken, fetchImpl });
+    const res = await fetch(`${base}/api/qloo/tools/${name}`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify({ entity: "A" }) });
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "Unknown tool" });
+    expect(getToken).not.toHaveBeenCalled();
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+  it.each([["group_a", { group_a: ["1", "2", "3", "4"], group_b: ["B"] }], ["group_b", { group_a: ["A"], group_b: ["1", "2", "3", "4"] }]])("400 when %s has more than 3 entries", async (_k, body) => {
+    const getToken = vi.fn(async () => "t");
+    const fetchImpl = vi.fn();
+    const base = await start({ gatewayUrl: "https://gw", getToken, fetchImpl });
+    const res = await fetch(`${base}/api/qloo/tools/qloo_compare_audiences`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify(body) });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "group_a and group_b allow at most 3 entries" });
+    expect(getToken).not.toHaveBeenCalled();
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+  it("allows compare_audiences with exactly 3 entries per group", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ envelope: { status: "ok" } }), { status: 200, headers: { "content-type": "application/json" } }));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const res = await fetch(`${base}/api/qloo/tools/qloo_compare_audiences`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify({ group_a: ["1", "2", "3"], group_b: ["4", "5", "6"] }) });
+    expect(res.status).toBe(200);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+  it("maps a non-OK non-JSON upstream body to a JSON error with the upstream status", async () => {
+    const fetchImpl = vi.fn(async () => new Response("<html>Bad Gateway</html>", { status: 503, headers: { "content-type": "text/html" } }));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const res = await fetch(`${base}/api/qloo/tools/qloo_compare_audiences`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify({ group_a: ["A"], group_b: ["B"] }) });
+    expect(res.status).toBe(503);
+    expect(res.headers.get("content-type")).toContain("application/json");
+    expect(await res.json()).toEqual({ error: "Qloo gateway unavailable" });
+  });
+  it("maps a non-OK non-JSON upstream body on the stream route too", async () => {
+    const fetchImpl = vi.fn(async () => new Response("upstream timeout", { status: 504, headers: { "content-type": "text/plain" } }));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const res = await fetch(`${base}/api/qloo/tour-board`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
+    expect(res.status).toBe(504);
+    expect(await res.json()).toEqual({ error: "Qloo gateway unavailable" });
   });
 });
