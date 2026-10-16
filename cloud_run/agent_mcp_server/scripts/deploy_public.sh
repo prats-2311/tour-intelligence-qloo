@@ -5,7 +5,8 @@ set -euo pipefail
 PROJECT=liifecalling-academy
 REGION=us-central1
 SERVICE=${PUBLIC_SERVICE_NAME:-tour-intel-mcp-public}
-SA=agent-mcp-server-sa@${PROJECT}.iam.gserviceaccount.com
+SA_NAME=tour-intel-mcp-public-sa
+SA=${SA_NAME}@${PROJECT}.iam.gserviceaccount.com
 GATEWAY_URL=${1:-}
 
 if [ -z "$GATEWAY_URL" ]; then
@@ -19,6 +20,13 @@ case "$SERVICE" in
   agent-mcp-server|tour-data-api|tour-dashboard|delight-card-renderer)
     echo "Refusing to deploy over existing service '$SERVICE'"; exit 1 ;;
 esac
+
+# Dedicated identity for the public service (never the private agent-mcp-server-sa): created if missing,
+# and its only grant is run.invoker on qloo-gateway.
+if ! gcloud iam service-accounts describe "$SA" --project "$PROJECT" >/dev/null 2>&1; then
+  gcloud iam service-accounts create "$SA_NAME" --project "$PROJECT" \
+    --display-name "Public MCP demo (taste tools only)"
+fi
 
 # Resource-level: the public service's SA may call the gateway (the gateway stays IAM-gated).
 gcloud run services add-iam-policy-binding qloo-gateway --project "$PROJECT" --region "$REGION" \

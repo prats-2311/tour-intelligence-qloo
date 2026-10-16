@@ -97,3 +97,33 @@ def test_public_find_tour_markets_is_limited_to_two_regions(public_main, monkeyp
     public_main.find_tour_markets("A", ["x"], 8)
     assert seen["max_regions"] == 2
     assert seen["session_id"] == public_main.public_session_id("203.0.113.9")
+
+
+def test_public_find_tour_markets_caps_max_stops_at_three(public_main, monkeypatch):
+    calls = []
+    monkeypatch.setattr(public_main.taste_tools, "find_tour_markets", lambda artist, regions, max_stops, **kw: calls.append(max_stops) or {"status": "ok"})
+    monkeypatch.setattr(public_main, "_request_ip", lambda: "203.0.113.9")
+    public_main.find_tour_markets("A", ["x"], 20)
+    public_main.find_tour_markets("A", ["x"], 2)
+    assert calls == [3, 2]
+
+
+def test_tools_call_through_the_middleware_uses_a_per_ip_session_id(public_main, monkeypatch):
+    """middleware -> contextvar -> tool -> gateway client: the right-most XFF IP decides the gateway session id."""
+    from starlette.testclient import TestClient
+    seen = []
+
+    def fake_call_tool(name, args, *, session_id, token_fn):
+        seen.append(session_id)
+        return {"envelope": {"status": "error"}}
+
+    monkeypatch.setattr(public_main.taste_tools, "call_tool", fake_call_tool)
+    headers = {"accept": "application/json, text/event-stream", "content-type": "application/json"}
+    body = {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+            "params": {"name": "get_local_moment", "arguments": {"artist": "Lumen Vale", "city": "Guadalajara", "country": "MX"}}}
+    with TestClient(public_main.app, raise_server_exceptions=False) as c:
+        for ip in ("198.51.100.21", "198.51.100.22"):
+            r = c.post("/mcp", headers={**headers, "x-forwarded-for": f"1.2.3.4, {ip}"}, json=body)
+            assert r.status_code == 200, r.text
+    assert seen == [public_main.public_session_id("198.51.100.21"), public_main.public_session_id("198.51.100.22")]
+    assert len(set(seen)) == 2 and all(s.startswith("mcp-public-") for s in seen)

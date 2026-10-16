@@ -51,6 +51,7 @@ from ratelimit import SlidingWindow  # noqa: E402
 # Public demo mode: only the five taste tools, per-IP rate limit and gateway budget.
 PUBLIC = os.environ.get("MCP_PUBLIC") == "1"
 PUBLIC_MAX_REGIONS = 2
+PUBLIC_MAX_STOPS = 3
 LIMITER = SlidingWindow(limit=30, window_s=600)
 _REQUEST_IP: contextvars.ContextVar[str] = contextvars.ContextVar("request_ip", default="unknown")
 
@@ -198,6 +199,8 @@ def find_tour_markets(artist: str, regions: list[str], max_stops: int = 8) -> di
     winnability scores. Affinity signal only, not a ticket forecast. If the artist
     name is ambiguous, returns candidates to choose from instead."""
     extra = {"max_regions": PUBLIC_MAX_REGIONS} if PUBLIC else {}
+    if PUBLIC:
+        max_stops = min(max_stops, PUBLIC_MAX_STOPS) if isinstance(max_stops, int) else max_stops
     return taste_tools.find_tour_markets(artist, regions, max_stops, **extra, **_gw())
 
 

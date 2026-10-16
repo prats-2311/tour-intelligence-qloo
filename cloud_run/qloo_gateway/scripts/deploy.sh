@@ -36,4 +36,4 @@ gcloud projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$SA" 
 
 gcloud run deploy qloo-gateway --source "$(dirname "$0")/.." --region "$REGION" --project "$PROJECT" \
   --service-account "$SA" --no-allow-unauthenticated --min-instances 1 --max-instances 3 --memory 1Gi \
-  --set-secrets "$SECRETS" --set-env-vars QLOO_CACHE_BACKEND=firestore,QLOO_USAGE_BACKEND=firestore,QLOO_DAILY_CEILING=2000,GOOGLE_CLOUD_PROJECT=${PROJECT},GEMINI_DAILY_CEILING=300,QLOO_BASE_URL=${QLOO_BASE_URL},QLOO_TRUSTED_BASE_URL=${QLOO_BASE_URL}
+  --set-secrets "$SECRETS" --set-env-vars QLOO_CACHE_BACKEND=firestore,QLOO_USAGE_BACKEND=firestore,QLOO_DAILY_CEILING=2000,QLOO_PUBLIC_DAILY_CEILING=400,GOOGLE_CLOUD_PROJECT=${PROJECT},GEMINI_DAILY_CEILING=300,QLOO_BASE_URL=${QLOO_BASE_URL},QLOO_TRUSTED_BASE_URL=${QLOO_BASE_URL}

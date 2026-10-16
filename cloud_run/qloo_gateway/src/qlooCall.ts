@@ -67,7 +67,7 @@ export function createQlooCaller(deps: {
         deps.budget.reserve(sessionId);
       } catch (err) {
         if (err instanceof BudgetExceededError) {
-          const recovery = err.scope === "session" ? "Session limit reached — try the showcase tour." : "Daily limit reached — try the showcase tour.";
+          const recovery = err.scope === "session" ? "Session limit reached — try the showcase tour." : err.scope === "public" ? "Public demo limit reached for today — try again tomorrow." : "Daily limit reached — try the showcase tour.";
           return { envelope: { operation: valid.name.replace(/^qloo_/, ""), status: "error", summary: recovery, error: { code: "BUDGET", retryable: false, recovery } }, cacheKey: key, cached: false, stale: false };
         }
         throw err;

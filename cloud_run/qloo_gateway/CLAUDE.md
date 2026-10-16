@@ -28,3 +28,6 @@ One Gemini call per playbook via Vertex REST (ADC token from `google-auth-librar
 
 ## Without-Qloo
 `POST /v1/without-qloo` (`{ artist, regions, cities }` + `x-session-id`) asks Gemini to rank the scored cities with no taste data (`withoutQloo.ts`). Accepted only if the answer is a permutation of the input after `normaliseName`; otherwise `unavailable`/`invalid`. Reserves the narrative ceiling per attempt; only `ok` results are cached (tool `without_qloo`).
+
+## Budget
+`BudgetGuard` per-session counts roll with the UTC day. Sessions whose id starts with `mcp-public-` (the public MCP demo) additionally share a daily ceiling `QLOO_PUBLIC_DAILY_CEILING` (default 400, set by `deploy.sh`). Those calls count toward, and are checked before, the global `QLOO_DAILY_CEILING` (2000), so public traffic cannot starve dashboard sessions; over it the tool answers `BUDGET` with "Public demo limit reached for today".

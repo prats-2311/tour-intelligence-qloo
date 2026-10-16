@@ -140,13 +140,13 @@ Other clients: add it as a custom connector / remote MCP server with the same `<
 
 | Tool | What it does |
 | --- | --- |
-| `find_tour_markets` | Score and rank touring markets for an artist in up to 2 regions |
+| `find_tour_markets` | Score and rank touring markets for an artist in up to 2 regions and 3 stops |
 | `get_city_playbook` | Compact taste playbook for one artist in one city |
 | `suggest_support_acts` | Support acts with audience overlap, local affinity and lift |
 | `rank_venues` | Rank up to 10 candidate venues by taste fit |
 | `get_local_moment` | Local events, scenes and places that fit the audience |
 
-Limits: 30 requests per 10 minutes per IP (counts every MCP HTTP request, including the initialize handshake, and is tracked per instance, with up to 2 instances), 2 regions per board, cached results.
+Limits: 30 requests per 10 minutes per IP (counts every MCP HTTP request, including the initialize handshake, and is tracked per instance, with up to 2 instances), 2 regions and 3 stops per board, cached results. Public sessions share a gateway budget of 400 Qloo calls per day (`QLOO_PUBLIC_DAILY_CEILING`), counted inside the global daily ceiling, and each client IP gets the 100-call per-session budget; the judge dashboard keeps working when the public budget is spent. The public service runs as its own `tour-intel-mcp-public-sa`, which can only invoke `qloo-gateway`.
 Every result is an affinity signal from aggregate taste data, not a ticket forecast or a claim about individuals.
 
 ---

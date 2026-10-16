@@ -23,7 +23,11 @@ const cache = process.env.QLOO_CACHE_BACKEND === "firestore"
   ? new TieredCache({ l1, l2: new FirestoreCache({ db: new Firestore() }) })
   : l1;
 const ceiling = Number(process.env.QLOO_DAILY_CEILING);
-const budget = new BudgetGuard({ perSession: 100, perDay: Number.isFinite(ceiling) && ceiling > 0 ? ceiling : 2000 });
+const publicCeiling = Number(process.env.QLOO_PUBLIC_DAILY_CEILING);
+const budget = new BudgetGuard({
+  perSession: 100, perDay: Number.isFinite(ceiling) && ceiling > 0 ? ceiling : 2000,
+  ...(Number.isFinite(publicCeiling) && publicCeiling > 0 ? { publicPerDay: publicCeiling } : {}),
+});
 const project = process.env.GOOGLE_CLOUD_PROJECT;
 const auth = new GoogleAuth({ scopes: ["https://www.googleapis.com/auth/cloud-platform"] });
 const geminiCeiling = Number(process.env.GEMINI_DAILY_CEILING);
