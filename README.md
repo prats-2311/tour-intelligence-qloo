@@ -142,7 +142,7 @@ Other clients: add it as a custom connector / remote MCP server with the same `<
 | --- | --- |
 | `find_tour_markets` | Score and rank touring markets for an artist in up to 2 regions and 3 stops |
 | `get_city_playbook` | Compact taste playbook for one artist in one city |
-| `suggest_support_acts` | Support acts with audience overlap, local affinity and lift |
+| `suggest_support_acts` | Support acts with shared taste, local affinity and lift |
 | `rank_venues` | Rank up to 10 candidate venues by taste fit |
 | `get_local_moment` | Local events, scenes and places that fit the audience |
 

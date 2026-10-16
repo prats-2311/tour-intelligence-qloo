@@ -213,7 +213,7 @@ def get_city_playbook(artist: str, city: str, country: str) -> dict:
 
 @mcp.tool()
 def suggest_support_acts(artist: str, city: str, country: str) -> dict:
-    """Suggest support acts for an artist in a city. Each act shows audience overlap,
+    """Suggest support acts for an artist in a city. Each act shows shared taste,
     local affinity and their product as lift, so both factors are visible."""
     return taste_tools.suggest_support_acts(artist, city, country, **_gw())
 

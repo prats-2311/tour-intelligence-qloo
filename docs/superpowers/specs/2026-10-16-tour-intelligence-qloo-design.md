@@ -146,6 +146,8 @@ Initial weights and thresholds are configuration constants, displayed in the "Wh
 ### 5.4 Co-bill lift
 `lift = overlap(compare_audiences) × local_affinity(candidate in city)`, ranked; displayed with both factors.
 
+Note (live check 2026-10-16): the co-bill overlap is measured as Qloo shared taste, the mean of the top-5 shared-tag scores from `compare_audiences`.
+
 ### 5.5 Integrity rules (tested)
 - Missing inputs ⇒ `insufficient_data`, never a filler number.
 - No score path calls an LLM.

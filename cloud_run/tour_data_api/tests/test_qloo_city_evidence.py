@@ -11,8 +11,8 @@ def _qloo_dataset(monkeypatch):
 PLAYBOOK = {"type": "playbook", "playbook": {"city": {"name": "Guadalajara", "country": "MX"}, "cards": [
     {"kind": "sponsors", "status": "ok", "items": [{"name": f"B{i}", "affinity": 0.9 - i / 100} for i in range(7)], "refs": [], "warnings": []},
     {"kind": "venue_fit", "status": "ok", "items": [{"name": "C3 Stage", "affinity": 0.91}], "refs": [], "warnings": []},
-    {"kind": "co_billing", "status": "ok", "items": [{"name": "Bruma Nocturna", "overlap": 0.34, "localAffinity": 0.88, "lift": 0.2992}], "refs": [], "warnings": []},
-    {"kind": "talent", "status": "ok", "items": [{"name": "Clara Sol", "affinity": 0.61}], "refs": [], "warnings": [], "summary": {"overlap": 0.12}},
+    {"kind": "co_billing", "status": "ok", "items": [{"name": "Bruma Nocturna", "entityId": "E9", "sharedTaste": 0.34, "localAffinity": 0.88, "lift": 0.2992, "sharedTags": ["Indie pop", "Dream pop"]}], "refs": [], "warnings": []},
+    {"kind": "talent", "status": "ok", "items": [{"name": "Clara Sol", "affinity": 0.61}], "refs": [], "warnings": [], "summary": {"sharedTaste": 0.12}, "sharedTags": ["Synth pop"]},
     {"kind": "promo_zones", "status": "ok", "items": [{"label": "Colonia Americana", "share": 0.38}], "refs": [], "warnings": []},
 ]}}
 
@@ -45,8 +45,9 @@ def test_compacts_the_gateway_playbook(client, mock_bq, monkeypatch):
     assert res.status_code == 200
     body = res.get_json()
     assert len(body["evidence"]["sponsors"]) == 5
-    assert body["evidence"]["co_billing"][0] == {"name": "Bruma Nocturna", "overlap": 0.34, "local_affinity": 0.88, "lift": 0.2992}
-    assert body["evidence"]["talent"]["overlap"] == 0.12
+    assert body["evidence"]["co_billing"][0] == {"name": "Bruma Nocturna", "shared_taste": 0.34, "local_affinity": 0.88, "lift": 0.2992, "shared_tags": ["Indie pop", "Dream pop"]}
+    assert body["evidence"]["talent"]["shared_taste"] == 0.12
+    assert "overlap" not in body["evidence"]["talent"]
     assert body["requests"] == 1
     url = get.call_args.args[0]
     assert "narrative=0" in url and "artistEntityId=Q1" in url

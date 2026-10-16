@@ -2196,18 +2196,18 @@ def _compact_qloo_playbook(cards: list[dict]) -> dict:
         return list((by_kind.get(kind) or {}).get("items") or [])
 
     talent = by_kind.get("talent") or {}
-    overlap = (talent.get("summary") or {}).get("overlap")
+    shared_taste = (talent.get("summary") or {}).get("sharedTaste")
     return {
         "sponsors": [{"name": i.get("name"), "affinity": i.get("affinity")} for i in items("sponsors")[:5]],
         "local_moment": [{"name": i.get("name"), "type": i.get("type"), "affinity": i.get("affinity")} for i in items("local_moment")[:5]],
         "venues": [{"name": i.get("name"), "affinity": i.get("affinity")} for i in items("venue_fit")[:3]],
         "co_billing": [
-            {"name": i.get("name"), "overlap": i.get("overlap"), "local_affinity": i.get("localAffinity"), "lift": i.get("lift")}
+            {"name": i.get("name"), "shared_taste": i.get("sharedTaste"), "local_affinity": i.get("localAffinity"), "lift": i.get("lift"), "shared_tags": list(i.get("sharedTags") or [])[:3]}
             for i in items("co_billing")[:3]
         ],
         "talent": {
             "proxies": [{"name": i.get("name"), "affinity": i.get("affinity")} for i in items("talent")[:3]],
-            "overlap": overlap if isinstance(overlap, (int, float)) else None,
+            "shared_taste": shared_taste if isinstance(shared_taste, (int, float)) else None,
         },
         "promo_zones": [{"label": i.get("label"), "share": i.get("share")} for i in items("promo_zones")[:3]],
     }
