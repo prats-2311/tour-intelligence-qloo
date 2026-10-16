@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, CircleAlert, History, Square } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
@@ -12,7 +13,9 @@ import { Sheet } from "@/components/qloo/Sheet";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { VerdictGlyph } from "@/components/qloo/VerdictGlyph";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
+import { fetchWithoutQloo } from "@/lib/qloo/client";
 import { LONG_NAMES_BRIEF, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
+import { SAMPLE_WITHOUT_QLOO } from "@/lib/qloo/fixtures/strategistSample";
 import { sortCities, summarize } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { INTEGRITY_LINE, VERDICT_LABEL } from "@/lib/qloo/labels";
@@ -20,11 +23,13 @@ import type { TourBrief, Verdict } from "@/lib/qloo/types";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
-type Mode = "winnability" | "density";
+type Mode = "winnability" | "density" | "without";
 const MODES: Array<{ id: Mode; label: string }> = [
   { id: "winnability", label: "Winnability" },
   { id: "density", label: "Density-only" },
+  { id: "without", label: "Without Qloo" },
 ];
+const PANEL_LABEL: Record<Mode, string> = { winnability: "Winnability ranking", density: "Density-only ranking", without: "Without Qloo ranking" };
 const SHORTLIST_VERDICTS = new Set(["play", "hidden_goldmine"]);
 
 function SegmentedControl({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
@@ -68,6 +73,20 @@ function SegmentedControl({ mode, onChange }: { mode: Mode; onChange: (m: Mode) 
   );
 }
 
+function GenericRanking({ ranked }: { ranked: Array<{ name: string; country: string }> }) {
+  return (
+    <ol aria-label="Generic ranking" className="flex flex-col gap-0.5">
+      {ranked.map((c, i) => (
+        <li key={`${c.name}-${c.country}`} className="flex min-h-12 items-center gap-3 bg-paper px-3 first:rounded-t-[14px] last:rounded-b-[14px]">
+          <span className="w-6 shrink-0 font-mono text-[13px] tabular-nums text-canvas-muted">{i + 1}</span>
+          <span className="min-w-0 flex-1 truncate text-[17px] font-semibold text-canvas-text">{c.name}</span>
+          <span className="shrink-0 text-[13px] text-canvas-muted">{c.country}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 const LEGEND: Verdict[] = ["play", "hidden_goldmine", "de_risk", "consider", "skip", "insufficient_data"];
 
 function Legend() {
@@ -90,7 +109,13 @@ export default function TourBoard() {
   const wantLong = sampleParam === "long";
   const wantSample = sampleParam === "1" || wantLong;
   const started = useRef(false);
-  const [mode, setMode] = useState<Mode>("winnability");
+  const modeParam = params.get("mode");
+  const mode: Mode = modeParam === "density" || modeParam === "without" ? modeParam : "winnability";
+  const setMode = (m: Mode) => setParams((p) => {
+    const n = new URLSearchParams(p);
+    if (m === "winnability") n.delete("mode"); else n.set("mode", m);
+    return n;
+  }, { replace: true });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [whyId, setWhyId] = useState<string | null>(null);
   const [logOpen, setLogOpen] = useState(false);
@@ -115,17 +140,31 @@ export default function TourBoard() {
   const newBrief = () => {
     setLastBrief(state.brief);
     reset();
-    if (params.has("sample")) setParams((p) => { const n = new URLSearchParams(p); n.delete("sample"); return n; }, { replace: true });
+    if (params.has("sample") || params.has("mode")) setParams((p) => { const n = new URLSearchParams(p); n.delete("sample"); n.delete("mode"); return n; }, { replace: true });
   };
 
-  const sorted = useMemo(() => sortCities(state.cities, mode), [state.cities, mode]);
+  const sorted = useMemo(() => sortCities(state.cities, mode === "density" ? "density" : "winnability"), [state.cities, mode]);
   const counts = useMemo(() => summarize(state.cities), [state.cities]);
   const eligible = useMemo(() => sortCities(state.cities, "winnability").filter((c) => SHORTLIST_VERDICTS.has(c.verdict)), [state.cities]);
   const maxStops = state.brief?.maxStops ?? 8;
   const atCap = shortlist.length >= maxStops;
   const sampleQ = state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
   const bookHref = `/tours/book${sampleQ}`;
-  const selected = state.cities.find((c) => c.id === selectedId);
+  const withoutMode = mode === "without";
+  const isSample = state.source === "sample";
+  const withoutLive = useQuery({
+    queryKey: ["without-qloo", state.artist?.entityId ?? state.brief?.artistEntityId ?? state.brief?.artist, state.cities.map((c) => c.id).join("|")],
+    queryFn: ({ signal }) => fetchWithoutQloo({
+      artist: state.brief?.artist ?? state.artist?.name ?? "",
+      regions: state.brief?.regions ?? [],
+      cities: state.cities.map((c) => ({ name: c.name, country: c.country })),
+    }, { signal }),
+    enabled: withoutMode && !isSample && state.status !== "streaming" && state.cities.length > 0,
+    staleTime: Infinity,
+    retry: false,
+  });
+  const withoutResult = isSample ? SAMPLE_WITHOUT_QLOO : withoutLive.data;
+  const selected = withoutMode ? undefined : state.cities.find((c) => c.id === selectedId);
   const whyCity = state.cities.find((c) => c.id === whyId);
   const summaryCity = selected ?? eligible.find((c) => c.verdict === "hidden_goldmine") ?? sorted[0];
 
@@ -231,25 +270,49 @@ export default function TourBoard() {
       {showInlineLog && <div className="rounded-[14px] bg-paper p-3"><AgentLog events={state.log} /></div>}
 
       {(state.cities.length > 0 || streaming) && (
-        <div role="tabpanel" aria-label={mode === "density" ? "Density-only ranking" : "Winnability ranking"}>
-          {state.cities.length > 0 && (
+        <div role="tabpanel" aria-label={PANEL_LABEL[mode]}>
+          {withoutMode && (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 rounded-[10px] bg-[#26251f] px-3 py-2 text-[13px] font-semibold text-canvas-text">
+                <CircleAlert size={16} className="shrink-0 text-canvas-muted" aria-hidden />
+                <span>Generic LLM answer — no taste evidence</span>
+              </div>
+              <p className="text-[13px] text-canvas-muted">No taste data. This is the ranking you'd get without Qloo.</p>
+              {streaming ? (
+                <p role="status" className="text-[13px] text-canvas-muted">Waiting for the board to finish…</p>
+              ) : withoutResult?.status === "ok" ? (
+                <GenericRanking ranked={withoutResult.ranked} />
+              ) : withoutResult?.status === "unavailable" ? (
+                <Notice>
+                  <CircleAlert size={14} className="text-state-error" aria-hidden />
+                  <span className="min-w-0">{withoutResult.message}</span>
+                  <button type="button" onClick={() => void withoutLive.refetch()} className={smallBtn}>Try again</button>
+                </Notice>
+              ) : (
+                <ul aria-hidden className="flex flex-col gap-0.5">
+                  {[0, 1, 2, 3].map((i) => <li key={i} className="skeleton h-12 list-none first:rounded-t-[14px] last:rounded-b-[14px]" />)}
+                </ul>
+              )}
+            </div>
+          )}
+          {!withoutMode && state.cities.length > 0 && (
             <div aria-hidden className={`mb-1 hidden grid-cols-1 gap-x-3 px-3 font-mono text-[11px] uppercase tracking-[0.08em] text-canvas-muted lg:grid ${ROW_COLS_LG}`}>
               <span>City</span><span>Fan heat · Activation</span><span className="text-right">Verdict</span><span className="text-right">Win</span>
             </div>
           )}
-          <ul className="flex flex-col gap-0.5">
+          {!withoutMode && <ul className="flex flex-col gap-0.5">
             {sorted.map((c) => (
               <CityRow key={c.id} city={c} selected={c.id === selectedId} dimActivation={mode === "density"} onOpen={openRow} />
             ))}
             {streaming && [0, 1, 2].slice(0, Math.max(1, 3 - Math.floor(sorted.length / 3))).map((i) => (
               <li key={`sk-${i}`} aria-hidden className="skeleton h-[88px] list-none first:rounded-t-[14px] last:rounded-b-[14px] lg:h-[72px]" />
             ))}
-          </ul>
+          </ul>}
         </div>
       )}
       {state.cities.length > 0 && (
         <div className="flex flex-col gap-1 pb-2">
-          <p className="px-1 text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
+          {!withoutMode && <p className="px-1 text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>}
           {!streaming && <button type="button" onClick={newBrief} className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">New brief</button>}
         </div>
       )}
@@ -351,7 +414,7 @@ export default function TourBoard() {
         <section aria-label="Routing map" className="relative h-[32dvh] min-h-[168px] bg-canvas-raised lg:sticky lg:top-14 lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:h-[calc(100dvh-56px)] lg:self-start">
           <Legend />
           <Suspense fallback={<div className="size-full bg-canvas-raised" />}>
-            <TourMap cities={state.cities} selectedId={selectedId} onSelect={selectFromMap} zones={selected?.zones} />
+            <TourMap cities={state.cities} selectedId={withoutMode ? null : selectedId} onSelect={selectFromMap} zones={selected?.zones} />
           </Suspense>
         </section>
         <section aria-label="Routing board" className="relative z-10 -mt-5 flex min-w-0 flex-col rounded-t-[18px] bg-canvas-raised lg:col-span-5 lg:col-start-8 lg:row-start-2 lg:mt-0 lg:rounded-none">

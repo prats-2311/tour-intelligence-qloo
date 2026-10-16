@@ -23,7 +23,7 @@ const SCRIPTS: Record<string, () => GatewayEvent[]> = {
   [SAMPLE_QUESTIONS[0]!]: () => [
     ...call("sample-1", "get_city_playbook", { city: "Guadalajara", country: "MX" }, "7 cards"),
     { type: "strategist_thinking", summary: "Compared fan heat with activation inputs for Guadalajara." },
-    ...finish("Guadalajara has moderate fan heat (62) but strong activation (82): sponsor fit is high (Cerro Alto Mezcal 0.91), a third of fans sit in Colonia Americana, and C3 Stage fits the crowd at 0.91. That combination is what the Hidden goldmine verdict means.", 1, 2),
+    ...finish("Guadalajara has moderate fan heat (62) but strong activation (82): sponsor fit is high (Cerro Alto Mezcal 0.91), 38% of in-city fan heat sits in Colonia Americana, and C3 Stage fits the crowd at 0.91. That combination is what the Hidden goldmine verdict means.", 1, 2),
   ],
   [SAMPLE_QUESTIONS[1]!]: () => [
     ...call("sample-1", "qloo_recommend", { target_type: "artist", signal_location: "São Paulo, BR" }, "2 results"),

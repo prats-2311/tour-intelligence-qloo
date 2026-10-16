@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -23,9 +24,13 @@ afterEach(() => {
 
 const PlaybookStub = () => <p>playbook {useParams().cityId}</p>;
 const Where = () => <span data-testid="search">{useLocation().search}</span>;
+const qc = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
 const wrap = (page: React.ReactNode, url: string) => (
-  <TourBoardProvider sampleDelayMs={0}><MemoryRouter initialEntries={[url]} key={url}>{page}<Where /></MemoryRouter></TourBoardProvider>
+  <QueryClientProvider client={qc()}>
+    <TourBoardProvider sampleDelayMs={0}><MemoryRouter initialEntries={[url]} key={url}>{page}<Where /></MemoryRouter></TourBoardProvider>
+  </QueryClientProvider>
 );
+const currentSearch = () => screen.getByTestId("search").textContent ?? "";
 const submitArtist = (name: string) => {
   fireEvent.change(screen.getByLabelText("Artist"), { target: { value: name } });
   fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
@@ -39,19 +44,69 @@ function RunOnce({ brief }: { brief: TourBrief }) {
 }
 const renderWithRun = (brief: TourBrief) =>
   render(
-    <TourBoardProvider sampleDelayMs={0}>
-      <MemoryRouter initialEntries={["/tours/board"]}>
-        <Routes>
-          <Route path="/tours/board" element={<TourBoard />} />
-          <Route path="/tours/book" element={<><p>book page</p><Where /></>} />
-        </Routes>
-        <RunOnce brief={brief} />
-      </MemoryRouter>
-    </TourBoardProvider>,
+    <QueryClientProvider client={qc()}>
+      <TourBoardProvider sampleDelayMs={0}>
+        <MemoryRouter initialEntries={["/tours/board"]}>
+          <Routes>
+            <Route path="/tours/board" element={<TourBoard />} />
+            <Route path="/tours/book" element={<><p>book page</p><Where /></>} />
+          </Routes>
+          <RunOnce brief={brief} />
+        </MemoryRouter>
+      </TourBoardProvider>
+    </QueryClientProvider>,
   );
 
 
 describe("TourBoard", () => {
+  it("Without Qloo shows the generic list with no bars, verdicts or scores, and the banner", async () => {
+    renderPage("/tours/board?sample=1&mode=without");
+    expect(await screen.findByText("Generic LLM answer — no taste evidence")).toBeTruthy();
+    expect(screen.getByText("No taste data. This is the ranking you'd get without Qloo.")).toBeTruthy();
+    const list = screen.getByRole("list", { name: "Generic ranking" });
+    expect(within(list).getAllByRole("listitem").map((li) => li.textContent)).toEqual(expect.arrayContaining([expect.stringContaining("Mexico City")]));
+    expect(within(list).queryByText("Hidden goldmine")).toBeNull();
+    expect(within(list).queryByRole("meter")).toBeNull();
+    expect(screen.queryAllByTestId("city-row")).toHaveLength(0);
+  });
+  it("switching to Without Qloo updates the URL and keeps the sample flag", async () => {
+    renderPage("/tours/board?sample=1");
+    fireEvent.click(await screen.findByRole("tab", { name: "Without Qloo" }));
+    expect(currentSearch()).toContain("mode=without");
+    expect(currentSearch()).toContain("sample=1");
+    fireEvent.click(screen.getByRole("tab", { name: "Winnability" }));
+    expect(currentSearch()).not.toContain("mode=");
+    expect(currentSearch()).toContain("sample=1");
+  });
+  it("live mode fetches the generic ranking only when the user selects it, and shows a retry on failure", async () => {
+    const spy = vi.spyOn(client, "fetchWithoutQloo").mockResolvedValue({ status: "unavailable", reason: "error", message: "Generic ranking unavailable" });
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield cityEvent(0); yield { type: "done", summary: {} }; });
+    renderPage("/tours/board");
+    submitArtist("Ada");
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(1));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    expect(spy).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole("tab", { name: "Without Qloo" }));
+    expect(await screen.findByText("Generic ranking unavailable")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+    expect(spy).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
+  });
+  it("sample mode never calls fetchWithoutQloo", async () => {
+    const spy = vi.spyOn(client, "fetchWithoutQloo");
+    renderPage("/tours/board?sample=1&mode=without");
+    await screen.findByRole("list", { name: "Generic ranking" });
+    expect(spy).not.toHaveBeenCalled();
+  });
+  it("selecting Without Qloo while streaming says to wait", async () => {
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield cityEvent(0); await new Promise(() => {}); });
+    renderPage("/tours/board");
+    submitArtist("Ada");
+    fireEvent.click(await screen.findByRole("tab", { name: "Without Qloo" }));
+    expect(screen.getByText("Waiting for the board to finish…")).toBeTruthy();
+  });
+
   it("sample run renders 10 rows, the sample banner and verdict summary", async () => {
     renderPage();
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
@@ -81,14 +136,14 @@ describe("TourBoard", () => {
   });
   it("tapping a city row opens its playbook (sample query kept)", async () => {
     render(
-      <TourBoardProvider sampleDelayMs={0}>
+      <QueryClientProvider client={qc()}><TourBoardProvider sampleDelayMs={0}>
         <MemoryRouter initialEntries={["/tours/board?sample=1"]}>
           <Routes>
             <Route path="/tours/board" element={<TourBoard />} />
             <Route path="/tours/playbook/:cityId" element={<><PlaybookStub /><Where /></>} />
           </Routes>
         </MemoryRouter>
-      </TourBoardProvider>,
+      </TourBoardProvider></QueryClientProvider>,
     );
     fireEvent.click(await screen.findByRole("button", { name: /^Guadalajara/ }));
     expect(await screen.findByText("playbook 4005539")).toBeTruthy();
@@ -296,14 +351,14 @@ describe("TourBoard", () => {
   });
   it("Open Tour Book navigates to the book in sample mode", async () => {
     render(
-      <TourBoardProvider sampleDelayMs={0}>
+      <QueryClientProvider client={qc()}><TourBoardProvider sampleDelayMs={0}>
         <MemoryRouter initialEntries={["/tours/board?sample=1"]}>
           <Routes>
             <Route path="/tours/board" element={<TourBoard />} />
             <Route path="/tours/book" element={<><p>book page</p><Where /></>} />
           </Routes>
         </MemoryRouter>
-      </TourBoardProvider>,
+      </TourBoardProvider></QueryClientProvider>,
     );
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
     fireEvent.click(screen.getByRole("button", { name: "Build tour" }));

@@ -4,7 +4,7 @@ const v = (x: { value: number | null }) => (x.value === null ? Number.NEGATIVE_I
 // -Infinity - -Infinity is NaN, so compare explicitly: equal (incl. both null) falls through to the next key.
 const desc = (a: number, b: number) => (a === b ? 0 : b > a ? 1 : -1);
 
-export function sortCities(cities: ScoredCity[], mode: "winnability" | "density"): ScoredCity[] {
+export function sortCities(cities: ScoredCity[], mode: "winnability" | "density" | "without"): ScoredCity[] {
   return [...cities].sort((a, b) =>
     mode === "density"
       ? desc(v(a.fanHeat), v(b.fanHeat)) || a.name.localeCompare(b.name)
