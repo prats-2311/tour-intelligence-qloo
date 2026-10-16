@@ -11,6 +11,10 @@ const META: Record<Verdict, { label: string; Icon: LucideIcon; cls: string }> = 
   insufficient_data: { label: "Not enough data", Icon: CircleDashed, cls: "bg-canvas-raised text-canvas-muted" },
 };
 
+export const VERDICT_LABEL: Record<Verdict, string> = Object.fromEntries(
+  Object.entries(META).map(([k, v]) => [k, v.label]),
+) as Record<Verdict, string>;
+
 export function VerdictChip({ verdict, size = "sm" }: { verdict: Verdict; size?: "sm" | "md" }) {
   const { label, Icon, cls } = META[verdict];
   return (
