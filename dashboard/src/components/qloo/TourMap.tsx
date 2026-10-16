@@ -4,7 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { ScoredCity, Zone } from "@/lib/qloo/types";
 import { boundsFor, cityMarkers, MAP_STYLE } from "@/lib/qloo/geometry";
 import { useIsDesktop, useMediaQuery } from "@/lib/useMediaQuery";
-import { markerElement, setMarkerSelected } from "./mapMarker";
+import { markerElement, markerSignature, setMarkerSelected } from "./mapMarker";
 
 interface Props {
   cities: ScoredCity[];
@@ -33,7 +33,7 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
   const reduce = useMediaQuery("(prefers-reduced-motion: reduce)");
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const markers = useRef<Map<string, { marker: maplibregl.Marker; element: HTMLButtonElement }>>(new Map());
+  const markers = useRef<Map<string, { marker: maplibregl.Marker; element: HTMLButtonElement; sig: string }>>(new Map());
   const styleReady = useRef(false);
   const onSelectRef = useRef(onSelect);
   const zonesRef = useRef(zones);
@@ -47,6 +47,10 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
   reduceRef.current = reduce;
 
   const idKey = useMemo(() => cities.map((c) => c.id).sort().join("|"), [cities]);
+  const sigKey = useMemo(
+    () => cityMarkers(cities).map((m, i) => markerSignature({ ...m, name: cities.find((c) => c.id === m.id)?.name ?? String(i) })).sort().join("\n"),
+    [cities],
+  );
 
   const applyZones = (map: maplibregl.Map) => {
     const data = zoneData(zonesRef.current);
@@ -108,16 +112,19 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
     if (b) map.fitBounds(b, { padding: 48, animate: !reduceRef.current });
   }, [idKey, isDesktop]);
 
-  // Add/remove markers only when the city set changes (or the map is recreated).
+  // Rebuild only markers whose rendered content changed; add new, remove gone.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
     const byId = new Map(citiesRef.current.map((c) => [c.id, c]));
-    const wanted = cityMarkers(citiesRef.current);
-    const keep = new Set(wanted.map((m) => m.id));
-    for (const [id, { marker }] of markers.current) {
-      if (!keep.has(id)) {
-        marker.remove();
+    const wanted = cityMarkers(citiesRef.current).map((m) => {
+      const name = byId.get(m.id)!.name;
+      return { ...m, name, sig: markerSignature({ ...m, name }) };
+    });
+    const keep = new Map(wanted.map((m) => [m.id, m.sig]));
+    for (const [id, entry] of markers.current) {
+      if (keep.get(id) !== entry.sig) {
+        entry.marker.remove();
         markers.current.delete(id);
       }
     }
@@ -125,20 +132,20 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
       if (markers.current.has(m.id)) continue;
       const element = markerElement({
         verdict: m.verdict,
-        city: byId.get(m.id)!.name,
+        city: m.name,
         label: m.label,
         selected: m.id === selectedRef.current,
         reduce: reduceRef.current,
         onSelect: () => onSelectRef.current(m.id),
       });
-      markers.current.set(m.id, { marker: new maplibregl.Marker({ element }).setLngLat(m.lngLat).addTo(map), element });
+      markers.current.set(m.id, { marker: new maplibregl.Marker({ element }).setLngLat(m.lngLat).addTo(map), element, sig: m.sig });
     }
-  }, [idKey, isDesktop]);
+  }, [sigKey, isDesktop]);
 
   // Selection changes mutate in place so keyboard focus is preserved.
   useEffect(() => {
     markers.current.forEach(({ element }, id) => setMarkerSelected(element, id === selectedId));
-  }, [selectedId, idKey, isDesktop]);
+  }, [selectedId, sigKey, isDesktop]);
 
   return <div ref={container} className="h-full min-h-[240px] w-full overflow-hidden rounded-[18px] bg-[#151410]" />;
 }

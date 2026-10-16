@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import { markerElement, setMarkerSelected } from "./mapMarker";
+import { markerElement, markerSignature, setMarkerSelected } from "./mapMarker";
 import type { Verdict } from "@/lib/qloo/types";
 
 const VERDICTS: Verdict[] = ["play", "hidden_goldmine", "de_risk", "consider", "skip", "insufficient_data"];
@@ -72,5 +72,13 @@ describe("markerElement", () => {
     const off = markerElement({ verdict: "play", city: "X", label: null, selected: false, onSelect: () => {} });
     expect((on.querySelector("[data-inner]") as HTMLElement).style.transition).toBe("none");
     expect((off.querySelector("[data-inner]") as HTMLElement).style.transition).toContain("transform");
+  });
+  it("markerSignature changes with verdict, name or label and is stable otherwise", () => {
+    const base = { id: "1", name: "Lima", verdict: "play" as Verdict, label: "Lima" };
+    expect(markerSignature(base)).toBe(markerSignature({ ...base }));
+    expect(markerSignature({ ...base, verdict: "skip", label: null })).not.toBe(markerSignature(base));
+    expect(markerSignature({ ...base, name: "Cusco" })).not.toBe(markerSignature(base));
+    expect(markerSignature({ ...base, label: null })).not.toBe(markerSignature(base));
+    expect(markerSignature({ ...base, id: "2" })).not.toBe(markerSignature(base));
   });
 });

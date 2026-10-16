@@ -123,3 +123,8 @@ export function setMarkerSelected(el: HTMLElement, selected: boolean): void {
   });
   inner.prepend(h);
 }
+
+/** Identity of everything a marker renders; a change means the marker must be rebuilt. */
+export function markerSignature(c: { id: string; name: string; verdict: Verdict; label: string | null }): string {
+  return [c.id, c.verdict, c.name, c.label ?? ""].join("|");
+}
