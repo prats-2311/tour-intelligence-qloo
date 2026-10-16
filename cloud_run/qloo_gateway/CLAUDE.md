@@ -6,3 +6,7 @@ The only service that talks to Qloo. Holds one `qloo mcp` child process (stdio) 
 - Every Qloo call goes through `resilientCall` (validate → cache → budget → mcp → retry → stale fallback).
 - Imports use `.js` suffixes (NodeNext ESM).
 - Deploy: container (Dockerfile) to Cloud Run, us-central1, `qloo-gateway-sa`, `--no-allow-unauthenticated`, `--min-instances=1`. `QLOO_API_KEY` from Secret Manager secret `qloo-api-key`.
+
+## Build & deploy
+- Local image check (from worktree root): `docker build -t qloo-gateway cloud_run/qloo_gateway && docker run --rm qloo-gateway qloo --version`
+- `scripts/deploy.sh` is run by Prateek (not by agents) after creating the `qloo-api-key` secret: `printf '%s' "$QLOO_API_KEY" | gcloud secrets create qloo-api-key --data-file=- --project liifecalling-academy`
