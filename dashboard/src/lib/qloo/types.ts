@@ -44,6 +44,7 @@ export interface ArtistProfile {
   refs: EvidenceRef[];
   warnings: DataWarning[];
 }
+export type StrategistToolStatus = "ok" | "empty" | "needs_input" | "partial" | "degraded" | "error" | "rejected";
 export type GatewayEvent =
   | { type: "resolve"; entity: { entityId: string; name: string } }
   | ({ type: "artist_profile" } & ArtistProfile)
@@ -55,6 +56,21 @@ export type GatewayEvent =
   | { type: "city_scored"; city: ScoredCity }
   | { type: "playbook"; playbook: { city: { name: string; country: string }; cards: PlaybookCard[] } }
   | { type: "narrative"; narrative: Narrative }
+  | { type: "strategist_thinking"; summary: string }
+  | { type: "strategist_tool_call"; id: string; name: string; args: Record<string, unknown> }
+  | { type: "strategist_tool_result"; id: string; name: string; status: StrategistToolStatus; summary: string; cached: boolean }
+  | { type: "strategist_message"; text: string; unsupportedNumbers: string[]; stoppedEarly: boolean; model: string }
+  | { type: "strategist_error"; code: "CAPPED" | "UNAVAILABLE" | "ABORTED" | "INTERNAL"; message: string }
   | { type: "done"; summary: unknown }
   | { type: "error"; code: string; message: string };
 export interface TourBrief { artist: string; artistEntityId?: string; regions: string[]; maxStops: number; dateWindow?: DateWindow }
+export interface ChatMessage { role: "user" | "assistant"; text: string }
+export interface StrategistContext {
+  artist?: { name: string; entityId: string };
+  regions?: string[];
+  cities?: Array<{ id: string; name: string; country: string; verdict: string; fanHeat: number | null; activation: number | null; winnability: number | null }>;
+  focusCityId?: string;
+}
+export type WithoutQloo =
+  | { status: "ok"; ranked: Array<{ name: string; country: string }>; model: string; cached: boolean }
+  | { status: "unavailable"; reason: "capped" | "error" | "disabled" | "invalid"; message: string };

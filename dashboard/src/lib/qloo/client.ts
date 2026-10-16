@@ -2,7 +2,8 @@ import { LONG_NAMES_SAMPLE, LUMEN_VALE_SAMPLE } from "./fixtures/lumenVale";
 import { getSessionId } from "./session";
 import { SseParser } from "./sse";
 import { samplePlaybookEvents, sampleThisWeek } from "./fixtures/lumenValePlaybooks";
-import type { DateWindow, GatewayEvent, ThisWeek, TourBrief } from "./types";
+import { SAMPLE_WITHOUT_QLOO, sampleStrategistEvents } from "./fixtures/strategistSample";
+import type { ChatMessage, DateWindow, GatewayEvent, StrategistContext, ThisWeek, TourBrief, WithoutQloo } from "./types";
 
 type StreamOpts = { signal?: AbortSignal; fetchImpl?: typeof fetch; sample?: boolean; sampleSet?: "default" | "long"; delayMs?: number };
 
@@ -55,6 +56,35 @@ export function streamCityPlaybook(q: { artist: string; artistEntityId: string; 
   }
   const qs = new URLSearchParams(q).toString();
   return stream(`/api/qloo/city-playbook?${qs}`, { method: "GET", headers: { "x-session-id": getSessionId() } }, opts);
+}
+
+export function streamStrategist(body: { messages: ChatMessage[]; context: StrategistContext }, opts: StreamOpts = {}): AsyncGenerator<GatewayEvent> {
+  if (opts.sample) {
+    const lastUser = [...body.messages].reverse().find((m) => m.role === "user");
+    return sample(sampleStrategistEvents(lastUser?.text ?? ""), opts);
+  }
+  return stream("/api/qloo/strategist", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-session-id": getSessionId() },
+    body: JSON.stringify(body),
+  }, opts);
+}
+
+const WITHOUT_QLOO_ERROR: WithoutQloo = { status: "unavailable", reason: "error", message: "Generic ranking unavailable" };
+
+export async function fetchWithoutQloo(body: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }> }, opts: { sample?: boolean; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<WithoutQloo> {
+  if (opts.sample) return SAMPLE_WITHOUT_QLOO;
+  try {
+    const res = await (opts.fetchImpl ?? fetch)("/api/qloo/without-qloo", {
+      method: "POST", signal: opts.signal,
+      headers: { "content-type": "application/json", "x-session-id": getSessionId() },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return WITHOUT_QLOO_ERROR;
+    return (await res.json()) as WithoutQloo;
+  } catch {
+    return WITHOUT_QLOO_ERROR;
+  }
 }
 
 const WEB_ERROR: ThisWeek = { status: "unavailable", reason: "error", message: "Live web context unavailable — search failed" };

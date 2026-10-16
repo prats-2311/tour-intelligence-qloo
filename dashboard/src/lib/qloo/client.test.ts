@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { callQlooTool, fetchThisWeek, streamCityPlaybook, streamTourBoard } from "./client";
+import { callQlooTool, fetchThisWeek, fetchWithoutQloo, streamCityPlaybook, streamStrategist, streamTourBoard } from "./client";
+import { SAMPLE_QUESTIONS } from "./fixtures/strategistSample";
 import type { GatewayEvent } from "./types";
 import { LONG_NAMES_SAMPLE, LUMEN_VALE_SAMPLE, SAMPLE_BRIEF } from "./fixtures/lumenVale";
 
@@ -128,5 +129,25 @@ describe("streamCityPlaybook sample mode and fetchThisWeek", () => {
   });
   it("fetchThisWeek in sample mode returns the fixture", async () => {
     expect((await fetchThisWeek({ city: "Guadalajara", country: "MX", window: { start: "2027-03-12", end: "2027-04-18" } }, { sample: true, cityId: "4005539" })).status).toBe("ok");
+  });
+  it("streamStrategist in sample mode replays the scripted events and never fetches", async () => {
+    const fetchImpl = vi.fn();
+    const out: GatewayEvent[] = [];
+    for await (const e of streamStrategist({ messages: [{ role: "user", text: SAMPLE_QUESTIONS[0]! }], context: {} }, { sample: true, delayMs: 0, fetchImpl })) out.push(e);
+    expect(out.at(-1)?.type).toBe("done");
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+  it("streamStrategist live posts messages and context with the session header", async () => {
+    const fetchImpl = vi.fn(async () => new Response('event: done\ndata: {"type":"done","summary":{}}\n\n', { status: 200, headers: { "content-type": "text/event-stream" } }));
+    for await (const _ of streamStrategist({ messages: [{ role: "user", text: "hi" }], context: {} }, { fetchImpl })) { /* drain */ }
+    const [url, init] = fetchImpl.mock.calls[0]! as unknown as [string, RequestInit];
+    expect(url).toBe("/api/qloo/strategist");
+    expect(JSON.parse(init.body as string)).toEqual({ messages: [{ role: "user", text: "hi" }], context: {} });
+    expect((init.headers as Record<string, string>)["x-session-id"]).toBeTruthy();
+  });
+  it("fetchWithoutQloo maps failures to an honest unavailable state", async () => {
+    const fetchImpl = vi.fn(async () => new Response("<html>", { status: 502 }));
+    expect(await fetchWithoutQloo({ artist: "A", regions: ["Mexico"], cities: [{ name: "X", country: "MX" }] }, { fetchImpl }))
+      .toEqual({ status: "unavailable", reason: "error", message: "Generic ranking unavailable" });
   });
 });
