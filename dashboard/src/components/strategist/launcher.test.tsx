@@ -24,6 +24,15 @@ describe("StrategistLauncher", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
     expect(screen.getByRole("dialog", { name: "Ask the strategist" })).toBeTruthy();
   });
+  it("lifts the FAB above the sticky footer on board, playbook and book, not elsewhere", async () => {
+    mm(false);
+    for (const [path, lifted] of [["/tours/board?sample=1", true], ["/tours/playbook/4005539?sample=1", true], ["/tours/book?sample=1", true], ["/insights", false]] as const) {
+      const { unmount } = shell(path);
+      const fab = await screen.findByRole("button", { name: "Ask the strategist" });
+      expect(fab.className.includes("bottom-[calc(9.5rem")).toBe(lifted);
+      unmount();
+    }
+  });
   it("titles the panel after the playbook city", async () => {
     mm(false);
     shell("/tours/playbook/4005539?sample=1");

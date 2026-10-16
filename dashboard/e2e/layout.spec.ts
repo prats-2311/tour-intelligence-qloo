@@ -123,6 +123,33 @@ test.describe("touch targets are at least 44x44 on mobile", () => {
     await expect(page.getByText(/Hidden goldmine verdict means/)).toBeVisible();
     await noHorizontalScroll(page);
   });
+  // The strategist FAB must never sit on top of a sticky footer's buttons (Tour Board, Playbook, Book).
+  const footerOccluded = (page: Page) => page.evaluate(() => {
+    const out: string[] = [];
+    const footers = [...document.querySelectorAll("*")].filter((el) => {
+      const cs = getComputedStyle(el);
+      return cs.position === "sticky" && cs.bottom !== "auto" && el.querySelector("button, a");
+    });
+    for (const f of footers) {
+      for (const b of f.querySelectorAll("button, a")) {
+        const r = b.getBoundingClientRect();
+        if (r.width < 1 || r.height < 1 || r.bottom < 0 || r.top > window.innerHeight) continue;
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        if (!hit || !b.contains(hit)) out.push(`${b.tagName} "${(b.textContent ?? "").trim().slice(0, 30)}" is covered by ${hit?.tagName} "${(hit?.getAttribute("aria-label") ?? hit?.textContent ?? "").trim().slice(0, 30)}"`);
+      }
+    }
+    return { footers: footers.length, out };
+  });
+  for (const [path, done] of [["/tours/board?sample=1", boardDone], ["/tours/playbook/4005539?sample=1", NEW_ROUTES[0]![1]], ["/tours/book?sample=1", bookDone]] as Array<[string, (p: Page) => Promise<void>]>) {
+    test(`strategist FAB does not cover the sticky footer: ${path}`, async ({ page }) => {
+      await page.goto(path);
+      await done(page);
+      await expect(page.getByRole("button", { name: "Ask the strategist" })).toBeVisible();
+      const res = await footerOccluded(page);
+      expect(res.footers).toBeGreaterThan(0);
+      expect(res.out).toEqual([]);
+    });
+  }
   for (const [path, done] of NEW_ROUTES) {
     test(`playbook and book: ${path}`, async ({ page }) => {
       await page.goto(path);

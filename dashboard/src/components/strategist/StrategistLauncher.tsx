@@ -13,6 +13,10 @@ export const DOCK_WIDTH = 380;
 /** Tour routes and Insights only; the legacy campaign pages never get the launcher. */
 export const showsStrategist = (pathname: string): boolean => pathname === "/insights" || pathname === "/tours" || pathname.startsWith("/tours/") || pathname.startsWith("/insights/");
 
+/** Routes whose mobile layout ends in a sticky 64 px action footer above the tab bar; the FAB sits above it. */
+export const hasStickyFooter = (pathname: string): boolean =>
+  pathname === "/tours/board" || pathname === "/tours/book" || pathname.startsWith("/tours/playbook/");
+
 function readOpen(): boolean {
   try { return localStorage.getItem(STORAGE_KEY) === "1"; } catch { return false; }
 }
@@ -44,13 +48,15 @@ function useLauncherModel() {
 export function StrategistFab() {
   const [open, setOpen] = useState(false);
   const { sample, title, context } = useLauncherModel();
+  const { pathname } = useLocation();
+  const lift = hasStickyFooter(pathname) ? "bottom-[calc(9.5rem+env(safe-area-inset-bottom))]" : "bottom-[calc(5rem+env(safe-area-inset-bottom))]";
   return (
     <>
       <button
         type="button"
         aria-label="Ask the strategist"
         onClick={() => setOpen(true)}
-        className="btn-gold fixed right-4 z-30 flex size-14 items-center justify-center rounded-full bottom-[calc(5rem+env(safe-area-inset-bottom))] outline-none focus-visible:ring-2 focus-visible:ring-bone"
+        className={`btn-gold fixed right-4 z-30 flex size-14 items-center justify-center rounded-full ${lift} outline-none focus-visible:ring-2 focus-visible:ring-bone`}
       >
         <MessageSquare size={22} aria-hidden />
       </button>
