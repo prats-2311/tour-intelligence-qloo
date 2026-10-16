@@ -19,7 +19,7 @@ export function activation(
 ): Score & { components: Partial<Record<ComponentName, number>> } {
   const present = (Object.keys(components) as ComponentName[]).filter((k) => Number.isFinite(components[k]?.value));
   const refs = present.flatMap((k) => components[k]!.refs);
-  const values = Object.fromEntries(present.map((k) => [k, components[k]!.value])) as Partial<Record<ComponentName, number>>;
+  const values = Object.fromEntries(present.map((k) => [k, Math.min(1, Math.max(0, components[k]!.value))])) as Partial<Record<ComponentName, number>>;
   if (present.length < 2) return { value: null, reason: "insufficient_data", refs, components: values };
   const totalWeight = present.reduce((sum, k) => sum + weights[k], 0);
   const value = 100 * present.reduce((sum, k) => sum + (weights[k] / totalWeight) * Math.min(1, Math.max(0, components[k]!.value)), 0);

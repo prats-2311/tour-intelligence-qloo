@@ -69,6 +69,58 @@ describe("winnability & verdict", () => {
   });
 });
 
+describe("fix round 1", () => {
+  it("isolates a non-finite market", () => {
+    const m = fanHeat([
+      { id: "a", affinity: 0.9, popularity: 0.2, refs: r },
+      { id: "b", affinity: 0.5, popularity: 0.8, refs: r },
+      { id: "c", affinity: NaN, popularity: 0.5, refs: r },
+    ]);
+    expect(m.get("a")?.value).toBeCloseTo(70, 5);
+    expect(m.get("b")?.value).toBeCloseTo(30, 5);
+    expect(m.get("c")).toMatchObject({ value: null, reason: "insufficient_data" });
+  });
+  it("verdict and winnability treat NaN as insufficient", () => {
+    const nan: Score = { value: NaN, refs: r };
+    expect(winnability(nan, s(60))).toMatchObject({ value: null });
+    expect(winnability(s(60), nan)).toMatchObject({ value: null });
+    expect(verdict(nan, s(60), s(60))).toBe("insufficient_data");
+    expect(verdict(s(60), nan, s(60))).toBe("insufficient_data");
+    expect(verdict(s(60), s(60), nan)).toBe("insufficient_data");
+  });
+  it.each([
+    [70, 60, "play"],
+    [70, 59.99, "consider"],
+    [69.99, 75, "hidden_goldmine"],
+    [45, 75, "hidden_goldmine"],
+    [44.99, 75, "consider"],
+    [70, 44.99, "de_risk"],
+    [70, 45, "consider"],
+    [50, 60, "consider"],
+    [50, 59.98, "skip"],
+  ])("boundary fan %d activation %d -> %s", (fan, act, expected) => {
+    expect(verdict(s(fan), s(act), winnability(s(fan), s(act)))).toBe(expected);
+  });
+  it("activation refs only from finite components", () => {
+    const ra = [{ tool: "a", cacheKey: "a" }];
+    const rb = [{ tool: "b", cacheKey: "b" }];
+    const rn = [{ tool: "n", cacheKey: "n" }];
+    const a = activation({ sponsor_fit: { value: 1, refs: ra }, venue_fit: { value: 0, refs: rb }, local_hooks: { value: NaN, refs: rn } });
+    expect(a.refs).toEqual([...ra, ...rb]);
+  });
+  it("winnability refs concatenate on scored and insufficient paths", () => {
+    const rf = [{ tool: "f", cacheKey: "f" }];
+    const rc = [{ tool: "c", cacheKey: "c" }];
+    expect(winnability({ value: 80, refs: rf }, { value: 60, refs: rc }).refs).toEqual([...rf, ...rc]);
+    expect(winnability({ value: null, reason: "insufficient_data", refs: rf }, { value: 60, refs: rc }).refs).toEqual([...rf, ...rc]);
+  });
+  it("activation components are clamped", () => {
+    const a = activation({ sponsor_fit: { value: 1.5, refs: r }, venue_fit: { value: 0, refs: r } });
+    expect(a.components.sponsor_fit).toBe(1);
+    expect(a.value).toBeCloseTo(60, 5);
+  });
+});
+
 describe("coBillLift", () => {
   it("multiplies and clamps to 0-1", () => {
     expect(coBillLift(0.5, 0.8)).toBeCloseTo(0.4);
