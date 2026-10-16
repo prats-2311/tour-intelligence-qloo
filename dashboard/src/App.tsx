@@ -5,6 +5,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { CampaignProvider } from "./lib/campaignContext";
 import { CityDetailSkeleton, CompareCitiesSkeleton, NewCampaignSkeleton, AddCitiesSkeleton, TasteInsightsSkeleton, TourBoardSkeleton, PlaybookSkeleton } from "./components/ui/Skeletons";
 import { WebMcpTools } from "./components/WebMcpTools";
+import { QlooWebMcpTools } from "./components/QlooWebMcpTools";
 
 // Dashboard (/campaign) is loaded eagerly. Landing and every other route ship
 // as separate chunks so the initial bundle stays small; each gets a fixed-height
@@ -26,6 +27,7 @@ export default function App() {
   return (
     <CampaignProvider>
       <WebMcpTools />
+      <QlooWebMcpTools />
       <AppShell>
         {/* Every lazy route gets its own Suspense + matching skeleton. A bare
             fallback={null} would show a blank page on a direct load (fresh
