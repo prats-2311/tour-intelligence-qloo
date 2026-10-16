@@ -17,35 +17,21 @@ export function AgentLogChip({ events, onOpen }: { events: GatewayEvent[]; onOpe
 function Marker({ status }: { status: LogStep["status"] }) {
   const reduce = useReducedMotion();
   if (status === "success") {
-    return (
-      <span role="img" aria-label="done">
-        <Check size={14} className="text-verdict-play-text" aria-hidden />
-      </span>
-    );
+    return <Check size={14} className="text-verdict-play-text" aria-hidden />;
   }
   if (status === "error") {
-    return (
-      <span role="img" aria-label="error">
-        <TriangleAlert size={14} className="text-verdict-derisk-text" aria-hidden />
-      </span>
-    );
+    return <TriangleAlert size={14} className="text-verdict-derisk-text" aria-hidden />;
   }
   if (status === "active") {
     return (
-      <span role="img" aria-label="in progress">
-        <LoaderCircle
-          size={14}
-          className={`text-gold ${reduce ? "" : "animate-spin"}`}
-          aria-hidden
-        />
-      </span>
+      <LoaderCircle
+        size={14}
+        className={`text-gold ${reduce ? "" : "animate-spin"}`}
+        aria-hidden
+      />
     );
   }
-  return (
-    <span role="img" aria-label="note">
-      <Circle size={10} className="text-canvas-muted" aria-hidden />
-    </span>
-  );
+  return <Circle size={10} className="text-canvas-muted" aria-hidden />;
 }
 
 const statusLabel: Record<LogStep["status"], string> = {
@@ -62,7 +48,7 @@ export function AgentLog({ events }: { events: GatewayEvent[] }) {
     <ol className="flex flex-col gap-3" aria-label="Agent reasoning log">
       {steps.map((s) => (
         <motion.li key={s.id} initial={reduce ? false : { opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3">
-          <span className="mt-1"><Marker status={s.status} /></span>
+          <span className="mt-1" aria-hidden><Marker status={s.status} /></span>
           <div className="min-w-0">
             <span className="sr-only">{statusLabel[s.status]}: </span>
             <p className="text-[13px] text-canvas-text">{s.sentence}</p>

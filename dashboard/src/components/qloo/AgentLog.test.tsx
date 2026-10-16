@@ -37,18 +37,19 @@ describe("AgentLog", () => {
     expect(screen.getAllByText("qloo_where_popular").length).toBeGreaterThan(0);
     expect(screen.getAllByText("From cache").length).toBeGreaterThan(0);
   });
-  it("exposes step status via aria-label on marker and sr-only status text", () => {
-    render(<AgentLog events={LUMEN_VALE_SAMPLE} />);
-    // Check for status markers with aria-labels
-    const statusMarkers = screen.getAllByRole("img");
-    expect(statusMarkers.length).toBeGreaterThan(0);
-    // Check that each marker has an aria-label
-    statusMarkers.forEach((marker) => {
-      expect(marker.getAttribute("aria-label")).toMatch(/in progress|done|error|note/);
+  it("exposes step status via sr-only status text per row (no double announcement)", () => {
+    const { container } = render(<AgentLog events={LUMEN_VALE_SAMPLE} />);
+    // Each log item should have sr-only status text before the sentence
+    const logItems = container.querySelectorAll("li");
+    expect(logItems.length).toBeGreaterThan(0);
+    logItems.forEach((item) => {
+      const srText = item.querySelector(".sr-only");
+      expect(srText).toBeTruthy();
+      expect(srText?.textContent).toMatch(/active|success|error|info|in progress|done|note/);
     });
-    // Check for sr-only status text in the list
-    const srTexts = document.querySelectorAll(".sr-only");
-    expect(srTexts.length).toBeGreaterThan(0);
+    // Marker span should be aria-hidden to avoid double announcement
+    const markerSpans = container.querySelectorAll("li > span[aria-hidden]");
+    expect(markerSpans.length).toBeGreaterThan(0);
   });
   it("active step uses spinning LoaderCircle icon", () => {
     const events: any[] = [

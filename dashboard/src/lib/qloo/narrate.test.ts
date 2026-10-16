@@ -98,4 +98,15 @@ describe("narrate", () => {
       { type: "tool_call", tool: "qloo_trends", args: {}, cached: false },
     ])).toEqual({ total: 2, cached: 0 });
   });
+  it("tool_result with needs_input status becomes info 'needs a choice' (not success)", () => {
+    const steps = narrate([
+      { type: "tool_call", tool: "qloo_recommend", args: { target_type: "brand", signal_location: "Boston" }, cached: false },
+      { type: "tool_result", tool: "qloo_recommend", status: "needs_input", resultCount: 5, cacheKey: "k", stale: false },
+    ]);
+    expect(steps[0]).toMatchObject({
+      sentence: "Checking sponsor fit in Boston",
+      status: "info",
+      detail: "needs a choice",
+    });
+  });
 });

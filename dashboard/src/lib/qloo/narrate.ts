@@ -65,17 +65,23 @@ export function narrate(events: GatewayEvent[]): LogStep[] {
           return;
         }
         const [{ step, args }] = open.splice(idx, 1) as [{ step: LogStep; tool: string; args: Record<string, unknown> }];
-        step.status = e.status === "error" ? "error" : "success";
-        if (e.status === "error") {
+        if (e.status === "needs_input") {
+          step.status = "info";
+          step.detail = "needs a choice";
+        } else if (e.status === "error") {
+          step.status = "error";
           step.detail = "Qloo returned an error";
-        } else if (e.status === "empty") {
-          step.detail = "no results";
-        } else if (e.status === "ok" && e.resultCount === 0) {
-          step.detail = "no results";
-        } else if (e.status === "partial" || e.status === "degraded") {
-          step.detail = detailFor(e.tool, args, e.status, e.resultCount);
         } else {
-          step.detail = unitFor(e.tool, args, e.resultCount);
+          step.status = "success";
+          if (e.status === "empty") {
+            step.detail = "no results";
+          } else if (e.status === "ok" && e.resultCount === 0) {
+            step.detail = "no results";
+          } else if (e.status === "partial" || e.status === "degraded") {
+            step.detail = detailFor(e.tool, args, e.status, e.resultCount);
+          } else {
+            step.detail = unitFor(e.tool, args, e.resultCount);
+          }
         }
         step.stale = e.stale;
         return;
