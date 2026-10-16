@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { City } from "../src/geo/cities.js";
+import { cityPopularityArgs } from "../src/pipeline/recArgs.js";
 import { runCityPlaybook } from "../src/pipeline/cityPlaybook.js";
 import type { QlooCaller } from "../src/qlooCall.js";
 import type { GatewayEvent, QlooEnvelope } from "../src/types.js";
@@ -45,6 +46,7 @@ describe("runCityPlaybook", () => {
     const seen: Array<Record<string, unknown>> = [];
     const events = await collect(runCityPlaybook(input, { qloo: qloo((t, a) => { if (t === "qloo_recommend" && !a.signals) seen.push(a); return happy(t, a); }), cities: CITIES }));
     expect(seen).toEqual([{ target_type: "artist", signal_location: "Mexico City, MX", limit: 5 }]);
+    expect(seen).toEqual([cityPopularityArgs("artist", "Mexico City, MX", 5)]);
     const talent = cardsOf(events).find((c) => c.kind === "talent")! as unknown as { items: Array<{ name: string }>; summary: { sharedTaste: number | null; sharedTags: string[] } };
     expect(talent.items.map((i) => i.name)).toEqual(["Proxy 1", "Proxy 2"]);
     expect(talent.summary.sharedTaste).toBeCloseTo(0.5, 10);

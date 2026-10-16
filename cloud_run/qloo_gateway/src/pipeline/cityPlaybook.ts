@@ -4,6 +4,7 @@ import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { coBillLift } from "../scoring/winnability.js";
 import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narrative, PlaybookCard } from "../types.js";
 import { activationInputs, Aborted, BudgetStop, trackedCall } from "./tourBoard.js";
+import { cityPopularityArgs } from "./recArgs.js";
 
 export type { PlaybookCard } from "../types.js";
 
@@ -70,7 +71,7 @@ export async function* runCityPlaybook(
     const where = `${input.city.name}, ${input.city.country}`;
     const [tagsS, proxyS] = await Promise.allSettled([
       trackedCall(deps, input.sessionId, "qloo_entity_tags", { entities: [input.artistEntityId], entity_type: "artist", limit: 10 }, events),
-      trackedCall(deps, input.sessionId, "qloo_recommend", { target_type: "artist", signal_location: where, limit: 5 }, events),
+      trackedCall(deps, input.sessionId, "qloo_recommend", cityPopularityArgs("artist", where, 5), events),
     ]);
     while (events.length) yield events.shift()!;
     const failed = [tagsS, proxyS].filter((s): s is PromiseRejectedResult => s.status === "rejected").map((s) => s.reason);

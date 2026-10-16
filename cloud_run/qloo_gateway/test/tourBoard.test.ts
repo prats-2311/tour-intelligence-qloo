@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { City } from "../src/geo/cities.js";
+import { artistTasteArgs } from "../src/pipeline/recArgs.js";
 import { pickCandidates, runTourBoard, type TourBrief } from "../src/pipeline/tourBoard.js";
 import type { QlooCaller } from "../src/qlooCall.js";
 import type { GatewayEvent, QlooEnvelope } from "../src/types.js";
@@ -201,6 +202,13 @@ describe("runTourBoard", () => {
     const events = await collect(runTourBoard({ ...brief, regions: ["Mexico", "Mexico2"] }, { qloo: fakeQloo((t, a) => (t === "qloo_where_popular" && String(a.within).startsWith("Mexico") ? heatMexico : happy(t, a))), cities: CITIES }));
     const names = events.filter((e) => e.type === "city_scored").map((e) => (e as { city: { name: string } }).city.name);
     expect(names).toEqual(["Mexico City", "Monterrey"]);
+  });
+
+  it("issues the brand and artist recommends with the shared artist-taste args", async () => {
+    const seen: Array<Record<string, unknown>> = [];
+    await collect(runTourBoard({ ...brief, artistEntityId: "A1" }, { qloo: fakeQloo((t, a) => { if (t === "qloo_recommend" && (a.target_type === "brand" || a.target_type === "artist")) seen.push(a); return happy(t, a); }), cities: CITIES }));
+    expect(seen).toContainEqual(artistTasteArgs("brand", "A1", "Mexico City, MX", 10));
+    expect(seen).toContainEqual(artistTasteArgs("artist", "A1", "Mexico City, MX", 10));
   });
 
   it("adds a tv_show recommend to local hooks", async () => {

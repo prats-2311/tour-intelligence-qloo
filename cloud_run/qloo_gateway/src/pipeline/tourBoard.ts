@@ -5,6 +5,7 @@ import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { activation, fanConcentration, meanTopK, type ComponentName } from "../scoring/activation.js";
 import { fanHeat } from "../scoring/fanHeat.js";
 import { verdict, winnability } from "../scoring/winnability.js";
+import { artistTasteArgs } from "./recArgs.js";
 import type { DataWarning, EvidenceRef, GatewayEvent, Score, Verdict } from "../types.js";
 
 export interface TourBrief { artist: string; artistEntityId?: string; regions: string[]; maxStops: number; sessionId: string; today: string }
@@ -79,10 +80,10 @@ export { call as trackedCall };
 export async function activationInputs(artist: string, city: { name: string; country: string }, deps: Deps, sessionId: string, events: GatewayEvent[], venueFallbackMessage = "venue ranking unresolved — showing place recommendations") {
   const where = `${city.name}, ${city.country}`;
   const [brands, places, films, artists, tv, inCity] = await settleAll([
-    call(deps, sessionId, "qloo_recommend", { target_type: "brand", signals: [artist], signal_location: where, limit: 10 }, events),
+    call(deps, sessionId, "qloo_recommend", artistTasteArgs("brand", artist, where, 10), events),
     call(deps, sessionId, "qloo_recommend", { target_type: "place", signals: [artist], filter_location: where, limit: 10 }, events),
     call(deps, sessionId, "qloo_recommend", { target_type: "movie", signals: [artist], signal_location: where, limit: 10 }, events),
-    call(deps, sessionId, "qloo_recommend", { target_type: "artist", signals: [artist], signal_location: where, limit: 10 }, events),
+    call(deps, sessionId, "qloo_recommend", artistTasteArgs("artist", artist, where, 10), events),
     call(deps, sessionId, "qloo_recommend", { target_type: "tv_show", signals: [artist], signal_location: where, limit: 10 }, events),
     call(deps, sessionId, "qloo_where_popular", { entity: artist, entity_type: "artist", within: where, limit: 20 }, events),
   ] as const);
