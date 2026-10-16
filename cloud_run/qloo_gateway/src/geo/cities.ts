@@ -39,6 +39,9 @@ export function nearestCity(cities: City[], p: { lat: number; lon: number }, opt
 /** GeoNames ids of well-known tour cities that a larger neighbouring municipality would otherwise outrank. Keep this small and curated. */
 const METRO_CORES: ReadonlySet<string> = new Set([
   "4005539", // Guadalajara, over Zapopan
+  "4641239", // Memphis, over "New South Memphis" (GeoNames artefact)
+  "5391811", // San Diego, over Tijuana (28 km; a cross-border metro keeps its home-country label)
+  "5520993", // El Paso, over Ciudad Juarez
 ]);
 
 /** The most populous city (>= minPopulation) within maxKm of the point; equal populations break by distance. A METRO_CORES city in range beats any non-core city (most populous core wins). Anchors suburbs to their tour city. */

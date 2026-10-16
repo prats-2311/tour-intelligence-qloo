@@ -152,6 +152,11 @@ describe("marketsFromHeat on the real GeoNames dataset", () => {
     expect(metroAnchor(real, { lat: 20.72111, lon: -103.38742 }, { maxKm: 30, minPopulation: 100_000 })?.id).toBe("4005539");
     expect(nameFor(20.72111, -103.38742)).toBe("Guadalajara");
   });
+  it("keeps cross-border and GeoNames-artefact metros on their home-country tour city", () => {
+    expect(nameFor(35.14953, -90.04898)).toBe("Memphis"); // over New South Memphis
+    expect(nameFor(32.71571, -117.16472)).toBe("San Diego"); // over Tijuana, 28 km away
+    expect(nameFor(31.75872, -106.48693)).toBe("El Paso"); // over Ciudad Juarez
+  });
   it("does not label the Santos/Guaruja coast as the Sao Paulo suburb Sao Bernardo do Campo", () => {
     const name = nameFor(-23.994, -46.23);
     expect(name).not.toBe("Sao Bernardo do Campo");
