@@ -18,15 +18,14 @@ _FORMULA = "lift = audience overlap × local affinity"
 
 
 def _check_name(label: str, value) -> str:
-    stripped = value.strip() if isinstance(value, str) else None
+    stripped = value.strip(" ") if isinstance(value, str) else None
     if stripped is None or not _NAME.fullmatch(stripped):
         raise ValueError(f"{label} must be 1-100 characters: letters, digits, spaces and '.,&()-")
     return stripped
 
 
-def _check_place(city, country) -> None:
-    _check_name("city", city)
-    _check_name("country", country)
+def _check_place(city, country) -> tuple[str, str]:
+    return _check_name("city", city), _check_name("country", country)
 
 
 def _resolve_artist(artist: str, *, session_id: str, token_fn) -> dict:
@@ -65,11 +64,10 @@ def _val(metric) -> object:
 
 @_guarded
 def find_tour_markets(artist: str, regions: list[str], max_stops: int = 8, *, session_id: str, token_fn, max_regions: int = 6) -> dict:
-    _check_name("artist", artist)
+    artist = _check_name("artist", artist)
     if not isinstance(regions, list) or not 1 <= len(regions) <= max_regions:
         raise ValueError(f"regions must have 1-{max_regions} items")
-    for r in regions:
-        _check_name("region", r)
+    regions = [_check_name("region", r) for r in regions]
     if not isinstance(max_stops, int) or isinstance(max_stops, bool) or not 1 <= max_stops <= 20:
         raise ValueError("max_stops must be between 1 and 20")
     who = _resolve_artist(artist, session_id=session_id, token_fn=token_fn)
@@ -112,8 +110,8 @@ def find_tour_markets(artist: str, regions: list[str], max_stops: int = 8, *, se
 
 def _playbook_cards(artist: str, city: str, country: str, *, session_id: str, token_fn):
     """Returns (artist_dict, cards) or (early_return_dict, None)."""
-    _check_name("artist", artist)
-    _check_place(city, country)
+    artist = _check_name("artist", artist)
+    city, country = _check_place(city, country)
     who = _resolve_artist(artist, session_id=session_id, token_fn=token_fn)
     if "status" in who:
         return who, None
@@ -183,12 +181,11 @@ def get_local_moment(artist: str, city: str, country: str, *, session_id: str, t
 
 @_guarded
 def rank_venues(artist: str, city: str, country: str, venues: list[str], *, session_id: str, token_fn) -> dict:
-    _check_name("artist", artist)
-    _check_place(city, country)
+    artist = _check_name("artist", artist)
+    city, country = _check_place(city, country)
     if not isinstance(venues, list) or not 1 <= len(venues) <= 10:
         raise ValueError("venues must have 1-10 items")
-    for v in venues:
-        _check_name("venue", v)
+    venues = [_check_name("venue", v) for v in venues]
     who = _resolve_artist(artist, session_id=session_id, token_fn=token_fn)
     if "status" in who:
         return who

@@ -241,12 +241,13 @@ def registered_tool_names() -> list[str]:
 
 
 def client_ip(scope) -> str:
-    """First X-Forwarded-For entry (Cloud Run sets it), else the socket peer."""
+    """Right-most X-Forwarded-For entry: Cloud Run's frontend appends the real peer,
+    so earlier entries are client-controlled and spoofable. Else the socket peer."""
     for k, v in scope.get("headers") or []:
         if k == b"x-forwarded-for":
-            first = v.decode("latin-1").split(",")[0].strip()
-            if first:
-                return first
+            last = v.decode("latin-1").split(",")[-1].strip()
+            if last:
+                return last
     client = scope.get("client")
     return client[0] if client else "unknown"
 

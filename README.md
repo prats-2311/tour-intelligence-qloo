@@ -146,7 +146,7 @@ Other clients: add it as a custom connector / remote MCP server with the same `<
 | `rank_venues` | Rank up to 10 candidate venues by taste fit |
 | `get_local_moment` | Local events, scenes and places that fit the audience |
 
-Limits: 30 requests per 10 minutes per IP, 2 regions per board, cached results.
+Limits: 30 requests per 10 minutes per IP (counts every MCP HTTP request, including the initialize handshake, and is tracked per instance, with up to 2 instances), 2 regions per board, cached results.
 Every result is an affinity signal from aggregate taste data, not a ticket forecast or a claim about individuals.
 
 ---

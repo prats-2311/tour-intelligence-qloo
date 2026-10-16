@@ -44,21 +44,45 @@ def test_public_session_id_is_a_hash_of_the_ip(public_main):
 
 def test_rate_limit_middleware_returns_429_after_the_limit(public_main):
     from starlette.testclient import TestClient
+    old = public_main.LIMITER.limit
     public_main.LIMITER.limit = 2
-    c = TestClient(public_main.app, raise_server_exceptions=False)
-    codes = [c.post("/mcp", headers={"x-forwarded-for": "198.51.100.1"}, json={}).status_code for _ in range(3)]
-    assert codes[-1] == 429
-    assert codes[0] != 429 and codes[1] != 429
-    r = c.post("/mcp", headers={"x-forwarded-for": "198.51.100.1"}, json={})
-    assert r.json() == {"error": "Rate limit reached — try again in a few minutes"}
-    # a different client IP is unaffected
-    assert c.post("/mcp", headers={"x-forwarded-for": "198.51.100.2"}, json={}).status_code != 429
+    try:
+        c = TestClient(public_main.app, raise_server_exceptions=False)
+        codes = [c.post("/mcp", headers={"x-forwarded-for": "198.51.100.1"}, json={}).status_code for _ in range(3)]
+        assert codes[-1] == 429
+        assert codes[0] != 429 and codes[1] != 429
+        r = c.post("/mcp", headers={"x-forwarded-for": "198.51.100.1"}, json={})
+        assert r.json() == {"error": "Rate limit reached — try again in a few minutes"}
+        # a different client IP is unaffected
+        assert c.post("/mcp", headers={"x-forwarded-for": "198.51.100.2"}, json={}).status_code != 429
+    finally:
+        public_main.LIMITER.limit = old
 
 
-def test_first_forwarded_entry_is_the_client_ip(public_main):
-    scope = {"headers": [(b"x-forwarded-for", b"198.51.100.7, 10.0.0.1")], "client": ("10.0.0.1", 1234)}
+def test_rightmost_forwarded_entry_is_the_client_ip(public_main):
+    scope = {"headers": [(b"x-forwarded-for", b"203.0.113.9, 198.51.100.7")], "client": ("10.0.0.1", 1234)}
     assert public_main.client_ip(scope) == "198.51.100.7"
     assert public_main.client_ip({"headers": [], "client": ("192.0.2.4", 1)}) == "192.0.2.4"
+
+
+def test_spoofed_first_forwarded_entry_does_not_bypass_the_limit(public_main):
+    from starlette.testclient import TestClient
+    old = public_main.LIMITER.limit
+    public_main.LIMITER.limit = 2
+    try:
+        c = TestClient(public_main.app, raise_server_exceptions=False)
+        codes = [c.post("/mcp", headers={"x-forwarded-for": f"1.1.1.{i}, 198.51.100.50"}, json={}).status_code for i in range(3)]
+        assert codes[-1] == 429
+    finally:
+        public_main.LIMITER.limit = old
+
+
+def test_unconfigured_gateway_gives_a_clean_error(public_main, monkeypatch):
+    monkeypatch.delenv("QLOO_GATEWAY_URL", raising=False)
+    with pytest.raises(RuntimeError) as e:
+        public_main.get_local_moment("Lumen Vale", "Guadalajara", "MX")
+    assert str(e.value) == "Qloo gateway not configured"
+    assert "Traceback" not in str(e.value)
 
 
 def test_public_find_tour_markets_is_limited_to_two_regions(public_main, monkeypatch):
