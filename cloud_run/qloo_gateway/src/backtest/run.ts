@@ -9,6 +9,13 @@ export interface RunnerDeps {
   llmList(c: BacktestCase): Promise<string[] | null>;
 }
 
+export class GatewayAuthError extends Error {
+  constructor(public readonly httpStatus: number) {
+    super(`gateway rejected the identity token (HTTP ${httpStatus}) — run \`gcloud auth login\` and retry`);
+    this.name = "GatewayAuthError";
+  }
+}
+
 const USABLE = new Set(["ok", "partial", "degraded"]);
 const unavailable = (reason: string): MethodResult => ({ status: "unavailable", reason });
 
@@ -17,14 +24,18 @@ async function resolveId(deps: RunnerDeps, entity: string, type: "artist" | "bra
     const env = await deps.callTool("qloo_describe", { entity, type }, sessionId);
     if (env.status !== "ok") return null;
     return extractEntities(env)[0]?.entityId ?? null;
-  } catch { return null; }
+  } catch (err) { if (err instanceof GatewayAuthError) throw err; return null; }
 }
 
 async function qlooList(deps: RunnerDeps, args: Record<string, unknown>, sessionId: string): Promise<RankedItem[] | MethodResult> {
-  let env: QlooEnvelope;
-  try { env = await deps.callTool("qloo_recommend", args, sessionId); } catch { return unavailable("request_failed"); }
-  if (!USABLE.has(env.status) && env.status !== "empty") return unavailable(env.status === "needs_input" ? "qloo_needs_input" : "qloo_error");
-  return extractEntities(env).map((e) => ({ name: e.name, entityId: e.entityId }));
+  try {
+    const env: QlooEnvelope = await deps.callTool("qloo_recommend", args, sessionId);
+    if (!USABLE.has(env.status) && env.status !== "empty") return unavailable(env.status === "needs_input" ? "qloo_needs_input" : "qloo_error");
+    return extractEntities(env).map((e) => ({ name: e.name, entityId: e.entityId }));
+  } catch (err) {
+    if (err instanceof GatewayAuthError) throw err;
+    return unavailable("request_failed");
+  }
 }
 
 export function llmPrompt(c: BacktestCase): string {
@@ -65,7 +76,7 @@ export async function runCase(c: BacktestCase, deps: RunnerDeps): Promise<CaseRe
   const [ours, pop, llm] = await Promise.all([
     artistId ? qlooList(deps, artistTasteArgs(target, artistId, where, WIDE_CUTOFF), sessionId) : Promise.resolve(unavailable("artist_unresolved")),
     artistId ? qlooList(deps, cityPopularityArgs(target, where, WIDE_CUTOFF), sessionId) : Promise.resolve(unavailable("artist_unresolved")),
-    deps.llmList(c).catch(() => null),
+    deps.llmList(c).catch((err) => { if (err instanceof GatewayAuthError) throw err; return null; }),
   ]);
   return {
     id: c.id, artist: c.artist, city: c.city, country: c.country,

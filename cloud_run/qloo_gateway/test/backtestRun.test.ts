@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { BacktestCase } from "../src/backtest/cases.js";
-import { cleanLlmList, llmPrompt, runCase, type RunnerDeps } from "../src/backtest/run.js";
-import { createGatewayCaller, parseArgs } from "../src/backtest/cli.js";
+import { cleanLlmList, GatewayAuthError, llmPrompt, runCase, type RunnerDeps } from "../src/backtest/run.js";
+import { createGatewayCaller, MAX_CASES, parseArgs, selectCases } from "../src/backtest/cli.js";
+import { buildResults } from "../src/backtest/score.js";
 
 const c: BacktestCase = {
   id: "a-gdl-vans", artist: "Mac DeMarco", city: "Guadalajara", country: "Mexico", activationType: "sponsor",
@@ -81,6 +82,39 @@ describe("runCase", () => {
   });
 });
 
+describe("runCase hardening", () => {
+  it("treats a malformed envelope from callTool as a per-method failure", async () => {
+    const d = deps();
+    const inner = d.callTool;
+    d.callTool = async (name, args, s) => (name === "qloo_recommend" && "signals" in args ? (undefined as never) : inner(name, args, s));
+    const r = await runCase(c, d);
+    expect(r.results.qloo_playbook).toEqual({ status: "unavailable", reason: "request_failed" });
+    expect(r.results.city_popularity.status).toBe("ok");
+  });
+  it("propagates auth failures instead of marking methods unavailable", async () => {
+    const d = deps();
+    d.callTool = async () => { throw new GatewayAuthError(401); };
+    await expect(runCase(c, d)).rejects.toThrow(/gcloud auth login/);
+  });
+  it("marks the LLM unavailable when llmList throws", async () => {
+    const d = deps();
+    d.llmList = async () => { throw new Error("vertex down"); };
+    expect((await runCase(c, d)).results.llm_only).toEqual({ status: "unavailable", reason: "llm_unavailable" });
+  });
+});
+
+describe("results status and case cap", () => {
+  it("marks results partial or complete", () => {
+    expect(buildResults([], { runAt: "x", model: "m" }).status).toBe("complete");
+    expect(buildResults([], { runAt: "x", model: "m", status: "partial" }).status).toBe("partial");
+  });
+  it("refuses more than the budget cap of cases", () => {
+    const many = Array.from({ length: MAX_CASES + 1 }, (_, i) => ({ ...c, id: `c${i}` }));
+    expect(() => selectCases(many, undefined, 0)).toThrow(/at most 30/);
+    expect(() => selectCases(many, many.slice(0, 3).map((x) => x.id), 0)).not.toThrow();
+  });
+});
+
 describe("LLM list handling", () => {
   it("dedupes, drops blanks, caps at 20", () => {
     const items = [{ name: "Vans" }, { name: " vans " }, { name: "" }, ...Array.from({ length: 30 }, (_, i) => ({ name: `B${i}` }))];
@@ -121,5 +155,34 @@ describe("cli helpers", () => {
     const failing = createGatewayCaller({ baseUrl: "https://gw.example", token: "SECRET-TOKEN", fetchImpl: vi.fn().mockResolvedValue(new Response("no", { status: 500 })), backoffMs: 0, retries: 1 });
     await expect(failing("qloo_recommend", {}, "s")).rejects.toThrow(/HTTP 500/);
     await failing("qloo_recommend", {}, "s").catch((e: Error) => expect(e.message).not.toContain("SECRET-TOKEN"));
+  });
+
+  const mk = (fetchImpl: typeof fetch) => createGatewayCaller({ baseUrl: "https://gw.example", token: "SECRET-TOKEN", fetchImpl, backoffMs: 0 });
+  it("uses a single prefix on 4xx and does not retry", async () => {
+    const f = vi.fn().mockResolvedValue(new Response("nf", { status: 404 }));
+    await expect(mk(f)("qloo_recommend", {}, "s")).rejects.toThrow(/^qloo_recommend: HTTP 404$/);
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+  it("throws GatewayAuthError on 401 and 403 without retrying", async () => {
+    for (const status of [401, 403]) {
+      const f = vi.fn().mockResolvedValue(new Response("x", { status }));
+      const err = await mk(f)("qloo_recommend", {}, "s").catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(GatewayAuthError);
+      expect((err as Error).message).toContain(`HTTP ${status}`);
+      expect((err as Error).message).not.toContain("SECRET-TOKEN");
+      expect(f).toHaveBeenCalledTimes(1);
+    }
+  });
+  it("retries 429", async () => {
+    const f = vi.fn().mockResolvedValueOnce(new Response("slow", { status: 429 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ envelope: { operation: "x", status: "ok", results: [] } }), { status: 200 }));
+    expect((await mk(f)("qloo_recommend", {}, "s")).status).toBe("ok");
+    expect(f).toHaveBeenCalledTimes(2);
+  });
+  it("rejects a 200 without a usable envelope", async () => {
+    for (const body of [{}, { envelope: "nope" }, { envelope: null }]) {
+      const f = vi.fn().mockImplementation(async () => new Response(JSON.stringify(body), { status: 200 }));
+      await expect(mk(f)("qloo_recommend", {}, "s")).rejects.toThrow(/malformed response/);
+    }
   });
 });

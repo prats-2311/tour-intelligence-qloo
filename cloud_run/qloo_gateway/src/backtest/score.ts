@@ -20,7 +20,7 @@ export interface CaseResult {
 }
 export interface MethodSummary { scored: number; hit10: number; hit20: number }
 export interface BacktestResults {
-  schemaVersion: 1; status: "complete"; runAt: string; model: string;
+  schemaVersion: 1; status: "complete" | "partial"; runAt: string; model: string;
   cutoff: typeof CUTOFF; wideCutoff: typeof WIDE_CUTOFF; methods: Method[];
   n: number; cases: CaseResult[]; summary: Record<Method, MethodSummary>; lost: string[];
 }
@@ -73,9 +73,9 @@ export function lostCases(cases: CaseResult[]): string[] {
   }).map((c) => c.id);
 }
 
-export function buildResults(cases: CaseResult[], meta: { runAt: string; model: string }): BacktestResults {
+export function buildResults(cases: CaseResult[], meta: { runAt: string; model: string; status?: "complete" | "partial" }): BacktestResults {
   return {
-    schemaVersion: 1, status: "complete", runAt: meta.runAt, model: meta.model,
+    schemaVersion: 1, status: meta.status ?? "complete", runAt: meta.runAt, model: meta.model,
     cutoff: CUTOFF, wideCutoff: WIDE_CUTOFF, methods: METHODS,
     n: cases.length, cases, summary: summarise(cases), lost: lostCases(cases),
   };
