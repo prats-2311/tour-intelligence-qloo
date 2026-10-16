@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createApp } from "../src/http/app.js";
 import type { QlooCaller } from "../src/qlooCall.js";
 import { describeOk, heatMexico, recs, cityHeat } from "./fixtures/envelopes.js";
+import { ValidationError } from "../src/qlooCall.js";
 import type { City } from "../src/geo/cities.js";
 
 const CITIES: City[] = [{ id: "1", name: "Mexico City", country: "MX", lat: 19.4326, lon: -99.1332, population: 9_000_000 }];
@@ -32,11 +33,35 @@ describe("http", () => {
     expect((await request(app).post("/v1/tour-board").send({ artist: "x", regions: ["Mexico"], maxStops: 3 })).status).toBe(400);
   });
   it("tools endpoint validates via the caller", async () => {
-    const bad: QlooCaller = { async call() { throw new Error("tool not allowlisted: qloo_api"); } };
+    const bad: QlooCaller = { async call() { throw new ValidationError("tool not allowlisted: qloo_api"); } };
     const res = await request(createApp({ qloo: bad, cities: CITIES, health: async () => ({ connected: true, ready: true }) }))
       .post("/v1/tools/qloo_api").set("x-session-id", "s").send({});
     expect(res.status).toBe(400);
     expect(res.body.error).toContain("not allowlisted");
+  });
+  it("returns JSON 400 for malformed JSON bodies", async () => {
+    const res = await request(app).post("/v1/tour-board").set("x-session-id", "s").set("content-type", "application/json").send("{bad json");
+    expect(res.status).toBe(400);
+    expect(res.headers["content-type"]).toContain("application/json");
+    expect(typeof res.body.error).toBe("string");
+  });
+  it("returns JSON 500 when health rejects", async () => {
+    const res = await request(createApp({ qloo, cities: CITIES, health: async () => { throw new Error("secret stack"); } })).get("/healthz");
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: "internal error" });
+  });
+  it("maps non-validation tool errors to 500", async () => {
+    const boom: QlooCaller = { async call() { throw new Error("db exploded"); } };
+    const res = await request(createApp({ qloo: boom, cities: CITIES, health: async () => ({ connected: true, ready: true }) }))
+      .post("/v1/tools/qloo_describe").set("x-session-id", "s").send({});
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: "internal error" });
+  });
+  it("rejects over-long session ids on all routes", async () => {
+    const long = "x".repeat(200);
+    expect((await request(app).post("/v1/tour-board").set("x-session-id", long).send({ artist: "A", regions: ["Mexico"], maxStops: 3 })).status).toBe(400);
+    expect((await request(app).get("/v1/city-playbook").set("x-session-id", long).query({ artist: "a", artistEntityId: "b", city: "c", country: "d" })).status).toBe(400);
+    expect((await request(app).post("/v1/tools/qloo_describe").set("x-session-id", long).send({})).status).toBe(400);
   });
   it("stops issuing Qloo calls when the client disconnects (Review Focus 3)", async () => {
     let starts = 0;

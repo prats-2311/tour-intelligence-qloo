@@ -3,6 +3,8 @@ import { cacheKey, type Cache } from "./cache.js";
 import type { QlooEnvelope } from "./types.js";
 import { validateToolCall } from "./validate.js";
 
+export class ValidationError extends Error {}
+
 export interface CallResult { envelope: QlooEnvelope; cacheKey: string; cached: boolean; stale: boolean }
 export interface QlooCaller { call(tool: string, args: Record<string, unknown>, sessionId: string): Promise<CallResult> }
 
@@ -52,7 +54,7 @@ export function createQlooCaller(deps: {
   return {
     async call(tool, args, sessionId) {
       const valid = validateToolCall(tool, args);
-      if (!valid.ok) throw new Error(valid.error);
+      if (!valid.ok) throw new ValidationError(valid.error);
       const key = cacheKey(valid.name, valid.args);
 
       const hit = await safeGet(key);

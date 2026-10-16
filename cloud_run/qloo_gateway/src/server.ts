@@ -15,4 +15,11 @@ const ceiling = Number(process.env.QLOO_DAILY_CEILING);
 const budget = new BudgetGuard({ perSession: 100, perDay: Number.isFinite(ceiling) && ceiling > 0 ? ceiling : 2000 });
 const app = createApp({ qloo: createQlooCaller({ mcp, cache, budget }), cities: loadCities(), health: () => mcp.health() });
 const port = Number(process.env.PORT ?? 8080);
-app.listen(port, () => console.log(`qloo_gateway listening on ${port}`));
+const server = app.listen(port, (err?: Error) => {
+  if (err) { console.error("qloo_gateway failed to listen", err); process.exit(1); }
+  console.log(`qloo_gateway listening on ${port}`);
+});
+process.on("SIGTERM", () => {
+  server.close();
+  void mcp.close().catch(() => undefined).finally(() => process.exit(0));
+});
