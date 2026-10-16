@@ -1,0 +1,43 @@
+import { describe, expect, it, vi } from "vitest";
+import { streamTourBoard } from "./client";
+import { SAMPLE_BRIEF } from "./fixtures/lumenVale";
+
+function sseResponse(chunks: string[], status = 200) {
+  const body = new ReadableStream<Uint8Array>({
+    start(c) { const enc = new TextEncoder(); chunks.forEach((x) => c.enqueue(enc.encode(x))); c.close(); },
+  });
+  return new Response(body, { status, headers: { "content-type": "text/event-stream" } });
+}
+
+describe("streamTourBoard", () => {
+  it("posts the brief with a session id and yields parsed events", async () => {
+    const fetchImpl = vi.fn(async () => sseResponse(['event: resolve\ndata: {"type":"resolve","entity":{"entityId":"A","name":"X"}}\n\n', 'event: done\ndata: {"type":"done","summary":{}}\n\n']));
+    const out = [];
+    for await (const e of streamTourBoard(SAMPLE_BRIEF, { fetchImpl: fetchImpl as unknown as typeof fetch })) out.push(e.type);
+    expect(out).toEqual(["resolve", "done"]);
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("/api/qloo/tour-board");
+    expect((init.headers as Record<string, string>)["x-session-id"]).toBeTruthy();
+    expect(JSON.parse(String(init.body))).toMatchObject({ artist: "Lumen Vale", regions: ["Mexico", "Brazil", "United States"] });
+  });
+  it("turns a non-OK response into a single error event", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ error: "artist, regions[1-6], maxStops[1-20] required" }), { status: 400 }));
+    const out = [];
+    for await (const e of streamTourBoard(SAMPLE_BRIEF, { fetchImpl: fetchImpl as unknown as typeof fetch })) out.push(e);
+    expect(out).toEqual([{ type: "error", code: "HTTP_400", message: "artist, regions[1-6], maxStops[1-20] required" }]);
+  });
+  it("sample mode yields the labelled fixture without calling fetch", async () => {
+    const fetchImpl = vi.fn();
+    const types = [];
+    for await (const e of streamTourBoard(SAMPLE_BRIEF, { fetchImpl: fetchImpl as unknown as typeof fetch, sample: true, delayMs: 0 })) types.push(e.type);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(types.at(-1)).toBe("done");
+    expect(types.filter((t) => t === "city_scored")).toHaveLength(10);
+  });
+  it("skips malformed JSON payloads instead of throwing", async () => {
+    const fetchImpl = vi.fn(async () => sseResponse(["event: resolve\ndata: {not json\n\n", 'event: done\ndata: {"type":"done","summary":{}}\n\n']));
+    const out = [];
+    for await (const e of streamTourBoard(SAMPLE_BRIEF, { fetchImpl: fetchImpl as unknown as typeof fetch })) out.push(e.type);
+    expect(out).toEqual(["done"]);
+  });
+});

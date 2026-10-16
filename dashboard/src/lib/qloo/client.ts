@@ -1,0 +1,62 @@
+import { LUMEN_VALE_SAMPLE } from "./fixtures/lumenVale";
+import { getSessionId } from "./session";
+import { SseParser } from "./sse";
+import type { GatewayEvent, TourBrief } from "./types";
+
+type StreamOpts = { signal?: AbortSignal; fetchImpl?: typeof fetch; sample?: boolean; delayMs?: number };
+
+export const isSampleMode = (): boolean => import.meta.env.VITE_QLOO_FIXTURES === "1";
+
+const sleep = (ms: number, signal?: AbortSignal) => new Promise<void>((resolve, reject) => {
+  if (ms <= 0) return resolve();
+  const t = setTimeout(resolve, ms);
+  signal?.addEventListener("abort", () => { clearTimeout(t); reject(new DOMException("aborted", "AbortError")); }, { once: true });
+});
+
+async function* sample(events: GatewayEvent[], opts: StreamOpts): AsyncGenerator<GatewayEvent> {
+  for (const e of events) { await sleep(opts.delayMs ?? 60, opts.signal); yield e; }
+}
+
+async function* stream(url: string, init: RequestInit, opts: StreamOpts): AsyncGenerator<GatewayEvent> {
+  const res = await (opts.fetchImpl ?? fetch)(url, { ...init, signal: opts.signal });
+  if (!res.ok || !res.body) {
+    let message = `request failed: ${res.status}`;
+    try { const j = (await res.json()) as { error?: string }; if (j.error) message = j.error; } catch { /* keep default */ }
+    yield { type: "error", code: `HTTP_${res.status}`, message };
+    return;
+  }
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  const parser = new SseParser();
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) return;
+    for (const { data } of parser.feed(value)) {
+      try { yield JSON.parse(data) as GatewayEvent; } catch { /* skip malformed payload */ }
+    }
+  }
+}
+
+export function streamTourBoard(brief: TourBrief, opts: StreamOpts = {}): AsyncGenerator<GatewayEvent> {
+  if (opts.sample) return sample(LUMEN_VALE_SAMPLE, opts);
+  return stream("/api/qloo/tour-board", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-session-id": getSessionId() },
+    body: JSON.stringify(brief),
+  }, opts);
+}
+
+export function streamCityPlaybook(q: { artist: string; artistEntityId: string; city: string; country: string }, opts: StreamOpts = {}): AsyncGenerator<GatewayEvent> {
+  const qs = new URLSearchParams(q).toString();
+  return stream(`/api/qloo/city-playbook?${qs}`, { method: "GET", headers: { "x-session-id": getSessionId() } }, opts);
+}
+
+export async function callQlooTool(name: string, args: Record<string, unknown>, opts: { fetchImpl?: typeof fetch; signal?: AbortSignal } = {}) {
+  const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/tools/${encodeURIComponent(name)}`, {
+    method: "POST", signal: opts.signal,
+    headers: { "content-type": "application/json", "x-session-id": getSessionId() },
+    body: JSON.stringify(args),
+  });
+  const json = (await res.json()) as { envelope?: unknown; cached?: boolean; stale?: boolean; error?: string };
+  if (!res.ok) throw new Error(json.error ?? `tool ${name} failed: ${res.status}`);
+  return { envelope: json.envelope, cached: Boolean(json.cached), stale: Boolean(json.stale) };
+}
