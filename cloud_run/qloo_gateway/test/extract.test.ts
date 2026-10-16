@@ -1,0 +1,23 @@
+import { describe, expect, it } from "vitest";
+import { extractEntities, extractHeatPoints, extractIssues } from "../src/extract.js";
+import { describeAmbiguous, heatMexico, recs } from "./fixtures/envelopes.js";
+
+describe("extract", () => {
+  it("extracts entities and marks a missing affinity as NaN", () => {
+    const e = extractEntities(recs(["A"], [0.9]));
+    expect(e[0]).toMatchObject({ entityId: "E0", name: "A", affinity: 0.9, index: 0 });
+    const missing = extractEntities({ operation: "recommend", status: "ok", results: [{ entity_id: "Z", name: "Z" }] });
+    expect(Number.isNaN(missing[0]!.affinity)).toBe(true);
+  });
+  it("extracts heat points from lat/lon or geohash", () => {
+    expect(extractHeatPoints(heatMexico)[0]).toMatchObject({ lat: 19.43, lon: -99.13, affinity: 0.92, popularity: 0.7, index: 0 });
+    const viaHash = extractHeatPoints({ operation: "where_popular", status: "ok", results: [{ location: { geohash: "9g3w81t7j" }, query: { affinity: 0.5, popularity: 0.1 } }] });
+    expect(viaHash[0]!.lat).toBeCloseTo(19.43, 1);
+  });
+  it("skips malformed points instead of crashing", () => {
+    expect(extractHeatPoints({ operation: "where_popular", status: "ok", results: [{ foo: 1 }, null] })).toEqual([]);
+  });
+  it("extracts needs_input issues and candidates", () => {
+    expect(extractIssues(describeAmbiguous)).toEqual([{ field: "entity", candidates: [{ id: "P1", name: "Pedro Infante" }, { id: "P2", name: "Pedro Capó" }] }]);
+  });
+});
