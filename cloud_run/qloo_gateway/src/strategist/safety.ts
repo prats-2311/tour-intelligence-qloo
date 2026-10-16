@@ -1,7 +1,8 @@
 import type { ChatMessage, StrategistContext } from "../types.js";
 
-export const LIMITS = { messages: 12, messageChars: 1000, nameChars: 100, cities: 20 } as const;
-const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
+export const LIMITS = { messages: 12, messageChars: 1000, nameChars: 100, cities: 20, regions: 6 } as const;
+const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u2028\u2029\u202A-\u202E\u2066-\u2069]/g;
+const ID = /^[A-Za-z0-9_:.-]{1,128}$/;
 const NAME = /^[\p{L}\p{M}\p{N} '.,&()-]{1,100}$/u;
 const VERDICTS = new Set(["play", "hidden_goldmine", "de_risk", "consider", "skip", "insufficient_data"]);
 const rec = (v: unknown) => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null);
@@ -32,11 +33,11 @@ export function validateContext(input: unknown): { ok: true; context: Strategist
   const ctx: StrategistContext = {};
   if (c.artist !== undefined) {
     const a = rec(c.artist);
-    if (!a || !isSafeName(a.name) || typeof a.entityId !== "string" || a.entityId.length > 128) return { ok: false, error: "context.artist invalid" };
+    if (!a || !isSafeName(a.name) || typeof a.entityId !== "string" || !ID.test(a.entityId)) return { ok: false, error: "context.artist invalid" };
     ctx.artist = { name: a.name.trim(), entityId: a.entityId };
   }
   if (c.regions !== undefined) {
-    if (!Array.isArray(c.regions) || c.regions.length > 6 || !c.regions.every(isSafeName)) return { ok: false, error: "context.regions invalid" };
+    if (!Array.isArray(c.regions) || c.regions.length > LIMITS.regions || !c.regions.every(isSafeName)) return { ok: false, error: "context.regions invalid" };
     ctx.regions = c.regions.map((r) => r.trim());
   }
   if (c.cities !== undefined) {
@@ -44,14 +45,14 @@ export function validateContext(input: unknown): { ok: true; context: Strategist
     const cities = [];
     for (const raw of c.cities) {
       const x = rec(raw);
-      if (!x || typeof x.id !== "string" || x.id.length > 32 || !isSafeName(x.name) || !isSafeName(x.country) || typeof x.verdict !== "string" || !VERDICTS.has(x.verdict)
+      if (!x || typeof x.id !== "string" || x.id.length > 32 || !ID.test(x.id) || !isSafeName(x.name) || !isSafeName(x.country) || typeof x.verdict !== "string" || !VERDICTS.has(x.verdict)
         || !score(x.fanHeat) || !score(x.activation) || !score(x.winnability)) return { ok: false, error: "context.cities item invalid" };
       cities.push({ id: x.id, name: (x.name as string).trim(), country: (x.country as string).trim(), verdict: x.verdict, fanHeat: x.fanHeat as number | null, activation: x.activation as number | null, winnability: x.winnability as number | null });
     }
     ctx.cities = cities;
   }
   if (c.focusCityId !== undefined) {
-    if (typeof c.focusCityId !== "string" || c.focusCityId.length > 32) return { ok: false, error: "context.focusCityId invalid" };
+    if (typeof c.focusCityId !== "string" || c.focusCityId.length > 32 || !ID.test(c.focusCityId)) return { ok: false, error: "context.focusCityId invalid" };
     ctx.focusCityId = c.focusCityId;
   }
   return { ok: true, context: ctx };
