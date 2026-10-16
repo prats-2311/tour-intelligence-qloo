@@ -119,11 +119,57 @@ describe("runTourBoard", () => {
     expect(events.at(-1)?.type).toBe("done");
   });
 
-  it("is not capped by maxStops: shortlists the top 8 by fan heat", async () => {
-    const many: City[] = Array.from({ length: 10 }, (_, i) => ({ id: `c${i}`, name: `City${i}`, country: "MX", lat: 10 + i * 2, lon: -100, population: 1_000_000 }));
-    const heat: QlooEnvelope = { operation: "where_popular", status: "ok", results: many.map((c, i) => ({ location: { latitude: c.lat, longitude: c.lon }, query: { affinity: 0.95 - i * 0.05, popularity: 0.3 } })) };
-    const events = await collect(runTourBoard({ ...brief, maxStops: 2 }, { qloo: fakeQloo((t, a) => (t === "qloo_where_popular" && a.within === "Mexico" ? heat : happy(t, a))), cities: many }));
-    expect(events.filter((e) => e.type === "city_scored")).toHaveLength(8);
+  describe("candidate mix", () => {
+    // Desired scaled fan heat per market, hottest first (affinity and popularity both span 0.2..1.0, so min-max gives exactly these, so the coldest is 0).
+    const DESIRED = [100, 95, 90, 85, 80, 68, 62, 56, 50, 46, 30, 0];
+    const pool = (n: number): { cities: City[]; heat: QlooEnvelope } => {
+      const cities: City[] = Array.from({ length: n }, (_, i) => ({ id: `c${i}`, name: `City${i}`, country: "MX", lat: 10 + i * 2, lon: -100, population: 1_000_000 }));
+      const raw = (i: number) => 0.2 + 0.008 * (n === 12 ? DESIRED[i]! : 100 - (i * 80) / Math.max(n - 1, 1));
+      const heat: QlooEnvelope = { operation: "where_popular", status: "ok", results: cities.map((c, i) => ({ location: { latitude: c.lat, longitude: c.lon }, query: { affinity: raw(i), popularity: raw(i) } })) };
+      return { cities, heat };
+    };
+    const run = async (n: number, maxStops: number, recsFor?: (where: string) => QlooEnvelope) => {
+      const { cities, heat } = pool(n);
+      const where: string[] = [];
+      const events = await collect(runTourBoard({ ...brief, maxStops }, {
+        qloo: fakeQloo((t, a) => {
+          if (t === "qloo_where_popular" && a.within === "Mexico") return heat;
+          if (t === "qloo_recommend" && a.target_type === "brand") where.push(String(a.signal_location));
+          if (recsFor && (t === "qloo_recommend" || t === "qloo_rank")) return recsFor(String(a.signal_location ?? a.filter_location));
+          return happy(t, a);
+        }), cities,
+      }));
+      const fan = new Map((events.filter((e) => e.type === "city_scored") as Array<{ city: { name: string; fanHeat: { value: number } } }>).map((e) => [e.city.name, e.city.fanHeat.value]));
+      return { events, where: where.map((w) => w.split(",")[0]!), fan };
+    };
+
+    it("scores 4 hot plus 4 mid-band markets for maxStops 8 over a 12-market pool", async () => {
+      const { where, fan } = await run(12, 8);
+      expect(where).toHaveLength(8);
+      const picked = where.map((w) => fan.get(w)!);
+      expect(picked.filter((v) => v >= 70)).toHaveLength(4);
+      expect(picked.filter((v) => v >= 45 && v < 70)).toHaveLength(4);
+      expect(where).toContain("City0");
+    });
+
+    it("surfaces a mid-band market with high activation as a hidden goldmine", async () => {
+      const events = (await run(12, 8, (w) => (w.startsWith("City7,") ? recs(["B"], [0.99]) : recs(["B"], [0.2])))).events;
+      const mid = (events.filter((e) => e.type === "city_scored") as Array<{ city: { name: string; verdict: string; fanHeat: { value: number }; activation: { value: number | null } } }>).map((e) => e.city).filter((c) => c.verdict === "hidden_goldmine");
+      expect(mid.length).toBeGreaterThan(0);
+      expect(mid.every((c) => c.fanHeat.value >= 45 && c.fanHeat.value < 70)).toBe(true);
+    });
+
+    it("fills remaining slots with the next hottest when the mid band is short", async () => {
+      // 6 markets with maxStops 6: hot=3; only few in the band; all 6 end up scored without duplicates.
+      const { where } = await run(6, 6);
+      expect(where).toHaveLength(6);
+      expect(new Set(where).size).toBe(6);
+    });
+
+    it("scores exactly maxStops markets, no more", async () => {
+      expect((await run(12, 5)).where).toHaveLength(5);
+      expect((await run(3, 8)).where).toHaveLength(3);
+    });
   });
 
   it("dedupes a city appearing in two regions", async () => {

@@ -35,3 +35,20 @@ export function nearestCity(cities: City[], p: { lat: number; lon: number }, opt
   }
   return best;
 }
+
+/** The most populous city (>= minPopulation) within maxKm of the point; equal populations break by distance. Anchors suburbs to their tour city. */
+export function metroAnchor(cities: City[], p: { lat: number; lon: number }, { maxKm = 50, minPopulation = 100_000 }: { maxKm?: number; minPopulation?: number } = {}): City | null {
+  let best: City | null = null;
+  let bestKm = Infinity;
+  const dLat = maxKm / 111;
+  const dLonMax = maxKm / (111 * Math.max(Math.cos((p.lat * Math.PI) / 180), 0.01));
+  for (const c of cities) {
+    if (c.population < minPopulation) continue;
+    const dLonDeg = Math.abs(((c.lon - p.lon + 540) % 360) - 180);
+    if (Math.abs(c.lat - p.lat) > dLat || dLonDeg > dLonMax) continue;
+    const km = haversineKm(c, p);
+    if (km > maxKm) continue;
+    if (!best || c.population > best.population || (c.population === best.population && km < bestKm)) { best = c; bestKm = km; }
+  }
+  return best;
+}

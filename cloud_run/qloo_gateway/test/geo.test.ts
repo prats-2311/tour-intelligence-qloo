@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { decodeGeohash } from "../src/geo/geohash.js";
-import { haversineKm, loadCities, nearestCity, type City } from "../src/geo/cities.js";
+import { haversineKm, loadCities, metroAnchor, nearestCity, type City } from "../src/geo/cities.js";
 import { marketsFromHeat, zonesFromHeat } from "../src/geo/heat.js";
 
 const CITIES: City[] = [
@@ -77,5 +77,51 @@ describe("zonesFromHeat", () => {
 describe("loadCities", () => {
   it("loads the GeoNames dataset", () => {
     expect(loadCities().length).toBeGreaterThan(50000);
+  });
+});
+
+describe("metroAnchor", () => {
+  const mk = (name: string, lat: number, lon: number, population: number): City => ({ id: name, name, country: "XX", lat, lon, population });
+  const opts = { maxKm: 50, minPopulation: 100_000 };
+  it("prefers the most populous city in range over the nearer suburb", () => {
+    const cities = [mk("Suburb", 45.5, -122.43, 110_000), mk("Metro", 45.52, -122.68, 650_000)];
+    expect(metroAnchor(cities, { lat: 45.5, lon: -122.43 }, opts)?.name).toBe("Metro");
+  });
+  it("breaks equal populations by distance", () => {
+    const cities = [mk("Far", 45.8, -122.43, 500_000), mk("Near", 45.55, -122.43, 500_000)];
+    expect(metroAnchor(cities, { lat: 45.5, lon: -122.43 }, opts)?.name).toBe("Near");
+  });
+  it("returns null when no city of the minimum size is in range", () => {
+    const cities = [mk("Small", 45.5, -122.43, 50_000), mk("Distant", 48, -122.43, 900_000)];
+    expect(metroAnchor(cities, { lat: 45.5, lon: -122.43 }, opts)).toBeNull();
+  });
+});
+
+describe("marketsFromHeat metro anchoring", () => {
+  const cities: City[] = [
+    { id: "m", name: "Metro", country: "XX", lat: 45.52, lon: -122.68, population: 650_000 },
+    { id: "s", name: "Suburb", country: "XX", lat: 45.5, lon: -122.43, population: 110_000 },
+  ];
+  it("merges points from one metro into a single market", () => {
+    const markets = marketsFromHeat([
+      { lat: 45.5, lon: -122.43, affinity: 0.9, popularity: 0.2, index: 0 },
+      { lat: 45.52, lon: -122.68, affinity: 0.95, popularity: 0.1, index: 1 },
+    ], cities);
+    expect(markets).toHaveLength(1);
+    expect(markets[0]).toMatchObject({ city: { name: "Metro" }, affinity: 0.95, popularity: 0.2, pointIndexes: [0, 1] });
+  });
+  it("produces no market for a point with no 100k city within 50 km", () => {
+    expect(marketsFromHeat([{ lat: 60, lon: 10, affinity: 1, popularity: 1, index: 0 }], cities)).toEqual([]);
+  });
+});
+
+describe("marketsFromHeat on the real GeoNames dataset", () => {
+  const real = loadCities();
+  const nameFor = (lat: number, lon: number) => marketsFromHeat([{ lat, lon, affinity: 1, popularity: 1, index: 0 }], real)[0]?.city.name;
+  it("maps suburbs seen in the live Beach House run to their tour city", () => {
+    expect(nameFor(45.498, -122.431)).toBe("Portland"); // Gresham, OR
+    expect(nameFor(37.688, -122.47)).toBe("San Francisco"); // Daly City, CA
+    expect(nameFor(19.4, -99.015)).toBe("Mexico City"); // Nezahualcoyotl
+    expect(nameFor(-22.883, -43.104)).toBe("Rio de Janeiro"); // Niteroi
   });
 });

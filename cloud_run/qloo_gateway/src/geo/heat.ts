@@ -1,11 +1,11 @@
-import { nearestCity, type City } from "./cities.js";
+import { metroAnchor, nearestCity, type City } from "./cities.js";
 
 export interface HeatPoint { lat: number; lon: number; affinity: number; popularity: number; index: number }
 
 export function marketsFromHeat(points: HeatPoint[], cities: City[], opts: { maxKm?: number; minPopulation?: number } = {}) {
   const byCity = new Map<string, { city: City; affinity: number; popularity: number; pointIndexes: number[] }>();
   for (const p of points) {
-    const city = nearestCity(cities, p, { maxKm: opts.maxKm ?? 50, minPopulation: opts.minPopulation ?? 100_000 });
+    const city = metroAnchor(cities, p, { maxKm: opts.maxKm ?? 50, minPopulation: opts.minPopulation ?? 100_000 });
     if (!city) continue;
     const m = byCity.get(city.id) ?? { city, affinity: -Infinity, popularity: -Infinity, pointIndexes: [] };
     m.affinity = Math.max(m.affinity, p.affinity);
