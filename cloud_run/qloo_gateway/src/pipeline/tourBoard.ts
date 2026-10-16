@@ -16,19 +16,20 @@ export interface ScoredCity {
 }
 interface Deps { qloo: QlooCaller; cities: City[]; signal?: AbortSignal; concurrency?: number }
 
+const SHORTLIST = 8;
 const MID_BAND = { min: 45, max: 70 };
 const MID_CENTRE = (MID_BAND.min + MID_BAND.max) / 2;
 
-/** Pick exactly min(maxStops, pool) markets to score: the hottest half, then mid-band fan heat (where hidden goldmines live), then the next hottest. */
-export function pickCandidates<T extends { city: { id: string } }>(pooled: T[], heat: Map<string, Score>, maxStops: number): T[] {
+/** Pick exactly min(shortlist size, pool) markets to score: the hottest half, then mid-band fan heat (where hidden goldmines live), then the next hottest. */
+export function pickCandidates<T extends { city: { id: string } }>(pooled: T[], heat: Map<string, Score>, size: number): T[] {
   const h = (m: T) => heat.get(m.city.id)?.value ?? -1;
   const hottest = [...pooled].sort((a, b) => h(b) - h(a));
-  const chosen = hottest.slice(0, Math.ceil(maxStops / 2));
+  const chosen = hottest.slice(0, Math.ceil(size / 2));
   const taken = new Set(chosen);
   const mid = hottest.filter((m) => !taken.has(m) && h(m) >= MID_BAND.min && h(m) < MID_BAND.max)
     .sort((a, b) => Math.abs(h(a) - MID_CENTRE) - Math.abs(h(b) - MID_CENTRE));
-  for (const m of mid) { if (chosen.length >= maxStops) break; chosen.push(m); taken.add(m); }
-  for (const m of hottest) { if (chosen.length >= maxStops) break; if (!taken.has(m)) { chosen.push(m); taken.add(m); } }
+  for (const m of mid) { if (chosen.length >= size) break; chosen.push(m); taken.add(m); }
+  for (const m of hottest) { if (chosen.length >= size) break; if (!taken.has(m)) { chosen.push(m); taken.add(m); } }
   return chosen;
 }
 const ref = (tool: string, r: CallResult, resultIndex?: number): EvidenceRef => ({ tool, cacheKey: r.cacheKey, ...(resultIndex !== undefined ? { resultIndex } : {}) });
@@ -200,7 +201,7 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
     const pooled = [...byId.values()];
 
     const heat = fanHeat(pooled.map((m) => ({ id: m.city.id, affinity: m.affinity, popularity: m.popularity, refs: m.refs })));
-    const shortlist = pickCandidates(pooled, heat, brief.maxStops);
+    const shortlist = pickCandidates(pooled, heat, Math.max(SHORTLIST, brief.maxStops));
 
     type CityOutcome = { ok: ScoredCity } | { stop: unknown };
     const limit = Math.max(deps.concurrency ?? 3, 1);

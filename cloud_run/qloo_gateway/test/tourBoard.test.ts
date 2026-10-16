@@ -166,9 +166,18 @@ describe("runTourBoard", () => {
       expect(new Set(where).size).toBe(6);
     });
 
-    it("scores exactly maxStops markets, no more", async () => {
-      expect((await run(12, 5)).where).toHaveLength(5);
+    it("scores max(8, maxStops) markets, capped by the pool", async () => {
+      expect((await run(12, 6)).where).toHaveLength(8);
+      expect((await run(12, 2)).where).toHaveLength(8);
+      expect((await run(12, 10)).where).toHaveLength(10);
       expect((await run(3, 8)).where).toHaveLength(3);
+    });
+
+    it("with maxStops 6 scores 4 hot plus 4 mid-band markets", async () => {
+      const { where, fan } = await run(12, 6);
+      const picked = where.map((w) => fan.get(w)!);
+      expect(picked.filter((v) => v >= 70)).toHaveLength(4);
+      expect(picked.filter((v) => v >= 45 && v < 70)).toHaveLength(4);
     });
   });
 
