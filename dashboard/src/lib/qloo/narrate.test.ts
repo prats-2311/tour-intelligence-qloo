@@ -41,4 +41,61 @@ describe("narrate", () => {
   it("counts Qloo calls and cache hits", () => {
     expect(countQlooCalls(LUMEN_VALE_SAMPLE)).toEqual({ total: 17, cached: 17 });
   });
+  it("marks partial/degraded results with a detail suffix (R11)", () => {
+    const steps = narrate([
+      { type: "tool_call", tool: "qloo_recommend", args: { target_type: "brand", signal_location: "Seattle, US" }, cached: false },
+      { type: "tool_result", tool: "qloo_recommend", status: "partial", resultCount: 3, cacheKey: "k", stale: false },
+    ]);
+    expect(steps[0]!.detail).toBe("3 brands · partial result");
+  });
+  it("marks degraded results with a detail suffix", () => {
+    const steps = narrate([
+      { type: "tool_call", tool: "qloo_where_popular", args: { within: "Argentina" }, cached: false },
+      { type: "tool_result", tool: "qloo_where_popular", status: "degraded", resultCount: 5, cacheKey: "k", stale: false },
+    ]);
+    expect(steps[0]!.detail).toBe("5 hotspots · degraded");
+  });
+  it("ok with resultCount 0 produces 'no results'", () => {
+    const steps = narrate([
+      { type: "tool_call", tool: "qloo_trends", args: {}, cached: false },
+      { type: "tool_result", tool: "qloo_trends", status: "ok", resultCount: 0, cacheKey: "k", stale: false },
+    ]);
+    expect(steps[0]!.detail).toBe("no results");
+  });
+  it("needs_input event becomes info 'needs a choice'", () => {
+    const steps = narrate([
+      { type: "needs_input", field: "artist", candidates: [{ id: "1", name: "Lumen Vale" }], summary: "Which one?" },
+    ]);
+    expect(steps[0]).toMatchObject({ sentence: "Several artists match — needs a choice", status: "info" });
+  });
+  it("pairs tool calls by FIFO per tool (R11)", () => {
+    const steps = narrate([
+      { type: "tool_call", tool: "qloo_where_popular", args: { within: "A" }, cached: false },
+      { type: "tool_call", tool: "qloo_where_popular", args: { within: "B" }, cached: false },
+      { type: "tool_result", tool: "qloo_where_popular", status: "ok", resultCount: 10, cacheKey: "k", stale: false },
+      { type: "tool_result", tool: "qloo_where_popular", status: "ok", resultCount: 20, cacheKey: "k2", stale: false },
+    ]);
+    expect(steps.map((s) => s.sentence)).toEqual([
+      "Finding where fans concentrate in A",
+      "Finding where fans concentrate in B",
+    ]);
+    expect(steps.map((s) => s.detail)).toEqual(["10 hotspots", "20 hotspots"]);
+  });
+  it("orphan tool_result creates info step instead of being dropped", () => {
+    const steps = narrate([
+      { type: "tool_result", tool: "qloo_rank", status: "ok", resultCount: 5, cacheKey: "k", stale: false },
+    ]);
+    expect(steps[0]).toMatchObject({ sentence: "Received qloo_rank result", status: "info" });
+  });
+  it("pluralizes chip label correctly", () => {
+    // This is tested in AgentLog.test.tsx but verify the count function
+    expect(countQlooCalls([{ type: "tool_call", tool: "qloo_describe", args: {}, cached: false }])).toEqual({
+      total: 1,
+      cached: 0,
+    });
+    expect(countQlooCalls([
+      { type: "tool_call", tool: "qloo_describe", args: {}, cached: false },
+      { type: "tool_call", tool: "qloo_trends", args: {}, cached: false },
+    ])).toEqual({ total: 2, cached: 0 });
+  });
 });

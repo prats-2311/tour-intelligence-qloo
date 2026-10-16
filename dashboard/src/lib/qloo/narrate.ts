@@ -35,8 +35,18 @@ function unitFor(tool: string, a: Record<string, unknown>, n: number): string {
   return `${n} results`;
 }
 
+function detailFor(tool: string, a: Record<string, unknown>, status: string, n: number): string {
+  const unit = unitFor(tool, a, n);
+  if (status === "partial") return `${unit} · partial result`;
+  if (status === "degraded") return `${unit} · degraded`;
+  return unit;
+}
+
 export function narrate(events: GatewayEvent[]): LogStep[] {
   const steps: LogStep[] = [];
+  // Tool results are paired with tool calls by FIFO per tool name (R11):
+  // the gateway pushes each tool_call immediately followed by its own tool_result,
+  // so we find the earliest open call for that tool and match it to the result.
   const open: Array<{ step: LogStep; tool: string; args: Record<string, unknown> }> = [];
   events.forEach((e, i) => {
     const id = String(i);
@@ -49,10 +59,24 @@ export function narrate(events: GatewayEvent[]): LogStep[] {
       }
       case "tool_result": {
         const idx = open.findIndex((o) => o.tool === e.tool);
-        if (idx === -1) return;
+        if (idx === -1) {
+          // Orphan tool_result (no matching open call) — create an info step instead of dropping
+          steps.push({ id, sentence: `Received ${e.tool} result`, status: "info" });
+          return;
+        }
         const [{ step, args }] = open.splice(idx, 1) as [{ step: LogStep; tool: string; args: Record<string, unknown> }];
         step.status = e.status === "error" ? "error" : "success";
-        step.detail = e.status === "error" ? "Qloo returned an error" : e.status === "empty" ? "no results" : unitFor(e.tool, args, e.resultCount);
+        if (e.status === "error") {
+          step.detail = "Qloo returned an error";
+        } else if (e.status === "empty") {
+          step.detail = "no results";
+        } else if (e.status === "ok" && e.resultCount === 0) {
+          step.detail = "no results";
+        } else if (e.status === "partial" || e.status === "degraded") {
+          step.detail = detailFor(e.tool, args, e.status, e.resultCount);
+        } else {
+          step.detail = unitFor(e.tool, args, e.resultCount);
+        }
         step.stale = e.stale;
         return;
       }
@@ -64,7 +88,7 @@ export function narrate(events: GatewayEvent[]): LogStep[] {
         steps.push({ id, sentence: `Scored ${e.city.name} — ${VERDICT_LABEL[e.city.verdict]}${w === null ? "" : `, winnability ${Math.round(w)}`}`, status: "info" });
         return;
       }
-      case "needs_input": steps.push({ id, sentence: "Several artists match — choose one to continue", status: "info" }); return;
+      case "needs_input": steps.push({ id, sentence: "Several artists match — needs a choice", status: "info" }); return;
       case "error": steps.push({ id, sentence: e.message, status: "error", detail: e.code }); return;
       default: return;
     }
