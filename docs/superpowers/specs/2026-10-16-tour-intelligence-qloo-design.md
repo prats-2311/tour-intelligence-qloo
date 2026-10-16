@@ -349,11 +349,27 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 - **Graft:** `graft build` after setup; subagents locate code with `graft_find_code`/`graft ask`, read APIs with `graft_file_api`/`graft skeleton`, check blast radius with `graft_trace_calls` before edits; `graft check` in `run_tests.sh`.
 - **UI tasks:** subagents read `frontend-design`, `ui-ux-pro-max` and `taste-skill` (from `~/.claude/plugins/cache/…` until enabled) plus `dashboard/CLAUDE.md`; design at 375 px first; deliver Playwright screenshots at 375/1280 for review.
 
+### 11.0 UI/UX workflow — "must not feel AI-generated"
+1. **Design system capture:** `stitch-design:extract-design-md` on the existing Premiere Noir dashboard, refined with `stitch-utilities:taste-design` → `DESIGN.md` (tokens, type scale, colour, motion, density rules). Single source of truth for every UI agent.
+2. **Screen exploration:** Stitch (`stitch-design:generate-design`, prompts via `stitch-utilities:enhance-prompt`; requires the Stitch MCP server connected) **and** Claude Design (design artifacts / DesignSync) produce 2–3 variants each for Landing, Tour Board, City Playbook and Taste Insights at 375 px and 1280 px.
+3. **Human selection gate:** Prateek picks one direction per screen; choice recorded in this spec before any UI code.
+4. **Build:** scaffold from the chosen Stitch screens (`stitch-build:react-components` / `shadcn-ui`), finish with Sonnet agents applying `frontend-design`, `ui-ux-pro-max`, `taste-skill`, `dataviz`, and `dashboard/CLAUDE.md`.
+5. **Verify:** Playwright screenshots at 375/1280 compared against the approved mockups; `design:accessibility-review`; reduced-motion check.
+
+**Anti-"AI look" rules (acceptance criteria for every screen):**
+- One committed identity, not defaults: Premiere Noir's marquee-meets-call-sheet language (Fraunces display + JetBrains Mono labels + Inter body). No stock shadcn look, no purple/indigo gradients, no generic glassmorphism, no emoji-as-icons, no "centered hero + three feature cards".
+- Speak the touring industry's language in layout and copy: advance sheets, routing boards, boxscores, settlement-style tables, tour-poster key art — not generic SaaS dashboards. Microcopy written for promoters ("Hold", "Avails", "Market heat"), never marketing filler.
+- Real data density with clear hierarchy (Pollstar/Bloomberg-terminal confidence), asymmetric grids, purposeful whitespace; every chart earns its place (dataviz rules).
+- Custom-styled map (dark CARTO base re-tinted to the palette), city accent colours from the validated palette, real generated key art per city — no placeholder illustrations or stock imagery.
+- Motion only where it explains state (agent steps streaming in, verdict reveal, sheet transitions); springs, not fades-everywhere; reduced-motion respected.
+- Details that signal craft: tabular numerals, consistent 4/8 spacing, optical alignment, honest empty/partial states with designed illustrations of the actual data shape, focus states, 44 px touch targets.
+
 ### 11.1 Milestones
 | Dates | Milestone |
 |---|---|
 | Oct 16–17 | Repo + dataset; spec approved; plan written; **data spike when key arrives**; tune §5 |
 | Oct 18–20 | `qloo_gateway`: MCP client, validation, cache, budget, scoring, pipeline skeleton; deployed |
+| Oct 18–19 (parallel) | DESIGN.md capture; Stitch + Claude Design screen variants; Prateek picks directions (§11.0) |
 | Oct 20–23 | Tour Board (Discover + Decide), agent log, Why-sheet, comparison toggle, Taste Insights dashboard; showcase pre-warm |
 | Oct 21–24 (parallel track) | Backtest case gathering via Parallel + **human review by Prateek** (target 12–20, minimum 8) |
 | Oct 23–25 | City Playbook (Activate) with grounding-verified claims; Stage-2 Playbooks get Qloo evidence; Book chapters + .ics |
