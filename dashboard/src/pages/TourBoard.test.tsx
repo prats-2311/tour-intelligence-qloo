@@ -86,6 +86,19 @@ describe("TourBoard", () => {
     expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
   });
 
+  it("Without Qloo sends the resolved artist name, not the raw brief text", async () => {
+    const spy = vi.spyOn(client, "fetchWithoutQloo").mockResolvedValue({ status: "unavailable", reason: "error", message: "Generic ranking unavailable" });
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
+      yield { type: "resolve", entity: { entityId: "Q1", name: "Florence + the Machine" } }; yield cityEvent(0); yield { type: "done", summary: {} };
+    });
+    renderPage("/tours/board");
+    submitArtist("florence and the machine");
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    fireEvent.click(await screen.findByRole("tab", { name: "Without Qloo" }));
+    await waitFor(() => expect(spy).toHaveBeenCalled());
+    expect(spy.mock.calls[0]![0].artist).toBe("Florence + the Machine");
+  });
+
   it("Without Qloo shows the generic list with no bars, verdicts or scores, and the banner", async () => {
     renderPage("/tours/board?sample=1&mode=without");
     expect(await screen.findByText("Generic LLM answer — no taste evidence")).toBeTruthy();

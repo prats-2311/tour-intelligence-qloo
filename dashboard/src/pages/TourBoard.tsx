@@ -155,7 +155,7 @@ export default function TourBoard() {
   const withoutLive = useQuery({
     queryKey: ["without-qloo", state.artist?.entityId ?? state.brief?.artistEntityId ?? state.brief?.artist, state.cities.map((c) => c.id).join("|")],
     queryFn: ({ signal }) => fetchWithoutQloo({
-      artist: state.brief?.artist ?? state.artist?.name ?? "",
+      artist: state.artist?.name ?? state.brief?.artist ?? "",
       regions: state.brief?.regions ?? [],
       cities: state.cities.map((c) => ({ name: c.name, country: c.country })),
     }, { signal }),

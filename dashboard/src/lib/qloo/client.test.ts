@@ -127,6 +127,30 @@ describe("streamCityPlaybook sample mode and fetchThisWeek", () => {
     expect(await fetchThisWeek({ city: "G", country: "MX", window: { start: "2027-01-01", end: "2027-06-01" } }, { fetchImpl }))
       .toEqual({ status: "unavailable", reason: "error", message: "Date window too long (max 62 days)" });
   });
+  const UNAVAILABLE = { status: "unavailable", reason: "error", message: "Generic ranking unavailable" };
+  const WQ = { artist: "A", regions: ["Mexico"], cities: [{ name: "X", country: "MX" }] };
+  const json = (b: unknown, status = 200) => vi.fn(async () => new Response(JSON.stringify(b), { status, headers: { "content-type": "application/json" } }));
+  it("fetchWithoutQloo maps a 400 to the generic copy, never the validator text", async () => {
+    const r = await fetchWithoutQloo(WQ, { fetchImpl: json({ error: "artist, regions (1-6) and cities (1-20 {name, country}) with safe names required" }, 400) });
+    expect(r).toEqual(UNAVAILABLE);
+  });
+  it("fetchWithoutQloo treats a 200 body of the wrong shape as unavailable", async () => {
+    for (const body of [{}, { status: "ok" }, { status: "ok", ranked: [{ name: 1, country: "MX" }] }, { status: "ok", ranked: "x" }, { status: "unavailable", reason: "capped" }, null, []]) {
+      expect(await fetchWithoutQloo(WQ, { fetchImpl: json(body) })).toEqual(UNAVAILABLE);
+    }
+  });
+  it("fetchWithoutQloo passes through well-formed ok and unavailable bodies", async () => {
+    const ok = { status: "ok", ranked: [{ name: "X", country: "MX" }], model: "m", cached: false };
+    expect(await fetchWithoutQloo(WQ, { fetchImpl: json(ok) })).toEqual(ok);
+    const un = { status: "unavailable", reason: "capped", message: "Capped today" };
+    expect(await fetchWithoutQloo(WQ, { fetchImpl: json(un) })).toEqual(un);
+  });
+  it("streamStrategist maps a 400 to friendly copy, never the validator text", async () => {
+    const fetchImpl = json({ error: "context.cities item invalid" }, 400);
+    const out: GatewayEvent[] = [];
+    for await (const e of streamStrategist({ messages: [{ role: "user", text: "hi" }], context: {} }, { fetchImpl })) out.push(e);
+    expect(out).toEqual([{ type: "error", code: "HTTP_400", message: "The strategist couldn't read this board — try again" }]);
+  });
   it("fetchThisWeek in sample mode returns the fixture", async () => {
     expect((await fetchThisWeek({ city: "Guadalajara", country: "MX", window: { start: "2027-03-12", end: "2027-04-18" } }, { sample: true, cityId: "4005539" })).status).toBe("ok");
   });

@@ -63,14 +63,34 @@ export function streamStrategist(body: { messages: ChatMessage[]; context: Strat
     const lastUser = [...body.messages].reverse().find((m) => m.role === "user");
     return sample(sampleStrategistEvents(lastUser?.text ?? ""), opts);
   }
-  return stream("/api/qloo/strategist", {
+  return friendlyStrategistErrors(stream("/api/qloo/strategist", {
     method: "POST",
     headers: { "content-type": "application/json", "x-session-id": getSessionId() },
     body: JSON.stringify(body),
-  }, opts);
+  }, opts));
+}
+
+/** A 400 carries raw validator text; the user gets plain copy instead. */
+async function* friendlyStrategistErrors(events: AsyncGenerator<GatewayEvent>): AsyncGenerator<GatewayEvent> {
+  for await (const e of events) {
+    yield e.type === "error" && e.code === "HTTP_400" ? { ...e, message: "The strategist couldn't read this board — try again" } : e;
+  }
 }
 
 const WITHOUT_QLOO_ERROR: WithoutQloo = { status: "unavailable", reason: "error", message: "Generic ranking unavailable" };
+
+const isStr = (v: unknown): v is string => typeof v === "string";
+function parseWithoutQloo(v: unknown): WithoutQloo | null {
+  if (!v || typeof v !== "object") return null;
+  const o = v as Record<string, unknown>;
+  if (o.status === "ok") {
+    const ranked = o.ranked;
+    if (!Array.isArray(ranked) || !ranked.every((r) => !!r && isStr((r as Record<string, unknown>).name) && isStr((r as Record<string, unknown>).country))) return null;
+    return { status: "ok", ranked: ranked as Array<{ name: string; country: string }>, model: isStr(o.model) ? o.model : "", cached: o.cached === true };
+  }
+  if (o.status === "unavailable" && isStr(o.reason) && isStr(o.message)) return v as WithoutQloo;
+  return null;
+}
 
 export async function fetchWithoutQloo(body: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }> }, opts: { sample?: boolean; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<WithoutQloo> {
   if (opts.sample) return SAMPLE_WITHOUT_QLOO;
@@ -81,7 +101,8 @@ export async function fetchWithoutQloo(body: { artist: string; regions: string[]
       body: JSON.stringify(body),
     });
     if (!res.ok) return WITHOUT_QLOO_ERROR;
-    return (await res.json()) as WithoutQloo;
+    const parsed = parseWithoutQloo(await res.json());
+    return parsed ?? WITHOUT_QLOO_ERROR;
   } catch {
     return WITHOUT_QLOO_ERROR;
   }
