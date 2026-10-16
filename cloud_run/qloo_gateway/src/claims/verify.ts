@@ -31,6 +31,7 @@ function decimals(n: number): number {
 // more than one decimal coarser than v, and a sub-1 evidence value is never claimed as an integer.
 function numberMatches(n: number, v: number): boolean {
   if (!Number.isFinite(n) || !Number.isFinite(v)) return false;
+  if (n === v) return true;
   const d = decimals(n);
   const dv = decimals(v);
   if (d > 100) return false;

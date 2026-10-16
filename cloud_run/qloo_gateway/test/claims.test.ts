@@ -64,6 +64,17 @@ describe("strict display-rounding number rule", () => {
   });
 });
 
+describe("exact-equal numeric claims", () => {
+  it("accepts 0 vs 0 and 0 vs -0", () => {
+    expect(ok(0, 0)).toBe(true);
+    expect(ok(0, -0)).toBe(true);
+  });
+  it("still rejects 0 vs 0.4 and 1 vs 0.82", () => {
+    expect(ok(0, 0.4)).toBe(false);
+    expect(ok(1, 0.82)).toBe(false);
+  });
+});
+
 describe("normaliseName scripts", () => {
   it("preserves CJK, kana voicing and Devanagari", () => {
     expect(normaliseName("東京タワー")).toBe("東京タワー");
