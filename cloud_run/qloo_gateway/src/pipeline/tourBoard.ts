@@ -19,8 +19,8 @@ interface Deps { qloo: QlooCaller; cities: City[]; signal?: AbortSignal; concurr
 const SHORTLIST = 8;
 const ref = (tool: string, r: CallResult, resultIndex?: number): EvidenceRef => ({ tool, cacheKey: r.cacheKey, ...(resultIndex !== undefined ? { resultIndex } : {}) });
 
-class Aborted extends Error {}
-class BudgetStop extends Error {}
+export class Aborted extends Error {}
+export class BudgetStop extends Error {}
 const budgetHit = new WeakSet<object>();
 
 function warningsOf(tool: string, r: CallResult): DataWarning[] {
@@ -58,6 +58,8 @@ async function call(deps: Deps, sessionId: string, tool: string, args: Record<st
   }
   return r;
 }
+
+export { call as trackedCall };
 
 export async function activationInputs(artist: string, city: { name: string; country: string }, deps: Deps, sessionId: string, events: GatewayEvent[]) {
   const where = `${city.name}, ${city.country}`;
