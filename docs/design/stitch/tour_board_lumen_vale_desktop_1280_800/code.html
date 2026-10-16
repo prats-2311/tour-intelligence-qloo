@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1280, initial-scale=1.0">
+  <title>Tour Board — Lumen Vale</title>
+  <!-- Google Fonts: Fraunces, Inter, JetBrains Mono, Material Symbols Outlined -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ground: '#1c1b18',
+            chrome: '#26251f',
+            card: '#282722',
+            well: '#32312a',
+            bone: '#f2f0ea',
+            'bone-bar': '#e9e4d6',
+            stone: '#a4a094',
+            'stone-muted': '#8b877c',
+            gold: '#ffcc00',
+            'gold-text': '#1d1a10',
+            teal: '#0f9d8a',
+            coral: '#e8606f',
+            steel: '#5a86e8',
+            'map-land': '#1f1e1a',
+            'map-water': '#151410',
+          },
+          fontFamily: {
+            serif: ['Fraunces', 'serif'],
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #1c1b18;
+      color: #f2f0ea;
+      font-family: 'Inter', sans-serif;
+      font-feature-settings: "tnum" 1, "cv05" 1;
+      overflow-x: hidden;
+      user-select: none;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+    }
+    /* Custom scrollbar for routing list */
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #26251f;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #32312a;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="h-[800px] w-[1280px] max-h-[800px] max-w-[1280px] overflow-hidden flex flex-col bg-ground">
+
+  <!-- TOP BAR (56px, #26251f) -->
+  <header class="h-[56px] min-h-[56px] w-full bg-chrome px-6 flex items-center justify-between z-30">
+    <div class="flex items-center space-x-8">
+      <!-- Wordmark -->
+      <div class="flex items-baseline space-x-2">
+        <span class="font-serif text-[18px] font-semibold text-bone tracking-tight">Tour Intelligence</span>
+        <span class="text-[13px] text-stone font-medium">× Qloo</span>
+      </div>
+
+      <!-- Navigation links -->
+      <nav class="flex items-center space-x-6 text-[14px]">
+        <a href="#" class="text-stone hover:text-bone transition-colors py-4">Discover</a>
+        <a href="#" class="text-bone font-medium py-4 relative">
+          Tours
+          <span class="absolute bottom-0 left-0 right-0 h-[2px] bg-gold"></span>
+        </a>
+        <a href="#" class="text-stone hover:text-bone transition-colors py-4">Insights</a>
+        <a href="#" class="text-stone hover:text-bone transition-colors py-4">Proof</a>
+      </nav>
+    </div>
+
+    <!-- Strategist Toggle Button -->
+    <div class="flex items-center space-x-3">
+      <button class="flex items-center space-x-2 bg-well hover:bg-[#3d3c33] transition-colors text-bone px-3.5 py-1.5 rounded-[10px] text-[13px] font-medium">
+        <span class="material-symbols-outlined text-[17px] text-stone">forum</span>
+        <span>Strategist</span>
+        <span class="w-1.5 h-1.5 rounded-full bg-gold ml-1"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN BODY: 12-COLUMN ASYMMETRIC GRID (Remaining 744px) -->
+  <main class="flex-1 w-full grid grid-cols-12 overflow-hidden">
+
+    <!-- LEFT: MAP AREA (COLUMNS 1–7 = 7/12 ~ 58.33%) -->
+    <section class="col-span-7 h-full relative overflow-hidden bg-map-water">
+      <!-- Dark warm-tinted SVG map of Mexico, S. US & Brazil with Hexbins -->
+      <svg class="w-full h-full object-cover" viewBox="0 0 746 744" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="hexGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#f2f0ea" stop-opacity="0.28" />
+            <stop offset="60%" stop-color="#f2f0ea" stop-opacity="0.10" />
+            <stop offset="100%" stop-color="#f2f0ea" stop-opacity="0" />
+          </radialGradient>
+          <filter id="selFilter" x="-40%" y="-40%" width="180%" height="180%">
+            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#ffcc00" flood-opacity="0.55"/>
+          </filter>
+        </defs>
+
+        <!-- Base Water background is #151410 -->
+        <rect width="746" height="744" fill="#151410"/>
+
+        <!-- Land masses (warm #1f1e1a) -->
+        <!-- North America / S. USA & Mexico -->
+        <path d="M0,0 L380,0 L385,80 L350,110 L395,145 L360,195 L325,235 L335,260 L360,250 L390,265 L365,300 L320,335 L260,360 L245,390 L210,385 L180,360 L140,310 L100,280 L70,230 L55,170 L25,120 L0,105 Z" fill="#1f1e1a"/>
+        <!-- Central America Bridge -->
+        <path d="M210,385 L260,390 L275,415 L260,435 L285,455 L280,470 L245,450 L230,420 Z" fill="#1f1e1a"/>
+        <!-- South America (Brazil, Atlantic coast, Andes) -->
+        <path d="M280,470 L340,460 L410,480 L490,490 L560,510 L620,535 L610,575 L580,610 L560,655 L530,710 L480,744 L400,744 L370,700 L340,650 L320,580 L290,530 L275,490 Z" fill="#1f1e1a"/>
+
+        <!-- Subtle Topographic & Geo Coastline Borders -->
+        <path d="M385,80 L350,110 L395,145 L360,195 L325,235 L335,260 L360,250 L390,265 L365,300 L320,335 L260,360 L245,390 L210,385" stroke="#26251f" stroke-width="1.5" stroke-dasharray="3 3"/>
+        <path d="M280,470 L340,460 L410,480 L490,490 L560,510 L620,535 L610,575 L580,610 L560,655 L530,710" stroke="#26251f" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+        <!-- Route Flight Lines (subtle dashed connections for proposed routing) -->
+        <path d="M110,190 L215,315" stroke="#a4a094" stroke-width="1" stroke-dasharray="4 4" stroke-opacity="0.3"/>
+        <path d="M215,315 L252,335" stroke="#ffcc00" stroke-width="1.5" stroke-dasharray="3 3" stroke-opacity="0.6"/>
+        <path d="M252,335 L518,638" stroke="#ffcc00" stroke-width="1.5" stroke-dasharray="3 3" stroke-opacity="0.4"/>
+        <path d="M518,638 L540,622" stroke="#a4a094" stroke-width="1" stroke-dasharray="4 4" stroke-opacity="0.3"/>
+
+        <!-- Hexagon Heat Bins (Bone-coloured clustering around LA, CDMX, GDL, SP) -->
+        <!-- Group: Los Angeles area hexbins -->
+        <g opacity="0.45">
+          <polygon points="105,182 113,177 121,182 121,192 113,197 105,192" fill="#e9e4d6" fill-opacity="0.2" stroke="#f2f0ea" stroke-opacity="0.3"/>
+          <polygon points="97,197 105,192 113,197 113,207 105,212 97,207" fill="#e9e4d6" fill-opacity="0.25"/>
+          <polygon points="113,197 121,192 129,197 129,207 121,212 113,207" fill="#e9e4d6" fill-opacity="0.35"/>
+        </g>
+
+        <!-- Group: Mexico City & Guadalajara hexbins cluster -->
+        <g opacity="0.8">
+          <circle cx="215" cy="315" r="42" fill="url(#hexGlow)"/>
+          <circle cx="252" cy="335" r="46" fill="url(#hexGlow)"/>
+          
+          <polygon points="207,307 215,302 223,307 223,317 215,322 207,317" fill="#f2f0ea" fill-opacity="0.45" stroke="#f2f0ea" stroke-width="0.8"/>
+          <polygon points="223,307 231,302 239,307 239,317 231,322 223,317" fill="#f2f0ea" fill-opacity="0.35"/>
+          <polygon points="215,322 223,317 231,322 231,332 223,337 215,332" fill="#f2f0ea" fill-opacity="0.5"/>
+          <polygon points="244,327 252,322 260,327 260,337 252,342 244,337" fill="#f2f0ea" fill-opacity="0.55" stroke="#ffcc00" stroke-width="1"/>
+          <polygon points="252,342 260,337 268,342 268,352 260,357 252,352" fill="#f2f0ea" fill-opacity="0.4"/>
+          <polygon points="236,342 244,337 252,342 252,352 244,357 236,352" fill="#f2f0ea" fill-opacity="0.3"/>
+          <polygon points="260,327 268,322 276,327 276,337 268,342 260,337" fill="#f2f0ea" fill-opacity="0.25"/>
+        </g>
+
+        <!-- Group: São Paulo & Curitiba hexbins cluster -->
+        <g opacity="0.85">
+          <circle cx="540" cy="622" r="44" fill="url(#hexGlow)"/>
+          <circle cx="518" cy="638" r="40" fill="url(#hexGlow)"/>
+
+          <polygon points="532,614 540,609 548,614 548,624 540,629 532,624" fill="#f2f0ea" fill-opacity="0.5" stroke="#f2f0ea" stroke-width="0.8"/>
+          <polygon points="548,614 556,609 564,614 564,624 556,629 548,624" fill="#f2f0ea" fill-opacity="0.35"/>
+          <polygon points="524,629 532,624 540,629 540,639 532,644 524,639" fill="#f2f0ea" fill-opacity="0.4"/>
+          <polygon points="510,630 518,625 526,630 526,640 518,645 510,640" fill="#f2f0ea" fill-opacity="0.5" stroke="#ffcc00" stroke-width="1"/>
+          <polygon points="494,630 502,625 510,630 510,640 502,645 494,640" fill="#f2f0ea" fill-opacity="0.25"/>
+        </g>
+
+        <!-- MARKERS BY VERDICT SHAPE -->
+        <!-- 9. Chicago US (small grey x) -->
+        <g transform="translate(260, 110)">
+          <path d="M-4,-4 L4,4 M-4,4 L4,-4" stroke="#8b877c" stroke-width="2"/>
+        </g>
+
+        <!-- 5. Los Angeles US (coral triangle) -->
+        <g transform="translate(110, 190)">
+          <polygon points="0,-7 7,6 -7,6" fill="#e8606f"/>
+        </g>
+
+        <!-- 7. Austin US (steel-blue ring) -->
+        <g transform="translate(230, 220)">
+          <circle cx="0" cy="0" r="5" stroke="#5a86e8" stroke-width="2.2" fill="none"/>
+        </g>
+
+        <!-- 8. Monterrey MX (steel-blue ring) -->
+        <g transform="translate(210, 275)">
+          <circle cx="0" cy="0" r="5" stroke="#5a86e8" stroke-width="2.2" fill="none"/>
+        </g>
+
+        <!-- 1. Mexico City MX (teal filled circle) -->
+        <g transform="translate(252, 335)">
+          <circle cx="0" cy="0" r="6" fill="#0f9d8a"/>
+          <circle cx="0" cy="0" r="9" stroke="#0f9d8a" stroke-width="1" stroke-opacity="0.4"/>
+        </g>
+
+        <!-- 3. Guadalajara MX (gold diamond WITH SELECTION RING & LABEL - SIGNATURE MOMENT) -->
+        <g transform="translate(215, 315)">
+          <!-- Outer Pulsing Selection Ring -->
+          <circle cx="0" cy="0" r="14" stroke="#ffcc00" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.9" filter="url(#selFilter)"/>
+          <circle cx="0" cy="0" r="18" stroke="#ffcc00" stroke-width="0.8" opacity="0.4"/>
+          <!-- Solid Gold Diamond -->
+          <polygon points="0,-7 7,0 0,7 -7,0" fill="#ffcc00"/>
+          <!-- City Label -->
+          <text x="-6" y="-12" text-anchor="end" font-family="Fraunces, serif" font-size="12" font-weight="600" fill="#f2f0ea" letter-spacing="-0.01em">Guadalajara</text>
+        </g>
+
+        <!-- --. Belo Horizonte BR (hollow grey square) -->
+        <g transform="translate(565, 595)">
+          <rect x="-4.5" y="-4.5" width="9" height="9" stroke="#8b877c" stroke-width="1.8" fill="none"/>
+        </g>
+
+        <!-- 6. Rio de Janeiro BR (steel-blue ring) -->
+        <g transform="translate(575, 625)">
+          <circle cx="0" cy="0" r="5" stroke="#5a86e8" stroke-width="2.2" fill="none"/>
+        </g>
+
+        <!-- 2. São Paulo BR (teal filled circle) -->
+        <g transform="translate(540, 622)">
+          <circle cx="0" cy="0" r="6" fill="#0f9d8a"/>
+          <circle cx="0" cy="0" r="9" stroke="#0f9d8a" stroke-width="1" stroke-opacity="0.4"/>
+        </g>
+
+        <!-- 4. Curitiba BR (gold diamond, labelled) -->
+        <g transform="translate(518, 638)">
+          <polygon points="0,-6.5 6.5,0 0,6.5 -6.5,0" fill="#ffcc00"/>
+          <text x="12" y="4" font-family="Fraunces, serif" font-size="11" font-weight="600" fill="#f2f0ea">Curitiba</text>
+        </g>
+      </svg>
+
+      <!-- Map Overlays -->
+      <!-- Bottom-Left: Attribution -->
+      <div class="absolute bottom-4 left-5 text-[11px] text-stone font-mono tracking-tight pointer-events-none">
+        CARTO Warm Dark · Taste Hexbins: Qloo Cultural Graph
+      </div>
+
+      <!-- Bottom-Right: 36px square zoom controls -->
+      <div class="absolute bottom-4 right-5 flex flex-col space-y-1">
+        <button class="w-[36px] h-[36px] bg-chrome hover:bg-well transition-colors text-bone flex items-center justify-center rounded-[8px] border-none text-[18px] font-mono leading-none">
+          +
+        </button>
+        <button class="w-[36px] h-[36px] bg-chrome hover:bg-well transition-colors text-bone flex items-center justify-center rounded-[8px] border-none text-[18px] font-mono leading-none">
+          −
+        </button>
+      </div>
+
+      <!-- Live Legend in Map Corner -->
+      <div class="absolute top-4 left-5 bg-chrome/90 backdrop-blur-sm px-3.5 py-2.5 rounded-[10px] flex items-center space-x-4 text-[11px] font-mono uppercase tracking-wider text-stone border-none">
+        <div class="flex items-center space-x-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-teal"></span>
+          <span>Play</span>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <span class="w-2 h-2 rotate-45 bg-gold"></span>
+          <span class="text-bone font-medium">Goldmine</span>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <span class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[7px] border-b-coral"></span>
+          <span>De-risk</span>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <span class="w-2.5 h-2.5 rounded-full border border-steel"></span>
+          <span>Consider</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: ROUTING LIST PANEL (COLUMNS 8–12 = 5/12 ~ 41.67%) -->
+    <section class="col-span-5 h-full bg-chrome flex flex-col justify-between overflow-hidden relative">
+
+      <!-- TOP SECTION OF PANEL: Header, Controls & Column Headings -->
+      <div class="px-6 pt-5 pb-2">
+        <!-- Title & Subtitle -->
+        <h1 class="font-serif text-[40px] font-semibold text-bone leading-tight tracking-tight">Tour Board</h1>
+        <p class="text-[13px] text-stone mt-0.5">
+          Lumen Vale · Mexico, Brazil, US · 12 Mar – 18 Apr 2027 · 1,000–2,500 cap
+        </p>
+
+        <!-- Segmented Control + Qloo Agent Chip + Compare Toggle -->
+        <div class="flex items-center justify-between mt-3.5 pt-1">
+          <!-- Segmented Control -->
+          <div class="flex bg-well p-1 rounded-[10px] space-x-1 text-[12px]">
+            <button class="bg-card text-gold font-medium px-3 py-1 rounded-[7px] transition-colors">
+              Winnability
+            </button>
+            <button class="text-stone hover:text-bone px-2.5 py-1 rounded-[7px] transition-colors">
+              Density-only
+            </button>
+            <button class="text-stone hover:text-bone px-2.5 py-1 rounded-[7px] transition-colors">
+              Without Qloo
+            </button>
+          </div>
+
+          <!-- Right side of header bar: Agent chip + Compare -->
+          <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-1.5 bg-well px-2.5 py-1 rounded-[10px] text-[11px] text-stone font-mono">
+              <span class="material-symbols-outlined text-[14px] text-gold animate-pulse">radio_button_checked</span>
+              <span>Agent · 47 Qloo</span>
+            </div>
+            <button class="text-[12px] text-stone hover:text-bone font-medium transition-colors ml-1">
+              Compare
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Column Headers -->
+        <div class="grid grid-cols-12 gap-2 mt-3 px-3 text-[11px] font-mono tracking-wider text-stone uppercase">
+          <div class="col-span-1">#</div>
+          <div class="col-span-4">Market</div>
+          <div class="col-span-4">Fan Heat / Activation</div>
+          <div class="col-span-3 text-right">Verdict · Win</div>
+        </div>
+      </div>
+
+      <!-- ROUTING ROWS LIST (Scrollable or perfectly fitted, 10 rows × 48-52px fit into ~480px) -->
+      <div class="flex-1 px-5 overflow-y-auto custom-scroll space-y-[2px]">
+
+        <!-- ROW 1: Mexico City -->
+        <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
+          <div class="col-span-1 font-mono text-[12px] text-stone">01</div>
+          <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
+            <span class="font-serif text-[15px] font-semibold text-bone">Mexico City</span>
+            <span class="text-[11px] font-mono text-stone">MX</span>
+          </div>
+          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-bone-bar rounded-full" style="width: 91%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">91</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-gold rounded-full" style="width: 77%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">77</span>
+            </div>
+          </div>
+          <div class="col-span-3 flex items-center justify-end space-x-2">
+            <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-teal/20 text-teal text-[11px] font-medium leading-none">
+              <span class="material-symbols-outlined text-[12px]">play_arrow</span>
+              <span>Play</span>
+            </span>
+            <span class="font-mono text-[16px] font-bold text-bone w-6 text-right">84</span>
+          </div>
+        </div>
+
+        <!-- ROW 2: São Paulo -->
+        <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
+          <div class="col-span-1 font-mono text-[12px] text-stone">02</div>
+          <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
+            <span class="font-serif text-[15px] font-semibold text-bone">São Paulo</span>
+            <span class="text-[11px] font-mono text-stone">BR</span>
+          </div>
+          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-bone-bar rounded-full" style="width: 84%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">84</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-gold rounded-full" style="width: 66%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">66</span>
+            </div>
+          </div>
+          <div class="col-span-3 flex items-center justify-end space-x-2">
+            <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-teal/20 text-teal text-[11px] font-medium leading-none">
+              <span class="material-symbols-outlined text-[12px]">play_arrow</span>
+              <span>Play</span>
+            </span>
+            <span class="font-mono text-[16px] font-bold text-bone w-6 text-right">75</span>
+          </div>
+        </div>
+
+        <!-- ROW 3: Guadalajara (SIGNATURE HIGHLIGHT: #32312a, Goldmine, Activation 82 > Fan heat 62) -->
+        <div class="h-[46px] rounded-[14px] bg-well ring-1 ring-gold/40 px-3 grid grid-cols-12 gap-2 items-center relative">
+          <div class="col-span-1 font-mono text-[12px] text-gold font-bold">03</div>
+          <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
+            <span class="font-serif text-[15px] font-bold text-bone flex items-center">
+              Guadalajara
+              <span class="w-1.5 h-1.5 rounded-full bg-gold ml-1.5"></span>
+            </span>
+            <span class="text-[11px] font-mono text-stone">MX</span>
+          </div>
+          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-card rounded-full overflow-hidden">
+                <div class="h-full bg-bone-bar rounded-full" style="width: 62%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">62</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-card rounded-full overflow-hidden">
+                <div class="h-full bg-gold rounded-full shadow-[0_0_8px_rgba(255,204,0,0.4)]" style="width: 82%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-gold font-bold w-4 text-right">82</span>
+            </div>
+          </div>
+          <div class="col-span-3 flex items-center justify-end space-x-2">
+            <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-gold text-gold-text text-[10.5px] font-semibold leading-none">
+              <span class="material-symbols-outlined text-[12px]">diamond</span>
+              <span>Hidden goldmine</span>
+            </span>
+            <span class="font-mono text-[16px] font-bold text-gold w-6 text-right">72</span>
+          </div>
+        </div>
+
+        <!-- ROW 4: Curitiba (Hidden goldmine) -->
+        <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
+          <div class="col-span-1 font-mono text-[12px] text-stone">04</div>
+          <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
+            <span class="font-serif text-[15px] font-semibold text-bone">Curitiba</span>
+            <span class="text-[11px] font-mono text-stone">BR</span>
+          </div>
+          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-bone-bar rounded-full" style="width: 51%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">51</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-gold rounded-full" style="width: 77%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-gold font-bold w-4 text-right">77</span>
+            </div>
+          </div>
+          <div class="col-span-3 flex items-center justify-end space-x-2">
+            <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-gold text-gold-text text-[10.5px] font-semibold leading-none">
+              <span class="material-symbols-outlined text-[12px]">diamond</span>
+              <span>Hidden goldmine</span>
+            </span>
+            <span class="font-mono text-[16px] font-bold text-bone w-6 text-right">64</span>
+          </div>
+        </div>
+
+        <!-- ROW 5: Los Angeles (De-risk: Fan Heat 88 vs Activation 40) -->
+        <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
+          <div class="col-span-1 font-mono text-[12px] text-stone">05</div>
+          <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
+            <span class="font-serif text-[15px] font-semibold text-bone">Los Angeles</span>
+            <span class="text-[11px] font-mono text-stone">US</span>
+          </div>
+          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-bone-bar rounded-full" style="width: 88%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">88</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-gold rounded-full" style="width: 40%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">40</span>
+            </div>
+          </div>
+          <div class="col-span-3 flex items-center justify-end space-x-2">
+            <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-coral/20 text-coral text-[11px] font-medium leading-none">
+              <span class="material-symbols-outlined text-[12px]">warning</span>
+              <span>De-risk</span>
+            </span>
+            <span class="font-mono text-[16px] font-bold text-bone w-6 text-right">64</span>
+          </div>
+        </div>
+
+        <!-- ROW 6: Rio de Janeiro (Consider) -->
+        <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
+          <div class="col-span-1 font-mono text-[12px] text-stone">06</div>
+          <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
+            <span class="font-serif text-[15px] font-semibold text-bone">Rio de Janeiro</span>
+            <span class="text-[11px] font-mono text-stone">BR</span>
+          </div>
+          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-bone-bar rounded-full" style="width: 72%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">72</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-gold rounded-full" style="width: 54%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">54</span>
+            </div>
+          </div>
+          <div class="col-span-3 flex items-center justify-end space-x-2">
+            <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-steel/20 text-steel text-[11px] font-medium leading-none">
+              <span class="material-symbols-outlined text-[12px]">balance</span>
+              <span>Consider</span>
+            </span>
+            <span class="font-mono text-[16px] font-bold text-bone w-6 text-right">63</span>
+          </div>
+        </div>
+
+        <!-- ROW 7: Austin (Consider) -->
+        <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
+          <div class="col-span-1 font-mono text-[12px] text-stone">07</div>
+          <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
+            <span class="font-serif text-[15px] font-semibold text-bone">Austin</span>
+            <span class="text-[11px] font-mono text-stone">US</span>
+          </div>
+          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-bone-bar rounded-full" style="width: 66%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">66</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-gold rounded-full" style="width: 52%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">52</span>
+            </div>
+          </div>
+          <div class="col-span-3 flex items-center justify-end space-x-2">
+            <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-steel/20 text-steel text-[11px] font-medium leading-none">
+              <span class="material-symbols-outlined text-[12px]">balance</span>
+              <span>Consider</span>
+            </span>
+            <span class="font-mono text-[16px] font-bold text-bone w-6 text-right">59</span>
+          </div>
+        </div>
+
+        <!-- ROW 8: Monterrey (Consider) -->
+        <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
+          <div class="col-span-1 font-mono text-[12px] text-stone">08</div>
+          <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
+            <span class="font-serif text-[15px] font-semibold text-bone">Monterrey</span>
+            <span class="text-[11px] font-mono text-stone">MX</span>
+          </div>
+          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-bone-bar rounded-full" style="width: 57%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">57</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-gold rounded-full" style="width: 59%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone w-4 text-right">59</span>
+            </div>
+          </div>
+          <div class="col-span-3 flex items-center justify-end space-x-2">
+            <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-steel/20 text-steel text-[11px] font-medium leading-none">
+              <span class="material-symbols-outlined text-[12px]">balance</span>
+              <span>Consider</span>
+            </span>
+            <span class="font-mono text-[16px] font-bold text-bone w-6 text-right">58</span>
+          </div>
+        </div>
+
+        <!-- ROW 9: Chicago (Skip) -->
+        <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
+          <div class="col-span-1 font-mono text-[12px] text-stone">09</div>
+          <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
+            <span class="font-serif text-[15px] font-semibold text-stone">Chicago</span>
+            <span class="text-[11px] font-mono text-stone-muted">US</span>
+          </div>
+          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-stone rounded-full" style="width: 47%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone-muted w-4 text-right">47</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-stone-muted rounded-full" style="width: 49%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone-muted w-4 text-right">49</span>
+            </div>
+          </div>
+          <div class="col-span-3 flex items-center justify-end space-x-2">
+            <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-stone/20 text-stone text-[11px] font-medium leading-none">
+              <span class="material-symbols-outlined text-[12px]">skip_next</span>
+              <span>Skip</span>
+            </span>
+            <span class="font-mono text-[16px] font-bold text-stone w-6 text-right">48</span>
+          </div>
+        </div>
+
+        <!-- ROW 10: Belo Horizonte (Not enough data · 1 of 4 inputs) -->
+        <div class="h-[46px] rounded-[14px] bg-card/60 px-3 grid grid-cols-12 gap-2 items-center opacity-70">
+          <div class="col-span-1 font-mono text-[12px] text-stone-muted">—</div>
+          <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
+            <span class="font-serif text-[15px] font-medium text-stone">Belo Horizonte</span>
+            <span class="text-[11px] font-mono text-stone-muted">BR</span>
+          </div>
+          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
+                <div class="h-full bg-stone-muted rounded-full" style="width: 55%"></div>
+              </div>
+              <span class="font-mono text-[10px] text-stone-muted w-4 text-right">55</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <div class="flex-1 h-[6px] bg-well/60 rounded-full border border-dashed border-stone-muted/40"></div>
+              <span class="font-mono text-[10px] text-stone-muted w-4 text-right">--</span>
+            </div>
+          </div>
+          <div class="col-span-3 flex items-center justify-end">
+            <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-[4px] bg-well text-stone text-[10px] font-mono leading-tight whitespace-nowrap">
+              <span class="material-symbols-outlined text-[11px]">progress_activity</span>
+              <span>1 of 4 inputs</span>
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FOOTER BAR PINNED AT BOTTOM OF RIGHT PANEL -->
+      <div class="p-5 bg-chrome border-t-0 space-y-2 mt-auto">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <span class="text-[13px] text-stone font-mono">4 markets shortlisted</span>
+            <span class="text-stone">·</span>
+            <a href="#" class="text-[13px] text-bone hover:text-gold transition-colors underline decoration-stone/40 underline-offset-4">
+              Taste Insights
+            </a>
+          </div>
+
+          <!-- Ticket Gold primary button with near-black text -->
+          <button class="bg-gold hover:bg-[#ffdb33] active:bg-[#e6b800] transition-colors text-gold-text font-semibold px-6 py-2.5 rounded-[10px] text-[14px] flex items-center space-x-2 shadow-none border-none">
+            <span>Build tour</span>
+            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+          </button>
+        </div>
+
+        <!-- Integrity statement -->
+        <p class="text-[11px] text-stone leading-tight">
+          Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.
+        </p>
+      </div>
+
+    </section>
+
+  </main>
+
+</body>
+</html>
