@@ -86,13 +86,21 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
     mapRef.current = map;
     styleReady.current = false;
     map.once("style.load", () => warmTint(map));
-    // Tile or style failures (offline, provider down): say so; the markers and the list keep working.
-    map.on("error", () => setTilesFailed(true));
+    setTilesFailed(false);
+    let styleSeen = false;
+    // Only a style-level failure means "no basemap": a stray tile 404 after the style
+    // loaded leaves a usable map, so it must not raise the overlay (R31).
+    map.on("style.load", () => { styleSeen = true; });
+    map.on("error", () => { if (!styleSeen) setTilesFailed(true); });
+    const watchdog = setTimeout(() => { if (!map.isStyleLoaded()) setTilesFailed(true); }, 8000);
+    map.on("idle", () => setTilesFailed(false));
     const refit = () => {
       const b = boundsFor(citiesRef.current);
       if (b) map.fitBounds(b, { padding: 48, animate: false, maxZoom: 6 });
     };
     map.on("load", () => {
+      clearTimeout(watchdog);
+      setTilesFailed(false);
       styleReady.current = true;
       map.resize();
       refit();
@@ -118,6 +126,7 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
     return () => {
       ro?.disconnect();
       clearTimeout(timer);
+      clearTimeout(watchdog);
       markers.current.forEach(({ marker }) => marker.remove());
       markers.current.clear();
       map.remove();

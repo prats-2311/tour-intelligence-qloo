@@ -49,6 +49,12 @@ describe("TasteInsights", () => {
     expect(screen.getByText("Qloo calls").parentElement?.textContent).toContain("17");
     expect(screen.getByText("Sample data — illustrative, not Qloo output")).toBeTruthy();
   });
+  it("lets the market map grow with its section at xl instead of h-full", async () => {
+    await seeded();
+    const map = screen.getByRole("region", { name: "Market map" }).querySelector("div.relative")!;
+    expect(map.className).toContain("xl:flex-1");
+    expect(map.className).not.toContain("xl:h-full");
+  });
   it("verdict filter narrows every panel", async () => {
     await seeded();
     fireEvent.click(screen.getByRole("checkbox", { name: "Play" }));

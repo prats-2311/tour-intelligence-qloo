@@ -143,7 +143,7 @@ export default function TasteInsights() {
             <section aria-label="Market map" className="flex min-w-0 flex-col gap-2 rounded-[14px] bg-paper p-3 lg:p-4 xl:col-span-2">
               <h2 className="font-title text-[20px] leading-tight text-canvas-text">Market map</h2>
               <p className="text-[12px] text-canvas-muted">{visible.length} {visible.length === 1 ? "market" : "markets"} in focus</p>
-              <div className="relative h-[260px] overflow-hidden rounded-[10px] bg-canvas xl:h-full xl:min-h-[260px]">
+              <div className="relative h-[260px] overflow-hidden rounded-[10px] bg-canvas xl:min-h-[260px] xl:flex-1">
                 {visible.length === 0 ? (
                   <div className="flex size-full flex-col items-center justify-center gap-3 px-4 text-center">
                     <p className="text-[14px] text-canvas-text">No markets match the filters</p>
