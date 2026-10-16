@@ -63,7 +63,8 @@ describe("runStrategist", () => {
   });
   it("logs only the error name on an internal failure", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const signal = { get aborted(): boolean { throw new TypeError("secret payload"); } } as unknown as AbortSignal;
+    let n = 0;
+    const signal = { get aborted(): boolean { if (n++ === 0) throw new TypeError("secret payload"); return false; } } as unknown as AbortSignal;
     const bad = { ...deps(script(text("x"))), signal };
     const events = await collect(runStrategist(input, bad));
     expect(events[0]).toMatchObject({ type: "strategist_error", code: "INTERNAL" });
