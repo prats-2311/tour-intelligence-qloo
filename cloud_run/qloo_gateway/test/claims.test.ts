@@ -222,3 +222,12 @@ describe("raw decimals of the stated text", () => {
     expect(tokenSupported(numberTokens("1")[0]!, [0.9988])).toBe(false);
   });
 });
+
+describe("ids are not claim numbers", () => {
+  it("ignores digits inside UUID and urn tokens", () => {
+    const t = (x: string) => numberTokens(x).map((n) => n.raw);
+    expect(t("Tame Impala 00000000-E5AA-AE8D-802C-B8C6CB3A59AD at 0.99")).toEqual(["0.99"]);
+    expect(t("tag urn:tag:genre:media:rock2 and urn:entity:place:8c13 lead 0.5")).toEqual(["0.5"]);
+    expect(t("7 shows")).toEqual(["7"]);
+  });
+});

@@ -5,6 +5,7 @@ import { buildEvidence } from "../src/narrative/evidence.js";
 import type { GeminiResponse, GenerateFn } from "../src/narrative/gemini.js";
 import { MemoryUsageStore } from "../src/web/usage.js";
 import { createNarrator } from "../src/narrative/narrate.js";
+import { cacheKey } from "../src/cache.js";
 import type { PlaybookCard } from "../src/types.js";
 
 afterEach(() => { vi.restoreAllMocks(); });
@@ -119,6 +120,54 @@ describe("createNarrator", () => {
     const again = await narrate(input);
     expect(generate).toHaveBeenCalledTimes(1);
     expect(again.status === "ok" && again.cached).toBe(true);
+  });
+  describe("cache re-verification", () => {
+    const key = () => cacheKey("gemini_narrative", { artist: input.artist, city: input.city, evidence: buildEvidence(input.cards) });
+    const seed = async (results: unknown) => {
+      const d = deps(vi.fn(async () => answer(good)));
+      await d.cache.put(key(), "gemini_narrative", { operation: "narrative", status: "ok", results } as never);
+      return d;
+    };
+    it("re-verifies cached unverified claims on read, so a claim once removed now passes, with no model call", async () => {
+      const d = await seed({
+        v: 2, model: "primary", thoughtSummary: null, merch: null, evidence: buildEvidence(input.cards),
+        cards: [{ kind: "sponsors", claims: [{ text: "Cerro Alto Mezcal scores 0.91.", entities: [{ name: "Cerro Alto Mezcal" }], numbers: [0.91], evidence_refs: ["sponsors:0"] },
+          { text: "Cerro Alto Mezcal scores 0.50.", entities: [{ name: "Cerro Alto Mezcal" }], numbers: [0.5], evidence_refs: ["sponsors:0"] }] }],
+      });
+      const n = await createNarrator(d)(input);
+      if (n.status !== "ok") throw new Error("expected ok");
+      expect(n.cached).toBe(true);
+      expect(n.cards.sponsors!.verified.map((c) => c.numbers)).toEqual([[0.91]]);
+      expect(n.cards.sponsors!.removed[0]).toMatchObject({ reason: "unsupported_number" });
+      expect(d.generate).not.toHaveBeenCalled();
+    });
+    it("treats an old-shape cache entry as a miss and regenerates without crashing", async () => {
+      const d = await seed({ status: "ok", model: "old", thoughtSummary: null, cards: { sponsors: { verified: [], removed: [] } }, merch: null, cached: false });
+      const n = await createNarrator(d)(input);
+      expect(n.status === "ok" && n.cached).toBe(false);
+      expect(d.generate).toHaveBeenCalledTimes(1);
+    });
+  });
+  describe("leaked entity ids", () => {
+    const uuid = "00000000-E5AA-AE8D-802C-B8C6CB3A59AD";
+    const run = (text: string, numbers: number[]) => createNarrator(deps(async () => answer({ cards: [{ kind: "sponsors", claims: [
+      { text, entities: [{ name: "Cerro Alto Mezcal", entityId: uuid }], numbers, evidence_refs: ["sponsors:0"] }] }] })))(input);
+    it("keeps a claim with a UUID parenthetical and strips the parenthetical from the stored text", async () => {
+      const n = await run(`Cerro Alto Mezcal (entityId: ${uuid}) fits at 0.91.`, [0.91]);
+      if (n.status !== "ok") throw new Error("expected ok");
+      expect(n.cards.sponsors!.verified.map((c) => c.text)).toEqual(["Cerro Alto Mezcal fits at 0.91."]);
+    });
+    it("still removes a claim with a genuine unsupported number elsewhere", async () => {
+      const n = await run(`Cerro Alto Mezcal (entityId: ${uuid}) fits at 0.91 across 7 venues.`, [0.91]);
+      if (n.status !== "ok") throw new Error("expected ok");
+      expect(n.cards.sponsors!.verified).toEqual([]);
+      expect(n.cards.sponsors!.removed[0]).toMatchObject({ reason: "unsupported_number", detail: "7" });
+    });
+    it("tells the model never to write entity ids in text", async () => {
+      const generate = vi.fn(async () => answer(good));
+      await createNarrator(deps(generate))(input);
+      expect(JSON.stringify(generate.mock.calls[0])).toMatch(/never write entity ids/i);
+    });
   });
   it("tells the model the evidence is data and lists only evidence ids it may cite", async () => {
     const generate = vi.fn<GenerateFn>(async () => answer(good));

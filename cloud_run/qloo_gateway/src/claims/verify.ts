@@ -62,9 +62,13 @@ export interface NumberToken { raw: string; value: number; percent: boolean; sca
 
 const SCALES: Record<string, number> = { k: 1e3, thousand: 1e3, m: 1e6, mm: 1e6, million: 1e6, b: 1e9, bn: 1e9, billion: 1e9 };
 
+const ID_TOKEN = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b|\burn:[^\s,;()]+/gi;
+
 /** Numeric tokens in free text: decimals, thousands separators ("1,200"), a trailing "%" and scale words ("1.2k", "38 thousand"; value is the scaled number). */
 export function numberTokens(text: string): NumberToken[] {
   const out: NumberToken[] = [];
+  // Entity ids are not stated numbers: mask UUIDs and urn: tokens before extracting.
+  text = text.replace(ID_TOKEN, " ");
   for (const m of text.matchAll(/(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)(%|\s?(?:thousand|million|billion|bn|mm|k|m|b)(?![\p{L}\p{N}]))?/giu)) {
     const suffix = (m[2] ?? "").trim().toLowerCase();
     const percent = suffix === "%";
