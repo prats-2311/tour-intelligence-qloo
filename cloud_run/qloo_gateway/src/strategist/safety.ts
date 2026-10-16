@@ -12,6 +12,14 @@ export function isSafeName(s: unknown): s is string {
   return typeof s === "string" && s.trim() !== "" && NAME.test(s.trim());
 }
 
+const BAD_CONTEXT_CHARS = /[\u0000-\u001F\u007F-\u009F\u2028\u2029\u202A-\u202E\u2066-\u2069<>]/;
+/** Printable display text for client-supplied names (artist, regions, cities). Goes to Gemini only as JSON data, so punctuation like + ! $ / is fine; markup and control/bidi characters are not. */
+export function isSafeContextText(s: unknown): s is string {
+  if (typeof s !== "string") return false;
+  const t = s.trim();
+  return t.length >= 1 && t.length <= LIMITS.nameChars && !BAD_CONTEXT_CHARS.test(t);
+}
+
 export function sanitizeMessages(input: unknown): { ok: true; messages: ChatMessage[] } | { ok: false; error: string } {
   if (!Array.isArray(input) || input.length === 0 || input.length > LIMITS.messages) return { ok: false, error: `messages must be 1-${LIMITS.messages} items` };
   const out: ChatMessage[] = [];
@@ -33,20 +41,21 @@ export function validateContext(input: unknown): { ok: true; context: Strategist
   const ctx: StrategistContext = {};
   if (c.artist !== undefined) {
     const a = rec(c.artist);
-    if (!a || !isSafeName(a.name) || typeof a.entityId !== "string" || !ID.test(a.entityId)) return { ok: false, error: "context.artist invalid" };
+    if (!a || !isSafeContextText(a.name) || typeof a.entityId !== "string" || !ID.test(a.entityId)) return { ok: false, error: "context.artist invalid" };
     ctx.artist = { name: a.name.trim(), entityId: a.entityId };
   }
   if (c.regions !== undefined) {
-    if (!Array.isArray(c.regions) || c.regions.length > LIMITS.regions || !c.regions.every(isSafeName)) return { ok: false, error: "context.regions invalid" };
-    ctx.regions = c.regions.map((r) => r.trim());
+    if (!Array.isArray(c.regions) || c.regions.length > LIMITS.regions) return { ok: false, error: "context.regions invalid" };
+    ctx.regions = c.regions.filter(isSafeContextText).map((r) => r.trim());
   }
   if (c.cities !== undefined) {
     if (!Array.isArray(c.cities) || c.cities.length > LIMITS.cities) return { ok: false, error: `context.cities must be at most ${LIMITS.cities}` };
     const cities = [];
     for (const raw of c.cities) {
       const x = rec(raw);
-      if (!x || typeof x.id !== "string" || x.id.length > 32 || !ID.test(x.id) || !isSafeName(x.name) || !isSafeName(x.country) || typeof x.verdict !== "string" || !VERDICTS.has(x.verdict)
-        || !score(x.fanHeat) || !score(x.activation) || !score(x.winnability)) return { ok: false, error: "context.cities item invalid" };
+      if (!x) continue;
+      if (typeof x.id !== "string" || x.id.length > 32 || !ID.test(x.id) || !isSafeContextText(x.name) || !isSafeContextText(x.country) || typeof x.verdict !== "string" || !VERDICTS.has(x.verdict)
+        || !score(x.fanHeat) || !score(x.activation) || !score(x.winnability)) continue;
       cities.push({ id: x.id, name: (x.name as string).trim(), country: (x.country as string).trim(), verdict: x.verdict, fanHeat: x.fanHeat as number | null, activation: x.activation as number | null, winnability: x.winnability as number | null });
     }
     ctx.cities = cities;

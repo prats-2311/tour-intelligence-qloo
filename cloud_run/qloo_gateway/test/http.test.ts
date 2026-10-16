@@ -132,6 +132,16 @@ describe("strategist route", () => {
     expect(res.text).toContain("event: strategist_error");
     expect(res.text).toContain("UNAVAILABLE");
     expect(res.text).toContain("event: done");
+    expect(res.text).toContain('"forcedFinal":false');
+  });
+  it("accepts real artist names with punctuation in the board context and drops a bad city", async () => {
+    const strategist = vi.fn(async function* () { yield { type: "done", summary: {} } as const; });
+    const app = createApp({ ...base, strategist });
+    const city = { id: "1", name: "A", country: "MX", verdict: "play", fanHeat: 1, activation: 1, winnability: 1 };
+    const res = await request(app).post("/v1/strategist").set("x-session-id", "s")
+      .send({ messages: [{ role: "user", text: "hi" }], context: { artist: { name: "Florence + the Machine", entityId: "Q1" }, regions: ["US/Canada"], cities: [city, { ...city, id: "2", name: "<b>" }] } });
+    expect(res.status).toBe(200);
+    expect(strategist.mock.calls[0]![0].context).toMatchObject({ artist: { name: "Florence + the Machine" }, regions: ["US/Canada"], cities: [city] });
   });
 });
 
@@ -152,6 +162,21 @@ describe("without-qloo route", () => {
     expect(ok.status).toBe(200);
     expect(ok.body).toMatchObject({ status: "ok", ranked: body.cities });
     expect(withoutQloo).toHaveBeenCalledWith({ ...body, sessionId: "s" });
+  });
+  it.each(["Florence + the Machine", "AC/DC", "P!nk", "Panic! at the Disco", "Ke$ha"])("accepts the artist %s and the region US/Canada", async (artist) => {
+    const withoutQloo = vi.fn(async () => ({ status: "ok" as const, ranked: body.cities, model: "m", cached: false }));
+    const res = await request(createApp({ ...base, withoutQloo })).post("/v1/without-qloo").set("x-session-id", "s").send({ ...body, artist, regions: ["US/Canada"] });
+    expect(res.status).toBe(200);
+    expect(withoutQloo).toHaveBeenCalledWith({ ...body, artist, regions: ["US/Canada"], sessionId: "s" });
+  });
+  it("still rejects markup, bidi and control characters in artist, regions and cities", async () => {
+    const withoutQloo = vi.fn();
+    const app = createApp({ ...base, withoutQloo });
+    const post = (b: object) => request(app).post("/v1/without-qloo").set("x-session-id", "s").send(b);
+    expect((await post({ ...body, artist: "<script>" })).status).toBe(400);
+    expect((await post({ ...body, regions: ["a\u202Eb"] })).status).toBe(400);
+    expect((await post({ ...body, cities: [{ name: "Gua\u0007", country: "MX" }] })).status).toBe(400);
+    expect(withoutQloo).not.toHaveBeenCalled();
   });
   it("answers unavailable/disabled without the dep", async () => {
     const res = await request(createApp(base)).post("/v1/without-qloo").set("x-session-id", "s").send(body);

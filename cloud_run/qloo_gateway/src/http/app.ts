@@ -3,7 +3,7 @@ import type { City } from "../geo/cities.js";
 import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import { runTourBoard } from "../pipeline/tourBoard.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
-import { isSafeName, LIMITS, sanitizeMessages, validateContext } from "../strategist/safety.js";
+import { isSafeContextText, LIMITS, sanitizeMessages, validateContext } from "../strategist/safety.js";
 import type { ChatMessage, GatewayEvent, NarrateFn, StrategistContext, ThisWeek, WithoutQloo } from "../types.js";
 
 function validSession(id: string | undefined): id is string {
@@ -81,7 +81,7 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
       ? deps.strategist({ messages: messages.messages, context: context.context, sessionId }, controller.signal)
       : (async function* (): AsyncGenerator<GatewayEvent> {
         yield { type: "strategist_error", code: "UNAVAILABLE", message: "Strategist unavailable right now" };
-        yield { type: "done", summary: { rounds: 0, toolCalls: 0 } };
+        yield { type: "done", summary: { rounds: 0, toolCalls: 0, forcedFinal: false } };
       })();
     await streamSse(res, gen, controller);
   });
@@ -91,8 +91,8 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
     if (!validSession(sessionId)) return void res.status(400).json({ error: "x-session-id header required (1-128 chars)" });
     const b = (req.body ?? {}) as Record<string, unknown>;
     const { artist, regions, cities } = b;
-    const city = (c: unknown) => { const o = c as Record<string, unknown> | null; return !!o && typeof o === "object" && isSafeName(o.name) && isSafeName(o.country); };
-    if (!isSafeName(artist) || !Array.isArray(regions) || regions.length < 1 || regions.length > LIMITS.regions || !regions.every(isSafeName)
+    const city = (c: unknown) => { const o = c as Record<string, unknown> | null; return !!o && typeof o === "object" && isSafeContextText(o.name) && isSafeContextText(o.country); };
+    if (!isSafeContextText(artist) || !Array.isArray(regions) || regions.length < 1 || regions.length > LIMITS.regions || !regions.every(isSafeContextText)
       || !Array.isArray(cities) || cities.length < 1 || cities.length > LIMITS.cities || !cities.every(city)) {
       return void res.status(400).json({ error: "artist, regions (1-6) and cities (1-20 {name, country}) with safe names required" });
     }
