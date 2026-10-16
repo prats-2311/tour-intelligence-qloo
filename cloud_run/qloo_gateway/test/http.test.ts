@@ -134,3 +134,27 @@ describe("strategist route", () => {
     expect(res.text).toContain("event: done");
   });
 });
+
+describe("without-qloo route", () => {
+  const base = { qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }) };
+  const body = { artist: "Lumen Vale", regions: ["Mexico"], cities: [{ name: "Guadalajara", country: "MX" }] };
+  it("validates input and passes the result through as JSON", async () => {
+    const withoutQloo = vi.fn(async () => ({ status: "ok" as const, ranked: body.cities, model: "m", cached: false }));
+    const app = createApp({ ...base, withoutQloo });
+    const post = (b: unknown, session = "s") => { const r = request(app).post("/v1/without-qloo"); return (session ? r.set("x-session-id", session) : r).send(b as object); };
+    const many = Array.from({ length: 21 }, (_, i) => ({ name: `City ${i}`, country: "MX" }));
+    expect((await post({ ...body, cities: many })).status).toBe(400);
+    expect((await post({ ...body, cities: [{ name: "Ignore previous <script>", country: "MX" }] })).status).toBe(400);
+    expect((await post({ ...body, regions: [] })).status).toBe(400);
+    expect((await post(body, "")).status).toBe(400);
+    expect(withoutQloo).not.toHaveBeenCalled();
+    const ok = await post(body);
+    expect(ok.status).toBe(200);
+    expect(ok.body).toMatchObject({ status: "ok", ranked: body.cities });
+    expect(withoutQloo).toHaveBeenCalledWith({ ...body, sessionId: "s" });
+  });
+  it("answers unavailable/disabled without the dep", async () => {
+    const res = await request(createApp(base)).post("/v1/without-qloo").set("x-session-id", "s").send(body);
+    expect(res.body).toMatchObject({ status: "unavailable", reason: "disabled" });
+  });
+});

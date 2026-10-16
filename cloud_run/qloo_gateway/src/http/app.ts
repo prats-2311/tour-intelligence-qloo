@@ -3,8 +3,8 @@ import type { City } from "../geo/cities.js";
 import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import { runTourBoard } from "../pipeline/tourBoard.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
-import { sanitizeMessages, validateContext } from "../strategist/safety.js";
-import type { ChatMessage, GatewayEvent, NarrateFn, StrategistContext, ThisWeek } from "../types.js";
+import { isSafeName, LIMITS, sanitizeMessages, validateContext } from "../strategist/safety.js";
+import type { ChatMessage, GatewayEvent, NarrateFn, StrategistContext, ThisWeek, WithoutQloo } from "../types.js";
 
 function validSession(id: string | undefined): id is string {
   return typeof id === "string" && id.length >= 1 && id.length <= 128;
@@ -25,7 +25,7 @@ async function streamSse(res: Response, gen: AsyncGenerator<GatewayEvent>, contr
   res.end();
 }
 
-export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent> }) {
+export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo> }) {
   const app = express();
   app.use(express.json({ limit: "64kb" }));
 
@@ -84,6 +84,21 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
         yield { type: "done", summary: { rounds: 0, toolCalls: 0 } };
       })();
     await streamSse(res, gen, controller);
+  });
+
+  app.post("/v1/without-qloo", async (req, res, next) => {
+    const sessionId = req.header("x-session-id");
+    if (!validSession(sessionId)) return void res.status(400).json({ error: "x-session-id header required (1-128 chars)" });
+    const b = (req.body ?? {}) as Record<string, unknown>;
+    const { artist, regions, cities } = b;
+    const city = (c: unknown) => { const o = c as Record<string, unknown> | null; return !!o && typeof o === "object" && isSafeName(o.name) && isSafeName(o.country); };
+    if (!isSafeName(artist) || !Array.isArray(regions) || regions.length < 1 || regions.length > LIMITS.regions || !regions.every(isSafeName)
+      || !Array.isArray(cities) || cities.length < 1 || cities.length > LIMITS.cities || !cities.every(city)) {
+      return void res.status(400).json({ error: "artist, regions (1-6) and cities (1-20 {name, country}) with safe names required" });
+    }
+    if (!deps.withoutQloo) return void res.json({ status: "unavailable", reason: "disabled", message: "Generic ranking unavailable" });
+    const clean = cities.map((c: { name: string; country: string }) => ({ name: c.name.trim(), country: c.country.trim() }));
+    try { res.json(await deps.withoutQloo({ artist: artist.trim(), regions: regions.map((r: string) => r.trim()), cities: clean, sessionId })); } catch (err) { next(err); }
   });
 
   const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;

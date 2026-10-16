@@ -190,4 +190,17 @@ describe("qlooProxy", () => {
     await ok.text();
     expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/strategist");
   });
+  it("forwards /api/qloo/without-qloo as JSON and rejects bodies over 16 KB", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ status: "ok", ranked: [] }), { status: 200, headers: { "content-type": "application/json" } }));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const post = (body) => fetch(`${base}/api/qloo/without-qloo`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify(body) });
+    const big = await post({ artist: "x".repeat(17 * 1024), regions: ["Mexico"], cities: [] });
+    expect(big.status).toBe(400);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    const body = { artist: "A", regions: ["Mexico"], cities: [{ name: "Guadalajara", country: "MX" }] };
+    const ok = await post(body);
+    expect(await ok.json()).toEqual({ status: "ok", ranked: [] });
+    expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/without-qloo");
+    expect(JSON.parse(fetchImpl.mock.calls[0][1].body)).toEqual(body);
+  });
 });

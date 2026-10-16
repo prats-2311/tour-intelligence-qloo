@@ -53,6 +53,13 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch })
     if (Buffer.byteLength(JSON.stringify(body)) > MAX_STRATEGIST_BYTES) return res.status(400).json({ error: "request too large" });
     return forward(req, res, { route: "strategist", path: "/v1/strategist", method: "POST", body, stream: true });
   });
+  // Without-Qloo generic ranking: small JSON body, full validation at the gateway.
+  const MAX_WITHOUT_QLOO_BYTES = 16 * 1024;
+  app.post("/api/qloo/without-qloo", (req, res) => {
+    const body = req.body ?? {};
+    if (Buffer.byteLength(JSON.stringify(body)) > MAX_WITHOUT_QLOO_BYTES) return res.status(400).json({ error: "request too large" });
+    return forward(req, res, { route: "without-qloo", path: "/v1/without-qloo", method: "POST", body });
+  });
   app.get("/api/qloo/city-playbook", (req, res) => {
     const params = new URLSearchParams();
     for (const k of PLAYBOOK_PARAMS) if (typeof req.query[k] === "string") params.set(k, req.query[k]);

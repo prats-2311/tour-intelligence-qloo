@@ -3,6 +3,7 @@ import { BudgetGuard } from "./budget.js";
 import { FirestoreCache, MemoryCache, TieredCache } from "./cache.js";
 import { loadCities } from "./geo/cities.js";
 import { createApp } from "./http/app.js";
+import { rankWithoutQloo } from "./withoutQloo.js";
 import { runStrategist } from "./strategist/run.js";
 import { QlooMcpClient, defaultFactory } from "./mcpClient.js";
 import { createQlooCaller } from "./qlooCall.js";
@@ -48,6 +49,7 @@ const qlooCaller = createQlooCaller({ mcp, cache, budget });
 const cities = loadCities();
 const app = createApp({
   qloo: qlooCaller, cities, health: () => mcp.health(), narrate, thisWeek: (input) => thisWeek(input, webDeps),
+  withoutQloo: (input) => rankWithoutQloo(input, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
   strategist: (input, signal) => runStrategist(input, { generate, models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, qloo: qlooCaller, cities, signal }),
 });
 const port = Number(process.env.PORT ?? 8080);

@@ -83,3 +83,7 @@ export interface StrategistContext {
 }
 
 export type StrategistToolStatus = "ok" | "empty" | "needs_input" | "partial" | "degraded" | "error" | "rejected";
+
+export type WithoutQloo =
+  | { status: "ok"; ranked: Array<{ name: string; country: string }>; model: string; cached: boolean }
+  | { status: "unavailable"; reason: "capped" | "error" | "disabled" | "invalid"; message: string };
