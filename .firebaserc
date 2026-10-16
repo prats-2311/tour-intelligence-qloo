@@ -1,6 +1,3 @@
 {
-  "projects": { "default": "liifecalling-academy" },
-  "targets": {
-    "liifecalling-academy": { "hosting": { "tour-intel-qloo": ["tour-intel-qloo"] } }
-  }
+  "projects": { "default": "liifecalling-academy" }
 }

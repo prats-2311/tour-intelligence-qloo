@@ -24,7 +24,7 @@ Tour Intelligence × Qloo: "Don't just find your fans. Win their city." A taste-
 
 ## Deploy topology (2026-10-16)
 - The finished Google-hackathon backends in `liifecalling-academy` (`tour-data-api`, `delight-card-renderer`, `agent-mcp-server`, Dialogflow CX agent, job `tour-campaign-orchestrator`) are reused; nothing is deleted.
-- The dashboard deploys as the new Cloud Run service `tour-intel-qloo` (`dashboard/scripts/deploy.sh`, refuses `tour-dashboard`), fronted by Firebase Hosting at `https://tour-intel-qloo.web.app` (`firebase.json`, `.firebaserc`, `dashboard/scripts/deploy_web_app.sh`). Prateek runs both; see `dashboard/CLAUDE.md`.
+- The dashboard deploys as the new Cloud Run service `tour-intel-qloo` (`dashboard/scripts/deploy.sh`, refuses `tour-dashboard`), with `https://tour-intel-qloo.web.app` as a 302 short link to the Cloud Run address (Hosting rewrites cannot carry long SSE streams) (`firebase.json`, `.firebaserc`, `dashboard/scripts/deploy_web_app.sh`). Prateek runs both; see `dashboard/CLAUDE.md`.
 - The public MCP stays new: `cloud_run/agent_mcp_server/scripts/deploy_public.sh` (Plan 4) targets `tour-intel-mcp-public`.
 - Reusing dataset `tour_intelligence` (instead of `tour_intelligence_qloo`) is pending Prateek's decision; the dataset guards are unchanged until then.
 - Cloud Run reserves paths ending in `z`: the gateway health route is `/health`.

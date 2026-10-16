@@ -2,8 +2,8 @@
   "hosting": {
     "site": "tour-intel-qloo",
     "public": "dashboard/firebase-public",
-    "rewrites": [
-      { "source": "**", "run": { "serviceId": "tour-intel-qloo", "region": "us-central1" } }
+    "redirects": [
+      { "source": "/:path*", "destination": "https://tour-intel-qloo-602700957663.us-central1.run.app/:path*", "type": 302 }
     ]
   }
 }

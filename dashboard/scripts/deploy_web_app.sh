@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# Run by Prateek, never by agents. Fronts Cloud Run service tour-intel-qloo with Firebase Hosting.
-# If the site id is taken, pick another and edit it here and in .firebaserc.
+# Run by Prateek, never by agents. Publishes https://<site>.web.app as a short link (302) to the Cloud Run dashboard.
+# The site id lives only in firebase.json ("hosting.site"); if it is taken, edit it there.
 set -euo pipefail
 PROJECT=liifecalling-academy
-SITE=tour-intel-qloo
 cd "$(dirname "$0")/../.."
-npx firebase-tools@latest hosting:sites:create "$SITE" --project "$PROJECT" || true
-npx firebase-tools@latest deploy --only hosting --project "$PROJECT"
+SITE=$(node -p "require('./firebase.json').hosting.site")
+FB="npx firebase-tools@14"
+if ! OUT=$($FB hosting:sites:create "$SITE" --project "$PROJECT" 2>&1); then
+  if printf '%s' "$OUT" | grep -qi "already exists"; then echo "Site $SITE already exists, continuing"; else printf '%s\n' "$OUT"; exit 1; fi
+fi
+$FB deploy --only hosting --project "$PROJECT"
 echo "https://${SITE}.web.app"
