@@ -100,7 +100,6 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
   const events: GatewayEvent[] = [];
   const flush = function* () { while (events.length) yield events.shift()!; };
   const scored: ScoredCity[] = [];
-  const byWinnability = () => scored.sort((a, b) => (b.winnability.value ?? -1) - (a.winnability.value ?? -1));
   try {
     let artistName = brief.artist;
     let entityId = brief.artistEntityId;
@@ -203,21 +202,17 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
       }));
       yield* flush();
       let stop: unknown;
-      for (const o of batch) { if ("ok" in o) scored.push(o.ok); else stop ??= o.stop; }
+      const fresh: ScoredCity[] = [];
+      for (const o of batch) { if ("ok" in o) fresh.push(o.ok); else stop ??= o.stop; }
+      fresh.sort((a, b) => (b.winnability.value ?? -1) - (a.winnability.value ?? -1));
+      for (const city of fresh) { scored.push(city); yield { type: "city_scored", city }; }
       if (stop) throw stop;
     }
-    byWinnability();
-    for (const city of scored) yield { type: "city_scored", city };
     yield { type: "done", summary: { artist: { entityId, name: artistName }, cities: scored.length } };
   } catch (err) {
     yield* flush();
     if (err instanceof Aborted) { yield { type: "error", code: "ABORTED", message: "client disconnected" }; return; }
-    if (err instanceof BudgetStop) {
-      byWinnability();
-      for (const city of scored) yield { type: "city_scored", city };
-      yield { type: "error", code: "BUDGET", message: err.message };
-      return;
-    }
+    if (err instanceof BudgetStop) { yield { type: "error", code: "BUDGET", message: err.message }; return; }
     yield { type: "error", code: "INTERNAL", message: (err as Error).message };
   }
 }

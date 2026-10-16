@@ -163,6 +163,41 @@ describe("runTourBoard", () => {
     expect(log.some((l) => l.includes("Charlie") || l.includes("Delta"))).toBe(false);
   });
 
+  describe("batch streaming (concurrency 3, 4-city shortlist = two batches)", () => {
+    const four: City[] = [
+      { id: "a", name: "Alpha", country: "MX", lat: 19, lon: -99, population: 1_000_000 },
+      { id: "b", name: "Bravo", country: "MX", lat: 22, lon: -102, population: 1_000_000 },
+      { id: "c", name: "Charlie", country: "MX", lat: 25, lon: -105, population: 1_000_000 },
+      { id: "d", name: "Delta", country: "MX", lat: 28, lon: -108, population: 1_000_000 },
+    ];
+    const heat: QlooEnvelope = { operation: "where_popular", status: "ok", results: four.map((c, i) => ({ location: { latitude: c.lat, longitude: c.lon }, query: { affinity: 0.9 - i * 0.1, popularity: 0.3 } })) };
+    const budget: QlooEnvelope = { operation: "x", status: "error", summary: "Session limit reached", error: { code: "BUDGET", retryable: false, recovery: "new session" } };
+    const fourRouter = (budgetOnSecondBatch: boolean) => (t: string, a: Record<string, unknown>): QlooEnvelope => {
+      if (t === "qloo_where_popular" && a.within === "Mexico") return heat;
+      if (budgetOnSecondBatch && String(a.within ?? a.filter_location ?? a.signal_location ?? "").startsWith("Delta")) return budget;
+      return happy(t, a);
+    };
+
+    it("yields city_scored for the first batch before the second batch's tool calls", async () => {
+      const events = await collect(runTourBoard(brief, { qloo: fakeQloo(fourRouter(false)), cities: four, concurrency: 3 }));
+      const firstScored = events.findIndex((e) => e.type === "city_scored");
+      const lastToolCall = events.map((e) => e.type).lastIndexOf("tool_call");
+      expect(firstScored).toBeGreaterThan(-1);
+      expect(firstScored).toBeLessThan(lastToolCall);
+      expect(events.filter((e) => e.type === "city_scored")).toHaveLength(4);
+      expect(events.at(-1)).toMatchObject({ type: "done", summary: { cities: 4 } });
+    });
+
+    it("never yields the same city twice when the budget stops the run", async () => {
+      const events = await collect(runTourBoard(brief, { qloo: fakeQloo(fourRouter(true)), cities: four, concurrency: 3 }));
+      const ids = events.filter((e) => e.type === "city_scored").map((e) => (e as { city: { id: string } }).city.id);
+      expect(ids.length).toBeGreaterThan(0);
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(events.at(-1)).toMatchObject({ type: "error", code: "BUDGET" });
+      expect(events.some((e) => e.type === "done")).toBe(false);
+    });
+  });
+
   it("isolates a throwing city: INTERNAL warning, others scored, done", async () => {
     const qloo: QlooCaller = { async call(tool, args) {
       if (String(args.signal_location ?? args.filter_location ?? args.within ?? "").startsWith("Monterrey")) throw new Error("kaboom");
