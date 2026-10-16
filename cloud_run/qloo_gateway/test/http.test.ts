@@ -102,4 +102,15 @@ describe("http", () => {
       server.close();
     }
   });
+  it("rejects a this-week request with a reversed or over-long window", async () => {
+    const app = createApp({ qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }), thisWeek: async () => ({ status: "unavailable", reason: "no_key", message: "x" }) });
+    const bad = await request(app).get("/v1/this-week?city=G&country=MX&start=2027-03-20&end=2027-03-12").set("x-session-id", "s");
+    expect(bad.status).toBe(400);
+    const long = await request(app).get("/v1/this-week?city=G&country=MX&start=2027-01-01&end=2027-04-01").set("x-session-id", "s");
+    expect(long.status).toBe(400);
+    const impossible = await request(app).get("/v1/this-week?city=G&country=MX&start=2027-13-45&end=2027-14-01").set("x-session-id", "s");
+    expect(impossible.status).toBe(400);
+    const ok = await request(app).get("/v1/this-week?city=G&country=MX&start=2027-03-12&end=2027-04-12").set("x-session-id", "s");
+    expect(ok.body).toEqual({ status: "unavailable", reason: "no_key", message: "x" });
+  });
 });

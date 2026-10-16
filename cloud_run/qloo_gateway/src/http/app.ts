@@ -3,7 +3,7 @@ import type { City } from "../geo/cities.js";
 import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import { runTourBoard } from "../pipeline/tourBoard.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
-import type { GatewayEvent, NarrateFn } from "../types.js";
+import type { GatewayEvent, NarrateFn, ThisWeek } from "../types.js";
 
 function validSession(id: string | undefined): id is string {
   return typeof id === "string" && id.length >= 1 && id.length <= 128;
@@ -24,7 +24,7 @@ async function streamSse(res: Response, gen: AsyncGenerator<GatewayEvent>, contr
   res.end();
 }
 
-export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn }) {
+export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek> }) {
   const app = express();
   app.use(express.json({ limit: "64kb" }));
 
@@ -65,6 +65,19 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
       if (err instanceof ValidationError) res.status(400).json({ error: err.message });
       else res.status(500).json({ error: "internal error" });
     }
+  });
+
+  const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+  app.get("/v1/this-week", async (req, res, next) => {
+    const sessionId = req.header("x-session-id");
+    const { city, country, start, end } = req.query;
+    if (!validSession(sessionId) || [city, country, start, end].some((v) => typeof v !== "string" || !v || v.length > 80)
+      || !ISO_DATE.test(String(start)) || !ISO_DATE.test(String(end)) || String(end) < String(start)
+      || !((Date.parse(String(end)) - Date.parse(String(start))) / 86_400_000 <= 62)) {
+      return void res.status(400).json({ error: "x-session-id, city, country, start, end (YYYY-MM-DD, ≤ 62 days) required" });
+    }
+    if (!deps.thisWeek) return void res.json({ status: "unavailable", reason: "no_key", message: "Live web context unavailable — search is not configured" });
+    try { res.json(await deps.thisWeek({ city: String(city), country: String(country), start: String(start), end: String(end), sessionId })); } catch (err) { next(err); }
   });
 
   app.use((err: { status?: number; statusCode?: number; message?: string }, _req: Request, res: Response, _next: NextFunction) => {

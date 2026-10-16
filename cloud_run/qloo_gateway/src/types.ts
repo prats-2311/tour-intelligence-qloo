@@ -48,6 +48,13 @@ export type Narrative =
 export interface NarrateInput { artist: string; city: { name: string; country: string }; cards: PlaybookCard[]; sessionId: string }
 export type NarrateFn = (input: NarrateInput) => Promise<Narrative>;
 
+export interface WebResult { id: string; url: string; title: string; content: string }
+export interface ThisWeekItem { text: string; date: string | null; entities: string[]; citations: string[] }
+export type ThisWeek =
+  | { status: "ok"; window: { start: string; end: string }; items: ThisWeekItem[]; removed: Array<{ item: ThisWeekItem; reason: string }>;
+      citations: Array<{ id: string; url: string; title: string }>; summarised: boolean; cached: boolean }
+  | { status: "unavailable"; reason: "no_key" | "capped" | "error"; message: string };
+
 export type GatewayEvent =
   | { type: "resolve"; entity: { entityId: string; name: string } }
   | { type: "artist_profile"; demographics: unknown[]; tags: Array<{ name: string; affinity: number }>; trends: unknown; refs: EvidenceRef[]; warnings: DataWarning[] }

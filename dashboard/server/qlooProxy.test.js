@@ -10,7 +10,16 @@ async function start(opts) {
   await new Promise((r) => { server = app.listen(0, r); });
   return `http://127.0.0.1:${server.address().port}`;
 }
-afterEach(() => { vi.restoreAllMocks(); server?.closeAllConnections?.(); server?.close(); });
+// Await the close: an unawaited close lets the next test's listen(0) be handed the same ephemeral port
+// while undici still holds a keep-alive socket to the old server, so a request can land on the wrong listener.
+afterEach(async () => {
+  vi.restoreAllMocks();
+  const s = server;
+  server = undefined;
+  if (!s) return;
+  s.closeAllConnections?.();
+  await new Promise((r) => s.close(r));
+});
 
 const sse = (chunks) => new Response(new ReadableStream({ start(c) { const e = new TextEncoder(); chunks.forEach((x) => c.enqueue(e.encode(x))); c.close(); } }), { status: 200, headers: { "content-type": "text/event-stream" } });
 
@@ -148,5 +157,24 @@ describe("qlooProxy", () => {
     const res = await fetch(`${base}/api/qloo/tour-board`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
     expect(res.status).toBe(504);
     expect(await res.json()).toEqual({ error: "Qloo gateway unavailable" });
+  });
+  it("forwards only allowlisted this-week params and rejects long or missing values", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ status: "ok" }), { status: 200, headers: { "content-type": "application/json" } }));
+    const getToken = vi.fn(async () => "t");
+    const base = await start({ gatewayUrl: "https://gw", getToken, fetchImpl });
+    const ok = await fetch(`${base}/api/qloo/this-week?city=Guadalajara&country=MX&start=2027-03-12&end=2027-04-18&evil=1`, { headers: { "x-session-id": "s" } });
+    expect(await ok.json()).toEqual({ status: "ok" });
+    expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/this-week?city=Guadalajara&country=MX&start=2027-03-12&end=2027-04-18");
+    for (const qs of [`city=${"x".repeat(81)}&country=MX&start=2027-03-12&end=2027-04-18`, "city=G&country=MX&start=2027-03-12"]) {
+      const res = await fetch(`${base}/api/qloo/this-week?${qs}`, { headers: { "x-session-id": "s" } });
+      expect(res.status).toBe(400);
+    }
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+  it("forwards the narrative flag on city-playbook", async () => {
+    const fetchImpl = vi.fn(async () => sse(["event: done\ndata: {}\n\n"]));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    await (await fetch(`${base}/api/qloo/city-playbook?artist=A&narrative=0`, { headers: { "x-session-id": "s" } })).text();
+    expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/city-playbook?artist=A&narrative=0");
   });
 });

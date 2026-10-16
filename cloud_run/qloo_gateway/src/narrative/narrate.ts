@@ -95,7 +95,8 @@ export function createNarrator(deps: NarrativeDeps): NarrateFn {
       const narrative = { status: "ok" as const, model, thoughtSummary, cards: out, merch: present.has("merch") ? parsed.merch : null, cached: false };
       try { await deps.cache.put(key, "gemini_narrative", { operation: "narrative", status: "ok", results: narrative }); } catch { /* not cached */ }
       return narrative;
-    } catch {
+    } catch (err) {
+      console.warn(`[narrative] unavailable: ${String((err as Error)?.message ?? err)}`);
       return { status: "unavailable", reason: "error", message: UNAVAILABLE };
     }
   };

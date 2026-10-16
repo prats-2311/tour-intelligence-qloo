@@ -1,10 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { BudgetGuard } from "../src/budget.js";
 import { MemoryCache } from "../src/cache.js";
 import { buildEvidence } from "../src/narrative/evidence.js";
 import type { GeminiResponse, GenerateFn } from "../src/narrative/gemini.js";
 import { createNarrator } from "../src/narrative/narrate.js";
 import type { PlaybookCard } from "../src/types.js";
+
+afterEach(() => { vi.restoreAllMocks(); });
 
 const cards: PlaybookCard[] = [
   { kind: "sponsors", status: "ok", items: [{ entityId: "B1", name: "Cerro Alto Mezcal", affinity: 0.91, popularity: 0.4, index: 0 }], refs: [{ tool: "qloo_recommend", cacheKey: "k1" }], warnings: [] },
@@ -71,10 +73,14 @@ describe("createNarrator", () => {
     expect(n.status === "ok" && n.model).toBe("fallback");
   });
   it("returns unavailable (not a throw) on malformed JSON from every model", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const n = await createNarrator(deps(async () => ({ candidates: [{ content: { parts: [{ text: "not json" }] } }] })))(input);
     expect(n).toEqual({ status: "unavailable", reason: "error", message: "Narrative unavailable — showing Qloo evidence only" });
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]![0])).toMatch(/^\[narrative\] unavailable: /);
   });
   it("returns unavailable on a schema-violating answer (claims not an array)", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     const n = await createNarrator(deps(async () => answer({ cards: [{ kind: "sponsors", claims: "x" }] })))(input);
     expect(n.status).toBe("unavailable");
   });

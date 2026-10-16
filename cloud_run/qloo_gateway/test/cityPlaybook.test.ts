@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { City } from "../src/geo/cities.js";
 import { runCityPlaybook } from "../src/pipeline/cityPlaybook.js";
 import type { QlooCaller } from "../src/qlooCall.js";
@@ -26,6 +26,8 @@ async function collect(g: AsyncGenerator<GatewayEvent>) { const o: GatewayEvent[
 const input = { artist: "Test Artist", artistEntityId: "A1", city: { name: "Mexico City", country: "MX" }, sessionId: "s" };
 type Cards = Array<{ kind: string; status: string; items: Array<Record<string, unknown>>; warnings: Array<{ kind: string }> }>;
 const cardsOf = (events: GatewayEvent[]) => (events.find((e) => e.type === "playbook") as { playbook: { cards: Cards } }).playbook.cards;
+
+afterEach(() => { vi.restoreAllMocks(); });
 
 describe("runCityPlaybook", () => {
   it("produces all seven evidence cards in order", async () => {
@@ -92,8 +94,10 @@ describe("runCityPlaybook", () => {
     expect(events.some((e) => e.type === "narrative")).toBe(false);
   });
   it("turns a throwing narrator into an unavailable narrative, still ending in done", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const events = await collect(runCityPlaybook(input, { qloo: qloo(happy), cities: CITIES, narrate: async () => { throw new Error("boom"); } }));
     expect(events.find((e) => e.type === "narrative")).toMatchObject({ narrative: { status: "unavailable", reason: "error" } });
+    expect(warn).toHaveBeenCalledWith("[narrative] unavailable: boom");
     expect(events.at(-1)?.type).toBe("done");
   });
   it("BUDGET from entity tags ends the stream with error BUDGET and nothing after it", async () => {

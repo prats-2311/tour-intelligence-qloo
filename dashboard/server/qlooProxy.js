@@ -42,7 +42,7 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch })
     }
   }
 
-  const PLAYBOOK_PARAMS = ["artist", "artistEntityId", "city", "country"];
+  const PLAYBOOK_PARAMS = ["artist", "artistEntityId", "city", "country", "narrative"];
 
   app.post("/api/qloo/tour-board", (req, res) => forward(req, res, { route: "tour-board", path: "/v1/tour-board", method: "POST", body: req.body ?? {}, stream: true }));
   app.get("/api/qloo/city-playbook", (req, res) => {
@@ -50,6 +50,16 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch })
     for (const k of PLAYBOOK_PARAMS) if (typeof req.query[k] === "string") params.set(k, req.query[k]);
     const qs = params.toString();
     return forward(req, res, { route: "city-playbook", path: `/v1/city-playbook?${qs}`, method: "GET", stream: true });
+  });
+  const WEEK_PARAMS = ["city", "country", "start", "end"];
+  app.get("/api/qloo/this-week", (req, res) => {
+    const params = new URLSearchParams();
+    for (const k of WEEK_PARAMS) {
+      const v = req.query[k];
+      if (typeof v !== "string" || !v || v.length > 80) return res.status(400).json({ error: "city, country, start, end required (≤ 80 chars)" });
+      params.set(k, v);
+    }
+    return forward(req, res, { route: "this-week", path: `/v1/this-week?${params}`, method: "GET" });
   });
   // Spec §8: raw Qloo tools are never exposed publicly — only the compare panel's tool is reachable.
   const PUBLIC_TOOLS = new Set(["qloo_compare_audiences"]);

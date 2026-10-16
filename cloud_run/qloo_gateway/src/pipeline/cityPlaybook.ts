@@ -113,7 +113,8 @@ export async function* runCityPlaybook(
       let narrative: Narrative;
       try {
         narrative = await deps.narrate({ artist: input.artist, city: input.city, cards, sessionId: input.sessionId });
-      } catch {
+      } catch (err) {
+        console.warn(`[narrative] unavailable: ${String((err as Error)?.message ?? err)}`);
         narrative = { status: "unavailable", reason: "error", message: "Narrative unavailable — showing Qloo evidence only" };
       }
       yield { type: "narrative", narrative };
