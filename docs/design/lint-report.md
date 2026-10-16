@@ -83,3 +83,29 @@ playbook route and on a static capture of the loaded Book, because inspect only 
 - **focal-point, few-pictures, no-footage, still-page**: a data tool whose picture is the deterministic typographic poster and the map; DESIGN.md 9 bans stock photos and decorative motion. Largest type is the Fraunces city or artist name.
 - **covered-text (Book, 375, from the static capture)**: artefact of the captured file, where the fixed chapter list and action bar lose their fixed positioning. Live screenshots at 375 show the header, action bar and tab bar over scrolled content with no heading covered.
 - **palette-cream / grey-body / font-fallback**: bone `#f2f0ea` and stone `#a4a094` are the spec'd tokens; fonts are declared and load in the live app (the static capture has no font files).
+
+# Plan 4 gate (Task 12): Strategist and Without Qloo
+
+Run 2026-10-16 against the fixture build (`E2E_PORT=5199 node e2e/snapshots.mjs`; two new captures: `without` = `/tours/board?sample=1&mode=without`, `strategist` = the board with the panel open after the first suggested question). `lint.mjs` on the captured body markup, `inspect.mjs` on the live Without Qloo and board routes at 1280 and 375. The open panel is only reachable by interaction, so it is covered by the markup lint and the computed-style sweep, not `inspect.mjs`.
+
+## Results
+
+| Check | Target | Result |
+| --- | --- | --- |
+| `lint.mjs` on rendered body markup | `without`, `strategist` | 0 FAIL, 0 WARN each |
+| Computed-style sweep | `without` | no shadows, no gradients; fonts Inter, Fraunces, JetBrains Mono only |
+| Computed-style sweep | `strategist` | shadows: `.btn-gold` inset highlight only (after fix 1); no gradients; same three fonts |
+| `lint.mjs` on Plan 4 source (`components/strategist`, `components/qloo`, `strategistSample.ts`) | | FAILs are the accepted `mono` and `hairline` entries below; 1 WARN em-dash (spec'd strings) |
+| `inspect.mjs` Without Qloo at 1280 and 375 | | only the accepted exceptions below; no `micro-label`, `button-fx` or `body-size` hits |
+| `inspect.mjs` board at 1280 and 375 | | same findings as the Plan 2 gate (accepted) |
+
+## Fixes made
+
+1. Shared chat primitives (`ui/ChatBits.tsx`) carried faint drop shadows on bubbles, the composer input and the send button (found by the computed-style sweep on the open panel). Removed; the gold CTA keeps only the `.btn-gold` inset cue.
+2. Layout gate: inside the strategist dialog at 375 the suggestion chips were 31 px high and the voice-input button 36x36. Chips are now `min-h-11` and the mic button `size-11`, fixed in the owning shared component.
+
+## Accepted exceptions
+
+- **mono / micro-label / small-text / body-size / font-count / palette-cream / grey-body / few-pictures / no-footage / button-fx**: same entries and reasons as the Plan 2 and Plan 3 gates (JetBrains Mono 11px caps for table heads and tool chips, dense data rows, bone and stone tokens, a data tool with no stock photos, `.btn-gold` inset highlight).
+- **hairline (`StrategistLauncher.tsx` `border-l`)**: the left edge of the docked desktop panel, a structural boundary between the page and the dock. The other two hits (`DualBars` `w-px`, `WhyThisScore` `border-t`) are Plan 2 and unchanged.
+- **inspect on the Without Qloo route shows "2 text blocks under 13px"**: the mono 11px rank numerals and caption, same style as the board.

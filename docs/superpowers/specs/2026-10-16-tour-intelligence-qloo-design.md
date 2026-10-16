@@ -239,6 +239,8 @@ Landing → **Try the showcase tour** (pre-cached) → Tour Board → tap a **Hi
 | Proof (`/proof`) | Headline hit rates (ours vs LLM-only vs city-popularity), per-case cards with source links, "where we lost" section, limitations | Table view |
 | Navigation | Bottom tab bar: Discover · Tours · Strategist; Proof linked from Landing and the Tour Board header | Top bar |
 
+- Implementation note (Plan 4): Without Qloo = Gemini ranking of the same cities with no taste data, accepted only as a permutation; sample uses a fixed list.
+
 Key art (City Playbook): Plan 3 ships a deterministic typographic poster; generated key art is a Plan 6 item.
 
 ### 7.3 UI rules (acceptance criteria)
@@ -297,6 +299,8 @@ Every displayed reasoning line maps to a real event or a real model thought summ
 **Taste tools (new):** `find_tour_markets(artist, regions[], max_stops)` → cities with fan heat, activation, winnability, verdicts, provenance; `get_city_playbook(artist, city)`; `suggest_support_acts(artist, city)`; `rank_venues(artist, city, venues[≤10])`; `get_local_moment(artist, city)`. Existing read tools unchanged.
 
 **WebMCP UI-driving tools (new):** `open_city`, `set_comparison_mode`, `build_tour_from_shortlist`, `open_tour_book`. Existing write tools keep their confirmation behaviour.
+
+- Implementation note (Plan 4): Public demo endpoint = separate Cloud Run service `tour-intel-mcp-public` (`MCP_PUBLIC=1`), taste tools only, 30 req/10 min/IP.
 
 Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Qloo kit). README documents one-line connection (`claude mcp add --transport http tour-intel <url>/mcp`) and custom-connector setup.
 
