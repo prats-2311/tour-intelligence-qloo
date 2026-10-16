@@ -2,6 +2,8 @@
 set -euo pipefail
 PROJECT=liifecalling-academy
 REGION=us-central1
+# Hackathon credentials only work against this server; override from the environment if needed.
+QLOO_BASE_URL=${QLOO_BASE_URL:-https://hackathon.api.qloo.com}
 SA=qloo-gateway-sa@${PROJECT}.iam.gserviceaccount.com
 
 # Fail fast, before any mutation.
@@ -34,4 +36,4 @@ gcloud projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$SA" 
 
 gcloud run deploy qloo-gateway --source "$(dirname "$0")/.." --region "$REGION" --project "$PROJECT" \
   --service-account "$SA" --no-allow-unauthenticated --min-instances 1 --max-instances 3 --memory 1Gi \
-  --set-secrets "$SECRETS" --set-env-vars QLOO_CACHE_BACKEND=firestore,QLOO_USAGE_BACKEND=firestore,QLOO_DAILY_CEILING=2000,GOOGLE_CLOUD_PROJECT=${PROJECT},GEMINI_DAILY_CEILING=300
+  --set-secrets "$SECRETS" --set-env-vars QLOO_CACHE_BACKEND=firestore,QLOO_USAGE_BACKEND=firestore,QLOO_DAILY_CEILING=2000,GOOGLE_CLOUD_PROJECT=${PROJECT},GEMINI_DAILY_CEILING=300,QLOO_BASE_URL=${QLOO_BASE_URL},QLOO_TRUSTED_BASE_URL=${QLOO_BASE_URL}

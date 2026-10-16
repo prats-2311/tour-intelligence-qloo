@@ -9,6 +9,7 @@ The only service that talks to Qloo. Holds one `qloo mcp` child process (stdio) 
 
 ## Build & deploy
 - Local image check (from worktree root): `docker build -t qloo-gateway cloud_run/qloo_gateway && docker run --rm qloo-gateway qloo --version`
+- The hackathon server (`https://hackathon.api.qloo.com`) is used through `QLOO_BASE_URL` and `QLOO_TRUSTED_BASE_URL` (both set by `deploy.sh`, overridable via `QLOO_BASE_URL` in the environment); for local runs set both to the same URL before starting. The gateway logs the active base URL (never a key) at startup.
 - `scripts/deploy.sh` is run by Prateek (not by agents) after creating the `qloo-api-key` secret: `printf '%s' "$QLOO_API_KEY" | gcloud secrets create qloo-api-key --data-file=- --project liifecalling-academy`
 
 ## Narrative

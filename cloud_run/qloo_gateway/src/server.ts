@@ -11,6 +11,9 @@ import { createNarrator } from "./narrative/narrate.js";
 import { createTavilySearch } from "./web/tavily.js";
 import { FirestoreUsageStore, MemoryUsageStore } from "./web/usage.js";
 import { thisWeek } from "./web/thisWeek.js";
+import { logQlooBaseUrl } from "./startupLog.js";
+
+logQlooBaseUrl(process.env);
 
 const mcp = new QlooMcpClient({ factory: defaultFactory });
 const l1 = new MemoryCache();
