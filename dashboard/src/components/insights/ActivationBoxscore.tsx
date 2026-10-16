@@ -1,4 +1,5 @@
 import { VerdictChip } from "@/components/qloo/VerdictChip";
+import { byActivation } from "@/lib/qloo/insightsFilters";
 import { sortCities } from "@/lib/qloo/ranking";
 import type { ComponentName, ScoredCity } from "@/lib/qloo/types";
 
@@ -25,7 +26,7 @@ function Num({ v, bar, digits }: { v: number | null | undefined; bar: string; di
 }
 
 export function ActivationBoxscore({ cities, selectedId, onSelect }: { cities: ScoredCity[]; selectedId: string | null; onSelect: (id: string) => void }) {
-  const rows = sortCities(cities, "winnability").sort((a, b) => (b.activation.value ?? -1) - (a.activation.value ?? -1));
+  const rows = sortCities(cities, "winnability").sort(byActivation);
   return (
     <section aria-label="Activation boxscore" className="rounded-[14px] bg-paper p-3 lg:p-4">
       <h2 className="font-title text-[20px] leading-tight text-canvas-text">Activation breakdown</h2>

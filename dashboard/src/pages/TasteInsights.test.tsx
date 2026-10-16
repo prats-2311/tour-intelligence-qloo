@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import TasteInsights from "./TasteInsights";
@@ -9,14 +9,26 @@ import TasteInsights from "./TasteInsights";
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
 
 let desktop = true;
-beforeAll(() => {
+beforeEach(() => {
   vi.stubGlobal("matchMedia", () => ({ matches: desktop, addEventListener() {}, removeEventListener() {} }));
 });
-afterAll(() => vi.unstubAllGlobals());
-afterEach(() => { cleanup(); desktop = true; });
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  desktop = true;
+});
 
-function Seed() { const { run } = useTourBoard(); return <button onClick={() => run(SAMPLE_BRIEF, { sample: true })}>seed</button>; }
-const renderPage = () => render(<MemoryRouter><TourBoardProvider sampleDelayMs={0}><Seed /><TasteInsights /></TourBoardProvider></MemoryRouter>);
+function Seed() {
+  const { run } = useTourBoard();
+  return (
+    <>
+      <button onClick={() => run(SAMPLE_BRIEF, { sample: true })}>seed</button>
+      <button onClick={() => run({ ...SAMPLE_BRIEF, artist: "Other Act" }, { sample: true })}>seed2</button>
+    </>
+  );
+}
+const renderPage = (delay = 0) => render(<MemoryRouter><TourBoardProvider sampleDelayMs={delay}><Seed /><TasteInsights /></TourBoardProvider></MemoryRouter>);
 const seeded = async () => {
   renderPage();
   fireEvent.click(screen.getByText("seed"));
@@ -42,32 +54,83 @@ describe("TasteInsights", () => {
     await waitFor(() => expect(screen.getAllByTestId("boxscore-row")).toHaveLength(8));
     expect(screen.getAllByTestId("matrix-point")).toHaveLength(7);
   });
-  it("matrix is an accessible image with a table toggle and keyboard-selectable points", async () => {
+  it("filter changed mid-stream sticks, and later countries are visible", async () => {
+    renderPage(25);
+    fireEvent.click(screen.getByText("seed"));
+    await waitFor(() => expect(screen.getAllByTestId("boxscore-row").length).toBeGreaterThan(0), { timeout: 3000 });
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Play" }));
+    await waitFor(() => expect(screen.getByText("Chicago")).toBeTruthy(), { timeout: 5000 });
+    await waitFor(() => expect(screen.getByText("Belo Horizonte")).toBeTruthy(), { timeout: 5000 });
+    expect((screen.getByRole("checkbox", { name: "Play" }) as HTMLInputElement).checked).toBe(false);
+    expect(screen.getAllByTestId("boxscore-row")).toHaveLength(8);
+  });
+  it("a new brief resets filters", async () => {
     await seeded();
-    expect(screen.getByRole("img", { name: /9 markets plotted/ })).toBeTruthy();
-    const point = screen.getAllByTestId("matrix-point")[0]!;
+    fireEvent.click(screen.getByRole("checkbox", { name: "Play" }));
+    await waitFor(() => expect(screen.getAllByTestId("boxscore-row")).toHaveLength(8));
+    fireEvent.click(screen.getByText("seed2"));
+    await waitFor(() => expect(screen.getAllByTestId("boxscore-row")).toHaveLength(10), { timeout: 3000 });
+    expect((screen.getByRole("checkbox", { name: "Play" }) as HTMLInputElement).checked).toBe(true);
+  });
+  it("source filter offers All / Fresh / Stale", async () => {
+    await seeded();
+    for (const n of ["All", "Fresh", "Stale"]) expect(screen.getByRole("radio", { name: n })).toBeTruthy();
+    expect(screen.queryByRole("radio", { name: /live|cached/i })).toBeNull();
+    fireEvent.click(screen.getByRole("radio", { name: "Stale" }));
+    await waitFor(() => expect(screen.queryAllByTestId("boxscore-row")).toHaveLength(0));
+  });
+  it("shows an honest empty state with Reset when every market is filtered out", async () => {
+    await seeded();
+    fireEvent.click(screen.getByRole("radio", { name: "Stale" }));
+    await waitFor(() => expect(screen.queryAllByTestId("matrix-point")).toHaveLength(0));
+    expect(screen.getAllByText("No markets match the filters").length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText("Fan heat →")).toBeNull();
+    fireEvent.click(screen.getAllByRole("button", { name: "Reset filters" })[0]!);
+    await waitFor(() => expect(screen.getAllByTestId("boxscore-row")).toHaveLength(10));
+  });
+  it("matrix is a labelled group (no focusable content inside role=img) with keyboard-selectable points and a table toggle", async () => {
+    await seeded();
+    expect(screen.getByRole("group", { name: /9 markets plotted/ })).toBeTruthy();
+    expect(screen.queryByRole("img", { name: /9 markets plotted/ })).toBeNull();
+    const point = screen.getAllByRole("button", { name: /Guadalajara/ }).find((b) => b.getAttribute("data-testid") === "matrix-point")!;
     fireEvent.keyDown(point, { key: "Enter" });
     expect(point.getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: "Table" }));
     expect(screen.queryAllByTestId("matrix-point")).toHaveLength(0);
     expect(within(screen.getByTestId("matrix-table")).getAllByRole("row")).toHaveLength(11);
   });
+  it("matrix toggle and point hit areas are at least 44px", async () => {
+    await seeded();
+    expect(screen.getByRole("button", { name: "Table" }).className).toMatch(/\bh-11\b/);
+    const hit = screen.getAllByTestId("matrix-point")[0]!.querySelector("circle")!;
+    // viewBox 480 rendered at >= ~320px wide => scale >= 0.66; 44px needs r >= 33
+    expect(Number(hit.getAttribute("r"))).toBeGreaterThanOrEqual(33);
+  });
   it("mobile shows a Filters (n) button opening a sheet", async () => {
     desktop = false;
     await seeded();
-    expect(screen.getByRole("button", { name: "Filters (0)" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Filters (0)" }));
     fireEvent.click(await screen.findByRole("checkbox", { name: "Play" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Filters (1)" })).toBeTruthy());
   });
-  it("Export CSV downloads a Blob named after the artist", async () => {
+  it("Export CSV downloads a UTF-8 BOM Blob named after the artist", async () => {
     await seeded();
-    const create = vi.fn(() => "blob:x");
-    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: create, revokeObjectURL: vi.fn() }));
-    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const blobs: Blob[] = [];
+    const revoke = vi.fn();
+    vi.stubGlobal("URL", class extends URL {
+      static createObjectURL = (b: Blob) => { blobs.push(b); return "blob:x"; };
+      static revokeObjectURL = revoke;
+    });
+    let name = "";
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) { name = this.download; });
     fireEvent.click(screen.getByRole("button", { name: /Export CSV/ }));
-    expect(create).toHaveBeenCalledTimes(1);
-    expect(click).toHaveBeenCalled();
-    click.mockRestore();
+    expect(blobs).toHaveLength(1);
+    expect(name).toBe("taste-insights-lumen-vale.csv");
+    expect(revoke).toHaveBeenCalled();
+    const buf = await new Promise<ArrayBuffer>((res) => { const r = new FileReader(); r.onload = () => res(r.result as ArrayBuffer); r.readAsArrayBuffer(blobs[0]!); });
+    const bytes = new Uint8Array(buf);
+    expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    const text = new TextDecoder("utf-8", { ignoreBOM: true }).decode(bytes);
+    expect(text).toContain("Guadalajara,MX,0.84,0.79,0.81,0.86,82,Hidden goldmine");
   });
 });

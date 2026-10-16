@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import { useId, useState, type KeyboardEvent } from "react";
 import { VERDICT_LABEL, VerdictChip } from "@/components/qloo/VerdictChip";
 import { linear, matrixPoints, QUADRANTS } from "@/lib/qloo/geometry";
 import type { ScoredCity, Verdict } from "@/lib/qloo/types";
@@ -33,8 +33,9 @@ function summary(cities: ScoredCity[], plotted: number): string {
   return `Winnability matrix, fan heat on the x axis against activation on the y axis. ${plotted} ${plotted === 1 ? "market" : "markets"} plotted${skipped > 0 ? `, ${skipped} without activation data not plotted` : ""}. ${parts.join(". ")}${parts.length ? "." : ""}`;
 }
 
-export function WinnabilityMatrix({ cities, selectedId, onSelect, calls }: { cities: ScoredCity[]; selectedId: string | null; onSelect: (id: string) => void; calls: number }) {
+export function WinnabilityMatrix({ cities, selectedId, onSelect, calls, onReset }: { cities: ScoredCity[]; selectedId: string | null; onSelect: (id: string) => void; calls: number; onReset: () => void }) {
   const [view, setView] = useState<"matrix" | "table">("matrix");
+  const capId = useId();
   const pts = matrixPoints(cities, { w: W, h: H, pad: PAD });
   const sx = linear([0, 100], [PAD, W - PAD]);
   const sy = linear([0, 100], [H - PAD, PAD]);
@@ -43,7 +44,7 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls }: { cit
   const zone = (x0: number, x1: number, y0: number, y1: number, fill: string) =>
     <rect x={sx(x0)} y={sy(y1)} width={sx(x1) - sx(x0)} height={sy(y0) - sy(y1)} fill={fill} />;
   const keyActivate = (id: string) => (e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(id); } };
-  const tab = (on: boolean) => `h-8 min-w-14 rounded-[6px] px-3 text-[13px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${on ? "bg-paper-raised text-canvas-text" : "text-canvas-muted hover:text-canvas-text"}`;
+  const tab = (on: boolean) => `h-11 min-w-14 rounded-[6px] px-3 text-[13px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${on ? "bg-paper-raised text-canvas-text" : "text-canvas-muted hover:text-canvas-text"}`;
   const zoneText = { fontSize: 10, fill: "var(--color-canvas-muted)", letterSpacing: "0.08em" } as const;
 
   return (
@@ -62,8 +63,15 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls }: { cit
         </div>
       </header>
 
-      {view === "matrix" ? (
-        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={summary(cities, pts.length)} className="h-auto w-full rounded-[10px] bg-canvas">
+      {cities.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 rounded-[10px] bg-canvas px-4 py-10 text-center">
+          <p className="text-[14px] text-canvas-text">No markets match the filters</p>
+          <button type="button" onClick={onReset} className="min-h-11 rounded-[8px] bg-paper-raised px-4 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932]">Reset filters</button>
+        </div>
+      ) : view === "matrix" ? (
+        <figure role="group" aria-labelledby={capId} className="m-0">
+        <figcaption id={capId} className="sr-only">{summary(cities, pts.length)}</figcaption>
+        <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full rounded-[10px] bg-canvas">
           {zone(h1, h2, a3, 100, "rgba(255,204,0,0.10)")}
           {zone(h2, 100, a2, 100, "rgba(15,157,138,0.10)")}
           {zone(h2, 100, 0, a1, "rgba(232,96,111,0.10)")}
@@ -100,7 +108,7 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls }: { cit
                 onClick={() => onSelect(p.id)}
                 onKeyDown={keyActivate(p.id)}
               >
-                <circle r={16} fill="transparent" stroke="none" />
+                <circle r={36} fill="transparent" stroke="none" />
                 <Mark verdict={p.verdict} selected={on} />
                 {labelled && (
                   <text x={flip ? -12 : 12} y={4} textAnchor={flip ? "end" : "start"} fontSize={12} fontWeight={600} fill="var(--color-canvas-text)" stroke="var(--color-canvas)" strokeWidth={3} paintOrder="stroke">{p.name}</text>
@@ -109,6 +117,7 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls }: { cit
             );
           })}
         </svg>
+        </figure>
       ) : (
         <div data-testid="matrix-table" className="overflow-x-auto">
           <table className="w-full min-w-[360px] border-collapse text-[13px]">

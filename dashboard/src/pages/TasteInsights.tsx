@@ -19,26 +19,36 @@ const secondaryBtn = "inline-flex h-12 items-center justify-center gap-2 rounded
 export default function TasteInsights() {
   const { state } = useTourBoard();
   const isDesktop = useIsDesktop();
-  const { cities, log, status, source, brief, artist } = state;
-  const defaults = useMemo(() => defaultFilters(cities), [cities]);
+  const { cities, log, status, source, brief, artist, regionsEmpty, regionsUnavailable, error } = state;
   const streaming = status === "streaming";
-  const runKey = `${status}|${source}|${brief?.artist ?? ""}|${brief?.regions.join(",") ?? ""}`;
-  const [tagged, setTagged] = useState<{ key: string; f: InsightsFilters } | null>(null);
+  // Filters belong to a run's brief: changing them mid-stream sticks, a new brief resets them.
+  const briefKey = `${source}|${brief?.artist ?? ""}|${brief?.regions.join(",") ?? ""}`;
+  const [tagged, setTagged] = useState<{ key: string; f: InsightsFilters }>({ key: briefKey, f: defaultFilters() });
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const filters = tagged.key === briefKey ? tagged.f : defaultFilters();
+  const setFilters = (f: InsightsFilters) => setTagged({ key: briefKey, f });
+  useEffect(() => { setSelectedId(null); }, [briefKey]);
 
-  // Filters re-initialise per run: once the run settles they start from that run's countries.
-  useEffect(() => {
-    if (streaming) return;
-    setTagged({ key: runKey, f: defaultFilters(cities) });
-    setSelectedId(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- cities are read at settle time only
-  }, [runKey, streaming]);
-
-  const filters = streaming || !tagged || tagged.key !== runKey ? defaults : tagged.f;
   const visible = useMemo(() => applyFilters(cities, filters), [cities, filters]);
   const selected = visible.some((c) => c.id === selectedId) ? selectedId : null;
   const calls = dataQuality(log).calls;
   const artistName = artist?.name ?? brief?.artist;
+
+  if (cities.length === 0 && !streaming && status !== "idle") {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4 py-10">
+        <h1 className="font-title text-[32px] leading-tight text-canvas-text">Taste Insights</h1>
+        <h2 className="text-[18px] font-semibold text-canvas-text">No markets were scored</h2>
+        <ul className="flex flex-col gap-1 text-[14px] text-canvas-text">
+          {regionsEmpty.map((r) => <li key={`e-${r}`}>No Qloo signal in {r}</li>)}
+          {regionsUnavailable.map((r) => <li key={`u-${r.region}`}>{r.region} unavailable: {r.message}</li>)}
+          {error && <li>{error.message}</li>}
+          {regionsEmpty.length === 0 && regionsUnavailable.length === 0 && !error && <li>Qloo returned no markets for this brief.</li>}
+        </ul>
+        <Link to="/tours/board" className={`${secondaryBtn} w-fit`}>Back to the Tour Board</Link>
+      </div>
+    );
+  }
 
   if (cities.length === 0 && !streaming) {
     return (
@@ -65,7 +75,7 @@ export default function TasteInsights() {
     URL.revokeObjectURL(url);
   };
 
-  const panel = <FiltersPanel cities={cities} filters={filters} defaults={defaults} onChange={(f) => setTagged({ key: runKey, f })} />;
+  const panel = <FiltersPanel cities={cities} filters={filters} onChange={setFilters} />;
   const scored = `${cities.length} ${cities.length === 1 ? "market" : "markets"} scored`;
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -91,14 +101,21 @@ export default function TasteInsights() {
         <div className={`flex min-w-0 flex-col gap-4 ${isDesktop ? "lg:col-span-9" : "lg:col-span-12"}`}>
           <DataQualityTiles log={log} />
           <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-5">
-            <div className="min-w-0 xl:col-span-3"><WinnabilityMatrix cities={visible} selectedId={selected} onSelect={setSelectedId} calls={calls} /></div>
+            <div className="min-w-0 xl:col-span-3"><WinnabilityMatrix cities={visible} selectedId={selected} onSelect={setSelectedId} calls={calls} onReset={() => setFilters(defaultFilters())} /></div>
             <section aria-label="Market map" className="flex min-w-0 flex-col gap-2 rounded-[14px] bg-paper p-3 lg:p-4 xl:col-span-2">
               <h2 className="font-title text-[20px] leading-tight text-canvas-text">Market map</h2>
               <p className="text-[12px] text-canvas-muted">{visible.length} {visible.length === 1 ? "market" : "markets"} in focus</p>
               <div className="relative h-[260px] overflow-hidden rounded-[10px] bg-canvas xl:h-full xl:min-h-[260px]">
-                <Suspense fallback={<div className="size-full bg-canvas-raised" />}>
-                  <TourMap cities={visible} selectedId={selected} onSelect={setSelectedId} zones={visible.find((c) => c.id === selected)?.zones} />
-                </Suspense>
+                {visible.length === 0 ? (
+                  <div className="flex size-full flex-col items-center justify-center gap-3 px-4 text-center">
+                    <p className="text-[14px] text-canvas-text">No markets match the filters</p>
+                    <button type="button" onClick={() => setFilters(defaultFilters())} className="min-h-11 rounded-[8px] bg-paper-raised px-4 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932]">Reset filters</button>
+                  </div>
+                ) : (
+                  <Suspense fallback={<div className="size-full bg-canvas-raised" />}>
+                    <TourMap cities={visible} selectedId={selected} onSelect={setSelectedId} zones={visible.find((c) => c.id === selected)?.zones} />
+                  </Suspense>
+                )}
               </div>
             </section>
           </div>

@@ -2,29 +2,31 @@ import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { Sheet } from "@/components/qloo/Sheet";
 import { VERDICT_LABEL } from "@/components/qloo/VerdictChip";
-import { ALL_VERDICTS, activeFilterCount, type InsightsFilters } from "@/lib/qloo/insightsFilters";
+import { ALL_VERDICTS, activeFilterCount, defaultFilters, type InsightsFilters } from "@/lib/qloo/insightsFilters";
 import type { ScoredCity, Verdict } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
 const label = "font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-canvas-muted";
 const row = "flex min-h-11 cursor-pointer items-center gap-3 rounded-[8px] px-2 text-[14px] text-canvas-text hover:bg-paper-raised lg:min-h-9";
 
+const SOURCE_LABEL = { all: "All", fresh: "Fresh", stale: "Stale" } as const;
+
 function toggle<T>(list: T[], v: T): T[] {
   return list.includes(v) ? list.filter((x) => x !== v) : [...list, v];
 }
 
-function FiltersBody({ cities, filters, defaults, onChange }: Props) {
+function FiltersBody({ cities, filters, onChange }: Props) {
   const countries = [...new Set(cities.map((c) => c.country))];
   const verdictCount = (v: Verdict) => cities.filter((c) => c.verdict === v).length;
   const present = ALL_VERDICTS.filter((v) => verdictCount(v) > 0);
-  const n = activeFilterCount(filters, defaults);
+  const n = activeFilterCount(filters);
   return (
     <div className="flex flex-col gap-5">
       <fieldset className="flex flex-col gap-1">
         <legend className={`${label} mb-1`}>Region</legend>
         {countries.map((c) => (
           <label key={c} className={row}>
-            <input type="checkbox" className="size-5 accent-[#ffcc00]" checked={filters.countries.includes(c)} aria-label={c} onChange={() => onChange({ ...filters, countries: toggle(filters.countries, c) })} />
+            <input type="checkbox" className="size-5 accent-[#ffcc00]" checked={!filters.excludedCountries.includes(c)} aria-label={c} onChange={() => onChange({ ...filters, excludedCountries: toggle(filters.excludedCountries, c) })} />
             <span className="flex-1">{c}</span>
             <span aria-hidden className="font-mono text-[12px] text-canvas-muted">{cities.filter((x) => x.country === c).length}</span>
           </label>
@@ -34,7 +36,7 @@ function FiltersBody({ cities, filters, defaults, onChange }: Props) {
         <legend className={`${label} mb-1`}>Verdict</legend>
         {present.map((v) => (
           <label key={v} className={row}>
-            <input type="checkbox" className="size-5 accent-[#ffcc00]" checked={filters.verdicts.includes(v)} aria-label={VERDICT_LABEL[v]} onChange={() => onChange({ ...filters, verdicts: toggle(filters.verdicts, v) })} />
+            <input type="checkbox" className="size-5 accent-[#ffcc00]" checked={!filters.excludedVerdicts.includes(v)} aria-label={VERDICT_LABEL[v]} onChange={() => onChange({ ...filters, excludedVerdicts: toggle(filters.excludedVerdicts, v) })} />
             <span className="flex-1">{VERDICT_LABEL[v]}</span>
             <span aria-hidden className="font-mono text-[12px] text-canvas-muted">{verdictCount(v)}</span>
           </label>
@@ -48,27 +50,27 @@ function FiltersBody({ cities, filters, defaults, onChange }: Props) {
       </div>
       <fieldset className="flex flex-col gap-1">
         <legend className={`${label} mb-1`}>Data source</legend>
-        {(["all", "live", "cached"] as const).map((s) => (
+        {(["all", "fresh", "stale"] as const).map((s) => (
           <label key={s} className={row}>
             <input type="radio" name="insights-source" className="size-5 accent-[#ffcc00]" checked={filters.source === s} onChange={() => onChange({ ...filters, source: s })} />
-            <span className="flex-1 capitalize">{s}</span>
+            <span className="flex-1">{SOURCE_LABEL[s]}</span>
           </label>
         ))}
       </fieldset>
-      <button type="button" disabled={n === 0} onClick={() => onChange(defaults)} className="min-h-11 self-start px-2 text-[13px] font-semibold text-gold underline-offset-[0.18em] hover:underline disabled:text-canvas-muted disabled:no-underline">
+      <button type="button" disabled={n === 0} onClick={() => onChange(defaultFilters())} className="min-h-11 self-start px-2 text-[13px] font-semibold text-gold underline-offset-[0.18em] hover:underline disabled:text-canvas-muted disabled:no-underline">
         Reset filters
       </button>
     </div>
   );
 }
 
-type Props = { cities: ScoredCity[]; filters: InsightsFilters; defaults: InsightsFilters; onChange: (f: InsightsFilters) => void };
+type Props = { cities: ScoredCity[]; filters: InsightsFilters; onChange: (f: InsightsFilters) => void };
 
 /** Left rail on desktop, "Filters (n)" button + bottom sheet on mobile. `cities` is the unfiltered run. */
 export function FiltersPanel(props: Props) {
   const isDesktop = useIsDesktop();
   const [open, setOpen] = useState(false);
-  const n = activeFilterCount(props.filters, props.defaults);
+  const n = activeFilterCount(props.filters);
   if (isDesktop) {
     return (
       <aside aria-label="Filters" className="rounded-[14px] bg-paper p-4">
