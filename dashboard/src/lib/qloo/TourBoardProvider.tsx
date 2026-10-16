@@ -38,6 +38,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
         if (controller.signal.aborted) return;
       }
       if (!terminal && !controller.signal.aborted) dispatch({ type: "interrupted" });
+      if (controllerRef.current === controller) controllerRef.current = null;
     })();
   }, [silentAbort, sampleDelayMs]);
 
