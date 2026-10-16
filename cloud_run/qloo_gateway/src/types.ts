@@ -27,6 +27,27 @@ export interface DataWarning { tool: string; kind: "error" | "partial" | "degrad
 
 export type Verdict = "play" | "hidden_goldmine" | "de_risk" | "consider" | "skip" | "insufficient_data";
 
+export type CardKind = "sponsors" | "merch" | "promo_zones" | "local_moment" | "venue_fit" | "co_billing" | "talent";
+
+export interface PlaybookCard<T = unknown> {
+  kind: CardKind;
+  status: "ok" | "empty";
+  items: T[];
+  refs: EvidenceRef[];
+  warnings: DataWarning[];
+  summary?: Record<string, number | null>;
+}
+
+export interface Claim { text: string; entities: Array<{ name: string; entityId?: string }>; numbers: number[]; evidence_refs: string[] }
+export type RemovalReason = "no_refs" | "dangling_ref" | "unsupported_entity" | "unsupported_number" | "no_checkable_content";
+export interface CardClaims { verified: Claim[]; removed: Array<{ claim: Claim; reason: RemovalReason; detail: string }> }
+export interface MerchDirection { title: string; palette: string[]; motifs: string[]; products: string[] }
+export type Narrative =
+  | { status: "ok"; model: string; thoughtSummary: string | null; cards: Partial<Record<CardKind, CardClaims>>; merch: MerchDirection | null; cached: boolean }
+  | { status: "unavailable"; reason: "error" | "capped" | "disabled"; message: string };
+export interface NarrateInput { artist: string; city: { name: string; country: string }; cards: PlaybookCard[]; sessionId: string }
+export type NarrateFn = (input: NarrateInput) => Promise<Narrative>;
+
 export type GatewayEvent =
   | { type: "resolve"; entity: { entityId: string; name: string } }
   | { type: "artist_profile"; demographics: unknown[]; tags: Array<{ name: string; affinity: number }>; trends: unknown; refs: EvidenceRef[]; warnings: DataWarning[] }
@@ -37,5 +58,6 @@ export type GatewayEvent =
   | { type: "region_empty"; region: string }
   | { type: "city_scored"; city: unknown }
   | { type: "playbook"; playbook: unknown }
+  | { type: "narrative"; narrative: Narrative }
   | { type: "done"; summary: unknown }
   | { type: "error"; code: string; message: string };

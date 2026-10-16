@@ -1,6 +1,6 @@
 export interface EvidenceItem { id: string; entityIds: string[]; names: string[]; numbers: number[] }
-export interface Claim { text: string; entities: Array<{ name: string; entityId?: string }>; numbers: number[]; evidence_refs: string[] }
-export type RemovalReason = "no_refs" | "dangling_ref" | "unsupported_entity" | "unsupported_number" | "no_checkable_content";
+import type { Claim, RemovalReason } from "../types.js";
+export type { Claim, RemovalReason } from "../types.js";
 
 export function normaliseName(s: string): string {
   return s

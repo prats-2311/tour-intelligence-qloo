@@ -3,7 +3,7 @@ import type { City } from "../geo/cities.js";
 import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import { runTourBoard } from "../pipeline/tourBoard.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
-import type { GatewayEvent } from "../types.js";
+import type { GatewayEvent, NarrateFn } from "../types.js";
 
 function validSession(id: string | undefined): id is string {
   return typeof id === "string" && id.length >= 1 && id.length <= 128;
@@ -24,7 +24,7 @@ async function streamSse(res: Response, gen: AsyncGenerator<GatewayEvent>, contr
   res.end();
 }
 
-export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }> }) {
+export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn }) {
   const app = express();
   app.use(express.json({ limit: "64kb" }));
 
@@ -52,8 +52,8 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
       return void res.status(400).json({ error: "x-session-id, artist, artistEntityId, city, country required" });
     }
     const controller = new AbortController();
-    await streamSse(res, runCityPlaybook({ artist: String(artist), artistEntityId: String(artistEntityId), city: { name: String(city), country: String(country) }, sessionId },
-      { qloo: deps.qloo, cities: deps.cities, signal: controller.signal }), controller);
+    await streamSse(res, runCityPlaybook({ artist: String(artist), artistEntityId: String(artistEntityId), city: { name: String(city), country: String(country) }, sessionId, narrative: req.query.narrative !== "0" },
+      { qloo: deps.qloo, cities: deps.cities, signal: controller.signal, narrate: deps.narrate }), controller);
   });
 
   app.post("/v1/tools/:name", async (req, res) => {

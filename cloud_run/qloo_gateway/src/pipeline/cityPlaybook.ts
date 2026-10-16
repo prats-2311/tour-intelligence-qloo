@@ -2,16 +2,10 @@ import { extractEntities } from "../extract.js";
 import type { City } from "../geo/cities.js";
 import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { coBillLift } from "../scoring/winnability.js";
-import type { DataWarning, EvidenceRef, GatewayEvent } from "../types.js";
+import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, PlaybookCard } from "../types.js";
 import { activationInputs, Aborted, BudgetStop, trackedCall } from "./tourBoard.js";
 
-export interface PlaybookCard<T> {
-  kind: "sponsors" | "promo_zones" | "local_moment" | "venue_fit" | "co_billing";
-  status: "ok" | "empty";
-  items: T[];
-  refs: EvidenceRef[];
-  warnings: DataWarning[];
-}
+export type { PlaybookCard } from "../types.js";
 
 function overlapOf(results: unknown): number {
   const r = results as Record<string, unknown> | undefined;
@@ -42,13 +36,13 @@ function interleave<T>(lists: T[][], max: number): T[] {
   return out;
 }
 
-function card<T>(kind: PlaybookCard<T>["kind"], items: T[], refs: EvidenceRef[], warnings: DataWarning[]): PlaybookCard<T> {
-  return { kind, status: items.length > 0 ? "ok" : "empty", items, refs, warnings: dedupe(warnings) };
+function card<T>(kind: CardKind, items: T[], refs: EvidenceRef[], warnings: DataWarning[], nonEmpty = items.length > 0): PlaybookCard<T> {
+  return { kind, status: nonEmpty ? "ok" : "empty", items, refs, warnings: dedupe(warnings) };
 }
 
 export async function* runCityPlaybook(
-  input: { artist: string; artistEntityId: string; city: { name: string; country: string }; sessionId: string },
-  deps: { qloo: QlooCaller; cities: City[]; signal?: AbortSignal },
+  input: { artist: string; artistEntityId: string; city: { name: string; country: string }; sessionId: string; narrative?: boolean },
+  deps: { qloo: QlooCaller; cities: City[]; signal?: AbortSignal; narrate?: NarrateFn },
 ): AsyncGenerator<GatewayEvent> {
   const events: GatewayEvent[] = [];
   try {
@@ -72,9 +66,32 @@ export async function* runCityPlaybook(
     const compared = settled.map((s) => (s as PromiseFulfilledResult<{ warnings: DataWarning[]; lift?: { name: string; entityId: string; overlap: number; localAffinity: number; lift: number; ref: EvidenceRef } }>).value);
     const coBill = compared.flatMap((c) => (c.lift ? [c.lift] : [])).sort((x, y) => y.lift - x.lift);
 
+    const where = `${input.city.name}, ${input.city.country}`;
+    const [tags, proxyRecs] = await Promise.all([
+      trackedCall(deps, input.sessionId, "qloo_entity_tags", { entities: [input.artistEntityId], entity_type: "artist", limit: 10 }, events),
+      trackedCall(deps, input.sessionId, "qloo_recommend", { target_type: "artist", filter_location: where, limit: 5 }, events),
+    ]);
+    const proxies = extractEntities(proxyRecs.envelope).slice(0, 5);
+    let talentOverlap: number | null = null;
+    const talentWarnings: DataWarning[] = [...warningsFor("qloo_recommend", proxyRecs)];
+    const talentRefs: EvidenceRef[] = [ref("qloo_recommend", proxyRecs)];
+    if (proxies.length > 0) {
+      const cmp = await trackedCall(deps, input.sessionId, "qloo_compare_audiences", { group_a: [input.artistEntityId], group_b: proxies.map((p) => p.entityId) }, events);
+      talentRefs.push(ref("qloo_compare_audiences", cmp));
+      talentWarnings.push(...warningsFor("qloo_compare_audiences", cmp));
+      const o = overlapOf(cmp.envelope.results);
+      if (Number.isNaN(o)) talentWarnings.push({ tool: "qloo_compare_audiences", kind: "partial", message: "overlap unavailable for city mainstream" });
+      else talentOverlap = o;
+    }
+    while (events.length) yield events.shift()!;
+
     const { raw } = a;
-    const cards: PlaybookCard<unknown>[] = [
-      card("sponsors", extractEntities(raw.brands.envelope), [ref("qloo_recommend", raw.brands)], warningsFor("qloo_recommend", raw.brands)),
+    const sponsors = extractEntities(raw.brands.envelope);
+    const artistTags = extractEntities(tags.envelope);
+    const cards: PlaybookCard[] = [
+      card("sponsors", sponsors, [ref("qloo_recommend", raw.brands)], warningsFor("qloo_recommend", raw.brands)),
+      card("merch", artistTags, [ref("qloo_entity_tags", tags), ref("qloo_recommend", raw.brands)],
+        [...warningsFor("qloo_entity_tags", tags), ...warningsFor("qloo_recommend", raw.brands)], artistTags.length > 0 || sponsors.length > 0),
       card("promo_zones", a.zones.slice(0, 5), [ref("qloo_where_popular", raw.inCity)], warningsFor("qloo_where_popular", raw.inCity)),
       card("local_moment",
         interleave([raw.artists, raw.films, raw.tv, raw.places].map((r) => extractEntities(r.envelope)), 9),
@@ -83,6 +100,7 @@ export async function* runCityPlaybook(
       card("venue_fit", raw.ranked ? extractEntities(raw.ranked.envelope).slice(0, 3) : [], raw.ranked ? [ref("qloo_rank", raw.ranked)] : [],
         raw.ranked ? warningsFor("qloo_rank", raw.ranked) : []),
       card("co_billing", coBill, coBill.map((c) => c.ref), compared.flatMap((c) => c.warnings)),
+      { ...card("talent", proxies, talentRefs, talentWarnings), summary: { overlap: talentOverlap } },
     ];
     yield { type: "playbook", playbook: { city: input.city, cards } };
     yield { type: "done", summary: { city: input.city.name } };

@@ -1,5 +1,5 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/http/app.js";
 import type { QlooCaller } from "../src/qlooCall.js";
 import { describeOk, heatMexico, recs, cityHeat } from "./fixtures/envelopes.js";
@@ -56,6 +56,12 @@ describe("http", () => {
       .post("/v1/tools/qloo_describe").set("x-session-id", "s").send({});
     expect(res.status).toBe(500);
     expect(res.body).toEqual({ error: "internal error" });
+  });
+  it("passes narrative=0 through to the playbook pipeline", async () => {
+    const narrate = vi.fn();
+    const withNarrate = createApp({ qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }), narrate });
+    await request(withNarrate).get("/v1/city-playbook?artist=A&artistEntityId=A1&city=Mexico%20City&country=MX&narrative=0").set("x-session-id", "s");
+    expect(narrate).not.toHaveBeenCalled();
   });
   it("rejects over-long session ids on all routes", async () => {
     const long = "x".repeat(200);
