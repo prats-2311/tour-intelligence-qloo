@@ -316,6 +316,12 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 - Budget: 100 Qloo calls/session (a cold Tour Board is ~63 calls: describe 1 + profile 3 + regions R + 8 cities × 7), global daily ceiling; exceeded mid-board → already-scored cities are shown, then "Session limit reached — try the showcase".
 - City activation computed progressively for top 8 cities; city playbooks lazy-loaded and cached.
 
+### 9.2b Live web search — Tavily (replaces Parallel; Parallel account has no credits)
+- Provider: Tavily behind a small search adapter in `tour_data_api` (same citation shape as before; provider switchable by config). Fallback when unavailable or capped: no live web context (honest "Live web context unavailable" state) — **never** an automatic paid fallback.
+- **Credit policy (1,000 free credits/month; Prateek must not be charged):** basic-depth `search` only (1 credit), `max_results` ≤ 5; never `research` or `crawl`; `extract` only for a single specific URL when required. Firestore cache keyed by (city, topic, date window), TTL 7 days. Hard caps in code: 25 Tavily calls/day, 600/month (persisted counter); over cap → honest unavailable state. Showcase pre-warmed so judging makes zero Tavily calls. All tests use a fake client; one manual smoke test only. Each call logged with a running count.
+- Development research by agents uses built-in WebSearch/WebFetch, not Tavily.
+- Key: `tavily-api-key` in Secret Manager (created by Prateek); Tavily "Pay as you go" switched off.
+
 ### 9.3 Security & data handling
 - `QLOO_API_KEY` only in Secret Manager → gateway env; never in repo, browser, logs, or prompts.
 - Gateway is IAM-private (callers: BFF, tour_data_api, agent_mcp_server) via resource-level `run.invoker`.
