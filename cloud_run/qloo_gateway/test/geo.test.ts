@@ -91,6 +91,21 @@ describe("metroAnchor", () => {
     const cities = [mk("Far", 45.8, -122.43, 500_000), mk("Near", 45.55, -122.43, 500_000)];
     expect(metroAnchor(cities, { lat: 45.5, lon: -122.43 }, opts)?.name).toBe("Near");
   });
+  it("lets a metro core city beat a larger non-core city in range", () => {
+    const core: City = { ...mk("Core", 45.52, -122.68, 300_000), id: "4005539" };
+    const cities = [mk("Bigger", 45.5, -122.43, 900_000), core];
+    expect(metroAnchor(cities, { lat: 45.5, lon: -122.43 }, opts)?.name).toBe("Core");
+  });
+  it("ignores a metro core below the minimum population or out of range", () => {
+    const small: City = { ...mk("Core", 45.52, -122.68, 50_000), id: "4005539" };
+    expect(metroAnchor([mk("Bigger", 45.5, -122.43, 900_000), small], { lat: 45.5, lon: -122.43 }, opts)?.name).toBe("Bigger");
+    const far: City = { ...mk("Core", 47, -122.43, 300_000), id: "4005539" };
+    expect(metroAnchor([mk("Bigger", 45.5, -122.43, 900_000), far], { lat: 45.5, lon: -122.43 }, opts)?.name).toBe("Bigger");
+  });
+  it("without a core in range the most populous city still wins", () => {
+    const cities = [mk("Small", 45.5, -122.43, 200_000), mk("Bigger", 45.52, -122.5, 900_000)];
+    expect(metroAnchor(cities, { lat: 45.5, lon: -122.43 }, opts)?.name).toBe("Bigger");
+  });
   it("returns null when no city of the minimum size is in range", () => {
     const cities = [mk("Small", 45.5, -122.43, 50_000), mk("Distant", 48, -122.43, 900_000)];
     expect(metroAnchor(cities, { lat: 45.5, lon: -122.43 }, opts)).toBeNull();
@@ -132,6 +147,10 @@ describe("marketsFromHeat on the real GeoNames dataset", () => {
     expect(nameFor(37.688, -122.47)).toBe("San Francisco"); // Daly City, CA
     expect(nameFor(19.4, -99.015)).toBe("Mexico City"); // Nezahualcoyotl
     expect(nameFor(-22.883, -43.104)).toBe("Rio de Janeiro"); // Niteroi
+  });
+  it("anchors Zapopan's coordinates to Guadalajara via the metro core override", () => {
+    expect(metroAnchor(real, { lat: 20.72111, lon: -103.38742 }, { maxKm: 30, minPopulation: 100_000 })?.id).toBe("4005539");
+    expect(nameFor(20.72111, -103.38742)).toBe("Guadalajara");
   });
   it("does not label the Santos/Guaruja coast as the Sao Paulo suburb Sao Bernardo do Campo", () => {
     const name = nameFor(-23.994, -46.23);
