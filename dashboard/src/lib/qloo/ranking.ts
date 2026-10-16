@@ -24,3 +24,11 @@ export function ordinal(n: number): string {
   if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
   return `${n}${({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th"}`;
 }
+
+export function defaultShortlist(cities: ScoredCity[], maxStops: number): string[] {
+  return cities
+    .filter((c) => c.verdict === "play" || c.verdict === "hidden_goldmine")
+    .sort((a, b) => (b.winnability.value ?? -1) - (a.winnability.value ?? -1) || (b.activation.value ?? -1) - (a.activation.value ?? -1))
+    .slice(0, Math.max(0, maxStops))
+    .map((c) => c.id);
+}

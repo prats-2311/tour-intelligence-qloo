@@ -52,4 +52,17 @@ describe("boardReducer", () => {
     const c = LUMEN_VALE_SAMPLE.find((e) => e.type === "city_scored")!;
     expect(run([c, c]).cities).toHaveLength(1);
   });
+  it("stores an explicit shortlist and clears it when a new run starts", () => {
+    let s = boardReducer(initialBoard, { type: "start", brief: SAMPLE_BRIEF, source: "sample" });
+    s = boardReducer(s, { type: "shortlist", ids: ["4005539"] });
+    expect(s.shortlist).toEqual(["4005539"]);
+    s = boardReducer(s, { type: "start", brief: SAMPLE_BRIEF, source: "sample" });
+    expect(s.shortlist).toBeNull();
+  });
+  it("keeps cities in arrival order, never sorted, and a re-scored city keeps its slot", () => {
+    const [a, b, c] = LUMEN_VALE_SAMPLE.filter((e) => e.type === "city_scored").slice(0, 3) as Array<Extract<GatewayEvent, { type: "city_scored" }>>;
+    const s = run([c!, a!, b!, { ...a!, city: { ...a!.city, name: "Renamed" } }]);
+    expect(s.cities.map((x) => x.id)).toEqual([c!.city.id, a!.city.id, b!.city.id]);
+    expect(s.cities[1]!.name).toBe("Renamed");
+  });
 });

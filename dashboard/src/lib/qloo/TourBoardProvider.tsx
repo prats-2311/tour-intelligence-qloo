@@ -1,9 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from "react";
+import { SAMPLE_ACCENT_ORDER } from "./cityAccent";
 import { isSampleMode, streamTourBoard } from "./client";
+import { defaultShortlist } from "./ranking";
 import { boardReducer, initialBoard, type BoardState } from "./tourBoardReducer";
 import type { TourBrief } from "./types";
 
-type Ctx = { state: BoardState; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: "default" | "long" }): void; abort(): void; reset(): void };
+type Ctx = { state: BoardState; shortlist: string[]; accentOrder: string[]; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: "default" | "long" }): void; abort(): void; reset(): void };
 const TourBoardContext = createContext<Ctx | null>(null);
 
 export function TourBoardProvider({ children, sampleDelayMs }: { children: ReactNode; sampleDelayMs?: number }) {
@@ -45,7 +47,15 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
   const reset = useCallback(() => { silentAbort(); dispatch({ type: "reset" }); }, [silentAbort]);
   useEffect(() => () => { silentAbort(); }, [silentAbort]);
 
-  const value = useMemo(() => ({ state, run, abort, reset }), [state, run, abort, reset]);
+  const shortlist = useMemo(() => state.shortlist ?? defaultShortlist(state.cities, state.brief?.maxStops ?? 8), [state.shortlist, state.cities, state.brief?.maxStops]);
+  const accentOrder = useMemo(() => (state.source === "sample" ? SAMPLE_ACCENT_ORDER : state.cities.map((c) => c.id)), [state.source, state.cities]);
+  const maxStops = state.brief?.maxStops ?? 8;
+  const setShortlist = useCallback((ids: string[]) => dispatch({ type: "shortlist", ids: ids.slice(0, Math.max(0, maxStops)) }), [maxStops]);
+  const toggleShortlist = useCallback((id: string) => {
+    setShortlist(shortlist.includes(id) ? shortlist.filter((x) => x !== id) : [...shortlist, id]);
+  }, [shortlist, setShortlist]);
+
+  const value = useMemo(() => ({ state, shortlist, accentOrder, setShortlist, toggleShortlist, run, abort, reset }), [state, shortlist, accentOrder, setShortlist, toggleShortlist, run, abort, reset]);
   return <TourBoardContext.Provider value={value}>{children}</TourBoardContext.Provider>;
 }
 

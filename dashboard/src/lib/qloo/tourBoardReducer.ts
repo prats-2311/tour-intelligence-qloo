@@ -7,6 +7,8 @@ export type BoardState = {
   artist?: { entityId: string; name: string };
   profile?: ArtistProfile;
   cities: ScoredCity[];
+  /** null = use defaultShortlist */
+  shortlist: string[] | null;
   log: GatewayEvent[];
   regionsEmpty: string[];
   regionsUnavailable: Array<{ region: string; code: string; message: string }>;
@@ -19,14 +21,17 @@ export type BoardAction =
   | { type: "start"; brief: TourBrief; source: "live" | "sample" }
   | { type: "event"; event: GatewayEvent }
   | { type: "interrupted"; reason?: "user" | "connection" }
+  | { type: "shortlist"; ids: string[] }
   | { type: "reset" };
 
-export const initialBoard: BoardState = { status: "idle", source: "live", cities: [], log: [], regionsEmpty: [], regionsUnavailable: [] };
+export const initialBoard: BoardState = { status: "idle", source: "live", cities: [], shortlist: null, log: [], regionsEmpty: [], regionsUnavailable: [] };
 
 export function boardReducer(state: BoardState, action: BoardAction): BoardState {
   switch (action.type) {
     case "reset":
       return initialBoard;
+    case "shortlist":
+      return { ...state, shortlist: action.ids };
     case "start":
       return { ...initialBoard, status: "streaming", source: action.source, brief: action.brief };
     case "interrupted":
@@ -43,7 +48,8 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
         case "region_empty": return { ...state, log, regionsEmpty: [...state.regionsEmpty, e.region] };
         case "region_unavailable": return { ...state, log, regionsUnavailable: [...state.regionsUnavailable, { region: e.region, code: e.code, message: e.message }] };
         case "needs_input": return { ...state, log, status: "needs_input", needsInput: e };
-        case "city_scored": return { ...state, log, cities: [...state.cities.filter((c) => c.id !== e.city.id), e.city] };
+        // Arrival order is load-bearing (accentOrder): never sort here, and a re-scored city keeps its slot.
+        case "city_scored": return { ...state, log, cities: state.cities.some((c) => c.id === e.city.id) ? state.cities.map((c) => (c.id === e.city.id ? e.city : c)) : [...state.cities, e.city] };
         case "done": return { ...state, log, status: "done" };
         case "error": return { ...state, log, status: "error", error: { code: e.code, message: e.message } };
         default: return { ...state, log };

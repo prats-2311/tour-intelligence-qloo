@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SAMPLE_CITIES } from "./fixtures/lumenVale";
-import { ordinal, sortCities, summarize } from "./ranking";
+import { defaultShortlist, ordinal, sortCities, summarize } from "./ranking";
 
 describe("ranking", () => {
   it("winnability order matches the sample", () => {
@@ -32,5 +32,10 @@ describe("ranking", () => {
   it("ordinal handles teens and suffixes", () => {
     expect([1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101, 111].map(ordinal)).toEqual(
       ["1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "22nd", "23rd", "101st", "111th"]);
+  });
+  it("defaultShortlist takes Play/Hidden goldmine by winnability, capped at maxStops", () => {
+    expect(defaultShortlist(SAMPLE_CITIES, 8)).toEqual(["3530597", "3448439", "4005539", "3464975"]);
+    expect(defaultShortlist(SAMPLE_CITIES, 2)).toEqual(["3530597", "3448439"]);
+    expect(defaultShortlist(SAMPLE_CITIES.filter((c) => c.verdict === "skip"), 8)).toEqual([]);
   });
 });

@@ -89,4 +89,23 @@ describe("TourBoardProvider", () => {
     act(() => screen.getByText("run").click());
     await waitFor(() => expect(screen.getByTestId("status").textContent).toBe("interrupted"));
   });
+  it("shortlist defaults, toggles relative to the resolved list, and caps at max stops", async () => {
+    function ShortProbe() {
+      const { state, run, shortlist, toggleShortlist, setShortlist } = useTourBoard();
+      return (<div>
+        <span data-testid="s">{shortlist.join(",")}</span><span data-testid="st">{state.status}</span>
+        <button onClick={() => run({ ...SAMPLE_BRIEF, maxStops: 2 }, { sample: true })}>run</button>
+        <button onClick={() => toggleShortlist("3530597")}>toggle</button>
+        <button onClick={() => setShortlist(["a", "b", "c"])}>many</button>
+      </div>);
+    }
+    render(<TourBoardProvider sampleDelayMs={0}><ShortProbe /></TourBoardProvider>);
+    act(() => screen.getByText("run").click());
+    await waitFor(() => expect(screen.getByTestId("st").textContent).toBe("done"));
+    expect(screen.getByTestId("s").textContent).toBe("3530597,3448439");
+    act(() => screen.getByText("toggle").click());
+    expect(screen.getByTestId("s").textContent).toBe("3448439");
+    act(() => screen.getByText("many").click());
+    expect(screen.getByTestId("s").textContent).toBe("a,b");
+  });
 });
