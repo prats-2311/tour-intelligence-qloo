@@ -36,7 +36,13 @@ from sdk_logic.grounding_check import check_grounding
 
 app = Flask(__name__)
 _bq = bigquery.Client()
-_DATASET = "tour_intelligence"
+
+
+def _dataset() -> str:
+    """Dataset name, read at call time so BQ_DATASET can point a deploy (or a
+    test) at a different dataset. Unset means the original dataset."""
+    return os.environ.get("BQ_DATASET", "tour_intelligence")
+
 
 # The only cities with full seeded coverage (culture_notes, local_delight,
 # fan_signals) — city_briefs are only trustworthy end-to-end for these until
@@ -325,7 +331,7 @@ def _all_city_ids() -> list[str]:
     with no code change. A small extra query on an infrequent path
     (creating stops, the strategy chat's schema) -- worth the correctness
     over caching a list that could go stale the moment a new city is added."""
-    rows = _query(f"SELECT city_id FROM `{_DATASET}.cities` ORDER BY city_id", [])
+    rows = _query(f"SELECT city_id FROM `{_dataset()}.cities` ORDER BY city_id", [])
     return [r["city_id"] for r in rows]
 
 
@@ -336,7 +342,7 @@ def _all_city_summaries() -> list[dict]:
     model has no way to know which supported city is on which continent
     from an id string alone."""
     rows = _query(
-        f"SELECT city_id, city_name, country, region FROM `{_DATASET}.cities` ORDER BY city_id", []
+        f"SELECT city_id, city_name, country, region FROM `{_dataset()}.cities` ORDER BY city_id", []
     )
     return [
         {"city_id": r["city_id"], "city_name": r["city_name"], "country": r["country"], "region": r["region"]}
@@ -532,7 +538,7 @@ def culture_notes():
     rows = _query(
         f"SELECT city_id, etiquette_notes, greeting_style, media_behavior_notes, "
         f"fan_interaction_style, dos, donts, humor_boundaries "
-        f"FROM `{_DATASET}.culture_notes` WHERE city_id = @city_id",
+        f"FROM `{_dataset()}.culture_notes` WHERE city_id = @city_id",
         [bigquery.ScalarQueryParameter("city_id", "STRING", city_id)],
     )
     if not rows:
@@ -665,7 +671,7 @@ def fan_signals():
     rows = _query(
         f"SELECT city_id, genre, artist_type, enthusiasm_score, fan_behavior_style, "
         f"city_importance_tier, genre_affinity_notes, signal_basis "
-        f"FROM `{_DATASET}.fan_signals` "
+        f"FROM `{_dataset()}.fan_signals` "
         f"WHERE city_id = @city_id AND genre = @genre AND artist_type = @artist_type",
         [
             bigquery.ScalarQueryParameter("city_id", "STRING", city_id),
@@ -696,7 +702,7 @@ def local_delight():
     rows = _query(
         f"SELECT city_id, local_phrases, cultural_references, beloved_icons, "
         f"crowd_moment_suggestions, music_or_remix_ideas "
-        f"FROM `{_DATASET}.local_delight` WHERE city_id = @city_id",
+        f"FROM `{_dataset()}.local_delight` WHERE city_id = @city_id",
         [bigquery.ScalarQueryParameter("city_id", "STRING", city_id)],
     )
     if not rows:
@@ -840,7 +846,7 @@ def city_demographics():
         f"SELECT city_id, literacy_rate, median_age, population, "
         f"median_household_income_usd, internet_penetration_rate, "
         f"dominant_social_platforms, top_interest_categories, notable_public_holidays "
-        f"FROM `{_DATASET}.city_demographics` WHERE city_id = @city_id",
+        f"FROM `{_dataset()}.city_demographics` WHERE city_id = @city_id",
         [bigquery.ScalarQueryParameter("city_id", "STRING", city_id)],
     )
     if not rows:
@@ -1530,7 +1536,7 @@ def extract_venue_info():
 def cities_list():
     rows = _query(
         f"SELECT city_id, city_name, country, primary_language, timezone, region "
-        f"FROM `{_DATASET}.cities` ORDER BY city_name",
+        f"FROM `{_dataset()}.cities` ORDER BY city_name",
         [],
     )
     return jsonify({
@@ -1634,7 +1640,7 @@ def bulk_add_cities():
             failed.append({"city_name": name, "error": str(e)})
 
     if rows:
-        errors = _bq.insert_rows_json(f"{_bq.project}.{_DATASET}.cities", rows)
+        errors = _bq.insert_rows_json(f"{_bq.project}.{_dataset()}.cities", rows)
         if errors:
             return jsonify({"error": "insert failed", "details": errors}), 500
 
@@ -1648,7 +1654,7 @@ def _get_latest_campaign(campaign_id: str) -> bigquery.table.Row | None:
     rows = _query(
         f"SELECT campaign_id, title, campaign_type, genre, talent_roster, status, "
         f"selected_metrics, created_at, updated_at "
-        f"FROM `{_DATASET}.campaigns` WHERE campaign_id = @campaign_id "
+        f"FROM `{_dataset()}.campaigns` WHERE campaign_id = @campaign_id "
         f"QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY updated_at DESC) = 1",
         [bigquery.ScalarQueryParameter("campaign_id", "STRING", campaign_id)],
     )
@@ -1682,7 +1688,7 @@ def list_campaigns():
     # recently edited, so editing an old campaign doesn't reshuffle the list.
     rows = _query(
         f"SELECT campaign_id, title, campaign_type, genre, talent_roster, status, selected_metrics, created_at "
-        f"FROM `{_DATASET}.campaigns` "
+        f"FROM `{_dataset()}.campaigns` "
         f"QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY updated_at DESC) = 1 "
         f"ORDER BY created_at DESC",
         [],
@@ -1723,10 +1729,134 @@ def create_campaign():
         "updated_at": now,
         "selected_metrics": payload.get("selected_metrics") or [],
     }
-    errors = _bq.insert_rows_json(f"{_bq.project}.{_DATASET}.campaigns", [row])
+    errors = _bq.insert_rows_json(f"{_bq.project}.{_dataset()}.campaigns", [row])
     if errors:
         return jsonify({"error": "insert failed", "details": errors}), 500
     return jsonify({"campaign_id": row["campaign_id"], "status": "inserted"})
+
+
+_QLOO_TOUR_MAX_BOARD_JSON = 200000
+_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _is_text(value, max_len: int) -> bool:
+    return isinstance(value, str) and 0 < len(value.strip()) and len(value) <= max_len
+
+
+def _to_base36(n: int) -> str:
+    digits = "0123456789abcdefghijklmnopqrstuvwxyz"
+    out = ""
+    while n:
+        n, r = divmod(n, 36)
+        out = digits[r] + out
+    return out or "0"
+
+
+def _validate_qloo_tour(p: dict) -> str | None:
+    """Returns an error message, or None when the payload is acceptable."""
+    for field in ("title", "artist", "artist_entity_id"):
+        if not _is_text(p.get(field), 200):
+            return f"{field} must be a non-empty string of at most 200 characters"
+    regions = p.get("regions")
+    if not isinstance(regions, list) or not 1 <= len(regions) <= 6 or not all(isinstance(r, str) for r in regions):
+        return "regions must be 1-6 strings"
+    cities = p.get("cities")
+    if not isinstance(cities, list) or not 1 <= len(cities) <= 20:
+        return "cities must be 1-20 items"
+    for c in cities:
+        if not isinstance(c, dict) or not all(_is_text(c.get(k), 120) for k in ("id", "name", "country")):
+            return "each city needs non-empty id, name and country (at most 120 characters)"
+    window = p.get("date_window")
+    if window is not None:
+        start = window.get("start") if isinstance(window, dict) else None
+        end = window.get("end") if isinstance(window, dict) else None
+        if not all(isinstance(d, str) and _ISO_DATE_RE.match(d) for d in (start, end)):
+            return "date_window must be null or {start, end} as YYYY-MM-DD"
+        try:
+            datetime.date.fromisoformat(start)
+            datetime.date.fromisoformat(end)
+        except ValueError:
+            return "date_window must contain real calendar dates"
+        if end < start:
+            return "date_window end must not be before start"
+    board = p.get("board_json")
+    if not isinstance(board, str) or len(board) > _QLOO_TOUR_MAX_BOARD_JSON:
+        return f"board_json must be a string of at most {_QLOO_TOUR_MAX_BOARD_JSON} characters"
+    return None
+
+
+@app.post("/qloo_tours")
+def create_qloo_tour():
+    """Save a live Qloo tour as a campaign: any Qloo cities we have not seen
+    become `qloo_<id>` rows in cities, then the campaign, its ordered stops and
+    a snapshot of the Tour Book are inserted. Inserts are not transactional --
+    a failure part-way returns 500 and may leave the earlier rows behind."""
+    payload = request.get_json(silent=True) or {}
+    problem = _validate_qloo_tour(payload)
+    if problem:
+        return jsonify({"error": problem}), 400
+
+    ds = _dataset()
+    project = _bq.project
+    cities = payload["cities"]
+    city_ids = [f"qloo_{c['id']}" for c in cities]
+    existing = {
+        r["city_id"]
+        for r in _query(
+            f"SELECT city_id FROM `{ds}.cities` WHERE city_id IN UNNEST(@city_ids)",
+            [bigquery.ArrayQueryParameter("city_ids", "STRING", city_ids)],
+        )
+    }
+    new_city_rows = [
+        {
+            "city_id": cid, "city_name": c["name"], "country": c["country"],
+            "primary_language": "und", "timezone": "UTC", "region": "qloo_import",
+        }
+        for cid, c in zip(city_ids, cities)
+        if cid not in existing
+    ]
+
+    now_dt = datetime.datetime.now(datetime.timezone.utc)
+    now = now_dt.isoformat()
+    campaign_id = f"{_slugify(payload['title'])}_{_to_base36(int(now_dt.timestamp() * 1000))}"
+    window = payload.get("date_window")
+    writes = []
+    if new_city_rows:
+        writes.append(("cities", new_city_rows))
+    writes.append(("campaigns", [{
+        "campaign_id": campaign_id,
+        "title": payload["title"],
+        "campaign_type": "music_tour",
+        "genre": "music",
+        "talent_roster": [payload["artist"]],
+        "status": "active",
+        "created_at": now,
+        "updated_at": now,
+        "selected_metrics": [],
+    }]))
+    writes.append(("campaign_stops", [
+        {
+            "campaign_id": campaign_id, "city_id": cid, "stop_date": None, "sequence_order": i,
+            "event_format": None, "updated_at": now, "removed": False, "venue_url": None, "stop_metrics": [],
+        }
+        for i, cid in enumerate(city_ids, start=1)
+    ]))
+    writes.append(("qloo_tours", [{
+        "campaign_id": campaign_id,
+        "artist": payload["artist"],
+        "artist_entity_id": payload["artist_entity_id"],
+        "regions": payload["regions"],
+        "date_window_start": window["start"] if window else None,
+        "date_window_end": window["end"] if window else None,
+        "cities_json": json.dumps(cities),
+        "board_json": payload["board_json"],
+        "created_at": now,
+    }]))
+    for table, rows in writes:
+        errors = _bq.insert_rows_json(f"{project}.{ds}.{table}", rows)
+        if errors:
+            return jsonify({"error": "insert failed", "details": errors}), 500
+    return jsonify({"campaign_id": campaign_id, "stops": len(city_ids)}), 201
 
 
 @app.post("/update_campaign")
@@ -1758,7 +1888,7 @@ def update_campaign():
         "created_at": current["created_at"].isoformat(),
         "updated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
-    errors = _bq.insert_rows_json(f"{_bq.project}.{_DATASET}.campaigns", [row])
+    errors = _bq.insert_rows_json(f"{_bq.project}.{_dataset()}.campaigns", [row])
     if errors:
         return jsonify({"error": "insert failed", "details": errors}), 500
     return jsonify({
@@ -1778,8 +1908,8 @@ def _get_current_stops(campaign_id: str) -> list[dict]:
     current state as prompt context to reason about deltas."""
     rows = _query(
         f"WITH latest AS ("
-        f"  SELECT s.*, c.city_name FROM `{_DATASET}.campaign_stops` s "
-        f"  JOIN `{_DATASET}.cities` c USING (city_id) "
+        f"  SELECT s.*, c.city_name FROM `{_dataset()}.campaign_stops` s "
+        f"  JOIN `{_dataset()}.cities` c USING (city_id) "
         f"  WHERE s.campaign_id = @campaign_id "
         f"  QUALIFY ROW_NUMBER() OVER (PARTITION BY s.campaign_id, s.city_id ORDER BY s.updated_at DESC) = 1"
         f") "
@@ -1833,7 +1963,7 @@ def remove_campaign_stop():
         "updated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "removed": True,
     }
-    errors = _bq.insert_rows_json(f"{_bq.project}.{_DATASET}.campaign_stops", [row])
+    errors = _bq.insert_rows_json(f"{_bq.project}.{_dataset()}.campaign_stops", [row])
     if errors:
         return jsonify({"error": "insert failed", "details": errors}), 500
     return jsonify({"campaign_id": campaign_id, "city_id": city_id, "status": "removed"})
@@ -1850,7 +1980,7 @@ def get_chat_session():
         return jsonify({"error": "missing required query param: session_key"}), 400
     rows = _query(
         f"SELECT session_key, messages_json, context_json, updated_at "
-        f"FROM `{_DATASET}.chat_sessions` WHERE session_key = @session_key "
+        f"FROM `{_dataset()}.chat_sessions` WHERE session_key = @session_key "
         f"QUALIFY ROW_NUMBER() OVER (PARTITION BY session_key ORDER BY updated_at DESC) = 1",
         [bigquery.ScalarQueryParameter("session_key", "STRING", session_key)],
     )
@@ -1890,7 +2020,7 @@ def save_chat_session():
         "context_json": json.dumps(payload.get("context")) if payload.get("context") is not None else None,
         "updated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
-    errors = _bq.insert_rows_json(f"{_bq.project}.{_DATASET}.chat_sessions", [row])
+    errors = _bq.insert_rows_json(f"{_bq.project}.{_dataset()}.chat_sessions", [row])
     if errors:
         return jsonify({"error": "insert failed", "details": errors}), 500
     return jsonify({"session_key": session_key, "status": "saved"})
@@ -1941,7 +2071,7 @@ def create_campaign_stops():
             "venue_url": s.get("venue_url"),
             "stop_metrics": s.get("stop_metrics") or [],
         })
-    errors = _bq.insert_rows_json(f"{_bq.project}.{_DATASET}.campaign_stops", rows)
+    errors = _bq.insert_rows_json(f"{_bq.project}.{_dataset()}.campaign_stops", rows)
     if errors:
         return jsonify({"error": "insert failed", "details": errors}), 500
     return jsonify({"campaign_id": campaign_id, "status": "inserted", "count": len(rows)})
@@ -1967,7 +2097,7 @@ def list_city_briefs():
         f"culture_summary, local_delight_summary, talent_brief_json, grounding_check_passed, "
         f"grounding_check_notes, delight_card_url, demographic_snapshot_json, pronunciation_audio_json, "
         f"style_moodboard_url, venue_notes_json "
-        f"FROM `{_DATASET}.city_briefs` "
+        f"FROM `{_dataset()}.city_briefs` "
         f"WHERE campaign_id = @campaign_id {city_filter} "
         f"QUALIFY ROW_NUMBER() OVER (PARTITION BY city_id ORDER BY generated_at DESC) = 1",
         params,
@@ -2024,7 +2154,7 @@ def insert_city_brief():
         "style_moodboard_url": payload.get("style_moodboard_url"),
         "venue_notes_json": payload.get("venue_notes_json"),
     }
-    errors = _bq.insert_rows_json(f"{_bq.project}.{_DATASET}.city_briefs", [row])
+    errors = _bq.insert_rows_json(f"{_bq.project}.{_dataset()}.city_briefs", [row])
     if errors:
         return jsonify({"error": "insert failed", "details": errors}), 500
     return jsonify({"brief_id": row["brief_id"], "status": "inserted"})
@@ -2099,7 +2229,7 @@ def get_campaign_insights():
     if not campaign_id:
         return jsonify({"error": "missing required query param: campaign_id"}), 400
     rows = _query(
-        f"SELECT campaign_id, generated_at, insights_json FROM `{_DATASET}.campaign_insights` "
+        f"SELECT campaign_id, generated_at, insights_json FROM `{_dataset()}.campaign_insights` "
         f"WHERE campaign_id = @campaign_id ORDER BY generated_at DESC LIMIT 1",
         [bigquery.ScalarQueryParameter("campaign_id", "STRING", campaign_id)],
     )
@@ -2123,7 +2253,7 @@ def insert_campaign_insights():
         "generated_at": payload.get("generated_at") or datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "insights_json": payload.get("insights_json"),
     }
-    errors = _bq.insert_rows_json(f"{_bq.project}.{_DATASET}.campaign_insights", [row])
+    errors = _bq.insert_rows_json(f"{_bq.project}.{_dataset()}.campaign_insights", [row])
     if errors:
         return jsonify({"error": "insert failed", "details": errors}), 500
     return jsonify({"campaign_id": row["campaign_id"], "status": "inserted"})
@@ -2214,7 +2344,7 @@ def get_stop_outcome():
     if not campaign_id or not city_id:
         return jsonify({"error": "missing required query param(s): campaign_id, city_id"}), 400
     rows = _query(
-        f"SELECT campaign_id, city_id, generated_at, outcome_json FROM `{_DATASET}.stop_outcomes` "
+        f"SELECT campaign_id, city_id, generated_at, outcome_json FROM `{_dataset()}.stop_outcomes` "
         f"WHERE campaign_id = @campaign_id AND city_id = @city_id ORDER BY generated_at DESC LIMIT 1",
         [
             bigquery.ScalarQueryParameter("campaign_id", "STRING", campaign_id),
@@ -2243,7 +2373,7 @@ def insert_stop_outcome():
         "generated_at": payload.get("generated_at") or datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "outcome_json": payload.get("outcome_json"),
     }
-    errors = _bq.insert_rows_json(f"{_bq.project}.{_DATASET}.stop_outcomes", [row])
+    errors = _bq.insert_rows_json(f"{_bq.project}.{_dataset()}.stop_outcomes", [row])
     if errors:
         return jsonify({"error": "insert failed", "details": errors}), 500
     return jsonify({"campaign_id": row["campaign_id"], "city_id": row["city_id"], "status": "inserted"})
@@ -2261,7 +2391,7 @@ def get_stop_safety_checklist():
         return jsonify({"error": "missing required query param(s): campaign_id, city_id"}), 400
     rows = _query(
         f"SELECT campaign_id, city_id, generated_at, showstop_manager_assigned, "
-        f"showstop_manager_name, capacity_confirmed FROM `{_DATASET}.stop_safety_checklist` "
+        f"showstop_manager_name, capacity_confirmed FROM `{_dataset()}.stop_safety_checklist` "
         f"WHERE campaign_id = @campaign_id AND city_id = @city_id ORDER BY generated_at DESC LIMIT 1",
         [
             bigquery.ScalarQueryParameter("campaign_id", "STRING", campaign_id),
@@ -2298,7 +2428,7 @@ def insert_stop_safety_checklist():
         "showstop_manager_name": payload.get("showstop_manager_name"),
         "capacity_confirmed": bool(payload.get("capacity_confirmed", False)),
     }
-    errors = _bq.insert_rows_json(f"{_bq.project}.{_DATASET}.stop_safety_checklist", [row])
+    errors = _bq.insert_rows_json(f"{_bq.project}.{_dataset()}.stop_safety_checklist", [row])
     if errors:
         return jsonify({"error": "insert failed", "details": errors}), 500
     return jsonify({"campaign_id": row["campaign_id"], "city_id": row["city_id"], "status": "inserted"})
@@ -2347,7 +2477,7 @@ def create_city_monitor():
         return jsonify({"error": "PARALLEL_API_KEY is not configured on this service"}), 500
 
     existing = _query(
-        f"SELECT monitor_id FROM `{_DATASET}.city_monitors` "
+        f"SELECT monitor_id FROM `{_dataset()}.city_monitors` "
         f"WHERE campaign_id = @campaign_id AND city_id = @city_id AND monitor_type = @monitor_type "
         f"ORDER BY created_at DESC LIMIT 1",
         [
@@ -2379,7 +2509,7 @@ def create_city_monitor():
         "monitor_type": monitor_type,
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
-    errors = _bq.insert_rows_json(f"{_bq.project}.{_DATASET}.city_monitors", [row])
+    errors = _bq.insert_rows_json(f"{_bq.project}.{_dataset()}.city_monitors", [row])
     if errors:
         return jsonify({"error": "insert failed", "details": errors}), 500
     return jsonify({"monitor_id": monitor.monitor_id, "created": True})
@@ -2447,9 +2577,9 @@ def genre_recommendations():
         return jsonify({"error": "missing required query param: genre"}), 400
     rows = _query(
         f"SELECT cb.city_id, AVG(cb.enthusiasm_score) AS avg_enthusiasm_score, COUNT(*) AS sample_size "
-        f"FROM `{_DATASET}.city_briefs` cb "
+        f"FROM `{_dataset()}.city_briefs` cb "
         f"JOIN ("
-        f"  SELECT campaign_id, genre FROM `{_DATASET}.campaigns` "
+        f"  SELECT campaign_id, genre FROM `{_dataset()}.campaigns` "
         f"  QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id ORDER BY updated_at DESC) = 1"
         f") c ON cb.campaign_id = c.campaign_id "
         f"WHERE c.genre = @genre AND cb.status = 'final' AND cb.enthusiasm_score IS NOT NULL "
@@ -2797,7 +2927,7 @@ def _local_delight_digest(city_ids: list[str]) -> str:
     lines = []
     for city_id in city_ids[:5]:
         rows = _query(
-            f"SELECT cultural_references, crowd_moment_suggestions FROM `{_DATASET}.local_delight` "
+            f"SELECT cultural_references, crowd_moment_suggestions FROM `{_dataset()}.local_delight` "
             f"WHERE city_id = @city_id",
             [bigquery.ScalarQueryParameter("city_id", "STRING", city_id)],
         )

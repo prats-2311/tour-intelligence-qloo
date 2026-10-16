@@ -263,6 +263,30 @@ export async function createCampaign(input: NewCampaignInput) {
   return res.json() as Promise<{ campaign_id: string; status: string }>;
 }
 
+export interface SaveTourInput {
+  title: string;
+  artist: string;
+  artist_entity_id: string;
+  regions: string[];
+  date_window: { start: string; end: string } | null;
+  cities: Array<{ id: string; name: string; country: string; verdict: string; winnability: number | null }>;
+  board_json: string;
+}
+
+// Live runs only: the BFF refuses source "sample" so showcase data never reaches BigQuery.
+export async function saveTourAsCampaign(input: SaveTourInput): Promise<{ campaign_id: string; stops: number }> {
+  const res = await fetch("/api/tours", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source: "live", ...input }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+  let json: { campaign_id?: string; stops?: number; error?: string } = {};
+  try { json = await res.json(); } catch { /* non-JSON body */ }
+  if (!res.ok) throw new Error(json.error ?? `save failed: ${res.status}`);
+  return { campaign_id: String(json.campaign_id), stops: Number(json.stops) };
+}
+
 export async function updateCampaign(
   campaignId: string,
   partial: Partial<{

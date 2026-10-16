@@ -54,6 +54,11 @@ const renderAt = (url: string, extra?: React.ReactNode) =>
   );
 
 describe("TourBook", () => {
+  it("hides Save as campaign in sample mode", async () => {
+    renderAt("/tours/book?sample=1");
+    await screen.findByRole("heading", { name: "Market selection" });
+    expect(screen.queryByRole("button", { name: "Save as campaign" })).toBeNull();
+  });
   it("prepares the sample shortlist and renders cover, market chapter and four city chapters", async () => {
     renderAt("/tours/book?sample=1");
     expect(await screen.findByRole("heading", { name: "Market selection" })).toBeTruthy();
