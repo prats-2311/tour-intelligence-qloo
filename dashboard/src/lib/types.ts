@@ -111,6 +111,7 @@ export interface CityBrief {
   pronunciation_audio_json: string | null;
   style_moodboard_url: string | null;
   venue_notes_json: string | null;
+  qloo_evidence_json?: string | null;
 }
 
 export interface DemographicSnapshot {

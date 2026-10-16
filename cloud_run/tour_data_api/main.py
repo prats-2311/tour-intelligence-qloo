@@ -21,6 +21,7 @@ import io
 import os
 import re
 import time
+import urllib.parse
 import wave
 
 import requests
@@ -2100,7 +2101,7 @@ def list_city_briefs():
         f"SELECT brief_id, campaign_id, city_id, generated_at, status, enthusiasm_score, "
         f"culture_summary, local_delight_summary, talent_brief_json, grounding_check_passed, "
         f"grounding_check_notes, delight_card_url, demographic_snapshot_json, pronunciation_audio_json, "
-        f"style_moodboard_url, venue_notes_json "
+        f"style_moodboard_url, venue_notes_json, qloo_evidence_json "
         f"FROM `{_dataset()}.city_briefs` "
         f"WHERE campaign_id = @campaign_id {city_filter} "
         f"QUALIFY ROW_NUMBER() OVER (PARTITION BY city_id ORDER BY generated_at DESC) = 1",
@@ -2126,6 +2127,7 @@ def list_city_briefs():
                 "pronunciation_audio_json": r["pronunciation_audio_json"],
                 "style_moodboard_url": r["style_moodboard_url"],
                 "venue_notes_json": r["venue_notes_json"],
+                "qloo_evidence_json": r.get("qloo_evidence_json"),
             }
             for r in rows
         ],
@@ -2157,11 +2159,112 @@ def insert_city_brief():
         "pronunciation_audio_json": payload.get("pronunciation_audio_json"),
         "style_moodboard_url": payload.get("style_moodboard_url"),
         "venue_notes_json": payload.get("venue_notes_json"),
+        "qloo_evidence_json": payload.get("qloo_evidence_json"),
     }
     errors = _bq.insert_rows_json(f"{_bq.project}.{_dataset()}.city_briefs", [row])
     if errors:
         return jsonify({"error": "insert failed", "details": errors}), 500
     return jsonify({"brief_id": row["brief_id"], "status": "inserted"})
+
+
+def _gateway_id_token(url: str) -> str:
+    """ID token for the Qloo gateway (audience = its URL). Module-level so tests can replace it."""
+    import google.auth.transport.requests
+    from google.oauth2 import id_token
+    return id_token.fetch_id_token(google.auth.transport.requests.Request(), url)
+
+
+def _compact_qloo_playbook(cards: list[dict]) -> dict:
+    by_kind = {c.get("kind"): c for c in cards if isinstance(c, dict)}
+
+    def items(kind: str) -> list[dict]:
+        return list((by_kind.get(kind) or {}).get("items") or [])
+
+    talent = by_kind.get("talent") or {}
+    overlap = (talent.get("summary") or {}).get("overlap")
+    return {
+        "sponsors": [{"name": i.get("name"), "affinity": i.get("affinity")} for i in items("sponsors")[:5]],
+        "local_moment": [{"name": i.get("name"), "type": i.get("type"), "affinity": i.get("affinity")} for i in items("local_moment")[:5]],
+        "venues": [{"name": i.get("name"), "affinity": i.get("affinity")} for i in items("venue_fit")[:3]],
+        "co_billing": [
+            {"name": i.get("name"), "overlap": i.get("overlap"), "local_affinity": i.get("localAffinity"), "lift": i.get("lift")}
+            for i in items("co_billing")[:3]
+        ],
+        "talent": {
+            "proxies": [{"name": i.get("name"), "affinity": i.get("affinity")} for i in items("talent")[:3]],
+            "overlap": overlap if isinstance(overlap, (int, float)) else None,
+        },
+        "promo_zones": [{"label": i.get("label"), "share": i.get("share")} for i in items("promo_zones")[:3]],
+    }
+
+
+@app.get("/qloo_city_evidence")
+def qloo_city_evidence():
+    """Compact Qloo taste evidence for one city of a saved Qloo tour, for the
+    Stage-2 agents. Calls the gateway city-playbook with narrative=0 (no
+    Gemini) and reads the SSE stream to its playbook event."""
+    campaign_id = request.args.get("campaign_id")
+    city_id = request.args.get("city_id")
+    if not campaign_id or not city_id:
+        return jsonify({"error": "missing required query params: campaign_id, city_id"}), 400
+    rows = _query(
+        f"SELECT artist, artist_entity_id, cities_json FROM `{_dataset()}.qloo_tours` "
+        f"WHERE campaign_id = @campaign_id ORDER BY created_at DESC LIMIT 1",
+        [bigquery.ScalarQueryParameter("campaign_id", "STRING", campaign_id)],
+    )
+    city = None
+    if rows:
+        try:
+            tour_cities = json.loads(rows[0]["cities_json"] or "[]")
+        except (TypeError, ValueError):
+            tour_cities = []
+        city = next((c for c in tour_cities if isinstance(c, dict) and f"qloo_{c.get('id')}" == city_id), None)
+    if not rows or not city:
+        return jsonify({"error": "not a Qloo tour city"}), 404
+    gateway = os.environ.get("QLOO_GATEWAY_URL", "").rstrip("/")
+    if not gateway:
+        return jsonify({"error": "Qloo gateway not configured"}), 503
+
+    unavailable = (jsonify({"error": "Qloo gateway unavailable"}), 502)
+    try:
+        resp = requests.get(
+            f"{gateway}/v1/city-playbook?" + urllib.parse.urlencode({
+                "artist": rows[0]["artist"], "artistEntityId": rows[0]["artist_entity_id"],
+                "city": city.get("name") or "", "country": city.get("country") or "", "narrative": "0",
+            }),
+            headers={"Authorization": f"Bearer {_gateway_id_token(gateway)}", "x-session-id": f"stage2-{campaign_id}"[:128]},
+            stream=True, timeout=120,
+        )
+        if resp.status_code != 200:
+            return unavailable
+        playbook = None
+        tool_results = 0
+        for line in resp.iter_lines(decode_unicode=True):
+            if not line or not line.startswith("data:"):
+                continue
+            try:
+                event = json.loads(line[5:].strip())
+            except ValueError:
+                continue
+            kind = event.get("type")
+            if kind == "tool_result":
+                tool_results += 1
+            elif kind == "playbook":
+                playbook = event.get("playbook")
+            elif kind == "error":
+                return unavailable
+            elif kind == "done":
+                break
+    except requests.RequestException:
+        return unavailable
+    if not isinstance(playbook, dict):
+        return unavailable
+    return jsonify({
+        "artist": rows[0]["artist"],
+        "city": (playbook.get("city") or {}).get("name") or city.get("name"),
+        "evidence": _compact_qloo_playbook(playbook.get("cards") or []),
+        "requests": tool_results,
+    })
 
 
 _CAMPAIGN_INSIGHTS_SCHEMA = {

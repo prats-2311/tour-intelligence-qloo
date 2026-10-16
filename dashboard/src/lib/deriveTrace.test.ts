@@ -106,4 +106,29 @@ describe("deriveTrace", () => {
     const insertStep = steps.find((s) => s.label === "insertCityBrief");
     expect(insertStep?.detail).toContain("nova_horizon_2026-mumbai-live-001");
   });
+
+  const briefWith = (qloo_evidence_json?: string | null) => ({
+    brief_id: "b1", campaign_id: "c1", city_id: "mumbai", generated_at: null,
+    status: "final", enthusiasm_score: 91, culture_summary: "s", local_delight_summary: "d",
+    talent_brief_json: "{}", grounding_check_passed: true, grounding_check_notes: null,
+    delight_card_url: null, demographic_snapshot_json: null, pronunciation_audio_json: null, style_moodboard_url: null, venue_notes_json: null,
+    qloo_evidence_json,
+  });
+
+  it("adds a Qloo taste evidence step before the draft step when the brief carries Qloo evidence", () => {
+    const steps = deriveTrace(baseDetail({
+      brief: briefWith(JSON.stringify({ sponsors: [{}, {}], venues: [{}], co_billing: [{}] })),
+    }));
+    const labels = steps.map((s) => s.label);
+    expect(steps.find((s) => s.label === "Qloo taste evidence")).toMatchObject({
+      kind: "tool", detail: "2 sponsors · 1 venues · 1 support acts",
+    });
+    expect(labels.indexOf("Qloo taste evidence")).toBeLessThan(labels.indexOf("Talent Prep Agent — draft synthesis"));
+  });
+
+  it("adds no Qloo step without evidence or with unparseable evidence", () => {
+    for (const v of [undefined, null, "not json"]) {
+      expect(deriveTrace(baseDetail({ brief: briefWith(v) })).some((s) => s.label === "Qloo taste evidence")).toBe(false);
+    }
+  });
 });

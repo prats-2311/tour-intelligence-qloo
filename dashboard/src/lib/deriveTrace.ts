@@ -6,6 +6,16 @@ import type { CityDetail, TraceStep } from "./types";
 // honest, factual step sequence from the real data each brief actually
 // carries — the tools that had to run to produce it, in the order the
 // architecture requires, annotated with the real values each step produced.
+function parseQlooEvidence(raw: string | null | undefined): Record<string, unknown> | null {
+  if (!raw) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function deriveTrace(detail: CityDetail): TraceStep[] {
   const { stop, cultureNotes, fanSignal, localDelight, brief } = detail;
   const steps: TraceStep[] = [];
@@ -42,6 +52,15 @@ export function deriveTrace(detail: CityDetail): TraceStep[] {
   steps.push({ kind: "playbook", label: "Local Delight Agent" });
 
   if (brief) {
+    const qloo = parseQlooEvidence(brief.qloo_evidence_json);
+    if (qloo) {
+      const n = (v: unknown) => (Array.isArray(v) ? v.length : 0);
+      steps.push({
+        kind: "tool",
+        label: "Qloo taste evidence",
+        detail: `${n(qloo.sponsors)} sponsors · ${n(qloo.venues)} venues · ${n(qloo.co_billing)} support acts`,
+      });
+    }
     steps.push({
       kind: "playbook",
       label: "Talent Prep Agent — draft synthesis",

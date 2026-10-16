@@ -40,7 +40,8 @@ AGENT_ID = "672c258a-7d63-4164-a4c6-a34f17490f53"
 AGENT_NAME = f"projects/{PROJECT_ID}/locations/{LOCATION}/agents/{AGENT_ID}"
 API_BASE = f"https://{LOCATION}-dialogflow.googleapis.com/v3beta1"
 DATASET = "tour_intelligence"
-TOUR_DATA_API = "https://tour-data-api-602700957663.us-central1.run.app"
+# No default URL: the original Google-hackathon service must never be hit by accident.
+TOUR_DATA_API = os.environ.get("TOUR_DATA_API_URL", "")
 DELIGHT_RENDERER = "https://delight-card-renderer-602700957663.us-central1.run.app"
 
 _METADATA_SA_BASE = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default"
@@ -173,6 +174,10 @@ def _known_context(collected: dict) -> str:
         )
     if collected.get("local_delight"):
         lines.append(f"local_delight_payload: {json.dumps(collected['local_delight'])}")
+    if collected.get("qloo_evidence"):
+        lines.append(
+            f"qloo_taste_evidence (aggregate Qloo affinity, not individuals): {json.dumps(collected['qloo_evidence'])}"
+        )
     return "\n".join(lines)
 
 
@@ -525,6 +530,24 @@ def _brief_already_final(campaign_id: str, city_id: str, identity_token: str) ->
     return any(b.get("status") == "final" for b in resp.json().get("briefs", []))
 
 
+def _fetch_qloo_evidence(campaign_id: str, city_id: str, identity_token: str) -> dict | None:
+    """Compact Qloo taste evidence for a Qloo-tour city. Best effort: a missing
+    evidence block (not a Qloo tour, gateway down, any error) never fails the brief."""
+    try:
+        resp = requests.get(
+            f"{TOUR_DATA_API}/qloo_city_evidence",
+            headers={"Authorization": f"Bearer {identity_token}"},
+            params={"campaign_id": campaign_id, "city_id": city_id},
+            timeout=150,
+        )
+        if resp.status_code != 200:
+            return None
+        return resp.json().get("evidence")
+    except Exception as exc:  # noqa: BLE001 -- evidence is optional by design
+        print(f"[{city_id}] Qloo evidence unavailable: {exc}")
+        return None
+
+
 def run_city(
     city_id: str,
     city_name: str,
@@ -546,11 +569,20 @@ def run_city(
         city_id, city_name, selected_metrics or [], _auth_token("identity", audience=TOUR_DATA_API)
     )
 
+    # Qloo taste evidence (aggregate affinity) for Qloo-tour cities only; one
+    # deterministic HTTP call, optional, so a failure never blocks the brief.
+    qloo_evidence = (
+        _fetch_qloo_evidence(campaign_id, city_id, _auth_token("identity", audience=TOUR_DATA_API))
+        if city_id.startswith("qloo_") else None
+    )
+
     def _fresh_session_id() -> str:
         return f"driver-{campaign_id}-{city_id}-{int(time.time() * 1000)}"
 
     session_id = _fresh_session_id()
     collected: dict = {}
+    if qloo_evidence:
+        collected["qloo_evidence"] = qloo_evidence
     prompt = (
         f"Run the campaign orchestration for campaign_id {campaign_id}, {city_name} stop only: fetch "
         f"campaign and stop data, then run Culture Intelligence, Fan Enthusiasm, and Local Delight. "
@@ -700,6 +732,7 @@ def run_city(
         "pronunciation_audio_json": json.dumps(pronunciation_audio) if pronunciation_audio else None,
         "style_moodboard_url": style_moodboard_url,
         "venue_notes_json": venue_notes_json,
+        "qloo_evidence_json": json.dumps(collected["qloo_evidence"]) if collected.get("qloo_evidence") else None,
     }
     insert_resp = requests.post(
         f"{TOUR_DATA_API}/city_briefs", headers={"Authorization": f"Bearer {tour_data_token}"}, json=insert_payload, timeout=60
@@ -762,6 +795,8 @@ def run_campaign(campaign_id: str) -> dict[str, str | None]:
     load and still hit it under another's. Only the outer loop -- cities
     that don't depend on each other's output at all -- benefits from running
     in parallel."""
+    if not TOUR_DATA_API:
+        raise SystemExit("TOUR_DATA_API_URL is not set")
     lookup_token = _auth_token("identity", audience=TOUR_DATA_API)
     campaign_title = _fetch_campaign_title(campaign_id, lookup_token)
     stops = _fetch_campaign_stops(campaign_id, lookup_token)

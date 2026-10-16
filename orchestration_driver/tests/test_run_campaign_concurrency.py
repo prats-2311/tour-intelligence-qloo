@@ -7,7 +7,15 @@ docstring); this only changes the *inter-city* dispatch layer."""
 
 from unittest.mock import patch
 
+import pytest
+
 import run_campaign
+
+
+@pytest.fixture(autouse=True)
+def _tour_data_api_url(monkeypatch):
+    # run_campaign() refuses to start without TOUR_DATA_API_URL (no default URL).
+    monkeypatch.setattr(run_campaign, "TOUR_DATA_API", "https://tour-data-api.test")
 
 
 def _stop(city_id, city_name="City", stop_date="2027-01-01"):
