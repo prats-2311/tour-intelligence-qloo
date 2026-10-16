@@ -25,5 +25,8 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  /* This test imports cloud_run/qloo_gateway, which is not in the dashboard-only
+     Cloud Build upload (gcloud run deploy --source=dashboard). Vitest still runs it. */
+  "exclude": ["src/lib/qloo/fixtures/lumenValePlaybooks.test.ts"]
 }
