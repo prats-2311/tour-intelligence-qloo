@@ -134,6 +134,14 @@
   letter-spacing: -0.015em;
 }
 
+/* Landing hero: Fraunces 500 with tight tracking, per the reference. Separate
+   from .font-title, whose unlayered weight/tracking would override utilities. */
+.font-hero {
+  font-family: "Fraunces", ui-serif, Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
 body {
   margin: 0;
   /* Only allowed wash: a faint gold house light (DESIGN.md section 9). */

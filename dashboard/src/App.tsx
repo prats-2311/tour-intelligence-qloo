@@ -6,11 +6,12 @@ import { CampaignProvider } from "./lib/campaignContext";
 import { CityDetailSkeleton, CompareCitiesSkeleton, NewCampaignSkeleton, AddCitiesSkeleton } from "./components/ui/Skeletons";
 import { WebMcpTools } from "./components/WebMcpTools";
 
-// Dashboard is the landing route, loaded eagerly -- it's needed on first
-// paint anyway, so splitting it out would just add a chunk-fetch delay with
-// no benefit. The other three are only needed once the user navigates to
-// them, so they ship as separate chunks instead of bloating the initial
-// bundle every visitor downloads.
+// Dashboard (/campaign) is loaded eagerly. Landing and every other route ship
+// as separate chunks so the initial bundle stays small; each gets a Suspense
+// fallback so a direct load never paints a blank page.
+function LandingSkeleton() {
+  return <div aria-hidden className="mx-auto min-h-[480px] w-full max-w-[1240px] rounded-[18px] bg-canvas-raised/40" />;
+}
 const Landing = lazy(() => import("./pages/Landing"));
 const TourBoard = lazy(() => import("./pages/TourBoard"));
 const TasteInsights = lazy(() => import("./pages/TasteInsights"));
@@ -30,7 +31,7 @@ export default function App() {
             a totally blank page for however long that route's JS chunk took
             to fetch, indistinguishable from the app being broken. */}
         <Routes>
-          <Route path="/" element={<Suspense fallback={null}><Landing /></Suspense>} />
+          <Route path="/" element={<Suspense fallback={<LandingSkeleton />}><Landing /></Suspense>} />
           <Route path="/tours/board" element={<Suspense fallback={null}><TourBoard /></Suspense>} />
           <Route path="/insights" element={<Suspense fallback={null}><TasteInsights /></Suspense>} />
           <Route path="/campaign" element={<Dashboard />} />

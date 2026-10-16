@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SAMPLE_CITIES } from "./fixtures/lumenVale";
-import { sortCities, summarize } from "./ranking";
+import { ordinal, sortCities, summarize } from "./ranking";
 
 describe("ranking", () => {
   it("winnability order matches the sample", () => {
@@ -28,5 +28,9 @@ describe("ranking", () => {
     const before = SAMPLE_CITIES.map((c) => c.id);
     sortCities(SAMPLE_CITIES, "density");
     expect(SAMPLE_CITIES.map((c) => c.id)).toEqual(before);
+  });
+  it("ordinal handles teens and suffixes", () => {
+    expect([1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101, 111].map(ordinal)).toEqual(
+      ["1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "22nd", "23rd", "101st", "111th"]);
   });
 });

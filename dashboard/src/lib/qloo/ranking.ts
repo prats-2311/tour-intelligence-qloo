@@ -18,3 +18,9 @@ export function summarize(cities: ScoredCity[]): Record<Verdict, number> {
   for (const c of cities) out[c.verdict] += 1;
   return out;
 }
+
+export function ordinal(n: number): string {
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
+  return `${n}${({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th"}`;
+}

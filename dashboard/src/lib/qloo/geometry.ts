@@ -60,3 +60,9 @@ export function warmTint(map: TintableMap): void {
     for (const [k, v] of Object.entries(t.paint ?? {})) map.setPaintProperty(layer.id, k, v);
   }
 }
+
+/** Refit the map only when the container has a real size and it changed by at least a pixel. */
+export function shouldRefit(prev: { w: number; h: number }, next: { w: number; h: number }): boolean {
+  if (next.w <= 0 || next.h <= 0) return false;
+  return Math.abs(next.w - prev.w) >= 1 || Math.abs(next.h - prev.h) >= 1;
+}

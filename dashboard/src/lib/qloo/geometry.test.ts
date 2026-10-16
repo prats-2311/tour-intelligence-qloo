@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SAMPLE_CITIES } from "./fixtures/lumenVale";
-import { boundsFor, cityMarkers, MAP_STYLE_URL, tintFor } from "./geometry";
+import { boundsFor, cityMarkers, MAP_STYLE_URL, shouldRefit, tintFor } from "./geometry";
 
 describe("map geometry", () => {
   it("markers use lon,lat and label only play/goldmine", () => {
@@ -32,5 +32,12 @@ describe("map geometry", () => {
     const country = tintFor({ id: "place_country_major", type: "symbol" });
     expect(country.hide).toBeUndefined();
     expect(country.paint?.["text-opacity"]).toBeLessThan(1);
+  });
+  it("shouldRefit only for a real, non-empty size change", () => {
+    expect(shouldRefit({ w: 0, h: 0 }, { w: 600, h: 460 })).toBe(true);
+    expect(shouldRefit({ w: 600, h: 460 }, { w: 600, h: 460 })).toBe(false);
+    expect(shouldRefit({ w: 600, h: 460 }, { w: 600.4, h: 460 })).toBe(false);
+    expect(shouldRefit({ w: 600, h: 460 }, { w: 0, h: 460 })).toBe(false);
+    expect(shouldRefit({ w: 600, h: 460 }, { w: 320, h: 460 })).toBe(true);
   });
 });

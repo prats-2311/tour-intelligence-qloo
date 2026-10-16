@@ -1,19 +1,25 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { DualBars } from "@/components/qloo/DualBars";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
+import { ordinal, sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
 const GDL = SAMPLE_CITIES[2]!;
+const PREVIEW_CITIES = SAMPLE_CITIES.filter((c) => c.verdict !== "insufficient_data");
 const noop = () => {};
 const CTA = "flex min-h-[52px] items-center justify-center rounded-[10px] px-6 font-sans text-[16px] outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold active:scale-[0.98] motion-reduce:active:scale-100 lg:min-h-12 lg:text-[15px]";
 
 function ProofCard() {
   const reduce = useReducedMotion();
+  const line = useMemo(() => {
+    const rank = (mode: "density" | "winnability") => sortCities(PREVIEW_CITIES, mode).findIndex((c) => c.id === GDL.id) + 1;
+    return `Ranked ${ordinal(rank("density"))} on fan density alone. ${ordinal(rank("winnability"))} on winnability.`;
+  }, []);
   return (
     <section aria-label="Guadalajara sample routing row" className="-mx-4 bg-paper px-4 py-4 lg:mx-0 lg:rounded-[18px] lg:p-5">
       <div className="flex items-start justify-between gap-4">
@@ -36,23 +42,16 @@ function ProofCard() {
         </div>
       </div>
       <div className="mt-4"><DualBars fanHeat={GDL.fanHeat} activation={GDL.activation} /></div>
-      <p className="mt-3 text-[13px] text-canvas-muted">Ranked 6th on fan density alone. 3rd on winnability.</p>
+      <p className="mt-3 text-[13px] text-canvas-muted">{line}</p>
     </section>
   );
 }
 
 function MapPreview() {
-  // TourMap fits bounds once per city-set change; handing it the cities one
-  // frame after mount makes the fit run against the settled container size.
-  const [cities, setCities] = useState<typeof SAMPLE_CITIES>([]);
-  useEffect(() => {
-    const id = setTimeout(() => setCities(SAMPLE_CITIES), 300);
-    return () => clearTimeout(id);
-  }, []);
   return (
     <div className="h-[460px] overflow-hidden rounded-[18px] bg-canvas-raised" aria-hidden inert>
       <Suspense fallback={<div className="size-full bg-canvas-raised" />}>
-        <TourMap cities={cities} onSelect={noop} />
+        <TourMap cities={PREVIEW_CITIES} onSelect={noop} />
       </Suspense>
     </div>
   );
@@ -63,7 +62,7 @@ export default function Landing() {
   return (
     <div className="mx-auto grid w-full max-w-[1240px] gap-8 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-12 lg:gap-y-0 lg:pt-6">
       <section className="lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:pt-8">
-        <h1 className="font-title text-[48px] leading-[1.04] tracking-[-0.03em] text-bone [text-wrap:balance] lg:text-[88px] lg:leading-[0.95]">
+        <h1 className="font-hero text-[48px] leading-[1.04] text-bone [text-wrap:balance] lg:text-[88px] lg:leading-[0.95]">
           Win <br />their city.
         </h1>
         <p className="mt-5 max-w-[44ch] text-[17px] leading-[1.45] text-canvas-muted [text-wrap:pretty] lg:mt-6">

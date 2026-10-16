@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { ScoredCity, Zone } from "@/lib/qloo/types";
-import { boundsFor, cityMarkers, MAP_STYLE_URL, warmTint } from "@/lib/qloo/geometry";
+import { boundsFor, cityMarkers, MAP_STYLE_URL, shouldRefit, warmTint } from "@/lib/qloo/geometry";
 import { useIsDesktop, useMediaQuery } from "@/lib/useMediaQuery";
 import { markerElement, markerSignature, setMarkerSelected } from "./mapMarker";
 
@@ -80,15 +80,41 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
       style: MAP_STYLE_URL,
       attributionControl: { compact: true },
       cooperativeGestures: !isDesktop,
+      maxZoom: 6,
     });
     mapRef.current = map;
     styleReady.current = false;
     map.once("style.load", () => warmTint(map));
+    const refit = () => {
+      const b = boundsFor(citiesRef.current);
+      if (b) map.fitBounds(b, { padding: 48, animate: false, maxZoom: 6 });
+    };
     map.on("load", () => {
       styleReady.current = true;
+      map.resize();
+      refit();
       applyZones(map); // applies the latest zones, including ones queued before load
     });
+    // Layout can settle after the map is constructed (lazy chunk, grid reflow):
+    // keep the canvas and framing in step with the container.
+    let last = { w: 0, h: 0 };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver((entries) => {
+      const r = entries[0]?.contentRect;
+      if (!r) return;
+      const next = { w: r.width, h: r.height };
+      if (!shouldRefit(last, next)) return;
+      last = next;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        map.resize();
+        refit();
+      }, 100);
+    });
+    ro?.observe(container.current);
     return () => {
+      ro?.disconnect();
+      clearTimeout(timer);
       markers.current.forEach(({ marker }) => marker.remove());
       markers.current.clear();
       map.remove();
@@ -110,7 +136,7 @@ export default function TourMap({ cities, selectedId, onSelect, zones }: Props) 
     const map = mapRef.current;
     if (!map) return;
     const b = boundsFor(citiesRef.current);
-    if (b) map.fitBounds(b, { padding: 48, animate: !reduceRef.current });
+    if (b) map.fitBounds(b, { padding: 48, animate: !reduceRef.current, maxZoom: 6 });
   }, [idKey, isDesktop]);
 
   // Rebuild only markers whose rendered content changed; add new, remove gone.
