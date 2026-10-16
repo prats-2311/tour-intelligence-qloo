@@ -10,7 +10,7 @@ async function start(opts) {
   await new Promise((r) => { server = app.listen(0, r); });
   return `http://127.0.0.1:${server.address().port}`;
 }
-afterEach(() => server?.close());
+afterEach(() => { vi.restoreAllMocks(); server?.closeAllConnections?.(); server?.close(); });
 
 const sse = (chunks) => new Response(new ReadableStream({ start(c) { const e = new TextEncoder(); chunks.forEach((x) => c.enqueue(e.encode(x))); c.close(); } }), { status: 200, headers: { "content-type": "text/event-stream" } });
 
@@ -53,5 +53,57 @@ describe("qlooProxy", () => {
     const res = await fetch(`${base}/api/qloo/tools/qloo_describe`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
     expect(res.status).toBe(502);
     expect(await res.json()).toEqual({ error: "Qloo gateway unavailable" });
+  });
+  it("aborts the upstream request when the client disconnects mid-stream", async () => {
+    let signal;
+    const fetchImpl = vi.fn(async (u, init) => {
+      if (String(u).includes("/v1/tools/")) return new Response("{}", { status: 200, headers: { "content-type": "application/json" } });
+      signal = init.signal;
+      return new Response(new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode("event: tick\ndata: {}\n\n")); } }), { status: 200, headers: { "content-type": "text/event-stream" } });
+    });
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const ac = new AbortController();
+    const res = await fetch(`${base}/api/qloo/tour-board`, { method: "POST", signal: ac.signal, headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
+    await res.body.getReader().read();
+    ac.abort();
+    await vi.waitFor(() => expect(signal.aborted).toBe(true));
+    const next = await fetch(`${base}/api/qloo/tools/x`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
+    expect(next.status).toBe(200);
+  });
+  it("ends the response cleanly when the upstream stream errors mid-way", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const fetchImpl = vi.fn(async () => new Response(new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode("event: a\ndata: {}\n\n")); setTimeout(() => c.error(new Error("boom")), 10); } }), { status: 200, headers: { "content-type": "text/event-stream" } }));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const res = await fetch(`${base}/api/qloo/tour-board`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
+    await res.text().catch(() => {});
+    const again = await fetch(`${base}/api/qloo/tools/x`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
+    expect(again.status).toBeGreaterThan(0);
+    expect(err).toHaveBeenCalledWith("[qlooProxy]", "tour-board", "boom");
+  });
+  it("502 and logs when getToken throws", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const fetchImpl = vi.fn();
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => { throw new Error("no creds"); }, fetchImpl });
+    const res = await fetch(`${base}/api/qloo/tools/qloo_describe`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: "{}" });
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: "Qloo gateway unavailable" });
+    expect(err).toHaveBeenCalledWith("[qlooProxy]", "tools", "no creds");
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+  it.each([["missing", undefined], ["empty", ""], ["too long", "x".repeat(129)]])("400 for %s x-session-id without calling getToken", async (_n, v) => {
+    const getToken = vi.fn(async () => "t");
+    const fetchImpl = vi.fn();
+    const base = await start({ gatewayUrl: "https://gw", getToken, fetchImpl });
+    const res = await fetch(`${base}/api/qloo/tour-board`, { method: "POST", headers: { "content-type": "application/json", ...(v === undefined ? {} : { "x-session-id": v }) }, body: "{}" });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "x-session-id header required (1-128 chars)" });
+    expect(getToken).not.toHaveBeenCalled();
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+  it("forwards only whitelisted string city-playbook params", async () => {
+    const fetchImpl = vi.fn(async () => sse(["event: done\ndata: {}\n\n"]));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    await (await fetch(`${base}/api/qloo/city-playbook?artist=A&city=Lima&evil=1&country=PE&country=MX`, { headers: { "x-session-id": "s" } })).text();
+    expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/city-playbook?artist=A&city=Lima");
   });
 });

@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TOUR_DATA_API = process.env.TOUR_DATA_API_URL || "https://tour-data-api-602700957663.us-central1.run.app";
 const DELIGHT_RENDERER = process.env.DELIGHT_RENDERER_URL || "https://delight-card-renderer-602700957663.us-central1.run.app";
 const QLOO_GATEWAY = process.env.QLOO_GATEWAY_URL;
-const PORT =process.env.PORT || 8787;
+const PORT = process.env.PORT || 8787;
 const RUN_JOBS_API =
   "https://run.googleapis.com/v2/projects/liifecalling-academy/locations/us-central1/jobs/tour-campaign-orchestrator:run";
 
