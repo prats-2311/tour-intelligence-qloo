@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { City } from "../src/geo/cities.js";
 import { runCityPlaybook } from "../src/pipeline/cityPlaybook.js";
 import type { QlooCaller } from "../src/qlooCall.js";
@@ -77,6 +77,35 @@ describe("runCityPlaybook", () => {
       cities: CITIES,
     }));
     expect(events.at(-1)).toMatchObject({ type: "error", code: "BUDGET" });
+    expect(events.some((e) => e.type === "playbook" || e.type === "done")).toBe(false);
+  });
+  it("yields narrative after playbook and before done when a narrator is configured", async () => {
+    const narrate = vi.fn(async () => ({ status: "unavailable" as const, reason: "disabled" as const, message: "m" }));
+    const events = await collect(runCityPlaybook(input, { qloo: qloo(happy), cities: CITIES, narrate }));
+    expect(events.slice(-3).map((e) => e.type)).toEqual(["playbook", "narrative", "done"]);
+    expect(narrate.mock.calls[0]![0].cards).toHaveLength(7);
+  });
+  it("skips the narrative phase when narrative is false", async () => {
+    const narrate = vi.fn();
+    const events = await collect(runCityPlaybook({ ...input, narrative: false }, { qloo: qloo(happy), cities: CITIES, narrate }));
+    expect(narrate).not.toHaveBeenCalled();
+    expect(events.some((e) => e.type === "narrative")).toBe(false);
+  });
+  it("turns a throwing narrator into an unavailable narrative, still ending in done", async () => {
+    const events = await collect(runCityPlaybook(input, { qloo: qloo(happy), cities: CITIES, narrate: async () => { throw new Error("boom"); } }));
+    expect(events.find((e) => e.type === "narrative")).toMatchObject({ narrative: { status: "unavailable", reason: "error" } });
+    expect(events.at(-1)?.type).toBe("done");
+  });
+  it("BUDGET from entity tags ends the stream with error BUDGET and nothing after it", async () => {
+    const events = await collect(runCityPlaybook(input, {
+      qloo: qloo((t, a) => (t === "qloo_entity_tags"
+        ? ({ operation: t, status: "error", summary: "budget out", error: { code: "BUDGET", retryable: false } } as unknown as QlooEnvelope)
+        : happy(t, a))),
+      cities: CITIES,
+    }));
+    const i = events.findIndex((e) => e.type === "error");
+    expect(events[i]).toMatchObject({ code: "BUDGET" });
+    expect(i).toBe(events.length - 1);
     expect(events.some((e) => e.type === "playbook" || e.type === "done")).toBe(false);
   });
   it("abort before start yields error ABORTED", async () => {

@@ -10,3 +10,6 @@ The only service that talks to Qloo. Holds one `qloo mcp` child process (stdio) 
 ## Build & deploy
 - Local image check (from worktree root): `docker build -t qloo-gateway cloud_run/qloo_gateway && docker run --rm qloo-gateway qloo --version`
 - `scripts/deploy.sh` is run by Prateek (not by agents) after creating the `qloo-api-key` secret: `printf '%s' "$QLOO_API_KEY" | gcloud secrets create qloo-api-key --data-file=- --project liifecalling-academy`
+
+## Narrative
+One Gemini call per playbook via Vertex REST (ADC token from `google-auth-library`). Claims are verified by `claims/verify.ts`; unverified ones are returned as `removed` with a reason. Results are cached 7 d under tool `gemini_narrative`. Ceilings: 20 per session and `GEMINI_DAILY_CEILING` (default 300) per day. Any failure yields an `unavailable` narrative and never fails the playbook. Models: `GEMINI_MODEL` / `GEMINI_FALLBACK_MODEL`.

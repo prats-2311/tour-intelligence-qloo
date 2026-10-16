@@ -2,7 +2,7 @@ import { extractEntities } from "../extract.js";
 import type { City } from "../geo/cities.js";
 import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { coBillLift } from "../scoring/winnability.js";
-import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, PlaybookCard } from "../types.js";
+import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narrative, PlaybookCard } from "../types.js";
 import { activationInputs, Aborted, BudgetStop, trackedCall } from "./tourBoard.js";
 
 export type { PlaybookCard } from "../types.js";
@@ -67,10 +67,15 @@ export async function* runCityPlaybook(
     const coBill = compared.flatMap((c) => (c.lift ? [c.lift] : [])).sort((x, y) => y.lift - x.lift);
 
     const where = `${input.city.name}, ${input.city.country}`;
-    const [tags, proxyRecs] = await Promise.all([
+    const [tagsS, proxyS] = await Promise.allSettled([
       trackedCall(deps, input.sessionId, "qloo_entity_tags", { entities: [input.artistEntityId], entity_type: "artist", limit: 10 }, events),
       trackedCall(deps, input.sessionId, "qloo_recommend", { target_type: "artist", filter_location: where, limit: 5 }, events),
     ]);
+    while (events.length) yield events.shift()!;
+    const failed = [tagsS, proxyS].filter((s): s is PromiseRejectedResult => s.status === "rejected").map((s) => s.reason);
+    if (failed.length) throw failed.find((b) => b instanceof Aborted || b instanceof BudgetStop) ?? failed[0];
+    const tags = (tagsS as PromiseFulfilledResult<CallResult>).value;
+    const proxyRecs = (proxyS as PromiseFulfilledResult<CallResult>).value;
     const proxies = extractEntities(proxyRecs.envelope).slice(0, 5);
     let talentOverlap: number | null = null;
     const talentWarnings: DataWarning[] = [...warningsFor("qloo_recommend", proxyRecs)];
@@ -103,6 +108,16 @@ export async function* runCityPlaybook(
       { ...card("talent", proxies, talentRefs, talentWarnings), summary: { overlap: talentOverlap } },
     ];
     yield { type: "playbook", playbook: { city: input.city, cards } };
+    if (input.narrative !== false && deps.narrate) {
+      if (deps.signal?.aborted) throw new Aborted();
+      let narrative: Narrative;
+      try {
+        narrative = await deps.narrate({ artist: input.artist, city: input.city, cards, sessionId: input.sessionId });
+      } catch {
+        narrative = { status: "unavailable", reason: "error", message: "Narrative unavailable — showing Qloo evidence only" };
+      }
+      yield { type: "narrative", narrative };
+    }
     yield { type: "done", summary: { city: input.city.name } };
   } catch (err) {
     while (events.length) yield events.shift()!;
