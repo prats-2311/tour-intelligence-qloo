@@ -12,6 +12,15 @@ const boardDone = async (page: Page) => {
   await expect(page.getByText(/10 markets scored/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Stop" })).toHaveCount(0);
 };
+// The playbook has finished streaming (heading + verification summary), or the Book has prepared every chapter.
+const playbookDone = async (page: Page, city: string) => {
+  await expect(page.getByRole("heading", { name: city }).first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/\d+ verified · \d+ removed/).first()).toBeVisible({ timeout: 15_000 });
+};
+const bookDone = async (page: Page) => {
+  await expect(page.getByRole("heading", { name: "Market selection" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("button", { name: "Download PDF" })).toBeVisible({ timeout: 30_000 });
+};
 const toInsights = async (page: Page) => {
   await page.getByRole("link", { name: /Insights/ }).first().click();
   await expect(page.getByTestId("boxscore-row")).toHaveCount(10);
@@ -34,6 +43,21 @@ for (const path of ["/", "/tours/board?sample=1", "/tours/board?sample=long", "/
   });
 }
 
+const NEW_ROUTES: Array<[string, (page: Page) => Promise<void>]> = [
+  ["/tours/playbook/4005539?sample=1", (p) => playbookDone(p, "Guadalajara")],
+  ["/tours/playbook/3464975?sample=long", (p) => playbookDone(p, "San Juan de los Lagos")],
+  ["/tours/book?sample=1", bookDone],
+  ["/tours/book?sample=long", bookDone],
+];
+for (const [path, done] of NEW_ROUTES) {
+  test(`no horizontal scroll at 360px: ${path}`, async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 780 });
+    await page.goto(path);
+    await done(page);
+    await noHorizontalScroll(page);
+  });
+}
+
 test("no horizontal scroll at 360px with long names on every screen (Review Focus 4)", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 780 });
   await page.goto("/tours/board?sample=long");
@@ -41,9 +65,11 @@ test("no horizontal scroll at 360px with long names on every screen (Review Focu
   await expect(page.getByText("Santiago de Querétaro").first()).toBeVisible();
   await noHorizontalScroll(page);
   await page.getByTestId("city-row").getByText("Santiago de Querétaro").first().click();
-  await expect(page.getByRole("dialog", { name: /Santiago de Querétaro/ })).toBeVisible();
+  await expect(page).toHaveURL(/\/tours\/playbook\/3995465\?sample=long/);
+  await expect(page.getByRole("heading", { name: "Santiago de Querétaro" }).first()).toBeVisible();
   await noHorizontalScroll(page);
-  await page.keyboard.press("Escape");
+  await page.goBack();
+  await boardDone(page);
   await toInsights(page);
   await expect(page.getByTestId("boxscore-row").filter({ hasText: "Santiago de Querétaro" })).toHaveCount(1);
   await noHorizontalScroll(page);
@@ -67,4 +93,11 @@ test.describe("touch targets are at least 44x44 on mobile", () => {
     await toInsights(page);
     expect(await smallTargets(page)).toEqual([]);
   });
+  for (const [path, done] of NEW_ROUTES) {
+    test(`playbook and book: ${path}`, async ({ page }) => {
+      await page.goto(path);
+      await done(page);
+      expect(await smallTargets(page)).toEqual([]);
+    });
+  }
 });

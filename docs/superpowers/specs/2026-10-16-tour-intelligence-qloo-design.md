@@ -79,6 +79,7 @@ Activation findings feed back into ② (they are the inputs to the activation-po
 
 ### ④ Book — deliverables
 - **Tour & Activation Book** (existing Executive Tour Book, extended): market-selection chapter (heat map, winnability table, density-only vs winnability comparison), one activation chapter per city, provenance appendix listing every Qloo request. Print stylesheet → PDF; plus an `.ics` of chosen stops.
+- Plan 3: the Tour Book is a dashboard route (`/tours/book`) rendered from the run; the legacy `delight_card_renderer` book stays for legacy campaigns.
 - "Build tour from shortlist" creates a campaign in the existing campaign system; existing per-city briefs (Culture, Delight, Talent) run with Qloo evidence attached.
 
 ### ⑤ Proof — the activation backtest (`/proof`)
@@ -237,6 +238,8 @@ Landing → **Try the showcase tour** (pre-cached) → Tour Board → tap a **Hi
 | Proof (`/proof`) | Headline hit rates (ours vs LLM-only vs city-popularity), per-case cards with source links, "where we lost" section, limitations | Table view |
 | Navigation | Bottom tab bar: Discover · Tours · Strategist; Proof linked from Landing and the Tour Board header | Top bar |
 
+Key art (City Playbook): Plan 3 ships a deterministic typographic poster; generated key art is a Plan 6 item.
+
 ### 7.3 UI rules (acceptance criteria)
 - Touch targets ≥ 44 px; primary actions in thumb zone; no horizontal scroll at 360 px.
 - Showcase content visible ≤ 2.5 s on a mid-range phone over 4G (cache, skeletons, lazy map).
@@ -320,6 +323,7 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 - Provider: Tavily behind a small search adapter in `tour_data_api` (same citation shape as before; provider switchable by config). Fallback when unavailable or capped: no live web context (honest "Live web context unavailable" state) — **never** an automatic paid fallback.
 - **Credit policy (1,000 free credits/month; Prateek must not be charged):** basic-depth `search` only (1 credit), `max_results` ≤ 5; never `research` or `crawl`; `extract` only for a single specific URL when required. Firestore cache keyed by (city, topic, date window), TTL 7 days. Hard caps in code: 25 Tavily calls/day, 600/month (persisted counter); over cap → honest unavailable state. Showcase pre-warmed so judging makes zero Tavily calls. All tests use a fake client; one manual smoke test only. Each call logged with a running count.
 - Development research by agents uses built-in WebSearch/WebFetch, not Tavily.
+- Implementation note (Plan 3): the Tavily adapter lives in `qloo_gateway` (`src/web/`), not `tour_data_api`; policy unchanged.
 - Key: `tavily-api-key` in Secret Manager (created by Prateek); Tavily "Pay as you go" switched off.
 
 ### 9.3 Security & data handling

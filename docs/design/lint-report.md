@@ -48,3 +48,37 @@ Remaining differences, all accepted as minor or data/live-mode dependent:
 - Landing: no hexbin cluster or dashed arc on the map fragment, verdict chip sits in the row instead of the card header, backtest link and "Proof" nav item absent (not built), nav is left-aligned rather than centred.
 - Insights: no "Active filter" chip, claims KPI or median-benchmark row; momentum has a single series (no peers); filter rail is wider with checkbox lists only. Content differences from live-only data.
 - Mobile board (375): list scrolls under a fixed bottom tab bar; in full-page captures the fixed bar appears mid-page, which is a capture artefact. Map pin labels overlap where Curitiba and Sao Paulo are close together at 375 (label collision, not fixed).
+
+# Plan 3 gate (Task 15): City Playbook and Tour Book
+
+Run 2026-10-16 against the fixture build (`E2E_PORT=5199 node e2e/snapshots.mjs`, `lint.mjs` on the captured markup, `inspect.mjs` on the live
+playbook route and on a static capture of the loaded Book, because inspect only waits about two seconds and the Book prepares its chapters after the board stream).
+
+## Results
+
+| Check | Target | Result |
+| --- | --- | --- |
+| `lint.mjs` on rendered body markup | `/tours/playbook/4005539?sample=1`, `/tours/book?sample=1` | 0 FAIL, 0 WARN each |
+| Computed-style sweep | both routes | shadows: `.btn-gold` inset highlight only; gradients: perforated rail holes only (radial, see exceptions); fonts Inter, Fraunces, JetBrains Mono only |
+| `lint.mjs` on Plan 3 source (30 files) | pages, `components/playbook`, `components/book` | FAILs are the accepted `mono` and `hairline` entries below; 1 WARN em-dash (spec'd strings) |
+| `inspect.mjs` playbook at 1280 and 375 | | only the accepted exceptions below (class matches Plan 2's board/landing list) |
+| `inspect.mjs` Book (loaded capture) at 1280 and 375 | | only the accepted exceptions below |
+
+## Fixes made
+
+1. Book chapter: the rule above the "Removed claims" block (`border-t`) is gone; spacing carries the separation (inspect `hairline` 4 to 3 rows, all real tables).
+2. Layout gate found three touch-target failures, fixed in the owning components: the Landing "Guadalajara" stretched link (115x25, now `min-h-11`), and the Playbook "Add to tour" / "Remove from tour" button (collapsed to 23px because `flex-1` sat in a column flex; now `w-full`).
+
+## Accepted exceptions (each with its DESIGN.md line)
+
+- **gradient (perforated rail)**: `PlaybookCard` top rail and Book chapter tab use a `radial-gradient` only to punch the perforation holes over a flat city colour (DESIGN.md 4.2 CueCard rail; city colour on city-scoped surfaces only, DESIGN.md 2.6). No colour gradient. Carry `taste-skill-ignore` comments.
+- **gradient (`.skeleton` shimmer)**: loading state only, same exception as Plan 2.
+- **mono / micro-label / small-text / body-size / font-count**: JetBrains Mono 11px tracked caps for column heads, card meta lines and KPI numbers is the specified style (DESIGN.md 4); the dense advance-sheet and boxscore text follows the references. Same entry as Plan 2.
+- **button-fx**: `.btn-gold` 1px inset top highlight (DESIGN.md 262).
+- **eyebrow (playbook)**: the mandatory "Sample data — illustrative, not Qloo output" banner sits above the city heading (spec 5.6, honesty rule). It carries information and cannot be folded into the headline.
+- **eyebrow (Book)**: false positive, "Sponsors · Cites missing evidence" is a card status line directly above a "Provenance" sub-heading.
+- **hairline (Book)**: `border-b` row rules in the Market selection and Provenance tables, and the 1px key line in the slope-chart legend. Real tables (DESIGN.md 4, same as boxscore).
+- **side-scroll at 375 (Book)**: the Market selection and Provenance tables scroll sideways inside their own container with a sticky city column; the page itself never scrolls horizontally (layout spec). Deliberate data-table pattern, same as the Insights boxscore.
+- **focal-point, few-pictures, no-footage, still-page**: a data tool whose picture is the deterministic typographic poster and the map; DESIGN.md 9 bans stock photos and decorative motion. Largest type is the Fraunces city or artist name.
+- **covered-text (Book, 375, from the static capture)**: artefact of the captured file, where the fixed chapter list and action bar lose their fixed positioning. Live screenshots at 375 show the header, action bar and tab bar over scrolled content with no heading covered.
+- **palette-cream / grey-body / font-fallback**: bone `#f2f0ea` and stone `#a4a094` are the spec'd tokens; fonts are declared and load in the live app (the static capture has no font files).

@@ -1,4 +1,5 @@
 import type { CardClaims, CardKind, Claim, GatewayEvent, MerchDirection, Narrative, PlaybookCard, ThisWeek, ThisWeekItem } from "../types";
+import { LONG_CITY_NAMES } from "./lumenVale";
 
 // Illustrative sample data for the labelled Lumen Vale showcase. Only neighbourhood and venue names are real.
 type Ent = [name: string, affinity: number, type?: string];
@@ -188,9 +189,13 @@ function thisWeekFor(c: CityData): ThisWeek {
 
 export const SAMPLE_PLAYBOOK_CITY_IDS = ["3530597", "3448439", "4005539", "3464975"] as const;
 
-export function samplePlaybookEvents(cityId: string): GatewayEvent[] | null {
+export function samplePlaybookEvents(cityId: string, opts: { long?: boolean } = {}): GatewayEvent[] | null {
   const c = byId(cityId);
-  return c ? eventsFor(c) : null;
+  if (!c) return null;
+  const events = eventsFor(c);
+  const longName = opts.long ? LONG_CITY_NAMES[cityId] : undefined;
+  if (!longName) return events;
+  return events.map((e): GatewayEvent => (e.type === "playbook" ? { ...e, playbook: { ...e.playbook, city: { ...e.playbook.city, name: longName } } } : e));
 }
 
 export function sampleThisWeek(cityId: string): ThisWeek | null {

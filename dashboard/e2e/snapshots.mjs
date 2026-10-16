@@ -3,7 +3,7 @@ import { chromium } from "@playwright/test";
 import { mkdirSync, writeFileSync } from "node:fs";
 mkdirSync("test-results/html", { recursive: true });
 mkdirSync("test-results/shots", { recursive: true });
-const routes = { landing: "/", board: "/tours/board?sample=1", insights: "/insights", campaign: "/campaign" }; // order matters: insights follows board
+const routes = { landing: "/", board: "/tours/board?sample=1", insights: "/insights", campaign: "/campaign", playbook: "/tours/playbook/4005539?sample=1", book: "/tours/book?sample=1" }; // order matters: insights follows board; playbook and book load their own sample run
 const browser = await chromium.launch();
 for (const [vp, size] of [["mobile", { width: 375, height: 812 }], ["desktop", { width: 1280, height: 800 }]]) {
   const page = await (await browser.newContext({ viewport: size, deviceScaleFactor: vp === "mobile" ? 2 : 1 })).newPage();
@@ -11,11 +11,13 @@ for (const [vp, size] of [["mobile", { width: 375, height: 812 }], ["desktop", {
     if (name === "insights") { // client-side nav keeps the sample run in the provider
       await page.getByRole("link", { name: /Insights/ }).first().click();
       await page.getByTestId("boxscore-row").first().waitFor({ timeout: 15000 });
-    } else await page.goto(`http://localhost:5173${path}`);
+    } else await page.goto(`http://localhost:${process.env.E2E_PORT ?? 5173}${path}`);
     if (name === "board") {
       await page.getByText(/10 markets scored/).waitFor({ timeout: 15000 });
       await page.getByRole("button", { name: "Stop" }).waitFor({ state: "detached", timeout: 15000 });
     }
+    if (name === "playbook") await page.getByText(/\d+ verified · \d+ removed/).first().waitFor({ timeout: 15000 });
+    if (name === "book") await page.getByRole("button", { name: "Download PDF" }).waitFor({ timeout: 30000 });
     if (name === "landing") await page.getByRole("heading", { level: 1 }).waitFor();
     if (name === "campaign") await page.waitForLoadState("networkidle");
     if (vp === "desktop") {

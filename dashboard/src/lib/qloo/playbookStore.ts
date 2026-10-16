@@ -2,7 +2,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { streamCityPlaybook } from "./client";
 import { initialPlaybook, playbookReducer, type PlaybookState } from "./playbookReducer";
 
-export interface PlaybookRequest { artist: string; artistEntityId: string; city: { id: string; name: string; country: string }; sample: boolean; delayMs?: number }
+export interface PlaybookRequest { artist: string; artistEntityId: string; city: { id: string; name: string; country: string }; sample: boolean; sampleSet?: "default" | "long"; delayMs?: number }
 
 const states = new Map<string, PlaybookState>();
 const inflight = new Map<string, Promise<PlaybookState>>();
@@ -11,8 +11,8 @@ const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 
-export const playbookKey = (artistEntityId: string, cityId: string): string => `${artistEntityId}|${cityId}`;
-const keyOf = (r: PlaybookRequest) => playbookKey(r.artistEntityId, r.city.id);
+export const playbookKey = (artistEntityId: string, cityId: string, sampleSet?: "default" | "long"): string => `${artistEntityId}|${cityId}|${sampleSet ?? "default"}`;
+const keyOf = (r: PlaybookRequest) => playbookKey(r.artistEntityId, r.city.id, r.sampleSet);
 
 export function getPlaybook(key: string): PlaybookState | undefined { return states.get(key); }
 
@@ -34,7 +34,7 @@ export function loadPlaybook(req: PlaybookRequest): Promise<PlaybookState> {
     try {
       const events = streamCityPlaybook(
         { artist: req.artist, artistEntityId: req.artistEntityId, city: req.city.name, country: req.city.country },
-        { sample: req.sample, cityId: req.city.id, delayMs: req.delayMs },
+        { sample: req.sample, sampleSet: req.sampleSet, cityId: req.city.id, delayMs: req.delayMs },
       );
       for await (const event of events) {
         s = put(key, playbookReducer(s, { type: "event", event }));

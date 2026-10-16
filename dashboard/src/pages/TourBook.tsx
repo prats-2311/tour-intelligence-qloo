@@ -13,7 +13,7 @@ import type { SaveTourInput } from "@/lib/api";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { Sheet } from "@/components/qloo/Sheet";
 import { fetchThisWeek } from "@/lib/qloo/client";
-import { SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
+import { LONG_NAMES_BRIEF, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { toIcs } from "@/lib/qloo/ics";
 import { getPlaybook, loadPlaybook, playbookKey, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { sortCities } from "@/lib/qloo/ranking";
@@ -37,8 +37,11 @@ function Centered({ children }: { children: React.ReactNode }) {
 export default function TourBook() {
   const { state, run, shortlist, accentOrder } = useTourBoard();
   const [params] = useSearchParams();
-  const wantSample = params.get("sample") === "1";
-  const sampleQ = wantSample ? "?sample=1" : "";
+  const sampleParam = params.get("sample");
+  const wantLong = sampleParam === "long";
+  const wantSample = sampleParam === "1" || wantLong;
+  const wantSet = wantLong ? "long" : "default";
+  const sampleQ = wantLong ? "?sample=long" : wantSample ? "?sample=1" : "";
   const isDesktop = useIsDesktop();
   const reduce = useReducedMotion();
   const started = useRef(false);
@@ -54,13 +57,13 @@ export default function TourBook() {
   useEffect(() => {
     if (!wantSample || started.current) return;
     started.current = true;
-    if (state.source !== "sample") run(SAMPLE_BRIEF, { sample: true });
-  }, [wantSample, state.source, run]);
+    if (state.source !== "sample" || (state.sampleSet ?? "default") !== wantSet) run(wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
+  }, [wantSample, wantLong, wantSet, state.source, state.sampleSet, run]);
 
   const sample = state.source === "sample";
-  const ready = !wantSample || sample;
+  const ready = !wantSample || (sample && (state.sampleSet ?? "default") === wantSet);
   const artist = ready ? state.artist : undefined;
-  const streaming = state.status === "streaming" || (wantSample && !sample);
+  const streaming = state.status === "streaming" || !ready;
   const boardReady = ready && !streaming && !!artist && !!state.brief && state.cities.length > 0;
   const dateWindow = state.brief?.dateWindow;
 
@@ -68,9 +71,9 @@ export default function TourBook() {
     const chosen = new Set(shortlist);
     return sortCities(state.cities, "winnability").filter((c) => chosen.has(c.id));
   }, [state.cities, shortlist]);
-  const prepKey = `${sample}|${artist?.entityId ?? ""}|${picked.map((c) => c.id).join(",")}`;
+  const prepKey = `${sample}|${state.sampleSet ?? ""}|${artist?.entityId ?? ""}|${picked.map((c) => c.id).join(",")}`;
   const requests = useMemo<PlaybookRequest[]>(
-    () => (artist ? picked.map((c) => ({ artist: artist.name, artistEntityId: artist.entityId, city: { id: c.id, name: c.name, country: c.country }, sample, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined })) : []),
+    () => (artist ? picked.map((c) => ({ artist: artist.name, artistEntityId: artist.entityId, city: { id: c.id, name: c.name, country: c.country }, sample, sampleSet: state.sampleSet, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined })) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [prepKey],
   );
@@ -84,7 +87,7 @@ export default function TourBook() {
         if (cancelled) return;
         setStep(i + 1);
         const req = requests[i]!;
-        if (getPlaybook(playbookKey(req.artistEntityId, req.city.id))?.status !== "done") await loadPlaybook(req);
+        if (getPlaybook(playbookKey(req.artistEntityId, req.city.id, req.sampleSet))?.status !== "done") await loadPlaybook(req);
       }
       if (!cancelled) setPreparedKey(prepKey);
     })();
@@ -111,7 +114,7 @@ export default function TourBook() {
     return buildTourBook({
       brief: state.brief, artistName: artist.name, source: state.source, cities: state.cities, shortlist: picked.map((c) => c.id), accentOrder,
       boardLog: state.log,
-      playbooks: Object.fromEntries(picked.map((c) => [c.id, getPlaybook(playbookKey(artist.entityId, c.id))])),
+      playbooks: Object.fromEntries(picked.map((c) => [c.id, getPlaybook(playbookKey(artist.entityId, c.id, state.sampleSet))])),
       weeks: Object.fromEntries(picked.map((c, i) => [c.id, weekQueries[i]?.data])),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

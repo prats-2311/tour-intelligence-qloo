@@ -45,3 +45,12 @@ describe("sample playbooks", () => {
     expect(sampleThisWeek("5368361")).toBeNull();
   });
 });
+
+describe("long-name sample playbooks", () => {
+  const nameOf = (ev: GatewayEvent[] | null) => (ev!.find((e) => e.type === "playbook") as Extract<GatewayEvent, { type: "playbook" }>).playbook.city.name;
+  it("rename Curitiba only when long is requested", () => {
+    expect(nameOf(samplePlaybookEvents("3464975"))).toBe("Curitiba");
+    expect(nameOf(samplePlaybookEvents("3464975", { long: true }))).toBe("San Juan de los Lagos");
+    expect(nameOf(samplePlaybookEvents("4005539", { long: true }))).toBe("Guadalajara");
+  });
+});

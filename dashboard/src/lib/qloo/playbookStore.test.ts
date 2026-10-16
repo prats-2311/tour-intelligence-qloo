@@ -47,4 +47,12 @@ describe("playbookStore", () => {
     expect(result.current.status).toBe("idle");
     act(() => {});
   });
+  it("keeps the long-name sample set separate from the default one", async () => {
+    const curitiba = { ...gdl, city: { id: "3464975", name: "San Juan de los Lagos", country: "BR" } };
+    await loadPlaybook(curitiba);
+    await loadPlaybook({ ...curitiba, sampleSet: "long" });
+    expect(getPlaybook(playbookKey("sample-lumen-vale", "3464975"))?.status).toBe("done");
+    expect(getPlaybook(playbookKey("sample-lumen-vale", "3464975", "long"))?.status).toBe("done");
+    expect(playbookKey("a", "b")).toBe("a|b|default");
+  });
 });

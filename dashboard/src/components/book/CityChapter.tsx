@@ -87,7 +87,7 @@ export function CityChapter({ chapter }: { chapter: BookCityChapter }) {
               <ThisWeekBody week={week} />
             </section>
             {chapter.claims && (
-              <div className="flex flex-col gap-3 border-t border-canvas-line pt-3">
+              <div className="flex flex-col gap-3 pt-4">
                 <ClaimsBadge verified={chapter.claims.verified} removed={chapter.claims.removed} />
                 {removed.length > 0 && (
                   <div className="flex flex-col gap-2">

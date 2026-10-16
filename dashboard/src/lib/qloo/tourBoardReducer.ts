@@ -3,6 +3,7 @@ import type { ArtistProfile, GatewayEvent, ScoredCity, TourBrief } from "./types
 export type BoardState = {
   status: "idle" | "streaming" | "needs_input" | "done" | "error" | "interrupted";
   source: "live" | "sample";
+  sampleSet?: "default" | "long";
   brief?: TourBrief;
   artist?: { entityId: string; name: string };
   profile?: ArtistProfile;
@@ -18,7 +19,7 @@ export type BoardState = {
 };
 
 export type BoardAction =
-  | { type: "start"; brief: TourBrief; source: "live" | "sample" }
+  | { type: "start"; brief: TourBrief; source: "live" | "sample"; sampleSet?: "default" | "long" }
   | { type: "event"; event: GatewayEvent }
   | { type: "interrupted"; reason?: "user" | "connection" }
   | { type: "shortlist"; ids: string[] }
@@ -33,7 +34,7 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
     case "shortlist":
       return { ...state, shortlist: action.ids };
     case "start":
-      return { ...initialBoard, status: "streaming", source: action.source, brief: action.brief };
+      return { ...initialBoard, status: "streaming", source: action.source, sampleSet: action.sampleSet, brief: action.brief };
     case "interrupted":
       return state.status === "streaming" ? { ...state, status: "interrupted", interruptReason: action.reason ?? "connection" } : state;
     case "event": {

@@ -27,7 +27,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
     const controller = new AbortController();
     controllerRef.current = controller;
     const sample = opts.sample ?? isSampleMode();
-    dispatch({ type: "start", brief, source: sample ? "sample" : "live" });
+    dispatch({ type: "start", brief, source: sample ? "sample" : "live", sampleSet: opts.sampleSet });
     void (async () => {
       let terminal = false;
       try {

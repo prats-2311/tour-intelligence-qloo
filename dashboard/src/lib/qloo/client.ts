@@ -50,7 +50,7 @@ export function streamTourBoard(brief: TourBrief, opts: StreamOpts = {}): AsyncG
 
 export function streamCityPlaybook(q: { artist: string; artistEntityId: string; city: string; country: string }, opts: StreamOpts & { cityId?: string } = {}): AsyncGenerator<GatewayEvent> {
   if (opts.sample) {
-    const events = opts.cityId ? samplePlaybookEvents(opts.cityId) : null;
+    const events = opts.cityId ? samplePlaybookEvents(opts.cityId, { long: opts.sampleSet === "long" }) : null;
     return sample(events ?? [{ type: "error", code: "NO_SAMPLE", message: `No sample playbook for ${q.city}` }], opts);
   }
   const qs = new URLSearchParams(q).toString();

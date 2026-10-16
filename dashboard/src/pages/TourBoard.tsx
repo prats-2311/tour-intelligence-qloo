@@ -123,14 +123,15 @@ export default function TourBoard() {
   const eligible = useMemo(() => sortCities(state.cities, "winnability").filter((c) => SHORTLIST_VERDICTS.has(c.verdict)), [state.cities]);
   const maxStops = state.brief?.maxStops ?? 8;
   const atCap = shortlist.length >= maxStops;
-  const bookHref = `/tours/book${state.source === "sample" ? "?sample=1" : ""}`;
+  const sampleQ = state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
+  const bookHref = `/tours/book${sampleQ}`;
   const selected = state.cities.find((c) => c.id === selectedId);
   const whyCity = state.cities.find((c) => c.id === whyId);
   const summaryCity = selected ?? eligible.find((c) => c.verdict === "hidden_goldmine") ?? sorted[0];
 
   const retry = () => { if (state.brief) run(state.brief, { sample: state.source === "sample", sampleSet: wantLong ? "long" : "default" }); };
   const showcase = () => run(SAMPLE_BRIEF, { sample: true });
-  const openRow = (id: string) => navigate(`/tours/playbook/${id}${state.source === "sample" ? "?sample=1" : ""}`);
+  const openRow = (id: string) => navigate(`/tours/playbook/${id}${sampleQ}`);
   const selectFromMap = (id: string) => {
     setSelectedId(id);
     document.getElementById(`city-row-${id}`)?.scrollIntoView?.({ block: "nearest", behavior: reduce ? "auto" : "smooth" });

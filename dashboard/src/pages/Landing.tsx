@@ -28,7 +28,7 @@ function ProofCard() {
         <div className="min-w-0">
           <div className="flex items-baseline gap-2">
             <h2 className="font-title text-[20px] leading-tight text-bone lg:text-[22px]">
-              <Link to={`/tours/playbook/${GDL.id}?sample=1`} className="outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-gold lg:after:rounded-[18px]">{GDL.name}</Link>
+              <Link to={`/tours/playbook/${GDL.id}?sample=1`} className="inline-flex min-h-11 items-center outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-gold lg:after:rounded-[18px]">{GDL.name}</Link>
             </h2>
             <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-canvas-muted">{GDL.country}</span>
           </div>

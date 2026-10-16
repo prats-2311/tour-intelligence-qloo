@@ -19,7 +19,7 @@ import { ReasoningSummary } from "@/components/playbook/ReasoningSummary";
 import { PlaybookSkeleton } from "@/components/ui/Skeletons";
 import { fetchThisWeek } from "@/lib/qloo/client";
 import { accentFor } from "@/lib/qloo/cityAccent";
-import { SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
+import { LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks";
 import { INTEGRITY_LINE } from "@/lib/qloo/labels";
 import { loadPlaybook, usePlaybook, type PlaybookRequest } from "@/lib/qloo/playbookStore";
@@ -47,7 +47,7 @@ const PLACE: Record<CardId, string> = {
 const FALLBACK_MAX_STOPS = 8;
 // Sample playbooks replay ~25 events; the showcase pacing used on the board (60 ms) would make this page feel slow.
 const SAMPLE_PLAYBOOK_DELAY_MS = 10;
-const btnGold = "btn-gold inline-flex h-12 min-w-0 flex-1 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:flex-none";
+const btnGold = "btn-gold inline-flex h-12 w-full min-w-0 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:w-auto";
 const textBtn = "inline-flex min-h-11 items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 const smallBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 const first = (card: Card | undefined, key: string): string => {
@@ -59,8 +59,11 @@ export default function CityPlaybook() {
   const { cityId = "" } = useParams();
   const { state, run, shortlist, toggleShortlist, accentOrder } = useTourBoard();
   const [params] = useSearchParams();
-  const wantSample = params.get("sample") === "1";
-  const sampleQ = wantSample ? "?sample=1" : "";
+  const sampleParam = params.get("sample");
+  const wantLong = sampleParam === "long";
+  const wantSample = sampleParam === "1" || wantLong;
+  const wantSet = wantLong ? "long" : "default";
+  const sampleQ = wantLong ? "?sample=long" : wantSample ? "?sample=1" : "";
   const isDesktop = useIsDesktop();
   const started = useRef(false);
   const [tab, setTab] = useState<Tab>("activate");
@@ -76,17 +79,17 @@ export default function CityPlaybook() {
   useEffect(() => {
     if (!wantSample || started.current) return;
     started.current = true;
-    if (state.source !== "sample") run(SAMPLE_BRIEF, { sample: true });
-  }, [wantSample, state.source, run]);
+    if (state.source !== "sample" || (state.sampleSet ?? "default") !== wantSet) run(wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
+  }, [wantSample, wantLong, wantSet, state.source, state.sampleSet, run]);
 
   const sample = state.source === "sample";
   // While a requested sample run has not started, nothing from an earlier live run is shown.
-  const ready = !wantSample || sample;
+  const ready = !wantSample || (sample && (state.sampleSet ?? "default") === wantSet);
   const city = ready ? state.cities.find((c) => c.id === cityId) : undefined;
   const shownCity = city ?? (wantSample ? SAMPLE_CITIES.find((c) => c.id === cityId) : undefined);
   const artist = ready ? state.artist : undefined;
   const req: PlaybookRequest | null = shownCity && artist
-    ? { artist: artist.name, artistEntityId: artist.entityId, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country }, sample, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined }
+    ? { artist: artist.name, artistEntityId: artist.entityId, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country }, sample, sampleSet: state.sampleSet, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined }
     : null;
   const pb = usePlaybook(req);
   const window = state.brief?.dateWindow;
@@ -123,7 +126,7 @@ export default function CityPlaybook() {
   }, [idsKey, tab]);
 
   if (!shownCity) {
-    if (state.status === "streaming" || (wantSample && !sample)) return <PlaybookSkeleton />;
+    if (state.status === "streaming" || !ready) return <PlaybookSkeleton />;
     return (
       <div className="mx-auto flex w-full max-w-md flex-col items-start gap-3 py-10">
         <h1 className="font-title text-[24px] leading-tight text-canvas-text">Open this city from a Tour Board</h1>

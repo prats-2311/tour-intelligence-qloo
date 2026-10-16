@@ -15,6 +15,13 @@ Tour Intelligence × Qloo: "Don't just find your fans. Win their city." A taste-
 - Mobile-first responsive UI in the existing Premiere Noir system.
 - Process: Superpowers workflow (TDD, subagent-driven development with Sonnet subagents, verification before completion); Graft for code navigation; UI tasks read frontend-design, ui-ux-pro-max, taste-skill.
 
+## Qloo tour routes (Plan 3)
+- `/tours/board` (Tour Board) → tap a row → `/tours/playbook/:cityId` (City Playbook: advance-sheet cards, audit sheet, sponsors badge) → "Build tour" sheet → `/tours/book` (Tour Book: market chapter, one chapter per shortlisted city, provenance appendix, print to PDF, `.ics`, Share).
+- Playbooks are fetched once per artist and city by `dashboard/src/lib/qloo/playbookStore.ts` (key `artist|city|sampleSet`) and shared by Playbook, Book and Insights cross-domain taste; the Book prepares them one at a time.
+- Sample mode has playbooks for four cities (Mexico City, Sao Paulo, Guadalajara, Curitiba) in `fixtures/lumenValePlaybooks.ts`; `?sample=1` works on `/tours/board`, `/tours/playbook/:cityId` and `/tours/book` without prior state, `?sample=long` runs the long-names variant on all three.
+- "Save as campaign" (Book) writes via `POST /api/tours` to `tour_data_api` and is live-only; sample tours are refused.
+- No code defaults point at the original Google-hackathon services: set `TOUR_DATA_API_URL` (BFF, `agent_mcp_server`, orchestrator) and `DELIGHT_RENDERER_URL` (BFF, orchestrator). Unset, the BFF answers 503 `tour_data_api not configured`; the other two refuse to start.
+
 ## Nested guides
 Existing per-directory `CLAUDE.md` files remain authoritative for their services; `cloud_run/qloo_gateway/CLAUDE.md` covers the gateway.
 
