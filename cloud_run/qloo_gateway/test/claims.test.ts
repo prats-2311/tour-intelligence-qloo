@@ -34,16 +34,57 @@ describe("verifyClaims", () => {
   });
 });
 
-describe("number tolerance edge cases (documents current behaviour)", () => {
-  const affinity: EvidenceItem[] = [{ id: "a1", entityIds: [], names: [], numbers: [0.82] }];
-  it("CONCERN: integer 1 is accepted against a 0-1 affinity of 0.82 (tolerance 0.5)", () => {
-    expect(verifyClaims([claim({ evidence_refs: ["a1"], numbers: [1] })], affinity).verified).toHaveLength(1);
+const num = (n: number, v: number) =>
+  verifyClaims([claim({ evidence_refs: ["n"], numbers: [n] })], [{ id: "n", entityIds: [], names: [], numbers: [v] }]);
+const ok = (n: number, v: number) => num(n, v).verified.length === 1;
+
+describe("strict display-rounding number rule", () => {
+  it("rejects integer 1 vs 0.82 and 0 vs 0.4", () => {
+    expect(ok(1, 0.82)).toBe(false);
+    expect(ok(0, 0.4)).toBe(false);
   });
-  it("CONCERN: integer 0 is accepted against a 0-1 affinity of 0.4", () => {
-    const ev: EvidenceItem[] = [{ id: "a2", entityIds: [], names: [], numbers: [0.4] }];
-    expect(verifyClaims([claim({ evidence_refs: ["a2"], numbers: [0] })], ev).verified).toHaveLength(1);
+  it("accepts legitimate rounding, rejects the rest", () => {
+    expect(ok(83, 82.6)).toBe(true);
+    expect(ok(83, 82.4)).toBe(false);
+    expect(ok(0.8, 0.82)).toBe(true);
+    expect(ok(0.8, 0.849)).toBe(false);
+    expect(ok(82, 82.4)).toBe(true);
+    expect(ok(82, 82)).toBe(true);
   });
-  it("rejects a 1-dp claim that differs beyond rounding", () => {
-    expect(verifyClaims([claim({ evidence_refs: ["a1"], numbers: [0.9] })], affinity).removed[0]?.reason).toBe("unsupported_number");
+  it("rejects NaN and non-finite", () => {
+    expect(ok(NaN, 1)).toBe(false);
+    expect(ok(1, NaN)).toBe(false);
+    expect(ok(Infinity, Infinity)).toBe(false);
+    expect(num(NaN, 1).removed[0]?.reason).toBe("unsupported_number");
+  });
+  it("handles exponent notation", () => {
+    expect(ok(1e-7, 0)).toBe(false);
+    expect(ok(0, 1e-7)).toBe(false);
+    expect(ok(1.5e-7, 1.5e-7)).toBe(true);
+  });
+});
+
+describe("normaliseName scripts", () => {
+  it("preserves CJK, kana voicing and Devanagari", () => {
+    expect(normaliseName("東京タワー")).toBe("東京タワー");
+    expect(normaliseName("ばなな")).not.toBe(normaliseName("ぱなな"));
+    const a = normaliseName("कॉफी");
+    const b = normaliseName("कोरोना");
+    expect(a).not.toBe(b);
+    expect(a.length).toBeGreaterThan(0);
+    expect(b.length).toBeGreaterThan(0);
+  });
+});
+
+describe("empty names and uncheckable claims", () => {
+  it("empty normalised names never match", () => {
+    const ev: EvidenceItem[] = [{ id: "x", entityIds: [], names: ["!!!"], numbers: [] }];
+    const r = verifyClaims([claim({ evidence_refs: ["x"], entities: [{ name: "---" }] })], ev);
+    expect(r.removed[0]?.reason).toBe("unsupported_entity");
+  });
+  it("removes claims with no entities and no numbers", () => {
+    const r = verifyClaims([claim({})], evidence);
+    expect(r.removed[0]?.reason).toBe("no_checkable_content");
+    expect(verifyClaims([claim({ evidence_refs: ["nope"] })], evidence).removed[0]?.reason).toBe("dangling_ref");
   });
 });
