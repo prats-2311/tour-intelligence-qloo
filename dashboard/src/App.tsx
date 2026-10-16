@@ -15,6 +15,7 @@ function LandingSkeleton() {
 const Landing = lazy(() => import("./pages/Landing"));
 const TourBoard = lazy(() => import("./pages/TourBoard"));
 const CityPlaybook = lazy(() => import("./pages/CityPlaybook"));
+const TourBook = lazy(() => import("./pages/TourBook"));
 const TasteInsights = lazy(() => import("./pages/TasteInsights"));
 const CityDetail = lazy(() => import("./pages/CityDetail").then((m) => ({ default: m.CityDetail })));
 const CompareCities = lazy(() => import("./pages/CompareCities").then((m) => ({ default: m.CompareCities })));
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/" element={<Suspense fallback={<LandingSkeleton />}><Landing /></Suspense>} />
           <Route path="/tours/board" element={<Suspense fallback={<TourBoardSkeleton />}><TourBoard /></Suspense>} />
           <Route path="/tours/playbook/:cityId" element={<Suspense fallback={<PlaybookSkeleton />}><CityPlaybook /></Suspense>} />
+          <Route path="/tours/book" element={<Suspense fallback={<PlaybookSkeleton />}><TourBook /></Suspense>} />
           <Route path="/insights" element={<Suspense fallback={<TasteInsightsSkeleton />}><TasteInsights /></Suspense>} />
           <Route path="/campaign" element={<Dashboard />} />
           <Route

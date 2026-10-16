@@ -23,7 +23,7 @@ export function ThisWeekBody({ week }: { week: Week | undefined }) {
           <ul className="mt-2 space-y-1">
             {week.citations.map((c) => (
               <li key={c.id}>
-                <a href={c.url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center break-words text-[15px] text-canvas-text underline decoration-canvas-muted underline-offset-4">{c.title}</a>
+                <a data-cite href={c.url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center break-words text-[15px] text-canvas-text underline decoration-canvas-muted underline-offset-4">{c.title}</a>
               </li>
             ))}
           </ul>
@@ -40,7 +40,7 @@ export function ThisWeekBody({ week }: { week: Week | undefined }) {
                 <p className="text-[15px] leading-[1.45] text-canvas-text">{it.text}</p>
                 <div className="flex flex-wrap items-center gap-x-1">
                   {when && <span className="mr-2 text-[13px] tabular-nums text-canvas-muted">{when}</span>}
-                  {links.map((l) => <a key={l.n} href={l.href} target="_blank" rel="noreferrer" className={LINK}>[{l.n}]</a>)}
+                  {links.map((l) => <a key={l.n} data-cite href={l.href} target="_blank" rel="noreferrer" className={LINK}>[{l.n}]</a>)}
                 </div>
               </li>
             );

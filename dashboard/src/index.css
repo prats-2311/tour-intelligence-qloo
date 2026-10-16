@@ -262,3 +262,28 @@ body {
     opacity: 0.75;
   }
 }
+
+/* Tour & Activation Book: the one page-turn motion (city accent rail slides in from the left edge, 240 ms). */
+.tour-book .book-chapter { scroll-margin-top: 72px; }
+@keyframes page-turn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@media (prefers-reduced-motion: no-preference) {
+  .tour-book .page-turn-rail { animation: page-turn 240ms ease-out both; }
+}
+
+/* Print-to-PDF: white page, black text, one chapter per page, citations spelled out. Scoped to the Book. */
+@media print {
+  body:has(.tour-book), body:has(.tour-book) #root > div { background: #fff !important; }
+  body:has(.tour-book) [data-app-shell] { display: none !important; }
+  body:has(.tour-book) main { padding: 0 !important; }
+  .tour-book { margin: 0 !important; background: #fff; color: #111; }
+  .tour-book *:not(svg *):not([data-print-keep]) { color: #111 !important; background-color: transparent !important; box-shadow: none !important; }
+  .tour-book [data-noprint], .tour-book [role="dialog"], .tour-book [data-testid="sheet-overlay"], .tour-book .margin-note { display: none !important; }
+  .tour-book .book-page { width: 100% !important; max-width: none !important; padding: 0 !important; gap: 0 !important; }
+  .tour-book .book-chapter { break-before: page; padding: 0 !important; margin-top: 0 !important; }
+  .tour-book .book-chapter:first-child { break-before: auto; }
+  .tour-book svg, .tour-book [data-print-keep] { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .tour-book .slope-chart text { fill: #111 !important; }
+  .tour-book .slope-chart line[data-highlight] { stroke: #111 !important; stroke-width: 3 !important; }
+  .tour-book a[data-cite]::after { content: " (" attr(href) ")"; }
+  .tour-book tr, .tour-book dl > div { break-inside: avoid; }
+}

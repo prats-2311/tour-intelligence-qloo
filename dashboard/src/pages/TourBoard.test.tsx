@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { useEffect } from "react";
 import { MemoryRouter, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
+import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import * as client from "@/lib/qloo/client";
-import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
+import { SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { VERDICT_SHAPE } from "@/lib/qloo/labels";
+import type { TourBrief } from "@/lib/qloo/types";
 import TourBoard from "./TourBoard";
 
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
@@ -30,6 +32,24 @@ const submitArtist = (name: string) => {
 };
 const cityEvent = (i: number) => ({ type: "city_scored" as const, city: SAMPLE_CITIES[i]! });
 const renderPage = (url = "/tours/board?sample=1") => render(wrap(<TourBoard />, url));
+function RunOnce({ brief }: { brief: TourBrief }) {
+  const { run } = useTourBoard();
+  useEffect(() => { run(brief, { sample: true }); }, [run, brief]);
+  return null;
+}
+const renderWithRun = (brief: TourBrief) =>
+  render(
+    <TourBoardProvider sampleDelayMs={0}>
+      <MemoryRouter initialEntries={["/tours/board"]}>
+        <Routes>
+          <Route path="/tours/board" element={<TourBoard />} />
+          <Route path="/tours/book" element={<><p>book page</p><Where /></>} />
+        </Routes>
+        <RunOnce brief={brief} />
+      </MemoryRouter>
+    </TourBoardProvider>,
+  );
+
 
 describe("TourBoard", () => {
   it("sample run renders 10 rows, the sample banner and verdict summary", async () => {
@@ -254,5 +274,41 @@ describe("TourBoard", () => {
     submitArtist("Beyoncé");
     fireEvent.click(await screen.findByRole("button", { name: "Try other regions" }));
     expect((await screen.findByLabelText("Artist") as HTMLInputElement).value).toBe("Beyoncé");
+  });
+  it("Build tour defaults to the top max-stops eligible cities and caps selection", async () => {
+    renderWithRun({ ...SAMPLE_BRIEF, maxStops: 2 });
+    fireEvent.click(await screen.findByRole("button", { name: "Build tour" }));
+    expect(screen.getByRole("checkbox", { name: /Mexico City/ })).toHaveProperty("checked", true);
+    expect(screen.getByRole("checkbox", { name: /São Paulo/ })).toHaveProperty("checked", true);
+    const gdl = screen.getByRole("checkbox", { name: /Guadalajara/ });
+    expect(gdl).toHaveProperty("checked", false);
+    expect(gdl).toHaveProperty("disabled", true);
+    expect(screen.getByText("Max stops reached — raise it in the brief")).toBeTruthy();
+    expect(screen.getByText("2 of max 2 stops")).toBeTruthy();
+  });
+  it("unchecking a stop frees a slot and keeps the count honest", async () => {
+    renderWithRun({ ...SAMPLE_BRIEF, maxStops: 2 });
+    fireEvent.click(await screen.findByRole("button", { name: "Build tour" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Mexico City/ }));
+    expect(screen.getByText("1 of max 2 stops")).toBeTruthy();
+    expect(screen.getByRole("checkbox", { name: /Guadalajara/ })).toHaveProperty("disabled", false);
+    expect(screen.queryByText("Max stops reached — raise it in the brief")).toBeNull();
+  });
+  it("Open Tour Book navigates to the book in sample mode", async () => {
+    render(
+      <TourBoardProvider sampleDelayMs={0}>
+        <MemoryRouter initialEntries={["/tours/board?sample=1"]}>
+          <Routes>
+            <Route path="/tours/board" element={<TourBoard />} />
+            <Route path="/tours/book" element={<><p>book page</p><Where /></>} />
+          </Routes>
+        </MemoryRouter>
+      </TourBoardProvider>,
+    );
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    fireEvent.click(screen.getByRole("button", { name: "Build tour" }));
+    fireEvent.click(screen.getByRole("link", { name: "Open Tour Book" }));
+    expect(await screen.findByText("book page")).toBeTruthy();
+    expect(screen.getByTestId("search").textContent).toBe("?sample=1");
   });
 });

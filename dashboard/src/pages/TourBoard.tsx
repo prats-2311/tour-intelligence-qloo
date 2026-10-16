@@ -82,7 +82,7 @@ const secondaryBtn = "inline-flex h-12 items-center justify-center gap-2 rounded
 const smallBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 
 export default function TourBoard() {
-  const { state, run, abort, reset } = useTourBoard();
+  const { state, run, abort, reset, shortlist, toggleShortlist } = useTourBoard();
   const reduce = useReducedMotion();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -95,7 +95,6 @@ export default function TourBoard() {
   const [whyId, setWhyId] = useState<string | null>(null);
   const [logOpen, setLogOpen] = useState(false);
   const [buildOpen, setBuildOpen] = useState(false);
-  const [excluded, setExcluded] = useState<Set<string>>(new Set());
   const [lastBrief, setLastBrief] = useState<TourBrief | undefined>(undefined);
 
   // ?sample=1 starts the showcase unless the provider already holds a sample run
@@ -106,10 +105,9 @@ export default function TourBoard() {
     if (state.source !== "sample") run(wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantLong ? "long" : "default" });
   }, [wantSample, wantLong, state.source, run]);
 
-  // A new run starts clean: no stale selection or shortlist exclusions.
+  // A new run starts clean: no stale selection (the provider's reducer clears the shortlist on start).
   useEffect(() => {
     if (state.status !== "streaming") return;
-    setExcluded(new Set());
     setSelectedId(null);
     setWhyId(null);
   }, [state.status, state.brief]);
@@ -122,8 +120,10 @@ export default function TourBoard() {
 
   const sorted = useMemo(() => sortCities(state.cities, mode), [state.cities, mode]);
   const counts = useMemo(() => summarize(state.cities), [state.cities]);
-  const eligible = useMemo(() => sorted.filter((c) => SHORTLIST_VERDICTS.has(c.verdict)), [sorted]);
-  const shortlisted = eligible.filter((c) => !excluded.has(c.id));
+  const eligible = useMemo(() => sortCities(state.cities, "winnability").filter((c) => SHORTLIST_VERDICTS.has(c.verdict)), [state.cities]);
+  const maxStops = state.brief?.maxStops ?? 8;
+  const atCap = shortlist.length >= maxStops;
+  const bookHref = `/tours/book${state.source === "sample" ? "?sample=1" : ""}`;
   const selected = state.cities.find((c) => c.id === selectedId);
   const whyCity = state.cities.find((c) => c.id === whyId);
   const summaryCity = selected ?? eligible.find((c) => c.verdict === "hidden_goldmine") ?? sorted[0];
@@ -258,7 +258,7 @@ export default function TourBoard() {
   const footer = state.cities.length > 0 && (
     <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 flex items-center gap-3 bg-canvas-raised px-3 py-2 lg:bottom-0 lg:justify-between lg:py-3">
       <span className="hidden min-w-0 text-[13px] text-canvas-muted lg:block">
-        {shortlisted.length} {shortlisted.length === 1 ? "market" : "markets"} shortlisted
+        {shortlist.length} {shortlist.length === 1 ? "market" : "markets"} shortlisted
       </span>
       <button type="button" disabled={eligible.length === 0} onClick={() => setBuildOpen(true)} className="btn-gold inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:flex-none">
         Build tour<ArrowRight size={16} className="hidden lg:block" aria-hidden />
@@ -295,22 +295,34 @@ export default function TourBoard() {
           {eligible.length === 0 ? (
             <p className="text-[14px] text-canvas-muted">No Play or Hidden goldmine markets in this run.</p>
           ) : (
-            <ul className="flex flex-col gap-0.5">
-              {eligible.map((c) => (
-                <li key={c.id}>
-                  <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-[8px] bg-paper-raised px-3">
-                    <input
-                      type="checkbox"
-                      checked={!excluded.has(c.id)}
-                      onChange={() => setExcluded((prev) => { const n = new Set(prev); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })}
-                      className="size-5 accent-[#ffcc00]"
-                    />
-                    <span className="min-w-0 flex-1 truncate text-[15px] text-canvas-text">{c.name}</span>
-                    <VerdictChip verdict={c.verdict} />
-                  </label>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="text-[13px] tabular-nums text-canvas-muted">{shortlist.length} of max {maxStops} stops</p>
+              <ul className="flex flex-col gap-0.5">
+                {eligible.map((c) => {
+                  const checked = shortlist.includes(c.id);
+                  const blocked = !checked && atCap;
+                  return (
+                    <li key={c.id}>
+                      <label className={`flex min-h-11 items-center gap-3 rounded-[8px] bg-paper-raised px-3 ${blocked ? "opacity-60" : "cursor-pointer"}`}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={blocked}
+                          onChange={() => toggleShortlist(c.id)}
+                          className="size-5 accent-[#ffcc00]"
+                        />
+                        <span className="min-w-0 flex-1 truncate text-[15px] text-canvas-text">{c.name}</span>
+                        <VerdictChip verdict={c.verdict} />
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+              {eligible.some((c) => !shortlist.includes(c.id)) && atCap && <p className="text-[13px] text-canvas-muted">Max stops reached — raise it in the brief</p>}
+              {shortlist.length > 0
+                ? <Link to={bookHref} className="btn-gold inline-flex h-12 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10">Open Tour Book</Link>
+                : <button type="button" disabled className="btn-gold inline-flex h-12 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10">Open Tour Book</button>}
+            </>
           )}
           <Link to="/insights" className={secondaryBtn}>Compare in Taste Insights</Link>
         </div>

@@ -155,7 +155,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <TourGuide active={tourActive} onClose={() => setTourActive(false)} />
 
       {isDesktop ? (
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-canvas-raised px-8">
+        <header data-app-shell className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-canvas-raised px-8">
           <div className="flex items-center gap-8">
             <div className="flex items-baseline gap-2">
               <span className="font-title text-[18px] font-semibold text-bone">Tour Intelligence</span>
@@ -187,6 +187,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
       ) : (
         <nav
+          data-app-shell
           aria-label="Primary"
           className="fixed inset-x-0 bottom-0 z-40 bg-canvas-raised pb-[env(safe-area-inset-bottom)]"
         >
