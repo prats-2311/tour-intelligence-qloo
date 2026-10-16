@@ -374,7 +374,10 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 | `brandkit` | Devpost thumbnail / gallery brand board |
 Not used: `gpt-tasteskill` (scroll-GSAP marketing pages), `minimalist-skill` (conflicts with the committed dark identity).
 
+**Selected directions (2026-10-16, Prateek):** reference screens live in `docs/design/stitch/` (fixed HTML + PNG; originals kept as `*.original.*`). Landing = desktop **v2** (v1 dropped). Tour Board (mobile + desktop), Taste Insights (desktop) and City Playbook (desktop) approved with the review fixes applied. Claude Design comparison skipped. Headline copy: "Win their city." (full tagline on the Book cover). Fonts: Fraunces is the intended display serif (Stitch substituted Newsreader for generation only).
+
 **Anti-"AI look" rules (acceptance criteria for every screen):**
+- No invented technical labels, version strings or metrics ("engine v4.x", "tier-2 fallback", margins, velocities, "LIVE" dots). Every number and status on screen must come from real data or a real event.
 - One committed identity, not defaults: Premiere Noir's marquee-meets-call-sheet language (Fraunces display + JetBrains Mono labels + Inter body). No stock shadcn look, no purple/indigo gradients, no generic glassmorphism, no emoji-as-icons, no "centered hero + three feature cards".
 - Speak the touring industry's language in layout and copy: advance sheets, routing boards, boxscores, settlement-style tables, tour-poster key art — not generic SaaS dashboards. Microcopy written for promoters ("Hold", "Avails", "Market heat"), never marketing filler.
 - Real data density with clear hierarchy (Pollstar/Bloomberg-terminal confidence), asymmetric grids, purposeful whitespace; every chart earns its place (dataviz rules).
