@@ -20,14 +20,14 @@ const card = (k: Card["kind"]) => cards.find((c) => c.kind === k)!;
 describe("playbook cards", () => {
   it("shows verified claims and a per-card badge that opens the audit", () => {
     let opened = false;
-    render(<PlaybookCard accent="#ff00aa" meta="GDL · SPONSORS" title="Sponsors" claims={narrative.status === "ok" ? narrative.cards.sponsors : undefined} narrativeStatus="ok" refsCount={1} onAudit={() => { opened = true; }}><p>body</p></PlaybookCard>);
+    render(<PlaybookCard accent="#ff00aa" meta="GDL · SPONSORS" title="Sponsors" claims={narrative.status === "ok" ? narrative.cards.sponsors : undefined} narrativeStatus="ok" refsCount={1} hasEvidence onAudit={() => { opened = true; }}><p>body</p></PlaybookCard>);
     expect(screen.getByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "2 verified · 1 removed" }));
     expect(opened).toBe(true);
     expect(screen.getByText("Qloo · 1 request")).toBeTruthy();
   });
   it("says the narrative was removed when no claim passed but evidence exists", () => {
-    render(<PlaybookCard accent="#ff00aa" meta="m" title="Venue fit" claims={{ verified: [], removed: [] }} narrativeStatus="ok" refsCount={1}><p>evidence</p></PlaybookCard>);
+    render(<PlaybookCard accent="#ff00aa" meta="m" title="Venue fit" claims={{ verified: [], removed: [] }} narrativeStatus="ok" refsCount={1} hasEvidence><p>evidence</p></PlaybookCard>);
     expect(screen.getByText("Narrative removed: no claim passed verification.")).toBeTruthy();
     expect(screen.getByText("evidence")).toBeTruthy();
   });
@@ -41,14 +41,18 @@ describe("playbook cards", () => {
     expect(screen.getByRole("link").className).toContain("min-w-11");
   });
   it("shows evidence only (no claim list) when the narrative is unavailable", () => {
-    render(<PlaybookCard accent="#ff00aa" meta="m" title="Sponsors" narrativeStatus="unavailable" refsCount={1}><p>evidence</p></PlaybookCard>);
+    render(<PlaybookCard accent="#ff00aa" meta="m" title="Sponsors" narrativeStatus="unavailable" refsCount={1} hasEvidence><p>evidence</p></PlaybookCard>);
     expect(screen.queryByText(/verified/)).toBeNull();
     expect(screen.getByText("evidence")).toBeTruthy();
   });
   it("shows a skeleton line while the narrative is pending", () => {
-    const { container } = render(<PlaybookCard accent="#ff00aa" meta="m" title="Sponsors" narrativeStatus="pending" refsCount={2}><p>evidence</p></PlaybookCard>);
+    const { container } = render(<PlaybookCard accent="#ff00aa" meta="m" title="Sponsors" narrativeStatus="pending" refsCount={2} hasEvidence><p>evidence</p></PlaybookCard>);
     expect(container.querySelector(".skeleton")).toBeTruthy();
     expect(screen.getByText("Qloo · 2 requests")).toBeTruthy();
+  });
+  it("omits the Qloo source chip for a card with no Qloo requests (This week is web context)", () => {
+    render(<PlaybookCard accent="#ff00aa" meta="m" title="This week" narrativeStatus="unavailable" refsCount={0} hasEvidence><p>web</p></PlaybookCard>);
+    expect(screen.queryByText(/Qloo ·/)).toBeNull();
   });
   it("badge is a 44px button only when something was removed", () => {
     const { unmount } = render(<ClaimsBadge verified={3} removed={0} />);

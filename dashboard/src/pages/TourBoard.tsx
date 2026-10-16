@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, CircleAlert, History, Square } from "lucide-react";
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { BriefForm } from "@/components/qloo/BriefForm";
 import { CityRow, ROW_COLS_LG } from "@/components/qloo/CityRow";
@@ -85,6 +85,7 @@ export default function TourBoard() {
   const { state, run, abort, reset } = useTourBoard();
   const reduce = useReducedMotion();
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const sampleParam = params.get("sample");
   const wantLong = sampleParam === "long";
   const wantSample = sampleParam === "1" || wantLong;
@@ -129,7 +130,7 @@ export default function TourBoard() {
 
   const retry = () => { if (state.brief) run(state.brief, { sample: state.source === "sample", sampleSet: wantLong ? "long" : "default" }); };
   const showcase = () => run(SAMPLE_BRIEF, { sample: true });
-  const openRow = (id: string) => { setSelectedId(id); setWhyId(id); };
+  const openRow = (id: string) => navigate(`/tours/playbook/${id}${state.source === "sample" ? "?sample=1" : ""}`);
   const selectFromMap = (id: string) => {
     setSelectedId(id);
     document.getElementById(`city-row-${id}`)?.scrollIntoView?.({ block: "nearest", behavior: reduce ? "auto" : "smooth" });

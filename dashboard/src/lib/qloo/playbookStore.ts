@@ -6,6 +6,7 @@ export interface PlaybookRequest { artist: string; artistEntityId: string; city:
 
 const states = new Map<string, PlaybookState>();
 const inflight = new Map<string, Promise<PlaybookState>>();
+let epoch = 0; // bumped by resetPlaybooks so a job still running in the background cannot repopulate the cleared store
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
@@ -15,7 +16,7 @@ const keyOf = (r: PlaybookRequest) => playbookKey(r.artistEntityId, r.city.id);
 
 export function getPlaybook(key: string): PlaybookState | undefined { return states.get(key); }
 
-function put(key: string, s: PlaybookState): PlaybookState { states.set(key, s); notify(); return s; }
+function putState(key: string, s: PlaybookState): PlaybookState { states.set(key, s); notify(); return s; }
 
 // No AbortController: playbooks are shared across pages and finish in the background, so a page
 // unmounting must not cancel a playbook another page is waiting for.
@@ -25,6 +26,8 @@ export function loadPlaybook(req: PlaybookRequest): Promise<PlaybookState> {
   if (existing?.status === "done") return Promise.resolve(existing);
   const pending = inflight.get(key);
   if (pending) return pending;
+  const born = epoch;
+  const put = (k: string, v: PlaybookState): PlaybookState => (born === epoch ? putState(k, v) : v);
   const job = (async () => {
     let s = put(key, playbookReducer(initialPlaybook, { type: "start", source: req.sample ? "sample" : "live" }));
     let terminal = false;
@@ -53,4 +56,4 @@ export function usePlaybook(req: PlaybookRequest | null): PlaybookState {
   return state;
 }
 
-export function resetPlaybooks(): void { states.clear(); inflight.clear(); notify(); }
+export function resetPlaybooks(): void { epoch++; states.clear(); inflight.clear(); notify(); }

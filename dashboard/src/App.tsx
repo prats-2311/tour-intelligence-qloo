@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { Dashboard } from "./pages/Dashboard";
 import { CampaignProvider } from "./lib/campaignContext";
-import { CityDetailSkeleton, CompareCitiesSkeleton, NewCampaignSkeleton, AddCitiesSkeleton, TasteInsightsSkeleton, TourBoardSkeleton } from "./components/ui/Skeletons";
+import { CityDetailSkeleton, CompareCitiesSkeleton, NewCampaignSkeleton, AddCitiesSkeleton, TasteInsightsSkeleton, TourBoardSkeleton, PlaybookSkeleton } from "./components/ui/Skeletons";
 import { WebMcpTools } from "./components/WebMcpTools";
 
 // Dashboard (/campaign) is loaded eagerly. Landing and every other route ship
@@ -14,6 +14,7 @@ function LandingSkeleton() {
 }
 const Landing = lazy(() => import("./pages/Landing"));
 const TourBoard = lazy(() => import("./pages/TourBoard"));
+const CityPlaybook = lazy(() => import("./pages/CityPlaybook"));
 const TasteInsights = lazy(() => import("./pages/TasteInsights"));
 const CityDetail = lazy(() => import("./pages/CityDetail").then((m) => ({ default: m.CityDetail })));
 const CompareCities = lazy(() => import("./pages/CompareCities").then((m) => ({ default: m.CompareCities })));
@@ -31,6 +32,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Suspense fallback={<LandingSkeleton />}><Landing /></Suspense>} />
           <Route path="/tours/board" element={<Suspense fallback={<TourBoardSkeleton />}><TourBoard /></Suspense>} />
+          <Route path="/tours/playbook/:cityId" element={<Suspense fallback={<PlaybookSkeleton />}><CityPlaybook /></Suspense>} />
           <Route path="/insights" element={<Suspense fallback={<TasteInsightsSkeleton />}><TasteInsights /></Suspense>} />
           <Route path="/campaign" element={<Dashboard />} />
           <Route

@@ -31,6 +31,12 @@ describe("playbookStore", () => {
     vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () { yield { type: "tool_call", tool: "qloo_recommend", args: {}, cached: false } as const; });
     expect((await loadPlaybook(gdl)).status).toBe("interrupted");
   });
+  it("a stream still running when the store is reset does not repopulate it", async () => {
+    const pending = loadPlaybook(gdl);
+    resetPlaybooks();
+    await pending;
+    expect(getPlaybook(playbookKey("sample-lumen-vale", "4005539"))).toBeUndefined();
+  });
   it("usePlaybook publishes streaming then done", async () => {
     const { result } = renderHook(() => usePlaybook(gdl));
     await waitFor(() => expect(result.current.status).toBe("done"));

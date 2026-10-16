@@ -23,11 +23,13 @@ function ProofCard() {
     return `Ranked ${ordinal(rank("density"))} on fan density alone. ${ordinal(rank("winnability"))} on winnability.`;
   }, []);
   return (
-    <section aria-label="Guadalajara sample routing row" className="-mx-4 bg-paper px-4 py-4 lg:mx-0 lg:rounded-[18px] lg:p-5">
+    <section aria-label="Guadalajara sample routing row" className="relative -mx-4 bg-paper px-4 py-4 hover:bg-paper-raised lg:mx-0 lg:rounded-[18px] lg:p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-baseline gap-2">
-            <h2 className="font-title text-[20px] leading-tight text-bone lg:text-[22px]">{GDL.name}</h2>
+            <h2 className="font-title text-[20px] leading-tight text-bone lg:text-[22px]">
+              <Link to={`/tours/playbook/${GDL.id}?sample=1`} className="outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-gold lg:after:rounded-[18px]">{GDL.name}</Link>
+            </h2>
             <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-canvas-muted">{GDL.country}</span>
           </div>
           <div className="mt-2"><SampleBanner compact /></div>

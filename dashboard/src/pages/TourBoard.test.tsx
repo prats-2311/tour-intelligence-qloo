@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import * as client from "@/lib/qloo/client";
@@ -19,6 +19,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const PlaybookStub = () => <p>playbook {useParams().cityId}</p>;
 const Where = () => <span data-testid="search">{useLocation().search}</span>;
 const wrap = (page: React.ReactNode, url: string) => (
   <TourBoardProvider sampleDelayMs={0}><MemoryRouter initialEntries={[url]} key={url}>{page}<Where /></MemoryRouter></TourBoardProvider>
@@ -52,11 +53,26 @@ describe("TourBoard", () => {
     const rows = screen.getAllByTestId("city-row");
     expect(within(rows[5]!).getByText("Guadalajara")).toBeTruthy();
   });
-  it("opens Why this score? for a row", async () => {
+  it("opens Why this score? from the footer action", async () => {
     renderPage();
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
-    fireEvent.click(within(screen.getAllByTestId("city-row")[2]!).getByText("Guadalajara"));
-    expect(await screen.findByRole("dialog", { name: /Guadalajara/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Why this score?" }));
+    expect(await screen.findByRole("dialog", { name: /why this score/i })).toBeTruthy();
+  });
+  it("tapping a city row opens its playbook (sample query kept)", async () => {
+    render(
+      <TourBoardProvider sampleDelayMs={0}>
+        <MemoryRouter initialEntries={["/tours/board?sample=1"]}>
+          <Routes>
+            <Route path="/tours/board" element={<TourBoard />} />
+            <Route path="/tours/playbook/:cityId" element={<><PlaybookStub /><Where /></>} />
+          </Routes>
+        </MemoryRouter>
+      </TourBoardProvider>,
+    );
+    fireEvent.click(await screen.findByRole("button", { name: /^Guadalajara/ }));
+    expect(await screen.findByText("playbook 4005539")).toBeTruthy();
+    expect(screen.getByTestId("search").textContent).toBe("?sample=1");
   });
   it("shows the needs_input picker and re-runs with the chosen id", async () => {
     const spy = vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {

@@ -32,6 +32,10 @@ describe("Landing", () => {
     expect(screen.queryByText("Affinity signal from aggregate taste data — not a ticket forecast.")).toBeNull();
     expect(screen.queryByText(/\blive\b/i)).toBeNull();
   });
+  it("the Guadalajara proof card links to its sample playbook", () => {
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    expect(screen.getByRole("link", { name: /Guadalajara/ }).getAttribute("href")).toBe("/tours/playbook/4005539?sample=1");
+  });
   it("shows the fixture's winnability, never a filler", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
     const card = screen.getByRole("region", { name: "Guadalajara sample routing row" });
