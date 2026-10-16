@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SAMPLE_CITIES } from "./fixtures/lumenVale";
-import { boundsFor, cityMarkers, linear, MAP_STYLE_URL, matrixPoints, shouldRefit, tintFor } from "./geometry";
+import { boundsFor, cityMarkers, linear, MAP_STYLE_URL, matrixPoints, nearestPoint, shouldRefit, tintFor } from "./geometry";
 
 describe("map geometry", () => {
   it("markers use lon,lat and label only play/goldmine", () => {
@@ -50,5 +50,23 @@ describe("chart geometry", () => {
     expect(pts[0]).toMatchObject({ name: "Guadalajara", verdict: "hidden_goldmine" });
     expect(pts[0]!.x).toBeCloseTo(134);
     expect(pts[0]!.y).toBeCloseTo(46);
+  });
+});
+
+describe("nearestPoint hit testing", () => {
+  const pts = matrixPoints(SAMPLE_CITIES, { w: 480, h: 320, pad: 36 });
+  const at = (name: string) => pts.find((p) => p.name === name)!;
+  it("returns the point under an exact click, even when neighbours are close", () => {
+    expect(nearestPoint(pts, at("Rio de Janeiro").x, at("Rio de Janeiro").y, 30)).toBe(at("Rio de Janeiro").id);
+    expect(nearestPoint(pts, at("Austin").x, at("Austin").y, 30)).toBe(at("Austin").id);
+  });
+  it("midway picks the nearer point", () => {
+    const a = at("Rio de Janeiro"), b = at("Austin");
+    expect(nearestPoint(pts, a.x + (b.x - a.x) * 0.4, a.y + (b.y - a.y) * 0.4, 100)).toBe(a.id);
+    expect(nearestPoint(pts, a.x + (b.x - a.x) * 0.6, a.y + (b.y - a.y) * 0.6, 100)).toBe(b.id);
+  });
+  it("returns null when nothing is within maxDist", () => {
+    expect(nearestPoint(pts, -500, -500, 30)).toBeNull();
+    expect(nearestPoint([], 0, 0, 30)).toBeNull();
   });
 });

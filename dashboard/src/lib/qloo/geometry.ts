@@ -90,3 +90,14 @@ export function dataQuality(log: GatewayEvent[]) {
     errors: results.filter((r) => r.status === "error").length,
   };
 }
+
+/** Id of the point closest to (x, y) within maxDist (same units), else null. */
+export function nearestPoint(points: Array<{ id: string; x: number; y: number }>, x: number, y: number, maxDist: number): string | null {
+  let best: string | null = null;
+  let bestD = Infinity;
+  for (const p of points) {
+    const d = Math.hypot(p.x - x, p.y - y);
+    if (d <= maxDist && d < bestD) { best = p.id; bestD = d; }
+  }
+  return best;
+}

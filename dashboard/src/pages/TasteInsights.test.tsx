@@ -3,7 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
-import { SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
+import { matrixPoints } from "@/lib/qloo/geometry";
+import { SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import TasteInsights from "./TasteInsights";
 
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
@@ -99,12 +100,17 @@ describe("TasteInsights", () => {
     expect(screen.queryAllByTestId("matrix-point")).toHaveLength(0);
     expect(within(screen.getByTestId("matrix-table")).getAllByRole("row")).toHaveLength(11);
   });
-  it("matrix toggle and point hit areas are at least 44px", async () => {
+  it("matrix toggle is at least 44px and clicks resolve to the nearest point", async () => {
     await seeded();
     expect(screen.getByRole("button", { name: "Table" }).className).toMatch(/\bh-11\b/);
-    const hit = screen.getAllByTestId("matrix-point")[0]!.querySelector("circle")!;
-    // viewBox 480 rendered at >= ~320px wide => scale >= 0.66; 44px needs r >= 33
-    expect(Number(hit.getAttribute("r"))).toBeGreaterThanOrEqual(33);
+    const overlay = screen.getByTestId("matrix-overlay");
+    const svg = overlay.closest("svg")!;
+    vi.spyOn(svg, "getBoundingClientRect").mockReturnValue({ left: 0, top: 0, width: 480, height: 320, right: 480, bottom: 320, x: 0, y: 0, toJSON() {} });
+    const rio = matrixPoints(SAMPLE_CITIES, { w: 480, h: 320, pad: 36 }).find((p) => p.name === "Rio de Janeiro")!;
+    fireEvent.click(overlay, { clientX: rio.x, clientY: rio.y });
+    const sel = screen.getAllByTestId("matrix-point").find((g) => g.getAttribute("aria-pressed") === "true")!;
+    expect(sel.getAttribute("data-city-id")).toBe(rio.id);
+    expect(sel.getAttribute("aria-label")).toMatch(/Rio de Janeiro/);
   });
   it("mobile shows a Filters (n) button opening a sheet", async () => {
     desktop = false;

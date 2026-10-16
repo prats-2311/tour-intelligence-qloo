@@ -1,6 +1,6 @@
-import { useId, useState, type KeyboardEvent } from "react";
+import { useId, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { VERDICT_LABEL, VerdictChip } from "@/components/qloo/VerdictChip";
-import { linear, matrixPoints, QUADRANTS } from "@/lib/qloo/geometry";
+import { linear, matrixPoints, nearestPoint, QUADRANTS } from "@/lib/qloo/geometry";
 import type { ScoredCity, Verdict } from "@/lib/qloo/types";
 
 const W = 480, H = 320, PAD = 36;
@@ -36,6 +36,7 @@ function summary(cities: ScoredCity[], plotted: number): string {
 export function WinnabilityMatrix({ cities, selectedId, onSelect, calls, onReset }: { cities: ScoredCity[]; selectedId: string | null; onSelect: (id: string) => void; calls: number; onReset: () => void }) {
   const [view, setView] = useState<"matrix" | "table">("matrix");
   const capId = useId();
+  const svgRef = useRef<SVGSVGElement>(null);
   const pts = matrixPoints(cities, { w: W, h: H, pad: PAD });
   const sx = linear([0, 100], [PAD, W - PAD]);
   const sy = linear([0, 100], [H - PAD, PAD]);
@@ -43,6 +44,15 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls, onReset
   const [a1, a2, a3] = QUADRANTS.activation;
   const zone = (x0: number, x1: number, y0: number, y1: number, fill: string) =>
     <rect x={sx(x0)} y={sy(y1)} width={sx(x1) - sx(x0)} height={sy(y0) - sy(y1)} fill={fill} />;
+  // Pointer hits resolve to the nearest point within 22 CSS px, so close neighbours never shadow each other.
+  const pickNearest = (e: MouseEvent) => {
+    const box = svgRef.current?.getBoundingClientRect();
+    const scale = box && box.width > 0 ? box.width / W : 1;
+    const x = (e.clientX - (box?.left ?? 0)) / scale;
+    const y = (e.clientY - (box?.top ?? 0)) / scale;
+    const id = nearestPoint(pts, x, y, 22 / scale);
+    if (id) onSelect(id);
+  };
   const keyActivate = (id: string) => (e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(id); } };
   const tab = (on: boolean) => `h-11 min-w-14 rounded-[6px] px-3 text-[13px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${on ? "bg-paper-raised text-canvas-text" : "text-canvas-muted hover:text-canvas-text"}`;
   const zoneText = { fontSize: 10, fill: "var(--color-canvas-muted)", letterSpacing: "0.08em" } as const;
@@ -71,7 +81,7 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls, onReset
       ) : view === "matrix" ? (
         <figure role="group" aria-labelledby={capId} className="m-0">
         <figcaption id={capId} className="sr-only">{summary(cities, pts.length)}</figcaption>
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full rounded-[10px] bg-canvas">
+        <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="h-auto w-full rounded-[10px] bg-canvas">
           {zone(h1, h2, a3, 100, "rgba(255,204,0,0.10)")}
           {zone(h2, 100, a2, 100, "rgba(15,157,138,0.10)")}
           {zone(h2, 100, 0, a1, "rgba(232,96,111,0.10)")}
@@ -90,6 +100,7 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls, onReset
           <text x={sx(0) + 4} y={sy(0) - 6} {...zoneText}>CONSIDER / SKIP</text>
           <text x={W / 2} y={H - 4} textAnchor="middle" fontSize={11} fill="var(--color-canvas-muted)">Fan heat →</text>
           <text transform={`translate(10 ${H / 2}) rotate(-90)`} textAnchor="middle" fontSize={11} fill="var(--color-canvas-muted)">Activation →</text>
+          <rect data-testid="matrix-overlay" x={0} y={0} width={W} height={H} fill="transparent" onClick={pickNearest} />
           {pts.map((p) => {
             const on = p.id === selectedId;
             const labelled = p.verdict === "play" || p.verdict === "hidden_goldmine";
@@ -104,11 +115,10 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls, onReset
                 aria-pressed={on}
                 aria-label={`${p.name}: ${VERDICT_LABEL[p.verdict]}`}
                 transform={`translate(${p.x} ${p.y})`}
-                className="cursor-pointer outline-none focus-visible:[&>circle:first-child]:stroke-gold"
+                className="cursor-pointer focus-visible:outline-2 focus-visible:outline-gold"
                 onClick={() => onSelect(p.id)}
                 onKeyDown={keyActivate(p.id)}
               >
-                <circle r={36} fill="transparent" stroke="none" />
                 <Mark verdict={p.verdict} selected={on} />
                 {labelled && (
                   <text x={flip ? -12 : 12} y={4} textAnchor={flip ? "end" : "start"} fontSize={12} fontWeight={600} fill="var(--color-canvas-text)" stroke="var(--color-canvas)" strokeWidth={3} paintOrder="stroke">{p.name}</text>
