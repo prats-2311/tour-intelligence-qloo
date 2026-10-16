@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en" style="background-color: #1c1b18 !important; min-height: 100vh; color: #f2f0ea;"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tour Intelligence × Qloo</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Fraunces, JetBrains Mono, Inter, Public Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600;700&amp;family=Public+Sans:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            'canvas': '#1c1b18',
+            'canvas-raised': '#26251f',
+            'paper': '#282722',
+            'paper-raised': '#32312a',
+            'canvas-line': 'rgba(240, 238, 230, 0.09)',
+            'canvas-text': '#f2f0ea',
+            'canvas-muted': '#a4a094',
+            'ink': '#f0eee6',
+            'ink-muted': 'rgba(240, 238, 230, 0.58)',
+            'gold': '#ffcc00',
+            'gold-soft': '#ffe066',
+            'gold-press': '#efb900',
+            'on-gold': '#1d1a10',
+            'bone': '#e9e4d6',
+            'verdict-play': '#0f9d8a',
+            'verdict-play-text': '#5fd3be',
+            'verdict-goldmine': '#ffcc00',
+            'verdict-goldmine-mark': '#b88a00',
+            'verdict-derisk': '#e8606f',
+            'verdict-derisk-text': '#ff9aa4',
+            'verdict-consider': '#5a86e8',
+            'verdict-consider-text': '#a8c0f4',
+            'verdict-skip': '#8b877c',
+            'verdict-skip-text': '#bdb8ab',
+            'map-land': '#1f1e1a',
+            'map-water': '#151410',
+            'map-road': 'rgba(240, 238, 230, 0.07)',
+            'map-label': '#7d796f'
+          },
+          fontFamily: {
+            headline: ["Fraunces", "serif"],
+            display: ["Fraunces", "serif"],
+            body: ["Inter", "sans-serif"],
+            label: ["Public Sans", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          },
+          borderRadius: {
+            sm: '4px',
+            md: '8px',
+            lg: '10px',
+            xl: '14px',
+            '2xl': '18px',
+            full: '9999px'
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      background-color: #1c1b18;
+      color: #f2f0ea;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-feature-settings: 'tnum' on, 'cv11' on;
+    }
+
+    /* Ambient Gold House Light (7% opacity) */
+    .house-light-glow {
+      background: radial-gradient(circle at 90% 10%, rgba(255, 204, 0, 0.07) 0%, rgba(28, 27, 24, 0) 65%);
+    }
+
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden house-light-glow flex flex-col justify-between selection:bg-gold selection:text-on-gold" style="background-color: #1c1b18 !important; min-height: 100vh; color: #f2f0ea; background: radial-gradient(circle at 85% 15%, rgba(255, 204, 0, 0.07) 0%, transparent 60%), #1c1b18 !important;">
+<!-- Desktop Top Bar (Shared Component Anchor strictly mapped) -->
+<header class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 w-full h-14 bg-canvas-raised border-b border-canvas-line">
+<div class="flex items-center gap-3">
+<span class="font-display text-lg font-semibold text-bone tracking-tight">Tour Intelligence</span>
+<span class="font-body text-xs font-normal text-canvas-muted">× Qloo</span>
+</div>
+<!-- Web Navigation Clusters -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="font-body text-sm font-medium text-bone hover:text-gold transition-colors duration-150 relative py-1 after:absolute after:bottom-[-16px] after:left-0 after:right-0 after:h-[2px] after:bg-gold" href="#">Discover</a>
+<a class="font-body text-sm font-normal text-canvas-muted hover:text-gold transition-colors duration-150 py-1" href="#">Tours</a>
+<a class="font-body text-sm font-normal text-canvas-muted hover:text-gold transition-colors duration-150 py-1" href="#">Insights</a>
+<a class="font-body text-sm font-normal text-canvas-muted hover:text-gold transition-colors duration-150 py-1" href="#">Proof</a>
+</nav>
+<!-- Trailing Action -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-paper-raised">
+<span class="material-symbols-outlined text-[14px] text-canvas-muted" data-icon="radio">radio</span>
+<span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-canvas-muted">Qloo · Live</span>
+</div>
+</div>
+</header>
+<!-- Main Content Layout (12-Column Asymmetric Viewport) -->
+<main class="w-full max-w-[1240px] mx-auto px-6 pt-24 pb-16 flex-1 flex flex-col justify-center" style="background-color: #1c1b18 !important; color: #f2f0ea;">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+<!-- LEFT SIDE (Columns 1–5, width ~42%): The Promoters Pitch -->
+<section class="lg:col-span-5 flex flex-col justify-center pt-4 lg:pt-8">
+<h1 class="font-display text-[72px] lg:text-[88px] font-medium leading-[0.95] tracking-[-0.03em] text-canvas-text mb-6" style="color: #f2f0ea !important;">
+          Win<br/>their city.
+        </h1>
+<p class="font-body text-[17px] font-normal leading-relaxed text-canvas-muted max-w-[420px] mb-8" style="color: #a4a094 !important;">
+          Find the cities where your artist can win, then get the sponsor, venue and promo plan for each one. Built on Qloo taste data.
+        </p>
+<!-- CTA Action Cluster -->
+<div class="flex flex-wrap items-center gap-4 mb-6">
+<button class="bg-gold hover:bg-gold-soft active:bg-gold-press text-on-gold font-body text-sm font-semibold px-6 py-3.5 rounded-lg transition-colors flex items-center justify-center min-h-[48px] focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-canvas shadow-none">
+            Try the showcase tour
+          </button>
+<button class="bg-paper-raised hover:bg-[#3d3c33] active:bg-[#282722] text-canvas-text font-body text-sm font-medium px-6 py-3.5 rounded-lg transition-colors flex items-center justify-center min-h-[48px] focus:outline-none focus:ring-1 focus:ring-canvas-line">
+            Plan your own
+          </button>
+</div>
+<!-- Integrity Safeguard Notice -->
+<p class="font-body text-[13px] leading-normal text-canvas-muted" style="color: #a4a094 !important;">
+          Affinity signal from aggregate taste data — not a ticket forecast.
+          <a class="text-canvas-text underline hover:text-gold transition-colors ml-1 font-medium" href="#">See the backtest</a>
+</p>
+</section>
+<!-- RIGHT SIDE (Columns 6–12, width ~58%): Terminal Map & Live Advance Sheet -->
+<section class="lg:col-span-7 flex flex-col gap-6">
+<!-- CARTO Warm Dark Map Panel -->
+<div class="relative w-full h-[460px] bg-map-water rounded-2xl overflow-hidden border border-canvas-line">
+<!-- Stylized Dark Vector Map SVG -->
+<svg class="w-full h-full object-cover" fill="none" viewbox="0 0 700 460" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Hexbin Pattern definition -->
+<pattern height="41.569" id="hex-pattern" patterntransform="scale(0.8)" patternunits="userSpaceOnUse" width="24">
+<path d="M12 0L24 6.928V20.785L12 27.713L0 20.785V6.928L12 0Z" fill="none" stroke="rgba(240, 238, 230, 0.05)" stroke-width="0.75"></path>
+<path d="M12 27.713L24 34.641V48.498L12 55.426L0 48.498V34.641L12 27.713Z" fill="none" stroke="rgba(240, 238, 230, 0.05)" stroke-width="0.75"></path>
+</pattern>
+</defs>
+<!-- Warm Dark Landmass Shapes (North & South America Corridor) -->
+<!-- North America / US / Mexico Base -->
+<path d="M60 40 L340 30 L400 90 L380 140 L330 180 L250 250 L200 280 L180 270 L140 210 L100 180 L50 120 Z" fill="#1f1e1a"></path>
+<!-- Central America Isthmus -->
+<path d="M250 250 L280 270 L320 300 L300 320 L270 290 Z" fill="#1f1e1a"></path>
+<!-- South America Continent -->
+<path d="M310 290 L420 280 L560 330 L590 390 L520 450 L400 455 L340 400 L320 330 Z" fill="#1f1e1a"></path>
+<!-- Hexbin Grid Overlay across land -->
+<rect fill="url(#hex-pattern)" height="460" width="700"></rect>
+<!-- Regional Heat Clusters (Hex Ramp Bone Fills) -->
+<!-- Mexico Cluster Heat -->
+<path d="M175 220 L195 210 L215 220 L215 240 L195 250 L175 240 Z" fill="#736e60" fill-opacity="0.35"></path>
+<path d="M195 210 L215 200 L235 210 L235 230 L215 240 L195 230 Z" fill="#958f7f" fill-opacity="0.45"></path>
+<path d="M185 235 L205 225 L225 235 L225 255 L205 265 L185 255 Z" fill="#bab3a1" fill-opacity="0.5"></path>
+<!-- Brazil Cluster Heat -->
+<path d="M480 340 L500 330 L520 340 L520 360 L500 370 L480 360 Z" fill="#736e60" fill-opacity="0.4"></path>
+<path d="M500 355 L520 345 L540 355 L540 375 L520 385 L500 375 Z" fill="#bab3a1" fill-opacity="0.55"></path>
+<path d="M470 370 L490 360 L510 370 L510 390 L490 400 L470 390 Z" fill="#e9e4d6" fill-opacity="0.4"></path>
+<!-- Routing Flight Arch Path: Guadalajara -> Curitiba -->
+<path d="M188 232 Q 330 190 488 388" fill="none" stroke="#ffcc00" stroke-dasharray="4 4" stroke-opacity="0.8" stroke-width="1.75"></path>
+<!-- City Markers with Precise Verdict Shapes -->
+<!-- Chicago (Skip: Grey 'x') -->
+<g transform="translate(240, 80)">
+<line stroke="#8b877c" stroke-width="1.75" x1="-3" x2="3" y1="-3" y2="3"></line>
+<line stroke="#8b877c" stroke-width="1.75" x1="3" x2="-3" y1="-3" y2="3"></line>
+</g>
+<!-- Los Angeles (De-risk: Coral Triangle) -->
+<g transform="translate(100, 115)">
+<polygon fill="#e8606f" points="0,-5 5,4 -5,4" stroke="#1c1b18" stroke-width="1.5"></polygon>
+</g>
+<!-- Austin (Consider: Steel Blue Ring) -->
+<g transform="translate(195, 140)">
+<circle cx="0" cy="0" fill="none" r="4" stroke="#5a86e8" stroke-width="1.75"></circle>
+</g>
+<!-- Monterrey (Consider: Steel Blue Ring) -->
+<g transform="translate(190, 185)">
+<circle cx="0" cy="0" fill="none" r="4" stroke="#5a86e8" stroke-width="1.75"></circle>
+</g>
+<!-- Mexico City (Play: Teal Circle) -->
+<g transform="translate(210, 245)">
+<circle cx="0" cy="0" fill="#0f9d8a" r="4.5" stroke="#1c1b18" stroke-width="1.5"></circle>
+</g>
+<!-- GUADALAJARA (Hidden Goldmine: Gold Solid Diamond + Active Ring + Label) -->
+<g transform="translate(188, 232)">
+<!-- Selection pulse circle -->
+<circle cx="0" cy="0" fill="none" r="10" stroke="#ffcc00" stroke-opacity="0.4" stroke-width="1"></circle>
+<!-- Outer boundary -->
+<circle cx="0" cy="0" fill="#1c1b18" r="6"></circle>
+<!-- Diamond -->
+<polygon fill="#ffcc00" points="0,-4.5 4.5,0 0,4.5 -4.5,0"></polygon>
+<!-- Marker Label -->
+<text fill="#f2f0ea" font-family="Fraunces, serif" font-size="12" font-weight="600" letter-spacing="-0.01em" x="14" y="3">Guadalajara</text>
+</g>
+<!-- Rio de Janeiro (Consider: Steel Blue Ring) -->
+<g transform="translate(540, 375)">
+<circle cx="0" cy="0" fill="none" r="4" stroke="#5a86e8" stroke-width="1.75"></circle>
+</g>
+<!-- São Paulo (Play: Teal Circle) -->
+<g transform="translate(515, 378)">
+<circle cx="0" cy="0" fill="#0f9d8a" r="4.5" stroke="#1c1b18" stroke-width="1.5"></circle>
+</g>
+<!-- CURITIBA (Hidden Goldmine: Gold Diamond + Label) -->
+<g transform="translate(488, 388)">
+<circle cx="0" cy="0" fill="#1c1b18" r="6"></circle>
+<polygon fill="#ffcc00" points="0,-4.5 4.5,0 0,4.5 -4.5,0"></polygon>
+<text fill="#f2f0ea" font-family="Fraunces, serif" font-size="12" font-weight="600" letter-spacing="-0.01em" x="14" y="3">Curitiba</text>
+</g>
+</svg>
+<!-- Map Technical Ledger Footer Overlay -->
+<div class="absolute bottom-3 left-4 right-4 flex items-center justify-between pointer-events-none">
+<span class="font-mono text-[10px] font-semibold tracking-wider text-[#706c62] uppercase">
+              CARTO Warm Dark · Taste Hexbins: Qloo Cultural Graph
+            </span>
+<div class="flex items-center gap-3">
+<span class="flex items-center gap-1 font-mono text-[10px] text-canvas-muted">
+<span class="w-2 h-2 rounded-full bg-verdict-play inline-block"></span> Play
+              </span>
+<span class="flex items-center gap-1 font-mono text-[10px] text-canvas-muted">
+<span class="w-2 h-2 rotate-45 bg-gold inline-block"></span> Goldmine
+              </span>
+<span class="flex items-center gap-1 font-mono text-[10px] text-canvas-muted">
+<span class="w-2 h-2 rounded-full border border-verdict-consider inline-block"></span> Consider
+              </span>
+</div>
+</div>
+</div>
+<!-- Signature Routing Row Card: Guadalajara Active Focal Node -->
+<article class="bg-paper rounded-2xl p-5 border border-canvas-line">
+<div class="flex flex-col gap-4">
+<!-- Top City & Verdict Header -->
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-baseline gap-2.5">
+<h3 class="font-display text-[22px] font-semibold text-canvas-text tracking-tight">Guadalajara</h3>
+<span class="font-mono text-[11px] font-semibold text-canvas-muted uppercase tracking-widest">MX</span>
+</div>
+<p class="font-body text-[13px] text-canvas-muted mt-0.5">
+                  Ranked 6th on fan density alone. 3rd on winnability.
+                </p>
+</div>
+<div class="flex items-center gap-4">
+<!-- Verdict Chip: Hidden Goldmine (Solid Gold Chip) -->
+<div class="bg-gold text-on-gold px-2.5 py-1 rounded-sm text-xs font-semibold flex items-center gap-1.5 h-6">
+<span class="material-symbols-outlined text-[13px]" data-icon="diamond" style="font-variation-settings: 'FILL' 1;">diamond</span>
+<span class="font-body text-[11px] font-semibold">Hidden goldmine</span>
+</div>
+<!-- Big KPI Score: Winnability -->
+<div class="text-right pl-2">
+<span class="font-mono text-4xl font-bold tracking-tight text-canvas-text leading-none">72</span>
+</div>
+</div>
+</div>
+<!-- Dual Bars: Fan Heat vs. Activation -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+<!-- Fan Heat Bar -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-xs">
+<span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-canvas-muted">Fan heat</span>
+<span class="font-mono text-[12px] font-bold text-bone">62<span class="text-canvas-muted font-normal text-[10px] ml-0.5">/100</span></span>
+</div>
+<div class="w-full h-[6px] bg-paper-raised rounded-full overflow-hidden">
+<div class="h-full bg-bone rounded-full transition-all duration-500" style="width: 62%;"></div>
+</div>
+</div>
+<!-- Activation Bar -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-xs">
+<span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-canvas-muted">Activation</span>
+<span class="font-mono text-[12px] font-bold text-gold">82<span class="text-canvas-muted font-normal text-[10px] ml-0.5">/100</span></span>
+</div>
+<div class="w-full h-[6px] bg-paper-raised rounded-full overflow-hidden">
+<div class="h-full bg-gold rounded-full transition-all duration-500" style="width: 82%;"></div>
+</div>
+</div>
+</div>
+</div>
+</article>
+</section>
+</div>
+</main>
+<!-- Mobile Bottom Navigation Shell (Filtered to Destination Level on Small Screens) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center h-16 w-full px-4 bg-canvas-raised border-t border-canvas-line">
+<a class="flex flex-col items-center justify-center text-bone relative before:absolute before:top-0 before:w-5 before:h-[3px] before:bg-gold py-1" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="explore">explore</span>
+<span class="font-label text-[11px] font-semibold uppercase tracking-wider mt-1">Discover</span>
+</a>
+<a class="flex flex-col items-center justify-center text-canvas-muted hover:text-bone transition-colors duration-150 py-1" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="alt_route">alt_route</span>
+<span class="font-label text-[11px] font-semibold uppercase tracking-wider mt-1">Tours</span>
+</a>
+<a class="flex flex-col items-center justify-center text-canvas-muted hover:text-bone transition-colors duration-150 py-1" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="forum">forum</span>
+<span class="font-label text-[11px] font-semibold uppercase tracking-wider mt-1">Strategist</span>
+</a>
+</nav>
+</body></html>

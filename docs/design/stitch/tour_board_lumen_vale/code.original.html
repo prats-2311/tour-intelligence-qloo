@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Tour Board · Lumen Vale · Premiere Noir</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600;700;800&amp;family=Public+Sans:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#1c1b18',
+            'canvas-raised': '#26251f',
+            paper: '#282722',
+            'paper-raised': '#32312a',
+            'canvas-line': 'rgba(240, 238, 230, 0.09)',
+            'canvas-text': '#f2f0ea',
+            'canvas-muted': '#a4a094',
+            ink: '#f0eee6',
+            'ink-muted': 'rgba(240, 238, 230, 0.58)',
+            gold: '#ffcc00',
+            'gold-soft': '#ffe066',
+            'gold-press': '#efb900',
+            'on-gold': '#1d1a10',
+            bone: '#e9e4d6',
+            'verdict-play': '#0f9d8a',
+            'verdict-play-text': '#5fd3be',
+            'verdict-goldmine': '#ffcc00',
+            'verdict-goldmine-mark': '#b88a00',
+            'verdict-derisk': '#e8606f',
+            'verdict-derisk-text': '#ff9aa4',
+            'verdict-consider': '#5a86e8',
+            'verdict-consider-text': '#a8c0f4',
+            'verdict-skip': '#8b877c',
+            'verdict-skip-text': '#bdb8ab'
+          },
+          fontFamily: {
+            headline: ["Fraunces", "serif"],
+            display: ["Fraunces", "serif"],
+            body: ["Inter", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"],
+            label: ["Public Sans", "sans-serif"]
+          },
+          borderRadius: {
+            'sm': '4px',
+            'md': '8px',
+            'lg': '10px',
+            'xl': '14px',
+            '2xl': '18px',
+            'full': '9999px'
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Global styles enforcing zero glare & tabular numbers */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #1c1b18;
+      color: #f2f0ea;
+      font-family: 'Inter', sans-serif;
+      font-feature-settings: "tnum" 1, "cv11" 1;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+    .material-symbols-outlined {
+      font-size: inherit;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    /* Hide scrollbars cleanly */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .bar-tick {
+      position: absolute;
+      top: -2px;
+      width: 1px;
+      height: 10px;
+      background-color: #a4a094;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-canvas text-canvas-text antialiased selection:bg-gold selection:text-on-gold">
+<!-- Mobile Simulator Frame (Strictly 375px max responsive envelope) -->
+<div class="relative w-full max-w-[375px] h-screen bg-canvas flex flex-col overflow-hidden shadow-2xl">
+<!-- 1. Top Header Strip (52px, pinned, bg-canvas-raised per JSON/Spec) -->
+<header class="fixed top-0 left-0 right-0 max-w-[375px] mx-auto z-40 flex items-center justify-between px-3.5 h-[52px] bg-[#1c1b18]">
+<div class="flex items-center gap-2.5">
+<button aria-label="Back" class="flex items-center justify-center w-8 h-8 rounded-md text-canvas-muted hover:text-bone active:scale-95 transition-transform duration-100">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<div class="flex flex-col">
+<h1 class="font-display text-[17px] leading-tight font-semibold text-bone tracking-tight">Lumen Vale</h1>
+<span class="text-[12px] leading-none text-canvas-muted">Mexico · Brazil · US</span>
+</div>
+</div>
+<!-- Agent Log Indicator Chip -->
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-canvas-raised">
+<span class="material-symbols-outlined text-[13px] text-canvas-muted">sensors</span>
+<span class="font-mono text-[11px] font-semibold tracking-wider uppercase text-canvas-muted">Agent · 47 Qloo</span>
+</div>
+</header>
+<!-- Main Content Canvas (Map + Sliding Sheet) -->
+<main class="relative flex-1 w-full pt-[52px] pb-[64px] flex flex-col overflow-hidden">
+<!-- 2. Warm-Tinted SVG Geographic Map Surface (~240px tall) -->
+<section aria-label="Routing Heat Map" class="relative w-full h-[220px] shrink-0 bg-[#151410] overflow-hidden select-none">
+<svg class="w-full h-full object-cover" fill="none" viewbox="0 0 375 220" xmlns="http://www.w3.org/2000/svg">
+<!-- Deep warm map landmass shapes (dark CARTO aesthetic) -->
+<rect fill="#151410" height="220" width="375"></rect>
+<!-- North America & Mexico land snippet -->
+<path d="M-10,0 H260 L240,40 L210,65 L180,95 L140,115 L110,130 L75,110 L45,90 L20,70 L-10,60 Z" fill="#1f1e1a"></path>
+<path d="M75,110 L115,130 L135,145 L155,160 L140,175 L120,165 L85,130 Z" fill="#1f1e1a"></path>
+<!-- South America (Brazil outline hint) -->
+<path d="M190,120 Q240,110 290,135 Q340,160 330,195 Q300,225 250,230 Q210,210 190,170 Z" fill="#1f1e1a"></path>
+<!-- Subtle Road & Grid Strands -->
+<path d="M-10,35 Q100,50 145,145 Q210,160 270,180" stroke="rgba(240, 238, 230, 0.05)" stroke-dasharray="3 3" stroke-width="1"></path>
+<path d="M40,90 L135,145 L255,165 L290,175" stroke="rgba(240, 238, 230, 0.07)" stroke-width="1.2"></path>
+<!-- Fan Heat Hexbins (Mexico Cluster: high density) -->
+<g opacity="0.55">
+<!-- Center Mexico City heat -->
+<polygon fill="#e9e4d6" points="135,140 142,136 149,140 149,148 142,152 135,148"></polygon>
+<polygon fill="#bab3a1" points="124,134 131,130 138,134 138,142 131,146 124,142"></polygon>
+<polygon fill="#958f7f" points="146,134 153,130 160,134 160,142 153,146 146,142"></polygon>
+<polygon fill="#bab3a1" points="135,152 142,148 149,152 149,160 142,164 135,160"></polygon>
+<polygon fill="#736e60" points="113,128 120,124 127,128 127,136 120,140 113,136"></polygon>
+<polygon fill="#555146" points="102,122 109,118 116,122 116,130 109,134 102,130"></polygon>
+</g>
+<!-- Fan Heat Hexbins (Brazil Cluster: São Paulo / Curitiba) -->
+<g opacity="0.45">
+<polygon fill="#e9e4d6" points="270,165 277,161 284,165 284,173 277,177 270,173"></polygon>
+<polygon fill="#bab3a1" points="281,159 288,155 295,159 295,167 288,171 281,167"></polygon>
+<polygon fill="#bab3a1" points="259,171 266,167 273,171 273,179 266,183 259,179"></polygon>
+<polygon fill="#736e60" points="248,177 255,173 262,177 262,185 255,189 248,185"></polygon>
+<polygon fill="#555146" points="270,183 277,179 284,183 284,191 277,195 270,191"></polygon>
+</g>
+<!-- US & North Hexbins (LA, Austin) -->
+<g opacity="0.3">
+<polygon fill="#bab3a1" points="40,84 46,80 52,84 52,91 46,95 40,91"></polygon>
+<polygon fill="#736e60" points="49,76 55,72 61,76 61,83 55,87 49,83"></polygon>
+<polygon fill="#736e60" points="115,70 121,66 127,70 127,77 121,81 115,77"></polygon>
+</g>
+<!-- City Markers (Strictly typed marker geometries) -->
+<!-- 1. Los Angeles US: Coral Triangle (De-risk) -->
+<g transform="translate(46, 85)">
+<polygon fill="#e8606f" points="0,-7 6,5 -6,5" stroke="#1c1b18" stroke-width="1.5"></polygon>
+</g>
+<!-- 2. Austin US: Steel Blue Ring (Consider) -->
+<g transform="translate(118, 72)">
+<circle cx="0" cy="0" fill="none" r="4.5" stroke="#5a86e8" stroke-width="2"></circle>
+</g>
+<!-- 3. Chicago: Grey × (Skip) -->
+<g transform="translate(155, 38)">
+<path d="M-3,-3 L3,3 M3,-3 L-3,3" stroke="#8b877c" stroke-width="1.75"></path>
+</g>
+<!-- 4. Monterrey: Steel Blue Ring -->
+<g transform="translate(125, 112)">
+<circle cx="0" cy="0" fill="none" r="4" stroke="#5a86e8" stroke-width="1.75"></circle>
+</g>
+<!-- 5. Guadalajara: Ticket Gold Diamond (Hidden goldmine) -->
+<g transform="translate(114, 138)">
+<rect fill="#ffcc00" height="9" stroke="#1c1b18" stroke-width="1.5" transform="rotate(45)" width="9" x="-4.5" y="-4.5"></rect>
+<text fill="#f2f0ea" font-family="Fraunces" font-size="10" font-weight="600" text-anchor="middle" x="-8" y="16">Guadalajara</text>
+</g>
+<!-- 6. Mexico City: Teal Filled Circle (Play) -->
+<g transform="translate(142, 148)">
+<circle cx="0" cy="0" fill="#0f9d8a" r="5.5" stroke="#1c1b18" stroke-width="2"></circle>
+</g>
+<!-- 7. São Paulo: Teal Filled Circle (Play) -->
+<g transform="translate(284, 168)">
+<circle cx="0" cy="0" fill="#0f9d8a" r="5.5" stroke="#1c1b18" stroke-width="2"></circle>
+</g>
+<!-- 8. Rio de Janeiro: Steel Blue Ring (Consider) -->
+<g transform="translate(300, 162)">
+<circle cx="0" cy="0" fill="none" r="4.5" stroke="#5a86e8" stroke-width="2"></circle>
+</g>
+<!-- 9. Curitiba: Ticket Gold Diamond (Hidden goldmine) -->
+<g transform="translate(262, 184)">
+<rect fill="#ffcc00" height="9" stroke="#1c1b18" stroke-width="1.5" transform="rotate(45)" width="9" x="-4.5" y="-4.5"></rect>
+<text fill="#f2f0ea" font-family="Fraunces" font-size="10" font-weight="600" text-anchor="middle" x="32" y="3">Curitiba</text>
+</g>
+<!-- 10. Belo Horizonte: Hollow Grey Square -->
+<g transform="translate(282, 146)">
+<rect fill="none" height="7" stroke="#8b877c" stroke-width="1.5" width="7" x="-3.5" y="-3.5"></rect>
+</g>
+</svg>
+<!-- Subtle Top-Right Ambient Warm House Light Wash (<7% opacity) -->
+<div class="pointer-events-none absolute -top-12 -right-12 w-48 h-48 rounded-full bg-gold opacity-[0.06] blur-2xl"></div>
+</section>
+<!-- 3. Bottom Sheet Rising Over the Map (#282722, rounded-t-[18px]) -->
+<section class="relative flex-1 -mt-5 bg-paper rounded-t-[18px] flex flex-col overflow-hidden z-20 shadow-none border-0">
+<!-- Sheet Drag Grabber -->
+<div class="w-full flex justify-center pt-2.5 pb-1">
+<div class="w-9 h-1 rounded-full bg-[#47443c]"></div>
+</div>
+<!-- Segmented Control Strip -->
+<div class="px-3 pt-1 pb-2">
+<div class="h-10 w-full bg-canvas-raised rounded-lg p-1 flex items-center justify-between">
+<button class="flex-1 h-full rounded-[6px] bg-paper-raised text-bone text-[13px] font-medium flex items-center justify-center transition-colors">
+              Winnability
+            </button>
+<button class="flex-1 h-full rounded-[6px] text-canvas-muted hover:text-bone text-[13px] font-normal flex items-center justify-center transition-colors">
+              Density-only
+            </button>
+<button class="flex-1 h-full rounded-[6px] text-canvas-muted hover:text-bone text-[13px] font-normal flex items-center justify-center transition-colors">
+              Without Qloo
+            </button>
+</div>
+</div>
+<!-- Sheet Routing Metadata Headline -->
+<div class="px-4 py-1 flex items-center justify-between">
+<p class="text-[12.5px] leading-tight text-canvas-muted">
+            9 markets scored · <span class="text-[#5fd3be]">2 Play</span> · <span class="text-gold">2 Hidden goldmine</span> · <span class="text-[#ff9aa4]">1 De-risk</span>
+</p>
+</div>
+<!-- Routing Board Stacked Rows List (Scrollable, at least 3.5 rows fully visible) -->
+<div class="flex-1 overflow-y-auto no-scrollbar px-3 space-y-[2px] pb-24">
+<!-- Column Headers Label mono -->
+<div class="flex items-center justify-between px-3 pt-2 pb-1 text-canvas-muted font-mono text-[11px] font-semibold tracking-wider uppercase">
+<div class="flex items-center gap-3">
+<span class="w-4">#</span>
+<span>Market / Affinity Signal</span>
+</div>
+<div class="flex items-center gap-3 text-right">
+<span>Verdict · Win</span>
+</div>
+</div>
+<!-- Row 01: Mexico City (Play) -->
+<div class="bg-paper rounded-t-xl hover:bg-paper-raised transition-colors p-3 min-h-[88px] flex items-center justify-between">
+<!-- Rank & Info -->
+<div class="flex items-start gap-2.5 flex-1 min-w-0 pr-3">
+<span class="font-mono text-[12px] font-medium text-canvas-muted pt-0.5 w-4">01</span>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline gap-1.5 mb-1.5">
+<h3 class="font-display text-[17px] font-semibold text-bone truncate leading-none">Mexico City</h3>
+<span class="text-[12px] font-medium text-canvas-muted">MX</span>
+</div>
+<!-- Dual Bars -->
+<div class="w-full space-y-1.5 max-w-[160px]">
+<!-- Fan Heat -->
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Fan heat</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-bone rounded-[3px]" style="width: 91%;"></div>
+<div class="bar-tick" style="left: 70%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">91</span>
+</div>
+<!-- Activation -->
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Activation</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-gold rounded-[3px]" style="width: 77%;"></div>
+<div class="bar-tick" style="left: 60%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">77</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Verdict Chip & Score -->
+<div class="flex flex-col items-end justify-center shrink-0 pl-1">
+<div class="h-6 px-2 rounded-sm bg-[#243c35] text-verdict-play-text flex items-center gap-1 mb-1">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+<span class="text-[12px] font-semibold leading-none">Play</span>
+</div>
+<span class="font-mono text-[24px] font-bold leading-none text-bone tracking-tight">84</span>
+</div>
+</div>
+<!-- Row 02: São Paulo (Play) -->
+<div class="bg-paper hover:bg-paper-raised transition-colors p-3 min-h-[88px] flex items-center justify-between">
+<div class="flex items-start gap-2.5 flex-1 min-w-0 pr-3">
+<span class="font-mono text-[12px] font-medium text-canvas-muted pt-0.5 w-4">02</span>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline gap-1.5 mb-1.5">
+<h3 class="font-display text-[17px] font-semibold text-bone truncate leading-none">São Paulo</h3>
+<span class="text-[12px] font-medium text-canvas-muted">BR</span>
+</div>
+<div class="w-full space-y-1.5 max-w-[160px]">
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Fan heat</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-bone rounded-[3px]" style="width: 84%;"></div>
+<div class="bar-tick" style="left: 70%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">84</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Activation</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-gold rounded-[3px]" style="width: 66%;"></div>
+<div class="bar-tick" style="left: 60%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">66</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end justify-center shrink-0 pl-1">
+<div class="h-6 px-2 rounded-sm bg-[#243c35] text-verdict-play-text flex items-center gap-1 mb-1">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+<span class="text-[12px] font-semibold leading-none">Play</span>
+</div>
+<span class="font-mono text-[24px] font-bold leading-none text-bone tracking-tight">75</span>
+</div>
+</div>
+<!-- Row 03: Guadalajara (Hidden goldmine - SIGNATURE ROW) -->
+<div class="bg-paper hover:bg-paper-raised transition-colors p-3 min-h-[88px] flex items-center justify-between">
+<div class="flex items-start gap-2.5 flex-1 min-w-0 pr-3">
+<span class="font-mono text-[12px] font-medium text-canvas-muted pt-0.5 w-4">03</span>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline gap-1.5 mb-1.5">
+<h3 class="font-display text-[17px] font-semibold text-bone truncate leading-none">Guadalajara</h3>
+<span class="text-[12px] font-medium text-canvas-muted">MX</span>
+</div>
+<!-- Dual Bars (Gold longer than bone) -->
+<div class="w-full space-y-1.5 max-w-[160px]">
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Fan heat</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-bone rounded-[3px]" style="width: 62%;"></div>
+<div class="bar-tick" style="left: 70%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">62</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Activation</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-gold rounded-[3px]" style="width: 82%;"></div>
+<div class="bar-tick" style="left: 75%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">82</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Solid Gold Chip (The only solid chip per design system) -->
+<div class="flex flex-col items-end justify-center shrink-0 pl-1">
+<div class="h-6 px-2 rounded-sm bg-gold text-on-gold flex items-center gap-1 mb-1 font-semibold">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">diamond</span>
+<span class="text-[12px] leading-none">Hidden goldmine</span>
+</div>
+<span class="font-mono text-[24px] font-bold leading-none text-bone tracking-tight">72</span>
+</div>
+</div>
+<!-- Row 04: Curitiba (Hidden goldmine) -->
+<div class="bg-paper hover:bg-paper-raised transition-colors p-3 min-h-[88px] flex items-center justify-between">
+<div class="flex items-start gap-2.5 flex-1 min-w-0 pr-3">
+<span class="font-mono text-[12px] font-medium text-canvas-muted pt-0.5 w-4">04</span>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline gap-1.5 mb-1.5">
+<h3 class="font-display text-[17px] font-semibold text-bone truncate leading-none">Curitiba</h3>
+<span class="text-[12px] font-medium text-canvas-muted">BR</span>
+</div>
+<div class="w-full space-y-1.5 max-w-[160px]">
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Fan heat</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-bone rounded-[3px]" style="width: 51%;"></div>
+<div class="bar-tick" style="left: 70%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">51</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Activation</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-gold rounded-[3px]" style="width: 77%;"></div>
+<div class="bar-tick" style="left: 75%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">77</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end justify-center shrink-0 pl-1">
+<div class="h-6 px-2 rounded-sm bg-gold text-on-gold flex items-center gap-1 mb-1 font-semibold">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">diamond</span>
+<span class="text-[12px] leading-none">Hidden goldmine</span>
+</div>
+<span class="font-mono text-[24px] font-bold leading-none text-bone tracking-tight">64</span>
+</div>
+</div>
+<!-- Row 05: Los Angeles (De-risk) -->
+<div class="bg-paper hover:bg-paper-raised transition-colors p-3 min-h-[88px] flex items-center justify-between">
+<div class="flex items-start gap-2.5 flex-1 min-w-0 pr-3">
+<span class="font-mono text-[12px] font-medium text-canvas-muted pt-0.5 w-4">05</span>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline gap-1.5 mb-1.5">
+<h3 class="font-display text-[17px] font-semibold text-bone truncate leading-none">Los Angeles</h3>
+<span class="text-[12px] font-medium text-canvas-muted">US</span>
+</div>
+<!-- Dual Bars (High Fan heat, weak activation) -->
+<div class="w-full space-y-1.5 max-w-[160px]">
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Fan heat</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-bone rounded-[3px]" style="width: 88%;"></div>
+<div class="bar-tick" style="left: 70%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">88</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Activation</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-gold rounded-[3px]" style="width: 40%;"></div>
+<div class="bar-tick" style="left: 45%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">40</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Warning Coral Chip -->
+<div class="flex flex-col items-end justify-center shrink-0 pl-1">
+<div class="h-6 px-2 rounded-sm bg-[#4b3130] text-verdict-derisk-text flex items-center gap-1 mb-1">
+<span class="material-symbols-outlined text-[13px]">warning</span>
+<span class="text-[12px] font-semibold leading-none">De-risk</span>
+</div>
+<span class="font-mono text-[24px] font-bold leading-none text-bone tracking-tight">64</span>
+</div>
+</div>
+<!-- Row 06: Rio de Janeiro (Consider) -->
+<div class="bg-paper hover:bg-paper-raised transition-colors p-3 min-h-[88px] flex items-center justify-between">
+<div class="flex items-start gap-2.5 flex-1 min-w-0 pr-3">
+<span class="font-mono text-[12px] font-medium text-canvas-muted pt-0.5 w-4">06</span>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline gap-1.5 mb-1.5">
+<h3 class="font-display text-[17px] font-semibold text-bone truncate leading-none">Rio de Janeiro</h3>
+<span class="text-[12px] font-medium text-canvas-muted">BR</span>
+</div>
+<div class="w-full space-y-1.5 max-w-[160px]">
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Fan heat</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-bone rounded-[3px]" style="width: 70%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">70</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Activation</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-gold rounded-[3px]" style="width: 56%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">56</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Consider Chip -->
+<div class="flex flex-col items-end justify-center shrink-0 pl-1">
+<div class="h-6 px-2 rounded-sm bg-[#313846] text-verdict-consider-text flex items-center gap-1 mb-1">
+<span class="material-symbols-outlined text-[13px]">balance</span>
+<span class="text-[12px] font-semibold leading-none">Consider</span>
+</div>
+<span class="font-mono text-[24px] font-bold leading-none text-bone tracking-tight">63</span>
+</div>
+</div>
+<!-- Row 07: Austin (Consider) -->
+<div class="bg-paper rounded-b-xl hover:bg-paper-raised transition-colors p-3 min-h-[88px] flex items-center justify-between">
+<div class="flex items-start gap-2.5 flex-1 min-w-0 pr-3">
+<span class="font-mono text-[12px] font-medium text-canvas-muted pt-0.5 w-4">07</span>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline gap-1.5 mb-1.5">
+<h3 class="font-display text-[17px] font-semibold text-bone truncate leading-none">Austin</h3>
+<span class="text-[12px] font-medium text-canvas-muted">US</span>
+</div>
+<div class="w-full space-y-1.5 max-w-[160px]">
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Fan heat</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-bone rounded-[3px]" style="width: 65%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">65</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-canvas-muted w-10 shrink-0">Activation</span>
+<div class="relative flex-1 h-[6px] bg-canvas rounded-[3px] overflow-hidden">
+<div class="h-full bg-gold rounded-[3px]" style="width: 52%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-bone w-5 text-right">52</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end justify-center shrink-0 pl-1">
+<div class="h-6 px-2 rounded-sm bg-[#313846] text-verdict-consider-text flex items-center gap-1 mb-1">
+<span class="material-symbols-outlined text-[13px]">balance</span>
+<span class="text-[12px] font-semibold leading-none">Consider</span>
+</div>
+<span class="font-mono text-[24px] font-bold leading-none text-bone tracking-tight">59</span>
+</div>
+</div>
+<!-- Integrity Disclaimer Line (Voice requirement) -->
+<p class="px-2 pt-3 pb-6 text-[11px] leading-relaxed text-canvas-muted opacity-70 text-center">
+            Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.
+          </p>
+</div>
+<!-- Sticky Sheet Footer Action Section -->
+<div class="absolute bottom-0 left-0 right-0 px-4 pt-3 pb-3 bg-gradient-to-t from-paper via-paper to-transparent">
+<!-- Single Primary Action Button: Ticket Gold -->
+<button class="w-full h-12 bg-gold hover:bg-gold-soft active:bg-gold-press text-on-gold rounded-lg font-body font-semibold text-[15px] flex items-center justify-center transition-colors">
+            Build tour
+          </button>
+<!-- Secondary Text Action -->
+<div class="w-full text-center mt-2">
+<button class="text-[13px] font-medium text-canvas-muted hover:text-bone underline underline-offset-4 transition-colors">
+              Why this score?
+            </button>
+</div>
+</div>
+</section>
+</main>
+<!-- 4. Strategist Floating Action Button (FAB) (56px circular, gold icon on #32312a) -->
+<button aria-label="Open Strategist" class="fixed right-4 bottom-[76px] z-50 w-14 h-14 rounded-full bg-paper-raised text-gold flex items-center justify-center active:scale-95 transition-transform duration-100 shadow-xl">
+<span class="material-symbols-outlined text-[26px]">forum</span>
+</button>
+<!-- 5. BottomNavBar (64px, bg-canvas-raised per JSON mandate) -->
+<nav aria-label="Main Navigation" class="fixed bottom-0 left-0 right-0 max-w-[375px] mx-auto z-50 flex justify-around items-center h-16 w-full px-4 bg-canvas-raised">
+<!-- Tab 1: Discover -->
+<a class="flex flex-col items-center justify-center text-canvas-muted hover:text-bone transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px] mb-0.5">explore</span>
+<span class="font-label text-[10px] font-semibold uppercase tracking-wider">Discover</span>
+</a>
+<!-- Tab 2: Tours (ACTIVE DESTINATION: Tours) -->
+<a class="flex flex-col items-center justify-center text-bone relative before:absolute before:top-[-6px] before:w-5 before:h-[3px] before:bg-gold active:scale-95 transition-transform duration-100" href="#">
+<span class="material-symbols-outlined text-[22px] mb-0.5 text-bone">alt_route</span>
+<span class="font-label text-[10px] font-semibold uppercase tracking-wider text-bone">Tours</span>
+</a>
+<!-- Tab 3: Strategist -->
+<a class="flex flex-col items-center justify-center text-canvas-muted hover:text-bone transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px] mb-0.5">forum</span>
+<span class="font-label text-[10px] font-semibold uppercase tracking-wider">Strategist</span>
+</a>
+</nav>
+</div>
+</body></html>

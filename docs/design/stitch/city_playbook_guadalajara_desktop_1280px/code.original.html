@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Premiere Noir — Tour Intelligence × Qloo | Guadalajara Playbook</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700;800&amp;family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&amp;family=Public+Sans:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#1c1b18',
+            'canvas-raised': '#26251f',
+            paper: '#282722',
+            'paper-raised': '#32312a',
+            'canvas-line': 'rgba(240, 238, 230, 0.09)',
+            'canvas-text': '#f2f0ea',
+            'canvas-muted': '#a4a094',
+            ink: '#f0eee6',
+            'ink-muted': 'rgba(240, 238, 230, 0.58)',
+            gold: '#ffcc00',
+            'gold-soft': '#ffe066',
+            'gold-press': '#efb900',
+            'on-gold': '#1d1a10',
+            bone: '#e9e4d6',
+            'city-3': '#ff00aa',
+            'verdict-play': '#0f9d8a',
+            'verdict-play-text': '#5fd3be'
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1.125rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            headline: ["Fraunces", "Newsreader", "serif"],
+            display: ["Fraunces", "Newsreader", "serif"],
+            body: ["Inter", "sans-serif"],
+            label: ["Public Sans", "Inter", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    /* Global scrollbar & typography settings */
+    body {
+      background-color: #1c1b18;
+      color: #f2f0ea;
+      font-feature-settings: "cv11", "ss01";
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-tabular {
+      font-variant-numeric: tabular-nums;
+    }
+    /* Filmstrip / Ticket perforation rail pattern for Guadalajara */
+    .perforated-rail {
+      background-color: #ff00aa;
+      background-image: radial-gradient(#1c1b18 2.2px, transparent 2.6px);
+      background-size: 10px 10px;
+      background-position: 0 center;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-canvas text-canvas-text flex flex-col font-body selection:bg-gold selection:text-on-gold">
+<!-- Desktop Top Bar (Shared Component Anchor) -->
+<header class="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 w-full h-14 bg-canvas-raised border-b border-canvas-line">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2">
+<span class="font-display text-lg font-semibold text-bone tracking-tight">Tour Intelligence</span>
+<span class="text-xs text-canvas-muted font-body font-normal">× Qloo</span>
+</div>
+<nav class="hidden md:flex items-center gap-6 h-14 text-sm font-medium">
+<a class="text-canvas-muted hover:text-gold transition-colors duration-150 py-4" href="#">Discover</a>
+<a class="text-bone font-medium border-b-2 border-gold h-full flex items-center pt-0.5" href="#">Tours</a>
+<a class="text-canvas-muted hover:text-gold transition-colors duration-150 py-4" href="#">Insights</a>
+<a class="text-canvas-muted hover:text-gold transition-colors duration-150 py-4" href="#">Proof</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-paper-raised text-xs font-mono tracking-wider text-canvas-muted">
+<span class="w-1.5 h-1.5 rounded-full bg-canvas-muted"></span>
+<span>Qloo · Live</span>
+</div>
+<button class="flex items-center justify-center w-8 h-8 rounded-lg bg-paper hover:bg-paper-raised text-bone transition-colors" title="AI Strategist">
+<span class="material-symbols-outlined text-[18px]">forum</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas (Desktop 1280px optimized) -->
+<main class="w-full max-w-[1280px] mx-auto pt-20 pb-20 px-4 md:px-8 flex-1 flex flex-col gap-8">
+<!-- Back Navigation Breadcrumb -->
+<div class="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-canvas-muted">
+<a class="flex items-center gap-1 hover:text-bone transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<span>Tours / Latin America Fall 2027</span>
+</a>
+<span>/</span>
+<span class="text-bone">Stop 03 · GDL</span>
+</div>
+<!-- Header Band (12 Columns Grid) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Columns 1–5: Identity & Market Verdict Block -->
+<div class="lg:col-span-5 flex flex-col gap-6">
+<div>
+<div class="flex items-baseline gap-3">
+<h1 class="font-display text-4xl lg:text-[42px] font-semibold tracking-tight text-bone leading-none">Guadalajara</h1>
+<span class="text-sm font-body text-canvas-muted">Jalisco, MX</span>
+</div>
+<p class="text-xs font-mono uppercase tracking-wider text-canvas-muted mt-2">Target Market Analysis · Lumen Vale Headline</p>
+</div>
+<!-- Verdict Chip & Winnability Score -->
+<div class="flex items-center justify-between p-4 rounded-xl bg-paper">
+<div class="flex items-center gap-2">
+<!-- Hidden Goldmine Solid Stamp -->
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gold text-on-gold rounded text-xs font-mono font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">diamond</span>
+<span>Hidden goldmine</span>
+</div>
+</div>
+<div class="flex items-baseline gap-1.5 font-tabular">
+<span class="text-xs font-mono text-canvas-muted uppercase tracking-wider">Winnability</span>
+<span class="font-mono text-2xl font-bold text-bone">72</span>
+<span class="text-xs font-mono text-canvas-muted">/100</span>
+</div>
+</div>
+<!-- Dual Stacked Metric Bars (Fan Heat vs Activation) -->
+<div class="flex flex-col gap-3 p-4 rounded-xl bg-paper">
+<!-- Fan Heat Bar -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-xs">
+<span class="text-canvas-muted">Fan heat</span>
+<span class="font-mono font-bold text-bone font-tabular">62 <span class="text-canvas-muted font-normal">/100</span></span>
+</div>
+<div class="h-1.5 w-full bg-canvas-line rounded-full overflow-hidden">
+<div class="h-full bg-bone rounded-full" style="width: 62%;"></div>
+</div>
+</div>
+<!-- Activation Bar -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-xs">
+<span class="text-canvas-muted">Activation score</span>
+<span class="font-mono font-bold text-gold font-tabular">82 <span class="text-canvas-muted font-normal">/100</span></span>
+</div>
+<div class="h-1.5 w-full bg-canvas-line rounded-full overflow-hidden">
+<div class="h-full bg-gold rounded-full" style="width: 82%;"></div>
+</div>
+</div>
+<div class="text-[11px] text-canvas-muted pt-1">
+            Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.
+          </div>
+</div>
+<!-- 2x2 Advance-Sheet Quick Grid -->
+<div class="grid grid-cols-2 gap-2.5 p-3.5 rounded-xl bg-canvas-raised text-xs font-mono">
+<div class="flex flex-col gap-0.5">
+<span class="text-[10px] uppercase text-canvas-muted tracking-wider">TOP ZONE</span>
+<span class="text-bone font-semibold truncate">Colonia Americana</span>
+</div>
+<div class="flex flex-col gap-0.5">
+<span class="text-[10px] uppercase text-canvas-muted tracking-wider">BEST ROOM</span>
+<span class="text-bone font-semibold truncate">C3 Stage (1,800)</span>
+</div>
+<div class="flex flex-col gap-0.5">
+<span class="text-[10px] uppercase text-canvas-muted tracking-wider">SUPPORT MATCH</span>
+<span class="text-bone font-semibold truncate">Bruma Nocturna</span>
+</div>
+<div class="flex flex-col gap-0.5">
+<span class="text-[10px] uppercase text-canvas-muted tracking-wider">INTELLIGENCE</span>
+<div class="flex items-center gap-1 text-verdict-play-text font-semibold">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+<span>7 verified · 2 removed</span>
+</div>
+</div>
+</div>
+<!-- Call To Action Row -->
+<div class="flex items-center gap-5 pt-1">
+<button class="px-6 py-2.5 rounded-[10px] bg-gold hover:bg-gold-soft active:bg-gold-press text-on-gold font-semibold text-sm transition-colors duration-150">
+            Add to tour
+          </button>
+<a class="text-xs text-canvas-muted hover:text-bone underline underline-offset-4 decoration-canvas-line hover:decoration-bone transition-colors font-body" href="#reasoning">
+            Why this score?
+          </a>
+</div>
+</div>
+<!-- Columns 6–12: 16:9 Tour Poster Presentation -->
+<div class="lg:col-span-7 flex flex-col gap-2">
+<div class="relative w-full aspect-[16/9] rounded-[18px] overflow-hidden bg-paper shadow-2xl flex items-center justify-center border border-canvas-line group">
+<img alt="Guadalajara Risograph Tour Poster" class="w-full h-full object-cover object-center filter contrast-[1.05] brightness-[0.98]" src="https://lh3.googleusercontent.com/aida/AEtjO1XRFJxPW1ybkRUTEYaJUDyPTalLw_Esub_MLQvcrO9KDNJuDm96VcSV78NYE6MYejicnQGGaOT8HqzVaiSU0f2c5EcRYM4fn74uao7PelFbN2167P8jNwMcvSRkbwLJOTSlEBWL0t-YsX_xPlnQredBZod6PSnXz1Z59Lfs2eCdbjDriEjU3dwOs4qfExS9fwL5EzlHlpc99cTQBCvjJu69Hf8h7rsU_yi40oGokUPQfGUmH2ChIqJsDfbn"/>
+<div class="absolute inset-0 bg-gradient-to-t from-canvas/90 via-transparent to-transparent opacity-60"></div>
+<div class="absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs font-mono text-bone drop-shadow-md">
+<span class="bg-canvas/80 backdrop-blur-none px-2.5 py-1 rounded border border-canvas-line/40 text-[11px] uppercase tracking-wider">
+              Risograph Key Art · Guadalajara Series No. 03
+            </span>
+<span class="bg-canvas/80 backdrop-blur-none px-2.5 py-1 rounded border border-canvas-line/40 text-[11px] text-canvas-muted">
+              4:5 Print Sheet &amp; Billboard Avail
+            </span>
+</div>
+</div>
+<div class="flex justify-between items-center px-1 text-[11px] font-mono text-canvas-muted">
+<span>GDL · 14 MAR 2027 · C3 STAGE ROUTE SPEC</span>
+<span>CITY IDENT: #FF00AA</span>
+</div>
+</div>
+</section>
+<!-- Sticky Sub-Tabs Navigation -->
+<div class="sticky top-14 z-30 bg-canvas/95 backdrop-blur-none border-b border-canvas-line flex items-center justify-between py-1">
+<div class="flex items-center gap-8 text-xs font-mono uppercase tracking-wider">
+<button class="py-3 text-bone font-bold border-b-2 border-gold flex items-center gap-1.5">
+<span>Activate</span>
+<span class="w-1.5 h-1.5 rounded-full bg-gold"></span>
+</button>
+<button class="py-3 text-canvas-muted hover:text-bone transition-colors">Culture</button>
+<button class="py-3 text-canvas-muted hover:text-bone transition-colors">Delight</button>
+<button class="py-3 text-canvas-muted hover:text-bone transition-colors">Talent</button>
+</div>
+<div class="hidden sm:flex items-center gap-2 text-xs font-mono text-canvas-muted">
+<span>Sort by Winnability</span>
+<span class="material-symbols-outlined text-[16px]">tune</span>
+</div>
+</div>
+<!-- Asymmetric Card Grid Section -->
+<div class="space-y-6">
+<!-- Row 1: Sponsors & Promo Zones (5 / 7 split) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+<!-- Sponsors Card (Cols 1-5) -->
+<div class="lg:col-span-5 bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
+<div>
+<!-- Fuchsia Perforated Rail -->
+<div class="h-2.5 w-full perforated-rail"></div>
+<div class="p-6">
+<div class="flex justify-between items-baseline mb-4">
+<span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted">GDL · SPONSORS · 10 BRANDS</span>
+<span class="text-xs font-mono text-canvas-muted">Affinity Fit</span>
+</div>
+<!-- Ranked Sponsor List -->
+<div class="space-y-3 font-mono text-xs">
+<div class="flex flex-col gap-1.5 p-2 rounded bg-paper-raised">
+<div class="flex justify-between items-center text-sm font-sans font-medium text-bone">
+<span>1. Cerro Alto Mezcal</span>
+<span class="font-mono text-xs text-bone font-bold font-tabular">0.91</span>
+</div>
+<div class="h-1 w-full bg-canvas-line rounded-full overflow-hidden">
+<div class="h-full bg-bone" style="width: 91%;"></div>
+</div>
+<span class="text-[10px] text-canvas-muted">Craft spirit partner · Artisanal agave tap takeover</span>
+</div>
+<div class="flex flex-col gap-1.5 p-2 rounded bg-paper-raised/60">
+<div class="flex justify-between items-center text-sm font-sans font-medium text-bone">
+<span>2. Brisa Vinyl Bar</span>
+<span class="font-mono text-xs text-bone font-bold font-tabular">0.87</span>
+</div>
+<div class="h-1 w-full bg-canvas-line rounded-full overflow-hidden">
+<div class="h-full bg-bone" style="width: 87%;"></div>
+</div>
+<span class="text-[10px] text-canvas-muted">Official afterparty host &amp; physical ticket outlet</span>
+</div>
+<div class="flex flex-col gap-1.5 p-2 rounded bg-paper-raised/60">
+<div class="flex justify-between items-center text-sm font-sans font-medium text-bone">
+<span>3. Ola Norte Surf Supply</span>
+<span class="font-mono text-xs text-bone font-bold font-tabular">0.83</span>
+</div>
+<div class="h-1 w-full bg-canvas-line rounded-full overflow-hidden">
+<div class="h-full bg-bone" style="width: 83%;"></div>
+</div>
+<span class="text-[10px] text-canvas-muted">Apparel retail pop-up in Colonia Americana</span>
+</div>
+<div class="flex flex-col gap-1.5 p-2 rounded bg-paper-raised/60">
+<div class="flex justify-between items-center text-sm font-sans font-medium text-bone">
+<span>4. Casa Jícara Coffee</span>
+<span class="font-mono text-xs text-bone font-bold font-tabular">0.81</span>
+</div>
+<div class="h-1 w-full bg-canvas-line rounded-full overflow-hidden">
+<div class="h-full bg-bone" style="width: 81%;"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1.5 p-2 rounded bg-paper-raised/60">
+<div class="flex justify-between items-center text-sm font-sans font-medium text-bone">
+<span>5. Tejido Studio</span>
+<span class="font-mono text-xs text-bone font-bold font-tabular">0.78</span>
+</div>
+<div class="h-1 w-full bg-canvas-line rounded-full overflow-hidden">
+<div class="h-full bg-bone" style="width: 78%;"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Card Foot -->
+<div class="p-4 bg-canvas-raised/50 border-t border-canvas-line flex items-center justify-between text-xs font-mono text-canvas-muted">
+<div class="flex items-center gap-1.5 text-verdict-play-text">
+<span class="material-symbols-outlined text-[14px]">shield_with_heart</span>
+<span>7 verified · 2 removed</span>
+</div>
+<span class="text-[11px]">Qloo · 2 requests</span>
+</div>
+</div>
+<!-- Promo Zones Card (Cols 6-12) -->
+<div class="lg:col-span-7 bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
+<div>
+<!-- Fuchsia Perforated Rail -->
+<div class="h-2.5 w-full perforated-rail"></div>
+<div class="p-6">
+<div class="flex justify-between items-baseline mb-4">
+<span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted">GDL · PROMO ZONES &amp; DENSITY MAPPING</span>
+<span class="text-xs font-mono text-bone font-tabular">Colonia Americana Peak</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+<!-- Visual Map Stylized Canvas -->
+<div class="md:col-span-7 bg-[#1f1e1a] rounded-xl p-4 relative overflow-hidden border border-canvas-line aspect-[7/5] flex flex-col justify-between">
+<div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: radial-gradient(#e9e4d6 1px, transparent 1px); background-size: 16px 16px;"></div>
+<!-- Simulated Hexbin Clusters -->
+<div class="relative z-10 flex flex-col h-full justify-between">
+<div class="flex justify-between text-[10px] font-mono text-canvas-muted">
+<span>20.676° N, 103.347° W</span>
+<span class="text-bone">HEX DENSITY: HIGH</span>
+</div>
+<div class="flex items-center justify-center relative py-6">
+<!-- Central Peak (Colonia Americana) -->
+<div class="w-24 h-24 rounded-full bg-bone/20 flex items-center justify-center border border-bone/40 animate-pulse">
+<div class="w-14 h-14 rounded-full bg-bone/40 flex items-center justify-center border border-bone">
+<span class="text-[10px] font-mono font-bold text-canvas bg-bone px-1 rounded">38%</span>
+</div>
+</div>
+<!-- Cluster 2 (Chapultepec) -->
+<div class="absolute top-2 right-12 w-16 h-16 rounded-full bg-bone/15 flex items-center justify-center border border-bone/20">
+<span class="text-[9px] font-mono text-bone">26%</span>
+</div>
+<!-- Cluster 3 (Providencia) -->
+<div class="absolute bottom-1 left-8 w-12 h-12 rounded-full bg-bone/10 flex items-center justify-center border border-bone/15">
+<span class="text-[9px] font-mono text-canvas-muted">17%</span>
+</div>
+</div>
+<div class="flex justify-between items-end text-[10px] font-mono">
+<span class="text-canvas-muted">Dark CARTO re-tinted ground</span>
+<span class="text-gold font-bold">14.8 km² primary core</span>
+</div>
+</div>
+</div>
+<!-- Zone Breakdown Table -->
+<div class="md:col-span-5 space-y-2.5 font-mono text-xs">
+<div class="flex justify-between items-center py-1.5 border-b border-canvas-line text-canvas-muted text-[11px] uppercase tracking-wider">
+<span>District</span>
+<span>Heat Share</span>
+</div>
+<div class="flex justify-between items-center py-1 text-bone">
+<span class="font-sans font-medium text-sm">Colonia Americana</span>
+<span class="font-bold text-bone font-tabular">38%</span>
+</div>
+<div class="flex justify-between items-center py-1 text-bone">
+<span class="font-sans font-medium text-sm">Chapultepec</span>
+<span class="font-bold text-bone font-tabular">26%</span>
+</div>
+<div class="flex justify-between items-center py-1 text-bone">
+<span class="font-sans font-medium text-sm">Providencia</span>
+<span class="font-bold text-canvas-muted font-tabular">17%</span>
+</div>
+<div class="flex justify-between items-center py-1 text-canvas-muted">
+<span class="font-sans font-medium">Zapopan Centro</span>
+<span class="font-tabular">9%</span>
+</div>
+<div class="flex justify-between items-center py-1 text-canvas-muted">
+<span class="font-sans font-medium">Tlaquepaque</span>
+<span class="font-tabular">6%</span>
+</div>
+<div class="pt-2 text-[10px] text-canvas-muted">
+                    Recommendation: Deploy flyposting &amp; wild pasteups on Calle Libertad and Av. Chapultepec strip.
+                  </div>
+</div>
+</div>
+</div>
+</div>
+<!-- Card Foot -->
+<div class="p-4 bg-canvas-raised/50 border-t border-canvas-line flex items-center justify-between text-xs font-mono text-canvas-muted">
+<div class="flex items-center gap-1.5 text-verdict-play-text">
+<span class="material-symbols-outlined text-[14px]">shield_with_heart</span>
+<span>7 verified · 2 removed</span>
+</div>
+<span class="text-[11px]">Qloo · 2 requests</span>
+</div>
+</div>
+</section>
+<!-- Row 2: 3-Column Asymmetric Specs (Venue Fit, Co-Billing Match, Local Moment) -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Venue Fit Card -->
+<div class="bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
+<div>
+<div class="h-2.5 w-full perforated-rail"></div>
+<div class="p-5">
+<span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted block mb-4">GDL · VENUE FIT</span>
+<div class="space-y-4">
+<div class="p-3 rounded-lg bg-paper-raised flex flex-col gap-1.5">
+<div class="flex justify-between items-baseline">
+<span class="font-sans font-semibold text-sm text-bone">C3 Stage</span>
+<span class="font-mono font-bold text-xs text-bone font-tabular">0.91 fit</span>
+</div>
+<div class="h-1 w-full bg-canvas-line rounded-full overflow-hidden">
+<div class="h-full bg-gold" style="width: 91%;"></div>
+</div>
+<div class="flex justify-between text-[11px] font-mono text-canvas-muted mt-1">
+<span>1,800 CAP</span>
+<span class="text-verdict-play-text font-semibold">Primary Hold</span>
+</div>
+</div>
+<div class="p-3 rounded-lg bg-paper-raised/60 flex flex-col gap-1.5">
+<div class="flex justify-between items-baseline">
+<span class="font-sans font-medium text-sm text-bone">Teatro Diana</span>
+<span class="font-mono text-xs text-bone font-tabular">0.86 fit</span>
+</div>
+<div class="h-1 w-full bg-canvas-line rounded-full overflow-hidden">
+<div class="h-full bg-bone" style="width: 86%;"></div>
+</div>
+<div class="flex justify-between text-[11px] font-mono text-canvas-muted mt-1">
+<span>2,345 CAP</span>
+<span>Seated Hall</span>
+</div>
+</div>
+<div class="p-3 rounded-lg bg-paper-raised/60 flex flex-col gap-1.5">
+<div class="flex justify-between items-baseline">
+<span class="font-sans font-medium text-sm text-bone">Foro Independencia</span>
+<span class="font-mono text-xs text-bone font-tabular">0.79 fit</span>
+</div>
+<div class="h-1 w-full bg-canvas-line rounded-full overflow-hidden">
+<div class="h-full bg-bone" style="width: 79%;"></div>
+</div>
+<div class="flex justify-between text-[11px] font-mono text-canvas-muted mt-1">
+<span>800 CAP</span>
+<span>Intimate Alt</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-3.5 bg-canvas-raised/50 border-t border-canvas-line flex items-center justify-between text-[11px] font-mono text-canvas-muted">
+<span class="flex items-center gap-1 text-verdict-play-text"><span class="material-symbols-outlined text-[13px]">verified</span> Qloo verified</span>
+<span>Avails: 13-15 Mar</span>
+</div>
+</div>
+<!-- Co-Billing Match Card -->
+<div class="bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
+<div>
+<div class="h-2.5 w-full perforated-rail"></div>
+<div class="p-5">
+<span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted block mb-4">GDL · CO-BILLING MATCH</span>
+<div class="space-y-4">
+<div class="p-3 rounded-lg bg-paper-raised flex flex-col gap-1">
+<div class="flex justify-between items-baseline">
+<span class="font-sans font-semibold text-sm text-bone">Bruma Nocturna</span>
+<span class="font-mono font-bold text-xs text-bone font-tabular">0.30 net fit</span>
+</div>
+<div class="text-[11px] font-mono text-canvas-muted">
+                    0.34 local heat × 0.88 taste affinity
+                  </div>
+<p class="text-xs text-canvas-text mt-1">Dark wave duo based in Guadalajara. Dominates local college radio airplay.</p>
+</div>
+<div class="p-3 rounded-lg bg-paper-raised/60 flex flex-col gap-1">
+<div class="flex justify-between items-baseline">
+<span class="font-sans font-medium text-sm text-bone">Sala Cóndor</span>
+<span class="font-mono font-bold text-xs text-bone font-tabular">0.23 net fit</span>
+</div>
+<div class="text-[11px] font-mono text-canvas-muted">
+                    0.29 local heat × 0.81 taste affinity
+                  </div>
+<p class="text-xs text-canvas-muted mt-1">Post-punk quintet with strong Zapopan fan overlap.</p>
+</div>
+<div class="p-3 rounded-lg bg-paper-raised/60 flex flex-col gap-1">
+<div class="flex justify-between items-baseline">
+<span class="font-sans font-medium text-sm text-bone">Hilo Rojo</span>
+<span class="font-mono text-xs text-bone font-tabular">0.16 net fit</span>
+</div>
+<div class="text-[11px] font-mono text-canvas-muted">
+                    0.22 local heat × 0.74 taste affinity
+                  </div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-3.5 bg-canvas-raised/50 border-t border-canvas-line flex items-center justify-between text-[11px] font-mono text-canvas-muted">
+<span class="flex items-center gap-1 text-verdict-play-text"><span class="material-symbols-outlined text-[13px]">verified</span> Qloo verified</span>
+<span>3 candidates vetted</span>
+</div>
+</div>
+<!-- Local Moment & Stage Cue Card -->
+<div class="bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
+<div>
+<div class="h-2.5 w-full perforated-rail"></div>
+<div class="p-5">
+<span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted block mb-4">GDL · LOCAL MOMENT</span>
+<div class="space-y-3.5 text-xs">
+<div class="p-3 rounded-lg bg-paper-raised border border-canvas-line/50">
+<span class="font-mono text-[10px] uppercase text-canvas-muted block mb-1">STAGE NOD PHRASE</span>
+<p class="text-base font-display italic text-bone">"Gracias, tapatíos."</p>
+<span class="text-[11px] text-canvas-muted block mt-1">Encore transition bridge. Authentic civic acknowledgment.</span>
+</div>
+<div class="space-y-2">
+<span class="font-mono text-[10px] uppercase text-canvas-muted block">HIGH AFFINITY LOCAL TOUCHPOINTS</span>
+<div class="flex items-center gap-2 text-canvas-text">
+<span class="w-1.5 h-1.5 rounded-full bg-gold"></span>
+<span>Late screenings at <strong>Cine Foro UDG</strong></span>
+</div>
+<div class="flex items-center gap-2 text-canvas-text">
+<span class="w-1.5 h-1.5 rounded-full bg-gold"></span>
+<span>Weekend foraging at <strong>Mercado San Juan de Dios</strong></span>
+</div>
+<div class="flex items-center gap-2 text-canvas-text">
+<span class="w-1.5 h-1.5 rounded-full bg-gold"></span>
+<span>Natural wine bars along Calle Colonias</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-3.5 bg-canvas-raised/50 border-t border-canvas-line flex items-center justify-between text-[11px] font-mono text-canvas-muted">
+<span class="flex items-center gap-1 text-verdict-play-text"><span class="material-symbols-outlined text-[13px]">verified</span> Qloo verified</span>
+<span>Cultural index 94/100</span>
+</div>
+</div>
+</section>
+<!-- Row 3: Merch & Routing Conflicts (7 / 5 split) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+<!-- Specialty Merch Drop (Cols 1-7) -->
+<div class="lg:col-span-7 bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
+<div>
+<div class="h-2.5 w-full perforated-rail"></div>
+<div class="p-6">
+<div class="flex justify-between items-baseline mb-4">
+<span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted">GDL · SPECIALTY MERCH SPECIFICATION</span>
+<span class="text-xs font-mono text-bone font-tabular">300 Units Planned Run</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
+<!-- Flat Tee Technical Mockup Box -->
+<div class="sm:col-span-5 bg-paper-raised rounded-xl p-4 flex flex-col items-center justify-center text-center border border-canvas-line aspect-square">
+<div class="w-24 h-28 border border-dashed border-canvas-muted/40 rounded flex flex-col items-center justify-center p-2 relative bg-canvas">
+<span class="text-[9px] font-mono uppercase text-canvas-muted">HEAVYWEIGHT 240GSM</span>
+<div class="my-auto text-xs font-display font-bold text-bone">LUMEN VALE</div>
+<span class="text-[8px] font-mono text-[#ff00aa]">GUADALAJARA '27</span>
+</div>
+<span class="text-[11px] font-mono text-canvas-muted mt-2">Jacaranda Season Capsule</span>
+</div>
+<!-- Specs & Color Swatches -->
+<div class="sm:col-span-7 space-y-3 font-mono text-xs">
+<div>
+<span class="text-[10px] text-canvas-muted uppercase tracking-wider block">PALETTE SWATCHES</span>
+<div class="flex items-center gap-3 mt-1.5">
+<div class="flex items-center gap-1.5">
+<span class="w-4 h-4 rounded-full bg-[#d8b4e2] border border-canvas-line"></span>
+<span class="text-[11px] text-bone font-sans">Lilac Mist</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-4 h-4 rounded-full bg-bone border border-canvas-line"></span>
+<span class="text-[11px] text-bone font-sans">Bone White</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-4 h-4 rounded-full bg-canvas border border-canvas-line"></span>
+<span class="text-[11px] text-bone font-sans">Warm Charcoal</span>
+</div>
+</div>
+</div>
+<div class="space-y-1 text-canvas-muted text-[11px]">
+<div class="flex justify-between py-1 border-b border-canvas-line">
+<span>PROJECTED GROSS:</span>
+<span class="text-bone font-bold font-tabular">$13,500 USD</span>
+</div>
+<div class="flex justify-between py-1 border-b border-canvas-line">
+<span>MARGIN:</span>
+<span class="text-bone font-bold font-tabular">68.4%</span>
+</div>
+<div class="flex justify-between py-1">
+<span>PRODUCTION WINDOW:</span>
+<span class="text-bone font-tabular">18 Feb - 02 Mar</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 bg-canvas-raised/50 border-t border-canvas-line flex items-center justify-between text-xs font-mono text-canvas-muted">
+<span class="flex items-center gap-1.5 text-verdict-play-text"><span class="material-symbols-outlined text-[14px]">shield_with_heart</span> 7 verified · 2 removed</span>
+<span>Qloo · Local apparel index</span>
+</div>
+</div>
+<!-- Calendar & Routing Conflicts (Cols 8-12) -->
+<div class="lg:col-span-5 bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
+<div>
+<div class="h-2.5 w-full perforated-rail"></div>
+<div class="p-6">
+<div class="flex justify-between items-baseline mb-4">
+<span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted">GDL · CALENDAR &amp; ROUTING CONFLICTS</span>
+<span class="text-xs font-mono text-verdict-play-text font-bold">CLEAR WINDOW</span>
+</div>
+<div class="space-y-3 font-body text-xs">
+<div class="p-3 rounded-lg bg-paper-raised flex items-start gap-3">
+<span class="material-symbols-outlined text-canvas-muted text-[18px] mt-0.5">event</span>
+<div class="flex-1">
+<div class="flex justify-between">
+<span class="font-semibold text-bone">Film Festival Week</span>
+<span class="font-mono text-[10px] text-canvas-muted">13–19 MAR</span>
+</div>
+<p class="text-canvas-muted text-[11px] mt-0.5">High cultural foot traffic in central core (2 verified sources).</p>
+</div>
+</div>
+<div class="p-3 rounded-lg bg-paper-raised flex items-start gap-3">
+<span class="material-symbols-outlined text-gold text-[18px] mt-0.5">celebration</span>
+<div class="flex-1">
+<div class="flex justify-between">
+<span class="font-semibold text-bone">Long Weekend Holiday</span>
+<span class="font-mono text-[10px] text-canvas-muted">15 MAR</span>
+</div>
+<p class="text-canvas-muted text-[11px] mt-0.5">Benito Juárez Day observed. Extended stay-over probability for traveling fans.</p>
+</div>
+</div>
+<div class="p-3 rounded-lg bg-paper-raised border border-verdict-play/30 flex items-start gap-3">
+<span class="material-symbols-outlined text-verdict-play-text text-[18px] mt-0.5">check_circle</span>
+<div class="flex-1">
+<div class="flex justify-between">
+<span class="font-semibold text-bone">No Rival Cap Conflicts</span>
+<span class="font-mono text-[10px] text-verdict-play-text">CONFIRMED</span>
+</div>
+<p class="text-canvas-muted text-[11px] mt-0.5">Zero 1,000–2,500 cap indie shows scheduled on 14 Mar across metro venues.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 bg-canvas-raised/50 border-t border-canvas-line flex items-center justify-between text-xs font-mono text-canvas-muted">
+<span class="flex items-center gap-1.5 text-verdict-play-text"><span class="material-symbols-outlined text-[14px]">shield_with_heart</span> 7 verified · 2 removed</span>
+<span>Live routing feed</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Collapsed Model Reasoning Summary -->
+<section class="rounded-xl bg-canvas-raised border border-canvas-line p-4 transition-all duration-200" id="reasoning">
+<div class="flex items-center justify-between cursor-pointer" onclick="document.getElementById('reasoning-drawer').classList.toggle('hidden');">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-gold text-[20px]">psychology</span>
+<div>
+<h4 class="text-xs font-mono font-semibold uppercase tracking-wider text-bone">Model Reasoning Summary · Engine v4.2</h4>
+<p class="text-xs text-canvas-muted mt-0.5">Affinity threshold satisfied (Heat 62, Activation 82). High-density concentration in Colonia Americana.</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-mono text-canvas-muted">47 Qloo calls</span>
+<span class="material-symbols-outlined text-canvas-muted">expand_more</span>
+</div>
+</div>
+<div class="hidden mt-4 pt-4 border-t border-canvas-line/60 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono text-canvas-muted" id="reasoning-drawer">
+<div class="space-y-1.5">
+<div class="text-bone font-semibold uppercase tracking-wider text-[11px]">SIGNAL VERIFICATION PIPELINE</div>
+<p class="text-canvas-text font-body">1. Cross-referenced Spotify City Chart velocity against regional vinyl sales index.</p>
+<p class="text-canvas-text font-body">2. Pruned two out-of-market promoters from the candidate stack due to radius restrictions.</p>
+<p class="text-canvas-text font-body">3. Normalized C3 Stage room economics against historical USD/MXN exchange volatility.</p>
+</div>
+<div class="space-y-1.5">
+<div class="text-bone font-semibold uppercase tracking-wider text-[11px]">GROUNDING RECORD</div>
+<div class="p-2 rounded bg-paper-raised text-[11px] font-mono text-canvas-muted">
+            CALL_HASH: qloo_geo_where_popular(lat=20.676, lng=-103.347, rad=12km) → HTTP 200 [1.84s]
+          </div>
+<div class="p-2 rounded bg-paper-raised text-[11px] font-mono text-canvas-muted">
+            AFFINITY_CLUSTER: [Indie Rock, Shoegaze, Film Noir] → Co-efficient 0.88
+          </div>
+</div>
+</div>
+</section>
+</main>
+<!-- Mobile Bottom Navigation Bar (Mandated Shared Component for Viewport Pivot) -->
+<div class="md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center h-16 w-full px-4 bg-canvas-raised border-t border-canvas-line">
+<a class="flex flex-col items-center justify-center text-canvas-muted hover:text-bone transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">explore</span>
+<span class="font-label text-[11px] font-semibold uppercase tracking-wider mt-0.5">Discover</span>
+</a>
+<!-- Active Destination: Tours -->
+<a class="flex flex-col items-center justify-center text-bone relative before:absolute before:top-0 before:w-5 before:h-[3px] before:bg-gold" href="#">
+<span class="material-symbols-outlined text-[20px] text-bone">alt_route</span>
+<span class="font-label text-[11px] font-semibold uppercase tracking-wider mt-0.5 text-bone">Tours</span>
+</a>
+<a class="flex flex-col items-center justify-center text-canvas-muted hover:text-bone transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">forum</span>
+<span class="font-label text-[11px] font-semibold uppercase tracking-wider mt-0.5">Strategist</span>
+</a>
+</div>
+</body></html>

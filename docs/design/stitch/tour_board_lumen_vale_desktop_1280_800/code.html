@@ -41,7 +41,9 @@
     }
   </script>
   <style>
+    html { background-color: #1c1b18; min-height: 100vh; }
     body {
+      min-height: 100vh;
       background-color: #1c1b18;
       color: #f2f0ea;
       font-family: 'Inter', sans-serif;
@@ -310,10 +312,10 @@
 
         <!-- Table Column Headers -->
         <div class="grid grid-cols-12 gap-2 mt-3 px-3 text-[11px] font-mono tracking-wider text-stone uppercase">
-          <div class="col-span-1">#</div>
+          
           <div class="col-span-4">Market</div>
-          <div class="col-span-4">Fan Heat / Activation</div>
-          <div class="col-span-3 text-right">Verdict · Win</div>
+          <div class="col-span-3">Fan Heat / Activation</div>
+          <div class="col-span-5 text-right">Verdict · Win</div>
         </div>
       </div>
 
@@ -322,12 +324,11 @@
 
         <!-- ROW 1: Mexico City -->
         <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
-          <div class="col-span-1 font-mono text-[12px] text-stone">01</div>
           <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
             <span class="font-serif text-[15px] font-semibold text-bone">Mexico City</span>
             <span class="text-[11px] font-mono text-stone">MX</span>
           </div>
-          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+          <div class="col-span-3 flex flex-col justify-center space-y-1 pr-1">
             <div class="flex items-center space-x-1.5">
               <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
                 <div class="h-full bg-bone-bar rounded-full" style="width: 91%"></div>
@@ -341,7 +342,7 @@
               <span class="font-mono text-[10px] text-stone w-4 text-right">77</span>
             </div>
           </div>
-          <div class="col-span-3 flex items-center justify-end space-x-2">
+          <div class="col-span-5 flex items-center justify-end space-x-2 whitespace-nowrap">
             <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-teal/20 text-teal text-[11px] font-medium leading-none">
               <span class="material-symbols-outlined text-[12px]">play_arrow</span>
               <span>Play</span>
@@ -352,12 +353,11 @@
 
         <!-- ROW 2: São Paulo -->
         <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
-          <div class="col-span-1 font-mono text-[12px] text-stone">02</div>
           <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
             <span class="font-serif text-[15px] font-semibold text-bone">São Paulo</span>
             <span class="text-[11px] font-mono text-stone">BR</span>
           </div>
-          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+          <div class="col-span-3 flex flex-col justify-center space-y-1 pr-1">
             <div class="flex items-center space-x-1.5">
               <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
                 <div class="h-full bg-bone-bar rounded-full" style="width: 84%"></div>
@@ -371,7 +371,7 @@
               <span class="font-mono text-[10px] text-stone w-4 text-right">66</span>
             </div>
           </div>
-          <div class="col-span-3 flex items-center justify-end space-x-2">
+          <div class="col-span-5 flex items-center justify-end space-x-2 whitespace-nowrap">
             <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-teal/20 text-teal text-[11px] font-medium leading-none">
               <span class="material-symbols-outlined text-[12px]">play_arrow</span>
               <span>Play</span>
@@ -382,7 +382,6 @@
 
         <!-- ROW 3: Guadalajara (SIGNATURE HIGHLIGHT: #32312a, Goldmine, Activation 82 > Fan heat 62) -->
         <div class="h-[46px] rounded-[14px] bg-well ring-1 ring-gold/40 px-3 grid grid-cols-12 gap-2 items-center relative">
-          <div class="col-span-1 font-mono text-[12px] text-gold font-bold">03</div>
           <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
             <span class="font-serif text-[15px] font-bold text-bone flex items-center">
               Guadalajara
@@ -390,7 +389,7 @@
             </span>
             <span class="text-[11px] font-mono text-stone">MX</span>
           </div>
-          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+          <div class="col-span-3 flex flex-col justify-center space-y-1 pr-1">
             <div class="flex items-center space-x-1.5">
               <div class="flex-1 h-[6px] bg-card rounded-full overflow-hidden">
                 <div class="h-full bg-bone-bar rounded-full" style="width: 62%"></div>
@@ -404,7 +403,7 @@
               <span class="font-mono text-[10px] text-gold font-bold w-4 text-right">82</span>
             </div>
           </div>
-          <div class="col-span-3 flex items-center justify-end space-x-2">
+          <div class="col-span-5 flex items-center justify-end space-x-2 whitespace-nowrap">
             <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-gold text-gold-text text-[10.5px] font-semibold leading-none">
               <span class="material-symbols-outlined text-[12px]">diamond</span>
               <span>Hidden goldmine</span>
@@ -415,12 +414,11 @@
 
         <!-- ROW 4: Curitiba (Hidden goldmine) -->
         <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
-          <div class="col-span-1 font-mono text-[12px] text-stone">04</div>
           <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
             <span class="font-serif text-[15px] font-semibold text-bone">Curitiba</span>
             <span class="text-[11px] font-mono text-stone">BR</span>
           </div>
-          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+          <div class="col-span-3 flex flex-col justify-center space-y-1 pr-1">
             <div class="flex items-center space-x-1.5">
               <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
                 <div class="h-full bg-bone-bar rounded-full" style="width: 51%"></div>
@@ -434,7 +432,7 @@
               <span class="font-mono text-[10px] text-gold font-bold w-4 text-right">77</span>
             </div>
           </div>
-          <div class="col-span-3 flex items-center justify-end space-x-2">
+          <div class="col-span-5 flex items-center justify-end space-x-2 whitespace-nowrap">
             <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-gold text-gold-text text-[10.5px] font-semibold leading-none">
               <span class="material-symbols-outlined text-[12px]">diamond</span>
               <span>Hidden goldmine</span>
@@ -445,12 +443,11 @@
 
         <!-- ROW 5: Los Angeles (De-risk: Fan Heat 88 vs Activation 40) -->
         <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
-          <div class="col-span-1 font-mono text-[12px] text-stone">05</div>
           <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
             <span class="font-serif text-[15px] font-semibold text-bone">Los Angeles</span>
             <span class="text-[11px] font-mono text-stone">US</span>
           </div>
-          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+          <div class="col-span-3 flex flex-col justify-center space-y-1 pr-1">
             <div class="flex items-center space-x-1.5">
               <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
                 <div class="h-full bg-bone-bar rounded-full" style="width: 88%"></div>
@@ -464,7 +461,7 @@
               <span class="font-mono text-[10px] text-stone w-4 text-right">40</span>
             </div>
           </div>
-          <div class="col-span-3 flex items-center justify-end space-x-2">
+          <div class="col-span-5 flex items-center justify-end space-x-2 whitespace-nowrap">
             <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-coral/20 text-coral text-[11px] font-medium leading-none">
               <span class="material-symbols-outlined text-[12px]">warning</span>
               <span>De-risk</span>
@@ -475,12 +472,11 @@
 
         <!-- ROW 6: Rio de Janeiro (Consider) -->
         <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
-          <div class="col-span-1 font-mono text-[12px] text-stone">06</div>
           <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
             <span class="font-serif text-[15px] font-semibold text-bone">Rio de Janeiro</span>
             <span class="text-[11px] font-mono text-stone">BR</span>
           </div>
-          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+          <div class="col-span-3 flex flex-col justify-center space-y-1 pr-1">
             <div class="flex items-center space-x-1.5">
               <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
                 <div class="h-full bg-bone-bar rounded-full" style="width: 72%"></div>
@@ -494,7 +490,7 @@
               <span class="font-mono text-[10px] text-stone w-4 text-right">54</span>
             </div>
           </div>
-          <div class="col-span-3 flex items-center justify-end space-x-2">
+          <div class="col-span-5 flex items-center justify-end space-x-2 whitespace-nowrap">
             <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-steel/20 text-steel text-[11px] font-medium leading-none">
               <span class="material-symbols-outlined text-[12px]">balance</span>
               <span>Consider</span>
@@ -505,12 +501,11 @@
 
         <!-- ROW 7: Austin (Consider) -->
         <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
-          <div class="col-span-1 font-mono text-[12px] text-stone">07</div>
           <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
             <span class="font-serif text-[15px] font-semibold text-bone">Austin</span>
             <span class="text-[11px] font-mono text-stone">US</span>
           </div>
-          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+          <div class="col-span-3 flex flex-col justify-center space-y-1 pr-1">
             <div class="flex items-center space-x-1.5">
               <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
                 <div class="h-full bg-bone-bar rounded-full" style="width: 66%"></div>
@@ -524,7 +519,7 @@
               <span class="font-mono text-[10px] text-stone w-4 text-right">52</span>
             </div>
           </div>
-          <div class="col-span-3 flex items-center justify-end space-x-2">
+          <div class="col-span-5 flex items-center justify-end space-x-2 whitespace-nowrap">
             <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-steel/20 text-steel text-[11px] font-medium leading-none">
               <span class="material-symbols-outlined text-[12px]">balance</span>
               <span>Consider</span>
@@ -535,12 +530,11 @@
 
         <!-- ROW 8: Monterrey (Consider) -->
         <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
-          <div class="col-span-1 font-mono text-[12px] text-stone">08</div>
           <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
             <span class="font-serif text-[15px] font-semibold text-bone">Monterrey</span>
             <span class="text-[11px] font-mono text-stone">MX</span>
           </div>
-          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+          <div class="col-span-3 flex flex-col justify-center space-y-1 pr-1">
             <div class="flex items-center space-x-1.5">
               <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
                 <div class="h-full bg-bone-bar rounded-full" style="width: 57%"></div>
@@ -554,7 +548,7 @@
               <span class="font-mono text-[10px] text-stone w-4 text-right">59</span>
             </div>
           </div>
-          <div class="col-span-3 flex items-center justify-end space-x-2">
+          <div class="col-span-5 flex items-center justify-end space-x-2 whitespace-nowrap">
             <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-steel/20 text-steel text-[11px] font-medium leading-none">
               <span class="material-symbols-outlined text-[12px]">balance</span>
               <span>Consider</span>
@@ -565,12 +559,11 @@
 
         <!-- ROW 9: Chicago (Skip) -->
         <div class="h-[46px] rounded-[14px] bg-card hover:bg-well transition-colors px-3 grid grid-cols-12 gap-2 items-center">
-          <div class="col-span-1 font-mono text-[12px] text-stone">09</div>
           <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
             <span class="font-serif text-[15px] font-semibold text-stone">Chicago</span>
             <span class="text-[11px] font-mono text-stone-muted">US</span>
           </div>
-          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+          <div class="col-span-3 flex flex-col justify-center space-y-1 pr-1">
             <div class="flex items-center space-x-1.5">
               <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
                 <div class="h-full bg-stone rounded-full" style="width: 47%"></div>
@@ -584,7 +577,7 @@
               <span class="font-mono text-[10px] text-stone-muted w-4 text-right">49</span>
             </div>
           </div>
-          <div class="col-span-3 flex items-center justify-end space-x-2">
+          <div class="col-span-5 flex items-center justify-end space-x-2 whitespace-nowrap">
             <span class="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-[4px] bg-stone/20 text-stone text-[11px] font-medium leading-none">
               <span class="material-symbols-outlined text-[12px]">skip_next</span>
               <span>Skip</span>
@@ -595,12 +588,11 @@
 
         <!-- ROW 10: Belo Horizonte (Not enough data · 1 of 4 inputs) -->
         <div class="h-[46px] rounded-[14px] bg-card/60 px-3 grid grid-cols-12 gap-2 items-center opacity-70">
-          <div class="col-span-1 font-mono text-[12px] text-stone-muted">—</div>
           <div class="col-span-4 flex items-baseline space-x-1.5 truncate">
             <span class="font-serif text-[15px] font-medium text-stone">Belo Horizonte</span>
             <span class="text-[11px] font-mono text-stone-muted">BR</span>
           </div>
-          <div class="col-span-4 flex flex-col justify-center space-y-1 pr-1">
+          <div class="col-span-3 flex flex-col justify-center space-y-1 pr-1">
             <div class="flex items-center space-x-1.5">
               <div class="flex-1 h-[6px] bg-well rounded-full overflow-hidden">
                 <div class="h-full bg-stone-muted rounded-full" style="width: 55%"></div>
@@ -612,7 +604,7 @@
               <span class="font-mono text-[10px] text-stone-muted w-4 text-right">--</span>
             </div>
           </div>
-          <div class="col-span-3 flex items-center justify-end">
+          <div class="col-span-5 flex items-center justify-end">
             <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-[4px] bg-well text-stone text-[10px] font-mono leading-tight whitespace-nowrap">
               <span class="material-symbols-outlined text-[11px]">progress_activity</span>
               <span>1 of 4 inputs</span>

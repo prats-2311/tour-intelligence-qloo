@@ -115,10 +115,6 @@
 
     <!-- Right Header Tools -->
     <div class="flex items-center space-x-4">
-      <div class="flex items-center space-x-2 text-xs font-mono text-stone bg-well px-3 py-1.5 rounded-chip">
-        <span class="w-2 h-2 rounded-full bg-teal animate-pulse"></span>
-        <span class="tracking-wider">QLOO CULTURAL GRAPH · LIVE</span>
-      </div>
       <button class="flex items-center space-x-1.5 text-xs text-stone hover:text-bone bg-card px-3 py-1.5 rounded-btn transition-colors">
         <span class="material-symbols-outlined text-[16px]">forum</span>
         <span>Strategist</span>
@@ -131,7 +127,6 @@
     <div>
       <div class="flex items-center space-x-3 mb-1">
         <h1 class="font-serif text-[40px] leading-tight font-normal text-bone">Taste Insights</h1>
-        <span class="text-stone font-mono text-xs mt-2 px-2 py-0.5 bg-chrome rounded-chip">EVIDENCE ROOM</span>
       </div>
       <div class="flex items-center space-x-2 text-[13px] text-stone">
         <span class="text-bone font-medium">Lumen Vale</span>
@@ -297,17 +292,6 @@
         </div>
       </div>
 
-      <!-- Section: Live vs Cached Toggle -->
-      <div class="space-y-2 pt-1">
-        <label class="block font-mono text-[11px] uppercase tracking-wider text-stone">Data Ingestion</label>
-        <div class="flex items-center justify-between h-8 px-2.5 bg-well rounded text-xs">
-          <span class="text-stone">Live streaming</span>
-          <div class="w-8 h-4 bg-gold rounded-full p-0.5 flex justify-end items-center cursor-pointer">
-            <div class="w-3 h-3 bg-gold-dark rounded-full"></div>
-          </div>
-        </div>
-      </div>
-
       <!-- Section: Trend Window -->
       <div class="space-y-2">
         <label class="block font-mono text-[11px] uppercase tracking-wider text-stone">Trend Window</label>
@@ -351,7 +335,7 @@
         <div class="bg-card px-4 py-3 rounded-row border border-canvas-line">
           <div class="font-mono text-[11px] uppercase tracking-wider text-stone mb-1">Partial</div>
           <div class="font-mono text-2xl font-bold text-bone">2</div>
-          <div class="font-mono text-[10px] text-coral mt-1">Fallback to tier-2</div>
+          <div class="font-mono text-[10px] text-coral mt-1">Qloo returned partial data</div>
         </div>
         <!-- Tile 4 -->
         <div class="bg-card px-4 py-3 rounded-row border border-canvas-line">
@@ -363,11 +347,11 @@
         <div class="bg-card px-4 py-3 rounded-row border border-canvas-line">
           <div class="font-mono text-[11px] uppercase tracking-wider text-stone mb-1">Claims</div>
           <div class="font-mono text-lg font-bold text-bone flex items-baseline space-x-1">
-            <span class="text-teal">41</span>
+            <span class="text-teal">7</span>
             <span class="text-xs text-stone font-normal">/</span>
-            <span class="text-xs text-coral">6 rm</span>
+            <span class="text-coral">2</span>
           </div>
-          <div class="font-mono text-[10px] text-stone-dark mt-1">41 verif · 6 removed</div>
+          <div class="font-mono text-[10px] text-stone-dark mt-1">7 verified · 2 removed</div>
         </div>
       </div>
 
@@ -395,7 +379,7 @@
           </div>
 
           <!-- Scatter Plot Canvas Container -->
-          <div class="relative w-full h-[320px] bg-canvas rounded-row p-4 my-2 overflow-hidden border border-canvas-line">
+          <div class="relative w-full h-[320px] bg-canvas rounded-row px-4 pt-4 pb-9 my-2 overflow-hidden border border-canvas-line">
             
             <!-- SVG Coordinate Canvas with regions & gridlines -->
             <svg class="w-full h-full" viewBox="0 0 500 280">
@@ -411,15 +395,15 @@
               <!-- Shaded Verdict Regions (6% opacity) -->
               <!-- Play Region: x >= 70% (350), y >= 60% (y in svg is inverted: 0 to 112) -->
               <rect x="350" y="0" width="150" height="112" fill="#0f9d8a" fill-opacity="0.08" rx="4" />
-              <text x="358" y="18" fill="#0f9d8a" opacity="0.6" font-family="'JetBrains Mono'" font-size="9" font-weight="600" letter-spacing="0.05em">PLAY ZONE</text>
+              <text x="494" y="11" text-anchor="end" fill="#0f9d8a" opacity="0.7" font-family="'JetBrains Mono'" font-size="7.5" font-weight="600" letter-spacing="0.05em">PLAY</text>
 
               <!-- Hidden Goldmine Region: x 45-70% (225 to 350), y >= 75% (0 to 70) -->
               <rect x="225" y="0" width="125" height="70" fill="#ffcc00" fill-opacity="0.12" rx="4" stroke="rgba(255,204,0,0.2)" stroke-dasharray="2 2" />
-              <text x="232" y="16" fill="#ffcc00" opacity="0.9" font-family="'JetBrains Mono'" font-size="9" font-weight="700" letter-spacing="0.05em">★ HIDDEN GOLDMINE</text>
+              <text x="229" y="10" fill="#ffcc00" opacity="0.9" font-family="'JetBrains Mono'" font-size="7.5" font-weight="700" letter-spacing="0.05em">GOLDMINE</text>
 
               <!-- De-risk Region: x >= 70% (350 to 500), y < 45% (154 to 280) -->
               <rect x="350" y="154" width="150" height="126" fill="#e8606f" fill-opacity="0.08" rx="4" />
-              <text x="358" y="268" fill="#e8606f" opacity="0.6" font-family="'JetBrains Mono'" font-size="9" font-weight="600" letter-spacing="0.05em">DE-RISK</text>
+              <text x="494" y="163" text-anchor="end" fill="#e8606f" opacity="0.7" font-family="'JetBrains Mono'" font-size="7.5" font-weight="600" letter-spacing="0.05em">DE-RISK</text>
 
               <!-- Axes -->
               <line x1="30" y1="250" x2="490" y2="250" stroke="#32312a" stroke-width="1.5" />
@@ -444,8 +428,8 @@
               <!-- 1. Faded: Mexico City (91, 77) -> x = 30 + 91*4.5 = 439.5, y = 250 - 77*2.4 = 65.2 -->
               <g opacity="0.2">
                 <circle cx="440" cy="65" r="5" fill="#0f9d8a" />
-                <text x="440" y="54" fill="#f2f0ea" font-family="'Inter'" font-size="9" text-anchor="middle">Mexico City</text>
-                <text x="440" y="44" fill="#8b877c" font-family="'JetBrains Mono'" font-size="8" text-anchor="middle">91, 77</text>
+                <text x="448" y="66" fill="#f2f0ea" font-family="'Inter'" font-size="8">Mexico City</text>
+                <text x="448" y="76" fill="#8b877c" font-family="'JetBrains Mono'" font-size="7">91, 77</text>
               </g>
 
               <!-- 2. Faded: São Paulo (84, 66) -> x = 30 + 84*4.5 = 408, y = 250 - 66*2.4 = 91.6 -->
@@ -497,11 +481,11 @@
                 <!-- Diamond (rotated square) -->
                 <rect x="254" y="59" width="12" height="12" fill="#ffcc00" stroke="#1d1a10" stroke-width="1.5" transform="rotate(45 260 65)" />
                 <!-- Label card tag -->
-                <rect x="210" y="82" width="100" height="22" rx="4" fill="#26251f" stroke="#ffcc00" stroke-width="1" />
-                <text x="260" y="94" fill="#f2f0ea" font-family="'Fraunces'" font-size="10" font-weight="600" text-anchor="middle">Curitiba, BR</text>
-                <text x="260" y="102" fill="#ffcc00" font-family="'JetBrains Mono'" font-size="7.5" font-weight="600" text-anchor="middle">51 / 77 · WIN 64</text>
+                <rect x="210" y="78" width="100" height="22" rx="4" fill="#26251f" stroke="#ffcc00" stroke-width="1" />
+                <text x="260" y="90" fill="#f2f0ea" font-family="'Fraunces'" font-size="10" font-weight="600" text-anchor="middle">Curitiba, BR</text>
+                <text x="260" y="98" fill="#ffcc00" font-family="'JetBrains Mono'" font-size="7.5" font-weight="600" text-anchor="middle">51 / 77 · WIN 64</text>
                 <!-- Connector tick -->
-                <line x1="260" y1="73" x2="260" y2="82" stroke="#ffcc00" stroke-width="1" stroke-dasharray="1 1" />
+                <line x1="260" y1="73" x2="260" y2="78" stroke="#ffcc00" stroke-width="1" stroke-dasharray="1 1" />
               </g>
 
               <!-- 10. GOLDMINE: Guadalajara (62, 82) -> x = 30 + 62*4.5 = 309, y = 250 - 82*2.4 = 53.2 -->
@@ -511,11 +495,11 @@
                 <!-- Diamond (rotated square) -->
                 <rect x="302" y="46" width="14" height="14" fill="#ffcc00" stroke="#1d1a10" stroke-width="2" transform="rotate(45 309 53)" />
                 <!-- Label card tag -->
-                <rect x="264" y="14" width="112" height="24" rx="4" fill="#1c1b18" stroke="#ffcc00" stroke-width="1.5" />
-                <text x="320" y="26" fill="#ffcc00" font-family="'Fraunces'" font-size="11" font-weight="700" text-anchor="middle">★ Guadalajara, MX</text>
-                <text x="320" y="35" fill="#f2f0ea" font-family="'JetBrains Mono'" font-size="8" font-weight="600" text-anchor="middle">62 / 82 · WIN 72</text>
+                <rect x="326" y="26" width="98" height="24" rx="4" fill="#1c1b18" stroke="#ffcc00" stroke-width="1.5" />
+                <text x="375" y="37" fill="#ffcc00" font-family="'Fraunces'" font-size="10" font-weight="700" text-anchor="middle">★ Guadalajara, MX</text>
+                <text x="375" y="46" fill="#f2f0ea" font-family="'JetBrains Mono'" font-size="8" font-weight="600" text-anchor="middle">62 / 82 · WIN 72</text>
                 <!-- Connector tick -->
-                <line x1="309" y1="38" x2="309" y2="44" stroke="#ffcc00" stroke-width="1.5" />
+                <line x1="320" y1="46" x2="326" y2="42" stroke="#ffcc00" stroke-width="1.5" />
               </g>
             </svg>
 
@@ -617,7 +601,6 @@
 
           <div class="flex items-center justify-between text-[11px] text-stone">
             <span class="font-mono text-[10px]">COORDINATES LATAM</span>
-            <button class="text-gold hover:underline font-mono text-xs">Open GIS Layer →</button>
           </div>
         </div>
 
@@ -1288,8 +1271,7 @@
           </div>
 
           <div class="flex items-center justify-between text-[11px] text-stone">
-            <span class="font-mono text-[10px]">90D STREAMING ACCELERATION</span>
-            <span class="text-bone font-mono text-xs">Lead velocity +7% above peer median</span>
+            <span class="font-mono text-[10px]">Qloo trends · last 90 days</span>
           </div>
         </div>
 
@@ -1315,9 +1297,6 @@
     <div class="border-t border-canvas-line pt-6">
       <p class="text-[13px] text-stone">
         Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.
-      </p>
-      <p class="font-mono text-[10px] text-stone-dark mt-1">
-        Tour Intelligence × Qloo Cultural Graph engine v4.12 · Premiere Noir
       </p>
     </div>
   </footer>

@@ -69,8 +69,9 @@
     /* Filmstrip / Ticket perforation rail pattern for Guadalajara */
     .perforated-rail {
       background-color: #ff00aa;
-      background-image: radial-gradient(#1c1b18 2.2px, transparent 2.6px);
-      background-size: 10px 10px;
+      opacity: 0.6;
+      background-image: radial-gradient(#1c1b18 1.4px, transparent 1.8px);
+      background-size: 8px 6px;
       background-position: 0 center;
     }
   </style>
@@ -197,16 +198,9 @@
 </div>
 <!-- Columns 6–12: 16:9 Tour Poster Presentation -->
 <div class="lg:col-span-7 flex flex-col gap-2">
-<div class="relative w-full aspect-[16/9] rounded-[18px] overflow-hidden bg-paper shadow-2xl flex items-center justify-center border border-canvas-line group">
-<img alt="Guadalajara Risograph Tour Poster" class="w-full h-full object-cover object-center filter contrast-[1.05] brightness-[0.98]" src="https://lh3.googleusercontent.com/aida/AEtjO1XRFJxPW1ybkRUTEYaJUDyPTalLw_Esub_MLQvcrO9KDNJuDm96VcSV78NYE6MYejicnQGGaOT8HqzVaiSU0f2c5EcRYM4fn74uao7PelFbN2167P8jNwMcvSRkbwLJOTSlEBWL0t-YsX_xPlnQredBZod6PSnXz1Z59Lfs2eCdbjDriEjU3dwOs4qfExS9fwL5EzlHlpc99cTQBCvjJu69Hf8h7rsU_yi40oGokUPQfGUmH2ChIqJsDfbn"/>
-<div class="absolute inset-0 bg-gradient-to-t from-canvas/90 via-transparent to-transparent opacity-60"></div>
-<div class="absolute bottom-4 left-4 right-4 flex items-center justify-between text-xs font-mono text-bone drop-shadow-md">
-<span class="bg-canvas/80 backdrop-blur-none px-2.5 py-1 rounded border border-canvas-line/40 text-[11px] uppercase tracking-wider">
-              Risograph Key Art · Guadalajara Series No. 03
-            </span>
-<span class="bg-canvas/80 backdrop-blur-none px-2.5 py-1 rounded border border-canvas-line/40 text-[11px] text-canvas-muted">
-              4:5 Print Sheet &amp; Billboard Avail
-            </span>
+<div class="relative w-full h-[340px] rounded-[18px] overflow-hidden bg-paper shadow-2xl flex items-center justify-center border border-canvas-line">
+<div class="relative h-full aspect-[250/382] overflow-hidden">
+<img alt="Guadalajara Risograph Tour Poster" class="absolute left-0 top-0 h-full w-auto max-w-none filter contrast-[1.05] brightness-[0.98]" src="https://lh3.googleusercontent.com/aida/AEtjO1XRFJxPW1ybkRUTEYaJUDyPTalLw_Esub_MLQvcrO9KDNJuDm96VcSV78NYE6MYejicnQGGaOT8HqzVaiSU0f2c5EcRYM4fn74uao7PelFbN2167P8jNwMcvSRkbwLJOTSlEBWL0t-YsX_xPlnQredBZod6PSnXz1Z59Lfs2eCdbjDriEjU3dwOs4qfExS9fwL5EzlHlpc99cTQBCvjJu69Hf8h7rsU_yi40oGokUPQfGUmH2ChIqJsDfbn"/>
 </div>
 </div>
 <div class="flex justify-between items-center px-1 text-[11px] font-mono text-canvas-muted">
@@ -239,7 +233,7 @@
 <div class="lg:col-span-5 bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
 <div>
 <!-- Fuchsia Perforated Rail -->
-<div class="h-2.5 w-full perforated-rail"></div>
+<div class="h-1.5 w-full perforated-rail"></div>
 <div class="p-6">
 <div class="flex justify-between items-baseline mb-4">
 <span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted">GDL · SPONSORS · 10 BRANDS</span>
@@ -311,7 +305,7 @@
 <div class="lg:col-span-7 bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
 <div>
 <!-- Fuchsia Perforated Rail -->
-<div class="h-2.5 w-full perforated-rail"></div>
+<div class="h-1.5 w-full perforated-rail"></div>
 <div class="p-6">
 <div class="flex justify-between items-baseline mb-4">
 <span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted">GDL · PROMO ZONES &amp; DENSITY MAPPING</span>
@@ -397,7 +391,7 @@
 <!-- Venue Fit Card -->
 <div class="bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
 <div>
-<div class="h-2.5 w-full perforated-rail"></div>
+<div class="h-1.5 w-full perforated-rail"></div>
 <div class="p-5">
 <span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted block mb-4">GDL · VENUE FIT</span>
 <div class="space-y-4">
@@ -451,7 +445,7 @@
 <!-- Co-Billing Match Card -->
 <div class="bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
 <div>
-<div class="h-2.5 w-full perforated-rail"></div>
+<div class="h-1.5 w-full perforated-rail"></div>
 <div class="p-5">
 <span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted block mb-4">GDL · CO-BILLING MATCH</span>
 <div class="space-y-4">
@@ -495,7 +489,7 @@
 <!-- Local Moment & Stage Cue Card -->
 <div class="bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
 <div>
-<div class="h-2.5 w-full perforated-rail"></div>
+<div class="h-1.5 w-full perforated-rail"></div>
 <div class="p-5">
 <span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted block mb-4">GDL · LOCAL MOMENT</span>
 <div class="space-y-3.5 text-xs">
@@ -533,11 +527,10 @@
 <!-- Specialty Merch Drop (Cols 1-7) -->
 <div class="lg:col-span-7 bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
 <div>
-<div class="h-2.5 w-full perforated-rail"></div>
+<div class="h-1.5 w-full perforated-rail"></div>
 <div class="p-6">
 <div class="flex justify-between items-baseline mb-4">
 <span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted">GDL · SPECIALTY MERCH SPECIFICATION</span>
-<span class="text-xs font-mono text-bone font-tabular">300 Units Planned Run</span>
 </div>
 <div class="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
 <!-- Flat Tee Technical Mockup Box -->
@@ -568,20 +561,7 @@
 </div>
 </div>
 </div>
-<div class="space-y-1 text-canvas-muted text-[11px]">
-<div class="flex justify-between py-1 border-b border-canvas-line">
-<span>PROJECTED GROSS:</span>
-<span class="text-bone font-bold font-tabular">$13,500 USD</span>
-</div>
-<div class="flex justify-between py-1 border-b border-canvas-line">
-<span>MARGIN:</span>
-<span class="text-bone font-bold font-tabular">68.4%</span>
-</div>
-<div class="flex justify-between py-1">
-<span>PRODUCTION WINDOW:</span>
-<span class="text-bone font-tabular">18 Feb - 02 Mar</span>
-</div>
-</div>
+<p class="text-[11px] text-canvas-muted font-sans leading-relaxed">Style directions from Qloo brand &amp; tag affinities for GDL fans</p>
 </div>
 </div>
 </div>
@@ -594,7 +574,7 @@
 <!-- Calendar & Routing Conflicts (Cols 8-12) -->
 <div class="lg:col-span-5 bg-paper rounded-[18px] overflow-hidden flex flex-col justify-between">
 <div>
-<div class="h-2.5 w-full perforated-rail"></div>
+<div class="h-1.5 w-full perforated-rail"></div>
 <div class="p-6">
 <div class="flex justify-between items-baseline mb-4">
 <span class="font-mono text-xs font-semibold uppercase tracking-wider text-canvas-muted">GDL · CALENDAR &amp; ROUTING CONFLICTS</span>
@@ -647,7 +627,7 @@
 <div class="flex items-center gap-3">
 <span class="material-symbols-outlined text-gold text-[20px]">psychology</span>
 <div>
-<h4 class="text-xs font-mono font-semibold uppercase tracking-wider text-bone">Model Reasoning Summary · Engine v4.2</h4>
+<h4 class="text-xs font-mono font-semibold uppercase tracking-wider text-bone">Model reasoning summary</h4>
 <p class="text-xs text-canvas-muted mt-0.5">Affinity threshold satisfied (Heat 62, Activation 82). High-density concentration in Colonia Americana.</p>
 </div>
 </div>
