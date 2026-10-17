@@ -1,6 +1,6 @@
 # Activation calibration — calibrated-2026-10-17
 
-Inputs: 32 scored cities from 4 recorded Tour Board runs (Japanese Breakfast, Khruangbin, Mac DeMarco, Natalia Lafourcade). Backtest cases were not used.
+Inputs: 32 scored cities from 4 recorded Tour Board runs (Japanese Breakfast, Khruangbin, Mac DeMarco, Natalia Lafourcade). Backtest cases were not used. The trimmed inputs are committed in `cloud_run/qloo_gateway/test/fixtures/calibration/`; re-run: `node dist/scoring/calibrateCli.js --in test/fixtures/calibration/*.json --version calibrated-2026-10-17 --write src/scoring/calibration.ts --report ../../docs/qloo/calibration.md` (from `cloud_run/qloo_gateway`).
 
 | Config | Activation range | IQR | Fragile cities (±1 point) | Verdicts |
 |---|---|---|---|---|

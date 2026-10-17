@@ -414,7 +414,7 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 | MCP / WebMCP | Tools as plain functions; schema checks; one live E2E against the deployed demo endpoint |
 | Claim verification (§5.6) | Fabricated entity, altered number, dangling ref, valid claim; all-removed card fallback; audit list contents |
 | Backtest (§3 ⑤) | Hit@10/hit@20 logic on fixtures; unresolved-artist and unavailable-method handling ("no answer", excluded from denominators); baselines use identical cases and cut-off; results JSON schema; `/proof` renders from JSON with no live calls |
-| Calibration (§5.2–5.3) | Floors, vs-uniform concentration, quantile thresholds, thin data, close-call flag; `scoreCity` reproduces recorded scores under the default config (trimmed fixture recordings in `test/fixtures/calibration/`) |
+| Calibration (§5.2–5.3) | Floors, vs-uniform concentration, quantile thresholds, thin data, close-call flag; `scoreCity` reproduces recorded scores under the default config (trimmed fixture recordings in `test/fixtures/calibration/`); `deriveCalibration` over those 4 recordings reproduces the committed `SCORING` exactly |
 | UI | vitest for logic (geo conversion, score formatting, state); **Playwright judge path at 375 px and 1280 px**; no horizontal scroll at 360 px |
 
 `./run_tests.sh` (existing 413 + new) must be green for every merge. `graft check` runs inside it.

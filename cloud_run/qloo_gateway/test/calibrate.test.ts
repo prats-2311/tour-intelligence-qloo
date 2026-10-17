@@ -3,6 +3,7 @@ import { citiesFromRecording, deriveCalibration, fragility, quantile, renderCali
 import { parseCalArgs } from "../src/scoring/calibrateCli.js";
 import { readdirSync, readFileSync } from "node:fs";
 import { DEFAULT_SCORING } from "../src/scoring/config.js";
+import { SCORING } from "../src/scoring/calibration.js";
 
 const uniform = Array(20).fill(0.05);
 // Saturated like live data: affinities 0.88-0.98, concentration ≈ 0.15.
@@ -119,5 +120,14 @@ describe("calibration", () => {
       }
     }
     expect(checked).toBeGreaterThan(0);
+  });
+
+  it("deriveCalibration over the 4 committed recordings reproduces the committed SCORING exactly", () => {
+    const files = readdirSync(dir).filter((n) => n.endsWith(".json")).sort();
+    expect(files).toEqual(["japanese-breakfast.json", "khruangbin.json", "mac-demarco.json", "natalia-lafourcade.json"]);
+    const all = files.flatMap((f) => citiesFromRecording(JSON.parse(readFileSync(new URL(f, dir), "utf8"))));
+    const { config, report } = deriveCalibration(all, SCORING.version);
+    expect(report.gates.passed).toBe(true);
+    expect(config).toEqual(SCORING);
   });
 });

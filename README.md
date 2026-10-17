@@ -196,10 +196,10 @@ QLOO_GATEWAY_URL=<gateway> node dist/backtest/cli.js --cases ../../backtest/case
 
 ```bash
 cd cloud_run/qloo_gateway && npm run build
-node dist/scoring/calibrateCli.js --in <recordings…> --write src/scoring/calibration.ts --report ../../docs/qloo/calibration.md
+node dist/scoring/calibrateCli.js --in test/fixtures/calibration/*.json --version calibrated-2026-10-17 --write src/scoring/calibration.ts --report ../../docs/qloo/calibration.md
 ```
 
-`src/scoring/calibration.ts` is generated; never edit it by hand.
+The four trimmed recordings that produced `calibrated-2026-10-17` are committed in `cloud_run/qloo_gateway/test/fixtures/calibration/` (only the scores, affinities and zone shares; no entity ids, coordinates or refs), and a test checks that this command reproduces `src/scoring/calibration.ts` exactly. `src/scoring/calibration.ts` is generated; never edit it by hand.
 
 ---
 
