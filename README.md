@@ -156,7 +156,10 @@ Every result is an affinity signal from aggregate taste data, not a ticket forec
 The promoter's question: would this have found the sponsor, merch collab or local act the real tour actually used? `/proof` tests that against documented past activations, not against Qloo's own heatmap (which would be circular). Every case was reviewed by hand before it was scored.
 
 Three methods, same cases, same top-10 cut:
-1. **Qloo playbook:** the exact Qloo request the City Playbook makes (artist taste signal plus city).
+1. **Qloo playbook:** what the City Playbook's local-act column was in that run.
+   - Run 1 (v1): the artist-taste recommend request (the headliner's taste signal plus the city), widened to 20 results. For brands it is the exact recommend request the City Playbook makes.
+   - Run 2 (v2): the city's 20 most popular artists, the first 10 re-ranked by taste fit with `qloo_rank` (the card shows 10 of a pool of 20). For brands it is the same recommend request widened to 20.
+   - The live card is now a hybrid (Gemini proposes, Qloo verifies and ranks) that has not been tested on any case.
 2. **City popularity:** the same request without the artist, which tests whether the artist's taste adds anything to "what's popular in this city".
 3. **Generic LLM:** Gemini, same question, no Qloo.
 
@@ -168,6 +171,8 @@ Real entity in the top 10, per method (from `backtest/results.json` and `backtes
 | Run 2: 13 fresh local-act cases (method v2) | 1 of 13 | 1 of 13 | 7 of 13 |
 
 The honest reading: the playbook did not beat either baseline, and for naming the specific famous local guest the generic LLM did better. That is a world-knowledge question, and Qloo's city recommendations reflect what over-indexes with an audience in a city, not who is most famous there. So the City Playbook's local-act card is now a hybrid: Gemini proposes candidates, Qloo checks each name exists (a name Qloo cannot find is dropped, never shown) and ranks the survivors by taste fit. That hybrid has not been tested on new cases, and we make no claim about it. Run 1 is published as run 1; run 2 was judged on fresh cases reviewed after the method changed.
+
+Case selection: run 1 started from 26 candidates and 14 were accepted, after a controller pre-filter (weak source, future date, not city-specific, not local) and Prateek's review; run 2 went from 16 candidates to 13. Both candidate files (`backtest/candidates.json`, `backtest/candidates-run2.json`) are committed with the rejection notes.
 
 Limitation: Qloo's graph (and the LLM's training data) may already reflect these past activations (post-hoc leakage); we cannot control for this. The backtest shows consistency with real decisions, not causal lift. The samples are small and say so.
 
@@ -182,7 +187,7 @@ In the first Mac DeMarco recording, activation scores clustered at 73.9-76.1 bec
 | Before (default) | 51.5–96.8 | 2.67 | 5 | play 15, consider 10, hidden_goldmine 6, skip 1 |
 | After (calibrated) | 0.0–52.0 | 24.09 | 4 | play 12, consider 10, skip 7, insufficient_data 1, de_risk 1, hidden_goldmine 1 |
 
-Affinity floors: sponsor_fit 0.92, local_hooks 0.95, venue_fit 0.88. Close calls (verdict changes within ±2 points): 10 before, 10 after. The showcase tour (Natalia Lafourcade across Mexico, Brazil and the United States) was re-recorded on the calibrated scoring: Ciudad Juárez is the Hidden goldmine; El Paso, San Diego and Reynosa are Play.
+Affinity floors: sponsor_fit 0.92, local_hooks 0.95, venue_fit 0.88. Close calls (verdict changes within ±2 points): 10 before, 10 after. The showcase tour (Natalia Lafourcade across Mexico, Brazil and the United States) was re-recorded on the calibrated scoring: Ciudad Juarez is the Hidden goldmine; El Paso, San Diego and Reynosa are Play.
 
 ### Run the backtest
 

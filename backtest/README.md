@@ -9,7 +9,10 @@ Question: for real past tours, would the Qloo-powered City Playbook have surface
 - `results.json` (run 1, run at 2026-10-17T00:41Z) and `results-run2.json` (run 2, 2026-10-17T01:33Z): the runner's output. `/proof` renders committed copies of both (`dashboard/src/lib/qloo/fixtures/backtest.json`).
 
 Each case is scored three ways, with the same top-10 cut:
-1. **Qloo playbook:** the exact Qloo recommend request the City Playbook makes (artist signal + city), limit 20.
+1. **Qloo playbook:** what the City Playbook's local-act column was in that run.
+   - Run 1 (v1): the artist-taste recommend request (artist signal + city), widened to 20. For brands it is the exact request the City Playbook makes.
+   - Run 2 (v2): the city's 20 most popular artists, the first 10 re-ranked by taste fit with `qloo_rank` (pool of 20, 10 on the card). For brands it is the same request widened to 20.
+   - The live card is now a hybrid (Gemini proposes, Qloo verifies and ranks) that is untested; neither run measured it.
 2. **City popularity:** the same request without the artist, which tests whether the artist's taste adds anything beyond "what's popular in this city".
 3. **Generic LLM:** Gemini, same question, no Qloo and no web search.
 
@@ -20,5 +23,7 @@ A case counts toward Qloo's numbers only when the artist resolves in Qloo: both 
 Headline (real entity in the top 10): run 1 playbook 1/13, city popularity 1/13, LLM 3/14; run 2 playbook 1/13, city popularity 1/13, LLM 7/13. The playbook did not beat a baseline.
 
 Limitations: Qloo's graph (and the LLM's training data) may already reflect these past activations (post-hoc leakage); we cannot control for this. The backtest shows consistency with real decisions, not causal lift. The sample is small and says so.
+
+Case selection: run 1 had 26 candidates and 14 were accepted, after a controller pre-filter (weak source, future date, not city-specific, not local) and Prateek's review; run 2 had 16 candidates and 13 were accepted. `candidates.json` and `candidates-run2.json` keep the rejected candidates with their rejection notes.
 
 Re-run: see "Run the backtest" in the root README.
