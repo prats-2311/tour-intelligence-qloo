@@ -117,6 +117,14 @@ export async function record({ artist, regions, window, maxPlaybooks = 4, gatewa
   if (!boardEvents.some((e) => e.type === "done")) throw new Error("the board stream did not finish; nothing recorded");
 
   const cities = boardEvents.filter((e) => e.type === "city_scored").map((e) => e.city);
+  let withoutQloo;
+  try {
+    const res = await call("/v1/without-qloo", { method: "POST", headers: { ...headers, "content-type": "application/json" }, body: JSON.stringify({ artist, regions, cities: cities.map((c) => ({ name: c.name, country: c.country })) }) });
+    withoutQloo = await res.json();
+  } catch (err) {
+    warn(`generic ranking not recorded (${err.message})`);
+    withoutQloo = { status: "unavailable", reason: "error", message: "Generic ranking unavailable" };
+  }
   const picks = cities
     .filter((c) => SHORTLIST_VERDICTS.has(c.verdict))
     .sort((a, b) => (a.verdict === b.verdict ? 0 : a.verdict === "hidden_goldmine" ? -1 : 1) || (b.winnability.value ?? -1) - (a.winnability.value ?? -1))
@@ -138,7 +146,7 @@ export async function record({ artist, regions, window, maxPlaybooks = 4, gatewa
       thisWeek[c.id] = await (await call(`/v1/this-week?${wq}`, { method: "GET", headers })).json();
     }
   }
-  return { recordedAt: now.toISOString(), artist: resolved.entity.name, brief, boardEvents, playbooks, thisWeek };
+  return { recordedAt: now.toISOString(), artist: resolved.entity.name, brief, boardEvents, withoutQloo, playbooks, thisWeek };
 }
 
 /** One line per city: verdict, then its fan-density rank against its winnability rank. */

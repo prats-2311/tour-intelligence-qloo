@@ -13,10 +13,10 @@ import { Sheet } from "@/components/qloo/Sheet";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { VerdictGlyph } from "@/components/qloo/VerdictGlyph";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
-import { fetchWithoutQloo, WITHOUT_SHOWCASE } from "@/lib/qloo/client";
+import { fetchWithoutQloo } from "@/lib/qloo/client";
 import { LONG_CITY_NAMES, LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_WITHOUT_QLOO } from "@/lib/qloo/fixtures/strategistSample";
-import { SHOWCASE, showcaseBrief } from "@/lib/qloo/showcase";
+import { SHOWCASE, showcaseBrief, showcaseWithoutQloo } from "@/lib/qloo/showcase";
 import { sortCities, summarize } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
@@ -169,7 +169,7 @@ export default function TourBoard() {
     retry: false,
   });
   const withoutResult = state.source === "showcase"
-    ? WITHOUT_SHOWCASE
+    ? showcaseWithoutQloo()
     : isSample
     ? (state.sampleSet === "long" && SAMPLE_WITHOUT_QLOO.status === "ok"
       ? { ...SAMPLE_WITHOUT_QLOO, ranked: SAMPLE_WITHOUT_QLOO.ranked.map((r) => {
@@ -300,7 +300,7 @@ export default function TourBoard() {
                 <Notice>
                   <CircleAlert size={14} className="text-state-error" aria-hidden />
                   <span className="min-w-0">{withoutResult?.status === "unavailable" ? withoutResult.message : "Generic ranking unavailable"}</span>
-                  <button type="button" onClick={() => void withoutLive.refetch()} className={smallBtn}>Try again</button>
+                  {state.source === "live" && <button type="button" onClick={() => void withoutLive.refetch()} className={smallBtn}>Try again</button>}
                 </Notice>
               ) : (
                 <ul aria-hidden className="flex flex-col gap-0.5">

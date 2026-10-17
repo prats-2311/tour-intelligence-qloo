@@ -14,6 +14,23 @@ const c = (id: string, fan: number, win: number | null): ScoredCity => ({
   winnability: win === null ? { value: null, reason: "insufficient_data", refs: [] } : { value: win, refs: [] },
 });
 
+describe("recorded generic ranking", () => {
+  const ok = { status: "ok", ranked: [{ name: "X", country: "MX" }], model: "m", cached: false };
+  it("keeps a valid withoutQloo", () => {
+    expect(parseShowcase({ withoutQloo: ok }).withoutQloo).toEqual(ok);
+  });
+  it("turns a malformed or missing withoutQloo into null", () => {
+    expect(parseShowcase({ withoutQloo: { status: "ok", ranked: "x" } }).withoutQloo).toBeNull();
+    expect(parseShowcase({}).withoutQloo).toBeNull();
+  });
+  it("fetchWithoutQloo in showcase mode never hits the network", async () => {
+    const fetchImpl = vi.fn();
+    const r = await fetchWithoutQloo({ artist: "A", regions: [], cities: [] }, { sample: true, sampleSet: "showcase", fetchImpl: fetchImpl as unknown as typeof fetch });
+    expect(r.status).toBe("unavailable");
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
 describe("showcase data", () => {
   it("the committed placeholder is the Lumen Vale sample and is labelled as such", () => {
     expect(SHOWCASE.recordedAt).toBeNull();

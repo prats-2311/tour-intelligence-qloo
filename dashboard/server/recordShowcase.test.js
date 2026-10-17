@@ -17,13 +17,18 @@ const BOARD = [
   { type: "done", summary: {} },
 ];
 
-function mockFetch(calls) {
+function mockFetch(calls, { onWithoutQloo, withoutQlooStatus } = {}) {
   return async (url, init) => {
     calls.push({ url: String(url), init });
     const u = new URL(String(url));
     const body = (text, status = 200) => new Response(text, { status, headers: { "content-type": "text/event-stream" } });
     if (u.pathname === "/v1/tour-board") return body(sse(BOARD));
     if (u.pathname === "/v1/city-playbook") return body(sse([{ type: "tool_call", tool: "qloo_recommend", args: { target_type: "brand", signal_location: "x", junk: 1 }, cached: true }, { type: "done", summary: {} }]));
+    if (u.pathname === "/v1/without-qloo") {
+      if (withoutQlooStatus) return new Response("err", { status: withoutQlooStatus });
+      const reqBody = JSON.parse(init.body);
+      return new Response(JSON.stringify(onWithoutQloo ? onWithoutQloo(reqBody) : { status: "ok", ranked: reqBody.cities, model: "m", cached: false }), { status: 200 });
+    }
     if (u.pathname === "/v1/this-week") return new Response(JSON.stringify({ status: "ok", items: [] }), { status: 200 });
     return new Response("nope", { status: 404 });
   };
@@ -39,7 +44,7 @@ describe("record-showcase", () => {
   it("writes the expected shape and calls the dashboard's routes with auth and session headers", async () => {
     const calls = [];
     const out = await record({ artist: "Test Artist", regions: ["Mexico"], window: { start: "2027-03-12", end: "2027-04-18" }, maxPlaybooks: 4, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl: mockFetch(calls), now: new Date("2026-10-16T10:00:00Z") });
-    expect(Object.keys(out).sort()).toEqual(["artist", "boardEvents", "brief", "playbooks", "recordedAt", "thisWeek"]);
+    expect(Object.keys(out).sort()).toEqual(["artist", "boardEvents", "brief", "playbooks", "recordedAt", "thisWeek", "withoutQloo"]);
     expect(out.recordedAt).toBe("2026-10-16T10:00:00.000Z");
     expect(out.brief).toEqual({ artist: "Test Artist", regions: ["Mexico"], maxStops: 8, dateWindow: { start: "2027-03-12", end: "2027-04-18" } });
     expect(out.boardEvents).toHaveLength(BOARD.length);
@@ -53,6 +58,26 @@ describe("record-showcase", () => {
     expect(pb.init.headers.authorization).toBe(`Bearer ${TOKEN}`);
     expect(pb.init.headers["x-session-id"]).toMatch(/^showcase-2026-10-16-test-artist-[a-z0-9]{6}$/);
     expect(new URL(calls.find((c) => c.url.includes("/v1/this-week")).url).searchParams.get("start")).toBe("2027-03-12");
+  });
+
+  it("records the generic ranking after the board", async () => {
+    const bodies = [];
+    const calls = [];
+    const fetchImpl = mockFetch(calls, { onWithoutQloo: (b) => { bodies.push(b); return { status: "ok", ranked: b.cities.slice().reverse(), model: "gemini-x", cached: false }; } });
+    const out = await record({ artist: "Test Artist", regions: ["Mexico"], maxPlaybooks: 4, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl, now: new Date("2026-10-18T00:00:00Z"), sessionId: "s" });
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0]).toEqual({ artist: "Test Artist", regions: ["Mexico"], cities: [{ name: "Alpha", country: "MX" }, { name: "Beta", country: "MX" }, { name: "Gamma", country: "MX" }] });
+    expect(out.withoutQloo.status).toBe("ok");
+    const paths = calls.map((c) => new URL(c.url).pathname);
+    expect(paths.indexOf("/v1/without-qloo")).toBeGreaterThan(paths.indexOf("/v1/tour-board"));
+  });
+
+  it("keeps recording when the generic ranking fails", async () => {
+    const warnings = [];
+    const out = await record({ artist: "Test Artist", regions: ["Mexico"], maxPlaybooks: 4, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl: mockFetch([], { withoutQlooStatus: 503 }), warn: (m) => warnings.push(m) });
+    expect(out.withoutQloo).toEqual({ status: "unavailable", reason: "error", message: "Generic ranking unavailable" });
+    expect(warnings).toHaveLength(1);
+    expect(Object.keys(out.playbooks)).toHaveLength(2);
   });
 
   it("caps playbooks and skips this-week without a window", async () => {

@@ -1,7 +1,8 @@
 import raw from "./fixtures/showcase.json";
 import { recordedText } from "./labels";
 import { ordinal } from "./ranking";
-import type { GatewayEvent, ScoredCity, ThisWeek, TourBrief } from "./types";
+import type { GatewayEvent, ScoredCity, ThisWeek, TourBrief, WithoutQloo } from "./types";
+import { parseWithoutQloo, WITHOUT_SHOWCASE_MISSING } from "./withoutQloo";
 
 /** One recorded Tour Board run (see scripts/record-showcase.mjs). `recordedAt: null` marks the committed placeholder built from the Lumen Vale sample. */
 export interface Showcase {
@@ -11,6 +12,8 @@ export interface Showcase {
   boardEvents: GatewayEvent[];
   playbooks: Record<string, GatewayEvent[]>;
   thisWeek: Record<string, ThisWeek>;
+  /** The recorded generic-LLM ranking; null when the recording predates it or it was malformed. */
+  withoutQloo: WithoutQloo | null;
 }
 
 const KNOWN_EVENTS: ReadonlySet<string> = new Set([
@@ -38,6 +41,7 @@ export function parseShowcase(input: unknown): Showcase {
     boardEvents: cleanEvents(o.boardEvents),
     playbooks,
     thisWeek: ((o.thisWeek ?? {}) as Record<string, ThisWeek>),
+    withoutQloo: parseWithoutQloo(o.withoutQloo),
   };
 }
 
@@ -47,6 +51,7 @@ export const showcaseBrief = (): TourBrief => SHOWCASE.brief;
 export const showcaseBoardEvents = (): GatewayEvent[] => SHOWCASE.boardEvents;
 export const showcasePlaybookEvents = (cityId: string): GatewayEvent[] | null => SHOWCASE.playbooks[cityId] ?? null;
 export const showcaseThisWeek = (cityId: string): ThisWeek | null => SHOWCASE.thisWeek[cityId] ?? null;
+export const showcaseWithoutQloo = (): WithoutQloo => SHOWCASE.withoutQloo ?? WITHOUT_SHOWCASE_MISSING;
 export const showcaseBannerText = (): string => recordedText(SHOWCASE.recordedAt);
 
 export function showcaseCities(show: Showcase = SHOWCASE): ScoredCity[] {

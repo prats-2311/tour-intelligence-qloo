@@ -11,6 +11,12 @@ import { VERDICT_LABEL, VERDICT_SHAPE } from "@/lib/qloo/labels";
 import type { TourBrief } from "@/lib/qloo/types";
 import TourBoard from "./TourBoard";
 
+const recorded = vi.hoisted(() => ({ raw: undefined as unknown }));
+vi.mock("@/lib/qloo/showcase", async (orig) => {
+  const mod = await orig<typeof import("@/lib/qloo/showcase")>();
+  const { WITHOUT_SHOWCASE_MISSING } = await import("@/lib/qloo/withoutQloo");
+  return { ...mod, showcaseWithoutQloo: () => (recorded.raw === undefined ? mod.showcaseWithoutQloo() : mod.parseShowcase({ withoutQloo: recorded.raw }).withoutQloo ?? WITHOUT_SHOWCASE_MISSING) };
+});
 vi.mock("@/lib/qloo/fixtures/showcase.json", async () => ({ default: (await import("@/test/placeholderShowcase")).PLACEHOLDER_SHOWCASE }));
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
 
@@ -134,6 +140,28 @@ describe("TourBoard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
   });
+  it("showcase replays the recorded generic ranking with no request and no Try again", async () => {
+    recorded.raw = { status: "ok", ranked: [{ name: "Recorded Town", country: "MX" }, { name: "Other Town", country: "BR" }], model: "m", cached: false };
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    const spy = vi.spyOn(client, "fetchWithoutQloo");
+    renderPage("/tours/board?showcase=1&mode=without");
+    const list = await screen.findByRole("list", { name: "Generic ranking" });
+    expect(within(list).getAllByRole("listitem").map((li) => li.textContent)).toEqual([expect.stringContaining("Recorded Town"), expect.stringContaining("Other Town")]);
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(fetchSpy.mock.calls.some((c) => String(c[0]).includes("/api/qloo/without-qloo"))).toBe(false);
+    expect(spy).not.toHaveBeenCalled();
+    recorded.raw = undefined;
+  });
+
+  it("showcase without a recorded ranking says so and offers no Try again", async () => {
+    recorded.raw = null;
+    renderPage("/tours/board?showcase=1&mode=without");
+    expect(await screen.findByText("This recording has no generic ranking")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    recorded.raw = undefined;
+  });
+
   it("sample mode never calls fetchWithoutQloo", async () => {
     const spy = vi.spyOn(client, "fetchWithoutQloo");
     renderPage("/tours/board?sample=1&mode=without");

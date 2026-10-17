@@ -3,7 +3,8 @@ import { getSessionId } from "./session";
 import { SseParser } from "./sse";
 import { samplePlaybookEvents, sampleThisWeek } from "./fixtures/lumenValePlaybooks";
 import { SAMPLE_WITHOUT_QLOO, sampleStrategistEvents } from "./fixtures/strategistSample";
-import { showcaseBoardEvents, showcasePlaybookEvents, showcaseThisWeek } from "./showcase";
+import { showcaseBoardEvents, showcasePlaybookEvents, showcaseThisWeek, showcaseWithoutQloo } from "./showcase";
+import { parseWithoutQloo } from "./withoutQloo";
 import type { ChatMessage, DateWindow, GatewayEvent, SampleSet, StrategistContext, ThisWeek, TourBrief, WithoutQloo } from "./types";
 
 export const SHOWCASE_STRATEGIST_NOTE = "The live strategist needs a live run";
@@ -91,25 +92,10 @@ async function* friendlyStrategistErrors(events: AsyncGenerator<GatewayEvent>): 
   }
 }
 
-/** The recording has no generic-LLM answer to replay, so the showcase says so. */
-export const WITHOUT_SHOWCASE: WithoutQloo = { status: "unavailable", reason: "disabled", message: "The generic ranking needs a live run" };
 const WITHOUT_QLOO_ERROR: WithoutQloo = { status: "unavailable", reason: "error", message: "Generic ranking unavailable" };
 
-const isStr = (v: unknown): v is string => typeof v === "string";
-function parseWithoutQloo(v: unknown): WithoutQloo | null {
-  if (!v || typeof v !== "object") return null;
-  const o = v as Record<string, unknown>;
-  if (o.status === "ok") {
-    const ranked = o.ranked;
-    if (!Array.isArray(ranked) || !ranked.every((r) => !!r && isStr((r as Record<string, unknown>).name) && isStr((r as Record<string, unknown>).country))) return null;
-    return { status: "ok", ranked: ranked as Array<{ name: string; country: string }>, model: isStr(o.model) ? o.model : "", cached: o.cached === true };
-  }
-  if (o.status === "unavailable" && isStr(o.reason) && isStr(o.message)) return v as WithoutQloo;
-  return null;
-}
-
 export async function fetchWithoutQloo(body: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }> }, opts: { sample?: boolean; sampleSet?: SampleSet; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<WithoutQloo> {
-  if (opts.sample && opts.sampleSet === "showcase") return WITHOUT_SHOWCASE;
+  if (opts.sample && opts.sampleSet === "showcase") return showcaseWithoutQloo();
   if (opts.sample) return SAMPLE_WITHOUT_QLOO;
   try {
     const res = await (opts.fetchImpl ?? fetch)("/api/qloo/without-qloo", {
