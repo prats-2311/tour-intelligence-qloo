@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { BudgetGuard } from "../src/budget.js";
+import { describe, expect, it, vi } from "vitest";
+import { BudgetGuard, type DailyCountStore } from "../src/budget.js";
 import { MemoryCache, cacheKey } from "../src/cache.js";
 import { createQlooCaller } from "../src/qlooCall.js";
 import type { QlooEnvelope } from "../src/types.js";
@@ -131,5 +131,43 @@ describe("resilientCall fix round 1", () => {
     const caller = createQlooCaller({ mcp, cache: badCache as never, budget: new BudgetGuard({ perSession: 9, perDay: 9, now: () => 0 }), sleep: async () => {} });
     const r = await caller.call("qloo_describe", { entity: "x" }, "s");
     expect(r.envelope).toMatchObject({ status: "error", error: { code: "QLOO_AUTH" } });
+  });
+});
+
+describe("shared daily count in the caller", () => {
+  const mk = (store: DailyCountStore, cache = new MemoryCache(() => 0)) => {
+    const calls: string[] = [];
+    const mcp = { async callTool(name: string) { calls.push(name); return ok; } };
+    const budget = new BudgetGuard({ perSession: 60, perDay: 5, now: () => 0, dailyStore: store });
+    return { caller: createQlooCaller({ mcp, cache, budget, sleep: async () => {} }), calls, cache, budget };
+  };
+  it("a store at the ceiling gives a BUDGET envelope, a joined follower gets the same one, and Qloo is not called", async () => {
+    let n = 0;
+    const store: DailyCountStore = { tryIncrement: async () => { n += 1; return false; } };
+    const { caller, calls, budget } = mk(store);
+    const [a, b] = await Promise.all([caller.call("qloo_describe", { entity: "x" }, "s"), caller.call("qloo_describe", { entity: "x" }, "s")]);
+    expect(a.envelope).toMatchObject({ status: "error", error: { code: "BUDGET" } });
+    expect(b.envelope).toEqual(a.envelope);
+    expect(n).toBe(1);
+    expect(calls).toHaveLength(0);
+    expect(budget.remaining("s").session).toBe(60);
+  });
+  it("a cache hit never touches the store", async () => {
+    let n = 0;
+    const store: DailyCountStore = { tryIncrement: async () => { n += 1; return true; } };
+    const { caller } = mk(store);
+    await caller.call("qloo_describe", { entity: "x" }, "s");
+    expect(n).toBe(1);
+    const r = await caller.call("qloo_describe", { entity: "x" }, "s");
+    expect(r.cached).toBe(true);
+    expect(n).toBe(1);
+  });
+  it("a store that throws still lets the call through", async () => {
+    const { caller, calls } = mk({ tryIncrement: async () => { throw new Error("down"); } });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const r = await caller.call("qloo_describe", { entity: "x" }, "s");
+    warn.mockRestore();
+    expect(r.envelope.status).toBe("ok");
+    expect(calls).toHaveLength(1);
   });
 });

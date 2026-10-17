@@ -34,9 +34,9 @@ describe("ttlMs", () => {
     if (v === undefined) delete process.env.QLOO_CACHE_TTL_DAYS; else process.env.QLOO_CACHE_TTL_DAYS = v;
     try { fn(); } finally { if (prev === undefined) delete process.env.QLOO_CACHE_TTL_DAYS; else process.env.QLOO_CACHE_TTL_DAYS = prev; }
   };
-  it("is 1 day for trends, QLOO_CACHE_TTL_DAYS (default 45) otherwise", () => {
+  it("is 7 days for trends, QLOO_CACHE_TTL_DAYS (default 45) otherwise", () => {
     withEnv("45", () => expect(ttlMs("qloo_recommend")).toBe(45 * DAY));
-    withEnv(undefined, () => { expect(ttlMs("qloo_recommend")).toBe(45 * DAY); expect(ttlMs("qloo_trends")).toBe(DAY); });
+    withEnv(undefined, () => { expect(ttlMs("qloo_recommend")).toBe(45 * DAY); expect(ttlMs("qloo_trends")).toBe(7 * DAY); });
     withEnv("10", () => expect(ttlMs("qloo_recommend")).toBe(10 * DAY));
   });
   it("falls back to 45 days for an invalid env value", () => {
@@ -50,7 +50,7 @@ describe("MemoryCache", () => {
     const c = new MemoryCache(() => t);
     await c.put("k", "qloo_trends", env);
     expect((await c.get("k"))?.stale).toBe(false);
-    t = DAY + 1;
+    t = 7 * DAY + 1;
     expect(await c.get("k")).toBeNull();
     expect((await c.get("k", { allowStale: true }))?.stale).toBe(true);
   });
@@ -97,7 +97,7 @@ describe("FirestoreCache", () => {
     const c = new FirestoreCache({ db, now: () => t });
     expect(await c.get("nope")).toBeNull();
     await c.put("k", "qloo_trends", env);
-    t = DAY + 1;
+    t = 7 * DAY + 1;
     expect(await c.get("k")).toBeNull();
     expect((await c.get("k", { allowStale: true }))?.stale).toBe(true);
   });

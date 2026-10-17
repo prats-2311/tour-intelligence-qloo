@@ -23,7 +23,7 @@ function cacheTtlDays(): number {
 }
 
 export function ttlMs(tool: string): number {
-  return tool === "qloo_trends" ? DAY : cacheTtlDays() * DAY;
+  return tool === "qloo_trends" ? 7 * DAY : cacheTtlDays() * DAY;
 }
 
 export type CacheHit = { tool: string; envelope: QlooEnvelope; createdAt: number; stale: boolean };

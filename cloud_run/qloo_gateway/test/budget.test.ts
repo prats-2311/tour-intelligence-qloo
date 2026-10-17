@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { BudgetExceededError, BudgetGuard, FirestoreDailyCountStore, type DailyCountStore } from "../src/budget.js";
 import type { TxDb } from "../src/web/usage.js";
 
+const reserveShared = async (g: BudgetGuard, id: string) => { g.reserve(id); await g.persistDaily(id); };
+
 function fakeDb(): TxDb & { docs: Map<string, Record<string, unknown>> } {
   const docs = new Map<string, Record<string, unknown>>();
   return {
@@ -92,39 +94,63 @@ describe("BudgetGuard", () => {
       const db = fakeDb();
       const mk = () => new BudgetGuard({ perSession: 100, perDay: 3, now: () => t, dailyStore: new FirestoreDailyCountStore({ db }) });
       const a = mk(), b = mk();
-      await a.reserveShared("s1"); await b.reserveShared("s2"); await a.reserveShared("s1");
-      await expect(b.reserveShared("s3")).rejects.toMatchObject({ scope: "daily" });
+      await reserveShared(a, "s1"); await reserveShared(b, "s2"); await reserveShared(a, "s1");
+      await expect(reserveShared(b, "s3")).rejects.toMatchObject({ scope: "daily" });
       expect(db.docs.get("qloo_usage/2026-10-20")).toEqual({ count: 3 });
     });
     it("public sessions still count toward the global ceiling", async () => {
       const db = fakeDb();
       const g = new BudgetGuard({ perSession: 100, perDay: 2, publicPerDay: 5, now: () => t, dailyStore: new FirestoreDailyCountStore({ db }) });
-      await g.reserveShared("mcp-public-a"); await g.reserveShared("mcp-public-b");
-      await expect(g.reserveShared("dash-1")).rejects.toMatchObject({ scope: "daily" });
+      await reserveShared(g, "mcp-public-a"); await reserveShared(g, "mcp-public-b");
+      await expect(reserveShared(g, "dash-1")).rejects.toMatchObject({ scope: "daily" });
     });
     it("a refused reservation is released from the in-memory counts", async () => {
       const db = fakeDb();
       db.docs.set("qloo_usage/2026-10-20", { count: 1 });
       const g = new BudgetGuard({ perSession: 100, perDay: 1, now: () => t, dailyStore: new FirestoreDailyCountStore({ db }) });
-      await expect(g.reserveShared("s")).rejects.toBeInstanceOf(BudgetExceededError);
+      await expect(reserveShared(g, "s")).rejects.toBeInstanceOf(BudgetExceededError);
       expect(g.remaining("s").session).toBe(100);
     });
     it("on a Firestore error it logs and falls back to the in-memory count", async () => {
       const failing: DailyCountStore = { tryIncrement: async () => { throw new Error("firestore down"); } };
       const g = new BudgetGuard({ perSession: 100, perDay: 2, now: () => t, dailyStore: failing });
       const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-      await g.reserveShared("s"); await g.reserveShared("s");
-      await expect(g.reserveShared("s")).rejects.toMatchObject({ scope: "daily" });
+      await reserveShared(g, "s"); await reserveShared(g, "s");
+      await expect(reserveShared(g, "s")).rejects.toMatchObject({ scope: "daily" });
       expect(warn).toHaveBeenCalled();
       warn.mockRestore();
+    });
+    it("a stalled store times out after 1500 ms, falls back to memory and warns once a minute", async () => {
+      vi.useFakeTimers();
+      try {
+        let now = t;
+        const hung: DailyCountStore = { tryIncrement: () => new Promise<boolean>(() => undefined) };
+        const g = new BudgetGuard({ perSession: 100, perDay: 100, now: () => now, dailyStore: hung });
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+        const run = async () => { const p = reserveShared(g, "s"); await vi.advanceTimersByTimeAsync(1500); await p; };
+        let settled = false;
+        const first = reserveShared(g, "s").then(() => { settled = true; });
+        await vi.advanceTimersByTimeAsync(1499);
+        expect(settled).toBe(false);
+        await vi.advanceTimersByTimeAsync(1);
+        await first;
+        expect(settled).toBe(true);
+        await run(); await run();
+        expect(warn).toHaveBeenCalledTimes(1);
+        now += 61_000;
+        await run();
+        expect(warn).toHaveBeenCalledTimes(2);
+        expect(g.remaining("s").daily).toBe(100 - 4);
+        warn.mockRestore();
+      } finally { vi.useRealTimers(); }
     });
     it("a new UTC day uses a new doc", async () => {
       const db = fakeDb();
       let now = t;
       const g = new BudgetGuard({ perSession: 100, perDay: 1, now: () => now, dailyStore: new FirestoreDailyCountStore({ db }) });
-      await g.reserveShared("s");
+      await reserveShared(g, "s");
       now = Date.UTC(2026, 9, 21, 1);
-      await g.reserveShared("s");
+      await reserveShared(g, "s");
       expect([...db.docs.keys()].sort()).toEqual(["qloo_usage/2026-10-20", "qloo_usage/2026-10-21"]);
     });
   });

@@ -30,6 +30,8 @@ export class FirestoreDailyCountStore implements DailyCountStore {
   }
 }
 
+const STORE_TIMEOUT_MS = 1500;
+
 export class BudgetGuard {
   private sessions = new Map<string, number>();
   private day = "";
@@ -39,6 +41,7 @@ export class BudgetGuard {
   private readonly perDay: number;
   private readonly publicPerDay: number;
   private readonly now: () => number;
+  private lastWarnAt = -Infinity;
   private readonly dailyStore: DailyCountStore | undefined;
 
   /** `publicPerDay` caps sessions whose id starts with `mcp-public-`; those calls also count toward `perDay`, and the public cap is checked first. */
@@ -69,22 +72,28 @@ export class BudgetGuard {
   }
 
   /**
-   * `reserve` plus the shared daily count. Per-session and public counts stay in memory; the global count is also
-   * incremented in the store. A store error never fails the call: it logs and keeps the in-memory count.
+   * Shared daily count, run after the synchronous `reserve`. The store call is bounded (STORE_TIMEOUT_MS); on error or
+   * timeout it falls back to the in-memory count and warns at most once a minute. A refusal releases the reservation and throws.
    */
-  async reserveShared(sessionId: string): Promise<void> {
-    this.reserve(sessionId);
-    await this.persistDaily(sessionId);
-  }
-
-  /** Second half of `reserveShared` for callers that run the synchronous `reserve` first: on refusal it releases the reservation and throws. */
   async persistDaily(sessionId: string): Promise<void> {
     if (!this.dailyStore) return;
     let allowed = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      allowed = await this.dailyStore.tryIncrement(new Date(this.now()).toISOString().slice(0, 10), this.perDay);
+      const attempt = this.dailyStore.tryIncrement(new Date(this.now()).toISOString().slice(0, 10), this.perDay);
+      attempt.catch(() => undefined);
+      allowed = await Promise.race([
+        attempt,
+        new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(`timed out after ${STORE_TIMEOUT_MS} ms`)), STORE_TIMEOUT_MS); }),
+      ]);
     } catch (err) {
-      console.warn("qloo daily count store failed; using the in-memory count", err instanceof Error ? err.message : String(err));
+      const t = this.now();
+      if (t - this.lastWarnAt >= 60_000) {
+        this.lastWarnAt = t;
+        console.warn("qloo daily count store failed; using the in-memory count", err instanceof Error ? err.message : String(err));
+      }
+    } finally {
+      clearTimeout(timer);
     }
     if (!allowed) {
       this.release(sessionId);
