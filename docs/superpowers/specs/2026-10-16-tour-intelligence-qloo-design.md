@@ -27,19 +27,19 @@ The product is judged as a product, not a SaaS business (Devpost "Design": "a co
 - **The decision:** which cities to hold dates in, and how to win each one (sponsor to pitch, merch angle, where to spend promo, which local act to put on the bill).
 - **What goes wrong today:** routing on fan density alone books the obvious big markets and misses cities where local taste makes the show winnable. Activation ideas come from guesswork or a generic LLM.
 - **What the product does:** the Tour Board ranks by winnability and shows the cities density misses. Each city playbook turns Qloo taste into a pitchable plan. The Tour Book is the document the promoter takes into the sponsor or venue conversation.
-- **Why it's credible:** `/proof` checks the playbook against activations real tours actually ran.
+- **Why it's credible:** `/proof` checks the approach against activations real tours actually ran and publishes what it found, including where Qloo lost to a general-purpose LLM (see §3 ⑤).
 
 **Story rules (acceptance criteria):**
-1. Every example in the story comes from data the product actually shows: the committed showcase (`dashboard/src/lib/qloo/fixtures/showcase.json`, currently Mac DeMarco: Guadalajara and Oaxaca as hidden goldmines, Portland density #2 → winnability #1) or the committed backtest results JSON. If the showcase is re-recorded, the copy is regenerated from it, never hand-edited to stale numbers.
+1. Every example in the story comes from data the product actually shows: the committed showcase (`dashboard/src/lib/qloo/fixtures/showcase.json`, currently Natalia Lafourcade across Mexico, Brazil and the United States: Ciudad Juárez is the Hidden goldmine; El Paso, San Diego and Reynosa are Play) or the committed backtest results JSON. If the showcase is re-recorded, the copy is regenerated from it, never hand-edited to stale numbers.
 2. No invented customers, testimonials, quotes, revenue or dollar figures, and no "trusted by" claims. Money is described by the decision it informs ("which sponsor to pitch"), not by made-up amounts.
 3. Promoter language, not product language: holds, avails, market heat, routing, the bill, advance. Never "AI-powered insights".
 4. Shared taste is never called "audience overlap" or shown as a percent (see §5.4).
 
 **Plan 5 (proof and calibration) owns:**
-- `/proof` headline phrased as the promoter's question, e.g. "Would this have found the sponsor, merch collab or local act the real tour used?", with the hit rates against both baselines and the sample size next to it.
+- `/proof` headline phrased as the promoter's question, e.g. "Would this have found the sponsor, merch collab or local act the real tour used?", with the hit rates against both baselines and the sample size next to it. The page ships as an honest "what we learned" page, not a winning headline: both backtest runs are published, the playbook did not beat either baseline, and the page says what that means for the product (§3 ⑤ Results).
 - Each proof case card says which decision it maps to (sponsor / merch / local act) and links its sources.
 - A "Checked against real tours →" link from the Tour Board header and from the City Playbook to `/proof`, so the evidence sits at the decision point.
-- Verdict-threshold calibration: live activation clusters at 71–76, so the Hidden-goldmine cut at 75 flips on one point. Calibrate the §5.3 thresholds on the showcase plus control artists, never on backtest cases (§12 #9). Re-record the showcase if verdicts change, and update the story copy from the new recording.
+- Verdict-threshold calibration: live activation clusters at 71–76, so the Hidden-goldmine cut at 75 flips on one point. Calibrate the §5.3 thresholds on recorded Tour Board runs, never on backtest cases (§12 #9). Done (see §5.2–5.3 "Calibration (Plan 5)"); the showcase was re-recorded on the calibrated scoring and the story copy regenerated from it.
 
 **Plan 6 (polish and submission) owns:**
 - Landing: a three-beat narrative above the fold (the decision → winnability finds the city density misses → the playbook that wins it), each beat backed by a real showcase number, with "Try the showcase tour" as the primary action.
@@ -116,14 +116,24 @@ Activation findings feed back into ② (they are the inputs to the activation-po
 Competitors "prove" Qloo by scoring tours against Qloo's own heatmap (circular). We test against **real-world outcomes**.
 
 - **Question:** for real past tours, would our Qloo-powered playbook have surfaced the activations that actually happened in that city?
-- **Dataset (`backtest_cases`, BigQuery):** 12–20 documented city-specific activations from 2023–2026 tours — local sponsor/brand partnerships, city-exclusive merch collaborations, local guest appearances or covers of local artists. Each case: `artist, city, activation_type (sponsor | merch_collab | local_artist), real_entity, date, source_urls[]`. Candidates are gathered with Parallel Search/Task; **every case is human-reviewed before inclusion** (cases are evidence, so they are not trusted from an LLM). Minimum viable set: 8 cases.
-- **Method:** run `get_city_playbook(artist, city)` and check whether `real_entity` appears in the matching card's top-10 (**exact hit**), or shares its Qloo category/tag (**category hit**, via `entity_tags`).
+- **Dataset (committed JSON, not a BigQuery table):** documented city-specific activations from past tours — local sponsor/brand partnerships, city-exclusive merch collaborations, local guest appearances or covers of local artists. Each case: `artist, city, country, activationType (sponsor | merch_collab | local_artist), realEntity {name, aliases}, date, sources[], review`. Spec field names map as `activation_type` → `activationType`, `real_entity` → `realEntity`, `source_urls[]` → `sources`. Cases live in `backtest/cases.json` (run 1, 14 cases) and `backtest/cases-run2.json` (run 2, 13 fresh local-act cases); candidates are in `backtest/candidates*.json`. The files are public and auditable, they are the reviewed source of truth, and a BigQuery copy would add a manual step and nothing a judge can see. **Every case is human-reviewed by Prateek before inclusion** (cases are evidence, so they are not trusted from an LLM). Minimum viable set: 8 cases.
+- **Method:** an **exact hit** is the real entity in the top 10 of the playbook's own recommend request (the shared builder `artistTasteArgs`, so the backtest cannot drift from the product). The secondary metric is the **top 20**, the gateway's maximum `limit`. The earlier "category hit via `entity_tags`" is removed: `qloo_describe` returns no entity tags, and `qloo_entity_tags` returns audience-affinity tags (credit cards, "Bar"), not an entity's own taxonomy (`docs/qloo/api-notes.md` F8, F11), so a tag-based hit would be noise. The real entity is matched by Qloo entity id when both sides have one, otherwise by normalised name or listed alias; an entity that cannot be resolved is still matched by name and reported, never dropped silently.
 - **Baselines (same cases, same top-10 cut):**
   1. **LLM-only** — Gemini, same prompt, no Qloo.
   2. **City-popularity** — Qloo `recommend(filter_location=city)` **without** the artist signal (tests that the artist's taste adds value beyond "what's popular in the city").
-- **Reporting:** per-case table (hit/miss per method, with source links), aggregate hit rates, and an explicit "where we lost" section. Ties and losses are published, not hidden.
+- **Reporting:** per-case table (hit/miss per method, with source links), aggregate hit rates, and an explicit "where we lost" section. Ties and losses are published, not hidden. An answer that is unavailable for a case (for example the artist did not resolve in Qloo, or a Gemini error) is excluded from that method's denominator and shown as "no answer", never as a miss or a hit.
 - **Disclosed limitation:** Qloo's graph may already reflect past activations (post-hoc leakage); we cannot control for this and say so. The backtest shows consistency with real decisions, not causal lift.
-- **Reproducibility:** `scripts/backtest` runs end-to-end from the case table; results JSON committed; `/proof` renders from that JSON (static, no live quota during judging).
+- **Reproducibility:** `node dist/backtest/cli.js` (gateway workspace) runs end-to-end from a cases JSON file; results JSON is committed; `/proof` renders from that JSON (static, no live quota during judging). Commands are in the root README.
+- **Results (Plan 5, 2026-10-17; numbers copied from `backtest/results.json` and `backtest/results-run2.json`):**
+
+| Run | Cases scored | Qloo playbook, top 10 | City popularity, top 10 | Generic LLM, top 10 |
+|---|---|---|---|---|
+| Run 1 (method v1, 14 reviewed cases of all three types) | 13 Qloo, 14 LLM | 1 of 13 | 1 of 13 | 3 of 14 |
+| Run 2 (method v2, 13 fresh local-act cases) | 13 | 1 of 13 | 1 of 13 | 7 of 13 |
+
+  Run 1 asked Qloo for artists the headliner's fans like in that city, which returns global taste neighbours. Run 2 ranked the city's own popular artists with `qloo_rank` by taste fit and was judged on fresh cases reviewed after the method was fixed (never tuned on the cases it is scored against, §12 #9). **The playbook did not beat either baseline, and the generic LLM did better for local acts.** Naming the specific famous local guest or sponsor a real tour used is a world-knowledge question; Qloo's city recommendations reflect what over-indexes with an audience in a city, not who is most famous there. Both runs are published on `/proof`.
+- **Product change (untested):** the City Playbook's local-act card is now a hybrid. Gemini proposes up to 10 local candidates, Qloo verifies each name (`qloo_describe` plus an exact normalised-name match; unresolved names are dropped and counted, so Gemini output is shown only if it resolved to a Qloo entity) and ranks them by taste fit (`qloo_rank`). This hybrid has not been tested on new cases and no claim is made about it. Brand and merch cards are unchanged.
+- **Implemented in Plan 5 (2026-10-17).**
 
 ---
 
@@ -159,6 +169,16 @@ All scores are 0–100, computed in `qloo_gateway/src/scoring/`, unit-tested, an
 
 If fewer than 2 components are available → `activation = insufficient_data`.
 
+**Calibration (Plan 5, 2026-10-17).** Live data showed the three affinity components saturating at 0.88–0.98 and `fan_concentration` near-constant, so every city's activation landed at 73.9–76.1 and a fixed cut decided verdicts by noise. Plan 5 calibrates on the 32 scored cities of four recorded Tour Board runs (never on backtest cases):
+- The three affinity components are rescaled from per-component floors, each the 10th percentile of that component across the calibration cities (`sponsor_fit` 0.92, `local_hooks` 0.95, `venue_fit` 0.88).
+- `fan_concentration` is re-based against an even spread of the zones (`vs_uniform`).
+- A component with no spread across the calibration cities gets weight 0 (none were dropped; weights stay 0.30 / 0.25 / 0.25 / 0.20).
+- A thin-data city (2 or fewer usable components, every adjusted value 0) is `insufficient_data`, never 0.
+- Every scored city carries a close-call flag: its verdict would change if activation or fan heat moved by 2 points.
+- The activation thresholds are quantiles of the calibration cities: Play at the P50 of activation (28), Hidden goldmine at the P75 (38), De-risk at the P25 (13). Consider is the P25 of winnability (36), amended from the P50 after run 1 of the calibration made 14 of 32 cities Skip. Fan-heat thresholds are unchanged.
+
+Values, before/after table and gates: `docs/qloo/calibration.md`. The generated config is `cloud_run/qloo_gateway/src/scoring/calibration.ts` (`calibrated-2026-10-17`), produced by `calibrateCli` and never hand-edited.
+
 ### 5.3 Winnability and verdict
 `winnability = 0.5 × fan_heat + 0.5 × activation`
 
@@ -171,7 +191,17 @@ If fewer than 2 components are available → `activation = insufficient_data`.
 | **Consider** | winnability ≥ 55 (none of the above) |
 | **Skip** | otherwise |
 
-Initial weights and thresholds are configuration constants, displayed in the "Why this score?" sheet. A dedicated plan task re-tunes them after the data spike (§12) against the showcase artist and 3 control artists; tests assert the rule table, not specific tuned numbers.
+The numbers in the rule table above are the original design values. The calibrated ones, as shipped in `calibration.ts` and shown in the "Why this score?" sheet, are:
+
+| Verdict | Calibrated rule |
+|---|---|
+| **Play** | fan_heat ≥ 70 and activation ≥ 28 |
+| **Hidden goldmine** | 45 ≤ fan_heat < 70 and activation ≥ 38 |
+| **De-risk** | fan_heat ≥ 70 and activation < 13 |
+| **Consider** | winnability ≥ 36 (none of the above) |
+| **Skip** | otherwise |
+
+The rule table keeps its shape and order; only its numbers are the calibrated ones. Tests assert the rule table and the calibration procedure, not specific tuned numbers.
 
 ### 5.4 Co-bill lift
 `lift = overlap(compare_audiences) × local_affinity(candidate in city)`, ranked; displayed with both factors.
@@ -383,7 +413,8 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 | tour_data_api /qloo_* | Forwarding; `checkGrounding`; injection allowlists |
 | MCP / WebMCP | Tools as plain functions; schema checks; one live E2E against the deployed demo endpoint |
 | Claim verification (§5.6) | Fabricated entity, altered number, dangling ref, valid claim; all-removed card fallback; audit list contents |
-| Backtest (§3 ⑤) | Hit/category-hit logic on fixtures; baselines use identical cases and cut-off; results JSON schema; `/proof` renders from JSON with no live calls |
+| Backtest (§3 ⑤) | Hit@10/hit@20 logic on fixtures; unresolved-artist and unavailable-method handling ("no answer", excluded from denominators); baselines use identical cases and cut-off; results JSON schema; `/proof` renders from JSON with no live calls |
+| Calibration (§5.2–5.3) | Floors, vs-uniform concentration, quantile thresholds, thin data, close-call flag; `scoreCity` reproduces recorded scores under the default config (trimmed fixture recordings in `test/fixtures/calibration/`) |
 | UI | vitest for logic (geo conversion, score formatting, state); **Playwright judge path at 375 px and 1280 px**; no horizontal scroll at 360 px |
 
 `./run_tests.sh` (existing 413 + new) must be green for every merge. `graft check` runs inside it.
@@ -435,7 +466,7 @@ Not used: `gpt-tasteskill` (scroll-GSAP marketing pages), `minimalist-skill` (co
 | Oct 20–23 | Tour Board (Discover + Decide), agent log, Why-sheet, comparison toggle, Taste Insights dashboard; showcase pre-warm |
 | Oct 21–24 (parallel track) | Backtest case gathering via Parallel + **human review by Prateek** (target 12–20, minimum 8) |
 | Oct 23–25 | City Playbook (Activate) with grounding-verified claims; Stage-2 Playbooks get Qloo evidence; Book chapters + .ics |
-| Oct 25–27 | Strategist chat; MCP taste tools + public demo endpoint; WebMCP tools; **run backtest, build `/proof`** |
+| Oct 25–27 | Strategist chat; MCP taste tools + public demo endpoint; WebMCP tools; **run backtest, build `/proof`** (done early in Plan 5, 2026-10-17: two runs, calibration, honest `/proof`; see §3 ⑤ Results) |
 | Oct 27–29 | Polish, performance, Playwright judge path, README (request→result walkthrough, limitations, architecture), Devpost write-up, existing-project answer; repo → public |
 | Oct 30 | Final deploy, real-device smoke test, submit |
 

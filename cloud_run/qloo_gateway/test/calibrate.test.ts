@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { citiesFromRecording, deriveCalibration, fragility, quantile, renderCalibrationTs, renderReport, scoreCity, MIN_CAL_CITIES, type CalCity } from "../src/scoring/calibrate.js";
 import { parseCalArgs } from "../src/scoring/calibrateCli.js";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { DEFAULT_SCORING } from "../src/scoring/config.js";
 
 const uniform = Array(20).fill(0.05);
@@ -100,8 +100,8 @@ describe("calibration", () => {
     expect(text).toContain("9 before, 4 after");
   });
 
-  const dir = new URL("../../../.superpowers/sdd/2026-10-17-plan-5-proof-calibration/calibration/", import.meta.url);
-  it.skipIf(!existsSync(dir))("under DEFAULT_SCORING scoreCity reproduces every recorded score, no city is thin", () => {
+  const dir = new URL("./fixtures/calibration/", import.meta.url);
+  it("under DEFAULT_SCORING scoreCity reproduces every recorded score, no city is thin", () => {
     let checked = 0;
     for (const f of readdirSync(dir).filter((n) => n.endsWith(".json"))) {
       const rec = JSON.parse(readFileSync(new URL(f, dir), "utf8")) as { boardEvents: Array<{ type: string; city?: { name: string; verdict: string; activation: { value: number | null }; winnability: { value: number | null }; fanHeat: { value: number | null } } }> };

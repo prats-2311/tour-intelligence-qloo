@@ -33,3 +33,6 @@ venv/
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
+
+# firebase-tools hosting cache (deploy_web_app.sh)
+.firebase/
