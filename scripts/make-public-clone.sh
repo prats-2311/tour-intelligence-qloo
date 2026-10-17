@@ -122,7 +122,7 @@ echo "remotes: [$(git remote)]  refs: $(git for-each-ref --format='%(refname)' |
 bash "$SRC/scripts/check-public-data.sh" --history "$DEST"
 # Final hard gate: no skips. Every object of every ref (blobs, trees, commits, tags), any size, any path.
 ALLOW_RE='^(00000000-|672c258a-7d63-4164-a4c6-a34f17490f53$)'
-left=$(git cat-file --batch-all-objects --batch | grep -a -o -i -E '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | grep -v -i -E "$ALLOW_RE" | sort -u | wc -l | tr -d ' ')
+left=$(git cat-file --batch-all-objects --batch | grep -a -o -i -E '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | { grep -v -i -E "$ALLOW_RE" || true; } | sort -u | wc -l | tr -d ' ')
 if [[ "$left" != 0 ]]; then echo "FINAL GATE FAILED: $left real-looking id(s) remain in $DEST (objects incl. commit messages)" >&2; exit 1; fi
 if [[ -f "$EXTRA" ]]; then
   sed -n 's/==>.*//p' "$EXTRA" >"$WORK/literals.txt"
