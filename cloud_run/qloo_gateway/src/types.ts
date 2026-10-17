@@ -36,7 +36,7 @@ export interface PlaybookCard<T = unknown> {
   items: T[];
   refs: EvidenceRef[];
   warnings: DataWarning[];
-  summary?: Record<string, number | null | string[]>;
+  summary?: Record<string, number | boolean | null | string[]>;
 }
 
 export interface Claim { text: string; entities: Array<{ name: string; entityId?: string }>; numbers: number[]; evidence_refs: string[] }

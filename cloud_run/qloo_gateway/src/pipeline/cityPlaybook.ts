@@ -113,6 +113,7 @@ export async function* runCityPlaybook(
     }
     const suggestedIds = new Set([...novel, ...poolHits].map((e) => e.entityId));
     const candidateActs = suggested === null ? candidatesPop : [...new Map([...novel, ...candidatesPop].map((e) => [e.entityId, e])).values()].slice(0, LOCAL_SUGGESTIONS);
+    let rankUnavailable = false;
     let localActs = suggested === null ? proxies : candidateActs.slice(0, 5);
     if (candidateActs.length > 0) {
       let ranked: CallResult | null = null;
@@ -127,6 +128,7 @@ export async function* runCityPlaybook(
         localActs = rankedActs.slice(0, 5);
         talentWarnings.push(...warningsFor("qloo_rank", ranked));
       } else {
+        rankUnavailable = true;
         talentWarnings.push({ tool: "qloo_rank", kind: "partial", message: novel.length > 0 ? "taste ranking unavailable — showing suggested and popular artists unranked" : "taste ranking unavailable — showing the city's most popular artists" });
       }
     }
@@ -155,7 +157,7 @@ export async function* runCityPlaybook(
       card("venue_fit", a.venues.items, a.venues.refs, [...(raw.ranked ? warningsFor("qloo_rank", raw.ranked) : []), ...a.venues.warnings]),
       card("co_billing", coBill, coBill.map((c) => c.ref), compared.flatMap((c) => c.warnings)),
       { ...card("talent", localActs.map(({ name, entityId, affinity }) => ({ name, entityId, affinity, ...(suggested === null ? {} : { source: suggestedIds.has(entityId) ? "suggested" : "city_popular" }) })), talentRefs, talentWarnings),
-        summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags, ...(suggested === null ? {} : { suggestionsUnresolved: unresolved }) } },
+        summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags, ...(rankUnavailable ? { rankUnavailable: true } : {}), ...(suggested === null ? {} : { suggestionsUnresolved: unresolved }) } },
     ];
     yield { type: "playbook", playbook: { city: input.city, cards } };
     if (input.narrative !== false && deps.narrate) {

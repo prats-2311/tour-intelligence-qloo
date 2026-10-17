@@ -324,7 +324,7 @@ describe("runCityPlaybook", () => {
       const t = talentOf(events);
       expect(describes).toBe(0);
       expect(t.items).toEqual([{ name: "Proxy 2", entityId: "P0", affinity: 0.95 }, { name: "Proxy 1", entityId: "P1", affinity: 0.4 }]);
-      expect(t.summary).toEqual({ sharedTaste: expect.any(Number), sharedTags: ["Funk", "Soul", "Pop"] });
+      expect(t.summary).toEqual({ sharedTaste: expect.any(Number), sharedTags: ["Funk", "Soul", "Pop"] }); // ranked: no rankUnavailable flag
       expect(t.warnings).toEqual([]);
     });
     it("rank failure falls back to candidate order (suggestions first) with the existing warning", async () => {
@@ -333,6 +333,7 @@ describe("runCityPlaybook", () => {
       const t = talentOf(events);
       expect(t.items.map((i) => [i.name, i.source])).toEqual([["Drake", "suggested"], ["Proxy 1", "city_popular"], ["Proxy 2", "city_popular"]]);
       expect(t.warnings).toContainEqual({ tool: "qloo_rank", kind: "partial", message: "taste ranking unavailable — showing suggested and popular artists unranked" });
+      expect(t.summary.rankUnavailable).toBe(true);
     });
     it("a suggestion counts only if Qloo resolves the same name", async () => {
       const results = (...names: string[]): QlooEnvelope => ({ operation: "describe", status: "ok", results: names.map((n, i) => ({ entity_id: `D${i}-${n}`, name: n })) });
