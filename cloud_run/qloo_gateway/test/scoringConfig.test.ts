@@ -47,4 +47,20 @@ describe("scoring config", () => {
     expect(verdict(s(60), s(41), s(50.5), t)).toBe("hidden_goldmine");
     expect(verdict(s(60), s(41), s(50.5))).toBe("skip");
   });
+
+  it("under a calibrated config, components may be a strict subset of the raw components", () => {
+    const cfg = { ...DEFAULT_SCORING, weights: { ...DEFAULT_SCORING.weights, local_hooks: 0 }, affinityFloors: { sponsor_fit: 0.9, local_hooks: 0, venue_fit: 0 }, concentration: "vs_uniform" as const };
+    const raw = { sponsor_fit: 0.95, local_hooks: 0.7, fan_concentration: 0.8 };
+    const conc = concentrationValue([0.5, 0.3, 0.2], cfg.concentration); // <=3 zones: not scorable
+    expect(conc).toBeNull();
+    const comps = {
+      sponsor_fit: s(rescaleAffinity(raw.sponsor_fit, cfg.affinityFloors.sponsor_fit)),
+      local_hooks: s(rescaleAffinity(raw.local_hooks, cfg.affinityFloors.local_hooks)),
+    };
+    const a = activation(comps, cfg.weights);
+    expect(a.value).toBeNull(); // weight-0 hooks dropped, only sponsor_fit left
+    expect(Object.keys(a.components)).toEqual(["sponsor_fit"]);
+    for (const k of Object.keys(a.components)) expect(Object.keys(raw)).toContain(k);
+    expect(a.components.sponsor_fit).toBeCloseTo(0.5);
+  });
 });

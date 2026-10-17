@@ -340,18 +340,18 @@ describe("runTourBoard", () => {
       expect(events.filter((e) => e.type === "scoring")).toHaveLength(1);
     });
 
-    it("attaches rawComponents with the same keys as components, and components follow SCORING", async () => {
+    it("attaches rawComponents covering every component, and components follow SCORING", async () => {
       const events = await collect(runTourBoard(brief, { qloo: fakeQloo(happy), cities: CITIES }));
       const cities = events.filter((e) => e.type === "city_scored") as Array<{ city: { activation: { components: Record<string, number>; rawComponents: Record<string, number> } } }>;
       expect(cities.length).toBeGreaterThan(0);
       for (const { city } of cities) {
         const { components, rawComponents } = city.activation;
-        expect(Object.keys(rawComponents).sort()).toEqual(Object.keys(components).sort());
+        for (const k of Object.keys(components)) expect(Object.keys(rawComponents)).toContain(k);
         for (const k of ["sponsor_fit", "local_hooks", "venue_fit"] as const) {
-          if (rawComponents[k] === undefined) continue;
+          if (rawComponents[k] === undefined || components[k] === undefined) continue;
           expect(components[k]).toBeCloseTo(rescaleAffinity(rawComponents[k]!, SCORING.affinityFloors[k]));
         }
-        if (SCORING.concentration === "raw" && rawComponents.fan_concentration !== undefined) {
+        if (SCORING.concentration === "raw" && rawComponents.fan_concentration !== undefined && components.fan_concentration !== undefined) {
           expect(components.fan_concentration).toBeCloseTo(rawComponents.fan_concentration);
         }
       }

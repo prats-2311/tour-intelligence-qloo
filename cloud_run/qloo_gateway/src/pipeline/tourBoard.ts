@@ -13,7 +13,7 @@ import type { DataWarning, EvidenceRef, GatewayEvent, Score, Verdict } from "../
 export interface TourBrief { artist: string; artistEntityId?: string; regions: string[]; maxStops: number; sessionId: string; today: string }
 export interface ScoredCity {
   id: string; name: string; country: string; lat: number; lon: number;
-  fanHeat: Score; activation: Score & { components: Partial<Record<ComponentName, number>> }; winnability: Score; verdict: Verdict;
+  fanHeat: Score; activation: Score & { components: Partial<Record<ComponentName, number>>; rawComponents?: Partial<Record<ComponentName, number>> }; winnability: Score; verdict: Verdict;
   zones: ReturnType<typeof zonesFromHeat>;
   warnings: DataWarning[];
 }
