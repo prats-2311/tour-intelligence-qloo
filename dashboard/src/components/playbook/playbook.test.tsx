@@ -130,6 +130,18 @@ describe("playbook cards", () => {
     render(<CardBody card={base} city="Toronto" />);
     expect(screen.queryByText(/Suggested · in Qloo|Popular in city/)).toBeNull();
   });
+  it("talent: unresolved and unchecked suggestions are separate lines", () => {
+    render(<CardBody card={{ ...card("talent"), summary: { sharedTaste: null, sharedTags: [], suggestionsUnresolved: 2, suggestionsSkipped: 3 } }} city="Toronto" />);
+    expect(screen.getByText("2 suggestions weren't found in Qloo and are not shown.")).toBeTruthy();
+    expect(screen.getByText("3 more weren't checked (lookup limit).")).toBeTruthy();
+    cleanup();
+    render(<CardBody card={{ ...card("talent"), summary: { sharedTaste: null, sharedTags: [], suggestionsUnresolved: 0, suggestionsSkipped: 3 } }} city="Toronto" />);
+    expect(screen.queryByText(/weren't found/)).toBeNull();
+    expect(screen.getByText("3 more weren't checked (lookup limit).")).toBeTruthy();
+    cleanup();
+    render(<CardBody card={{ ...card("talent"), summary: { sharedTaste: null, sharedTags: [], suggestionsSkipped: 1 } }} city="Toronto" />);
+    expect(screen.getByText("1 more wasn't checked (lookup limit).")).toBeTruthy();
+  });
   it("talent unresolved line is singular for one suggestion", () => {
     render(<CardBody card={{ ...card("talent"), summary: { sharedTaste: null, sharedTags: [], suggestionsUnresolved: 1 } }} city="Toronto" />);
     expect(screen.getByText("1 suggestion wasn't found in Qloo and is not shown.")).toBeTruthy();

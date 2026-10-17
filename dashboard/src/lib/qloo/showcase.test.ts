@@ -43,6 +43,11 @@ describe("showcase data", () => {
     const scoring = { type: "scoring", scoring: { version: "v", thresholds: {} } };
     expect(cleanEvents([scoring])).toEqual([scoring]);
   });
+  it("keeps closeCallBand on a scoring event, and an older recording without it still parses", () => {
+    const withBand = { type: "scoring", scoring: { version: "v", thresholds: {} }, closeCallBand: 3 };
+    expect(cleanEvents([withBand])).toEqual([withBand]);
+    expect(cleanEvents([{ type: "scoring", scoring: { version: "v", thresholds: {} } }])).toHaveLength(1);
+  });
   it("drops a scoring event without a thresholds object", () => {
     expect(cleanEvents([{ type: "scoring" }, { type: "scoring", scoring: {} }, { type: "scoring", scoring: { thresholds: 3 } }])).toEqual([]);
   });

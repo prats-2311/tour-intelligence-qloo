@@ -102,7 +102,7 @@ export async function* runCityPlaybook(
     while (events.length) yield events.shift()!;
     const fatal = resolvedS.filter((r): r is PromiseRejectedResult => r.status === "rejected").map((r) => r.reason).find((e) => e instanceof Aborted || e instanceof BudgetStop);
     if (fatal) throw fatal;
-    let unresolved = skipped;
+    let unresolved = 0;
     const novel: Act[] = [];
     for (const [i, r] of resolvedS.entries()) {
       const top = r.status === "fulfilled" ? matchSuggestion(toDescribe[i]!, r.value.envelope.status, extractEntities(r.value.envelope)) : undefined;
@@ -157,7 +157,7 @@ export async function* runCityPlaybook(
       card("venue_fit", a.venues.items, a.venues.refs, [...(raw.ranked ? warningsFor("qloo_rank", raw.ranked) : []), ...a.venues.warnings]),
       card("co_billing", coBill, coBill.map((c) => c.ref), compared.flatMap((c) => c.warnings)),
       { ...card("talent", localActs.map(({ name, entityId, affinity }) => ({ name, entityId, affinity, ...(suggested === null ? {} : { source: suggestedIds.has(entityId) ? "suggested" : "city_popular" }) })), talentRefs, talentWarnings),
-        summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags, ...(rankUnavailable ? { rankUnavailable: true } : {}), ...(suggested === null ? {} : { suggestionsUnresolved: unresolved }) } },
+        summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags, ...(rankUnavailable ? { rankUnavailable: true } : {}), ...(suggested === null ? {} : { suggestionsUnresolved: unresolved, suggestionsSkipped: skipped }) } },
     ];
     yield { type: "playbook", playbook: { city: input.city, cards } };
     if (input.narrative !== false && deps.narrate) {

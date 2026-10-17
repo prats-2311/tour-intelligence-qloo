@@ -8,7 +8,7 @@ async function start(callTool) {
   mountTours(app, { callTool });
   // Same order as index.js: the app-wide 100 kb parser comes after the tours route.
   app.use(express.json());
-  await new Promise((r) => { server = app.listen(0, r); });
+  await new Promise((r) => { server = app.listen(0, "127.0.0.1", r); });
   return `http://127.0.0.1:${server.address().port}`;
 }
 afterEach(async () => {

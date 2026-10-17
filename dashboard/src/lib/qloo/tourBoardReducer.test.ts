@@ -73,6 +73,10 @@ describe("boardReducer", () => {
 });
 
 describe("boardReducer scoring", () => {
+  it("carries the close-call band from the scoring event; absent means 2", () => {
+    expect(run([{ type: "scoring", scoring: DEFAULT_SCORING_DISPLAY, closeCallBand: 3 }]).scoring?.closeCallBand).toBe(3);
+    expect(run([{ type: "scoring", scoring: DEFAULT_SCORING_DISPLAY }]).scoring?.closeCallBand).toBeUndefined();
+  });
   it("stores the scoring config from the stream and clears it on a new run", () => {
     const scoring = { ...DEFAULT_SCORING_DISPLAY, version: "calibrated-x" };
     let s = run([{ type: "scoring", scoring }]);

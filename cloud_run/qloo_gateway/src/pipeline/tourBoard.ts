@@ -6,7 +6,7 @@ import { activation, fanConcentration, meanTopK, type ComponentName } from "../s
 import { SCORING } from "../scoring/calibration.js";
 import { concentrationValue, isThin, rescaleAffinity } from "../scoring/config.js";
 import { fanHeat } from "../scoring/fanHeat.js";
-import { closeCall, verdict, winnability } from "../scoring/winnability.js";
+import { CLOSE_CALL_BAND, closeCall, verdict, winnability } from "../scoring/winnability.js";
 import { artistTasteArgs } from "./recArgs.js";
 import type { DataWarning, EvidenceRef, GatewayEvent, Score, Verdict } from "../types.js";
 
@@ -165,7 +165,7 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
       artistName = top.name;
     }
     yield { type: "resolve", entity: { entityId, name: artistName } };
-    yield { type: "scoring", scoring: SCORING };
+    yield { type: "scoring", scoring: SCORING, closeCallBand: CLOSE_CALL_BAND };
     const signalArtist = entityId; // harness accepts Qloo UUIDs as entity inputs
 
     // Window ends on the Monday of the week so the cache key is stable for 7 days: a cached board costs at most one trends call a week.

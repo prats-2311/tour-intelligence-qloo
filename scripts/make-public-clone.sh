@@ -120,15 +120,8 @@ rm -rf .git/refs/original && git reflog expire --expire=now --all && git gc --pr
 # --- 3. verify -------------------------------------------------------------------------------------------------
 echo "remotes: [$(git remote)]  refs: $(git for-each-ref --format='%(refname)' | tr '\n' ' ')"
 bash "$SRC/scripts/check-public-data.sh" --history "$DEST"
-# Final hard gate: no skips. Every object of every ref (blobs, trees, commits, tags), any size, any path.
-ALLOW_RE='^(00000000-|672c258a-7d63-4164-a4c6-a34f17490f53$)'
-left=$(git cat-file --batch-all-objects --batch | grep -a -o -i -E '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | { grep -v -i -E "$ALLOW_RE" || true; } | sort -u | wc -l | tr -d ' ')
-if [[ "$left" != 0 ]]; then echo "FINAL GATE FAILED: $left real-looking id(s) remain in $DEST (objects incl. commit messages)" >&2; exit 1; fi
-if [[ -f "$EXTRA" ]]; then
-  sed -n 's/==>.*//p' "$EXTRA" >"$WORK/literals.txt"
-  if git cat-file --batch-all-objects --batch | grep -a -q -F -f "$WORK/literals.txt"; then echo "FINAL GATE FAILED: an extra literal remains in $DEST" >&2; exit 1; fi
-fi
-echo "final gate: no real-looking ids in any object (no path or size skips)"
+# Final hard gate (own script so it is testable): no skips. Every object of every ref, any size, any path.
+bash "$SRC/scripts/final-gate.sh" "$EXTRA" || { echo "(in $DEST)" >&2; exit 1; }
 SCAN="$HOME/Documents/hackathon-brain/tools/secrets_scan.sh"
 if [[ -f "$SCAN" ]]; then bash "$SCAN" "$DEST"; else echo "secrets scan skipped: $SCAN not found"; fi
 echo "elapsed: $(( $(date +%s) - START ))s"

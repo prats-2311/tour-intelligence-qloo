@@ -74,11 +74,14 @@ function CaseCard({ c }: { c: CaseResult }) {
 }
 
 function Boxscore({ run, suffix = "" }: { run: BacktestRun; suffix?: string }) {
+  // Gold marks whichever method has the most top-10 hits in this run (ties share it; nobody if all are 0).
+  const best = Math.max(...METHODS.map((m) => run.summary[m].hit10));
+  const lead = best > 0 ? METHODS.filter((m) => run.summary[m].hit10 === best) : [];
   return (
     <div className="grid gap-3 lg:grid-cols-3" data-testid="boxscore">
       <h2 className="sr-only">{`Top 10 hit rates${suffix}`}</h2>
       {METHODS.map((m) => {
-        const mine = m === "qloo_playbook";
+        const mine = lead.includes(m);
         return (
           <section key={m} aria-label={METHOD_LABEL[m] + suffix} className={`min-w-0 rounded-[18px] bg-paper p-4 ${mine ? "border-t-2 border-gold" : ""}`}>
             <h3 className={`${eyebrow} ${mine ? "!text-gold" : ""}`}>{METHOD_LABEL[m]}</h3>

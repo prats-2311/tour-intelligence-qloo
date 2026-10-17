@@ -11,7 +11,7 @@ import type { GatewayEvent, QlooEnvelope, Score } from "../src/types.js";
 import { readFileSync } from "node:fs";
 import { activation } from "../src/scoring/activation.js";
 import { DEFAULT_SCORING, isThin, rescaleAffinity } from "../src/scoring/config.js";
-import { closeCall, verdict, winnability } from "../src/scoring/winnability.js";
+import { CLOSE_CALL_BAND, closeCall, verdict, winnability } from "../src/scoring/winnability.js";
 import { SCORING } from "../src/scoring/calibration.js";
 import { cityHeat, describeAmbiguous, describeOk, heatEmpty, heatMexico, recs } from "./fixtures/envelopes.js";
 
@@ -379,7 +379,7 @@ describe("runTourBoard", () => {
     it("emits the applied scoring config right after resolve", async () => {
       const events = await collect(runTourBoard(brief, { qloo: fakeQloo(happy), cities: CITIES }));
       const i = events.findIndex((e) => e.type === "resolve");
-      expect(events[i + 1]).toEqual({ type: "scoring", scoring: SCORING });
+      expect(events[i + 1]).toEqual({ type: "scoring", scoring: SCORING, closeCallBand: CLOSE_CALL_BAND });
       expect(events.filter((e) => e.type === "scoring")).toHaveLength(1);
     });
 

@@ -298,7 +298,14 @@ describe("runCityPlaybook", () => {
       const names = ["Proxy 1", ...Array.from({ length: 8 }, (_, i) => `Act ${i}`)];
       const t = talentOf(await collect(runCityPlaybook(input, { qloo: qloo((tool, a) => { if (tool === "qloo_describe") describes.push(String(a.entity)); return hybrid(tool, a); }), cities: CITIES, ...sug(...names) })));
       expect(describes).toEqual(["Act 0", "Act 1", "Act 2", "Act 3", "Act 4"]);
-      expect(t.summary.suggestionsUnresolved).toBe(3);
+      expect(t.summary.suggestionsUnresolved).toBe(0); // all 5 looked up resolved
+      expect(t.summary.suggestionsSkipped).toBe(3); // past the lookup limit: not checked, not "not found"
+    });
+    it("counts skipped separately from unresolved: unresolved is at most the lookup cap", async () => {
+      const names = ["Ghost", ...Array.from({ length: 7 }, (_, i) => `Act ${i}`)];
+      const t = talentOf(await collect(runCityPlaybook(input, { qloo: qloo(hybrid), cities: CITIES, ...sug(...names) })));
+      expect(t.summary.suggestionsUnresolved).toBe(1);
+      expect(t.summary.suggestionsSkipped).toBe(3);
     });
     it("keeps the popular-only rank warning when every resolved suggestion duplicates the pool", async () => {
       const empty = { operation: "rank", status: "empty", results: [] } as QlooEnvelope;

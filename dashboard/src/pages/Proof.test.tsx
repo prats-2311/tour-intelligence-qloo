@@ -123,6 +123,18 @@ describe("Proof", () => {
     expect(name.className).toContain("break-words");
     expect(screen.getByText("a-very-long-subdomain.example-news-site.com").className).toContain("break-all");
   });
+  it("the gold accent goes to the method with the highest top-10 hit count, not always the playbook", () => {
+    setBacktest(syntheticBacktest);
+    render(<MemoryRouter><ProofView data={getBacktest()!} /></MemoryRouter>);
+    const llm = screen.getByRole("region", { name: "Generic LLM (no Qloo)" });
+    const pb = screen.getByRole("region", { name: "Qloo playbook" });
+    expect(llm.className).toContain("border-gold");
+    expect(pb.className).not.toContain("border-gold");
+    cleanup();
+    view(twoRunsFixture); // playbook leads here
+    expect(screen.getByRole("region", { name: "Qloo playbook" }).className).toContain("border-gold");
+    expect(screen.getByRole("region", { name: "Generic LLM (no Qloo)" }).className).not.toContain("border-gold");
+  });
   it("the recorded runs (synthetic fixture, same shape): two runs, headline is run 2's real numbers, no winning language", () => {
     setBacktest(syntheticBacktest);
     const BACKTEST = getBacktest()!;

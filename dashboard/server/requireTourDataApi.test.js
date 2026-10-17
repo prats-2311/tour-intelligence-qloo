@@ -7,7 +7,7 @@ async function start(url) {
   const app = express();
   app.use(requireTourDataApi(url));
   app.get(/(.*)/, (req, res) => res.json({ reached: req.path }));
-  await new Promise((r) => { server = app.listen(0, r); });
+  await new Promise((r) => { server = app.listen(0, "127.0.0.1", r); });
   return `http://127.0.0.1:${server.address().port}`;
 }
 afterEach(async () => {

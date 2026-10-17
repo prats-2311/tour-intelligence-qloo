@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { DEFAULT_SCORING_DISPLAY } from "@/lib/qloo/labels";
@@ -25,6 +25,11 @@ describe("WhyThisScore scoring display", () => {
     expect(screen.getByText(/dropped — no spread in calibration/i)).toBeTruthy();
     expect(screen.getByText(/rescaled from a calibrated floor/i)).toBeTruthy();
   });
+  it("names the actual floors from the config in the floored paragraph", () => {
+    const scoring = { ...DEFAULT_SCORING_DISPLAY, affinityFloors: { sponsor_fit: 0.92, local_hooks: 0.95, venue_fit: 0.88 } };
+    render(<WhyThisScore city={city} scoring={scoring} />);
+    expect(screen.getByText(/sponsor 0\.92 · hooks 0\.95 · venue 0\.88/)).toBeTruthy();
+  });
   it("falls back to the default rules without a scoring config (sample, old recordings)", () => {
     render(<WhyThisScore city={city} />);
     expect(screen.getByText("45≤fan<70 & activation ≥75")).toBeTruthy();
@@ -35,6 +40,9 @@ describe("WhyThisScore scoring display", () => {
     expect(screen.getByText("Close call")).toBeTruthy();
     expect(screen.getByText("Within 2 points of a verdict line — treat as borderline.")).toBeTruthy();
     unmount();
+    render(<WhyThisScore city={{ ...city, closeCall: true }} scoring={{ ...DEFAULT_SCORING_DISPLAY, closeCallBand: 3 }} />);
+    expect(screen.getByText("Within 3 points of a verdict line — treat as borderline.")).toBeTruthy();
+    cleanup();
     render(<WhyThisScore city={{ ...city, closeCall: false }} />);
     expect(screen.queryByText("Close call")).toBeNull();
     expect(screen.queryByText(/treat as borderline/)).toBeNull();

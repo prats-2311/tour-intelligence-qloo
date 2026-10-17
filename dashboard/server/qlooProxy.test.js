@@ -7,9 +7,12 @@ async function start(opts) {
   const app = express();
   app.use(express.json());
   mountQlooProxy(app, opts);
-  await new Promise((r) => { server = app.listen(0, r); });
+  await new Promise((r) => { server = app.listen(0, "127.0.0.1", r); });
   return `http://127.0.0.1:${server.address().port}`;
 }
+// Bind to loopback explicitly. On macOS a wildcard listen(0) can be handed a port that another process
+// (a parallel test worker) already holds on 127.0.0.1, and requests to 127.0.0.1:port then reach THAT server
+// (the flaky 404 for "400 for missing x-session-id"). A specific-address bind fails with EADDRINUSE instead of coexisting.
 // Await the close: an unawaited close lets the next test's listen(0) be handed the same ephemeral port
 // while undici still holds a keep-alive socket to the old server, so a request can land on the wrong listener.
 afterEach(async () => {

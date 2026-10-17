@@ -65,4 +65,25 @@ expect "real id inside a >5 MB blob" 1 "$r" "data/big.txt"
 r=$(new_repo allowed);      commit_file "$r" fx.json '{"id":"00000000-1111-2222-3333-444444444444","agent":"672c258a-7d63-4164-a4c6-a34f17490f53"}'
 expect "synthetic and allowlisted ids pass" 0 "$r" "clean"
 
+# --- final-gate.sh (the make-public-clone.sh last gate), run inside the clone ---
+GATE="${GATE:-$(cd "$(dirname "$0")" && pwd)/final-gate.sh}"
+gate_expect() { # name want_exit repo [extra-file]
+  local out rc
+  out=$(cd "$3" && bash "$GATE" ${4:+"$4"} 2>&1); rc=$?
+  if [[ $rc -ne $2 ]]; then echo "FAIL: $1 (exit $rc, want $2)"; echo "$out" | sed 's/^/   /'; fails=$((fails+1)); else echo "ok:   $1"; fi
+}
+r=$(new_repo gatenoid);     commit_file "$r" src/a.ts 'export const a = 1'
+gate_expect "final gate: a repo with no UUID-shaped strings passes (unguarded grep would exit 1 silently)" 0 "$r"
+r=$(new_repo gateid);       commit_file "$r" docs/n.md "entity $REAL"
+gate_expect "final gate: a real id fails" 1 "$r"
+r=$(new_repo gateallow);    commit_file "$r" fx.json '{"id":"00000000-1111-2222-3333-444444444444"}'
+gate_expect "final gate: only allowlisted ids passes" 0 "$r"
+printf 'Zorblax==>Sample\n' >"$ROOT/extra.txt"
+r=$(new_repo gatelit);      commit_file "$r" docs/x.md "see Zorblax"
+gate_expect "final gate: a leftover extra literal fails" 1 "$r" "$ROOT/extra.txt"
+r=$(new_repo gatelitok);    commit_file "$r" docs/x.md "see Sample"
+gate_expect "final gate: extra literal absent passes" 0 "$r" "$ROOT/extra.txt"
+: >"$ROOT/empty.txt"
+gate_expect "final gate: an empty extras file passes" 0 "$r" "$ROOT/empty.txt"
+
 [[ $fails -eq 0 ]] && echo "all check-public-data tests passed" || { echo "$fails failed"; exit 1; }

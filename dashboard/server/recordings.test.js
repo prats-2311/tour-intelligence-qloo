@@ -6,7 +6,7 @@ let server;
 async function start(opts) {
   const app = express();
   mountRecordings(app, opts);
-  await new Promise((r) => { server = app.listen(0, r); });
+  await new Promise((r) => { server = app.listen(0, "127.0.0.1", r); });
   return `http://127.0.0.1:${server.address().port}`;
 }
 afterEach(async () => {

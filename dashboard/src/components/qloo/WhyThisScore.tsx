@@ -1,4 +1,4 @@
-import { CLOSE_CALL_NOTE, DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE, VERDICT_LABEL, ruleLines, weightRows } from "@/lib/qloo/labels";
+import { closeCallNote, DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE, VERDICT_LABEL, ruleLines, weightRows } from "@/lib/qloo/labels";
 import type { ScoredCity, ScoringConfig } from "@/lib/qloo/types";
 import { CloseCallChip } from "./CloseCallChip";
 import { DataWarningBadge } from "./DataWarningBadge";
@@ -26,7 +26,7 @@ export function WhyThisScore({ city, scoring }: { city: ScoredCity; scoring?: Sc
         <span className="font-mono text-[24px] font-bold tabular">{w === null ? "—" : Math.round(w)}</span>
         <span className="text-[13px] text-canvas-muted">{w === null ? "Not enough data to score" : "winnability"}</span>
       </div>
-      {city.closeCall && <p className="text-[13px] text-canvas-muted">{CLOSE_CALL_NOTE}</p>}
+      {city.closeCall && <p className="text-[13px] text-canvas-muted">{closeCallNote(cfg.closeCallBand)}</p>}
       <DualBars fanHeat={city.fanHeat} activation={city.activation} thresholds={cfg.thresholds} />
       <p className="font-mono text-[13px] text-canvas-muted">winnability = 0.5 × fan heat + 0.5 × activation</p>
       <table className="w-full text-left text-[13px]">
@@ -53,7 +53,7 @@ export function WhyThisScore({ city, scoring }: { city: ScoredCity; scoring?: Sc
       <p className="text-[12px] text-canvas-muted">Weights are renormalised over the components that returned data.</p>
       {floored && (
         <p className="text-[13px] text-canvas-muted">
-          Sponsor, hook and venue affinities are rescaled from a calibrated floor (0) to 1 (100), because Qloo's top recommendations all score near 1.
+          Sponsor, hook and venue affinities are rescaled from a calibrated floor to 1 (100), because Qloo's top recommendations all score near 1. Floors: sponsor {cfg.affinityFloors.sponsor_fit} · hooks {cfg.affinityFloors.local_hooks} · venue {cfg.affinityFloors.venue_fit}.
         </p>
       )}
       <div>

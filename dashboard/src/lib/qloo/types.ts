@@ -20,6 +20,8 @@ export interface ScoringConfig {
   affinityFloors: { sponsor_fit: number; local_hooks: number; venue_fit: number };
   concentration: "raw" | "vs_uniform";
   thresholds: Thresholds;
+  /** Close-call band the gateway used; absent in older recordings (treat as 2). */
+  closeCallBand?: number;
 }
 export interface Zone { label: string; lat: number; lon: number; affinity: number; index: number; share: number }
 export interface ScoredCity {
@@ -64,7 +66,7 @@ export interface ArtistProfile {
 export type StrategistToolStatus = "ok" | "empty" | "needs_input" | "partial" | "degraded" | "error" | "rejected";
 export type GatewayEvent =
   | { type: "resolve"; entity: { entityId: string; name: string } }
-  | { type: "scoring"; scoring: ScoringConfig }
+  | { type: "scoring"; scoring: ScoringConfig; closeCallBand?: number }
   | ({ type: "artist_profile" } & ArtistProfile)
   | { type: "region_unavailable"; region: string; code: string; message: string }
   | { type: "needs_input"; field: string; candidates: Array<{ id: string; name: string; type?: string }>; summary: string }

@@ -44,7 +44,7 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
       const log = [...state.log, e];
       switch (e.type) {
         case "resolve": return { ...state, log, artist: e.entity };
-        case "scoring": return { ...state, log, scoring: e.scoring };
+        case "scoring": return { ...state, log, scoring: e.closeCallBand === undefined ? e.scoring : { ...e.scoring, closeCallBand: e.closeCallBand } };
         case "artist_profile": {
           const profile: ArtistProfile = { demographics: e.demographics, tags: e.tags, trends: e.trends, refs: e.refs, warnings: e.warnings };
           return { ...state, log, profile };

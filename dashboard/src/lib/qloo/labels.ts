@@ -43,7 +43,8 @@ export function weightRows(s: ScoringConfig): Array<{ key: ComponentName; label:
 }
 
 export const CLOSE_CALL_LABEL = "Close call";
-export const CLOSE_CALL_NOTE = "Within 2 points of a verdict line — treat as borderline.";
+export const DEFAULT_CLOSE_CALL_BAND = 2;
+export const closeCallNote = (band: number = DEFAULT_CLOSE_CALL_BAND) => `Within ${band} points of a verdict line — treat as borderline.`;
 
 export type VerdictShape = "circle" | "diamond" | "triangle" | "ring" | "x" | "square";
 /** DESIGN.md section 2.5: shape carries the verdict on the map, the matrix and every legend. */

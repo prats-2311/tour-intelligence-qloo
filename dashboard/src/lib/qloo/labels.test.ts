@@ -38,3 +38,11 @@ describe("scoring display", () => {
     expect(rows.find((r) => r.key === "fan_concentration")).toMatchObject({ weight: "0.00", dropped: true });
   });
 });
+
+describe("closeCallNote", () => {
+  it("uses the band it is given and defaults to 2", async () => {
+    const { closeCallNote } = await import("./labels");
+    expect(closeCallNote(3)).toBe("Within 3 points of a verdict line — treat as borderline.");
+    expect(closeCallNote()).toBe("Within 2 points of a verdict line — treat as borderline.");
+  });
+});
