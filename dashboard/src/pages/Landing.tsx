@@ -9,6 +9,7 @@ import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
 import { ordinal, sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { proofFor, SHOWCASE, showcaseCities } from "@/lib/qloo/showcase";
+import { storyBeats } from "@/lib/qloo/story";
 import type { ScoredCity } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
@@ -65,6 +66,31 @@ function ProofCard() {
   );
 }
 
+const joinList = (xs: string[]): string => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+
+function Story() {
+  const beats = storyBeats(SHOWCASE);
+  if (!beats) return null;
+  const { decision: d, missed: m, plan: p } = beats;
+  const bill = p.localAct ?? p.coBill;
+  const clauses = [p.sponsor && `pitch ${p.sponsor}`, bill && `put ${bill} on the bill`].filter(Boolean).join(", ");
+  const steps = [
+    { label: "The hold", text: `${d.artist}: ${d.markets} markets${d.regions.length ? ` across ${joinList(d.regions)}` : ""}. Which ones get dates?` },
+    { label: "The city density misses", text: `${m.city} ranks ${ordinal(m.densityRank)} on fan density and ${ordinal(m.winnabilityRank)} on winnability — ${m.verdictLabel}.` },
+    { label: "How you win it", text: clauses ? `Its playbook: ${clauses}.` : "Its playbook: sponsor, venue and promo plan." },
+  ];
+  return (
+    <ol aria-label="The story in three beats" className="grid list-none gap-4 p-0 md:grid-cols-3 md:gap-6 lg:col-span-12 lg:row-start-3 lg:mt-10">
+      {steps.map((s) => (
+        <li key={s.label} className="min-w-0">
+          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-canvas-muted">{s.label}</span>
+          <p className="mt-1 text-[15px] leading-[1.45] text-canvas-text [text-wrap:pretty]">{s.text}</p>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function MapPreview() {
   const cities = useMemo(previewCities, []);
   return (
@@ -88,6 +114,7 @@ export default function Landing() {
           Find the cities where your artist can win, then get the sponsor, venue and promo plan for each one. Built on Qloo taste data.
         </p>
       </section>
+      <Story />
       <div className="flex flex-col gap-6 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
         {isDesktop && <MapPreview />}
         <ProofCard />

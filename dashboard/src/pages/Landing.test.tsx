@@ -5,6 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { DEFAULT_SCORING_DISPLAY } from "@/lib/qloo/labels";
+import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
+import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
+import { ordinal } from "@/lib/qloo/ranking";
+import { parseShowcase, SHOWCASE, setShowcase } from "@/lib/qloo/showcase";
+import { storyBeats } from "@/lib/qloo/story";
 import Landing from "./Landing";
 
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
@@ -74,5 +79,28 @@ describe("Landing hero default thresholds", () => {
   it("links to the proof page", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
     expect(screen.getByRole("link", { name: /Checked against real tours/ }).getAttribute("href")).toBe("/proof");
+  });
+});
+
+describe("Landing story beats (spec 1.2b rule 1: every number comes from the recording)", () => {
+  afterEach(() => setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE)));
+  it("shows the markets, city, both ranks and sponsor taken from storyBeats(SHOWCASE)", () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    const beats = storyBeats(SHOWCASE)!;
+    const list = screen.getByRole("list", { name: "The story in three beats" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
+    const text = list.textContent!;
+    expect(text).toContain(`${beats.decision.markets} markets`);
+    expect(text).toContain(beats.missed.city);
+    expect(text).toContain(ordinal(beats.missed.densityRank));
+    expect(text).toContain(ordinal(beats.missed.winnabilityRank));
+    expect(text).toContain(beats.missed.verdictLabel);
+    if (beats.plan.sponsor) expect(text).toContain(beats.plan.sponsor);
+  });
+  it("renders no story with the placeholder, and the sample card stays", () => {
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    expect(screen.queryByRole("list", { name: "The story in three beats" })).toBeNull();
+    expect(screen.getByRole("region", { name: "Guadalajara sample routing row" })).toBeTruthy();
   });
 });

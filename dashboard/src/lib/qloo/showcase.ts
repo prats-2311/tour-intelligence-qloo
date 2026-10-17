@@ -75,11 +75,15 @@ export interface Proof { city: ScoredCity; line: string }
  * scored cities when omitted), because the card links to that playbook. Picks the largest climb from the
  * fan-density rank to the winnability rank; with no climb, the top-winnability candidate with no claim about a shift.
  */
+/** Whole-board rank of a city on fan density or winnability (1 = best); only a strictly higher score ranks ahead. `scored` holds cities with both scores. */
+export const boardRank = (scored: ScoredCity[], c: ScoredCity, key: "fanHeat" | "winnability"): number => 1 + scored.filter((x) => x[key].value! > c[key].value!).length;
+export const hasBothScores = (c: ScoredCity): boolean => c.winnability.value !== null && c.fanHeat.value !== null;
+
 export function proofFor(all: ScoredCity[], withPlaybook?: readonly string[]): Proof | null {
-  const scored = all.filter((c) => c.winnability.value !== null && c.fanHeat.value !== null);
+  const scored = all.filter(hasBothScores);
   const pool = withPlaybook ? scored.filter((c) => withPlaybook.includes(c.id)) : scored;
   if (pool.length === 0) return null;
-  const rankOf = (c: ScoredCity, key: "fanHeat" | "winnability") => 1 + scored.filter((x) => x[key].value! > c[key].value!).length;
+  const rankOf = (c: ScoredCity, key: "fanHeat" | "winnability") => boardRank(scored, c, key);
   const rows = pool.map((c) => ({ city: c, d: rankOf(c, "fanHeat"), w: rankOf(c, "winnability") }));
   const best = rows.reduce((a, b) => (b.d - b.w > a.d - a.w ? b : a));
   if (best.d - best.w > 0) return { city: best.city, line: `Ranked ${ordinal(best.d)} on fan density alone. ${ordinal(best.w)} on winnability.` };
