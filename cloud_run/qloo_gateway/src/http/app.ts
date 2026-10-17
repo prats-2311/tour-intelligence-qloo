@@ -1,5 +1,6 @@
 import express, { type NextFunction, type Request, type Response } from "express";
 import type { City } from "../geo/cities.js";
+import { PUBLIC_SESSION_PREFIX } from "../budget.js";
 import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import { runTourBoard } from "../pipeline/tourBoard.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
@@ -54,8 +55,11 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
       return void res.status(400).json({ error: "x-session-id, artist, artistEntityId, city, country required" });
     }
     const controller = new AbortController();
-    await streamSse(res, runCityPlaybook({ artist: String(artist), artistEntityId: String(artistEntityId), city: { name: String(city), country: String(country) }, sessionId, narrative: req.query.narrative !== "0" },
-      { qloo: deps.qloo, cities: deps.cities, signal: controller.signal, narrate: deps.narrate, ...(deps.localActs ? { localActs: deps.localActs } : {}) }), controller);
+    const narrative = req.query.narrative !== "0";
+    // narrative=0 means "no Gemini" and public sessions are the cheap path: both keep the city-pool-only talent card.
+    const hybrid = deps.localActs && narrative && !sessionId!.startsWith(PUBLIC_SESSION_PREFIX);
+    await streamSse(res, runCityPlaybook({ artist: String(artist), artistEntityId: String(artistEntityId), city: { name: String(city), country: String(country) }, sessionId: sessionId!, narrative },
+      { qloo: deps.qloo, cities: deps.cities, signal: controller.signal, narrate: deps.narrate, ...(hybrid ? { localActs: deps.localActs! } : {}) }), controller);
   });
 
   app.post("/v1/tools/:name", async (req, res) => {

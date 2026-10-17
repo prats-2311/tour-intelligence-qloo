@@ -69,6 +69,17 @@ describe("http", () => {
     expect(on.text).toContain("event: narrative");
     expect(narrate).toHaveBeenCalledTimes(1);
   });
+  it("asks Gemini for local-act suggestions only on a narrated, non-public playbook", async () => {
+    const localActs = vi.fn(async () => ["Anitta"]);
+    const a = createApp({ qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }), localActs });
+    const q = "/v1/city-playbook?artist=A&artistEntityId=A1&city=Mexico%20City&country=MX";
+    await request(a).get(`${q}&narrative=0`).set("x-session-id", "s");
+    expect(localActs).not.toHaveBeenCalled();
+    await request(a).get(q).set("x-session-id", "mcp-public-abc123").set("Accept", "text/event-stream");
+    expect(localActs).not.toHaveBeenCalled();
+    await request(a).get(q).set("x-session-id", "s");
+    expect(localActs).toHaveBeenCalledTimes(1);
+  });
   it("rejects over-long session ids on all routes", async () => {
     const long = "x".repeat(200);
     expect((await request(app).post("/v1/tour-board").set("x-session-id", long).send({ artist: "A", regions: ["Mexico"], maxStops: 3 })).status).toBe(400);
