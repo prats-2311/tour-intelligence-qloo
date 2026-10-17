@@ -22,7 +22,8 @@ const KNOWN_EVENTS: ReadonlySet<string> = new Set([
 /** Drops anything that is not a known gateway event, so an unexpected type in the JSON can never crash a replay. */
 export function cleanEvents(events: unknown): GatewayEvent[] {
   if (!Array.isArray(events)) return [];
-  return events.filter((e): e is GatewayEvent => !!e && typeof e === "object" && typeof (e as { type?: unknown }).type === "string" && KNOWN_EVENTS.has((e as { type: string }).type));
+  return events.filter((e): e is GatewayEvent => !!e && typeof e === "object" && typeof (e as { type?: unknown }).type === "string" && KNOWN_EVENTS.has((e as { type: string }).type))
+    .filter((e) => e.type !== "scoring" || (!!e.scoring && typeof e.scoring === "object" && !!e.scoring.thresholds && typeof e.scoring.thresholds === "object"));
 }
 
 export function parseShowcase(input: unknown): Showcase {

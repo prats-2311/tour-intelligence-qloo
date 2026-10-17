@@ -3,13 +3,34 @@ import { useId } from "react";
 import { BACKTEST, METHODS, METHOD_LABEL, hitLine, rankText, type Backtest, type BacktestRun, type CaseResult, type MethodResult } from "@/lib/qloo/backtest";
 
 const TITLE = "Would it have found what the real tour used?";
-const REASON = "Run 1 asked Qloo for artists the headliner's fans like in that city, which returns global taste neighbours, not local acts. We changed the recipe to rank the city's own popular artists by taste fit, then tested it on new cases reviewed after the change.";
+const REASON = "Run 1 asked Qloo for artists the headliner's fans like in that city, which returns global taste neighbours. Run 2 ranked the city's own popular artists by taste fit and was judged on fresh cases reviewed after the change; it did no better, because Qloo's city-popularity list misses the most famous national acts.";
+const WHAT = "For naming the specific famous local guest or sponsor a real tour used, a general-purpose LLM did better than Qloo's taste graph in both runs. Qloo's recommendations reflect what over-indexes with an audience in a city, not who is most famous there — that is world knowledge. So the playbook now asks an LLM for local candidates and uses Qloo to check each one exists and to rank it by taste fit. We have not yet tested that change on new cases, so we make no claim about it here.";
+const TYPE_LABEL = { sponsor: "a sponsor", merch_collab: "a merch collab", local_artist: "a local act" } as const;
+
+/** "2022–2026" from the cases' own dates (YYYY-MM). */
+function yearRange(run: BacktestRun): string {
+  const ys = run.cases.map((c) => Number.parseInt(c.date, 10)).filter(Number.isFinite);
+  if (ys.length === 0) return "";
+  const lo = Math.min(...ys), hi = Math.max(...ys);
+  return lo === hi ? String(lo) : `${lo}–${hi}`;
+}
+/** The activation types actually present, in a fixed order: "a sponsor, a merch collab or a local act". */
+function typeList(run: BacktestRun): string {
+  const present = (Object.keys(TYPE_LABEL) as Array<keyof typeof TYPE_LABEL>).filter((t) => run.cases.some((c) => c.activationType === t));
+  if (present.length === 1 && present[0] === "local_artist") return "a local act on the bill";
+  const labels = present.map((t) => TYPE_LABEL[t]);
+  return labels.length < 2 ? (labels[0] ?? "") : `${labels.slice(0, -1).join(", ")} or ${labels.at(-1)}`;
+}
+const LIMIT_4 = {
+  v1: "The playbook column is the exact Qloo request the City Playbook makes, with the list widened to 20.",
+  v2: "For local acts, the playbook column ranks the city's 10 most popular artists by taste fit (Qloo rank); for brands it is the exact recommend request the City Playbook makes, widened to 20.",
+} as const;
 const eyebrow = "font-mono text-[11px] uppercase tracking-[0.08em] text-canvas-muted";
 const runDate = (r: BacktestRun) => (Number.isNaN(Date.parse(r.runAt)) ? r.runAt : new Date(r.runAt).toISOString().slice(0, 10));
 const hostname = (u: string): string => { try { return new URL(u).hostname; } catch { return u; } };
 
-function Heading({ id, children }: { id: string; children: ReactNode }) {
-  return <h2 id={id} className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">{children}</h2>;
+function Heading({ id, children, as: Tag = "h2" }: { id: string; children: ReactNode; as?: "h2" | "h3" }) {
+  return <Tag id={id} className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">{children}</Tag>;
 }
 
 function RankCell({ r }: { r: MethodResult }) {
@@ -40,8 +61,8 @@ function CaseCard({ c }: { c: CaseResult }) {
       </dl>
       <p className="text-[14px] leading-[1.45] text-canvas-text">{c.summary}</p>
       <ul className="m-0 flex list-none flex-wrap gap-x-4 p-0">
-        {c.sources.map((u) => (
-          <li key={u} className="min-w-0">
+        {c.sources.map((u, i) => (
+          <li key={`${i}-${u}`} className="min-w-0">
             <a href={u} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 min-w-11 items-center break-all text-[13px] text-canvas-text underline decoration-canvas-muted underline-offset-4">{hostname(u)}</a>
           </li>
         ))}
@@ -53,6 +74,7 @@ function CaseCard({ c }: { c: CaseResult }) {
 function Boxscore({ run, suffix = "" }: { run: BacktestRun; suffix?: string }) {
   return (
     <div className="grid gap-3 lg:grid-cols-3" data-testid="boxscore">
+      <h2 className="sr-only">{`Top 10 hit rates${suffix}`}</h2>
       {METHODS.map((m) => {
         const mine = m === "qloo_playbook";
         return (
@@ -67,15 +89,25 @@ function Boxscore({ run, suffix = "" }: { run: BacktestRun; suffix?: string }) {
   );
 }
 
-function Lost({ run, label }: { run: BacktestRun; label: string }) {
+function Lost({ run, label, as }: { run: BacktestRun; label: string; as?: "h2" | "h3" }) {
   const id = useId();
   const lost = run.lost.map((x) => run.cases.find((c) => c.id === x)).filter((c): c is CaseResult => !!c);
   return (
     <section aria-labelledby={id} className="flex flex-col gap-4">
-      <Heading id={id}>{label}</Heading>
+      <Heading id={id} as={as}>{label}</Heading>
       {lost.length === 0
         ? <p className="text-[15px] text-canvas-text">No case where a baseline ranked the real entity above the playbook.</p>
         : <div className="grid gap-3 lg:grid-cols-2">{lost.map((c) => <CaseCard key={c.id} c={c} />)}</div>}
+    </section>
+  );
+}
+
+function WhatThisShows() {
+  const id = useId();
+  return (
+    <section aria-labelledby={id} className="flex flex-col gap-3">
+      <Heading id={id}>What this shows</Heading>
+      <p className="max-w-[68ch] text-[15px] leading-[1.5] text-canvas-text">{WHAT}</p>
     </section>
   );
 }
@@ -93,18 +125,19 @@ function HowWeGotHere({ run }: { run: BacktestRun }) {
       <p className={eyebrow}>Run 1 · {runDate(run)}</p>
       <Note run={run} />
       <Boxscore run={run} suffix=" (run 1)" />
-      <Lost run={run} label="Where we lost in run 1" />
+      <Lost run={run} label="Where we lost in run 1" as="h3" />
     </section>
   );
 }
 
-function Limitations({ n }: { n: number }) {
+function Limitations({ run }: { run: BacktestRun }) {
   const id = useId();
+  const n = run.n;
   const items = [
     "Qloo's graph and the LLM's training data may already reflect these past activations (post-hoc leakage). We cannot control for this.",
     "This shows consistency with real decisions, not causal lift.",
     `Small sample: ${n} cases, each human-reviewed against its sources.`,
-    "The playbook column is the exact Qloo request the City Playbook makes, with the list widened to 20.",
+    LIMIT_4[run.method],
     "The generic LLM had no web search.",
   ];
   return (
@@ -140,18 +173,19 @@ export function ProofView({ data }: { data: Backtest }) {
       <div className="flex flex-col gap-4">
         {header}
         <p className="max-w-[68ch] text-[16px] leading-[1.5] text-canvas-text">
-          We took {run.n} real city activations from 2021–2026 tours (a sponsor, a merch collab or a local act) and checked whether each method put it in its top 10 for that city.
+          We took {run.n} real city activations from {yearRange(run)} tours ({typeList(run)}) and checked whether each method put it in its top 10 for that city.
         </p>
         <Note run={run} />
       </div>
       <Boxscore run={run} />
+      {data.runs.length >= 2 && <WhatThisShows />}
       <Lost run={run} label="Where we lost" />
       <section aria-labelledby={everyId} className="flex flex-col gap-4">
         <Heading id={everyId}>Every case</Heading>
         <div className="grid gap-3 lg:grid-cols-2">{run.cases.map((c) => <CaseCard key={c.id} c={c} />)}</div>
       </section>
       {data.runs.length >= 2 && <HowWeGotHere run={first} />}
-      <Limitations n={run.n} />
+      <Limitations run={run} />
       <footer className="break-words font-mono text-[12px] text-canvas-muted">
         Run {runDate(run)} · model {run.model} · reproduce with the steps in backtest/README.md
       </footer>

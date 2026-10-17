@@ -23,7 +23,7 @@ const SAMPLE_LINE = (): string => {
   return `Ranked ${ordinal(rank("density"))} on fan density alone. ${ordinal(rank("winnability"))} on winnability.`;
 };
 // The recording's own scoring config (when it has one) drives the hero bars' ticks; otherwise the bars keep the default thresholds.
-const RECORDED_THRESHOLDS = SHOWCASE.boardEvents.find((e) => e.type === "scoring")?.scoring.thresholds;
+const RECORDED_THRESHOLDS = SHOWCASE.boardEvents.find((e) => e.type === "scoring")?.scoring?.thresholds;
 const noop = () => {};
 const CTA = "flex min-h-[52px] items-center justify-center rounded-[10px] px-6 font-sans text-[16px] outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold active:scale-[0.98] motion-reduce:active:scale-100 lg:min-h-12 lg:text-[15px]";
 

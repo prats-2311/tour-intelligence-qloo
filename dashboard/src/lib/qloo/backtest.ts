@@ -29,12 +29,27 @@ export const METHOD_LABEL: Record<Method, string> = {
 export const PROOF_LINK_TEXT = "Checked against real tours";
 export const METHODS: Method[] = ["qloo_playbook", "city_popularity", "llm_only"];
 
+const isInt = (n: unknown): boolean => Number.isInteger(n);
+const validResult = (r: unknown): boolean => {
+  const x = r as { status?: string; rank?: unknown } | null;
+  return !!x && (x.status === "unavailable" || (x.status === "ok" && (x.rank === null || isInt(x.rank))));
+};
+const validCase = (c: unknown): c is CaseResult => {
+  const x = c as Partial<CaseResult> | null;
+  return !!x && typeof x.id === "string" && !!x.realEntity && typeof x.realEntity.name === "string" && Array.isArray(x.sources)
+    && x.sources.every((u) => typeof u === "string" && /^https?:\/\//i.test(u)) && !!x.results && METHODS.every((m) => validResult(x.results![m]));
+};
+
 function parseRun(input: unknown): BacktestRun | null {
   const d = input as Partial<BacktestRun> | null;
   // "partial" runs (a method failed mid-run) are never shown.
   if (!d || typeof d !== "object" || d.schemaVersion !== 1 || d.status !== "complete") return null;
   if (!Array.isArray(d.cases) || !d.summary || !Array.isArray(d.lost) || typeof d.runAt !== "string" || typeof d.model !== "string") return null;
-  if (!METHODS.every((m) => d.summary![m] && Number.isInteger(d.summary![m].scored))) return null;
+  if (!METHODS.every((m) => d.summary![m] && isInt(d.summary![m].scored) && isInt(d.summary![m].hit10) && isInt(d.summary![m].hit20))) return null;
+  if (!d.cases.every(validCase)) return null;
+  // A loss that matches no case would vanish from the page and could read as an all-clear: reject the whole run instead.
+  const ids = new Set(d.cases.map((c) => c.id));
+  if (!d.lost.every((id) => ids.has(id))) return null;
   return { ...(d as BacktestRun), method: d.method === "v2" ? "v2" : "v1" };
 }
 

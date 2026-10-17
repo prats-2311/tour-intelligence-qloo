@@ -32,8 +32,17 @@ describe("parseBacktest", () => {
   ])("treats %s as pending", (_l, raw) => {
     expect(parseBacktest(raw)).toEqual({ status: "pending" });
   });
-  it("the committed dashboard fixture is pending until the real runs are swapped in", () => {
-    expect(BACKTEST).toEqual({ status: "pending" });
+  it("the committed dashboard fixture holds the two real runs", () => {
+    expect(BACKTEST.status === "complete" && BACKTEST.runs.map((r) => r.method)).toEqual(["v1", "v2"]);
+  });
+  it.each([
+    ["missing hit10", (r: any) => { r.summary.llm_only.hit10 = undefined; }],
+    ["case missing a method result", (r: any) => { delete r.cases[0].results.llm_only; }],
+    ["non-http source", (r: any) => { r.cases[0].sources = ["javascript:alert(1)"]; }],
+  ])("rejects a run with %s", (_l, mutate) => {
+    const r = structuredClone(run1Fixture);
+    mutate(r);
+    expect(parseBacktest({ runs: [r] })).toEqual({ status: "pending" });
   });
   it("formats hit lines", () => {
     expect(hitLine({ scored: 15, hit10: 7, hit20: 9 }, 10)).toBe("7 of 15 in the top 10 · 47%");

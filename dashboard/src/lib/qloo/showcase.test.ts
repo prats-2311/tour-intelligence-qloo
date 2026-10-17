@@ -24,8 +24,11 @@ describe("showcase data", () => {
     expect(recordedText("2026-10-16T10:00:00.000Z")).toBe("Recorded Qloo run · 2026-10-16 — not live");
   });
   it("keeps the scoring event so a recorded run replays its calibrated config", () => {
-    const scoring = { type: "scoring", scoring: { version: "v" } };
+    const scoring = { type: "scoring", scoring: { version: "v", thresholds: {} } };
     expect(cleanEvents([scoring])).toEqual([scoring]);
+  });
+  it("drops a scoring event without a thresholds object", () => {
+    expect(cleanEvents([{ type: "scoring" }, { type: "scoring", scoring: {} }, { type: "scoring", scoring: { thresholds: 3 } }])).toEqual([]);
   });
   it("skips unknown event types and malformed entries instead of crashing", () => {
     const events = cleanEvents([{ type: "done", summary: {} }, { type: "from_the_future", x: 1 }, null, "x", { nope: 1 }]);

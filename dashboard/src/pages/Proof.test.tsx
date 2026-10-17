@@ -3,20 +3,21 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import ProofRoute, { ProofView } from "./Proof";
-import { parseBacktest } from "@/lib/qloo/backtest";
+import { BACKTEST, parseBacktest } from "@/lib/qloo/backtest";
 import { oneRunFixture, run1Fixture, run2Fixture, twoRunsFixture } from "@/lib/qloo/fixtures/backtestTestFixture";
 
 const view = (raw: unknown) => render(<MemoryRouter><ProofView data={parseBacktest(raw)} /></MemoryRouter>);
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-const REASON = "Run 1 asked Qloo for artists the headliner's fans like in that city, which returns global taste neighbours, not local acts. We changed the recipe to rank the city's own popular artists by taste fit, then tested it on new cases reviewed after the change.";
+const REASON = "Run 1 asked Qloo for artists the headliner's fans like in that city, which returns global taste neighbours. Run 2 ranked the city's own popular artists by taste fit and was judged on fresh cases reviewed after the change; it did no better, because Qloo's city-popularity list misses the most famous national acts.";
+const WHAT = "For naming the specific famous local guest or sponsor a real tour used, a general-purpose LLM did better than Qloo's taste graph in both runs. Qloo's recommendations reflect what over-indexes with an audience in a city, not who is most famous there — that is world knowledge. So the playbook now asks an LLM for local candidates and uses Qloo to check each one exists and to rank it by taste fit. We have not yet tested that change on new cases, so we make no claim about it here.";
 
 describe("Proof", () => {
   it("leads with the promoter's question and the latest run's hit rates", () => {
     view(twoRunsFixture);
     expect(screen.getByRole("heading", { level: 1, name: "Would it have found what the real tour used?" })).toBeTruthy();
     expect(screen.getByText("PROOF · ACTIVATION BACKTEST")).toBeTruthy();
-    expect(screen.getByText(/We took 2 real city activations from 2021–2026 tours/)).toBeTruthy();
+    expect(screen.getByText(/We took 2 real city activations from 2022–2024 tours \(a sponsor or a local act\)/)).toBeTruthy();
     const pb = screen.getByRole("region", { name: "Qloo playbook" });
     expect(within(pb).getByText("2 of 2 in the top 10 · 100%")).toBeTruthy();
     expect(within(pb).getByText("2 of 2 in the top 20 · 100%")).toBeTruthy();
@@ -85,6 +86,53 @@ describe("Proof", () => {
     view(twoRunsFixture);
     expect(screen.getByText("Run 2026-10-17 · model gemini-test · reproduce with the steps in backtest/README.md")).toBeTruthy();
   });
+  it("What this shows sits under the headline numbers, before Where we lost, only with 2+ runs", () => {
+    view(twoRunsFixture);
+    const what = screen.getByRole("region", { name: "What this shows" });
+    expect(within(what).getByText(WHAT)).toBeTruthy();
+    const order = (a: Node, b: Node) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(order(screen.getByRole("region", { name: "Qloo playbook" }), what)).toBe(true);
+    expect(order(what, screen.getByRole("region", { name: "Where we lost" }))).toBe(true);
+    cleanup();
+    view(oneRunFixture);
+    expect(screen.queryByText("What this shows")).toBeNull();
+  });
+  it("limitation 4 follows the shown run's method", () => {
+    view(oneRunFixture);
+    expect(screen.getByText("The playbook column is the exact Qloo request the City Playbook makes, with the list widened to 20.")).toBeTruthy();
+    cleanup();
+    view(twoRunsFixture);
+    expect(screen.getByText("For local acts, the playbook column ranks the city's 10 most popular artists by taste fit (Qloo rank); for brands it is the exact recommend request the City Playbook makes, widened to 20.")).toBeTruthy();
+    expect(screen.queryByText(/exact Qloo request the City Playbook makes, with/)).toBeNull();
+  });
+  it("a run whose lost id has no case is not shown (no false all-clear)", () => {
+    expect(parseBacktest({ runs: [{ ...run1Fixture, lost: ["ghost"] }] })).toEqual({ status: "pending" });
+    view({ runs: [{ ...run1Fixture, lost: ["ghost"] }] });
+    expect(screen.queryByText(/No case where a baseline/)).toBeNull();
+    expect(screen.getByText("The backtest has not been published yet.")).toBeTruthy();
+  });
+  it("headings never skip a level", () => {
+    view(twoRunsFixture);
+    const levels = screen.getAllByRole("heading").map((h) => Number(h.tagName[1]));
+    levels.forEach((l, i) => { if (i > 0) expect(l).toBeLessThanOrEqual(levels[i - 1]! + 1); });
+  });
+  it("long names and source links carry wrapping classes", () => {
+    view(oneRunFixture);
+    const name = screen.getAllByText(/Very Long Named Local Ensemble/)[0]!;
+    expect(name.className).toContain("break-words");
+    expect(screen.getByText("a-very-long-subdomain.example-news-site.com").className).toContain("break-all");
+  });
+  it("the committed real runs: two runs, headline is run 2's real numbers, no winning language", () => {
+    const { container } = render(<MemoryRouter><ProofView data={BACKTEST} /></MemoryRouter>);
+    expect(BACKTEST.status === "complete" && BACKTEST.runs.length).toBe(2);
+    expect(within(screen.getByRole("region", { name: "Qloo playbook" })).getByText("1 of 13 in the top 10 · 8%")).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Generic LLM (no Qloo)" })).getByText("7 of 13 in the top 10 · 54%")).toBeTruthy();
+    expect(screen.getByText(/a local act on the bill\)/)).toBeTruthy();
+    expect(screen.getByText(WHAT)).toBeTruthy();
+    expect(screen.getByText(REASON)).toBeTruthy();
+    const text = (container.textContent ?? "").toLowerCase();
+    for (const w of ["beat", "outperform", "win"]) expect(text).not.toContain(w);
+  });
   it("pending state shows no numbers", () => {
     view({ runs: [] });
     expect(screen.getByRole("heading", { level: 1, name: "Would it have found what the real tour used?" })).toBeTruthy();
@@ -93,9 +141,9 @@ describe("Proof", () => {
     expect(screen.queryByText("How we got here")).toBeNull();
     expect(document.body.textContent).not.toMatch(/\d/);
   });
-  it("the default route renders the committed (pending) fixture", () => {
+  it("the default route renders the committed runs", () => {
     render(<MemoryRouter><ProofRoute /></MemoryRouter>);
-    expect(screen.getByText("The backtest has not been published yet.")).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "What this shows" })).toBeTruthy();
   });
   it("makes no network requests", () => {
     const spy = vi.fn();
