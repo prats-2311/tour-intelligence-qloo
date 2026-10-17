@@ -39,7 +39,7 @@ The product is judged as a product, not a SaaS business (Devpost "Design": "a co
 - `/proof` headline phrased as the promoter's question, e.g. "Would this have found the sponsor, merch collab or local act the real tour used?", with the hit rates against both baselines and the sample size next to it. The page ships as an honest "what we learned" page, not a winning headline: both backtest runs are published, the playbook did not beat either baseline, and the page says what that means for the product (§3 ⑤ Results).
 - Each proof case card says which decision it maps to (sponsor / merch / local act) and links its sources.
 - A "Checked against real tours →" link from the Tour Board header and from the City Playbook to `/proof`, so the evidence sits at the decision point.
-- Verdict-threshold calibration: live activation clusters at 71–76, so the Hidden-goldmine cut at 75 flips on one point. Calibrate the §5.3 thresholds on recorded Tour Board runs, never on backtest cases (§12 #9). Done (see §5.2–5.3 "Calibration (Plan 5)"); the showcase was re-recorded on the calibrated scoring and the story copy regenerated from it.
+- Verdict-threshold calibration: live activation clusters at 71–76 (at the time, 2026-10-16), so the Hidden-goldmine cut at 75 flips on one point. Calibrate the §5.3 thresholds on recorded Tour Board runs, never on backtest cases (§12 #9). Done (see §5.2–5.3 "Calibration (Plan 5)"); the showcase was re-recorded on the calibrated scoring and the story copy regenerated from it.
 
 **Plan 6 (polish and submission) owns:**
 - Landing: a three-beat narrative above the fold (the decision → winnability finds the city density misses → the playbook that wins it), each beat backed by a real showcase number, with "Try the showcase tour" as the primary action.
@@ -169,7 +169,7 @@ All scores are 0–100, computed in `qloo_gateway/src/scoring/`, unit-tested, an
 
 If fewer than 2 components are available → `activation = insufficient_data`.
 
-**Calibration (Plan 5, 2026-10-17).** Live data showed the three affinity components saturating at 0.88–0.98 and `fan_concentration` near-constant, so every city's activation landed at 73.9–76.1 and a fixed cut decided verdicts by noise. Plan 5 calibrates on the 32 scored cities of four recorded Tour Board runs (never on backtest cases):
+**Calibration (Plan 5, 2026-10-17).** Live data showed the three affinity components saturating at 0.88–0.98 and `fan_concentration` near-constant, so in the first Mac DeMarco recording every city's activation landed at 73.9–76.1 and a fixed cut decided verdicts by noise. Across all 32 calibration cities the default config gave an activation range of 51.5–96.8 with an IQR of only 2.67 (`docs/qloo/calibration.md`). Plan 5 calibrates on the 32 scored cities of four recorded Tour Board runs (never on backtest cases):
 - The three affinity components are rescaled from per-component floors, each the 10th percentile of that component across the calibration cities (`sponsor_fit` 0.92, `local_hooks` 0.95, `venue_fit` 0.88).
 - `fan_concentration` is re-based against an even spread of the zones (`vs_uniform`).
 - A component with no spread across the calibration cities gets weight 0 (none were dropped; weights stay 0.30 / 0.25 / 0.25 / 0.20).

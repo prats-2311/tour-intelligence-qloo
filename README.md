@@ -175,7 +175,7 @@ See the full per-case table, sources and "where we lost" at `/proof` in the dash
 
 ## How scores are calibrated
 
-Live activation scores clustered at 73.9-76.1 because three affinity components saturate near 0.9, so a fixed verdict cut decided cities by noise. Plan 5 rescales the affinities from per-component floors, re-bases fan concentration against an even spread, sets the verdict thresholds from quantiles, marks thin-data cities `insufficient_data` and flags any verdict within 2 points of flipping as a "close call". Inputs were four recorded Tour Board runs (32 scored cities); backtest cases were never used. Source: `docs/qloo/calibration.md` (`calibrated-2026-10-17`).
+In the first Mac DeMarco recording, activation scores clustered at 73.9-76.1 because three affinity components saturate near 0.9, so a fixed verdict cut decided cities by noise. Across all 32 calibration cities the default config gave a range of 51.5–96.8 with an IQR of only 2.67. Plan 5 rescales the affinities from per-component floors, re-bases fan concentration against an even spread, sets the verdict thresholds from quantiles, marks thin-data cities `insufficient_data` and flags any verdict within 2 points of flipping as a "close call". Inputs were four recorded Tour Board runs (32 scored cities); backtest cases were never used. Source: `docs/qloo/calibration.md` (`calibrated-2026-10-17`).
 
 | Config | Activation range | IQR | Fragile cities (±1 point) | Verdicts |
 |---|---|---|---|---|
@@ -189,7 +189,7 @@ Affinity floors: sponsor_fit 0.92, local_hooks 0.95, venue_fit 0.88. Close calls
 ```bash
 cd cloud_run/qloo_gateway && npm run build && QLOO_GATEWAY_URL=<gateway> node dist/backtest/cli.js --cases ../../backtest/cases.json --out ../../backtest/results.json
 # run 2 (fresh local-act cases)
-QLOO_GATEWAY_URL=<gateway> node dist/backtest/cli.js --cases ../../backtest/cases-run2.json --out ../../backtest/results-run2.json --method-note "<what changed>"
+QLOO_GATEWAY_URL=<gateway> node dist/backtest/cli.js --cases ../../backtest/cases-run2.json --out ../../backtest/results-run2.json --method-note "Local acts: city-popular artists re-ranked by taste fit (qloo_rank). Judged on fresh cases reviewed after the method was fixed."
 ```
 
 ### Re-run calibration
