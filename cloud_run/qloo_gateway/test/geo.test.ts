@@ -165,6 +165,13 @@ describe("marketsFromHeat on the real GeoNames dataset", () => {
     expect(nameFor(-23.45, -46.95)).toBe("Sao Paulo"); // west of Osasco, 34 km out
     expect(nameFor(19.5, -98.85)).toBe("Mexico City"); // Iztapalapa side, 30 km out
   });
+  it("keeps distinct neighbouring cities on their own names", () => {
+    const own = (name: string, country: string) => { const c = real.find((x) => x.name === name && x.country === country)!; return nameFor(c.lat, c.lon); };
+    expect(own("Jundiai", "BR")).toBe("Jundiai");
+    expect(own("Petropolis", "BR")).toBe("Petropolis");
+    expect(own("Toluca", "MX")).toBe("Toluca");
+    expect(own("Rosarito", "MX")).toBe("Rosarito");
+  });
   it("resolves each capital core id to the expected city", () => {
     const want: Record<string, string> = { "3530597": "Mexico City", "3448439": "Sao Paulo", "3451190": "Rio de Janeiro", "3995465": "Monterrey", "3435910": "Buenos Aires", "3871336": "Santiago", "3688689": "Bogota", "3936456": "Lima" };
     for (const [id, name] of Object.entries(want)) expect(real.find((c) => c.id === id)?.name).toBe(name);

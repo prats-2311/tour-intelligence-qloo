@@ -228,6 +228,11 @@ describe("runTourBoard", () => {
     expect(names).not.toContain("Ecatepec de Morelos");
     expect(names).not.toContain("Iztapalapa");
     expect(names).toContain("Monterrey");
+    const mc = events.find((e) => e.type === "city_scored" && (e as { city: { name: string } }).city.name === "Mexico City") as unknown as { city: { fanHeat: { refs: unknown[] } } };
+    expect(mc.city.fanHeat.refs.length).toBeGreaterThan(0);
+    const solo = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => (t === "qloo_where_popular" && a.within === "Mexico" ? { ...suburbHeat, results: [suburbHeat.results![0]!, suburbHeat.results![3]!] } : happy(t, a))), cities: loadCities() }));
+    const heatOf = (evs: GatewayEvent[]) => (evs.find((e) => e.type === "city_scored" && (e as { city: { name: string } }).city.name === "Mexico City") as unknown as { city: { fanHeat: { value: number } } }).city.fanHeat.value;
+    expect(heatOf(events)).toBe(heatOf(solo)); // max of the merged suburbs: the 0.6 cell alone drives it
   });
 
   it("issues the brand and artist recommends with the shared artist-taste args", async () => {

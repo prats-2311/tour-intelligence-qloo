@@ -52,14 +52,14 @@ const METRO_CORES: ReadonlySet<string> = new Set([
   "3936456", // Lima, over Callao and San Juan de Lurigancho
 ]);
 
-/** A core's tour market reaches further than a normal anchor: heat cells on the outskirts of a 10M+ metro sit 30-50 km from the GeoNames centre and would otherwise anchor to a suburb. */
-const METRO_CORE_KM = 50;
+/** Wider reach (km) for the two 12M-person metros whose outer-ring heat cells sit 30-40 km from the GeoNames centre and would otherwise anchor to a suburb. Every other core uses the caller's radius. Kept at 40 so Jundiai, Petropolis, Toluca (all >=45 km) keep their own names. */
+const METRO_CORE_REACH_KM: ReadonlyMap<string, number> = new Map([["3530597", 40], ["3448439", 40]]);
 
-/** The most populous city (>= minPopulation) within maxKm of the point; equal populations break by distance. A METRO_CORES city in range (up to 50 km) beats any non-core city (most populous core wins). Anchors suburbs to their tour city. */
+/** The most populous city (>= minPopulation) within maxKm of the point; equal populations break by distance. A METRO_CORES city in range (Mexico City and Sao Paulo reach 40 km) beats any non-core city (most populous core wins). Anchors suburbs to their tour city. */
 export function metroAnchor(cities: City[], p: { lat: number; lon: number }, { maxKm = 50, minPopulation = 100_000 }: { maxKm?: number; minPopulation?: number } = {}): City | null {
   let best: City | null = null;
   let bestKm = Infinity;
-  const reachKm = Math.max(maxKm, METRO_CORE_KM);
+  const reachKm = Math.max(maxKm, ...METRO_CORE_REACH_KM.values());
   const dLat = reachKm / 111;
   const dLonMax = reachKm / (111 * Math.max(Math.cos((p.lat * Math.PI) / 180), 0.01));
   for (const c of cities) {
@@ -67,7 +67,7 @@ export function metroAnchor(cities: City[], p: { lat: number; lon: number }, { m
     const dLonDeg = Math.abs(((c.lon - p.lon + 540) % 360) - 180);
     if (Math.abs(c.lat - p.lat) > dLat || dLonDeg > dLonMax) continue;
     const km = haversineKm(c, p);
-    if (km > (METRO_CORES.has(c.id) ? reachKm : maxKm)) continue;
+    if (km > Math.max(maxKm, METRO_CORE_REACH_KM.get(c.id) ?? 0)) continue;
     const coreC = METRO_CORES.has(c.id), coreBest = best !== null && METRO_CORES.has(best.id);
     if (!best || (coreC && !coreBest) || (coreC === coreBest && (c.population > best.population || (c.population === best.population && km < bestKm)))) { best = c; bestKm = km; }
   }
