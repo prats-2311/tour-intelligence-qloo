@@ -226,7 +226,7 @@ describe("raw decimals of the stated text", () => {
 describe("ids are not claim numbers", () => {
   it("ignores digits inside UUID and urn tokens", () => {
     const t = (x: string) => numberTokens(x).map((n) => n.raw);
-    expect(t("Tame Impala 00000000-9129-46E0-AEE7-2C3A81E91385 at 0.99")).toEqual(["0.99"]);
+    expect(t("Tame Impala 00000000-ABCD-4EF0-8123-456789ABCDEF at 0.99")).toEqual(["0.99"]);
     expect(t("tag urn:tag:genre:media:rock2 and urn:entity:place:8c13 lead 0.5")).toEqual(["0.5"]);
     expect(t("7 shows")).toEqual(["7"]);
   });

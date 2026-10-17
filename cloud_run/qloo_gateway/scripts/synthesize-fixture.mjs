@@ -5,9 +5,9 @@
 //   node scripts/synthesize-fixture.mjs <in.json> <out.json>
 //
 // Deterministic (seeded PRNG, seed 6). Keeps every key, array length, status/contract fields, urn:tag taxonomy
-// prefixes, geography (coordinates, city/country) and exact 0/1 values. Replaces Qloo-returned entity names,
+// prefixes, city/country geography (query context) and exact 0/1 values. Replaces Qloo-returned entity names,
 // ids (00000000- prefix, same case as the original), tag names/leaf ids, descriptions, addresses, image urls
-// and jitters affinity/popularity/score/demographic values by at most 0.04. Reuses syntheticId() from the
+// and moves heat-point coordinates <= 0.02 deg (geohash recomputed) and jitters affinity/popularity/score/demographic values by at most 0.04. Reuses syntheticId() from the
 // dashboard generator so ids look the same across the repo.
 import { readFileSync, writeFileSync } from "node:fs";
 import { syntheticId } from "../../../dashboard/scripts/make-synthetic-recording.mjs";
@@ -29,6 +29,20 @@ function mulberry32(seed) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+const B32 = "0123456789bcdefghjkmnpqrstuvwxyz";
+/** Standard geohash of a point, `len` characters. */
+function geohash(lat, lon, len) {
+  let latR = [-90, 90], lonR = [-180, 180], bits = 0, bit = 0, even = true, out = "";
+  while (out.length < len) {
+    const r = even ? lonR : latR, v = even ? lon : lat, mid = (r[0] + r[1]) / 2;
+    bits <<= 1;
+    if (v >= mid) { bits |= 1; r[0] = mid; } else r[1] = mid;
+    even = !even;
+    if (++bit === 5) { out += B32[bits]; bits = 0; bit = 0; }
+  }
+  return out;
 }
 
 export function synthesizeFixture(input) {
@@ -88,6 +102,14 @@ export function synthesizeFixture(input) {
     if (Array.isArray(n)) return n.map((v) => walk(v, key, parent));
     if (!isObj(n)) return typeof n === "number" && NUMBER_KEYS.has(key) ? num(n) : n;
     const out = {};
+    // Qloo heat points are response data: move each by <= 0.02 degrees (seeded) and recompute the geohash to match.
+    if (typeof n.latitude === "number" && typeof n.longitude === "number") {
+      const lat = r6(n.latitude + (rand() * 2 - 1) * 0.02), lon = r6(n.longitude + (rand() * 2 - 1) * 0.02);
+      for (const [k, v] of Object.entries(n)) {
+        out[k] = k === "latitude" ? lat : k === "longitude" ? lon : k === "geohash" && typeof v === "string" ? geohash(lat, lon, v.length) : walk(v, k, n);
+      }
+      return out;
+    }
     for (const [k, v] of Object.entries(n)) {
       if (k === "name" && typeof v === "string" && names.has(v)) out[k] = names.get(v);
       else if (k === "name" && key === "geocode") out[k] = "Synthetic district";

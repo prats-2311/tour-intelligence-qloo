@@ -63,6 +63,6 @@ describe("live Qloo shapes", () => {
   it("heat points still parse from live where_popular", () => {
     const pts = extractHeatPoints(live("heat-gdl"));
     expect(pts.length).toBeGreaterThan(0);
-    expect(pts[0]!.lat).toBeCloseTo(20.67, 1);
+    expect(pts[0]!.lat).toBe((live("heat-gdl").results as Array<{ location: { latitude: number } }>)[0]!.location.latitude);
   });
 });

@@ -9,8 +9,12 @@
 set -euo pipefail
 
 FORBIDDEN_PATHS='(^|/)(fixtures/showcase\.json|fixtures/backtest\.json|backtest/results[^/]*\.json|test/fixtures/calibration/|private-data/)'
-UUID_RE='[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}'
-SYNTH_RE='^00000000-'
+# Case-insensitive: real Qloo ids are uppercase, but a lowercased copy is the same data.
+UUID_RE='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+# Allowed ids (matched on the id itself, case-insensitively):
+#  - 00000000-...   synthetic ids from the fixture generators
+#  - 672c258a-...   Dialogflow CX agent id (agent_builder/CLAUDE.md, orchestration_driver/run_campaign.py); not Qloo data
+ALLOW_RE='^(00000000-|672c258a-7d63-4164-a4c6-a34f17490f53$)'
 
 mode=tree
 if [[ "${1:-}" == "--history" ]]; then
@@ -30,7 +34,7 @@ if [[ "$mode" == "history" ]]; then
     case "$path" in
       *package-lock.json | *.png | *.jpg | *.jpeg | *.gif | *.ico | *.pdf | *.woff*) return 0 ;;
     esac
-    hit=$(git -C "$repo" cat-file blob "$sha" | grep -a -o -E "$UUID_RE" | grep -v -E "$SYNTH_RE" | head -1 || true)
+    hit=$(git -C "$repo" cat-file blob "$sha" | grep -a -o -i -E "$UUID_RE" | grep -v -i -E "$ALLOW_RE" | head -1 || true)
     if [[ -n "$hit" ]]; then echo "$path: $hit"; fi
     return 0
   }
@@ -40,8 +44,9 @@ if [[ "$mode" == "history" ]]; then
     | while read -r sha path; do scan_blob "$sha" "$path"; done | sort -u | head -200 || true)
 else
   bad=$(git -C "$repo" ls-files | grep -E "$FORBIDDEN_PATHS" || true)
-  ids=$(git -C "$repo" grep -I -o -n -E "$UUID_RE" -- . ':!*package-lock.json' ':!*.png' 2>/dev/null \
-    | grep -v -E ":${SYNTH_RE#^}" | awk -F: '{print $1": "$3}' | sort -u -t: -k1,1 || true)
+  ids=$(git -C "$repo" grep -I -o -n -i -E "$UUID_RE" -- . ':!*package-lock.json' ':!*.png' 2>/dev/null \
+    | awk -F: '{id=$3; print $1"\t"id}' | while IFS=$'\t' read -r f id; do printf '%s\n' "$id" | grep -q -i -E "$ALLOW_RE" || printf '%s:%s:%s\n' "$f" 0 "$id"; done \
+    | awk -F: '{print $1": "$3}' | sort -u -t: -k1,1 || true)
 fi
 
 if [[ -n "$bad$ids" ]]; then
