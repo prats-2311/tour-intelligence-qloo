@@ -12,11 +12,11 @@ const mm = (desktop: boolean) => vi.stubGlobal("matchMedia", () => ({ matches: d
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("AppShell", () => {
-  it("mobile renders a bottom tab bar with four tabs and no sidebar", () => {
+  it("mobile renders a bottom tab bar with three tabs and no sidebar", () => {
     mm(false);
     render(<MemoryRouter initialEntries={["/tours/board"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
     const nav = screen.getByRole("navigation", { name: "Primary" });
-    expect(nav.querySelectorAll("a")).toHaveLength(4);
+    expect(nav.querySelectorAll("a")).toHaveLength(3);
     expect(screen.getByRole("link", { name: /Tours/ }).getAttribute("aria-current")).toBe("page");
     expect(document.querySelector("aside")).toBeNull();
   });
@@ -43,5 +43,12 @@ describe("AppShell", () => {
     expect(btn.getAttribute("aria-expanded")).toBe("true");
     fireEvent.keyDown(document, { key: "Escape" });
     expect(btn.getAttribute("aria-expanded")).toBe("false");
+  });
+  it("primary nav shows only Discover, Tours, Insights; /campaign still renders by URL", () => {
+    mm(true);
+    render(<MemoryRouter initialEntries={["/campaign"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
+    const nav = screen.getByRole("navigation", { name: "Primary" });
+    expect(Array.from(nav.querySelectorAll("a")).map((a) => a.textContent?.trim())).toEqual(["Discover", "Tours", "Insights"]);
+    expect(screen.getByText("child")).toBeTruthy();
   });
 });

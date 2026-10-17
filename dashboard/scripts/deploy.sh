@@ -11,8 +11,11 @@ TOUR_DATA_API_URL=https://tour-data-api-602700957663.us-central1.run.app
 DELIGHT_RENDERER_URL=https://delight-card-renderer-602700957663.us-central1.run.app
 ORCHESTRATOR_JOB_URL=https://run.googleapis.com/v2/projects/${PROJECT}/locations/${REGION}/jobs/tour-campaign-orchestrator:run
 
+BUILD_ENV="PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1"
+[[ -n "${VITE_WEBMCP_OT_TOKEN:-}" ]] && BUILD_ENV="${BUILD_ENV},VITE_WEBMCP_OT_TOKEN=${VITE_WEBMCP_OT_TOKEN}"
+
 gcloud run deploy "$SERVICE" --source="$(dirname "$0")/.." --region="$REGION" --project="$PROJECT" \
-  --service-account="$SA" --set-build-env-vars=PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 --allow-unauthenticated \
+  --service-account="$SA" --set-build-env-vars="$BUILD_ENV" --allow-unauthenticated \
   --set-env-vars="TOUR_DATA_API_URL=${TOUR_DATA_API_URL},DELIGHT_RENDERER_URL=${DELIGHT_RENDERER_URL},QLOO_GATEWAY_URL=${QLOO_GATEWAY_URL},ORCHESTRATOR_JOB_URL=${ORCHESTRATOR_JOB_URL},RECORDINGS_BUCKET=liifecalling-academy-tour-intel-private"
 
 echo "Note: the qloo-gateway Cloud Run service must already exist (deploy cloud_run/qloo_gateway/scripts/deploy.sh first)."

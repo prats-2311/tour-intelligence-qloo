@@ -61,14 +61,25 @@ if not PUBLIC and not TOUR_DATA_API:
     raise RuntimeError("TOUR_DATA_API_URL is not set; refusing to start without this project's tour_data_api URL")
 _METADATA_SA_BASE = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default"
 
-mcp = MCPServer(
-    "tour-intelligence-agent-tools",
-    version="1.0.0",
-    instructions=(
-        "Read-only tools over the Agentic Tour & Promotion Intelligence OS's "
-        "campaign, culture, fan-signal, and talent-brief data."
-    ),
-)
+if PUBLIC:
+    mcp = MCPServer(
+        "tour-intelligence-qloo",
+        version="1.0.0",
+        instructions=(
+            "Taste tools from Tour Intelligence × Qloo: find tour markets a mid-tier artist can win, "
+            "and the per-city playbook (sponsor, co-bill, venue, local moment). "
+            "Backed by Qloo taste data; rate-limited public demo."
+        ),
+    )
+else:
+    mcp = MCPServer(
+        "tour-intelligence-agent-tools",
+        version="1.0.0",
+        instructions=(
+            "Read-only tools over the Agentic Tour & Promotion Intelligence OS's "
+            "campaign, culture, fan-signal, and talent-brief data."
+        ),
+    )
 
 
 def _identity_token(audience: str) -> str:

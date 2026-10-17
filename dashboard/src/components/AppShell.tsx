@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Clapperboard, Compass, Route, ChartColumn, ChevronsUpDown, Plus, Check, HelpCircle, ArrowLeftRight, Globe2 } from "lucide-react";
+import { Compass, Route, ChartColumn, ChevronsUpDown, Plus, Check, HelpCircle, ArrowLeftRight, Globe2 } from "lucide-react";
 import { useCampaignContext } from "../lib/campaignContext";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 import { StrategistDock, StrategistFab, StrategistToggle, showsStrategist, useStrategistDock } from "./strategist/StrategistLauncher";
@@ -10,7 +10,6 @@ const NAV_ITEMS = [
   { to: "/", label: "Discover", icon: Compass, end: true },
   { to: "/tours/board", label: "Tours", icon: Route, end: false },
   { to: "/insights", label: "Insights", icon: ChartColumn, end: false },
-  { to: "/campaign", label: "Campaigns", icon: Clapperboard, end: false },
 ];
 
 const toolLink = ({ isActive }: { isActive: boolean }) =>

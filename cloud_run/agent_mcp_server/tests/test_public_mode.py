@@ -127,3 +127,9 @@ def test_tools_call_through_the_middleware_uses_a_per_ip_session_id(public_main,
             assert r.status_code == 200, r.text
     assert seen == [public_main.public_session_id("198.51.100.21"), public_main.public_session_id("198.51.100.22")]
     assert len(set(seen)) == 2 and all(s.startswith("mcp-public-") for s in seen)
+
+
+def test_public_mode_instructions_name_the_qloo_project(public_main):
+    ins = public_main.mcp.instructions
+    assert "Tour Intelligence × Qloo" in ins
+    assert "Agentic Tour" not in ins

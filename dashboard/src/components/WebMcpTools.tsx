@@ -11,7 +11,7 @@ interface WebMcpToolResult {
 
 // Not using the `webmcp-types` npm package (github.com/GoogleChromeLabs) to
 // avoid a new dependency for one component -- this mirrors its shape
-// closely enough to swap in later if this graduates past origin-trial.
+// closely enough to swap in later if this graduates past experimental.
 type ToolDefinition = Record<string, unknown> & {
   registerTool?: (tool: Record<string, unknown>, options?: { signal?: AbortSignal }) => unknown;
 };
@@ -21,21 +21,19 @@ type ToolDefinition = Record<string, unknown> & {
  * running in the SAME browser tab as the visitor -- a sidebar assistant, an
  * extension -- call this page's own functions directly instead of clicking
  * through the UI, via document.modelContext.registerTool(...). It has
- * nothing to do with this project's own backend multi-agent system (Culture
- * Intelligence, Fan Enthusiasm, etc.), which talks to Dialogflow CX over
- * HTTP and is completely untouched by this file.
+ * nothing to do with this project's own backend or the Qloo gateway; it only
+ * exposes the page's own functions to an in-browser agent.
  *
- * Confirmed live (Chrome 151, 2026-08-28): document.modelContext is still
- * undefined without a per-origin trial token -- the API has NOT graduated
- * to default-on. It shipped as a Chrome 149 origin trial (June 2026);
- * Edge 147+ ships it by default, no trial needed. The entry point moved to
+ * Works in Chrome with WebMCP enabled (chrome://flags) or on a deployment
+ * built with VITE_WEBMCP_OT_TOKEN; without either, document.modelContext is
+ * undefined and this component does nothing. Edge 147+ ships it by default. The entry point moved to
  * document.modelContext as of the shipped build (navigator.modelContext is
  * deprecated as of Chrome 150 but kept here as a fallback), and cleanup
  * moved from a returned unregister() handle to an AbortController passed in
  * at registration -- registerTool(tool, { signal }), then controller.abort()
  * -- which is what this file now does. Every call is still feature-detected
  * and wrapped so an unsupported browser (the default today, everywhere
- * except an enrolled Chrome 149+/Edge 147+) pays zero cost.
+ * except Chrome with WebMCP enabled or Edge 147+) pays zero cost.
  */
 export function WebMcpTools() {
   const navigate = useNavigate();
