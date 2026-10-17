@@ -1,0 +1,314 @@
+[
+  {
+    "id": "coldplay-rio-de-janeiro-milton-nascimento",
+    "artist": "Coldplay",
+    "city": "Rio de Janeiro",
+    "country": "Brazil",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Milton Nascimento",
+      "aliases": [
+        "Milton Nascimento Bituca"
+      ]
+    },
+    "date": "2023-03",
+    "sources": [
+      "https://rollingstone.com.br/musica/coldplay-convida-milton-nascimento-no-ultimo-show-no-brasil/"
+    ],
+    "summary": "Brazilian singer Milton Nascimento joined Coldplay at their Rio de Janeiro stadium show to sing Maria, Maria.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "dua-lipa-sao-paulo-caetano-veloso",
+    "artist": "Dua Lipa",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Caetano Veloso",
+      "aliases": [
+        "Caetano Emanuel Viana Teles Veloso"
+      ]
+    },
+    "date": "2025-11-15",
+    "sources": [
+      "https://rollingstone.com.br/guia-show/dua-lipa-da-atencao-que-o-fa-brasileiro-merece-em-show-em-sao-paulo/",
+      "https://www.metropoles.com/sao-paulo/dua-lipa-caetano-veloso-brown-sp"
+    ],
+    "summary": "Caetano Veloso joined Dua Lipa on stage at MorumBIS in São Paulo to perform Margarida Perfumada.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "dua-lipa-sao-paulo-carlinhos-brown",
+    "artist": "Dua Lipa",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Carlinhos Brown",
+      "aliases": [
+        "Antonio Carlos Santos de Freitas"
+      ]
+    },
+    "date": "2025-11-15",
+    "sources": [
+      "https://rollingstone.com.br/guia-show/dua-lipa-da-atencao-que-o-fa-brasileiro-merece-em-show-em-sao-paulo/",
+      "https://www.metropoles.com/sao-paulo/dua-lipa-caetano-veloso-brown-sp"
+    ],
+    "summary": "Brazilian percussionist Carlinhos Brown joined Dua Lipa at her São Paulo show and sang Magalenha, a Sérgio Mendes song.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "g-flip-melbourne-vanessa-amorosi",
+    "artist": "G Flip",
+    "city": "Melbourne",
+    "country": "Australia",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Vanessa Amorosi",
+      "aliases": [
+        "Vanessa Amorosi Absolutely Everybody"
+      ]
+    },
+    "date": "2026-03-08",
+    "sources": [
+      "https://au.rollingstone.com/music/music-news/vanessa-amorosi-g-flip-melbourne-92097/"
+    ],
+    "summary": "Australian singer Vanessa Amorosi made a surprise appearance at G Flip's Melbourne show at Margaret Court Arena, performing Absolutely Everybody.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "olivia-rodrigo-dublin-fontaines-dc",
+    "artist": "Olivia Rodrigo",
+    "city": "Dublin",
+    "country": "Ireland",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Fontaines D.C.",
+      "aliases": [
+        "Fontaines DC",
+        "Fontaines D C"
+      ]
+    },
+    "date": "2025-06-24",
+    "sources": [
+      "https://www.rollingstone.co.uk/music/watch-olivia-rodrigo-cover-fontaines-d-c-s-i-love-you-in-dublin-51304/",
+      "https://www.roscommonherald.ie/olivia-rodrigo-surprises-fans-with-fontaines-dc-cover-at-marlay-park-gig_arid-62334.html"
+    ],
+    "summary": "Olivia Rodrigo covered Irish band Fontaines D.C.'s I Love You at her Marlay Park show in Dublin.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "hayley-williams-dublin-sinead-oconnor",
+    "artist": "Hayley Williams",
+    "city": "Dublin",
+    "country": "Ireland",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Sinéad O'Connor",
+      "aliases": [
+        "Sinead O'Connor",
+        "Sinead OConnor",
+        "Sinéad O’Connor"
+      ]
+    },
+    "date": "2026-06-30",
+    "sources": [
+      "https://stereogum.com/2504041/hayley-williams-covers-sinead-oconnor-at-dublin-tour-closer/news",
+      "https://www.hotpress.com/music/watch-hayley-williams-cover-sinead-oconnors-mandinka-in-dublin-23148831"
+    ],
+    "summary": "Hayley Williams covered Irish artist Sinéad O'Connor's Mandinka at the second of two Dublin National Stadium shows, dedicating it to Irish artists.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "coldplay-guadalajara-mana",
+    "artist": "Coldplay",
+    "city": "Guadalajara",
+    "country": "Mexico",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Maná",
+      "aliases": [
+        "Mana",
+        "Fher Olvera"
+      ]
+    },
+    "date": "2022-03-29",
+    "sources": [
+      "https://www.sopitas.com/musica/coldplay-toco-rayando-el-sol-fher-mana-conciertos-guadalajara-2022-estadio-akron/"
+    ],
+    "summary": "Fher Olvera of Guadalajara band Maná joined Coldplay in the final encore at Estadio Akron to perform Rayando el Sol.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "21-savage-toronto-drake",
+    "artist": "21 Savage",
+    "city": "Toronto",
+    "country": "Canada",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Drake",
+      "aliases": [
+        "Aubrey Graham",
+        "Drizzy"
+      ]
+    },
+    "date": "2024-05-27",
+    "sources": [
+      "https://www.blogto.com/music/2024/05/21-savage-drake-concert-toronto/"
+    ],
+    "summary": "Toronto's Drake made a surprise appearance at 21 Savage's Budweiser Stage show, performing On BS and Rich Flex.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "madonna-rio-de-janeiro-anitta",
+    "artist": "Madonna",
+    "city": "Rio de Janeiro",
+    "country": "Brazil",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Anitta",
+      "aliases": [
+        "Larissa de Macedo Machado"
+      ]
+    },
+    "date": "2024-05",
+    "sources": [
+      "https://www.cnnbrasil.com.br/pop/shakira-em-copacabana-como-foram-os-ultimos-shows-do-todo-mundo-no-rio/",
+      "https://www.npr.org/2024/05/06/1249368204/madonna-rio-brazil-concert-celebration"
+    ],
+    "summary": "Brazilian singer Anitta appeared during Vogue at Madonna's free Copacabana show in Rio de Janeiro.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "madonna-rio-de-janeiro-pabllo-vittar",
+    "artist": "Madonna",
+    "city": "Rio de Janeiro",
+    "country": "Brazil",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Pabllo Vittar",
+      "aliases": [
+        "Pablo Vittar"
+      ]
+    },
+    "date": "2024-05",
+    "sources": [
+      "https://www.cnnbrasil.com.br/pop/shakira-em-copacabana-como-foram-os-ultimos-shows-do-todo-mundo-no-rio/",
+      "https://www.npr.org/2024/05/06/1249368204/madonna-rio-brazil-concert-celebration"
+    ],
+    "summary": "Brazilian artist Pabllo Vittar joined Madonna for Music with samba school percussionists at the Copacabana show in Rio de Janeiro.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "coldplay-bogota-manuel-turizo",
+    "artist": "Coldplay",
+    "city": "Bogotá",
+    "country": "Colombia",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Manuel Turizo",
+      "aliases": [
+        "Manuel Turizo Zapata"
+      ]
+    },
+    "date": "2022-09-17",
+    "sources": [
+      "https://remezcla.com/music/coldplay-covers-j-balvin-bad-bunny-shares-stage-with-manuel-turizo-in-bogota/"
+    ],
+    "summary": "Colombian artist Manuel Turizo joined Coldplay at El Campín in Bogotá to perform La Bachata with Chris Martin on piano.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "coldplay-bogota-j-balvin",
+    "artist": "Coldplay",
+    "city": "Bogotá",
+    "country": "Colombia",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "J Balvin",
+      "aliases": [
+        "J. Balvin",
+        "Jose Balvin",
+        "José Álvaro Osorio Balvín"
+      ]
+    },
+    "date": "2022-09-16",
+    "sources": [
+      "https://remezcla.com/music/coldplay-covers-j-balvin-bad-bunny-shares-stage-with-manuel-turizo-in-bogota/"
+    ],
+    "summary": "Coldplay performed a reimagined cover of La Canción, by Colombian artist J Balvin and Bad Bunny, at their Bogotá show.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "coldplay-vancouver-bryan-adams",
+    "artist": "Coldplay",
+    "city": "Vancouver",
+    "country": "Canada",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Bryan Adams",
+      "aliases": [
+        "Bryan Guy Adams"
+      ]
+    },
+    "date": "2023-09-24",
+    "sources": [
+      "https://stereogum.com/2237123/bryan-adams-her-coldplay-vancouver/news"
+    ],
+    "summary": "Canadian singer Bryan Adams joined Coldplay in Vancouver as a surprise guest to perform (Everything I Do) I Do It For You.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  }
+]
