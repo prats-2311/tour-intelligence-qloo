@@ -1970,3 +1970,106 @@ The content must use the real numbers from `docs/qloo/calibration.md` and `backt
 ## Final review
 
 Once every task is complete: run the whole-branch review on the most capable model, with one fix dispatch and one scoped re-review, then hand off with superpowers:finishing-a-development-branch. The branch stays as it is, per Prateek's standing choice.
+
+---
+
+## Addendum (2026-10-17, approved by Prateek: "2 and 1")
+
+**Why:** backtest run 1 (`backtest/results.json`, commit 6a2e2b9) found no bug but a recipe gap. For local acts, the playbook asked Qloo "artists this artist's fans like, in this city" and got global taste neighbours (Harry Styles for Dua Lipa in Buenos Aires), not local acts. Calibration run 1 passed its gates, but it made 14 of 32 cities "skip" (Consider set at the median), kept a knife-edge (Oaxaca 36.7 against 37) and turned thin-data cities into 0.
+
+**Live spike (not a backtest case):** `qloo_rank` with `options` (up to 10 entity ids), `option_type: "artist"`, `signals: [artistId]` and `signal_location` re-orders a city's popular artists by taste fit. Khruangbin in Lisbon gave Branko and Dino d'Santiago at the top. `filter_location` is ignored for artists.
+
+Run 1 stays published as run 1. The new method is judged only on fresh cases (C1b), so it is never tuned on the cases it is scored against (spec §12 #9).
+
+### Task 3b: Local acts ranked by taste fit (playbook + backtest)
+
+**Files:**
+- Modify: `cloud_run/qloo_gateway/src/pipeline/recArgs.ts` (add `localActRankArgs`)
+- Modify: `cloud_run/qloo_gateway/src/pipeline/cityPlaybook.ts` (talent card)
+- Modify: `cloud_run/qloo_gateway/src/backtest/run.ts` (the local-act `qloo_playbook` list)
+- Modify: `cloud_run/qloo_gateway/src/backtest/score.ts` (results meta)
+- Test: `test/recArgs.test.ts`, `test/cityPlaybook.test.ts`, `test/backtestRun.test.ts`, `test/backtestScore.test.ts`
+
+**Interfaces:**
+- `localActRankArgs(artistId: string, where: string, ids: string[]) => { options: ids.slice(0, 10), option_type: "artist", signals: [artistId], signal_location: where }`
+- `LOCAL_ACT_POOL = 10` (city-popular artists considered by the playbook)
+- `BacktestResults` gains `method: "v1" | "v2"` and `methodNote: string`. `buildResults(cases, meta)` takes `meta.method` (default `"v2"`) and `meta.methodNote`. Existing run-1 files without `method` are read as `"v1"` by consumers.
+
+**Behaviour:**
+1. **Playbook talent card.**
+   - Get candidates with `cityPopularityArgs("artist", where, LOCAL_ACT_POOL)` (the limit was 5).
+   - If there are any, call `qloo_rank` with `localActRankArgs(artistEntityId, where, candidateIds)`.
+   - The card's `items` become the ranked list's top 5: `{ name, entityId, affinity }`, where `affinity` is the rank affinity.
+   - If rank returns nothing or fails, `items` fall back to the first 5 candidates in city-popularity order, with a warning `{ tool: "qloo_rank", kind: "partial", message: "taste ranking unavailable — showing the city's most popular artists" }`.
+   - The card's existing `summary.sharedTaste` compare (artist vs city mainstream) keeps using the first 5 candidates in city-popularity order, so its meaning doesn't change.
+   - Refs gain the rank call.
+2. **Backtest, local_artist cases only.**
+   - The `qloo_playbook` list = `qloo_rank` of the first 10 of `cityPopularityArgs("artist", where, 20)`, in ranked order, followed by the city-popularity items 11–20 that aren't already listed.
+   - If rank fails or returns nothing, the list is city-popularity order and the method stays `ok`, but the case result records `note: "rank_unavailable"` on that method result. `MethodResult` `ok` gains an optional `note?: string`.
+   - Brand cases (sponsor and merch_collab) are unchanged: `artistTasteArgs("brand", …)`.
+3. **CLI.** Add a `--method-note "<text>"` flag, written to `methodNote`. Results are written with `method: "v2"`.
+
+**Tests (TDD):**
+- builder shape;
+- talent card uses ranked order and affinity;
+- rank-failure fallback and warning;
+- the talent shared-taste compare still uses city-popularity order;
+- backtest local-act list = ranked 10 + remaining city-popularity, with no duplicates;
+- `rank_unavailable` note;
+- brand cases unchanged;
+- `buildResults` meta `method`/`methodNote`.
+
+Commit: `feat(playbook): local acts ranked by taste fit — city-popular artists re-ranked with qloo_rank`
+
+### Task 5b: Calibration amendments, thin data and close calls
+
+**Files:**
+- Modify: `cloud_run/qloo_gateway/src/scoring/config.ts` (add `isThin`)
+- Modify: `cloud_run/qloo_gateway/src/scoring/winnability.ts` (add `closeCall`, `CLOSE_CALL_BAND`)
+- Modify: `cloud_run/qloo_gateway/src/scoring/calibrate.ts`
+- Modify: `cloud_run/qloo_gateway/src/pipeline/tourBoard.ts`
+- Test: `test/scoringConfig.test.ts`, `test/calibrate.test.ts`, `test/tourBoard.test.ts`
+
+**Amended rule:** update the doc comment in `calibrate.ts` to match.
+- Rule 5's `considerWin` becomes `round(P25(win))`. The others are unchanged.
+- New rule 8, thin data: a city is thin when it has 2 or fewer components that are finite with weight > 0, and every one of those adjusted values is 0. A thin city's activation is `insufficient_data`, never 0. This is applied identically in the live pipeline and in `scoreCity`. Under `DEFAULT_SCORING` (floors 0) no real city is thin, so behaviour is preserved.
+- New rule 9, close call: `closeCall` is true when the verdict changes under any of activation ±`CLOSE_CALL_BAND` or fan ±`CLOSE_CALL_BAND`, with winnability recomputed. `CLOSE_CALL_BAND = 2`.
+
+**Interfaces:**
+- `isThin(adjusted: Partial<Record<ComponentName, number>>, weights: Record<ComponentName, number>): boolean`
+- `closeCall(fan: Score, act: Score, t: Thresholds, band = CLOSE_CALL_BAND): boolean` (returns false when fan or act is not a number)
+- Each `city_scored` city gains `closeCall: boolean`.
+- `CalibrationReport` gains `thin: number` (cities made insufficient_data by rule 8) and `closeCalls: { before: number; after: number }`. `renderReport` prints both.
+
+**Tests (TDD):**
+- `isThin` truth table;
+- a thin city gives `insufficient_data` in both the pipeline and `scoreCity`;
+- default config: no live-fixture city becomes thin and every existing verdict is unchanged;
+- `considerWin` uses P25;
+- `closeCall` near each threshold and away from all thresholds;
+- the board emits `closeCall`;
+- the report prints thin and close-call counts.
+
+Commit: `feat(scoring): calibration amendments — P25 consider, thin data is insufficient, close-call flag`
+
+### Controller C1b: fresh local-act cases
+
+Research round 3 finds about 10 new local_artist cases (past events, 2021–2026). No artist–city pair may repeat run 1's, and no case may come from Lisbon (the spike city). Prateek reviews a pre-filtered shortlist, as in C1. The cases go to `backtest/cases-run2.json`.
+
+### Controller C5b: run 2
+
+Run `node dist/backtest/cli.js --cases ../../backtest/cases-run2.json --out ../../backtest/results-run2.json --method-note "Local acts: city-popular artists re-ranked by taste fit (qloo_rank). Judged on fresh cases reviewed after the method was fixed."`
+
+Then copy both runs into the dashboard fixture as `{ "runs": [<results.json>, <results-run2.json>] }` (see the Task 7 amendment).
+
+### Task 6 amendment
+
+Show the `closeCall` flag: a small "Close call" chip next to the verdict chip on board cards and in "Why this score?". There, add one line: "Within 2 points of a verdict line — treat as borderline." Add `closeCall?: boolean` to the dashboard `ScoredCity` type.
+
+### Task 7 amendment
+
+`backtest.json` holds `{ "runs": BacktestResults[] }`, run 1 first. `parseBacktest` returns `{ status: "pending" }` or `{ status: "complete", runs }`. A run without `method` is read as `"v1"`.
+- `/proof` shows the latest run as the headline.
+- A section "How we got here" shows run 1's numbers, its "Where we lost" and the reason, verbatim: "Run 1 asked Qloo for artists the headliner's fans like in that city, which returns global taste neighbours, not local acts. We changed the recipe to rank the city's own popular artists by taste fit, then tested it on new cases reviewed after the change."
+- Each run shows its `methodNote`.
+- Tests cover two runs, one run (run 1 only, with no "How we got here" section), and pending.
