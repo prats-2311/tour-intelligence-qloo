@@ -27,7 +27,7 @@ export function MarketChapter({ market }: { market: TourBook["market"] }) {
           );
         })}
       </ul>
-      <div className="hidden overflow-x-auto md:block">
+      <div tabIndex={0} role="region" aria-label="Scored markets table" className="hidden overflow-x-auto focus-visible:outline-2 focus-visible:outline-gold md:block">
         <table className="w-full min-w-[420px] border-collapse">
           <caption className="sr-only">Scored markets; shortlisted markets carry a gold edge</caption>
           <thead>

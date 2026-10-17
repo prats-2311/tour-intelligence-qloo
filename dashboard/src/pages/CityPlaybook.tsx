@@ -224,7 +224,7 @@ function CityPlaybookPage() {
 
   const activatePanel = noSample ? noSamplePanel : (
     <>
-      <div ref={scrollerRef} className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0">
+      <div ref={scrollerRef} tabIndex={0} role="region" aria-label="Playbook cards" className="-mx-4 flex snap-x focus-visible:outline-2 focus-visible:outline-gold snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0">
         {activateIds.map((id) => (
           <div key={id} data-card={id} className={`w-[88%] shrink-0 snap-start lg:w-auto ${PLACE[id]}`}>{cardFor(id)}</div>
         ))}

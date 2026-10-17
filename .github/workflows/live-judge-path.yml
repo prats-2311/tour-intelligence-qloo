@@ -1,0 +1,40 @@
+name: live judge path
+
+# Daily check that the promoter path works on the deployed site (real showcase recording, real hosting).
+# It also keeps the site warm. Expected to fail until the recordings endpoint and the new UI are deployed.
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  judge-path:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - name: Install
+        working-directory: dashboard
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Promoter path on the live site
+        working-directory: dashboard
+        env:
+          E2E_BASE_URL: https://tour-intel-qloo.web.app
+        run: npx playwright test promoter-path.spec.ts
+      - name: Upload traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: dashboard/test-results
+          if-no-files-found: ignore

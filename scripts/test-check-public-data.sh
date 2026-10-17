@@ -5,7 +5,8 @@ set -uo pipefail
 GUARD="${GUARD:-$(cd "$(dirname "$0")" && pwd)/check-public-data.sh}"
 ROOT="$(mktemp -d)"; trap 'rm -rf "$ROOT"' EXIT
 fails=0
-REAL='00000000-EA91-A58E-1808-344CA61895A2'
+# Built from parts so this file itself does not trip the working-tree scan.
+REAL="1A2B3C4D-5E6F-4A8B-""9C0D-1E2F3A4B5C6D"
 
 new_repo() { # name -> path with one innocuous commit on master
   local d="$ROOT/$1"; mkdir -p "$d"

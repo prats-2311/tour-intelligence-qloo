@@ -21,7 +21,7 @@ export function Row({ name, aside, sub, chips }: { name: string; aside: ReactNod
 export function TagChips({ tags }: { tags: string[] }) {
   return (
     <span className="mt-1 flex flex-wrap gap-1">
-      {tags.map((t) => <span key={t} className="rounded-full bg-paper-raised px-2 py-0.5 text-[12px] text-canvas-muted">{t}</span>)}
+      {tags.map((t, i) => <span key={`${t}-${i}`} className="rounded-full bg-paper-raised px-2 py-0.5 text-[12px] text-canvas-muted">{t}</span>)}
     </span>
   );
 }

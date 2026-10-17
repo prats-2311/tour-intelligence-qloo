@@ -62,7 +62,7 @@ describe("CityRow close call", () => {
   it("shows a Close call chip and mentions it in the accessible name", () => {
     render(<ul><CityRow city={{ ...city, closeCall: true }} onOpen={() => {}} /></ul>);
     expect(screen.getByText("Close call")).toBeTruthy();
-    expect(screen.getByRole("button").getAttribute("aria-label")).toMatch(/close call/i);
+    expect(screen.getByRole("button", { name: /close call/i })).toBeTruthy(); // name comes from the visible chip text
   });
   it("no chip without the flag", () => {
     render(<ul><CityRow city={city} onOpen={() => {}} /></ul>);

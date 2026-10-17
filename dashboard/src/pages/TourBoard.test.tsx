@@ -378,13 +378,13 @@ describe("TourBoard", () => {
     const boxes = within(await screen.findByRole("dialog", { name: "Shortlist" })).getAllByRole("checkbox") as HTMLInputElement[];
     expect(boxes.every((b) => b.checked)).toBe(true);
   });
-  it("row aria-label includes the data warning label", async () => {
+  it("row accessible name includes the data warning label (from the visible badge)", async () => {
     const warned = { ...SAMPLE_CITIES[0]!, warnings: [{ tool: "qloo_recommend", kind: "partial" as const }] };
     vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield { type: "city_scored", city: warned }; yield { type: "done", summary: {} }; });
     renderPage("/tours/board");
     submitArtist("Ada");
     const row = (await screen.findAllByTestId("city-row"))[0]!;
-    expect(within(row).getByRole("button").getAttribute("aria-label")).toMatch(/Partial data/);
+    expect(within(row).getByRole("button", { name: /Partial data/ })).toBeTruthy();
   });
   it("map legend shows all six verdicts with the shared shapes", async () => {
     renderPage();

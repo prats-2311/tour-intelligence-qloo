@@ -14,7 +14,7 @@ export function ProvenanceAppendix({ rows, sample = false, showcase = false }: {
       ) : (
         <>
         <p className="text-[13px] text-canvas-muted md:hidden">Table scrolls sideways</p>
-        <div className="overflow-x-auto">
+        <div tabIndex={0} role="region" aria-label="Qloo requests table" className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-gold">
           <table className="w-full min-w-[460px] border-collapse">
             <thead>
               <tr className="border-b border-canvas-line">

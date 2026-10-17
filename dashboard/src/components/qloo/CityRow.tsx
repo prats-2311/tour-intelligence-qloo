@@ -1,7 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import type { Score, ScoredCity } from "@/lib/qloo/types";
 import { DataWarningBadge, warningLabel } from "./DataWarningBadge";
-import { VERDICT_LABEL } from "@/lib/qloo/labels";
 import { CloseCallChip } from "./CloseCallChip";
 import { VerdictChip } from "./VerdictChip";
 
@@ -30,7 +29,9 @@ export function CityRow({ city, selected, dimActivation, onOpen }: { city: Score
   const w = city.winnability.value;
   const num = (s: { value: number | null }) => (s.value === null ? "not enough data" : String(Math.round(s.value)));
   const warn = warningLabel(city.warnings);
-  const label = `${city.name}, ${city.country}: ${VERDICT_LABEL[city.verdict]}, winnability ${w === null ? "not available" : Math.round(w)}, fan heat ${num(city.fanHeat)}, activation ${num(city.activation)}${city.closeCall ? ", close call" : ""}${warn ? `, ${warn}` : ""}. Open score breakdown`;
+  // The button's name is its visible content (WCAG 2.5.3 label-in-name); the numbers that content leaves out go in the description.
+  const describedBy = `city-row-desc-${city.id}`;
+  const description = `Winnability ${w === null ? "not available" : Math.round(w)}, fan heat ${num(city.fanHeat)}, activation ${num(city.activation)}. Open score breakdown`;
   return (
     <motion.li
       id={`city-row-${city.id}`}
@@ -42,10 +43,11 @@ export function CityRow({ city, selected, dimActivation, onOpen }: { city: Score
       transition={{ type: "spring", stiffness: 420, damping: 38 }}
       className={`list-none first:rounded-t-[14px] last:rounded-b-[14px] ${selected ? "bg-paper-raised" : "bg-paper hover:bg-paper-raised"}`}
     >
+      <span id={describedBy} className="sr-only">{description}</span>
       <button
         type="button"
         onClick={() => onOpen(city.id)}
-        aria-label={label}
+        aria-describedby={describedBy}
         className={`grid min-h-[64px] w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-1.5 rounded-[inherit] px-3 py-2 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gold lg:min-h-[48px] lg:gap-y-0 lg:py-1 ${ROW_COLS_LG}`}
       >
         <span className="col-start-1 row-start-1 flex min-w-0 flex-wrap items-baseline gap-x-1.5 lg:flex-nowrap">
