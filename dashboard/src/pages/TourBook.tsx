@@ -161,7 +161,7 @@ function TourBookPage() {
   if (boardReady && picked.length === 0) {
     return (
       <Centered>
-        <h1 className="font-title text-[24px] leading-tight text-canvas-text">No markets shortlisted — pick cities in Build tour on the Tour Board</h1>
+        <h1 className="font-title text-[24px] leading-tight text-canvas-text">No markets shortlisted — hold dates for cities on the Tour Board</h1>
         <Link to={`/tours/board${sampleQ}`} className="inline-flex h-12 items-center rounded-[10px] bg-paper-raised px-5 text-[15px] font-semibold text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Go to Tour Board</Link>
       </Centered>
     );

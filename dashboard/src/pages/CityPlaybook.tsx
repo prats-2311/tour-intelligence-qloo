@@ -289,6 +289,7 @@ function CityPlaybookPage() {
             <Notice>
               <span className="min-w-0">{pb.status === "interrupted" ? "Connection lost while building this playbook." : "This playbook could not be built."}</span>
               <button type="button" onClick={retry} className={smallBtn}>Try again</button>
+              <Link to="/tours/board?showcase=1" className={smallBtn}>Try the showcase tour</Link>
             </Notice>
           )}
           {isDesktop && <div className="flex flex-wrap items-center gap-3">{addToTour}{whyBtn}</div>}

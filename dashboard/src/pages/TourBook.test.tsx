@@ -132,7 +132,7 @@ describe("TourBook", () => {
   });
   it("an empty shortlist gets an honest state, not a progress line", async () => {
     renderAt("/tours/book", <><RunNoWindow /><EmptyShortlist /></>);
-    expect(await screen.findByText("No markets shortlisted — pick cities in Build tour on the Tour Board")).toBeTruthy();
+    expect(await screen.findByText("No markets shortlisted — hold dates for cities on the Tour Board")).toBeTruthy();
     expect(screen.queryByText(/Preparing playbooks/)).toBeNull();
     expect(screen.getByRole("link", { name: "Go to Tour Board" }).getAttribute("href")).toBe("/tours/board");
   });

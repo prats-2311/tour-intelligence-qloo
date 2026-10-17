@@ -75,7 +75,7 @@ describe("TourBoard", () => {
     for (const label of Object.values(VERDICT_LABEL)) expect(screen.queryByText(label as string)).toBeNull();
     expect(screen.queryByText("Why this score?")).toBeNull();
     expect(screen.queryByRole("button", { name: "Why this score?" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Build tour" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Hold these dates" })).toBeNull();
     expect(screen.queryByLabelText("Map legend")).toBeNull();
     expect(screen.queryByText(/markets scored.*(Play|Hidden goldmine)/)).toBeNull();
     expect(screen.getByText(/10 markets scored/).textContent).not.toMatch(/Play|Hidden goldmine|De-risk/);
@@ -243,14 +243,24 @@ describe("TourBoard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
     expect(await screen.findByText(/No Qloo signal in Atlantis/)).toBeTruthy();
   });
-  it("budget error offers the showcase tour", async () => {
+  // Codes that really occur: gateway HTTP_<status>, mcp envelope codes (UNAVAILABLE, TRANSPORT, UNKNOWN), NOT_FOUND, BUDGET, INTERNAL.
+  // A fetch rejection never becomes a NETWORK code: the provider turns it into an interrupted run (tested below).
+  it.each(["NOT_FOUND", "HTTP_401", "HTTP_502", "UNAVAILABLE", "TRANSPORT", "BUDGET", "INTERNAL", "SOMETHING_NEW"])("error %s offers the showcase tour", async (code) => {
     vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
-      yield { type: "error", code: "BUDGET", message: "Session limit reached — try the showcase tour." };
+      yield { type: "error", code, message: "It went wrong." };
     });
     renderPage("/tours/board");
-    fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "X" } });
-    fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
+    submitArtist("X");
     expect(await screen.findByRole("button", { name: "Try the showcase tour" })).toBeTruthy();
+    expect(!!screen.queryByRole("button", { name: "Retry" })).toBe(code !== "BUDGET");
+    expect(!!screen.queryByText("Check the spelling, or pick from the suggestions.")).toBe(code === "NOT_FOUND");
+  });
+  it("a dropped connection (fetch rejects) also offers the showcase tour and Retry", async () => {
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { throw new TypeError("Failed to fetch"); });
+    renderPage("/tours/board");
+    submitArtist("X");
+    expect(await screen.findByRole("button", { name: "Try the showcase tour" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
   });
   it("Belo Horizonte renders as Not enough data and sorts last", async () => {
     renderPage();
@@ -296,13 +306,13 @@ describe("TourBoard", () => {
     expect(screen.getAllByTestId("city-row")).toHaveLength(10);
     expect(spy).toHaveBeenCalledTimes(1);
   });
-  it("Build tour sheet lists play and goldmine markets and links to Taste Insights only", async () => {
+  it("Hold these dates sheet lists play and goldmine markets and links to Taste only", async () => {
     renderPage();
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
-    fireEvent.click(screen.getByRole("button", { name: /Build tour/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
     const dialog = await screen.findByRole("dialog", { name: "Shortlist" });
     expect(within(dialog).getAllByRole("checkbox")).toHaveLength(4);
-    expect(within(dialog).getByRole("link", { name: "Compare in Taste Insights" }).getAttribute("href")).toBe("/insights");
+    expect(within(dialog).getByRole("link", { name: "Compare taste" }).getAttribute("href")).toBe("/insights");
   });
   it("passes the typed artist unchanged to the stream (Beyoncé)", async () => {
     const spy = vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield { type: "done", summary: {} }; });
@@ -357,14 +367,14 @@ describe("TourBoard", () => {
     renderPage();
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
-    fireEvent.click(screen.getByRole("button", { name: /Build tour/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
     fireEvent.click(within(await screen.findByRole("dialog", { name: "Shortlist" })).getAllByRole("checkbox")[0]!);
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     fireEvent.click(screen.getByRole("button", { name: "New brief" }));
     fireEvent.click(await screen.findByRole("button", { name: "Try the showcase tour" }));
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
-    fireEvent.click(screen.getByRole("button", { name: /Build tour/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
     const boxes = within(await screen.findByRole("dialog", { name: "Shortlist" })).getAllByRole("checkbox") as HTMLInputElement[];
     expect(boxes.every((b) => b.checked)).toBe(true);
   });
@@ -404,9 +414,9 @@ describe("TourBoard", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Try other regions" }));
     expect((await screen.findByLabelText("Artist") as HTMLInputElement).value).toBe("Beyoncé");
   });
-  it("Build tour defaults to the top max-stops eligible cities and caps selection", async () => {
+  it("Hold these dates defaults to the top max-stops eligible cities and caps selection", async () => {
     renderWithRun({ ...SAMPLE_BRIEF, maxStops: 2 });
-    fireEvent.click(await screen.findByRole("button", { name: "Build tour" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Hold these dates" }));
     expect(screen.getByRole("checkbox", { name: /Mexico City/ })).toHaveProperty("checked", true);
     expect(screen.getByRole("checkbox", { name: /São Paulo/ })).toHaveProperty("checked", true);
     const gdl = screen.getByRole("checkbox", { name: /Guadalajara/ });
@@ -417,7 +427,7 @@ describe("TourBoard", () => {
   });
   it("unchecking a stop frees a slot and keeps the count honest", async () => {
     renderWithRun({ ...SAMPLE_BRIEF, maxStops: 2 });
-    fireEvent.click(await screen.findByRole("button", { name: "Build tour" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Hold these dates" }));
     fireEvent.click(screen.getByRole("checkbox", { name: /Mexico City/ }));
     expect(screen.getByText("1 of max 2 stops")).toBeTruthy();
     expect(screen.getByRole("checkbox", { name: /Guadalajara/ })).toHaveProperty("disabled", false);
@@ -435,7 +445,7 @@ describe("TourBoard", () => {
       </TourBoardProvider></QueryClientProvider>,
     );
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
-    fireEvent.click(screen.getByRole("button", { name: "Build tour" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hold these dates" }));
     fireEvent.click(screen.getByRole("link", { name: "Open Tour Book" }));
     expect(await screen.findByText("book page")).toBeTruthy();
     expect(screen.getByTestId("search").textContent).toBe("?sample=1");

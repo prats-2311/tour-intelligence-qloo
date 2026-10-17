@@ -9,7 +9,7 @@ import { TourGuide, hasSeenTour } from "./ui/TourGuide";
 const NAV_ITEMS = [
   { to: "/", label: "Discover", icon: Compass, end: true },
   { to: "/tours/board", label: "Tours", icon: Route, end: false },
-  { to: "/insights", label: "Insights", icon: ChartColumn, end: false },
+  { to: "/insights", label: "Taste", icon: ChartColumn, end: false },
 ];
 
 const toolLink = ({ isActive }: { isActive: boolean }) =>

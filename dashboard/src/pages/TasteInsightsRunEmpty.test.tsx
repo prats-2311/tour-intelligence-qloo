@@ -21,7 +21,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 describe("TasteInsights after a zero-city run", () => {
   it("explains what happened instead of 'run a Tour Board'", () => {
     render(<MemoryRouter><TasteInsights /></MemoryRouter>);
-    expect(screen.queryByText("Run a Tour Board to see insights")).toBeNull();
+    expect(screen.queryByText("Score a Tour Board to see taste by market")).toBeNull();
     expect(screen.getByText("No markets were scored")).toBeTruthy();
     expect(screen.getByText("No Qloo signal in Peru")).toBeTruthy();
     expect(screen.getByText("Chile unavailable: Qloo down")).toBeTruthy();

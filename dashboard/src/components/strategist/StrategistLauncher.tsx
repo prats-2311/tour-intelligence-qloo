@@ -10,7 +10,7 @@ import { StrategistPanel } from "./StrategistPanel";
 const STORAGE_KEY = "strategistOpen";
 export const DOCK_WIDTH = 380;
 
-/** Tour routes and Insights only; the legacy campaign pages never get the launcher. */
+/** Tour routes and Taste only; the legacy campaign pages never get the launcher. */
 export const showsStrategist = (pathname: string): boolean => pathname === "/insights" || pathname === "/tours" || pathname.startsWith("/tours/") || pathname.startsWith("/insights/");
 
 /** Routes whose mobile layout ends in a sticky 64 px action footer above the tab bar; the FAB sits above it. */

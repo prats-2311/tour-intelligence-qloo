@@ -142,6 +142,15 @@ describe("CityPlaybook", () => {
     fireEvent.click(retry);
     await waitFor(() => expect(spy.mock.calls.length).toBe(calls + 1));
   });
+  it.each(["BUDGET", "HTTP_502"])("error %s links to the showcase tour", async (code) => {
+    vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () {
+      yield { type: "error", code, message: "boom" };
+    });
+    renderAt("/tours/playbook/4005539?sample=1");
+    const link = await screen.findByRole("link", { name: "Try the showcase tour" });
+    expect(link.getAttribute("href")).toBe("/tours/board?showcase=1");
+    expect(!!screen.queryByRole("button", { name: "Try again" })).toBe(code !== "BUDGET");
+  });
   it("lays out the desktop grid with one Add to tour in the identity block", async () => {
     desktop = true;
     renderAt("/tours/playbook/4005539?sample=1");

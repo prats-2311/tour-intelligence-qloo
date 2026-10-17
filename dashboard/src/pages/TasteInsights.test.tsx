@@ -42,7 +42,7 @@ const seeded = async () => {
 describe("TasteInsights", () => {
   it("empty state before any run (Review Focus 3)", () => {
     renderPage();
-    expect(screen.getByText("Run a Tour Board to see insights")).toBeTruthy();
+    expect(screen.getByText("Score a Tour Board to see taste by market")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Try the showcase tour" }).getAttribute("href")).toBe("/tours/board?showcase=1");
     expect(screen.getByRole("link", { name: "Plan your own" }).getAttribute("href")).toBe("/tours/board");
   });

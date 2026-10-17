@@ -52,7 +52,7 @@ export default function TasteInsights() {
       : interruptReason === "user" ? "Stopped before any market was scored" : "Connection lost before any market was scored";
     return (
       <div className="mx-auto flex w-full max-w-xl flex-col gap-4 py-10">
-        <h1 className="font-title text-[32px] leading-tight text-canvas-text">Taste Insights</h1>
+        <h1 className="font-title text-[32px] leading-tight text-canvas-text">Taste</h1>
         <h2 className="text-[18px] font-semibold text-canvas-text">{message}</h2>
         {status === "needs_input" && <p className="text-[14px] text-canvas-muted">Qloo found more than one match for {brief?.artist ?? "this artist"}. Pick one to score markets.</p>}
         <Link to="/tours/board" className={`${secondaryBtn} w-fit`}>Back to the Tour Board</Link>
@@ -63,7 +63,7 @@ export default function TasteInsights() {
   if (cities.length === 0 && !streaming && status !== "idle") {
     return (
       <div className="mx-auto flex w-full max-w-xl flex-col gap-4 py-10">
-        <h1 className="font-title text-[32px] leading-tight text-canvas-text">Taste Insights</h1>
+        <h1 className="font-title text-[32px] leading-tight text-canvas-text">Taste</h1>
         <h2 className="text-[18px] font-semibold text-canvas-text">No markets were scored</h2>
         <ul className="flex flex-col gap-1 text-[14px] text-canvas-text">
           {regionsEmpty.map((r) => <li key={`e-${r}`}>No Qloo signal in {r}</li>)}
@@ -79,8 +79,8 @@ export default function TasteInsights() {
   if (cities.length === 0 && !streaming) {
     return (
       <div className="mx-auto flex w-full max-w-xl flex-col gap-4 py-10 text-center">
-        <h1 className="font-title text-[32px] leading-tight text-canvas-text">Taste Insights</h1>
-        <h2 className="text-[18px] font-semibold text-canvas-text">Run a Tour Board to see insights</h2>
+        <h1 className="font-title text-[32px] leading-tight text-canvas-text">Taste</h1>
+        <h2 className="text-[18px] font-semibold text-canvas-text">Score a Tour Board to see taste by market</h2>
         <p className="text-[14px] text-canvas-muted">Winnability, activation and data quality are built from the markets a Tour Board run scores.</p>
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
           <Link to="/tours/board?showcase=1" className={secondaryBtn}>Try the showcase tour</Link>
@@ -108,7 +108,7 @@ export default function TasteInsights() {
       {source !== "live" && <SampleBanner source={source} />}
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="font-title text-[32px] leading-[1.1] text-canvas-text lg:text-[40px]">Taste Insights</h1>
+          <h1 className="font-title text-[32px] leading-[1.1] text-canvas-text lg:text-[40px]">Taste</h1>
           <p className="mt-1 text-[13px] text-canvas-muted">
             {artistName && <span className="text-canvas-text">{artistName}</span>}{artistName && " · "}{scored}
             {brief?.regions.length ? ` · ${brief.regions.join(", ")}` : ""}{streaming && " · still scoring"}

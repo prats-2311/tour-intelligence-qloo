@@ -241,15 +241,16 @@ export default function TourBoard() {
           <History size={14} className="text-state-stale" aria-hidden />
           <span className="min-w-0">{interruptedText(state.interruptReason)}</span>
           <button type="button" onClick={retry} className={smallBtn}>Retry</button>
+          <button type="button" onClick={showcase} className={smallBtn}>Try the showcase tour</button>
         </Notice>
       )}
       {state.status === "error" && state.error && (
         <Notice>
           <CircleAlert size={14} className="text-state-error" aria-hidden />
           <span className="min-w-0">{state.error.message}</span>
-          {state.error.code === "BUDGET"
-            ? <button type="button" onClick={showcase} className={smallBtn}>Try the showcase tour</button>
-            : <button type="button" onClick={retry} className={smallBtn}>Retry</button>}
+          {state.error.code === "NOT_FOUND" && <span className="min-w-0 text-canvas-muted">Check the spelling, or pick from the suggestions.</span>}
+          {state.error.code !== "BUDGET" && <button type="button" onClick={retry} className={smallBtn}>Retry</button>}
+          <button type="button" onClick={showcase} className={smallBtn}>Try the showcase tour</button>
         </Notice>
       )}
       {!empty && (state.regionsEmpty.length > 0 || state.regionsUnavailable.length > 0) && (
@@ -346,7 +347,7 @@ export default function TourBoard() {
         {shortlist.length} {shortlist.length === 1 ? "market" : "markets"} shortlisted
       </span>
       <button type="button" disabled={eligible.length === 0} onClick={() => setBuildOpen(true)} className="btn-gold inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:flex-none">
-        Build tour<ArrowRight size={16} className="hidden lg:block" aria-hidden />
+        Hold these dates<ArrowRight size={16} className="hidden lg:block" aria-hidden />
       </button>
       <button type="button" onClick={() => summaryCity && setWhyId(summaryCity.id)} className="inline-flex min-h-11 shrink-0 items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline lg:hidden">
         Why this score?
@@ -411,7 +412,7 @@ export default function TourBoard() {
                 : <button type="button" disabled className="btn-gold inline-flex h-12 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10">Open Tour Book</button>}
             </>
           )}
-          <Link to="/insights" className={secondaryBtn}>Compare in Taste Insights</Link>
+          <Link to="/insights" className={secondaryBtn}>Compare taste</Link>
         </div>
       </Sheet>
     </>

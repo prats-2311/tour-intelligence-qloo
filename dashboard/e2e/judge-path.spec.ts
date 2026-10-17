@@ -4,7 +4,7 @@ import { useSyntheticRecordings } from "./fixtures";
 // Runs must not depend on the network: map tile/style requests are blocked (the map shows its "tiles unavailable" note).
 test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); await useSyntheticRecordings(page); });
 
-test("judge path: landing → showcase → board → why → insights", async ({ page }) => {
+test("judge path: landing → showcase → board → why → taste", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1, name: "Win their city." })).toBeVisible();
   await page.goto("/tours/board?sample=1"); // the Lumen Vale sample: its cities are asserted below
@@ -22,12 +22,12 @@ test("judge path: landing → showcase → board → why → insights", async ({
   await expect(page.getByRole("dialog", { name: /Guadalajara/ })).toContainText("0.5 × fan heat + 0.5 × activation");
   await page.keyboard.press("Escape");
   await page.goBack();
-  await page.getByRole("link", { name: /Insights/ }).first().click();
+  await page.getByRole("link", { name: /Taste/ }).first().click();
   await expect(page.getByTestId("boxscore-row")).toHaveCount(10);
   await page.screenshot({ path: `test-results/judge-path-${test.info().project.name}.png`, fullPage: true });
 });
 
-test("showcase → Guadalajara playbook → Build tour → Book", async ({ page }) => {
+test("showcase → Guadalajara playbook → Hold these dates → Book", async ({ page }) => {
   const t0 = Date.now();
   await page.goto("/tours/board?sample=1"); // the Lumen Vale sample: its cities are asserted below
   await expect(page.getByText("Sample data — illustrative, not Qloo output").first()).toBeVisible();
@@ -41,7 +41,7 @@ test("showcase → Guadalajara playbook → Build tour → Book", async ({ page 
   await expect(page.getByText("Number 0.93 not in evidence")).toBeVisible();
   await page.keyboard.press("Escape");
   await page.goBack();
-  await page.getByRole("button", { name: "Build tour" }).click();
+  await page.getByRole("button", { name: "Hold these dates" }).click();
   await page.getByRole("link", { name: "Open Tour Book" }).click();
   await expect(page.getByRole("heading", { name: "Market selection" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Curitiba", level: 2 })).toBeVisible();

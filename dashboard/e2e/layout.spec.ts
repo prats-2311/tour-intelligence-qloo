@@ -28,7 +28,7 @@ const bookDone = async (page: Page) => {
   await expect(page.getByRole("button", { name: "Download PDF" })).toBeVisible({ timeout: 30_000 });
 };
 const toInsights = async (page: Page) => {
-  await page.getByRole("link", { name: /Insights/ }).first().click();
+  await page.getByRole("link", { name: /Taste/ }).first().click();
   await expect(page.getByTestId("boxscore-row")).toHaveCount(10);
 };
 

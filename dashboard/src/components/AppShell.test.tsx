@@ -24,7 +24,7 @@ describe("AppShell", () => {
     mm(true);
     render(<MemoryRouter initialEntries={["/"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
     expect(screen.getByText("Tour Intelligence")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Insights" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Taste" })).toBeTruthy();
   });
   it("campaign routes expose Compare and Add Cities links", () => {
     mm(true);
@@ -44,11 +44,11 @@ describe("AppShell", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     expect(btn.getAttribute("aria-expanded")).toBe("false");
   });
-  it("primary nav shows only Discover, Tours, Insights; /campaign still renders by URL", () => {
+  it("primary nav shows only Discover, Tours, Taste; /campaign still renders by URL", () => {
     mm(true);
     render(<MemoryRouter initialEntries={["/campaign"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
     const nav = screen.getByRole("navigation", { name: "Primary" });
-    expect(Array.from(nav.querySelectorAll("a")).map((a) => a.textContent?.trim())).toEqual(["Discover", "Tours", "Insights"]);
+    expect(Array.from(nav.querySelectorAll("a")).map((a) => a.textContent?.trim())).toEqual(["Discover", "Tours", "Taste"]);
     expect(screen.getByText("child")).toBeTruthy();
   });
 });
