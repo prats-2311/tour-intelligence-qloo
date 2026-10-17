@@ -4,6 +4,7 @@ import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { coBillLift } from "../scoring/winnability.js";
 import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narrative, PlaybookCard } from "../types.js";
 import { activationInputs, Aborted, BudgetStop, trackedCall } from "./tourBoard.js";
+import { LOCAL_SUGGESTIONS } from "./localActs.js";
 import { cityPopularityArgs, LOCAL_ACT_POOL, localActRankArgs } from "./recArgs.js";
 
 export type { PlaybookCard } from "../types.js";
@@ -41,7 +42,7 @@ function card<T>(kind: CardKind, items: T[], refs: EvidenceRef[], warnings: Data
 
 export async function* runCityPlaybook(
   input: { artist: string; artistEntityId: string; city: { name: string; country: string }; sessionId: string; narrative?: boolean },
-  deps: { qloo: QlooCaller; cities: City[]; signal?: AbortSignal; narrate?: NarrateFn },
+  deps: { qloo: QlooCaller; cities: City[]; signal?: AbortSignal; narrate?: NarrateFn; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null> },
 ): AsyncGenerator<GatewayEvent> {
   const events: GatewayEvent[] = [];
   try {
@@ -69,9 +70,10 @@ export async function* runCityPlaybook(
     const coBill = compared.flatMap((c) => (c.lift ? [c.lift] : [])).sort((x, y) => y.lift - x.lift);
 
     const where = `${input.city.name}, ${input.city.country}`;
-    const [tagsS, proxyS] = await Promise.allSettled([
+    const [tagsS, proxyS, suggestedS] = await Promise.allSettled([
       trackedCall(deps, input.sessionId, "qloo_entity_tags", { entities: [input.artistEntityId], entity_type: "artist", limit: 10 }, events),
       trackedCall(deps, input.sessionId, "qloo_recommend", cityPopularityArgs("artist", where, LOCAL_ACT_POOL), events),
+      deps.localActs ? deps.localActs({ artist: input.artist, city: input.city, sessionId: input.sessionId }) : Promise.resolve(null),
     ]);
     while (events.length) yield events.shift()!;
     const failed = [tagsS, proxyS].filter((s): s is PromiseRejectedResult => s.status === "rejected").map((s) => s.reason);
@@ -83,11 +85,26 @@ export async function* runCityPlaybook(
     let talentShared: { value: number | null; tags: string[] } = { value: null, tags: [] };
     const talentWarnings: DataWarning[] = [...warningsFor("qloo_recommend", proxyRecs), ...needsInputWarning("qloo_recommend", proxyRecs)];
     const talentRefs: EvidenceRef[] = [ref("qloo_recommend", proxyRecs)];
-    let localActs = proxies;
-    if (candidatesPop.length > 0) {
+    // Gemini names are unverified until Qloo finds them: only resolved entities ever become candidates.
+    const suggested = suggestedS.status === "fulfilled" ? suggestedS.value : null;
+    const resolvedS = await Promise.allSettled((suggested ?? []).map((name) => trackedCall(deps, input.sessionId, "qloo_describe", { entity: name, type: "artist" }, events)));
+    while (events.length) yield events.shift()!;
+    const fatal = resolvedS.filter((r): r is PromiseRejectedResult => r.status === "rejected").map((r) => r.reason).find((e) => e instanceof Aborted || e instanceof BudgetStop);
+    if (fatal) throw fatal;
+    let unresolved = 0;
+    const resolved: Array<ReturnType<typeof extractEntities>[number]> = [];
+    for (const r of resolvedS) {
+      const top = r.status === "fulfilled" ? extractEntities(r.value.envelope)[0] : undefined;
+      if (top) resolved.push(top); else unresolved += 1;
+      if (r.status === "fulfilled") talentRefs.push(ref("qloo_describe", r.value));
+    }
+    const suggestedIds = new Set(resolved.map((e) => e.entityId));
+    const candidateActs = suggested === null ? candidatesPop : [...new Map([...resolved, ...candidatesPop].map((e) => [e.entityId, e])).values()].slice(0, LOCAL_SUGGESTIONS);
+    let localActs = suggested === null ? proxies : candidateActs.slice(0, 5);
+    if (candidateActs.length > 0) {
       let ranked: CallResult | null = null;
       try {
-        ranked = await trackedCall(deps, input.sessionId, "qloo_rank", localActRankArgs(input.artistEntityId, where, candidatesPop.map((p) => p.entityId)), events);
+        ranked = await trackedCall(deps, input.sessionId, "qloo_rank", localActRankArgs(input.artistEntityId, where, candidateActs.map((p) => p.entityId)), events);
       } catch (err) {
         if (err instanceof Aborted || err instanceof BudgetStop) throw err;
       }
@@ -124,7 +141,8 @@ export async function* runCityPlaybook(
         [raw.artists, raw.films, raw.tv, raw.places].flatMap((r) => warningsFor("qloo_recommend", r))),
       card("venue_fit", a.venues.items, a.venues.refs, [...(raw.ranked ? warningsFor("qloo_rank", raw.ranked) : []), ...a.venues.warnings]),
       card("co_billing", coBill, coBill.map((c) => c.ref), compared.flatMap((c) => c.warnings)),
-      { ...card("talent", localActs.map(({ name, entityId, affinity }) => ({ name, entityId, affinity })), talentRefs, talentWarnings), summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags } },
+      { ...card("talent", localActs.map(({ name, entityId, affinity }) => ({ name, entityId, affinity, ...(suggested === null ? {} : { source: suggestedIds.has(entityId) ? "suggested" : "city_popular" }) })), talentRefs, talentWarnings),
+        summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags, ...(suggested === null ? {} : { suggestionsUnresolved: unresolved }) } },
     ];
     yield { type: "playbook", playbook: { city: input.city, cards } };
     if (input.narrative !== false && deps.narrate) {

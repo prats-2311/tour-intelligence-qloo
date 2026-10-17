@@ -91,12 +91,30 @@ describe("playbook cards", () => {
     render(<CardBody card={card("talent")} city="Guadalajara" />);
     expect(screen.getByText("Shared taste with Guadalajara's mainstream: 0.12")).toBeTruthy();
     expect(screen.getByText("dream pop")).toBeTruthy();
-    expect(screen.getByText("Local acts: the city's most popular artists, ranked by taste fit with the headliner.")).toBeTruthy();
+    expect(screen.getByText("Local acts: candidates suggested by Gemini or popular in the city, each found in Qloo and ranked by taste fit with the headliner.")).toBeTruthy();
     expect(screen.queryByText(/without the artist signal/)).toBeNull();
   });
   it("talent caption names the artist when known", () => {
     render(<CardBody card={card("talent")} city="Guadalajara" artist="Lumen Vale" />);
-    expect(screen.getByText("Local acts: the city's most popular artists, ranked by taste fit with Lumen Vale.")).toBeTruthy();
+    expect(screen.getByText("Local acts: candidates suggested by Gemini or popular in the city, each found in Qloo and ranked by taste fit with Lumen Vale.")).toBeTruthy();
+  });
+  it("talent rows carry a text source label and an unresolved note only when some suggestions were not found", () => {
+    const base = card("talent");
+    const hybrid: Card = { ...base, items: [{ name: "Drake", entityId: "e1", affinity: 0.9, source: "suggested" }, { name: "Local Band", entityId: "e2", affinity: 0.5, source: "city_popular" }, { name: "Plain", entityId: "e3", affinity: 0.4 }], summary: { ...base.summary, suggestionsUnresolved: 2 } };
+    render(<CardBody card={hybrid} city="Toronto" />);
+    expect(screen.getAllByText("Suggested · in Qloo")).toHaveLength(1);
+    expect(screen.getAllByText("Popular in city")).toHaveLength(1);
+    expect(screen.getByText("2 suggestions weren't found in Qloo and are not shown.")).toBeTruthy();
+    cleanup();
+    render(<CardBody card={{ ...hybrid, summary: { ...base.summary, suggestionsUnresolved: 0 } }} city="Toronto" />);
+    expect(screen.queryByText(/weren't found in Qloo/)).toBeNull();
+    cleanup();
+    render(<CardBody card={base} city="Toronto" />);
+    expect(screen.queryByText(/Suggested · in Qloo|Popular in city/)).toBeNull();
+  });
+  it("talent unresolved line uses the brief's wording for any count", () => {
+    render(<CardBody card={{ ...card("talent"), summary: { sharedTaste: null, sharedTags: [], suggestionsUnresolved: 1 } }} city="Toronto" />);
+    expect(screen.getByText("1 suggestions weren't found in Qloo and are not shown.")).toBeTruthy();
   });
   it("local moment labels entity types", () => {
     render(<CardBody card={card("local_moment")} city="Guadalajara" />);

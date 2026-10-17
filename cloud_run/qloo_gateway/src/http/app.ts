@@ -25,7 +25,7 @@ async function streamSse(res: Response, gen: AsyncGenerator<GatewayEvent>, contr
   res.end();
 }
 
-export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo> }) {
+export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo> }) {
   const app = express();
   app.use(express.json({ limit: "64kb" }));
 
@@ -55,7 +55,7 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
     }
     const controller = new AbortController();
     await streamSse(res, runCityPlaybook({ artist: String(artist), artistEntityId: String(artistEntityId), city: { name: String(city), country: String(country) }, sessionId, narrative: req.query.narrative !== "0" },
-      { qloo: deps.qloo, cities: deps.cities, signal: controller.signal, narrate: deps.narrate }), controller);
+      { qloo: deps.qloo, cities: deps.cities, signal: controller.signal, narrate: deps.narrate, ...(deps.localActs ? { localActs: deps.localActs } : {}) }), controller);
   });
 
   app.post("/v1/tools/:name", async (req, res) => {
