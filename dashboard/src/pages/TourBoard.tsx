@@ -19,6 +19,7 @@ import { SAMPLE_WITHOUT_QLOO } from "@/lib/qloo/fixtures/strategistSample";
 import { SHOWCASE, showcaseBrief } from "@/lib/qloo/showcase";
 import { sortCities, summarize } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
+import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
 import { INTEGRITY_LINE, VERDICT_LABEL } from "@/lib/qloo/labels";
 import type { TourBrief, Verdict } from "@/lib/qloo/types";
 
@@ -347,11 +348,12 @@ export default function TourBoard() {
   );
 
   const header = (
-    <header className={`flex min-w-0 items-center justify-between gap-3 bg-canvas-raised px-4 py-2 lg:px-6 lg:pb-2 lg:pt-5 ${hasMap ? "min-h-[48px]" : "rounded-[14px]"}`}>
-      <div className="min-w-0 max-w-full">
+    <header className={`flex min-w-0 flex-wrap items-center gap-x-3 bg-canvas-raised px-4 py-2 lg:px-6 lg:pb-2 lg:pt-5 ${hasMap ? "min-h-[48px]" : "rounded-[14px]"}`}>
+      <div className="min-w-0 max-w-full flex-1">
         <h1 className="font-title truncate text-[17px] leading-tight text-canvas-text lg:text-[32px] lg:leading-[1.1]">{artistName}</h1>
         {regionsLine && <p className="truncate text-[13px] text-canvas-muted">{regionsLine}</p>}
       </div>
+      <Link to="/proof" className="order-last inline-flex min-h-11 basis-full items-center font-mono text-[12px] text-canvas-muted underline-offset-4 hover:text-canvas-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:order-none lg:basis-auto">{PROOF_LINK_TEXT} →</Link>
       <div className="flex shrink-0 items-center gap-2">
         {streaming && (
           <button type="button" onClick={abort} className={smallBtn}><Square size={12} aria-hidden />Stop</button>

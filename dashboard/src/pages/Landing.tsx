@@ -5,6 +5,7 @@ import { DualBars } from "@/components/qloo/DualBars";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { INTEGRITY_LINE } from "@/lib/qloo/labels";
+import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
 import { ordinal, sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { proofFor, SHOWCASE, showcaseCities } from "@/lib/qloo/showcase";
@@ -21,6 +22,8 @@ const SAMPLE_LINE = (): string => {
   const rank = (mode: "density" | "winnability") => sortCities(PREVIEW_CITIES, mode).findIndex((c) => c.id === GDL.id) + 1;
   return `Ranked ${ordinal(rank("density"))} on fan density alone. ${ordinal(rank("winnability"))} on winnability.`;
 };
+// The recording's own scoring config (when it has one) drives the hero bars' ticks; otherwise the bars keep the default thresholds.
+const RECORDED_THRESHOLDS = SHOWCASE.boardEvents.find((e) => e.type === "scoring")?.scoring.thresholds;
 const noop = () => {};
 const CTA = "flex min-h-[52px] items-center justify-center rounded-[10px] px-6 font-sans text-[16px] outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold active:scale-[0.98] motion-reduce:active:scale-100 lg:min-h-12 lg:text-[15px]";
 
@@ -52,7 +55,7 @@ function ProofCard() {
           <span data-testid="proof-winnability" className="font-mono text-[28px] font-bold leading-none text-canvas-text tabular lg:text-4xl">{hero.winnability.value === null ? "—" : Math.round(hero.winnability.value)}</span>
         </div>
       </div>
-      <div className="mt-4"><DualBars fanHeat={hero.fanHeat} activation={hero.activation} /></div>
+      <div className="mt-4"><DualBars fanHeat={hero.fanHeat} activation={hero.activation} thresholds={RECORDED_THRESHOLDS} /></div>
       <p className="mt-3 text-[13px] text-canvas-muted">{line}</p>
       <p className="mt-2 text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
     </section>
@@ -90,6 +93,7 @@ export default function Landing() {
           <Link to="/tours/board?showcase=1" className={`${CTA} bg-gold font-semibold text-on-gold hover:bg-gold-soft active:bg-[#efb900]`}>Try the showcase tour</Link>
           <Link to="/tours/board" className={`${CTA} bg-paper-raised font-medium text-canvas-text hover:bg-[#3a3932]`}>Plan your own</Link>
         </div>
+        <Link to="/proof" className="mt-1 inline-flex min-h-11 items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{PROOF_LINK_TEXT} →</Link>
       </div>
     </div>
   );

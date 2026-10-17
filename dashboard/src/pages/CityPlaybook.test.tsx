@@ -150,3 +150,12 @@ describe("CityPlaybook", () => {
     expect(screen.getAllByRole("button", { name: /Add to tour|Remove from tour/ })).toHaveLength(1);
   });
 });
+
+describe("CityPlaybook proof entry point", () => {
+  it("links to the proof page with the explanatory line", async () => {
+    renderAt("/tours/playbook/4005539?sample=1");
+    const link = await screen.findByRole("link", { name: /Checked against real tours/ });
+    expect(link.getAttribute("href")).toBe("/proof");
+    expect(screen.getByText("How often this playbook surfaced the sponsor, merch partner or local act real tours used.")).toBeTruthy();
+  });
+});

@@ -15,7 +15,7 @@ export interface Showcase {
 
 const KNOWN_EVENTS: ReadonlySet<string> = new Set([
   "resolve", "artist_profile", "region_unavailable", "needs_input", "tool_call", "tool_result", "region_empty",
-  "city_scored", "playbook", "narrative", "strategist_thinking", "strategist_tool_call", "strategist_tool_result",
+  "city_scored", "scoring", "playbook", "narrative", "strategist_thinking", "strategist_tool_call", "strategist_tool_result",
   "strategist_message", "strategist_error", "done", "error",
 ]);
 

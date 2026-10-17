@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
+import { DEFAULT_SCORING_DISPLAY } from "@/lib/qloo/labels";
 import Landing from "./Landing";
 
 vi.mock("@/lib/qloo/fixtures/showcase.json", async () => ({ default: (await import("@/test/placeholderShowcase")).PLACEHOLDER_SHOWCASE }));
@@ -61,5 +62,18 @@ describe("Landing", () => {
     const { container } = render(<MemoryRouter><Landing /></MemoryRouter>);
     expect(container.querySelector('[aria-hidden="true"][inert]')).toBeTruthy();
     expect(screen.queryByText(/\blive\b/i)).toBeNull();
+  });
+});
+
+describe("Landing hero default thresholds", () => {
+  it("a recording without a scoring event keeps the default thresholds", () => {
+    const { container } = render(<MemoryRouter><Landing /></MemoryRouter>);
+    const t = DEFAULT_SCORING_DISPLAY.thresholds;
+    const lefts = [...container.querySelectorAll<HTMLElement>("span[aria-hidden].absolute")].map((s) => s.style.left);
+    expect(lefts).toEqual([t.goldmineFanMin, t.playFan, t.deRiskAct, t.playAct, t.goldmineAct].map((v) => `${v}%`));
+  });
+  it("links to the proof page", () => {
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    expect(screen.getByRole("link", { name: /Checked against real tours/ }).getAttribute("href")).toBe("/proof");
   });
 });

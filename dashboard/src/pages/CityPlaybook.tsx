@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { DualBars } from "@/components/qloo/DualBars";
 import { Notice } from "@/components/qloo/Notice";
@@ -224,6 +225,10 @@ export default function CityPlaybook() {
       <p className="mt-1 text-[13px] tabular-nums text-canvas-muted lg:hidden" aria-live="polite">
         {CARD_TITLE[activateIds[shownIdx]!]} · {shownIdx + 1} of {activateIds.length}
       </p>
+      <div className="mt-3 flex flex-col">
+        <Link to="/proof" className="inline-flex min-h-11 items-center self-start text-[14px] font-medium text-canvas-text underline decoration-canvas-muted underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{PROOF_LINK_TEXT} →</Link>
+        <p className="max-w-[56ch] text-[13px] text-canvas-muted">How often this playbook surfaced the sponsor, merch partner or local act real tours used.</p>
+      </div>
     </>
   );
   const talentCard = cardOf("talent");

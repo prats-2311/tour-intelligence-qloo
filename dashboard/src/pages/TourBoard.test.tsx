@@ -408,3 +408,10 @@ describe("TourBoard", () => {
     expect(screen.getByTestId("search").textContent).toBe("?sample=1");
   });
 });
+
+describe("TourBoard proof entry point", () => {
+  it("links to the proof page", () => {
+    renderPage();
+    expect(screen.getByRole("link", { name: /Checked against real tours/ }).getAttribute("href")).toBe("/proof");
+  });
+});
