@@ -3,9 +3,11 @@ import type { City } from "../src/geo/cities.js";
 import { artistTasteArgs } from "../src/pipeline/recArgs.js";
 import { pickCandidates, runTourBoard, type TourBrief } from "../src/pipeline/tourBoard.js";
 import type { QlooCaller } from "../src/qlooCall.js";
-import type { GatewayEvent, QlooEnvelope } from "../src/types.js";
+import type { GatewayEvent, QlooEnvelope, Score } from "../src/types.js";
 import { readFileSync } from "node:fs";
-import { rescaleAffinity } from "../src/scoring/config.js";
+import { activation } from "../src/scoring/activation.js";
+import { DEFAULT_SCORING, isThin, rescaleAffinity } from "../src/scoring/config.js";
+import { closeCall, verdict, winnability } from "../src/scoring/winnability.js";
 import { SCORING } from "../src/scoring/calibration.js";
 import { cityHeat, describeAmbiguous, describeOk, heatEmpty, heatMexico, recs } from "./fixtures/envelopes.js";
 
@@ -354,6 +356,33 @@ describe("runTourBoard", () => {
         if (SCORING.concentration === "raw" && rawComponents.fan_concentration !== undefined && components.fan_concentration !== undefined) {
           expect(components.fan_concentration).toBeCloseTo(rawComponents.fan_concentration);
         }
+      }
+    });
+  });
+
+  describe("close call and thin data under the default config", () => {
+    it("emits a boolean closeCall on every scored city", async () => {
+      const events = await collect(runTourBoard(brief, { qloo: fakeQloo(happy), cities: CITIES }));
+      const cities = events.filter((e) => e.type === "city_scored") as Array<{ city: { closeCall: unknown } }>;
+      expect(cities.length).toBeGreaterThan(0);
+      for (const { city } of cities) expect(typeof city.closeCall).toBe("boolean");
+    });
+
+    it("closeCall matches the verdict flip rule for the emitted scores", async () => {
+      const events = await collect(runTourBoard(brief, { qloo: fakeQloo(happy), cities: CITIES }));
+      for (const { city } of events.filter((e) => e.type === "city_scored") as Array<{ city: { fanHeat: Score; activation: Score; closeCall: boolean } }>) {
+        expect(city.closeCall).toBe(closeCall(city.fanHeat, city.activation, SCORING.thresholds));
+      }
+    });
+
+    it("no city is thin and live-fixture verdicts are unchanged under DEFAULT_SCORING", async () => {
+      expect(SCORING).toEqual(DEFAULT_SCORING);
+      const events = await collect(runTourBoard(brief, { qloo: fakeQloo(happy), cities: CITIES }));
+      for (const { city } of events.filter((e) => e.type === "city_scored") as Array<{ city: { fanHeat: Score; activation: Score & { components: Record<string, number> }; winnability: Score; verdict: string } }>) {
+        expect(isThin(city.activation.components, SCORING.weights)).toBe(false);
+        const a = activation(Object.fromEntries(Object.entries(city.activation.components).map(([k, v]) => [k, { value: v, refs: [] }])), DEFAULT_SCORING.weights);
+        expect(city.activation.value).toBeCloseTo(a.value!);
+        expect(city.verdict).toBe(verdict(city.fanHeat, a, winnability(city.fanHeat, a), DEFAULT_SCORING.thresholds));
       }
     });
   });

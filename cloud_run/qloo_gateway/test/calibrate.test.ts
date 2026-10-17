@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { citiesFromRecording, deriveCalibration, fragility, quantile, renderCalibrationTs, scoreCity, MIN_CAL_CITIES, type CalCity } from "../src/scoring/calibrate.js";
+import { citiesFromRecording, deriveCalibration, fragility, quantile, renderCalibrationTs, renderReport, scoreCity, MIN_CAL_CITIES, type CalCity } from "../src/scoring/calibrate.js";
 import { parseCalArgs } from "../src/scoring/calibrateCli.js";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { DEFAULT_SCORING } from "../src/scoring/config.js";
 
 const uniform = Array(20).fill(0.05);
@@ -72,5 +73,51 @@ describe("calibration", () => {
   it("parses CLI arguments", () => {
     expect(parseCalArgs(["--in", "a.json", "b.json", "--write", "w.ts", "--report", "r.md"])).toMatchObject({ inputs: ["a.json", "b.json"], write: "w.ts", report: "r.md" });
     expect(() => parseCalArgs(["--in", "a.json", "--report", "r.md"])).toThrow(/usage/);
+  });
+
+  it("sets considerWin at P25 of winnability", () => {
+    const { config } = deriveCalibration(cities, "p25");
+    const wins = cities.map((c) => scoreCity(c, config).win).filter((v): v is number => v !== null);
+    expect(config.thresholds.considerWin).toBe(Math.round(quantile(wins, 0.25)));
+    expect(config.thresholds.considerWin).toBeLessThan(Math.round(quantile(wins, 0.5)));
+  });
+
+  it("scores a thin city as insufficient_data, never 0", () => {
+    const cfg = { ...DEFAULT_SCORING, affinityFloors: { sponsor_fit: 0.9, local_hooks: 0.9, venue_fit: 0.9 }, weights: { ...DEFAULT_SCORING.weights, fan_concentration: 0, venue_fit: 0 } };
+    const thin: CalCity = { artist: "A", city: "T", fan: 80, raw: { sponsor_fit: 0.85, local_hooks: 0.8, fan_concentration: 0.2 }, zoneShares: [] };
+    expect(scoreCity(thin, cfg)).toMatchObject({ act: null, win: null, verdict: "insufficient_data", closeCall: false, thin: true });
+    const notThin = scoreCity({ ...thin, raw: { ...thin.raw, sponsor_fit: 0.95 } }, cfg);
+    expect(notThin.thin).toBe(false);
+  });
+
+  it("reports thin and close-call counts", () => {
+    const { report } = deriveCalibration(cities, "r");
+    expect(report.thin).toBe(0);
+    expect(report.closeCalls.before).toBeGreaterThanOrEqual(0);
+    expect(report.closeCalls.after).toBeGreaterThanOrEqual(0);
+    const text = renderReport({ ...report, thin: 3, closeCalls: { before: 9, after: 4 } });
+    expect(text).toContain("rule 8): 3.");
+    expect(text).toContain("9 before, 4 after");
+  });
+
+  const dir = new URL("../../../.superpowers/sdd/2026-10-17-plan-5-proof-calibration/calibration/", import.meta.url);
+  it.skipIf(!existsSync(dir))("under DEFAULT_SCORING scoreCity reproduces every recorded score, no city is thin", () => {
+    let checked = 0;
+    for (const f of readdirSync(dir).filter((n) => n.endsWith(".json"))) {
+      const rec = JSON.parse(readFileSync(new URL(f, dir), "utf8")) as { boardEvents: Array<{ type: string; city?: { name: string; verdict: string; activation: { value: number | null }; winnability: { value: number | null }; fanHeat: { value: number | null } } }> };
+      const byName = new Map(citiesFromRecording(rec).map((c) => [c.city, c]));
+      for (const e of rec.boardEvents) {
+        const rc = e.type === "city_scored" ? e.city! : undefined;
+        const c = rc && byName.get(rc.name);
+        if (!rc || !c || rc.activation.value === null) continue;
+        const r = scoreCity(c, DEFAULT_SCORING);
+        expect(r.thin).toBe(false);
+        expect(r.act).toBeCloseTo(rc.activation.value, 6);
+        expect(r.win).toBeCloseTo(rc.winnability.value!, 6);
+        expect(r.verdict).toBe(rc.verdict);
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 });

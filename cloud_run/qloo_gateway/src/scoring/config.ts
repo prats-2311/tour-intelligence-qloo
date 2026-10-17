@@ -40,3 +40,14 @@ export function concentrationValue(shares: number[], mode: ScoringConfig["concen
   const even = 3 / shares.length;
   return Math.min(1, Math.max(0, (top3 - even) / (1 - even)));
 }
+
+/**
+ * Rule 8, thin data: 2 or fewer components are finite with weight > 0 and every one of their adjusted values is 0.
+ * Such a city has no real signal, so its activation is insufficient_data rather than a confident 0.
+ * (No weighted components at all is thin too; activation is insufficient_data for it anyway.)
+ * Shared by the live pipeline and calibration's scoreCity so the two cannot disagree.
+ */
+export function isThin(adjusted: Partial<Record<ComponentName, number>>, weights: Record<ComponentName, number>): boolean {
+  const used = (Object.keys(adjusted) as ComponentName[]).filter((k) => Number.isFinite(adjusted[k]) && weights[k] > 0);
+  return used.length <= 2 && used.every((k) => adjusted[k] === 0);
+}

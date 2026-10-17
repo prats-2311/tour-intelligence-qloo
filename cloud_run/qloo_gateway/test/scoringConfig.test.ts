@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { concentrationValue, DEFAULT_SCORING, rescaleAffinity } from "../src/scoring/config.js";
+import { concentrationValue, DEFAULT_SCORING, isThin, rescaleAffinity } from "../src/scoring/config.js";
 import { SCORING } from "../src/scoring/calibration.js";
 import { activation } from "../src/scoring/activation.js";
 import { verdict } from "../src/scoring/winnability.js";
@@ -62,5 +62,21 @@ describe("scoring config", () => {
     expect(Object.keys(a.components)).toEqual(["sponsor_fit"]);
     for (const k of Object.keys(a.components)) expect(Object.keys(raw)).toContain(k);
     expect(a.components.sponsor_fit).toBeCloseTo(0.5);
+  });
+});
+
+describe("isThin (rule 8)", () => {
+  const w = DEFAULT_SCORING.weights;
+  it.each([
+    ["two weighted components, both 0", { sponsor_fit: 0, local_hooks: 0 }, w, true],
+    ["one weighted component, 0", { sponsor_fit: 0 }, w, true],
+    ["two components, one non-zero", { sponsor_fit: 0, local_hooks: 0.2 }, w, false],
+    ["three components, all 0", { sponsor_fit: 0, local_hooks: 0, venue_fit: 0 }, w, false],
+    ["weight-0 components are ignored", { sponsor_fit: 0, local_hooks: 0, venue_fit: 0 }, { ...w, venue_fit: 0 }, true],
+    ["a non-zero weight-0 component is ignored", { sponsor_fit: 0, local_hooks: 0, venue_fit: 0.9 }, { ...w, venue_fit: 0 }, true],
+    ["non-finite values are ignored", { sponsor_fit: 0, local_hooks: Number.NaN, venue_fit: 0 }, w, true],
+    ["no components at all", {}, w, true],
+  ] as const)("%s", (_n, adj, weights, expected) => {
+    expect(isThin(adj, weights)).toBe(expected);
   });
 });

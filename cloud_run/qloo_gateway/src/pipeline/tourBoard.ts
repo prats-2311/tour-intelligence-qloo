@@ -4,16 +4,16 @@ import { marketsFromHeat, zonesFromHeat } from "../geo/heat.js";
 import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { activation, fanConcentration, meanTopK, type ComponentName } from "../scoring/activation.js";
 import { SCORING } from "../scoring/calibration.js";
-import { concentrationValue, rescaleAffinity } from "../scoring/config.js";
+import { concentrationValue, isThin, rescaleAffinity } from "../scoring/config.js";
 import { fanHeat } from "../scoring/fanHeat.js";
-import { verdict, winnability } from "../scoring/winnability.js";
+import { closeCall, verdict, winnability } from "../scoring/winnability.js";
 import { artistTasteArgs } from "./recArgs.js";
 import type { DataWarning, EvidenceRef, GatewayEvent, Score, Verdict } from "../types.js";
 
 export interface TourBrief { artist: string; artistEntityId?: string; regions: string[]; maxStops: number; sessionId: string; today: string }
 export interface ScoredCity {
   id: string; name: string; country: string; lat: number; lon: number;
-  fanHeat: Score; activation: Score & { components: Partial<Record<ComponentName, number>>; rawComponents?: Partial<Record<ComponentName, number>> }; winnability: Score; verdict: Verdict;
+  fanHeat: Score; activation: Score & { components: Partial<Record<ComponentName, number>>; rawComponents?: Partial<Record<ComponentName, number>> }; winnability: Score; verdict: Verdict; closeCall: boolean;
   zones: ReturnType<typeof zonesFromHeat>;
   warnings: DataWarning[];
 }
@@ -228,15 +228,18 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
         const base = { id: m.city.id, name: m.city.name, country: m.city.country, lat: m.city.lat, lon: m.city.lon };
         try {
           const inputs = await activationInputs(signalArtist, m.city, deps, brief.sessionId, events, "venue ranking unresolved — venue fit not scored");
-          const act = { ...activation(inputs.components, SCORING.weights), rawComponents: inputs.rawComponents };
+          const adjusted = Object.fromEntries(Object.entries(inputs.components).map(([k, c]) => [k, c.value]));
+          const scoredAct = activation(inputs.components, SCORING.weights);
+          // Rule 8: a thin-data city is insufficient_data, never 0 (same isThin as calibration's scoreCity).
+          const act = { ...(isThin(adjusted, SCORING.weights) ? { ...scoredAct, value: null, reason: "insufficient_data" as const } : scoredAct), rawComponents: inputs.rawComponents };
           const win = winnability(fan, act);
-          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]) } };
+          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), closeCall: closeCall(fan, act, SCORING.thresholds), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]) } };
         } catch (err) {
           if (err instanceof Aborted || err instanceof BudgetStop) return { stop: err };
           const act = { ...activation({}, SCORING.weights), rawComponents: {} as Partial<Record<ComponentName, number>> };
           const win = winnability(fan, act);
           const warning: DataWarning = { tool: "pipeline", kind: "error", code: "INTERNAL", message: (err as Error).message };
-          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), zones: [], warnings: dedupeWarnings([...m.warnings, warning]) } };
+          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), closeCall: false, zones: [], warnings: dedupeWarnings([...m.warnings, warning]) } };
         }
       }));
       yield* flush();

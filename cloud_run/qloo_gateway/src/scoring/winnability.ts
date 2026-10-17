@@ -20,3 +20,18 @@ export function verdict(fan: Score, act: Score, win: Score, t: Thresholds = DEFA
 export function coBillLift(sharedTaste: number, localAffinity: number): number {
   return Math.min(1, Math.max(0, sharedTaste * localAffinity));
 }
+
+/** Rule 9: how far (in points) activation or fan heat may move before a verdict is called a close call. */
+export const CLOSE_CALL_BAND = 2;
+
+/** True when the verdict changes under activation +-band or fan +-band, with winnability recomputed. False when fan or act is not a number. */
+export function closeCall(fan: Score, act: Score, t: Thresholds, band = CLOSE_CALL_BAND): boolean {
+  if (!ok(fan) || !ok(act)) return false;
+  const at = (f: number, a: number): Verdict => {
+    const fs: Score = { value: f, refs: [] };
+    const as: Score = { value: a, refs: [] };
+    return verdict(fs, as, winnability(fs, as), t);
+  };
+  const base = at(fan.value, act.value);
+  return [[0, band], [0, -band], [band, 0], [-band, 0]].some(([df, da]) => at(fan.value + df!, act.value + da!) !== base);
+}

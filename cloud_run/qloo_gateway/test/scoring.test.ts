@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { fanHeat } from "../src/scoring/fanHeat.js";
 import { DEFAULT_WEIGHTS, activation, fanConcentration, meanTopK } from "../src/scoring/activation.js";
-import { coBillLift, verdict, winnability } from "../src/scoring/winnability.js";
+import { CLOSE_CALL_BAND, closeCall, coBillLift, verdict, winnability } from "../src/scoring/winnability.js";
+import { DEFAULT_SCORING } from "../src/scoring/config.js";
 import type { Score } from "../src/types.js";
 
 const r = [{ tool: "qloo_where_popular", cacheKey: "k" }];
@@ -125,5 +126,32 @@ describe("coBillLift", () => {
   it("multiplies and clamps to 0-1", () => {
     expect(coBillLift(0.5, 0.8)).toBeCloseTo(0.4);
     expect(coBillLift(2, 2)).toBe(1);
+  });
+});
+
+describe("closeCall (rule 9)", () => {
+  const t = DEFAULT_SCORING.thresholds;
+  it("uses a band of 2", () => { expect(CLOSE_CALL_BAND).toBe(2); });
+  it.each([
+    ["just above playFan", 71, 80, true],
+    ["just above playAct", 90, 61, true],
+    ["just inside the goldmine act threshold", 60, 76, true],
+    ["just above the goldmine fan minimum", 46, 80, true],
+    ["just below the de-risk act threshold", 80, 44, true],
+    ["just above the consider winnability line", 50, 61, true],
+    ["well inside play", 90, 90, false],
+    ["well inside skip", 20, 20, false],
+    ["well inside de_risk", 90, 20, false],
+    ["exactly 3 points above a threshold is clear", 73, 90, false],
+  ] as const)("%s", (_n, fan, act, expected) => {
+    expect(closeCall(s(fan), s(act), t)).toBe(expected);
+  });
+  it("is false when fan or activation is not a number", () => {
+    expect(closeCall(none, s(60), t)).toBe(false);
+    expect(closeCall(s(60), none, t)).toBe(false);
+  });
+  it("honours an explicit band", () => {
+    expect(closeCall(s(73), s(90), t, 4)).toBe(true);
+    expect(closeCall(s(71), s(80), t, 0)).toBe(false);
   });
 });
