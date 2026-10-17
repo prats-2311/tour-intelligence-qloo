@@ -1,4 +1,4 @@
-import type { ComponentName, Verdict } from "./types";
+import type { ComponentName, ScoringConfig, Thresholds, Verdict } from "./types";
 
 /** Display copy and encodings shared by every Qloo screen. One source, so they cannot drift. */
 export const VERDICT_LABEL: Record<Verdict, string> = {
@@ -17,6 +17,33 @@ export const ACTIVATION_WEIGHTS: ReadonlyArray<{ key: ComponentName; label: stri
   { key: "fan_concentration", label: "Fan concentration", short: "Concentration", weight: "0.25" },
   { key: "venue_fit", label: "Venue fit", short: "Venue", weight: "0.20" },
 ];
+
+/** Mirrors the gateway's DEFAULT_SCORING; used only when a run carries no scoring event (sample data, older recordings). */
+export const DEFAULT_SCORING_DISPLAY: ScoringConfig = {
+  version: "default",
+  weights: { sponsor_fit: 0.3, local_hooks: 0.25, fan_concentration: 0.25, venue_fit: 0.2 },
+  affinityFloors: { sponsor_fit: 0, local_hooks: 0, venue_fit: 0 },
+  concentration: "raw",
+  thresholds: { playFan: 70, playAct: 60, goldmineFanMin: 45, goldmineFanMax: 70, goldmineAct: 75, deRiskFan: 70, deRiskAct: 45, considerWin: 55 },
+};
+
+export function ruleLines(t: Thresholds): Array<{ verdict: Verdict; rule: string }> {
+  return [
+    { verdict: "play", rule: `fan ≥${t.playFan} & activation ≥${t.playAct}` },
+    { verdict: "hidden_goldmine", rule: `${t.goldmineFanMin}≤fan<${t.goldmineFanMax} & activation ≥${t.goldmineAct}` },
+    { verdict: "de_risk", rule: `fan ≥${t.deRiskFan} & activation <${t.deRiskAct}` },
+    { verdict: "consider", rule: `winnability ≥${t.considerWin}` },
+    { verdict: "skip", rule: "otherwise" },
+    { verdict: "insufficient_data", rule: "when inputs are missing" },
+  ];
+}
+
+export function weightRows(s: ScoringConfig): Array<{ key: ComponentName; label: string; weight: string; dropped: boolean }> {
+  return ACTIVATION_WEIGHTS.map(({ key, label }) => ({ key, label, weight: s.weights[key].toFixed(2), dropped: s.weights[key] === 0 }));
+}
+
+export const CLOSE_CALL_LABEL = "Close call";
+export const CLOSE_CALL_NOTE = "Within 2 points of a verdict line — treat as borderline.";
 
 export type VerdictShape = "circle" | "diamond" | "triangle" | "ring" | "x" | "square";
 /** DESIGN.md section 2.5: shape carries the verdict on the map, the matrix and every legend. */

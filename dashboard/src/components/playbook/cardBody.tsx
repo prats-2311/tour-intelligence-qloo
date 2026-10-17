@@ -11,7 +11,7 @@ import { VenueFit } from "./cards/VenueFit";
 
 export { ThisWeekBody } from "./cards/ThisWeek";
 
-export function CardBody({ card, merch, city }: { card: PlaybookCard; merch?: MerchDirection | null; city: string }) {
+export function CardBody({ card, merch, city, artist }: { card: PlaybookCard; merch?: MerchDirection | null; city: string; artist?: string }) {
   const empty = card.status === "empty" && card.kind !== "promo_zones";
   let body;
   if (empty) {
@@ -24,7 +24,7 @@ export function CardBody({ card, merch, city }: { card: PlaybookCard; merch?: Me
       case "local_moment": body = <LocalMoment card={card} />; break;
       case "venue_fit": body = <VenueFit card={card} />; break;
       case "co_billing": body = <CoBilling card={card} />; break;
-      case "talent": body = <Talent card={card} city={city} />; break;
+      case "talent": body = <Talent card={card} city={city} artist={artist} />; break;
     }
   }
   return (

@@ -35,7 +35,7 @@ function MarginNote({ requests, claims }: { requests: number; claims?: CardClaim
 
 const H3 = "font-title text-[20px] leading-tight text-canvas-text";
 
-export function CityChapter({ chapter, sample = false, showcase = false }: { chapter: BookCityChapter; sample?: boolean; showcase?: boolean }) {
+export function CityChapter({ chapter, sample = false, showcase = false, artist }: { chapter: BookCityChapter; sample?: boolean; showcase?: boolean; artist?: string }) {
   const { city, accent, playbook, week } = chapter;
   const narrative = playbook?.narrative;
   const ok = chapter.status === "ready";
@@ -79,7 +79,7 @@ export function CityChapter({ chapter, sample = false, showcase = false }: { cha
                   <h3 className={H3}>{TITLE[kind]}</h3>
                   {claims && claims.verified.map((c, i) => <p key={`${i}-${c.text}`} className="text-[15px] leading-[1.5] text-canvas-text">{c.text}</p>)}
                   {claims && card.status === "ok" && claims.verified.length === 0 && <p className="text-[13px] text-canvas-muted">Narrative removed: no claim passed verification.</p>}
-                  <CardBody card={card} merch={merch} city={city.name} />
+                  <CardBody card={card} merch={merch} city={city.name} artist={artist} />
                   <MarginNote requests={card.refs.length} claims={claims} />
                 </section>
               );

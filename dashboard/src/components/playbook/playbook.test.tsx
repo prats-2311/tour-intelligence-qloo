@@ -91,7 +91,12 @@ describe("playbook cards", () => {
     render(<CardBody card={card("talent")} city="Guadalajara" />);
     expect(screen.getByText("Shared taste with Guadalajara's mainstream: 0.12")).toBeTruthy();
     expect(screen.getByText("dream pop")).toBeTruthy();
-    expect(screen.getByText("City mainstream = top artists in the city without the artist signal")).toBeTruthy();
+    expect(screen.getByText("Local acts: the city's most popular artists, ranked by taste fit with the headliner.")).toBeTruthy();
+    expect(screen.queryByText(/without the artist signal/)).toBeNull();
+  });
+  it("talent caption names the artist when known", () => {
+    render(<CardBody card={card("talent")} city="Guadalajara" artist="Lumen Vale" />);
+    expect(screen.getByText("Local acts: the city's most popular artists, ranked by taste fit with Lumen Vale.")).toBeTruthy();
   });
   it("local moment labels entity types", () => {
     render(<CardBody card={card("local_moment")} city="Guadalajara" />);

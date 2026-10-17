@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_SCORING_DISPLAY } from "./labels";
 import { LUMEN_VALE_SAMPLE, SAMPLE_BRIEF } from "./fixtures/lumenVale";
 import { boardReducer, initialBoard } from "./tourBoardReducer";
 import type { GatewayEvent } from "./types";
@@ -68,5 +69,16 @@ describe("boardReducer", () => {
   it("start records the sample set", () => {
     expect(boardReducer(initialBoard, { type: "start", brief: SAMPLE_BRIEF, source: "sample", sampleSet: "long" }).sampleSet).toBe("long");
     expect(boardReducer(initialBoard, { type: "start", brief: SAMPLE_BRIEF, source: "live" }).sampleSet).toBeUndefined();
+  });
+});
+
+describe("boardReducer scoring", () => {
+  it("stores the scoring config from the stream and clears it on a new run", () => {
+    const scoring = { ...DEFAULT_SCORING_DISPLAY, version: "calibrated-x" };
+    let s = run([{ type: "scoring", scoring }]);
+    expect(s.scoring).toEqual(scoring);
+    s = boardReducer(s, { type: "start", brief: SAMPLE_BRIEF, source: "live" });
+    expect(s.scoring).toBeNull();
+    expect(boardReducer(run([{ type: "scoring", scoring }]), { type: "reset" }).scoring).toBeNull();
   });
 });

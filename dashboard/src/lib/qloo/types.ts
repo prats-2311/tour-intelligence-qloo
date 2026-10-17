@@ -9,13 +9,27 @@ export type Score =
 export interface DataWarning { tool: string; kind: "error" | "partial" | "degraded" | "stale"; code?: string; message?: string }
 export type Verdict = "play" | "hidden_goldmine" | "de_risk" | "consider" | "skip" | "insufficient_data";
 export type ComponentName = "sponsor_fit" | "local_hooks" | "fan_concentration" | "venue_fit";
+export interface Thresholds {
+  playFan: number; playAct: number; goldmineFanMin: number; goldmineFanMax: number; goldmineAct: number;
+  deRiskFan: number; deRiskAct: number; considerWin: number;
+}
+/** The scoring config the gateway applied to a run (streamed once as the `scoring` event). */
+export interface ScoringConfig {
+  version: string;
+  weights: Record<ComponentName, number>;
+  affinityFloors: { sponsor_fit: number; local_hooks: number; venue_fit: number };
+  concentration: "raw" | "vs_uniform";
+  thresholds: Thresholds;
+}
 export interface Zone { label: string; lat: number; lon: number; affinity: number; index: number; share: number }
 export interface ScoredCity {
   id: string; name: string; country: string; lat: number; lon: number;
   fanHeat: Score;
-  activation: Score & { components: Partial<Record<ComponentName, number>> };
+  activation: Score & { components: Partial<Record<ComponentName, number>>; rawComponents?: Partial<Record<ComponentName, number>> };
   winnability: Score;
   verdict: Verdict;
+  /** Within 2 points of a verdict line (gateway-computed). */
+  closeCall?: boolean;
   zones: Zone[];
   warnings: DataWarning[];
 }
@@ -50,6 +64,7 @@ export interface ArtistProfile {
 export type StrategistToolStatus = "ok" | "empty" | "needs_input" | "partial" | "degraded" | "error" | "rejected";
 export type GatewayEvent =
   | { type: "resolve"; entity: { entityId: string; name: string } }
+  | { type: "scoring"; scoring: ScoringConfig }
   | ({ type: "artist_profile" } & ArtistProfile)
   | { type: "region_unavailable"; region: string; code: string; message: string }
   | { type: "needs_input"; field: string; candidates: Array<{ id: string; name: string; type?: string }>; summary: string }

@@ -365,7 +365,7 @@ export default function TourBoard() {
     <>
       <Sheet open={logOpen} onClose={() => setLogOpen(false)} title="Agent log"><AgentLog events={state.log} /></Sheet>
       <Sheet open={!!whyCity} onClose={() => setWhyId(null)} title={whyCity ? `${whyCity.name} — why this score?` : "Why this score?"}>
-        {whyCity && <WhyThisScore city={whyCity} />}
+        {whyCity && <WhyThisScore city={whyCity} scoring={state.scoring} />}
       </Sheet>
       <Sheet open={buildOpen} onClose={() => setBuildOpen(false)} title="Shortlist">
         <div className="flex flex-col gap-3">

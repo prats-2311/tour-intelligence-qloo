@@ -1,4 +1,4 @@
-import type { ArtistProfile, GatewayEvent, SampleSet, ScoredCity, Source, TourBrief } from "./types";
+import type { ArtistProfile, GatewayEvent, SampleSet, ScoredCity, ScoringConfig, Source, TourBrief } from "./types";
 
 export type BoardState = {
   status: "idle" | "streaming" | "needs_input" | "done" | "error" | "interrupted";
@@ -8,6 +8,8 @@ export type BoardState = {
   artist?: { entityId: string; name: string };
   profile?: ArtistProfile;
   cities: ScoredCity[];
+  /** The scoring config the gateway applied; null until the event arrives (sample data, older recordings). */
+  scoring: ScoringConfig | null;
   /** null = use defaultShortlist */
   shortlist: string[] | null;
   log: GatewayEvent[];
@@ -25,7 +27,7 @@ export type BoardAction =
   | { type: "shortlist"; ids: string[] }
   | { type: "reset" };
 
-export const initialBoard: BoardState = { status: "idle", source: "live", cities: [], shortlist: null, log: [], regionsEmpty: [], regionsUnavailable: [] };
+export const initialBoard: BoardState = { status: "idle", source: "live", cities: [], scoring: null, shortlist: null, log: [], regionsEmpty: [], regionsUnavailable: [] };
 
 export function boardReducer(state: BoardState, action: BoardAction): BoardState {
   switch (action.type) {
@@ -42,6 +44,7 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
       const log = [...state.log, e];
       switch (e.type) {
         case "resolve": return { ...state, log, artist: e.entity };
+        case "scoring": return { ...state, log, scoring: e.scoring };
         case "artist_profile": {
           const profile: ArtistProfile = { demographics: e.demographics, tags: e.tags, trends: e.trends, refs: e.refs, warnings: e.warnings };
           return { ...state, log, profile };

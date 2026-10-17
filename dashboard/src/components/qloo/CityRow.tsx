@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import type { Score, ScoredCity } from "@/lib/qloo/types";
 import { DataWarningBadge, warningLabel } from "./DataWarningBadge";
 import { VERDICT_LABEL } from "@/lib/qloo/labels";
+import { CloseCallChip } from "./CloseCallChip";
 import { VerdictChip } from "./VerdictChip";
 
 /** Column template shared with the desktop header row in TourBoard. */
@@ -29,7 +30,7 @@ export function CityRow({ city, selected, dimActivation, onOpen }: { city: Score
   const w = city.winnability.value;
   const num = (s: { value: number | null }) => (s.value === null ? "not enough data" : String(Math.round(s.value)));
   const warn = warningLabel(city.warnings);
-  const label = `${city.name}, ${city.country}: ${VERDICT_LABEL[city.verdict]}, winnability ${w === null ? "not available" : Math.round(w)}, fan heat ${num(city.fanHeat)}, activation ${num(city.activation)}${warn ? `, ${warn}` : ""}. Open score breakdown`;
+  const label = `${city.name}, ${city.country}: ${VERDICT_LABEL[city.verdict]}, winnability ${w === null ? "not available" : Math.round(w)}, fan heat ${num(city.fanHeat)}, activation ${num(city.activation)}${city.closeCall ? ", close call" : ""}${warn ? `, ${warn}` : ""}. Open score breakdown`;
   return (
     <motion.li
       id={`city-row-${city.id}`}
@@ -50,6 +51,7 @@ export function CityRow({ city, selected, dimActivation, onOpen }: { city: Score
         <span className="col-start-1 row-start-1 flex min-w-0 flex-wrap items-baseline gap-x-1.5 lg:flex-nowrap">
           <span className="font-title min-w-0 max-w-full truncate text-[16px] leading-tight text-canvas-text">{city.name}</span>
           <span className="shrink-0 text-[12px] font-medium text-canvas-muted">{city.country}</span>
+          {city.closeCall && <span className="basis-full lg:basis-auto"><CloseCallChip /></span>}
           {warn && <span className="basis-full lg:basis-auto"><DataWarningBadge warnings={city.warnings} /></span>}
         </span>
         <span className={`col-span-3 col-start-1 row-start-2 grid min-w-0 grid-cols-2 gap-3 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:grid-cols-1 lg:gap-1.5 ${dimActivation ? "[&_[data-testid=bar-activation]]:opacity-30" : ""}`}>

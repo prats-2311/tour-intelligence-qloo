@@ -1,20 +1,14 @@
-import { ACTIVATION_WEIGHTS, INTEGRITY_LINE, VERDICT_LABEL } from "@/lib/qloo/labels";
-import type { ScoredCity, Verdict } from "@/lib/qloo/types";
+import { CLOSE_CALL_NOTE, DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE, VERDICT_LABEL, ruleLines, weightRows } from "@/lib/qloo/labels";
+import type { ScoredCity, ScoringConfig } from "@/lib/qloo/types";
+import { CloseCallChip } from "./CloseCallChip";
 import { DataWarningBadge } from "./DataWarningBadge";
 import { DualBars } from "./DualBars";
 import { VerdictChip } from "./VerdictChip";
 
-/** The gateway's verdict rules, shown for transparency (display only — never recomputed here). */
-const RULES: Array<{ verdict: Verdict; rule: string }> = [
-  { verdict: "play", rule: "fan ≥70 & activation ≥60" },
-  { verdict: "hidden_goldmine", rule: "45≤fan<70 & activation ≥75" },
-  { verdict: "de_risk", rule: "fan ≥70 & activation <45" },
-  { verdict: "consider", rule: "winnability ≥55" },
-  { verdict: "skip", rule: "otherwise" },
-  { verdict: "insufficient_data", rule: "when inputs are missing" },
-];
-
-export function WhyThisScore({ city }: { city: ScoredCity }) {
+/** Rules, weights and the floor note come from the scoring config the gateway applied (display only — never recomputed here). */
+export function WhyThisScore({ city, scoring }: { city: ScoredCity; scoring?: ScoringConfig | null }) {
+  const cfg = scoring ?? DEFAULT_SCORING_DISPLAY;
+  const floored = Object.values(cfg.affinityFloors).some((f) => f > 0);
   const w = city.winnability.value;
   const comps = city.activation.components;
   const seen = new Set<string>();
@@ -26,35 +20,46 @@ export function WhyThisScore({ city }: { city: ScoredCity }) {
   });
   return (
     <div className="flex flex-col gap-4 text-[14px] text-canvas-text">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <VerdictChip verdict={city.verdict} size="md" />
+        {city.closeCall && <CloseCallChip />}
         <span className="font-mono text-[24px] font-bold tabular">{w === null ? "—" : Math.round(w)}</span>
         <span className="text-[13px] text-canvas-muted">{w === null ? "Not enough data to score" : "winnability"}</span>
       </div>
-      <DualBars fanHeat={city.fanHeat} activation={city.activation} />
+      {city.closeCall && <p className="text-[13px] text-canvas-muted">{CLOSE_CALL_NOTE}</p>}
+      <DualBars fanHeat={city.fanHeat} activation={city.activation} thresholds={cfg.thresholds} />
       <p className="font-mono text-[13px] text-canvas-muted">winnability = 0.5 × fan heat + 0.5 × activation</p>
       <table className="w-full text-left text-[13px]">
         <thead className="text-canvas-muted">
           <tr><th className="py-1 font-medium">Component</th><th className="py-1 text-right font-medium">Weight</th><th className="py-1 text-right font-medium">Value</th></tr>
         </thead>
         <tbody>
-          {ACTIVATION_WEIGHTS.map(({ key, label, weight }) => {
+          {weightRows(cfg).map(({ key, label, weight, dropped }) => {
             const v = comps[key];
             return (
               <tr key={key} className="border-t border-canvas-line">
                 <td className="py-1.5">{label}</td>
                 <td className="py-1.5 text-right font-mono tabular">{weight}</td>
-                <td className="py-1.5 text-right font-mono tabular">{typeof v === "number" && Number.isFinite(v) ? v.toFixed(2) : "—"}</td>
+                {dropped ? (
+                  <td className="py-1.5 text-right text-[12px] text-canvas-muted">dropped — no spread in calibration</td>
+                ) : (
+                  <td className="py-1.5 text-right font-mono tabular">{typeof v === "number" && Number.isFinite(v) ? v.toFixed(2) : "—"}</td>
+                )}
               </tr>
             );
           })}
         </tbody>
       </table>
       <p className="text-[12px] text-canvas-muted">Weights are renormalised over the components that returned data.</p>
+      {floored && (
+        <p className="text-[13px] text-canvas-muted">
+          Sponsor, hook and venue affinities are rescaled from a calibrated floor (0) to 1 (100), because Qloo's top recommendations all score near 1.
+        </p>
+      )}
       <div>
         <h3 className="mb-1 text-[13px] font-medium text-canvas-muted">Verdict rules</h3>
         <ul aria-label="Verdict rules" className="flex flex-col gap-0.5 text-[13px]">
-          {RULES.map(({ verdict, rule }) => (
+          {ruleLines(cfg.thresholds).map(({ verdict, rule }) => (
             <li key={verdict} className={`flex flex-wrap gap-x-2 ${verdict === city.verdict ? "text-canvas-text" : "text-canvas-muted"}`}>
               <span className="font-medium">{VERDICT_LABEL[verdict]}:</span><span className="tabular">{rule}</span>
             </li>

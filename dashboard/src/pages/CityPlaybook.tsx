@@ -177,7 +177,7 @@ export default function CityPlaybook() {
         onAudit={() => setAuditOpen(true)}
         hasEvidence={card.status === "ok"}
       >
-        <CardBody card={card} merch={merch} city={shownCity.name} />
+        <CardBody card={card} merch={merch} city={shownCity.name} artist={artist?.name} />
       </PlaybookCard>
     );
   };
@@ -257,7 +257,7 @@ export default function CityPlaybook() {
               <span className="text-[13px] text-canvas-muted">/100</span>
             </span>
           </div>
-          <DualBars fanHeat={shownCity.fanHeat} activation={shownCity.activation} />
+          <DualBars fanHeat={shownCity.fanHeat} activation={shownCity.activation} thresholds={state.scoring?.thresholds} />
           {!isDesktop && whyBtn}
           <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
           <AdvanceSheet rows={[
@@ -318,7 +318,7 @@ export default function CityPlaybook() {
         <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 mt-4 flex bg-canvas-raised px-3 py-2">{addToTour}</div>
       )}
 
-      <Sheet open={whyOpen} onClose={() => setWhyOpen(false)} title={`${shownCity.name} — why this score?`}><WhyThisScore city={shownCity} /></Sheet>
+      <Sheet open={whyOpen} onClose={() => setWhyOpen(false)} title={`${shownCity.name} — why this score?`}><WhyThisScore city={shownCity} scoring={state.scoring} /></Sheet>
       <Sheet open={auditOpen} onClose={() => setAuditOpen(false)} title="Removed claims"><ClaimsAudit claims={audit} /></Sheet>
       <Sheet open={logOpen} onClose={() => setLogOpen(false)} title="Agent log"><AgentLog events={pb.log} /></Sheet>
     </div>

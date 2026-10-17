@@ -1,4 +1,5 @@
-import type { Score } from "@/lib/qloo/types";
+import { DEFAULT_SCORING_DISPLAY } from "@/lib/qloo/labels";
+import type { Score, Thresholds } from "@/lib/qloo/types";
 
 const Tick = ({ at }: { at: number }) => <span className="absolute top-[-2px] h-[10px] w-px bg-canvas-muted" style={{ left: `${at}%` }} aria-hidden />;
 
@@ -24,11 +25,12 @@ function Bar({ label, score, color, ticks, testId }: { label: string; score: Sco
   );
 }
 
-export function DualBars({ fanHeat, activation }: { fanHeat: Score; activation: Score }) {
+export function DualBars({ fanHeat, activation, thresholds }: { fanHeat: Score; activation: Score; thresholds?: Thresholds }) {
+  const t = thresholds ?? DEFAULT_SCORING_DISPLAY.thresholds;
   return (
     <div className="flex flex-col gap-2">
-      <Bar label="Fan heat" score={fanHeat} color="var(--color-bone)" ticks={[45, 70]} testId="bar-fanheat" />
-      <Bar label="Activation" score={activation} color="var(--color-gold)" ticks={[45, 60, 75]} testId="bar-activation" />
+      <Bar label="Fan heat" score={fanHeat} color="var(--color-bone)" ticks={[t.goldmineFanMin, t.playFan]} testId="bar-fanheat" />
+      <Bar label="Activation" score={activation} color="var(--color-gold)" ticks={[t.deRiskAct, t.playAct, t.goldmineAct]} testId="bar-activation" />
     </div>
   );
 }

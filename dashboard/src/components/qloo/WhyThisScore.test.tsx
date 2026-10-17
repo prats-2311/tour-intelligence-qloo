@@ -1,0 +1,63 @@
+// @vitest-environment jsdom
+import { render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
+import { DEFAULT_SCORING_DISPLAY } from "@/lib/qloo/labels";
+import { WhyThisScore } from "./WhyThisScore";
+import { DualBars } from "./DualBars";
+import { CityRow } from "./CityRow";
+
+const city = SAMPLE_CITIES[2]!;
+
+beforeEach(() => { vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} })); });
+afterEach(() => { vi.unstubAllGlobals(); });
+
+describe("WhyThisScore scoring display", () => {
+  it("shows the applied thresholds, a dropped component and the floor note", () => {
+    const scoring = {
+      ...DEFAULT_SCORING_DISPLAY, version: "calibrated-x",
+      affinityFloors: { sponsor_fit: 0.9, local_hooks: 0.92, venue_fit: 0.88 },
+      weights: { ...DEFAULT_SCORING_DISPLAY.weights, fan_concentration: 0 },
+      thresholds: { ...DEFAULT_SCORING_DISPLAY.thresholds, goldmineAct: 41 },
+    };
+    render(<WhyThisScore city={city} scoring={scoring} />);
+    expect(screen.getByText("45≤fan<70 & activation ≥41")).toBeTruthy();
+    expect(screen.getByText(/dropped — no spread in calibration/i)).toBeTruthy();
+    expect(screen.getByText(/rescaled from a calibrated floor/i)).toBeTruthy();
+  });
+  it("falls back to the default rules without a scoring config (sample, old recordings)", () => {
+    render(<WhyThisScore city={city} />);
+    expect(screen.getByText("45≤fan<70 & activation ≥75")).toBeTruthy();
+    expect(screen.queryByText(/rescaled from a calibrated floor/i)).toBeNull();
+  });
+  it("close call: chip with text plus the borderline line; absent otherwise", () => {
+    const { unmount } = render(<WhyThisScore city={{ ...city, closeCall: true }} />);
+    expect(screen.getByText("Close call")).toBeTruthy();
+    expect(screen.getByText("Within 2 points of a verdict line — treat as borderline.")).toBeTruthy();
+    unmount();
+    render(<WhyThisScore city={{ ...city, closeCall: false }} />);
+    expect(screen.queryByText("Close call")).toBeNull();
+    expect(screen.queryByText(/treat as borderline/)).toBeNull();
+  });
+});
+
+describe("DualBars thresholds", () => {
+  it("places ticks from injected thresholds", () => {
+    const t = { ...DEFAULT_SCORING_DISPLAY.thresholds, deRiskAct: 13, playAct: 28, goldmineAct: 38, goldmineFanMin: 40, playFan: 65 };
+    const { container } = render(<DualBars fanHeat={city.fanHeat} activation={city.activation} thresholds={t} />);
+    const lefts = [...container.querySelectorAll<HTMLElement>("span[aria-hidden][style*='left']")].map((e) => e.style.left);
+    expect(lefts).toEqual(["40%", "65%", "13%", "28%", "38%"]);
+  });
+});
+
+describe("CityRow close call", () => {
+  it("shows a Close call chip and mentions it in the accessible name", () => {
+    render(<ul><CityRow city={{ ...city, closeCall: true }} onOpen={() => {}} /></ul>);
+    expect(screen.getByText("Close call")).toBeTruthy();
+    expect(screen.getByRole("button").getAttribute("aria-label")).toMatch(/close call/i);
+  });
+  it("no chip without the flag", () => {
+    render(<ul><CityRow city={city} onOpen={() => {}} /></ul>);
+    expect(screen.queryByText("Close call")).toBeNull();
+  });
+});
