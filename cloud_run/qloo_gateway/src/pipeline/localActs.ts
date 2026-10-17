@@ -1,4 +1,5 @@
 import { BudgetExceededError } from "../budget.js";
+import { normaliseName } from "../claims/verify.js";
 import { cacheKey, type Cache } from "../cache.js";
 import { reserveAttempt, type CeilingDeps } from "../narrative/ceiling.js";
 import { generateJson, type GenerateFn } from "../narrative/gemini.js";
@@ -57,4 +58,13 @@ export async function suggestLocalActs(
     if (!(err instanceof BudgetExceededError)) console.warn(`[local-acts] unavailable: ${String((err as Error)?.message ?? err)}`);
     return null;
   }
+}
+
+const fold = (s: string) => normaliseName(s.replace(/&/g, " and "));
+
+/** A suggestion is real only if a describe answered "ok" with an entity of the same name (diacritics, case, punctuation and "&" folded) among its first 3 results. */
+export function matchSuggestion<E extends { name: string }>(name: string, status: string, entities: E[]): E | undefined {
+  if (status !== "ok") return undefined;
+  const want = fold(name);
+  return want === "" ? undefined : entities.slice(0, 3).find((e) => fold(e.name) === want);
 }

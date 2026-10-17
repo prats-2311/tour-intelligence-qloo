@@ -21,7 +21,7 @@ export function Talent({ card, city, artist }: { card: PlaybookCard; city: strin
       </div>
       <Rows>{card.items.map((it, i) => <Row key={i} name={str(it.name)} sub={SOURCE_LABEL[str(it.source)]} aside={fit(num(it.affinity))} />)}</Rows>
       <Caption>{`Local acts: candidates suggested by Gemini or popular in the city, each found in Qloo and ranked by taste fit with ${artist || "the headliner"}.`}</Caption>
-      {unresolved > 0 && <p className="mt-1 text-[13px] text-canvas-muted">{`${unresolved} suggestions weren't found in Qloo and are not shown.`}</p>}
+      {unresolved > 0 && <p className="mt-1 text-[13px] text-canvas-muted">{unresolved === 1 ? "1 suggestion wasn't found in Qloo and is not shown." : `${unresolved} suggestions weren't found in Qloo and are not shown.`}</p>}
     </>
   );
 }

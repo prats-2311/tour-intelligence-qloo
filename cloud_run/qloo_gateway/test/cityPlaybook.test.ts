@@ -313,7 +313,31 @@ describe("runCityPlaybook", () => {
       const events = await collect(runCityPlaybook(input, { qloo: qloo((t, a) => (t === "qloo_rank" && a.option_type === "artist" ? empty : hybrid(t, a))), cities: CITIES, ...sug("Drake") }));
       const t = talentOf(events);
       expect(t.items.map((i) => [i.name, i.source])).toEqual([["Drake", "suggested"], ["Proxy 1", "city_popular"], ["Proxy 2", "city_popular"]]);
-      expect(t.warnings).toContainEqual({ tool: "qloo_rank", kind: "partial", message: "taste ranking unavailable — showing the city's most popular artists" });
+      expect(t.warnings).toContainEqual({ tool: "qloo_rank", kind: "partial", message: "taste ranking unavailable — showing suggested and popular artists unranked" });
+    });
+    it("a suggestion counts only if Qloo resolves the same name", async () => {
+      const results = (...names: string[]): QlooEnvelope => ({ operation: "describe", status: "ok", results: names.map((n, i) => ({ entity_id: `D${i}-${n}`, name: n })) });
+      const route = (t: string, a: Record<string, unknown>): QlooEnvelope => {
+        if (t !== "qloo_describe") return hybrid(t, a);
+        switch (a.entity) {
+          case "Drake": return results("Drake Bell");
+          case "Mana": return results("Maná");
+          case "Anitta": return results("Anitta Fan Club", "Anitta");
+          case "Bad & Co": return results("Bad and Co.");
+          case "Needy": return { operation: "describe", status: "needs_input", results: [{ entity_id: "N1", name: "Needy" }] } as QlooEnvelope;
+          default: return hybrid(t, a);
+        }
+      };
+      const t = talentOf(await collect(runCityPlaybook(input, { qloo: qloo(route), cities: CITIES, ...sug("Drake", "Mana", "Anitta", "Bad & Co", "Needy") })));
+      const ids = t.items.map((i) => i.entityId);
+      expect(ids).toEqual(expect.arrayContaining(["D0-Maná", "D1-Anitta", "D0-Bad and Co."]));
+      expect(JSON.stringify(ids)).not.toMatch(/Drake|Fan Club|N1/);
+      expect(t.summary.suggestionsUnresolved).toBe(2);
+    });
+    it("rank failure with no suggestions keeps the 3b warning wording", async () => {
+      const empty = { operation: "rank", status: "empty", results: [] } as QlooEnvelope;
+      const t = talentOf(await collect(runCityPlaybook(input, { qloo: qloo((tool, a) => (tool === "qloo_rank" && a.option_type === "artist" ? empty : happy(tool, a))), cities: CITIES })));
+      expect(t.warnings.map((w) => w.message)).toContain("taste ranking unavailable — showing the city's most popular artists");
     });
     it("sharedTaste still compares the first 5 of the city pool, not the suggestions", async () => {
       const cmps: Array<Record<string, unknown>> = [];

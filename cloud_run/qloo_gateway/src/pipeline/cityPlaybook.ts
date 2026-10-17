@@ -4,7 +4,7 @@ import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { coBillLift } from "../scoring/winnability.js";
 import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narrative, PlaybookCard } from "../types.js";
 import { activationInputs, Aborted, BudgetStop, trackedCall } from "./tourBoard.js";
-import { LOCAL_SUGGESTIONS } from "./localActs.js";
+import { LOCAL_SUGGESTIONS, matchSuggestion } from "./localActs.js";
 import { cityPopularityArgs, LOCAL_ACT_POOL, localActRankArgs } from "./recArgs.js";
 
 export type { PlaybookCard } from "../types.js";
@@ -93,8 +93,8 @@ export async function* runCityPlaybook(
     if (fatal) throw fatal;
     let unresolved = 0;
     const resolved: Array<ReturnType<typeof extractEntities>[number]> = [];
-    for (const r of resolvedS) {
-      const top = r.status === "fulfilled" ? extractEntities(r.value.envelope)[0] : undefined;
+    for (const [i, r] of resolvedS.entries()) {
+      const top = r.status === "fulfilled" ? matchSuggestion(suggested![i]!, r.value.envelope.status, extractEntities(r.value.envelope)) : undefined;
       if (top) resolved.push(top); else unresolved += 1;
       if (r.status === "fulfilled") talentRefs.push(ref("qloo_describe", r.value));
     }
@@ -114,7 +114,7 @@ export async function* runCityPlaybook(
         localActs = rankedActs.slice(0, 5);
         talentWarnings.push(...warningsFor("qloo_rank", ranked));
       } else {
-        talentWarnings.push({ tool: "qloo_rank", kind: "partial", message: "taste ranking unavailable — showing the city's most popular artists" });
+        talentWarnings.push({ tool: "qloo_rank", kind: "partial", message: resolved.length > 0 ? "taste ranking unavailable — showing suggested and popular artists unranked" : "taste ranking unavailable — showing the city's most popular artists" });
       }
     }
     if (proxies.length > 0) {

@@ -112,9 +112,9 @@ describe("playbook cards", () => {
     render(<CardBody card={base} city="Toronto" />);
     expect(screen.queryByText(/Suggested · in Qloo|Popular in city/)).toBeNull();
   });
-  it("talent unresolved line uses the brief's wording for any count", () => {
+  it("talent unresolved line is singular for one suggestion", () => {
     render(<CardBody card={{ ...card("talent"), summary: { sharedTaste: null, sharedTags: [], suggestionsUnresolved: 1 } }} city="Toronto" />);
-    expect(screen.getByText("1 suggestions weren't found in Qloo and are not shown.")).toBeTruthy();
+    expect(screen.getByText("1 suggestion wasn't found in Qloo and is not shown.")).toBeTruthy();
   });
   it("local moment labels entity types", () => {
     render(<CardBody card={card("local_moment")} city="Guadalajara" />);
