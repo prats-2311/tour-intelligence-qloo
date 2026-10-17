@@ -16,8 +16,14 @@ export function cacheKey(tool: string, args: Record<string, unknown>): string {
   return createHash("sha256").update(JSON.stringify({ tool, args: normalise(args) })).digest("hex");
 }
 
+/** Days a non-trends response stays fresh: QLOO_CACHE_TTL_DAYS, default 45 so the cache outlasts the judging window. */
+function cacheTtlDays(): number {
+  const n = Number(process.env.QLOO_CACHE_TTL_DAYS);
+  return Number.isFinite(n) && n > 0 ? n : 45;
+}
+
 export function ttlMs(tool: string): number {
-  return tool === "qloo_trends" ? DAY : 7 * DAY;
+  return tool === "qloo_trends" ? DAY : cacheTtlDays() * DAY;
 }
 
 export type CacheHit = { tool: string; envelope: QlooEnvelope; createdAt: number; stale: boolean };

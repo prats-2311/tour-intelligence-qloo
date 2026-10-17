@@ -79,7 +79,7 @@ describe("resilientCall", () => {
     let t = 0;
     const cache = new MemoryCache(() => t);
     await cache.put(cacheKey("qloo_describe", { entity: "x" }), "qloo_describe", ok);
-    t = 8 * 86_400_000;
+    t = 46 * 86_400_000;
     const mcp = { async callTool() { return fatal; } };
     const caller = createQlooCaller({ mcp, cache, budget: new BudgetGuard({ perSession: 9, perDay: 9, now: () => t }), sleep: async () => {} });
     const r = await caller.call("qloo_describe", { entity: "x" }, "s");

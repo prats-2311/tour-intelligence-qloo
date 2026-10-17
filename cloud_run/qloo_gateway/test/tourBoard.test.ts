@@ -91,10 +91,22 @@ describe("runTourBoard", () => {
     expect(log.length).toBe(atAbort);
   });
 
-  it("computes the trends window as the 90 days ending today", async () => {
+  it("ends the trends window on the Monday of the week so the cache key is stable for a week", async () => {
+    const seen: Array<Record<string, unknown>> = [];
+    const thursday = { ...brief, today: "2026-10-22" };
+    await collect(runTourBoard(thursday, { qloo: fakeQloo((t, a) => { if (t === "qloo_trends") seen.push(a); return happy(t, a); }), cities: CITIES }));
+    expect(seen[0]).toMatchObject({ start_date: "2026-07-21", end_date: "2026-10-19" });
+    for (const today of ["2026-10-19", "2026-10-25"]) {
+      const s2: Array<Record<string, unknown>> = [];
+      await collect(runTourBoard({ ...brief, today }, { qloo: fakeQloo((t, a) => { if (t === "qloo_trends") s2.push(a); return happy(t, a); }), cities: CITIES }));
+      expect(s2[0]).toMatchObject({ start_date: "2026-07-21", end_date: "2026-10-19" });
+    }
+  });
+
+  it("computes the trends window as the 90 days ending on the week's Monday", async () => {
     const seen: Array<Record<string, unknown>> = [];
     await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => { if (t === "qloo_trends") seen.push(a); return happy(t, a); }), cities: CITIES }));
-    expect(seen[0]).toMatchObject({ start_date: "2026-07-22", end_date: "2026-10-20", entity_type: "artist" });
+    expect(seen[0]).toMatchObject({ start_date: "2026-07-21", end_date: "2026-10-19", entity_type: "artist" });
   });
 
   it("artist_profile.trends is the point array from series[0].points; an empty live series is []", async () => {

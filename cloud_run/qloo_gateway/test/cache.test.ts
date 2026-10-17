@@ -29,9 +29,18 @@ describe("cacheKey", () => {
 });
 
 describe("ttlMs", () => {
-  it("is 1 day for trends, 7 days otherwise", () => {
-    expect(ttlMs("qloo_trends")).toBe(DAY);
-    expect(ttlMs("qloo_recommend")).toBe(7 * DAY);
+  const withEnv = (v: string | undefined, fn: () => void) => {
+    const prev = process.env.QLOO_CACHE_TTL_DAYS;
+    if (v === undefined) delete process.env.QLOO_CACHE_TTL_DAYS; else process.env.QLOO_CACHE_TTL_DAYS = v;
+    try { fn(); } finally { if (prev === undefined) delete process.env.QLOO_CACHE_TTL_DAYS; else process.env.QLOO_CACHE_TTL_DAYS = prev; }
+  };
+  it("is 1 day for trends, QLOO_CACHE_TTL_DAYS (default 45) otherwise", () => {
+    withEnv("45", () => expect(ttlMs("qloo_recommend")).toBe(45 * DAY));
+    withEnv(undefined, () => { expect(ttlMs("qloo_recommend")).toBe(45 * DAY); expect(ttlMs("qloo_trends")).toBe(DAY); });
+    withEnv("10", () => expect(ttlMs("qloo_recommend")).toBe(10 * DAY));
+  });
+  it("falls back to 45 days for an invalid env value", () => {
+    for (const v of ["abc", "0", "-3"]) withEnv(v, () => expect(ttlMs("qloo_recommend")).toBe(45 * DAY));
   });
 });
 
@@ -80,7 +89,7 @@ describe("FirestoreCache", () => {
     expect((await c.get("k"))?.envelope).toEqual(env);
     const row = docs.get("k")!;
     expect(row).toMatchObject({ tool: "qloo_describe", createdAtMs: 1000 });
-    expect((row.expireAt as Date).getTime()).toBe(1000 + 7 * DAY + 7 * DAY);
+    expect((row.expireAt as Date).getTime()).toBe(1000 + 45 * DAY + 7 * DAY);
   });
   it("returns null for missing docs and hides stale rows unless allowStale", async () => {
     let t = 0;

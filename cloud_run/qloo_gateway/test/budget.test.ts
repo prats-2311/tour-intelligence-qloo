@@ -1,5 +1,20 @@
-import { describe, expect, it } from "vitest";
-import { BudgetExceededError, BudgetGuard } from "../src/budget.js";
+import { describe, expect, it, vi } from "vitest";
+import { BudgetExceededError, BudgetGuard, FirestoreDailyCountStore, type DailyCountStore } from "../src/budget.js";
+import type { TxDb } from "../src/web/usage.js";
+
+function fakeDb(): TxDb & { docs: Map<string, Record<string, unknown>> } {
+  const docs = new Map<string, Record<string, unknown>>();
+  return {
+    docs,
+    doc: (path: string) => ({ path }),
+    async runTransaction(fn) {
+      return fn({
+        async get(ref) { const d = docs.get((ref as { path: string }).path); return { exists: !!d, data: () => d }; },
+        set(ref, data) { docs.set((ref as { path: string }).path, data); },
+      });
+    },
+  };
+}
 
 describe("BudgetGuard", () => {
   it("allows up to perSession calls per session", () => {
@@ -69,6 +84,48 @@ describe("BudgetGuard", () => {
       const d = new BudgetGuard({ perSession: 1000, perDay: 1000, now: () => 0 });
       for (let i = 0; i < 400; i++) d.reserve(`mcp-public-${i}`);
       expect(() => d.reserve("mcp-public-x")).toThrow(BudgetExceededError);
+    });
+  });
+  describe("persisted daily count", () => {
+    const t = Date.UTC(2026, 9, 20, 12);
+    it("two guards sharing one Firestore stop at the ceiling together", async () => {
+      const db = fakeDb();
+      const mk = () => new BudgetGuard({ perSession: 100, perDay: 3, now: () => t, dailyStore: new FirestoreDailyCountStore({ db }) });
+      const a = mk(), b = mk();
+      await a.reserveShared("s1"); await b.reserveShared("s2"); await a.reserveShared("s1");
+      await expect(b.reserveShared("s3")).rejects.toMatchObject({ scope: "daily" });
+      expect(db.docs.get("qloo_usage/2026-10-20")).toEqual({ count: 3 });
+    });
+    it("public sessions still count toward the global ceiling", async () => {
+      const db = fakeDb();
+      const g = new BudgetGuard({ perSession: 100, perDay: 2, publicPerDay: 5, now: () => t, dailyStore: new FirestoreDailyCountStore({ db }) });
+      await g.reserveShared("mcp-public-a"); await g.reserveShared("mcp-public-b");
+      await expect(g.reserveShared("dash-1")).rejects.toMatchObject({ scope: "daily" });
+    });
+    it("a refused reservation is released from the in-memory counts", async () => {
+      const db = fakeDb();
+      db.docs.set("qloo_usage/2026-10-20", { count: 1 });
+      const g = new BudgetGuard({ perSession: 100, perDay: 1, now: () => t, dailyStore: new FirestoreDailyCountStore({ db }) });
+      await expect(g.reserveShared("s")).rejects.toBeInstanceOf(BudgetExceededError);
+      expect(g.remaining("s").session).toBe(100);
+    });
+    it("on a Firestore error it logs and falls back to the in-memory count", async () => {
+      const failing: DailyCountStore = { tryIncrement: async () => { throw new Error("firestore down"); } };
+      const g = new BudgetGuard({ perSession: 100, perDay: 2, now: () => t, dailyStore: failing });
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      await g.reserveShared("s"); await g.reserveShared("s");
+      await expect(g.reserveShared("s")).rejects.toMatchObject({ scope: "daily" });
+      expect(warn).toHaveBeenCalled();
+      warn.mockRestore();
+    });
+    it("a new UTC day uses a new doc", async () => {
+      const db = fakeDb();
+      let now = t;
+      const g = new BudgetGuard({ perSession: 100, perDay: 1, now: () => now, dailyStore: new FirestoreDailyCountStore({ db }) });
+      await g.reserveShared("s");
+      now = Date.UTC(2026, 9, 21, 1);
+      await g.reserveShared("s");
+      expect([...db.docs.keys()].sort()).toEqual(["qloo_usage/2026-10-20", "qloo_usage/2026-10-21"]);
     });
   });
 });

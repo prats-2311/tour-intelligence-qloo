@@ -63,17 +63,28 @@ export function createQlooCaller(deps: {
       const existing = inflight.get(key);
       if (existing) return existing;
 
+      const refused = (err: unknown) => {
+        if (err instanceof BudgetExceededError) {
+          const recovery = err.scope === "session" ? "Session limit reached — try the showcase tour." : err.scope === "public" ? "Public demo limit reached for today — try again tomorrow." : "Daily limit reached — try the showcase tour.";
+          return { envelope: { operation: valid.name.replace(/^qloo_/, ""), status: "error" as const, summary: recovery, error: { code: "BUDGET", retryable: false, recovery } }, cacheKey: key, cached: false, stale: false };
+        }
+        throw err;
+      };
       try {
         deps.budget.reserve(sessionId);
       } catch (err) {
-        if (err instanceof BudgetExceededError) {
-          const recovery = err.scope === "session" ? "Session limit reached — try the showcase tour." : err.scope === "public" ? "Public demo limit reached for today — try again tomorrow." : "Daily limit reached — try the showcase tour.";
-          return { envelope: { operation: valid.name.replace(/^qloo_/, ""), status: "error", summary: recovery, error: { code: "BUDGET", retryable: false, recovery } }, cacheKey: key, cached: false, stale: false };
-        }
-        throw err;
+        return refused(err);
       }
 
-      const promise = paidCall(valid.name, valid.args, key).finally(() => inflight.delete(key));
+      // The shared daily count is persisted before the paid call; registered in inflight before the first await so duplicates join it.
+      const promise = (async () => {
+        try {
+          await deps.budget.persistDaily(sessionId);
+        } catch (err) {
+          return refused(err);
+        }
+        return paidCall(valid.name, valid.args, key);
+      })().finally(() => inflight.delete(key));
       inflight.set(key, promise);
       return promise;
     },

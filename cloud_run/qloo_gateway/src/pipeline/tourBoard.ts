@@ -168,7 +168,10 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
     yield { type: "scoring", scoring: SCORING };
     const signalArtist = entityId; // harness accepts Qloo UUIDs as entity inputs
 
-    const end = new Date(`${brief.today}T00:00:00Z`);
+    // Window ends on the Monday of the week so the cache key is stable for 7 days: a cached board costs at most one trends call a week.
+    const today = new Date(`${brief.today}T00:00:00Z`);
+    const end = new Date(today.getTime() - ((today.getUTCDay() + 6) % 7) * 86_400_000);
+    const endDate = end.toISOString().slice(0, 10);
     const start = new Date(end.getTime() - 90 * 86_400_000).toISOString().slice(0, 10);
     let demo!: CallResult, tags!: CallResult, trends!: CallResult;
     let heatCalls!: Array<{ region: string; r: CallResult }>;
@@ -176,7 +179,7 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
       [demo, tags, trends, heatCalls] = await settleAll([
         call(deps, brief.sessionId, "qloo_audience_demographics", { entity: signalArtist, entity_type: "artist" }, events),
         call(deps, brief.sessionId, "qloo_entity_tags", { entities: [signalArtist], entity_type: "artist", limit: 10 }, events),
-        call(deps, brief.sessionId, "qloo_trends", { entities: [signalArtist], entity_type: "artist", start_date: start, end_date: brief.today }, events),
+        call(deps, brief.sessionId, "qloo_trends", { entities: [signalArtist], entity_type: "artist", start_date: start, end_date: endDate }, events),
         settleAll(brief.regions.map(async (region) => ({
           region, r: await call(deps, brief.sessionId, "qloo_where_popular", { entity: signalArtist, entity_type: "artist", within: region, limit: 20 }, events),
         }))),

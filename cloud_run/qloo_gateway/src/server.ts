@@ -1,5 +1,5 @@
 import { Firestore } from "@google-cloud/firestore";
-import { BudgetGuard, SESSION_QLOO_BUDGET } from "./budget.js";
+import { BudgetGuard, FirestoreDailyCountStore, SESSION_QLOO_BUDGET } from "./budget.js";
 import { FirestoreCache, MemoryCache, TieredCache } from "./cache.js";
 import { loadCities } from "./geo/cities.js";
 import { createApp } from "./http/app.js";
@@ -25,7 +25,9 @@ const cache = process.env.QLOO_CACHE_BACKEND === "firestore"
   : l1;
 const ceiling = Number(process.env.QLOO_DAILY_CEILING);
 const publicCeiling = Number(process.env.QLOO_PUBLIC_DAILY_CEILING);
+// Per-session and public counts stay in memory; the global daily count is persisted (qloo_usage/<YYYY-MM-DD>) so restarts and extra instances share it.
 const budget = new BudgetGuard({
+  ...(process.env.QLOO_USAGE_BACKEND === "firestore" ? { dailyStore: new FirestoreDailyCountStore({ db: new Firestore() }) } : {}),
   perSession: SESSION_QLOO_BUDGET, perDay: Number.isFinite(ceiling) && ceiling > 0 ? ceiling : 2000,
   ...(Number.isFinite(publicCeiling) && publicCeiling > 0 ? { publicPerDay: publicCeiling } : {}),
 });
