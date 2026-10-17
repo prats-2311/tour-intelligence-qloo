@@ -5,7 +5,6 @@ import { recordedText, SAMPLE_TEXT } from "./labels";
 import { cleanEvents, parseShowcase, proofFor, SHOWCASE, showcaseBannerText } from "./showcase";
 import type { GatewayEvent, ScoredCity } from "./types";
 
-vi.mock("./fixtures/showcase.json", async () => ({ default: (await import("@/test/placeholderShowcase")).PLACEHOLDER_SHOWCASE }));
 
 const collect = async (g: AsyncGenerator<GatewayEvent>) => { const out: GatewayEvent[] = []; for await (const e of g) out.push(e); return out; };
 const c = (id: string, fan: number, win: number | null): ScoredCity => ({

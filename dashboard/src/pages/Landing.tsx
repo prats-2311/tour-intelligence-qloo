@@ -15,21 +15,24 @@ import { useIsDesktop } from "@/lib/useMediaQuery";
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
 const GDL = SAMPLE_CITIES[2]!;
-// A real recording drives the card from its own data; the committed placeholder keeps the Guadalajara sample card.
-const RECORDED = SHOWCASE.recordedAt !== null;
-const PREVIEW_CITIES = (RECORDED ? showcaseCities() : SAMPLE_CITIES).filter((c) => c.verdict !== "insufficient_data");
-const SAMPLE_LINE = (): string => {
-  const rank = (mode: "density" | "winnability") => sortCities(PREVIEW_CITIES, mode).findIndex((c) => c.id === GDL.id) + 1;
+// The recording is fetched at boot and swaps SHOWCASE, so everything derived from it is a function read at render time, never a module constant.
+// A real recording drives the card from its own data; the placeholder keeps the Guadalajara sample card.
+const isRecorded = (): boolean => SHOWCASE.recordedAt !== null;
+const previewCities = (): ScoredCity[] => (isRecorded() ? showcaseCities() : SAMPLE_CITIES).filter((c) => c.verdict !== "insufficient_data");
+const sampleLine = (): string => {
+  const cities = previewCities();
+  const rank = (mode: "density" | "winnability") => sortCities(cities, mode).findIndex((c) => c.id === GDL.id) + 1;
   return `Ranked ${ordinal(rank("density"))} on fan density alone. ${ordinal(rank("winnability"))} on winnability.`;
 };
 // The recording's own scoring config (when it has one) drives the hero bars' ticks; otherwise the bars keep the default thresholds.
-const RECORDED_THRESHOLDS = SHOWCASE.boardEvents.find((e) => e.type === "scoring")?.scoring?.thresholds;
+const recordedThresholds = () => SHOWCASE.boardEvents.find((e) => e.type === "scoring")?.scoring?.thresholds;
 const noop = () => {};
 const CTA = "flex min-h-[52px] items-center justify-center rounded-[10px] px-6 font-sans text-[16px] outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold active:scale-[0.98] motion-reduce:active:scale-100 lg:min-h-12 lg:text-[15px]";
 
 function ProofCard() {
   const reduce = useReducedMotion();
-  const proof = useMemo<{ city: ScoredCity; line: string } | null>(() => (RECORDED ? proofFor(showcaseCities(), Object.keys(SHOWCASE.playbooks)) : { city: GDL, line: SAMPLE_LINE() }), []);
+  const RECORDED = isRecorded();
+  const proof = useMemo<{ city: ScoredCity; line: string } | null>(() => (RECORDED ? proofFor(showcaseCities(), Object.keys(SHOWCASE.playbooks)) : { city: GDL, line: sampleLine() }), [RECORDED]);
   if (!proof) return null;
   const { city: hero, line } = proof;
   return (
@@ -55,7 +58,7 @@ function ProofCard() {
           <span data-testid="proof-winnability" className="font-mono text-[28px] font-bold leading-none text-canvas-text tabular lg:text-4xl">{hero.winnability.value === null ? "—" : Math.round(hero.winnability.value)}</span>
         </div>
       </div>
-      <div className="mt-4"><DualBars fanHeat={hero.fanHeat} activation={hero.activation} thresholds={RECORDED_THRESHOLDS} /></div>
+      <div className="mt-4"><DualBars fanHeat={hero.fanHeat} activation={hero.activation} thresholds={recordedThresholds()} /></div>
       <p className="mt-3 text-[13px] text-canvas-muted">{line}</p>
       <p className="mt-2 text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
     </section>
@@ -63,10 +66,11 @@ function ProofCard() {
 }
 
 function MapPreview() {
+  const cities = useMemo(previewCities, []);
   return (
     <div className="h-[460px] overflow-hidden rounded-[18px] bg-canvas-raised" aria-hidden inert>
       <Suspense fallback={<div className="size-full bg-canvas-raised" />}>
-        <TourMap cities={PREVIEW_CITIES} onSelect={noop} />
+        <TourMap cities={cities} onSelect={noop} />
       </Suspense>
     </div>
   );

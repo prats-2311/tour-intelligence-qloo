@@ -4,7 +4,7 @@
 //
 //   QLOO_GATEWAY_URL=https://qloo-gateway-602700957663.us-central1.run.app \
 //   node dashboard/scripts/record-showcase.mjs --artist "<name>" --regions "Mexico,Brazil,United States" \
-//     --out dashboard/src/lib/qloo/fixtures/showcase.json [--window 2027-03-12:2027-04-18] [--max-playbooks 4]
+//     --out private-data/showcase.json [--window 2027-03-12:2027-04-18] [--max-playbooks 4]
 //
 // The identity token comes from `gcloud auth print-identity-token`, lives in memory only, and is never
 // logged or written. Recording spends real Qloo, Vertex and Tavily quota: run it deliberately.

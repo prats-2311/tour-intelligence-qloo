@@ -6,7 +6,7 @@ export function requireTourDataApi(url) {
   return (req, res, next) => {
     if (url) return next();
     const p = `${req.baseUrl}${req.path}`;
-    if (!p.startsWith("/api/") || p.startsWith("/api/qloo/")) return next();
+    if (!p.startsWith("/api/") || p.startsWith("/api/qloo/") || p.startsWith("/api/recordings/")) return next();
     res.status(503).json({ error: NOT_CONFIGURED });
   };
 }

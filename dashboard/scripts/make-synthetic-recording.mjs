@@ -1,0 +1,218 @@
+#!/usr/bin/env node
+// Turns a real (private) Qloo recording into a synthetic one of the same shape, so tests and e2e can be
+// committed to a public repo (Qloo's developer guide forbids storing Qloo response data there).
+//
+//   node dashboard/scripts/make-synthetic-recording.mjs <in.json> <out.json> --kind showcase|backtest
+//
+// Deterministic (seeded PRNG, seed 6). Keeps every key and array length, our own computed fields
+// (fanHeat, activation, winnability, verdict, scoring, backtest metrics and hit flags), and geography.
+// Replaces Qloo-returned entity names, ids, tags, affinity/popularity/demographic values.
+import { createHash } from "node:crypto";
+import { readFileSync, writeFileSync } from "node:fs";
+
+const UUID_RE = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
+const HEX_RE = /^[0-9a-f]{32,}$/i;
+const SYNTH_PREFIX = "00000000-";
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const r2 = (v) => Math.round(v * 100) / 100;
+const isObj = (v) => !!v && typeof v === "object" && !Array.isArray(v);
+const isUuid = (s) => typeof s === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** A UUID-shaped id with the 00000000- marker prefix and a hash-derived tail; keeps the original's letter case. */
+export function syntheticId(orig) {
+  if (orig.toLowerCase().startsWith(SYNTH_PREFIX)) return orig;
+  const h = createHash("sha256").update(`synthetic:${orig.toLowerCase()}`).digest("hex");
+  const id = `${SYNTH_PREFIX}${h.slice(0, 4)}-${h.slice(4, 8)}-${h.slice(8, 12)}-${h.slice(12, 24)}`;
+  return /[A-F]/.test(orig) ? id.toUpperCase() : id;
+}
+
+function makeContext() {
+  const rand = mulberry32(6);
+  const jit = new Map();
+  const counters = new Map();
+  const names = new Map(); // original name -> synthetic name
+  const tags = new Map();
+  /** A seeded value of the same magnitude: +-0.05, memoised on the 2-decimal value so text and fields stay consistent. */
+  const jitter = (v, clamp01) => {
+    const key = `${clamp01 ? "c" : "u"}${r2(v)}`;
+    if (!jit.has(key)) {
+      const moved = r2(v) + (rand() * 2 - 1) * 0.05;
+      jit.set(key, r2(clamp01 ? Math.min(1, Math.max(0, moved)) : moved));
+    }
+    return jit.get(key);
+  };
+  const number = (v, clamp01) => {
+    if (typeof v !== "number") return v;
+    const moved = Math.round((jitter(v, clamp01) + (v - r2(v)) * 0.9) * 1e6) / 1e6;
+    return clamp01 ? Math.min(1, Math.max(0, moved)) : moved;
+  };
+  const nameFor = (orig, type) => {
+    if (!names.has(orig)) {
+      const n = (counters.get(type) ?? 0) + 1;
+      counters.set(type, n);
+      names.set(orig, `Synthetic ${type} ${String(n).padStart(2, "0")}`);
+    }
+    return names.get(orig);
+  };
+  const tagFor = (orig) => {
+    if (!tags.has(orig)) tags.set(orig, `synthetic-tag-${String(tags.size + 1).padStart(2, "0")}`);
+    return tags.get(orig);
+  };
+  return { jitter, number, nameFor, tagFor, names, counters };
+}
+
+const CARD_TYPE = { sponsors: "Brand", merch: "Brand", talent: "Artist", co_billing: "Artist", venue_fit: "Place", local_moment: "Entity" };
+const SKIP_STRING_KEYS = new Set(["type", "tool", "kind", "status", "category", "verdict", "country", "reason", "source", "concentration", "version", "model", "recordedAt", "label"]);
+const QLOO_NUMBER_KEYS = new Set(["affinity", "popularity", "sharedTaste", "localAffinity", "lift"]);
+
+function typeFromEntity(o, hint) {
+  if (typeof o.category === "string" && o.category) return cap(o.category);
+  if (typeof o.type === "string" && o.type.startsWith("urn:entity:")) return cap(o.type.slice("urn:entity:".length).split(/[_:]/)[0]);
+  return hint ?? "Entity";
+}
+
+function showcase(input) {
+  const ctx = makeContext();
+  const cities = new Set();
+  const collect = (node, hint, path) => {
+    if (Array.isArray(node)) return node.forEach((v) => collect(v, hint, path));
+    if (!isObj(node)) return;
+    const p = path.join("/");
+    if (typeof node.name === "string" && (p.endsWith("city") || p.endsWith("playbook/city"))) cities.add(node.name);
+    if (typeof node.city === "string") cities.add(node.city);
+    for (const [k, v] of Object.entries(node)) {
+      let h = hint;
+      if (isObj(node) && typeof node.kind === "string" && CARD_TYPE[node.kind]) h = CARD_TYPE[node.kind];
+      if (k === "cards" && isObj(v)) { for (const [ck, cv] of Object.entries(v)) collect(cv, CARD_TYPE[ck] ?? hint, [...path, k, ck]); continue; }
+      collect(v, h, [...path, k]);
+    }
+  };
+  collect(input, undefined, []);
+  const countries = new Set(["Mexico", "United States", "Brazil", "Canada", "Argentina", "Colombia", "Chile", "Peru", "Spain", "US", "MX", "BR"]);
+  const placeLabels = new Set();
+  const gatherPlaces = (node, key) => {
+    if (Array.isArray(node)) return node.forEach((v) => gatherPlaces(v, key));
+    if (typeof node === "string") { if (["signal_location", "filter_location", "within", "label"].includes(key)) placeLabels.add(node); return; }
+    if (isObj(node)) for (const [k, v] of Object.entries(node)) gatherPlaces(v, k);
+  };
+  gatherPlaces(input, "");
+  const isGeo = (s) => cities.has(s) || countries.has(s) || placeLabels.has(s) || (/^(.+), [A-Z]{2}$/.test(s) && cities.has(s.replace(/, [A-Z]{2}$/, "")));
+  // Pass 1: every Qloo entity name, in document order (so numbering is deterministic).
+  const artists = new Set();
+  const gather = (node, hint, key, inEntities) => {
+    if (Array.isArray(node)) return node.forEach((v) => gather(v, hint, key, key === "entities"));
+    if (!isObj(node)) return;
+    const h = typeof node.kind === "string" && CARD_TYPE[node.kind] ? CARD_TYPE[node.kind] : hint;
+    if (typeof node.name === "string" && !isGeo(node.name) && (typeof node.entityId === "string" || inEntities || key === "entity" || key === "artist")) {
+      ctx.nameFor(node.name, key === "entity" || key === "artist" ? "Artist" : typeFromEntity(node, h));
+    }
+    for (const [k, v] of Object.entries(node)) {
+      if ((k === "artist") && typeof v === "string") ctx.nameFor(v, "Artist");
+      else if (k === "entity" && typeof v === "string" && !isUuid(v) && !isGeo(v)) ctx.nameFor(v, "Artist");
+      else if (k === "cards" && isObj(v)) for (const [ck, cv] of Object.entries(v)) gather(cv, CARD_TYPE[ck] ?? h, ck, false);
+      else gather(v, h, k, false);
+    }
+  };
+  gather(input, undefined, "", false);
+  // The artist is "Sample Artist" everywhere.
+  if (typeof input.artist === "string") ctx.names.set(input.artist, "Sample Artist");
+  // Narratives sometimes re-spell a name (accents, case): match letters up to diacritics and case.
+  const accents = new Map();
+  for (let cp = 0xc0; cp <= 0x17f; cp++) {
+    const ch = String.fromCharCode(cp);
+    const base = ch.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (base !== ch && /^[A-Za-z]$/.test(base)) accents.set(base.toLowerCase(), (accents.get(base.toLowerCase()) ?? "") + ch);
+  }
+  const fuzzy = (name) => [...name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")].map((c) => {
+    const extra = accents.get(c.toLowerCase());
+    const e = c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return extra ? `[${c}${extra}]` : e;
+  }).join("");
+  const byFuzzy = new Map([...ctx.names].map(([k, v]) => [k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(), v]));
+  const sorted = [...ctx.names.keys()].sort((a, b) => b.length - a.length);
+  const nameRe = sorted.length ? new RegExp(`(?<![\\p{L}\\p{N}])(?:${sorted.map(fuzzy).join("|")})(?![\\p{L}\\p{N}])`, "giu") : null;
+
+  const str = (s, key, path) => {
+    if (key && SKIP_STRING_KEYS.has(key)) return s;
+    if (isGeo(s)) return s;
+    if (HEX_RE.test(s)) return syntheticId(s);
+    let out = s.normalize("NFC").replace(UUID_RE, (m) => syntheticId(m));
+    if (nameRe) out = out.replace(nameRe, (m) => ctx.names.get(m) ?? byFuzzy.get(m.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()) ?? m);
+    if ((key === "text" || key === "thoughtSummary") && path.includes("narrative")) {
+      out = out.replace(/(?<![\d.])0\.\d{2}(?!\d)/g, (m) => String(ctx.jitter(parseFloat(m), true)));
+    }
+    return out;
+  };
+  const walk = (node, key, path) => {
+    if (typeof node === "string") return str(node, key, path);
+    if (Array.isArray(node)) {
+      if (key === "sharedTags") return node.map((t) => (typeof t === "string" ? ctx.tagFor(t) : t));
+      if (key === "numbers" && path.includes("narrative")) return node.map((n) => (typeof n === "number" && n > 0 && n < 1 ? ctx.jitter(n, true) : n));
+      return node.map((v) => walk(v, key, path));
+    }
+    if (!isObj(node)) return node;
+    const out = {};
+    for (const [k, v] of Object.entries(node)) {
+      if (k === "withoutQloo" || k === "scoring" || k === "thresholds") { out[k] = v; continue; }
+      if (typeof v === "number") {
+        if (QLOO_NUMBER_KEYS.has(k)) out[k] = ctx.number(v, true);
+        else if (path.includes("demographics")) out[k] = ctx.number(v, false);
+        else out[k] = v;
+        continue;
+      }
+      out[k] = walk(v, k, [...path, k]);
+    }
+    return out;
+  };
+  return walk(input, "", []);
+}
+
+const ACTIVATION_TYPE = { sponsor: "Brand", merch_collab: "Brand", local_artist: "Artist" };
+
+function backtest(input) {
+  const counters = new Map();
+  const next = (type) => { const n = (counters.get(type) ?? 0) + 1; counters.set(type, n); return `Synthetic ${type} ${String(n).padStart(2, "0")}`; };
+  const out = structuredClone(input);
+  for (const run of out.runs ?? []) {
+    for (const c of run.cases ?? []) {
+      const type = ACTIVATION_TYPE[c.activationType] ?? "Entity";
+      const real = c.realEntity;
+      if (real && typeof real.entityId === "string") real.entityId = syntheticId(real.entityId);
+      for (const res of Object.values(c.results ?? {})) {
+        if (!res || !Array.isArray(res.top)) continue;
+        res.top = res.top.map((t, i) => {
+          const hit = typeof res.rank === "number" && res.rank === i + 1;
+          const name = hit ? real.name : next(type);
+          const e = { name };
+          if (t && typeof t.entityId === "string") e.entityId = hit && real.entityId ? real.entityId : syntheticId(t.entityId);
+          return e;
+        });
+      }
+    }
+  }
+  return JSON.parse(JSON.stringify(out).replace(UUID_RE, (m) => syntheticId(m)));
+}
+
+export function makeSynthetic(input, kind) {
+  if (kind === "showcase") return showcase(input);
+  if (kind === "backtest") return backtest(input);
+  throw new Error(`unknown kind: ${kind}`);
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const [inFile, outFile] = process.argv.slice(2);
+  const kind = process.argv[process.argv.indexOf("--kind") + 1];
+  if (!inFile || !outFile || !kind) { console.error("usage: make-synthetic-recording.mjs <in> <out> --kind showcase|backtest"); process.exit(2); }
+  writeFileSync(outFile, JSON.stringify(makeSynthetic(JSON.parse(readFileSync(inFile, "utf8")), kind)) + "\n");
+}

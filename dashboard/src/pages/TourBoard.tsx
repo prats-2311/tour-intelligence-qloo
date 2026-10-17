@@ -16,7 +16,7 @@ import { WhyThisScore } from "@/components/qloo/WhyThisScore";
 import { fetchWithoutQloo } from "@/lib/qloo/client";
 import { LONG_CITY_NAMES, LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_WITHOUT_QLOO } from "@/lib/qloo/fixtures/strategistSample";
-import { SHOWCASE, showcaseBrief, showcaseWithoutQloo } from "@/lib/qloo/showcase";
+import { showcaseAvailable, showcaseBrief, showcaseWithoutQloo } from "@/lib/qloo/showcase";
 import { sortCities, summarize } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
@@ -131,6 +131,7 @@ export default function TourBoard() {
     if (!wantSample || started.current) return;
     started.current = true;
     if (wantShowcase) {
+      if (!showcaseAvailable()) return; // the private recording did not load: show the notice, never replay the placeholder as the showcase
       if (state.source !== "showcase") run(showcaseBrief(), { sample: true, sampleSet: "showcase" });
     } else if (state.source !== "sample") run(wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantLong ? "long" : "default" });
   }, [wantSample, wantLong, wantShowcase, state.source, run]);
@@ -183,19 +184,33 @@ export default function TourBoard() {
   const summaryCity = selected ?? eligible.find((c) => c.verdict === "hidden_goldmine") ?? sorted[0];
 
   const retry = () => { if (state.brief) run(state.brief, { sample: isSample, sampleSet: state.source === "showcase" ? "showcase" : wantLong ? "long" : "default" }); };
-  const showcase = () => run(showcaseBrief(), { sample: true, sampleSet: "showcase" });
+  const showcase = () => (showcaseAvailable()
+    ? run(showcaseBrief(), { sample: true, sampleSet: "showcase" })
+    : run(SAMPLE_BRIEF, { sample: true, sampleSet: "default" }));
+  const showcaseMissing = !showcaseAvailable() && (wantShowcase || state.source === "showcase");
   const openRow = (id: string) => navigate(`/tours/playbook/${id}${sampleQ}`);
   const selectFromMap = (id: string) => {
     setSelectedId(id);
     document.getElementById(`city-row-${id}`)?.scrollIntoView?.({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
   };
 
+  if (showcaseMissing) {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
+        <Notice>
+          <span className="min-w-0">The showcase recording is unavailable right now.</span>
+          <Link to="/tours/board?sample=1" className={smallBtn}>Open the sample tour</Link>
+        </Notice>
+      </div>
+    );
+  }
+
   if (state.status === "idle") {
     return (
       <div className="flex flex-col gap-6">
         <BriefForm onSubmit={(b: TourBrief) => run(b)} defaultBrief={lastBrief} />
         <div className="mx-auto flex w-full max-w-xl flex-col gap-2 border-t border-canvas-line pt-4">
-          <p className="text-[13px] text-canvas-muted">Want to see it first? {SHOWCASE.recordedAt ? "The showcase tour replays a recorded Qloo run." : "The showcase tour runs on sample data."}</p>
+          <p className="text-[13px] text-canvas-muted">Want to see it first? {showcaseAvailable() ? "The showcase tour replays a recorded Qloo run." : "The showcase tour runs on sample data."}</p>
           <button type="button" onClick={showcase} className={secondaryBtn}>Try the showcase tour</button>
         </div>
       </div>

@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
-import { useId } from "react";
-import { BACKTEST, METHODS, METHOD_LABEL, hitLine, rankText, type Backtest, type BacktestRun, type CaseResult, type MethodResult } from "@/lib/qloo/backtest";
+import { useId, useState } from "react";
+import { getBacktest, METHODS, METHOD_LABEL, hitLine, rankText, type Backtest, type BacktestRun, type CaseResult, type MethodResult } from "@/lib/qloo/backtest";
+
+import { loadRecordings } from "@/lib/qloo/recordings";
 
 const TITLE = "Would it have found what the real tour used?";
 const REASON = "Run 1 asked Qloo for artists the headliner's fans like in that city, which returns global taste neighbours. Run 2 ranked the city's own popular artists by taste fit and was judged on fresh cases reviewed after the change; it did no better, because Qloo's city-popularity list misses the most famous national acts.";
@@ -194,5 +196,19 @@ export function ProofView({ data }: { data: Backtest }) {
 }
 
 export default function Proof() {
-  return <ProofView data={BACKTEST} />;
+  const [, setTick] = useState(0);
+  const [retrying, setRetrying] = useState(false);
+  const data = getBacktest();
+  if (data) return <ProofView data={data} />;
+  const retry = () => { setRetrying(true); void loadRecordings().finally(() => { setRetrying(false); setTick((n) => n + 1); }); };
+  return (
+    <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-4 pb-8">
+      <header className="flex flex-col gap-3">
+        <p className={eyebrow}>PROOF · ACTIVATION BACKTEST</p>
+        <h1 className="font-title text-[32px] leading-[1.1] text-bone [text-wrap:balance] lg:text-[48px]">{TITLE}</h1>
+      </header>
+      <p className="text-[16px] text-canvas-muted">Proof results are unavailable right now.</p>
+      <button type="button" onClick={retry} disabled={retrying} className="inline-flex min-h-12 w-fit items-center rounded-[10px] bg-paper-raised px-5 text-[15px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:opacity-60">Retry</button>
+    </div>
+  );
 }

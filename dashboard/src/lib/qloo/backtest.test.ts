@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { BACKTEST, hitLine, parseBacktest, rankText } from "./backtest";
+import syntheticBacktest from "@/test/fixtures/backtest.synthetic.json";
+import { getBacktest, hitLine, parseBacktest, rankText, setBacktest } from "./backtest";
 import { oneRunFixture, run1Fixture, twoRunsFixture } from "./fixtures/backtestTestFixture";
 
 describe("parseBacktest", () => {
@@ -32,8 +33,15 @@ describe("parseBacktest", () => {
   ])("treats %s as pending", (_l, raw) => {
     expect(parseBacktest(raw)).toEqual({ status: "pending" });
   });
-  it("the committed dashboard fixture holds the two real runs", () => {
-    expect(BACKTEST.status === "complete" && BACKTEST.runs.map((r) => r.method)).toEqual(["v1", "v2"]);
+  it("the synthetic fixture (same shape as the private recording) loads as the two runs", () => {
+    setBacktest(syntheticBacktest);
+    expect(getBacktest()?.runs.map((r) => r.method)).toEqual(["v1", "v2"]);
+    setBacktest(null);
+    expect(getBacktest()).toBeNull();
+  });
+  it("setBacktest ignores anything that is not complete runs", () => {
+    setBacktest({ runs: [] });
+    expect(getBacktest()).toBeNull();
   });
   it.each([
     ["missing hit10", (r: any) => { r.summary.llm_only.hit10 = undefined; }],

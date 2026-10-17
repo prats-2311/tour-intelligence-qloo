@@ -1,5 +1,3 @@
-import raw from "./fixtures/backtest.json";
-
 /** Mirrors cloud_run/qloo_gateway/src/backtest/score.ts (re-declared: the dashboard build cannot import gateway code). */
 export type Method = "qloo_playbook" | "city_popularity" | "llm_only";
 export type MethodResult =
@@ -22,6 +20,7 @@ export interface BacktestRun {
   cases: CaseResult[]; summary: Record<Method, MethodSummary>; lost: string[];
 }
 export type Backtest = { status: "pending" } | { status: "complete"; runs: BacktestRun[] };
+export type BacktestRuns = Extract<Backtest, { status: "complete" }>;
 
 export const METHOD_LABEL: Record<Method, string> = {
   qloo_playbook: "Qloo playbook", city_popularity: "City popularity (Qloo, no artist)", llm_only: "Generic LLM (no Qloo)",
@@ -67,4 +66,13 @@ export function hitLine(s: MethodSummary, cut: 10 | 20): string {
 }
 
 export const rankText = (r: MethodResult): string => (r.status !== "ok" ? "no answer" : r.rank === null ? "not in top 20" : `#${r.rank}`);
-export const BACKTEST: Backtest = parseBacktest(raw);
+
+let BACKTEST: BacktestRuns | null = null;
+/** The two private backtest runs, or null until they load (or when they are unavailable). */
+export const getBacktest = (): BacktestRuns | null => BACKTEST;
+/** Sets the loaded backtest; anything that does not parse to complete runs leaves it null. */
+export function setBacktest(raw: unknown): void {
+  const parsed = parseBacktest(raw);
+  BACKTEST = parsed.status === "complete" ? parsed : null;
+}
+

@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import ProofRoute, { ProofView } from "./Proof";
-import { BACKTEST, parseBacktest } from "@/lib/qloo/backtest";
+import syntheticBacktest from "@/test/fixtures/backtest.synthetic.json";
+import { getBacktest, parseBacktest, setBacktest } from "@/lib/qloo/backtest";
 import { oneRunFixture, run1Fixture, run2Fixture, twoRunsFixture } from "@/lib/qloo/fixtures/backtestTestFixture";
 
 const view = (raw: unknown) => render(<MemoryRouter><ProofView data={parseBacktest(raw)} /></MemoryRouter>);
@@ -122,9 +123,11 @@ describe("Proof", () => {
     expect(name.className).toContain("break-words");
     expect(screen.getByText("a-very-long-subdomain.example-news-site.com").className).toContain("break-all");
   });
-  it("the committed real runs: two runs, headline is run 2's real numbers, no winning language", () => {
+  it("the recorded runs (synthetic fixture, same shape): two runs, headline is run 2's real numbers, no winning language", () => {
+    setBacktest(syntheticBacktest);
+    const BACKTEST = getBacktest()!;
     const { container } = render(<MemoryRouter><ProofView data={BACKTEST} /></MemoryRouter>);
-    expect(BACKTEST.status === "complete" && BACKTEST.runs.length).toBe(2);
+    expect(BACKTEST.runs.length).toBe(2);
     expect(within(screen.getByRole("region", { name: "Qloo playbook" })).getByText("1 of 13 in the top 10 · 8%")).toBeTruthy();
     expect(within(screen.getByRole("region", { name: "Generic LLM (no Qloo)" })).getByText("7 of 13 in the top 10 · 54%")).toBeTruthy();
     expect(screen.getByText(/a local act on the bill\)/)).toBeTruthy();
@@ -150,6 +153,18 @@ describe("Proof", () => {
     vi.stubGlobal("fetch", spy);
     view(twoRunsFixture);
     expect(spy).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+  it("without a loaded backtest the route says so and offers Retry, which reloads", async () => {
+    setBacktest(null);
+    const fetchImpl = vi.fn(async (url: RequestInfo | URL) => (String(url).endsWith("/backtest") ? new Response(JSON.stringify(syntheticBacktest), { status: 200 }) : new Response("{}", { status: 503 })));
+    vi.stubGlobal("fetch", fetchImpl);
+    render(<MemoryRouter><ProofRoute /></MemoryRouter>);
+    expect(screen.getByText("Proof results are unavailable right now.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(screen.getByText("What this shows")).toBeTruthy());
+    expect(getBacktest()).not.toBeNull();
+    setBacktest(null);
     vi.unstubAllGlobals();
   });
 });

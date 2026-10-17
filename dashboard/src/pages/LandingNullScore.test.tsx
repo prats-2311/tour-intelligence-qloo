@@ -4,7 +4,6 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Landing from "./Landing";
 
-vi.mock("@/lib/qloo/fixtures/showcase.json", async () => ({ default: (await import("@/test/placeholderShowcase")).PLACEHOLDER_SHOWCASE }));
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div /> }));
 vi.mock("@/lib/qloo/fixtures/lumenVale", async (importOriginal) => {
   const mod = await importOriginal<typeof import("@/lib/qloo/fixtures/lumenVale")>();

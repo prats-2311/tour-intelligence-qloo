@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { useSyntheticRecordings } from "./fixtures";
 
-// Runs against the committed real runs (complete state). No test-only route or fixture swap.
-test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); });
+// Runs against the synthetic backtest, served at /api/recordings/backtest exactly as the real one is (complete state).
+test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); await useSyntheticRecordings(page); });
 
 for (const width of [360, 1280]) {
   test(`proof page has no horizontal scroll and every source link fits at ${width}px`, async ({ page }) => {
@@ -9,7 +10,7 @@ for (const width of [360, 1280]) {
     const api: string[] = [];
     page.on("request", (r) => { const path = new URL(r.url()).pathname;
       // /api/campaigns is fetched by the app shell's CampaignProvider on every route; the page itself must call nothing else.
-      if (path.startsWith("/api/") && path !== "/api/campaigns") api.push(path); });
+      if (path.startsWith("/api/") && path !== "/api/campaigns" && !path.startsWith("/api/recordings/")) api.push(path); });
     await page.goto("/proof");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Would it have found what the real tour used?");
     await expect(page.getByRole("heading", { name: "What this shows" })).toBeVisible();

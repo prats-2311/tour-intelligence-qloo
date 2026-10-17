@@ -4,6 +4,7 @@ import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { mountQlooProxy } from "./qlooProxy.js";
+import { mountRecordings } from "./recordings.js";
 import { mountTours, statusFromCallTool } from "./tours.js";
 import { requireOrchestratorJob } from "./requireOrchestratorJob.js";
 import { NOT_CONFIGURED, requireTourDataApi } from "./requireTourDataApi.js";
@@ -1043,6 +1044,28 @@ app.post("/api/rank-cities", async (req, res) => {
 });
 
 mountQlooProxy(app, { gatewayUrl: QLOO_GATEWAY, getToken: getQlooGatewayToken });
+
+// OAuth access token (not an identity token) for reading the private recordings bucket: the service's own
+// identity from the metadata server, else the local gcloud session. Valid ~1 h, cached 50 min.
+let cachedRecordingsToken = null;
+let cachedRecordingsAt = 0;
+async function getRecordingsAccessToken() {
+  const now = Date.now();
+  if (cachedRecordingsToken && now - cachedRecordingsAt < 50 * 60 * 1000) return cachedRecordingsToken;
+  try {
+    const res = await fetch("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token", {
+      headers: { "Metadata-Flavor": "Google" },
+      signal: AbortSignal.timeout(1000),
+    });
+    if (!res.ok) throw new Error(`metadata server returned ${res.status}`);
+    cachedRecordingsToken = (await res.json()).access_token;
+  } catch {
+    cachedRecordingsToken = execSync("gcloud auth print-access-token").toString().trim();
+  }
+  cachedRecordingsAt = now;
+  return cachedRecordingsToken;
+}
+mountRecordings(app, { getAccessToken: getRecordingsAccessToken });
 
 
 // Production: serve the built frontend and let client-side routing handle the rest.

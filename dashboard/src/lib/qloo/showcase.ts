@@ -1,5 +1,5 @@
-import raw from "./fixtures/showcase.json";
 import { recordedText } from "./labels";
+import { PLACEHOLDER_SHOWCASE } from "./placeholderShowcase";
 import { ordinal } from "./ranking";
 import type { GatewayEvent, ScoredCity, ThisWeek, TourBrief, WithoutQloo } from "./types";
 import { parseWithoutQloo, WITHOUT_SHOWCASE_MISSING } from "./withoutQloo";
@@ -45,7 +45,15 @@ export function parseShowcase(input: unknown): Showcase {
   };
 }
 
-export const SHOWCASE: Showcase = parseShowcase(raw);
+/**
+ * The recorded run. The real recording is private (Qloo's terms keep response data out of the public repo), so it is
+ * fetched at boot (see recordings.ts) and set with `setShowcase`; until then this holds the Lumen Vale placeholder
+ * (`recordedAt: null`). It is a live binding: never copy it into a module-level constant, read it in render or a function.
+ */
+export let SHOWCASE: Showcase = parseShowcase(PLACEHOLDER_SHOWCASE);
+export function setShowcase(s: Showcase): void { SHOWCASE = s; }
+/** True once a real recording has been loaded (the placeholder has `recordedAt: null`). */
+export const showcaseAvailable = (): boolean => SHOWCASE.recordedAt !== null;
 
 export const showcaseBrief = (): TourBrief => SHOWCASE.brief;
 export const showcaseBoardEvents = (): GatewayEvent[] => SHOWCASE.boardEvents;

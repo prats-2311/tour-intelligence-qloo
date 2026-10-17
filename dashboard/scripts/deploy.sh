@@ -13,7 +13,7 @@ ORCHESTRATOR_JOB_URL=https://run.googleapis.com/v2/projects/${PROJECT}/locations
 
 gcloud run deploy "$SERVICE" --source="$(dirname "$0")/.." --region="$REGION" --project="$PROJECT" \
   --service-account="$SA" --set-build-env-vars=PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 --allow-unauthenticated \
-  --set-env-vars="TOUR_DATA_API_URL=${TOUR_DATA_API_URL},DELIGHT_RENDERER_URL=${DELIGHT_RENDERER_URL},QLOO_GATEWAY_URL=${QLOO_GATEWAY_URL},ORCHESTRATOR_JOB_URL=${ORCHESTRATOR_JOB_URL}"
+  --set-env-vars="TOUR_DATA_API_URL=${TOUR_DATA_API_URL},DELIGHT_RENDERER_URL=${DELIGHT_RENDERER_URL},QLOO_GATEWAY_URL=${QLOO_GATEWAY_URL},ORCHESTRATOR_JOB_URL=${ORCHESTRATOR_JOB_URL},RECORDINGS_BUCKET=liifecalling-academy-tour-intel-private"
 
 echo "Note: the qloo-gateway Cloud Run service must already exist (deploy cloud_run/qloo_gateway/scripts/deploy.sh first)."
 gcloud run services add-iam-policy-binding qloo-gateway --region="$REGION" --project="$PROJECT" \

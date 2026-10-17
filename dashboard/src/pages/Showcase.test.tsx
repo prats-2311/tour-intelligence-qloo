@@ -4,7 +4,11 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StrategistPanel } from "@/components/strategist/StrategistPanel";
-import { showcaseBannerText } from "@/lib/qloo/showcase";
+import { parseShowcase, setShowcase, showcaseBannerText } from "@/lib/qloo/showcase";
+import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
+import Landing from "./Landing";
+import TourBoard from "./TourBoard";
+import TourBook from "./TourBook";
 import { resetPlaybooks } from "@/lib/qloo/playbookStore";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import type { GatewayEvent, ScoredCity } from "@/lib/qloo/types";
@@ -31,19 +35,12 @@ const CLIMB = mk([city("a", "Alpha", 90, 60, "play"), city("b", "Beta", 80, 50, 
 const NO_CLIMB = mk([city("a", "Alpha", 90, 95, "play"), city("b", "Beta", 80, 50, "consider")]);
 
 async function load(fixture: unknown) {
-  vi.resetModules();
-  vi.doMock("@/lib/qloo/fixtures/showcase.json", () => ({ default: fixture }));
-  vi.doMock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
-  return {
-    Landing: (await import("./Landing")).default,
-    TourBoard: (await import("./TourBoard")).default,
-    TourBook: (await import("./TourBook")).default,
-    Provider: (await import("@/lib/qloo/TourBoardProvider")).TourBoardProvider as typeof TourBoardProvider,
-  };
+  setShowcase(parseShowcase(fixture));
+  return { Landing, TourBoard, TourBook, Provider: TourBoardProvider };
 }
 
 beforeEach(() => { vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} })); });
-afterEach(() => { cleanup(); resetPlaybooks(); vi.doUnmock("@/lib/qloo/fixtures/showcase.json"); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); resetPlaybooks(); setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE)); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("recorded showcase", () => {
   it("Landing proof card shows the biggest climb from the recording", async () => {
@@ -91,9 +88,26 @@ describe("recorded showcase", () => {
   it("the strategist builds chips from the recorded board and answers with the honest note", async () => {
     const context = { cities: [{ id: "d", name: "Delta", country: "MX", verdict: "hidden_goldmine", fanHeat: 60, activation: 50, winnability: 95 }] };
     render(<StrategistPanel context={context} sample showcase title="About Hand Made" />);
-    expect(screen.getByText(showcaseBannerText())).toBeTruthy(); // the statically imported json: placeholder today, a real recording later
+    expect(screen.getByText(showcaseBannerText())).toBeTruthy(); // whichever recording is loaded
     expect(screen.queryByRole("button", { name: "Why is Guadalajara a hidden goldmine?" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Why is Delta ranked here?" }));
     await waitFor(() => expect(screen.getByText("The live strategist needs a live run")).toBeTruthy());
+  });
+  it("when the recording is unavailable the board says so and links the sample; the landing still shows the sample proof card", async () => {
+    setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE)); // what the boot loader leaves behind when /api/recordings/showcase fails
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <TourBoardProvider sampleDelayMs={0}><MemoryRouter initialEntries={["/tours/board?showcase=1"]}><TourBoard /></MemoryRouter></TourBoardProvider>
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText("The showcase recording is unavailable right now.")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open the sample tour" }).getAttribute("href")).toBe("/tours/board?sample=1");
+    expect(screen.queryAllByTestId("city-row")).toHaveLength(0);
+    cleanup();
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    expect(screen.getByRole("region", { name: "Guadalajara sample routing row" })).toBeTruthy();
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

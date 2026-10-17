@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { useSyntheticRecordings } from "./fixtures";
 
 // Runs must not depend on the network: map tile/style requests are blocked (the map shows its "tiles unavailable" note).
-test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); });
+test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); await useSyntheticRecordings(page); });
 
 test("judge path: landing → showcase → board → why → insights", async ({ page }) => {
   await page.goto("/");

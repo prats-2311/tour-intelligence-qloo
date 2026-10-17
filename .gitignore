@@ -36,3 +36,8 @@ venv/
 
 # firebase-tools hosting cache (deploy_web_app.sh)
 .firebase/
+
+# Private Qloo recordings (Qloo terms: no Qloo response data in a public repo). Served from GCS in prod, ./private-data in dev.
+private-data/
+dashboard/src/lib/qloo/fixtures/showcase.json
+dashboard/src/lib/qloo/fixtures/backtest.json

@@ -7,7 +7,6 @@ import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { DEFAULT_SCORING_DISPLAY } from "@/lib/qloo/labels";
 import Landing from "./Landing";
 
-vi.mock("@/lib/qloo/fixtures/showcase.json", async () => ({ default: (await import("@/test/placeholderShowcase")).PLACEHOLDER_SHOWCASE }));
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
 
 beforeEach(() => {

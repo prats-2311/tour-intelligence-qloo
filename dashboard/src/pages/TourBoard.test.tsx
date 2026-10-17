@@ -9,6 +9,9 @@ import * as client from "@/lib/qloo/client";
 import { SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { VERDICT_LABEL, VERDICT_SHAPE } from "@/lib/qloo/labels";
 import type { TourBrief } from "@/lib/qloo/types";
+import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
+import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
+import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
 import TourBoard from "./TourBoard";
 
 const recorded = vi.hoisted(() => ({ raw: undefined as unknown }));
@@ -17,13 +20,13 @@ vi.mock("@/lib/qloo/showcase", async (orig) => {
   const { WITHOUT_SHOWCASE_MISSING } = await import("@/lib/qloo/withoutQloo");
   return { ...mod, showcaseWithoutQloo: () => (recorded.raw === undefined ? mod.showcaseWithoutQloo() : mod.parseShowcase({ withoutQloo: recorded.raw }).withoutQloo ?? WITHOUT_SHOWCASE_MISSING) };
 });
-vi.mock("@/lib/qloo/fixtures/showcase.json", async () => ({ default: (await import("@/test/placeholderShowcase")).PLACEHOLDER_SHOWCASE }));
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
 
 beforeEach(() => {
   vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
 });
 afterEach(() => {
+  setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
   cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
@@ -141,6 +144,7 @@ describe("TourBoard", () => {
     await waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
   });
   it("showcase replays the recorded generic ranking with no request and no Try again", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
     recorded.raw = { status: "ok", ranked: [{ name: "Recorded Town", country: "MX" }, { name: "Other Town", country: "BR" }], model: "m", cached: false };
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
@@ -155,6 +159,7 @@ describe("TourBoard", () => {
   });
 
   it("showcase without a recorded ranking says so and offers no Try again", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
     recorded.raw = null;
     renderPage("/tours/board?showcase=1&mode=without");
     expect(await screen.findByText("This recording has no generic ranking")).toBeTruthy();

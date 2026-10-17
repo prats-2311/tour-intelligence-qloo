@@ -28,6 +28,10 @@ describe("requireTourDataApi", () => {
     const res = await fetch(`${await start("")}/api/qloo/x`);
     expect(res.status).toBe(200);
   });
+  it("lets /api/recordings/* through when the URL is unset", async () => {
+    const res = await fetch(`${await start("")}/api/recordings/showcase`);
+    expect(res.status).toBe(200);
+  });
   it("lets everything through when the URL is set", async () => {
     const res = await fetch(`${await start("https://tda.test")}/api/campaigns`);
     expect(res.status).toBe(200);
