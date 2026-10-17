@@ -27,7 +27,10 @@ fi
 bad=""
 ids=""
 if [[ "$mode" == "history" ]]; then
-  bad=$(git -C "$repo" rev-list --objects --all | awk 'NF>1 {sub(/^[^ ]+ /,""); print}' | grep -E "$FORBIDDEN_PATHS" | sort -u || true)
+  # rev-list --objects names a blob once (its first path), so a renamed file hides its old path; the log
+  # listing (--no-renames, every ref) adds every path that ever appeared in any commit.
+  bad=$({ git -C "$repo" rev-list --objects --all | awk 'NF>1 {sub(/^[^ ]+ /,""); print}'
+          git -C "$repo" log --all --no-renames --name-only --format= ; } | grep -E "$FORBIDDEN_PATHS" | sort -u || true)
   # Content scan: one pass per distinct blob (git grep over every commit re-reads shared blobs; cat-file --batch reads each once).
   scan_blob() {
     local sha="$1" path="$2" hit
