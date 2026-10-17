@@ -8,7 +8,7 @@ export const WIDE_CUTOFF = 20;
 
 export interface RankedItem { name: string; entityId?: string }
 export interface Target { name: string; aliases?: string[]; entityId: string | null }
-export type MethodResult = { status: "ok"; rank: number | null; top: RankedItem[] } | { status: "unavailable"; reason: string };
+export type MethodResult = { status: "ok"; rank: number | null; top: RankedItem[]; note?: string } | { status: "unavailable"; reason: string };
 export type Decision = "Which sponsor to pitch" | "The merch angle" | "Who goes on the bill";
 
 export interface CaseResult {
@@ -21,6 +21,8 @@ export interface CaseResult {
 export interface MethodSummary { scored: number; hit10: number; hit20: number }
 export interface BacktestResults {
   schemaVersion: 1; status: "complete" | "partial"; runAt: string; model: string;
+  /** Which local-act method produced the run: v1 = plain city popularity / artist-taste recs, v2 = city-popular artists re-ranked by taste fit. Files without it are v1. */
+  method: "v1" | "v2"; methodNote: string;
   cutoff: typeof CUTOFF; wideCutoff: typeof WIDE_CUTOFF; methods: Method[];
   n: number; cases: CaseResult[]; summary: Record<Method, MethodSummary>; lost: string[];
 }
@@ -73,9 +75,10 @@ export function lostCases(cases: CaseResult[]): string[] {
   }).map((c) => c.id);
 }
 
-export function buildResults(cases: CaseResult[], meta: { runAt: string; model: string; status?: "complete" | "partial" }): BacktestResults {
+export function buildResults(cases: CaseResult[], meta: { runAt: string; model: string; status?: "complete" | "partial"; method?: "v1" | "v2"; methodNote?: string }): BacktestResults {
   return {
     schemaVersion: 1, status: meta.status ?? "complete", runAt: meta.runAt, model: meta.model,
+    method: meta.method ?? "v2", methodNote: meta.methodNote ?? "",
     cutoff: CUTOFF, wideCutoff: WIDE_CUTOFF, methods: METHODS,
     n: cases.length, cases, summary: summarise(cases), lost: lostCases(cases),
   };

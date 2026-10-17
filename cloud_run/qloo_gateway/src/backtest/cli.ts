@@ -7,12 +7,12 @@ import { MIN_CASES, validateCases, type BacktestCase } from "./cases.js";
 import { cleanLlmList, GatewayAuthError, llmPrompt, runCase } from "./run.js";
 import { buildResults, METHODS } from "./score.js";
 
-export function parseArgs(argv: string[]): { cases: string; out: string; only?: string[] } {
+export function parseArgs(argv: string[]): { cases: string; out: string; only?: string[]; methodNote?: string } {
   const get = (f: string) => { const i = argv.indexOf(f); return i === -1 ? undefined : argv[i + 1]; };
-  const cases = get("--cases"); const out = get("--out"); const only = get("--only");
+  const cases = get("--cases"); const out = get("--out"); const only = get("--only"); const methodNote = get("--method-note");
   if (!cases) throw new Error("--cases <path> is required");
   if (!out) throw new Error("--out <path> is required");
-  return { cases, out, ...(only ? { only: only.split(",").map((s) => s.trim()).filter(Boolean) } : {}) };
+  return { cases, out, ...(only ? { only: only.split(",").map((s) => s.trim()).filter(Boolean) } : {}), ...(methodNote ? { methodNote } : {}) };
 }
 
 /** Budget guard (global constraints): never spend Qloo/Vertex calls on more than this many cases in one run. */
@@ -85,15 +85,16 @@ async function main() {
     },
   };
 
+  const note = args.methodNote ? { methodNote: args.methodNote } : {};
   const runAt = new Date().toISOString();
   const results = [];
   for (const c of cases) {
     const r = await runCase(c, deps);
     results.push(r);
-    writeFileSync(args.out, `${JSON.stringify(buildResults(results, { runAt, model: usedModel, status: "partial" }), null, 2)}\n`);
+    writeFileSync(args.out, `${JSON.stringify(buildResults(results, { runAt, model: usedModel, status: "partial", method: "v2", ...note }), null, 2)}\n`);
     console.log(`${c.id}: ${METHODS.map((m) => { const x = r.results[m]; return `${m}=${x.status === "ok" ? (x.rank ?? "-") : x.reason}`; }).join(" ")}`);
   }
-  const doc = buildResults(results, { runAt, model: usedModel, status: "complete" });
+  const doc = buildResults(results, { runAt, model: usedModel, status: "complete", method: "v2", ...note });
   writeFileSync(args.out, `${JSON.stringify(doc, null, 2)}\n`);
   for (const m of METHODS) console.log(`${m}: top10 ${doc.summary[m].hit10}/${doc.summary[m].scored}, top20 ${doc.summary[m].hit20}/${doc.summary[m].scored}`);
   console.log(`lost: ${doc.lost.join(", ") || "none"}`);

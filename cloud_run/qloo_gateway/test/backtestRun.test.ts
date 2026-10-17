@@ -82,6 +82,74 @@ describe("runCase", () => {
   });
 });
 
+describe("runCase local acts ranked by taste fit", () => {
+  const local: BacktestCase = { ...c, activationType: "local_artist", realEntity: { name: "Caloncho" } };
+  const pool = Array.from({ length: 20 }, (_, i) => ent(`Act ${i + 1}`, `A${i + 1}`));
+  const rankedOf = (idxs: number[]) => env(idxs.map((i) => ({ ...pool[i - 1]!, affinity: 0.9 })));
+  function localDeps(over: { rank?: unknown; rankThrows?: boolean } = {}) {
+    const calls: Array<[string, Record<string, unknown>]> = [];
+    const d: RunnerDeps = {
+      callTool: async (name, args) => {
+        calls.push([name, args]);
+        if (name === "qloo_describe" && args.type === "artist") return env([args.entity === "Caloncho" ? ent("Caloncho", "A15") : ent("Mac DeMarco", "ART")]);
+        if (name === "qloo_recommend") return env(pool);
+        if (over.rankThrows) throw new Error("HTTP 503");
+        return (over.rank as never) ?? rankedOf([10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
+      },
+      llmList: async () => ["Caloncho"],
+    };
+    return { d, calls };
+  }
+  it("lists the rank of the first 10 city-popular artists, then the remaining city-popular ones, with no duplicates", async () => {
+    const { d, calls } = localDeps();
+    const r = await runCase(local, d);
+    const rank = calls.filter(([n]) => n === "qloo_rank");
+    expect(rank).toEqual([["qloo_rank", { options: pool.slice(0, 10).map((e) => e.entity_id), option_type: "artist", signals: ["ART"], signal_location: "Guadalajara, Mexico" }]]);
+    expect(calls.filter(([n]) => n === "qloo_recommend").map(([, a]) => a)).toEqual([{ target_type: "artist", signal_location: "Guadalajara, Mexico", limit: 20 }]);
+    // Caloncho is A15 in city order; it sits at position 15 in the combined list (10 ranked + A11..A20)
+    expect(r.results.qloo_playbook).toMatchObject({ status: "ok", rank: 15 });
+    expect(r.results.qloo_playbook).not.toHaveProperty("note");
+    expect((r.results.qloo_playbook as { top: Array<{ entityId: string }> }).top.map((i) => i.entityId)).toEqual(["A10", "A9", "A8", "A7", "A6", "A5", "A4", "A3", "A2", "A1"]);
+    expect(r.results.city_popularity).toMatchObject({ status: "ok", rank: 15 });
+  });
+  it("ranks a real entity inside the first 10 by taste order, not city order", async () => {
+    const { d } = localDeps();
+    const r = await runCase({ ...local, realEntity: { name: "Act 10" } }, { ...d, callTool: async (n, a, s) => (n === "qloo_describe" && a.entity === "Act 10" ? env([ent("Act 10", "A10")]) : d.callTool(n, a, s)) });
+    expect(r.results.qloo_playbook).toMatchObject({ rank: 1 });
+    expect(r.results.city_popularity).toMatchObject({ rank: 10 });
+  });
+  it("keeps the city-popularity order, status ok, and records rank_unavailable when rank fails", async () => {
+    for (const over of [{ rankThrows: true }, { rank: env([], "empty") }, { rank: env([], "error") }]) {
+      const { d } = localDeps(over);
+      const r = await runCase(local, d);
+      expect(r.results.qloo_playbook).toMatchObject({ status: "ok", rank: 15, note: "rank_unavailable" });
+      expect((r.results.qloo_playbook as { top: Array<{ entityId: string }> }).top[0]!.entityId).toBe("A1");
+    }
+  });
+  it("keeps propagating gateway auth errors from the rank call", async () => {
+    const { d } = localDeps();
+    const inner = d.callTool;
+    d.callTool = async (n, a, s) => { if (n === "qloo_rank") throw new GatewayAuthError(403); return inner(n, a, s); };
+    await expect(runCase(local, d)).rejects.toThrow(/gcloud auth login/);
+  });
+  it("leaves brand cases on artist-taste recommend with no rank call", async () => {
+    const d = deps();
+    await runCase({ ...c, activationType: "merch_collab" }, d);
+    expect(d.calls.some(([n]) => n === "qloo_rank")).toBe(false);
+    expect(d.calls.filter(([n]) => n === "qloo_recommend").map(([, a]) => a)).toEqual([
+      { target_type: "brand", signals: ["ART"], signal_location: "Guadalajara, Mexico", limit: 20 },
+      { target_type: "brand", signal_location: "Guadalajara, Mexico", limit: 20 },
+    ]);
+  });
+  it("marks both Qloo methods unavailable when the city-popular list itself fails", async () => {
+    const { d } = localDeps();
+    const inner = d.callTool;
+    d.callTool = async (n, a, s) => (n === "qloo_recommend" ? env([], "error") : inner(n, a, s));
+    const r = await runCase(local, d);
+    expect(r.results.qloo_playbook).toEqual({ status: "unavailable", reason: "qloo_error" });
+  });
+});
+
 describe("runCase hardening", () => {
   it("treats a malformed envelope from callTool as a per-method failure", async () => {
     const d = deps();
@@ -107,6 +175,10 @@ describe("results status and case cap", () => {
   it("marks results partial or complete", () => {
     expect(buildResults([], { runAt: "x", model: "m" }).status).toBe("complete");
     expect(buildResults([], { runAt: "x", model: "m", status: "partial" }).status).toBe("partial");
+  });
+  it("records the method and its note, defaulting to v2", () => {
+    expect(buildResults([], { runAt: "x", model: "m" })).toMatchObject({ method: "v2", methodNote: "" });
+    expect(buildResults([], { runAt: "x", model: "m", method: "v1", methodNote: "note" })).toMatchObject({ method: "v1", methodNote: "note" });
   });
   it("refuses more than the budget cap of cases", () => {
     const many = Array.from({ length: MAX_CASES + 1 }, (_, i) => ({ ...c, id: `c${i}` }));
@@ -138,6 +210,8 @@ describe("cli helpers", () => {
   it("parses args", () => {
     expect(parseArgs(["--cases", "a.json", "--out", "b.json", "--only", "x,y"])).toEqual({ cases: "a.json", out: "b.json", only: ["x", "y"] });
     expect(() => parseArgs(["--cases", "a.json"])).toThrow(/--out/);
+    expect(parseArgs(["--cases", "a.json", "--out", "b.json", "--method-note", "ranked local acts"]).methodNote).toBe("ranked local acts");
+    expect(parseArgs(["--cases", "a.json", "--out", "b.json"])).not.toHaveProperty("methodNote");
   });
 
   it("calls the gateway with auth and session headers, retries 5xx, and never leaks the token in errors", async () => {

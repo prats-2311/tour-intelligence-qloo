@@ -1,5 +1,5 @@
 import { extractEntities } from "../extract.js";
-import { artistTasteArgs, cityPopularityArgs } from "../pipeline/recArgs.js";
+import { artistTasteArgs, cityPopularityArgs, localActRankArgs } from "../pipeline/recArgs.js";
 import type { QlooEnvelope } from "../types.js";
 import type { BacktestCase } from "./cases.js";
 import { decisionFor, methodResult, targetType, WIDE_CUTOFF, type CaseResult, type MethodResult, type RankedItem } from "./score.js";
@@ -38,6 +38,24 @@ async function qlooList(deps: RunnerDeps, args: Record<string, unknown>, session
   }
 }
 
+/**
+ * Local acts: the first 10 city-popular artists re-ranked by taste fit with the headliner, then the remaining
+ * city-popular ones. A rank that fails or returns nothing leaves city-popularity order and a note on the result.
+ */
+async function rankedLocalActs(deps: RunnerDeps, artistId: string, where: string, pop: RankedItem[], sessionId: string): Promise<{ items: RankedItem[]; note?: string }> {
+  const ids = pop.slice(0, 10).flatMap((p) => (p.entityId ? [p.entityId] : []));
+  let ranked: RankedItem[] = [];
+  if (ids.length > 0) {
+    try {
+      const env: QlooEnvelope = await deps.callTool("qloo_rank", localActRankArgs(artistId, where, ids), sessionId);
+      if (USABLE.has(env.status)) ranked = extractEntities(env).map((e) => ({ name: e.name, entityId: e.entityId }));
+    } catch (err) { if (err instanceof GatewayAuthError) throw err; }
+  }
+  if (ranked.length === 0) return { items: pop, note: "rank_unavailable" };
+  const listed = new Set(ranked.map((r) => r.entityId));
+  return { items: [...ranked, ...pop.slice(10).filter((p) => !p.entityId || !listed.has(p.entityId))] };
+}
+
 export function llmPrompt(c: BacktestCase): string {
   const where = `${c.city}, ${c.country}`;
   const ask = c.activationType === "local_artist"
@@ -73,18 +91,26 @@ export async function runCase(c: BacktestCase, deps: RunnerDeps): Promise<CaseRe
   const t = { name: c.realEntity.name, ...(c.realEntity.aliases ? { aliases: c.realEntity.aliases } : {}), entityId };
   const score = (r: RankedItem[] | MethodResult): MethodResult => (Array.isArray(r) ? methodResult(r, t) : r);
 
-  const [ours, pop, llm] = await Promise.all([
-    artistId ? qlooList(deps, artistTasteArgs(target, artistId, where, WIDE_CUTOFF), sessionId) : Promise.resolve(unavailable("artist_unresolved")),
+  const local = c.activationType === "local_artist";
+  const [oursRaw, pop, llm] = await Promise.all([
+    artistId && !local ? qlooList(deps, artistTasteArgs(target, artistId, where, WIDE_CUTOFF), sessionId) : Promise.resolve(unavailable("artist_unresolved")),
     artistId ? qlooList(deps, cityPopularityArgs(target, where, WIDE_CUTOFF), sessionId) : Promise.resolve(unavailable("artist_unresolved")),
     deps.llmList(c).catch((err) => { if (err instanceof GatewayAuthError) throw err; return null; }),
   ]);
+  let ours: RankedItem[] | MethodResult = oursRaw;
+  let note: string | undefined;
+  if (local && artistId) {
+    if (Array.isArray(pop)) ({ items: ours, note } = await rankedLocalActs(deps, artistId, where, pop, sessionId));
+    else ours = pop;
+  }
+  const oursScored = score(ours);
   return {
     id: c.id, artist: c.artist, city: c.city, country: c.country,
     activationType: c.activationType, decision: decisionFor(c.activationType),
     realEntity: { name: c.realEntity.name, entityId, resolved: entityId !== null },
     date: c.date, sources: c.sources, summary: c.summary,
     results: {
-      qloo_playbook: score(ours),
+      qloo_playbook: note && oursScored.status === "ok" ? { ...oursScored, note } : oursScored,
       city_popularity: score(pop),
       llm_only: llm ? methodResult(llm.map((name) => ({ name })), t) : unavailable("llm_unavailable"),
     },

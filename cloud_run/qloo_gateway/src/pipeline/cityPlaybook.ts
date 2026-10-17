@@ -4,7 +4,7 @@ import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { coBillLift } from "../scoring/winnability.js";
 import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narrative, PlaybookCard } from "../types.js";
 import { activationInputs, Aborted, BudgetStop, trackedCall } from "./tourBoard.js";
-import { cityPopularityArgs } from "./recArgs.js";
+import { cityPopularityArgs, LOCAL_ACT_POOL, localActRankArgs } from "./recArgs.js";
 
 export type { PlaybookCard } from "../types.js";
 
@@ -71,17 +71,35 @@ export async function* runCityPlaybook(
     const where = `${input.city.name}, ${input.city.country}`;
     const [tagsS, proxyS] = await Promise.allSettled([
       trackedCall(deps, input.sessionId, "qloo_entity_tags", { entities: [input.artistEntityId], entity_type: "artist", limit: 10 }, events),
-      trackedCall(deps, input.sessionId, "qloo_recommend", cityPopularityArgs("artist", where, 5), events),
+      trackedCall(deps, input.sessionId, "qloo_recommend", cityPopularityArgs("artist", where, LOCAL_ACT_POOL), events),
     ]);
     while (events.length) yield events.shift()!;
     const failed = [tagsS, proxyS].filter((s): s is PromiseRejectedResult => s.status === "rejected").map((s) => s.reason);
     if (failed.length) throw failed.find((b) => b instanceof Aborted || b instanceof BudgetStop) ?? failed[0];
     const tags = (tagsS as PromiseFulfilledResult<CallResult>).value;
     const proxyRecs = (proxyS as PromiseFulfilledResult<CallResult>).value;
-    const proxies = extractEntities(proxyRecs.envelope).slice(0, 5);
+    const candidatesPop = extractEntities(proxyRecs.envelope);
+    const proxies = candidatesPop.slice(0, 5);
     let talentShared: { value: number | null; tags: string[] } = { value: null, tags: [] };
     const talentWarnings: DataWarning[] = [...warningsFor("qloo_recommend", proxyRecs), ...needsInputWarning("qloo_recommend", proxyRecs)];
     const talentRefs: EvidenceRef[] = [ref("qloo_recommend", proxyRecs)];
+    let localActs = proxies;
+    if (candidatesPop.length > 0) {
+      let ranked: CallResult | null = null;
+      try {
+        ranked = await trackedCall(deps, input.sessionId, "qloo_rank", localActRankArgs(input.artistEntityId, where, candidatesPop.map((p) => p.entityId)), events);
+      } catch (err) {
+        if (err instanceof Aborted || err instanceof BudgetStop) throw err;
+      }
+      const rankedActs = ranked ? extractEntities(ranked.envelope) : [];
+      if (ranked) talentRefs.push(ref("qloo_rank", ranked));
+      if (ranked && rankedActs.length > 0) {
+        localActs = rankedActs.slice(0, 5);
+        talentWarnings.push(...warningsFor("qloo_rank", ranked));
+      } else {
+        talentWarnings.push({ tool: "qloo_rank", kind: "partial", message: "taste ranking unavailable — showing the city's most popular artists" });
+      }
+    }
     if (proxies.length > 0) {
       const cmp = await trackedCall(deps, input.sessionId, "qloo_compare_audiences", { group_a: [input.artistEntityId], group_b: proxies.map((p) => p.entityId) }, events);
       talentRefs.push(ref("qloo_compare_audiences", cmp));
@@ -106,7 +124,7 @@ export async function* runCityPlaybook(
         [raw.artists, raw.films, raw.tv, raw.places].flatMap((r) => warningsFor("qloo_recommend", r))),
       card("venue_fit", a.venues.items, a.venues.refs, [...(raw.ranked ? warningsFor("qloo_rank", raw.ranked) : []), ...a.venues.warnings]),
       card("co_billing", coBill, coBill.map((c) => c.ref), compared.flatMap((c) => c.warnings)),
-      { ...card("talent", proxies, talentRefs, talentWarnings), summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags } },
+      { ...card("talent", localActs.map(({ name, entityId, affinity }) => ({ name, entityId, affinity })), talentRefs, talentWarnings), summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags } },
     ];
     yield { type: "playbook", playbook: { city: input.city, cards } };
     if (input.narrative !== false && deps.narrate) {
