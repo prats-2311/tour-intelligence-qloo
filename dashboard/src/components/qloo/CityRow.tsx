@@ -37,6 +37,7 @@ export function CityRow({ city, selected, dimActivation, onOpen }: { city: Score
       id={`city-row-${city.id}`}
       data-testid="city-row"
       data-city-id={city.id}
+      data-city-name={city.name}
       layout={reduce ? false : "position"}
       initial={reduce ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}

@@ -22,6 +22,8 @@ test.beforeEach(async ({ page }) => {
 const noOverflow = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 
 async function expectNoSeriousA11y(page: Page, where: string) {
+  // Rows fade in with a spring: wait for running animations to finish so contrast is measured on settled pixels (motion stays on, as judges see it).
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
   const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   const bad = violations.filter((v) => v.impact === "serious" || v.impact === "critical");
   expect(bad.map((v) => `${where}: ${v.id} (${v.impact}) ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`), `axe on ${where}`).toEqual([]);
@@ -34,7 +36,7 @@ test("promoter judge path: landing → board → playbook → hold → book → 
   const qloo: string[] = [];
   page.on("console", (m) => { if (m.type() === "error" && !TILE_HOST.test(m.text()) && !TILE_HOST.test(m.location().url)) errors.push(`console: ${m.text()}`); });
   page.on("pageerror", (e) => { if (!TILE_HOST.test(e.message)) errors.push(`pageerror: ${e.message}`); });
-  page.on("request", (r) => { if (r.url().includes("/api/qloo/")) qloo.push(r.url()); });
+  page.on("request", (r) => { if (r.url().includes("/api/qloo/") && (!LIVE || r.method() === "POST")) qloo.push(`${r.method()} ${r.url()}`); });
 
   // 1. Landing: three beats, then the showcase CTA.
   await page.goto("/");
@@ -50,8 +52,7 @@ test("promoter judge path: landing → board → playbook → hold → book → 
   await expect(rows.first()).toBeVisible({ timeout: 20_000 });
   const goldmine = rows.filter({ hasText: "Hidden goldmine" }).first();
   await expect(goldmine).toBeVisible();
-  const cityButton = goldmine.getByRole("button").first();
-  const cityName = ((await cityButton.getAttribute("aria-label")) ?? (await cityButton.innerText())).split(/[,\n]/)[0]!.trim();
+  const cityName = (await goldmine.getAttribute("data-city-name"))!;
   expect(cityName.length).toBeGreaterThan(1);
   const boardCount = await rows.count();
   expect(boardCount).toBeGreaterThan(0);
@@ -92,6 +93,6 @@ test("promoter judge path: landing → board → playbook → hold → book → 
   await expectNoSeriousA11y(page, "proof");
 
   expect(errors, "console/page errors on the promoter path").toEqual([]);
-  if (!LIVE) expect(qloo, "showcase must make zero /api/qloo/ calls").toEqual([]);
+  expect(qloo, LIVE ? "showcase must make zero POSTs to /api/qloo/" : "showcase must make zero /api/qloo/ calls").toEqual([]);
   expect(Date.now() - t0).toBeLessThan(120_000);
 });
