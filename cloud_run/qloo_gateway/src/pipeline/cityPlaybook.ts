@@ -4,7 +4,7 @@ import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { coBillLift } from "../scoring/winnability.js";
 import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narrative, PlaybookCard } from "../types.js";
 import { activationInputs, Aborted, BudgetStop, trackedCall } from "./tourBoard.js";
-import { LOCAL_SUGGESTIONS, matchSuggestion } from "./localActs.js";
+import { LOCAL_DESCRIBE_CAP, LOCAL_SUGGESTIONS, matchPool, matchSuggestion } from "./localActs.js";
 import { cityPopularityArgs, LOCAL_ACT_POOL, localActRankArgs } from "./recArgs.js";
 
 export type { PlaybookCard } from "../types.js";
@@ -87,19 +87,32 @@ export async function* runCityPlaybook(
     const talentRefs: EvidenceRef[] = [ref("qloo_recommend", proxyRecs)];
     // Gemini names are unverified until Qloo finds them: only resolved entities ever become candidates.
     const suggested = suggestedS.status === "fulfilled" ? suggestedS.value : null;
-    const resolvedS = await Promise.allSettled((suggested ?? []).map((name) => trackedCall(deps, input.sessionId, "qloo_describe", { entity: name, type: "artist" }, events)));
+    type Act = ReturnType<typeof extractEntities>[number];
+    // A suggestion already in the city pool reuses that entity (no describe); only the first LOCAL_DESCRIBE_CAP others are looked up.
+    const poolHits: Act[] = [];
+    const toDescribe: string[] = [];
+    let skipped = 0;
+    for (const name of suggested ?? []) {
+      const hit = matchPool(name, candidatesPop);
+      if (hit) poolHits.push(hit);
+      else if (toDescribe.length < LOCAL_DESCRIBE_CAP) toDescribe.push(name);
+      else skipped += 1;
+    }
+    const resolvedS = await Promise.allSettled(toDescribe.map((name) => trackedCall(deps, input.sessionId, "qloo_describe", { entity: name, type: "artist" }, events)));
     while (events.length) yield events.shift()!;
     const fatal = resolvedS.filter((r): r is PromiseRejectedResult => r.status === "rejected").map((r) => r.reason).find((e) => e instanceof Aborted || e instanceof BudgetStop);
     if (fatal) throw fatal;
-    let unresolved = 0;
-    const resolved: Array<ReturnType<typeof extractEntities>[number]> = [];
+    let unresolved = skipped;
+    const novel: Act[] = [];
     for (const [i, r] of resolvedS.entries()) {
-      const top = r.status === "fulfilled" ? matchSuggestion(suggested![i]!, r.value.envelope.status, extractEntities(r.value.envelope)) : undefined;
-      if (top) resolved.push(top); else unresolved += 1;
+      const top = r.status === "fulfilled" ? matchSuggestion(toDescribe[i]!, r.value.envelope.status, extractEntities(r.value.envelope)) : undefined;
+      if (!top) unresolved += 1;
+      else if (candidatesPop.some((e) => e.entityId === top.entityId)) poolHits.push(top);
+      else novel.push(top);
       if (r.status === "fulfilled") talentRefs.push(ref("qloo_describe", r.value));
     }
-    const suggestedIds = new Set(resolved.map((e) => e.entityId));
-    const candidateActs = suggested === null ? candidatesPop : [...new Map([...resolved, ...candidatesPop].map((e) => [e.entityId, e])).values()].slice(0, LOCAL_SUGGESTIONS);
+    const suggestedIds = new Set([...novel, ...poolHits].map((e) => e.entityId));
+    const candidateActs = suggested === null ? candidatesPop : [...new Map([...novel, ...candidatesPop].map((e) => [e.entityId, e])).values()].slice(0, LOCAL_SUGGESTIONS);
     let localActs = suggested === null ? proxies : candidateActs.slice(0, 5);
     if (candidateActs.length > 0) {
       let ranked: CallResult | null = null;
@@ -114,7 +127,7 @@ export async function* runCityPlaybook(
         localActs = rankedActs.slice(0, 5);
         talentWarnings.push(...warningsFor("qloo_rank", ranked));
       } else {
-        talentWarnings.push({ tool: "qloo_rank", kind: "partial", message: resolved.length > 0 ? "taste ranking unavailable — showing suggested and popular artists unranked" : "taste ranking unavailable — showing the city's most popular artists" });
+        talentWarnings.push({ tool: "qloo_rank", kind: "partial", message: novel.length > 0 ? "taste ranking unavailable — showing suggested and popular artists unranked" : "taste ranking unavailable — showing the city's most popular artists" });
       }
     }
     if (proxies.length > 0) {

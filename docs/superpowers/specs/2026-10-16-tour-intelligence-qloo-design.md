@@ -383,7 +383,7 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 ### 9.2 Caching & quota
 - Two-tier cache: L1 in-memory LRU in the gateway (~0 ms) + L2 Firestore `qloo_cache` (~10–30 ms, native TTL on `expireAt`, shared across instances, survives restarts); key = hash(tool, normalised args); latest write wins; TTL 7 d (trends 1 d); L2 failures degrade to L1 only. BigQuery is not used for caching (point lookups are ~0.5–2 s and bill ≥ 10 MB each); it holds campaign data and analytics only.
 - Showcase artist + 3 control artists pre-warmed before submission.
-- Budget: 100 Qloo calls/session (a cold Tour Board is ~63 calls: describe 1 + profile 3 + regions R + 8 cities × 7), global daily ceiling; exceeded mid-board → already-scored cities are shown, then "Session limit reached — try the showcase".
+- Budget: 160 Qloo calls/session (raised from 100 when the hybrid Talent card added up to 11 calls per playbook; a cold Tour Board is ~63 calls: describe 1 + profile 3 + regions R + 8 cities × 7, so a board plus 4 playbooks is ~107), global daily ceiling; exceeded mid-board → already-scored cities are shown, then "Session limit reached — try the showcase".
 - City activation computed progressively for top 8 cities; city playbooks lazy-loaded and cached.
 
 ### 9.2b Live web search — Tavily (replaces Parallel; Parallel account has no credits)

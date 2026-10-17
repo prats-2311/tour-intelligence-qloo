@@ -1,5 +1,5 @@
 import { Firestore } from "@google-cloud/firestore";
-import { BudgetGuard } from "./budget.js";
+import { BudgetGuard, SESSION_QLOO_BUDGET } from "./budget.js";
 import { FirestoreCache, MemoryCache, TieredCache } from "./cache.js";
 import { loadCities } from "./geo/cities.js";
 import { createApp } from "./http/app.js";
@@ -26,7 +26,7 @@ const cache = process.env.QLOO_CACHE_BACKEND === "firestore"
 const ceiling = Number(process.env.QLOO_DAILY_CEILING);
 const publicCeiling = Number(process.env.QLOO_PUBLIC_DAILY_CEILING);
 const budget = new BudgetGuard({
-  perSession: 100, perDay: Number.isFinite(ceiling) && ceiling > 0 ? ceiling : 2000,
+  perSession: SESSION_QLOO_BUDGET, perDay: Number.isFinite(ceiling) && ceiling > 0 ? ceiling : 2000,
   ...(Number.isFinite(publicCeiling) && publicCeiling > 0 ? { publicPerDay: publicCeiling } : {}),
 });
 const project = process.env.GOOGLE_CLOUD_PROJECT;

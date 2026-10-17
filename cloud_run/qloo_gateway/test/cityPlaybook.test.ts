@@ -279,12 +279,31 @@ describe("runCityPlaybook", () => {
       const ranks: Array<Record<string, unknown>> = [];
       const describes: Array<Record<string, unknown>> = [];
       const events = await collect(runCityPlaybook(input, { qloo: qloo((t, a) => { if (t === "qloo_describe") describes.push(a); if (t === "qloo_rank" && a.option_type === "artist") ranks.push(a); return hybrid(t, a); }), cities: CITIES, ...sug("Drake", "Proxy 1") }));
-      expect(describes).toEqual([{ entity: "Drake", type: "artist" }, { entity: "Proxy 1", type: "artist" }]);
+      expect(describes).toEqual([{ entity: "Drake", type: "artist" }]); // "Proxy 1" is already in the city pool: no describe
       expect(ranks).toEqual([localActRankArgs("A1", "Mexico City, MX", ["S-Drake", "P0", "P1"])]);
       const t = talentOf(events);
       expect(t.items.map((i) => [i.entityId, i.source])).toEqual([["P1", "city_popular"], ["P0", "suggested"], ["S-Drake", "suggested"]]);
       expect(t.items[0]).toEqual({ name: "Proxy 2", entityId: "P1", affinity: 0.9, source: "city_popular" });
-      expect(t.refs.map((r) => r.tool)).toEqual(["qloo_recommend", "qloo_describe", "qloo_describe", "qloo_rank", "qloo_compare_audiences"]);
+      expect(t.refs.map((r) => r.tool)).toEqual(["qloo_recommend", "qloo_describe", "qloo_rank", "qloo_compare_audiences"]);
+    });
+    it("a suggestion whose name matches a city-pool artist reuses the pool entity without a describe", async () => {
+      const describes: string[] = [];
+      const t = talentOf(await collect(runCityPlaybook(input, { qloo: qloo((tool, a) => { if (tool === "qloo_describe") describes.push(String(a.entity)); return hybrid(tool, a); }), cities: CITIES, ...sug("proxy  1", "PROXY 2") })));
+      expect(describes).toEqual([]);
+      expect(t.items.map((i) => [i.entityId, i.source])).toEqual([["P1", "suggested"], ["P0", "suggested"]]);
+      expect(t.summary.suggestionsUnresolved).toBe(0);
+    });
+    it("describes at most 5 suggestions, the first 5 not already matched in the pool", async () => {
+      const describes: string[] = [];
+      const names = ["Proxy 1", ...Array.from({ length: 8 }, (_, i) => `Act ${i}`)];
+      const t = talentOf(await collect(runCityPlaybook(input, { qloo: qloo((tool, a) => { if (tool === "qloo_describe") describes.push(String(a.entity)); return hybrid(tool, a); }), cities: CITIES, ...sug(...names) })));
+      expect(describes).toEqual(["Act 0", "Act 1", "Act 2", "Act 3", "Act 4"]);
+      expect(t.summary.suggestionsUnresolved).toBe(3);
+    });
+    it("keeps the popular-only rank warning when every resolved suggestion duplicates the pool", async () => {
+      const empty = { operation: "rank", status: "empty", results: [] } as QlooEnvelope;
+      const t = talentOf(await collect(runCityPlaybook(input, { qloo: qloo((tool, a) => (tool === "qloo_rank" && a.option_type === "artist" ? empty : hybrid(tool, a))), cities: CITIES, ...sug("Proxy 1", "Ghost") })));
+      expect(t.warnings).toContainEqual({ tool: "qloo_rank", kind: "partial", message: "taste ranking unavailable — showing the city's most popular artists" });
     });
     it("drops suggestions Qloo cannot find and counts them; they never reach the card", async () => {
       const events = await collect(runCityPlaybook(input, { qloo: qloo(hybrid), cities: CITIES, ...sug("Ghost", "Drake") }));

@@ -5,6 +5,8 @@ import { reserveAttempt, type CeilingDeps } from "../narrative/ceiling.js";
 import { generateJson, type GenerateFn } from "../narrative/gemini.js";
 
 export const LOCAL_SUGGESTIONS = 10;
+/** Gemini names that miss the city pool each cost one qloo_describe; capped so a playbook stays inside the session budget. */
+export const LOCAL_DESCRIBE_CAP = 5;
 
 const RESPONSE_SCHEMA = {
   type: "OBJECT",
@@ -67,4 +69,10 @@ export function matchSuggestion<E extends { name: string }>(name: string, status
   if (status !== "ok") return undefined;
   const want = fold(name);
   return want === "" ? undefined : entities.slice(0, 3).find((e) => fold(e.name) === want);
+}
+
+/** The city-pool artist a suggestion names (same folding as matchSuggestion), if any: such a suggestion needs no describe. */
+export function matchPool<E extends { name: string }>(name: string, pool: E[]): E | undefined {
+  const want = fold(name);
+  return want === "" ? undefined : pool.find((e) => fold(e.name) === want);
 }

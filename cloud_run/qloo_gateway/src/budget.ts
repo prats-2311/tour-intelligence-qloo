@@ -1,5 +1,7 @@
 export const PUBLIC_SESSION_PREFIX = "mcp-public-";
 export const DEFAULT_PUBLIC_DAILY = 400;
+/** Uncached Qloo calls one session may make: a cold board (~63) plus up to 6 hybrid playbooks (~16 each, ~11 with the describe cap). */
+export const SESSION_QLOO_BUDGET = 160;
 
 export class BudgetExceededError extends Error {
   constructor(public readonly scope: "session" | "daily" | "public") {
