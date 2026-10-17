@@ -30,4 +30,18 @@ describe("storyBeats", () => {
   it("is null for the placeholder", () => {
     expect(storyBeats(parseShowcase(PLACEHOLDER_SHOWCASE))).toBeNull();
   });
+  it("ignores a card whose status is empty, even when it carries items", () => {
+    const goldId = showcaseCities(show).find((c) => c.verdict === "hidden_goldmine")!.id;
+    const copy = parseShowcase(JSON.parse(JSON.stringify(fixture)));
+    for (const e of copy.playbooks[goldId]!) if (e.type === "playbook") for (const c of e.playbook.cards) if (c.kind === "sponsors") c.status = "empty";
+    const b = storyBeats(copy)!;
+    expect(b.plan.sponsor).toBeNull();
+    expect(b.plan.localAct).not.toBeNull();
+  });
+  it("returns null plan fields when the missed city has no playbook", () => {
+    const goldId = showcaseCities(show).find((c) => c.verdict === "hidden_goldmine")!.id;
+    const copy = parseShowcase(JSON.parse(JSON.stringify(fixture)));
+    delete copy.playbooks[goldId];
+    expect(storyBeats(copy)!.plan).toMatchObject({ sponsor: null, coBill: null, localAct: null });
+  });
 });

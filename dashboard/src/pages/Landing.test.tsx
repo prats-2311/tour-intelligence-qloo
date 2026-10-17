@@ -8,7 +8,7 @@ import { DEFAULT_SCORING_DISPLAY } from "@/lib/qloo/labels";
 import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
 import { ordinal } from "@/lib/qloo/ranking";
-import { parseShowcase, SHOWCASE, setShowcase } from "@/lib/qloo/showcase";
+import { parseShowcase, SHOWCASE, setShowcase, showcaseCities } from "@/lib/qloo/showcase";
 import { storyBeats } from "@/lib/qloo/story";
 import Landing from "./Landing";
 
@@ -82,21 +82,59 @@ describe("Landing hero default thresholds", () => {
   });
 });
 
+const goldId = () => showcaseCities(parseShowcase(syntheticShowcase)).find((c) => c.verdict === "hidden_goldmine")!.id;
+const editCards = (fn: (c: { kind: string; status: string }) => void) => {
+  const copy = parseShowcase(JSON.parse(JSON.stringify(syntheticShowcase)));
+  for (const e of copy.playbooks[goldId()]!) if (e.type === "playbook") e.playbook.cards.forEach(fn as never);
+  setShowcase(copy);
+};
+const renderBeats = () => {
+  render(<MemoryRouter><Landing /></MemoryRouter>);
+  return within(screen.getByRole("list", { name: "The story in three beats" })).getAllByRole("listitem");
+};
+
 describe("Landing story beats (spec 1.2b rule 1: every number comes from the recording)", () => {
   afterEach(() => setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE)));
-  it("shows the markets, city, both ranks and sponsor taken from storyBeats(SHOWCASE)", () => {
+  it("shows the markets, city, both ranks, sponsor and bill taken from storyBeats(SHOWCASE), each in its own beat", () => {
     setShowcase(parseShowcase(syntheticShowcase));
-    render(<MemoryRouter><Landing /></MemoryRouter>);
     const beats = storyBeats(SHOWCASE)!;
+    expect(beats.plan.sponsor).not.toBeNull();
+    const [hold, missed, plan] = renderBeats().map((li) => li.textContent!);
+    expect(hold).toContain(`${beats.decision.markets} markets`);
+    expect(missed).toContain(beats.missed.city);
+    expect(missed).toContain(`${ordinal(beats.missed.densityRank)} on fan density`);
+    expect(missed).toContain(`${ordinal(beats.missed.winnabilityRank)} on winnability`);
+    expect(missed).toContain(beats.missed.verdictLabel);
+    expect(plan).toContain(beats.plan.sponsor!);
+    const bill = beats.plan.localAct ?? beats.plan.coBill;
+    if (bill) expect(plan).toContain(bill);
+  });
+  it("degrades to the generic playbook line when the city has no playbook", () => {
+    const copy = parseShowcase(JSON.parse(JSON.stringify(syntheticShowcase)));
+    delete copy.playbooks[goldId()];
+    setShowcase(copy);
+    expect(renderBeats()[2]!.textContent).toContain("Its playbook: sponsor, venue and promo plan.");
+  });
+  it("drops only the pitch clause when the sponsor is missing, and only the bill clause when there is no act", () => {
+    editCards((c) => { if (c.kind === "sponsors") c.status = "empty"; });
+    let plan = renderBeats()[2]!.textContent!;
+    expect(plan).not.toContain("pitch");
+    expect(plan).toContain("on the bill");
+    cleanup();
+    editCards((c) => { if (c.kind === "talent" || c.kind === "co_billing") c.status = "empty"; });
+    plan = renderBeats()[2]!.textContent!;
+    expect(plan).toContain("pitch");
+    expect(plan).not.toContain("on the bill");
+  });
+  it("on mobile the CTAs come before the beats, and the beats before the proof card", () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    renderBeats();
+    const before = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const cta = screen.getByRole("link", { name: "Try the showcase tour" });
     const list = screen.getByRole("list", { name: "The story in three beats" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
-    const text = list.textContent!;
-    expect(text).toContain(`${beats.decision.markets} markets`);
-    expect(text).toContain(beats.missed.city);
-    expect(text).toContain(ordinal(beats.missed.densityRank));
-    expect(text).toContain(ordinal(beats.missed.winnabilityRank));
-    expect(text).toContain(beats.missed.verdictLabel);
-    if (beats.plan.sponsor) expect(text).toContain(beats.plan.sponsor);
+    const proof = screen.getByTestId("proof-winnability");
+    expect(before(cta, list)).toBe(true);
+    expect(before(list, proof)).toBe(true);
   });
   it("renders no story with the placeholder, and the sample card stays", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);

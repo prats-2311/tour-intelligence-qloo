@@ -69,16 +69,16 @@ export const showcasePlaybookCities = (): ScoredCity[] => showcaseCities().filte
 
 export interface Proof { city: ScoredCity; line: string }
 
+/** Whole-board rank of a city on fan density or winnability (1 = best); only a strictly higher score ranks ahead. `scored` holds cities with both scores. */
+export const boardRank = (scored: ScoredCity[], c: ScoredCity, key: "fanHeat" | "winnability"): number => 1 + scored.filter((x) => x[key].value! > c[key].value!).length;
+export const hasBothScores = (c: ScoredCity): boolean => c.winnability.value !== null && c.fanHeat.value !== null;
+
 /**
  * The Landing proof card. Ranks use the whole board (the Density tab's set) and only a strictly higher score
  * ranks ahead, so ties never count. Candidates are the cities with a recorded playbook (`withPlaybook`; all
  * scored cities when omitted), because the card links to that playbook. Picks the largest climb from the
  * fan-density rank to the winnability rank; with no climb, the top-winnability candidate with no claim about a shift.
  */
-/** Whole-board rank of a city on fan density or winnability (1 = best); only a strictly higher score ranks ahead. `scored` holds cities with both scores. */
-export const boardRank = (scored: ScoredCity[], c: ScoredCity, key: "fanHeat" | "winnability"): number => 1 + scored.filter((x) => x[key].value! > c[key].value!).length;
-export const hasBothScores = (c: ScoredCity): boolean => c.winnability.value !== null && c.fanHeat.value !== null;
-
 export function proofFor(all: ScoredCity[], withPlaybook?: readonly string[]): Proof | null {
   const scored = all.filter(hasBothScores);
   const pool = withPlaybook ? scored.filter((c) => withPlaybook.includes(c.id)) : scored;

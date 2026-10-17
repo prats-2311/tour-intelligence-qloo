@@ -9,7 +9,8 @@ export interface StoryBeats {
 }
 
 const firstName = (cards: PlaybookCard[], kind: PlaybookCard["kind"]): string | null => {
-  const name = cards.find((c) => c.kind === kind)?.items[0]?.name;
+  // An empty card renders as "no results", so its items are never shown and must not be quoted here.
+  const name = cards.find((c) => c.kind === kind && c.status === "ok")?.items[0]?.name;
   return typeof name === "string" && name ? name : null;
 };
 

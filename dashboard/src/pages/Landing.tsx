@@ -75,7 +75,7 @@ function Story() {
   const bill = p.localAct ?? p.coBill;
   const clauses = [p.sponsor && `pitch ${p.sponsor}`, bill && `put ${bill} on the bill`].filter(Boolean).join(", ");
   const steps = [
-    { label: "The hold", text: `${d.artist}: ${d.markets} markets${d.regions.length ? ` across ${joinList(d.regions)}` : ""}. Which ones get dates?` },
+    { label: "The hold", text: `${d.artist}: ${d.markets} ${d.markets === 1 ? "market" : "markets"}${d.regions.length ? ` across ${joinList(d.regions)}` : ""}. Which ones get dates?` },
     { label: "The city density misses", text: `${m.city} ranks ${ordinal(m.densityRank)} on fan density and ${ordinal(m.winnabilityRank)} on winnability — ${m.verdictLabel}.` },
     { label: "How you win it", text: clauses ? `Its playbook: ${clauses}.` : "Its playbook: sponsor, venue and promo plan." },
   ];
@@ -114,17 +114,17 @@ export default function Landing() {
           Find the cities where your artist can win, then get the sponsor, venue and promo plan for each one. Built on Qloo taste data.
         </p>
       </section>
-      <Story />
-      <div className="flex flex-col gap-6 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
-        {isDesktop && <MapPreview />}
-        <ProofCard />
-      </div>
       <div className="lg:col-span-5 lg:col-start-1 lg:row-start-2 lg:mt-8 lg:self-start">
         <div className="flex flex-col gap-2.5 lg:flex-row lg:gap-4">
           <Link to="/tours/board?showcase=1" className={`${CTA} bg-gold font-semibold text-on-gold hover:bg-gold-soft active:bg-[#efb900]`}>Try the showcase tour</Link>
           <Link to="/tours/board" className={`${CTA} bg-paper-raised font-medium text-canvas-text hover:bg-[#3a3932]`}>Plan your own</Link>
         </div>
         <Link to="/proof" className="mt-1 inline-flex min-h-11 items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{PROOF_LINK_TEXT} →</Link>
+      </div>
+      <Story />
+      <div className="flex flex-col gap-6 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
+        {isDesktop && <MapPreview />}
+        <ProofCard />
       </div>
     </div>
   );
