@@ -1,0 +1,577 @@
+[
+  {
+    "id": "fatboy-slim-mexico-city-vavava-shop",
+    "artist": "Fatboy Slim",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "merch_collab",
+    "realEntity": {
+      "name": "VAVAVA Shop",
+      "aliases": [
+        "Vavava Shop"
+      ]
+    },
+    "date": "2024-10",
+    "sources": [
+      "https://www.chilango.com/que-hacer/compras/fatboy-slim-pop-up-store-cdmx/"
+    ],
+    "summary": "VAVAVA Shop collaborated with Fatboy Slim on a Mexico City pop-up (29-31 Oct 2024) selling tees, hoodies and patches designed for Mexican fans ahead of his 1 Nov show at Pepsi Center.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "interpol-mexico-city-faramalla-club-de-vinilos",
+    "artist": "Interpol",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "merch_collab",
+    "realEntity": {
+      "name": "Faramalla Club de Vinilos",
+      "aliases": [
+        "Mercadorama"
+      ]
+    },
+    "date": "2024-04",
+    "sources": [
+      "https://www.chilango.com/agenda/musica-agenda/pop-store-interpol-cdmx-2024/"
+    ],
+    "summary": "Mercadorama and Faramalla Club de Vinilos partnered with Interpol on a 18-20 April 2024 pop-up at Vavava Shop with exclusive merch, posters and vinyl commemorating the band's Zocalo show.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "pulp-mexico-city-vavava-shop",
+    "artist": "Pulp",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "merch_collab",
+    "realEntity": {
+      "name": "VAVAVA Shop",
+      "aliases": [
+        "Vavava Shop"
+      ]
+    },
+    "date": "2023-11",
+    "sources": [
+      "https://www.chilango.com/que-hacer/musica/pulp-tendra-pop-up-store-en-cdmx/"
+    ],
+    "summary": "Pulp ran a merch pop-up at Vavava Shop in Mexico City on 10-12 November 2023 ahead of their Corona Capital set.",
+    "review": {
+      "status": "rejected",
+      "by": "prateek",
+      "at": "2026-10-17",
+      "note": "dropped in controller pre-filter (weak source, future date, not city-specific, or not local); Prateek accepted the shortlist"
+    }
+  },
+  {
+    "id": "adult-dvd-leeds-welcome-skate-store",
+    "artist": "Adult DVD",
+    "city": "Leeds",
+    "country": "United Kingdom",
+    "activationType": "merch_collab",
+    "realEntity": {
+      "name": "Welcome Skate Store",
+      "aliases": [
+        "Welcome Skateboards"
+      ]
+    },
+    "date": "2026-09",
+    "sources": [
+      "https://www.yorkshireeveningpost.co.uk/whats-on/adult-dvd-welcome-skate-store-leeds-album-launch-popup-9158054"
+    ],
+    "summary": "Leeds band Adult DVD and Welcome Skate Store held a one-day album-launch pop-up with exclusive tees, caps and custom skateboard decks, with remaining stock then limited to the band's UK tour.",
+    "review": {
+      "status": "rejected",
+      "by": "prateek",
+      "at": "2026-10-17",
+      "note": "dropped in controller pre-filter (weak source, future date, not city-specific, or not local); Prateek accepted the shortlist"
+    }
+  },
+  {
+    "id": "deftones-mexico-city-pumas-unam",
+    "artist": "Deftones",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "merch_collab",
+    "realEntity": {
+      "name": "Pumas UNAM",
+      "aliases": [
+        "Club Universidad Nacional",
+        "Pumas"
+      ]
+    },
+    "date": "2026-03",
+    "sources": [
+      "https://www.mercadonegro.pe/marketing/deftones-x-pumas-unam-la-historia-de-una-colaboracion-improbable/"
+    ],
+    "summary": "Before their 29 March 2026 Mexico City show, Deftones opened a pop-up with limited-edition merch developed with football club Pumas UNAM.",
+    "review": {
+      "status": "rejected",
+      "by": "prateek",
+      "at": "2026-10-17",
+      "note": "dropped in controller pre-filter (weak source, future date, not city-specific, or not local); Prateek accepted the shortlist"
+    }
+  },
+  {
+    "id": "water-from-your-eyes-mexico-city-matador-records",
+    "artist": "Water from Your Eyes",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "merch_collab",
+    "realEntity": {
+      "name": "Matador Records",
+      "aliases": [
+        "Matador"
+      ]
+    },
+    "date": "2024-11",
+    "sources": [
+      "https://matadorrecords.com/blogs/news/matador-records-mexico-city-pop-up",
+      "https://www.chilango.com/que-hacer/musica/water-from-your-eyes-meet-greet-pop-up-matador-records-cdmx/"
+    ],
+    "summary": "Matador Records ran a 9-14 November 2024 pop-up at Vavava Shop in Mexico City with label merch and vinyl from Water From Your Eyes and others ahead of Corona Capital, plus a band meet and greet.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "turnstile-toronto-saya-gray",
+    "artist": "Turnstile",
+    "city": "Toronto",
+    "country": "Canada",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Saya Gray"
+    },
+    "date": "2026-09-12",
+    "sources": [
+      "https://exclaim.ca/music/article/turnstile-announce-2026-north-american-tour-with-guests"
+    ],
+    "summary": "Turnstile's 12 September 2026 show at Woodbine Park in Toronto was announced with Yves Tumor, Saya Gray and Pluto's Kiss as guests, part of a tour with a curated guest lineup per city.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "ca7riel-paco-amoroso-mexico-city-erik-rubin",
+    "artist": "Ca7riel & Paco Amoroso",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Erik Rubin",
+      "aliases": [
+        "Erik Rubín",
+        "Erick Rubín"
+      ]
+    },
+    "date": "2026-08",
+    "sources": [
+      "https://www.cronica.com.mx/escenario/2026/08/08/ca7riel-paco-amoroso-el-ritual-de-sanacion-de-free-spirits-que-hizo-bailar-al-palacio-de-los-deportes/",
+      "https://los40.com.mx/2026/08/07/loreto-peralta-se-roba-las-miradas-en-el-concierto-de-ca7riel-y-paco-amoroso-en-la-cdmx/"
+    ],
+    "summary": "Mexican musician Erik Rubin was among the guests who joined Ca7riel & Paco Amoroso on stage at their Palacio de los Deportes show in Mexico City on the Free Spirits World Tour.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "ca7riel-paco-amoroso-mexico-city-uzielito-mix",
+    "artist": "Ca7riel & Paco Amoroso",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Uzielito Mix"
+    },
+    "date": "2026-08",
+    "sources": [
+      "https://www.cronica.com.mx/escenario/2026/08/08/ca7riel-paco-amoroso-el-ritual-de-sanacion-de-free-spirits-que-hizo-bailar-al-palacio-de-los-deportes/",
+      "https://los40.com.mx/2026/08/07/loreto-peralta-se-roba-las-miradas-en-el-concierto-de-ca7riel-y-paco-amoroso-en-la-cdmx/"
+    ],
+    "summary": "Mexican musician Uzielito Mix was among the guests who joined Ca7riel & Paco Amoroso on stage at their Palacio de los Deportes show in Mexico City.",
+    "review": {
+      "status": "rejected",
+      "by": "prateek",
+      "at": "2026-10-17",
+      "note": "dropped in controller pre-filter (weak source, future date, not city-specific, or not local); Prateek accepted the shortlist"
+    }
+  },
+  {
+    "id": "new-order-sao-paulo-jovens-ateus",
+    "artist": "New Order",
+    "city": "Sao Paulo",
+    "country": "Brazil",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Jovens Ateus"
+    },
+    "date": "2026-11-25",
+    "sources": [
+      "https://viva.com.br/cultura-e-lazer/new-order-fara-show-unico-em-sao-paulo-em-novembro-garanta-o-ingresso.html"
+    ],
+    "summary": "Brazilian band Jovens Ateus (from Parana) was announced as the opener for New Order's single Sao Paulo show at Espaco Unimed on 25 November 2026.",
+    "review": {
+      "status": "rejected",
+      "by": "prateek",
+      "at": "2026-10-17",
+      "note": "dropped in controller pre-filter (weak source, future date, not city-specific, or not local); Prateek accepted the shortlist"
+    }
+  },
+  {
+    "id": "shed-seven-york-brew-york",
+    "artist": "Shed Seven",
+    "city": "York",
+    "country": "United Kingdom",
+    "activationType": "sponsor",
+    "realEntity": {
+      "name": "Brew York"
+    },
+    "date": "2024-07-19",
+    "sources": [
+      "https://wb.camra.org.uk/2024/07/17/brew-york-hits-right-note",
+      "https://brewersjournal.info/?p=20573"
+    ],
+    "summary": "Brew York launched a limited-edition pale ale, Homecoming, with York band Shed Seven tied to their 19-20 July 2024 shows at York Museum Gardens.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "dua-lipa-buenos-aires-soda-stereo",
+    "artist": "Dua Lipa",
+    "city": "Buenos Aires",
+    "country": "Argentina",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Soda Stereo"
+    },
+    "date": "2025-11-07",
+    "sources": [
+      "https://www.yahoo.com/entertainment/music/articles/guide-dua-lipas-latin-american-183705748.html"
+    ],
+    "summary": "At her 7 November 2025 Buenos Aires show Dua Lipa covered Argentine rock band Soda Stereo's De Musica Ligera as that stop's local-artist tribute.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "dua-lipa-santiago-mon-laferte",
+    "artist": "Dua Lipa",
+    "city": "Santiago",
+    "country": "Chile",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Mon Laferte"
+    },
+    "date": "2025-11-11",
+    "sources": [
+      "https://www.yahoo.com/entertainment/music/articles/guide-dua-lipas-latin-american-183705748.html"
+    ],
+    "summary": "At her 11 November 2025 Santiago show Dua Lipa covered Chilean singer Mon Laferte's Tu Falta de Querer.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "dua-lipa-bogota-shakira",
+    "artist": "Dua Lipa",
+    "city": "Bogota",
+    "country": "Colombia",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Shakira"
+    },
+    "date": "2025-11-28",
+    "sources": [
+      "https://www.yahoo.com/entertainment/music/articles/guide-dua-lipas-latin-american-183705748.html",
+      "https://www.tvazteca.com/azteca7/latinoamericanos-en-usa/dua-lipa-homenajea-a-shakira-concierto-bogota/"
+    ],
+    "summary": "At her 28 November 2025 Bogota show Dua Lipa covered Colombian singer Shakira's Antologia.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "dua-lipa-mexico-city-mana",
+    "artist": "Dua Lipa",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Mana",
+      "aliases": [
+        "Maná",
+        "Fher Olvera"
+      ]
+    },
+    "date": "2025-12",
+    "sources": [
+      "https://ca.billboard.com/music/latin/dua-lipa-selena-tribute-mexico-city-tour-finale-1236130017",
+      "https://www.yahoo.com/entertainment/music/articles/guide-dua-lipas-latin-american-183705748.html"
+    ],
+    "summary": "During her December 2025 Estadio GNP Seguros run in Mexico City Dua Lipa performed Oye Mi Amor with Fher Olvera of Mexican rock band Mana.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "metallica-mexico-city-el-tri",
+    "artist": "Metallica",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "El Tri"
+    },
+    "date": "2024-09-27",
+    "sources": [
+      "https://remezcla.com/?p=378078"
+    ],
+    "summary": "Metallica covered Mexican band El Tri's A.D.O. at Estadio GNP Seguros in Mexico City on 27 September 2024.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "metallica-mexico-city-la-sonora-santanera",
+    "artist": "Metallica",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "La Sonora Santanera"
+    },
+    "date": "2024-09-29",
+    "sources": [
+      "https://remezcla.com/?p=378078"
+    ],
+    "summary": "Metallica covered La Sonora Santanera's Los Luchadores, with luchadores on stage, at Estadio GNP Seguros in Mexico City on 29 September 2024.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "bad-bunny-mexico-city-julieta-venegas",
+    "artist": "Bad Bunny",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Julieta Venegas"
+    },
+    "date": "2025-12-19",
+    "sources": [
+      "https://www.elfinanciero.com.mx/entretenimiento/2025/12/20/videos-julieta-venegas-canta-junto-a-bad-bunny-en-el-estadio-gnp-seguros-cdmx/",
+      "https://www.unotv.com/entretenimiento/gano-la-sexta-fecha-bad-bunny-sorprende-con-julieta-venegas-en-cdmx/"
+    ],
+    "summary": "Tijuana-born singer Julieta Venegas joined Bad Bunny on stage at Estadio GNP Seguros in Mexico City on 19 December 2025 for three songs.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  },
+  {
+    "id": "bizarrap-mexico-city-snow-tha-product",
+    "artist": "Bizarrap",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "local_artist",
+    "realEntity": {
+      "name": "Snow Tha Product"
+    },
+    "date": "2024-05-11",
+    "sources": [
+      "https://remezcla.com/music/watch-snow-tha-product-joins-bizarrap-in-mexico-city-concert/"
+    ],
+    "summary": "Mexican-American rapper Snow Tha Product joined Bizarrap on stage at his first headlining Mexico City show at Pepsi Center WTC on 11 May 2024.",
+    "review": {
+      "status": "rejected",
+      "by": "prateek",
+      "at": "2026-10-17",
+      "note": "dropped in controller pre-filter (weak source, future date, not city-specific, or not local); Prateek accepted the shortlist"
+    }
+  },
+  {
+    "id": "sabrina-carpenter-sao-paulo-budweiser",
+    "artist": "Sabrina Carpenter",
+    "city": "Sao Paulo",
+    "country": "Brazil",
+    "activationType": "sponsor",
+    "realEntity": {
+      "name": "Budweiser"
+    },
+    "date": "2026-03-20",
+    "sources": [
+      "https://www.dgabc.com.br/Noticia/4286882/lollapalooza-brasil-divulga-horarios-e-palcos-da-edicao-2026"
+    ],
+    "summary": "At Lollapalooza Brasil 2026 in Sao Paulo, Sabrina Carpenter headlined the Budweiser-branded stage on 20 March.",
+    "review": {
+      "status": "rejected",
+      "by": "prateek",
+      "at": "2026-10-17",
+      "note": "dropped in controller pre-filter (weak source, future date, not city-specific, or not local); Prateek accepted the shortlist"
+    }
+  },
+  {
+    "id": "tyler-the-creator-sao-paulo-budweiser",
+    "artist": "Tyler, the Creator",
+    "city": "Sao Paulo",
+    "country": "Brazil",
+    "activationType": "sponsor",
+    "realEntity": {
+      "name": "Budweiser"
+    },
+    "date": "2026-03-22",
+    "sources": [
+      "https://www.dgabc.com.br/Noticia/4286882/lollapalooza-brasil-divulga-horarios-e-palcos-da-edicao-2026"
+    ],
+    "summary": "At Lollapalooza Brasil 2026 in Sao Paulo, Tyler, the Creator closed the Budweiser-branded stage on 22 March.",
+    "review": {
+      "status": "rejected",
+      "by": "prateek",
+      "at": "2026-10-17",
+      "note": "dropped in controller pre-filter (weak source, future date, not city-specific, or not local); Prateek accepted the shortlist"
+    }
+  },
+  {
+    "id": "deftones-sao-paulo-samsung-galaxy",
+    "artist": "Deftones",
+    "city": "Sao Paulo",
+    "country": "Brazil",
+    "activationType": "sponsor",
+    "realEntity": {
+      "name": "Samsung Galaxy",
+      "aliases": [
+        "Samsung"
+      ]
+    },
+    "date": "2026-03-20",
+    "sources": [
+      "https://www.dgabc.com.br/Noticia/4286882/lollapalooza-brasil-divulga-horarios-e-palcos-da-edicao-2026"
+    ],
+    "summary": "At Lollapalooza Brasil 2026 in Sao Paulo, Deftones headlined the Samsung Galaxy-branded stage on 20 March.",
+    "review": {
+      "status": "rejected",
+      "by": "prateek",
+      "at": "2026-10-17",
+      "note": "dropped in controller pre-filter (weak source, future date, not city-specific, or not local); Prateek accepted the shortlist"
+    }
+  },
+  {
+    "id": "oasis-sao-paulo-adidas",
+    "artist": "Oasis",
+    "city": "Sao Paulo",
+    "country": "Brazil",
+    "activationType": "sponsor",
+    "realEntity": {
+      "name": "Adidas",
+      "aliases": [
+        "adidas Originals"
+      ]
+    },
+    "date": "2025-11-20",
+    "sources": [
+      "https://www.infomoney.com.br/?p=3076278"
+    ],
+    "summary": "Oasis opened an official fan store in Pinheiros, Sao Paulo, on 20 November 2025 with limited merch and an adidas collaboration, tied to their Brazil shows.",
+    "review": {
+      "status": "rejected",
+      "by": "prateek",
+      "at": "2026-10-17",
+      "note": "dropped in controller pre-filter (weak source, future date, not city-specific, or not local); Prateek accepted the shortlist"
+    }
+  },
+  {
+    "id": "oasis-mexico-city-adidas",
+    "artist": "Oasis",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "sponsor",
+    "realEntity": {
+      "name": "Adidas",
+      "aliases": [
+        "adidas Originals"
+      ]
+    },
+    "date": "2025-08-25",
+    "sources": [
+      "https://www.timeoutmexico.mx/ciudad-de-mexico/musica/merch-oasis-live-25-fan-store-plaza-carso-polanco"
+    ],
+    "summary": "Oasis opened a fan store at Plaza Carso, Mexico City, from 25 August to 13 September 2025 with exclusive adidas collaboration items.",
+    "review": {
+      "status": "rejected",
+      "by": "prateek",
+      "at": "2026-10-17",
+      "note": "dropped in controller pre-filter (weak source, future date, not city-specific, or not local); Prateek accepted the shortlist"
+    }
+  },
+  {
+    "id": "linkin-park-mexico-city-tortas-linkin",
+    "artist": "Linkin Park",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "sponsor",
+    "realEntity": {
+      "name": "Tortas Linkin"
+    },
+    "date": "2025-11-13",
+    "sources": [
+      "https://www.chilango.com/que-hacer/tortas-de-linkin-park-merch-oficial-cdmx-donde-cuando/"
+    ],
+    "summary": "Linkin Park ran a 13-14 November 2025 merch pop-up in Roma Norte, Mexico City, as Tortas Linkin, serving band-song-named sandwiches ahead of their show.",
+    "review": {
+      "status": "rejected",
+      "by": "prateek",
+      "at": "2026-10-17",
+      "note": "dropped in controller pre-filter (weak source, future date, not city-specific, or not local); Prateek accepted the shortlist"
+    }
+  },
+  {
+    "id": "bad-bunny-mexico-city-adidas",
+    "artist": "Bad Bunny",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "activationType": "merch_collab",
+    "realEntity": {
+      "name": "Adidas"
+    },
+    "date": "2025-12",
+    "sources": [
+      "https://los40.com.mx/2025/12/08/bad-bunny-x-adidas-asi-se-ve-la-nueva-colaboracion-especial-por-dtmf-llegara-a-mexico-precios-y-todos-los-detalles/"
+    ],
+    "summary": "Adidas released a Mexico-exclusive Bad Bunny tee carrying the tour seal and the city name for his December 2025 Mexico City stadium run.",
+    "review": {
+      "status": "accepted",
+      "by": "prateek",
+      "at": "2026-10-17"
+    }
+  }
+]
