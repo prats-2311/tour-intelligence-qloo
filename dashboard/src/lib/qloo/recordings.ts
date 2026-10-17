@@ -9,17 +9,19 @@ export type RecordingStatus = "ok" | "unavailable";
  * (showcase) or null (backtest) in place and is reported "unavailable".
  */
 export async function loadRecordings({ fetchImpl = fetch, timeoutMs = 4000 }: { fetchImpl?: typeof fetch; timeoutMs?: number } = {}): Promise<{ showcase: RecordingStatus; backtest: RecordingStatus }> {
-  const get = async (name: "showcase" | "backtest"): Promise<unknown> => {
-    try {
-      const r = await fetchImpl(`/api/recordings/${name}`, { signal: AbortSignal.timeout(timeoutMs) });
-      if (!r.ok) return null;
-      return await r.json();
-    } catch { return null; }
+  // Each recording has its own cap, so one that hangs never discards another that already loaded.
+  const get = (name: "showcase" | "backtest"): Promise<unknown> => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const capped = new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), timeoutMs); });
+    const load = (async () => {
+      try {
+        const r = await fetchImpl(`/api/recordings/${name}`, { signal: AbortSignal.timeout(timeoutMs) });
+        return r.ok ? await r.json() : null;
+      } catch { return null; }
+    })();
+    return Promise.race([load, capped]).finally(() => clearTimeout(timer));
   };
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<[null, null]>((resolve) => { timer = setTimeout(() => resolve([null, null]), timeoutMs); });
-  const [show, bt] = await Promise.race([Promise.all([get("showcase"), get("backtest")]), timeout]);
-  clearTimeout(timer);
+  const [show, bt] = await Promise.all([get("showcase"), get("backtest")]);
   const parsed = show ? parseShowcase(show) : null;
   if (parsed && parsed.recordedAt) setShowcase(parsed);
   if (bt) setBacktest(bt);

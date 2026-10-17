@@ -7,6 +7,7 @@ import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { BriefForm } from "@/components/qloo/BriefForm";
 import { CityRow, ROW_COLS_LG } from "@/components/qloo/CityRow";
 import { NeedsInputPicker } from "@/components/qloo/NeedsInputPicker";
+import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
 import { interruptedText, Notice, regionNoticeText } from "@/components/qloo/Notice";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { Sheet } from "@/components/qloo/Sheet";
@@ -194,16 +195,7 @@ export default function TourBoard() {
     document.getElementById(`city-row-${id}`)?.scrollIntoView?.({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
   };
 
-  if (showcaseMissing) {
-    return (
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
-        <Notice>
-          <span className="min-w-0">The showcase recording is unavailable right now.</span>
-          <Link to="/tours/board?sample=1" className={smallBtn}>Open the sample tour</Link>
-        </Notice>
-      </div>
-    );
-  }
+  if (showcaseMissing) return <ShowcaseUnavailable sampleHref="/tours/board?sample=1" />;
 
   if (state.status === "idle") {
     return (

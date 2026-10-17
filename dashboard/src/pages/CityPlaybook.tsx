@@ -25,7 +25,8 @@ import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks
 import { INTEGRITY_LINE } from "@/lib/qloo/labels";
 import { loadPlaybook, usePlaybook, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
-import { showcaseBrief, showcaseCities, showcasePlaybookCities } from "@/lib/qloo/showcase";
+import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
+import { showcaseAvailable, showcaseBrief, showcaseCities, showcasePlaybookCities } from "@/lib/qloo/showcase";
 import type { CardKind, PlaybookCard as Card, SampleSet } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
@@ -58,6 +59,12 @@ const first = (card: Card | undefined, key: string): string => {
 };
 
 export default function CityPlaybook() {
+  const [params] = useSearchParams();
+  if (params.get("showcase") === "1" && !showcaseAvailable()) return <ShowcaseUnavailable sampleHref={`/tours/playbook/${SAMPLE_CITIES[2]!.id}?sample=1`} />;
+  return <CityPlaybookPage />;
+}
+
+function CityPlaybookPage() {
   const { cityId = "" } = useParams();
   const { state, run, shortlist, toggleShortlist, accentOrder } = useTourBoard();
   const [params] = useSearchParams();

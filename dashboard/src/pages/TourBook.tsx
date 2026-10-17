@@ -20,7 +20,8 @@ import { SAMPLE_TEXT } from "@/lib/qloo/labels";
 import { sortCities } from "@/lib/qloo/ranking";
 import { buildTourBook, campaignTitle } from "@/lib/qloo/tourBook";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
-import { showcaseBannerText, showcaseBrief } from "@/lib/qloo/showcase";
+import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
+import { showcaseAvailable, showcaseBannerText, showcaseBrief } from "@/lib/qloo/showcase";
 import type { SampleSet, ThisWeek } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
@@ -37,6 +38,12 @@ function Centered({ children }: { children: React.ReactNode }) {
 }
 
 export default function TourBook() {
+  const [params] = useSearchParams();
+  if (params.get("showcase") === "1" && !showcaseAvailable()) return <ShowcaseUnavailable sampleHref="/tours/book?sample=1" />;
+  return <TourBookPage />;
+}
+
+function TourBookPage() {
   const { state, run, shortlist, accentOrder } = useTourBoard();
   const [params] = useSearchParams();
   const sampleParam = params.get("sample");

@@ -69,7 +69,7 @@ function makeContext() {
     if (!tags.has(orig)) tags.set(orig, `synthetic-tag-${String(tags.size + 1).padStart(2, "0")}`);
     return tags.get(orig);
   };
-  return { jitter, number, nameFor, tagFor, names, counters };
+  return { jitter, number, nameFor, tagFor, names, counters, rand };
 }
 
 const CARD_TYPE = { sponsors: "Brand", merch: "Brand", talent: "Artist", co_billing: "Artist", venue_fit: "Place", local_moment: "Entity" };
@@ -143,28 +143,58 @@ function showcase(input) {
   const sorted = [...ctx.names.keys()].sort((a, b) => b.length - a.length);
   const nameRe = sorted.length ? new RegExp(`(?<![\\p{L}\\p{N}])(?:${sorted.map(fuzzy).join("|")})(?![\\p{L}\\p{N}])`, "giu") : null;
 
+  // Zone / heat-point coordinates are Qloo where_popular locations: shift each by a seeded delta (+-0.02 deg), memoised on the
+  // 3-decimal value so a point's lat/lon, its "lat, lon" label and any coordinates quoted in narrative text agree.
+  const coordDelta = new Map();
+  const delta = (v) => {
+    const key = v.toFixed(3);
+    if (!coordDelta.has(key)) coordDelta.set(key, (ctx.rand() * 2 - 1) * 0.0195);
+    return coordDelta.get(key);
+  };
+  const COORD_RE = /-?\d{1,3}\.\d{3}(?!\d)/g;
+  const shiftCoords = (text) => text.replace(COORD_RE, (m) => (coordDelta.has(parseFloat(m).toFixed(3)) ? (parseFloat(m) + coordDelta.get(parseFloat(m).toFixed(3))).toFixed(3) : m));
   const str = (s, key, path) => {
     if (key && SKIP_STRING_KEYS.has(key)) return s;
     if (isGeo(s)) return s;
     if (HEX_RE.test(s)) return syntheticId(s);
     let out = s.normalize("NFC").replace(UUID_RE, (m) => syntheticId(m));
     if (nameRe) out = out.replace(nameRe, (m) => ctx.names.get(m) ?? byFuzzy.get(m.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()) ?? m);
+    if (key === "detail" || ((key === "text" || key === "thoughtSummary") && path.includes("narrative"))) out = shiftCoords(out);
     if ((key === "text" || key === "thoughtSummary") && path.includes("narrative")) {
       out = out.replace(/(?<![\d.])0\.\d{2}(?!\d)/g, (m) => String(ctx.jitter(parseFloat(m), true)));
     }
     return out;
   };
+  // share = affinity / sum(affinity) over the zones, so recompute it from the jittered affinities; points with no
+  // affinity (promo zones, a subset of those) get a seeded rescale that keeps their original total.
+  const rescaleShares = (items, orig) => {
+    if (items.every((z) => typeof z.affinity === "number")) {
+      const total = items.reduce((a, z) => a + z.affinity, 0);
+      items.forEach((z) => { z.share = total > 0 ? Math.round((z.affinity / total) * 1e9) / 1e9 : 0; });
+    } else {
+      const before = orig.reduce((a, z) => a + z.share, 0);
+      const factors = items.map(() => 0.75 + ctx.rand() * 0.5);
+      const scaled = items.map((z, i) => orig[i].share * factors[i]);
+      const after = scaled.reduce((a, b) => a + b, 0);
+      items.forEach((z, i) => { z.share = after > 0 ? Math.round((scaled[i] / after) * before * 1e9) / 1e9 : 0; });
+    }
+  };
   const walk = (node, key, path) => {
     if (typeof node === "string") return str(node, key, path);
     if (Array.isArray(node)) {
       if (key === "sharedTags") return node.map((t) => (typeof t === "string" ? ctx.tagFor(t) : t));
+      const done = node.map((v) => walk(v, key, path));
+      if (done.length > 0 && done.every((z) => isObj(z) && typeof z.share === "number")) rescaleShares(done, node);
       if (key === "numbers" && path.includes("narrative")) return node.map((n) => (typeof n === "number" && n > 0 && n < 1 ? ctx.jitter(n, true) : n));
-      return node.map((v) => walk(v, key, path));
+      return done;
     }
     if (!isObj(node)) return node;
     const out = {};
+    const isPoint = typeof node.lat === "number" && typeof node.lon === "number" && "label" in node;
     for (const [k, v] of Object.entries(node)) {
       if (k === "withoutQloo" || k === "scoring" || k === "thresholds") { out[k] = v; continue; }
+      if (isPoint && (k === "lat" || k === "lon")) { out[k] = Math.round((Number(v.toFixed(3)) + delta(v)) * 1e6) / 1e6; continue; }
+      if (isPoint && k === "label" && typeof v === "string") { out[k] = /^-?\d+\.\d{3}, -?\d+\.\d{3}$/.test(v) ? "" : v; continue; }
       if (typeof v === "number") {
         if (QLOO_NUMBER_KEYS.has(k)) out[k] = ctx.number(v, true);
         else if (path.includes("demographics")) out[k] = ctx.number(v, false);
@@ -173,9 +203,16 @@ function showcase(input) {
       }
       out[k] = walk(v, k, [...path, k]);
     }
+    if (isPoint && out.label === "") out.label = `${out.lat.toFixed(3)}, ${out.lon.toFixed(3)}`;
     return out;
   };
-  return walk(input, "", []);
+  const result = walk(input, "", []);
+  if (!result.withoutQloo) {
+    // The recording has no generic ranking: write a clearly labelled synthetic one so the Without Qloo tab can be exercised.
+    const scored = (result.boardEvents ?? []).flatMap((e) => (e.type === "city_scored" ? [{ name: e.city.name, country: e.city.country }] : []));
+    result.withoutQloo = { status: "ok", ranked: scored.reverse(), model: "synthetic", cached: false };
+  }
+  return result;
 }
 
 const ACTIVATION_TYPE = { sponsor: "Brand", merch_collab: "Brand", local_artist: "Artist" };

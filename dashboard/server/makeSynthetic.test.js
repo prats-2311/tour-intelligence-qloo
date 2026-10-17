@@ -61,6 +61,58 @@ describe("makeSynthetic showcase", () => {
   });
 });
 
+describe("makeSynthetic zones, coordinates and withoutQloo", () => {
+  const aff = [1, 0.8, 0.6, 0.45];
+  const sum = aff.reduce((a, b) => a + b, 0);
+  const pts = [[31.423645, -106.067505], [31.44021, -106.10033], [31.40517, -106.0211], [31.4666, -106.1555]];
+  const zones = aff.map((a, i) => ({ label: `${pts[i][0].toFixed(3)}, ${pts[i][1].toFixed(3)}`, lat: pts[i][0], lon: pts[i][1], affinity: a, index: i, share: a / sum }));
+  const promo = pts.slice(0, 2).map((p, i) => ({ label: "Ciudad Juarez", lat: p[0], lon: p[1], share: zones[i].share, source: "suggested" }));
+  const input = {
+    recordedAt: "2026-10-17T02:01:52.668Z", artist: "A Artist", brief: { artist: "A Artist", regions: [], maxStops: 2 },
+    boardEvents: [
+      { type: "city_scored", city: { ...city, zones } },
+      { type: "city_scored", city: { ...city, id: "2", name: "El Paso", country: "US", zones: [] } },
+    ],
+    playbooks: { "4013708": [
+      { type: "playbook", playbook: { city: { name: "Ciudad Juarez", country: "MX" }, cards: [{ kind: "promo_zones", status: "ok", items: promo }] } },
+      { type: "narrative", narrative: { status: "ok", cards: { promo_zones: { verified: [], removed: [{ claim: { text: `The coordinates ${zones[0].label} matter.`, numbers: [5], evidence_refs: [] }, reason: "unsupported_number", detail: pts[0][0].toFixed(3) }] } } } },
+    ] },
+    thisWeek: {},
+  };
+  const out = makeSynthetic(input, "showcase");
+  const oz = out.boardEvents[0].city.zones;
+  it("no original zone or promo share survives", () => {
+    const text = JSON.stringify(out);
+    for (const z of zones) expect(text).not.toContain(String(z.share));
+    expect(oz).toHaveLength(4);
+    expect(oz.reduce((a, z) => a + z.share, 0)).toBeCloseTo(1, 6);
+    for (const z of oz) expect(z.share).toBeCloseTo(z.affinity / oz.reduce((a, q) => a + q.affinity, 0), 6);
+    const items = out.playbooks["4013708"][0].playbook.cards[0].items;
+    items.forEach((it, i) => expect(it.share).not.toBe(promo[i].share));
+  });
+  it("zone and promo coordinates move by at most 0.02 degrees, city coordinates stay", () => {
+    oz.forEach((z, i) => {
+      expect(z.lat).not.toBe(pts[i][0]);
+      expect(Math.abs(z.lat - pts[i][0])).toBeLessThanOrEqual(0.02 + 1e-9);
+      expect(Math.abs(z.lon - pts[i][1])).toBeLessThanOrEqual(0.02 + 1e-9);
+      expect(z.label).toBe(`${z.lat.toFixed(3)}, ${z.lon.toFixed(3)}`);
+    });
+    const items = out.playbooks["4013708"][0].playbook.cards[0].items;
+    items.forEach((it, i) => expect(it.lat).not.toBe(pts[i][0]));
+    expect(out.boardEvents[0].city.lat).toBe(city.lat);
+    expect(out.boardEvents[0].city.lon).toBe(city.lon);
+    expect(JSON.stringify(out)).not.toContain(zones[0].label);
+    for (const [la, lo] of pts) { expect(JSON.stringify(out)).not.toContain(String(la)); expect(JSON.stringify(out)).not.toContain(String(lo)); }
+    const rem = out.playbooks["4013708"][1].narrative.cards.promo_zones.removed[0];
+    expect(rem.claim.text).toContain(oz[0].label); // quoted coordinates follow the point
+  });
+  it("writes a labelled synthetic withoutQloo (board cities, reversed) when the input has none, and keeps a present one", () => {
+    expect(out.withoutQloo).toEqual({ status: "ok", ranked: [{ name: "El Paso", country: "US" }, { name: "Ciudad Juarez", country: "MX" }], model: "synthetic", cached: false });
+    const kept = { status: "ok", ranked: [{ name: "Ciudad Juarez", country: "MX" }], model: "m", cached: true };
+    expect(makeSynthetic({ ...input, withoutQloo: kept }, "showcase").withoutQloo).toEqual(kept);
+  });
+});
+
 describe("makeSynthetic backtest", () => {
   const mk = (rank) => ({
     runs: [{

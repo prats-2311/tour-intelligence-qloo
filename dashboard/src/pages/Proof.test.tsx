@@ -128,8 +128,10 @@ describe("Proof", () => {
     const BACKTEST = getBacktest()!;
     const { container } = render(<MemoryRouter><ProofView data={BACKTEST} /></MemoryRouter>);
     expect(BACKTEST.runs.length).toBe(2);
-    expect(within(screen.getByRole("region", { name: "Qloo playbook" })).getByText("1 of 13 in the top 10 · 8%")).toBeTruthy();
-    expect(within(screen.getByRole("region", { name: "Generic LLM (no Qloo)" })).getByText("7 of 13 in the top 10 · 54%")).toBeTruthy();
+    const latest = BACKTEST.runs[BACKTEST.runs.length - 1]!.summary; // the headline is the latest run; expected text comes from the fixture
+    const expected = (m: "qloo_playbook" | "llm_only") => `${latest[m].hit10} of ${latest[m].scored} in the top 10 · ${Math.round((100 * latest[m].hit10) / latest[m].scored)}%`;
+    expect(within(screen.getByRole("region", { name: "Qloo playbook" })).getByText(expected("qloo_playbook"))).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Generic LLM (no Qloo)" })).getByText(expected("llm_only"))).toBeTruthy();
     expect(screen.getByText(/a local act on the bill\)/)).toBeTruthy();
     expect(screen.getByText(WHAT)).toBeTruthy();
     expect(screen.getByText(REASON)).toBeTruthy();

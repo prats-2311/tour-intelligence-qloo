@@ -9,6 +9,7 @@ import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
 import Landing from "./Landing";
 import TourBoard from "./TourBoard";
 import TourBook from "./TourBook";
+import CityPlaybook from "./CityPlaybook";
 import { resetPlaybooks } from "@/lib/qloo/playbookStore";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import type { GatewayEvent, ScoredCity } from "@/lib/qloo/types";
@@ -108,6 +109,26 @@ describe("recorded showcase", () => {
     cleanup();
     render(<MemoryRouter><Landing /></MemoryRouter>);
     expect(screen.getByRole("region", { name: "Guadalajara sample routing row" })).toBeTruthy();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+  it.each([
+    ["/tours/book?showcase=1", "/tours/book?sample=1"],
+    ["/tours/playbook/4013708?showcase=1", `/tours/playbook/${SAMPLE_CITIES[2]!.id}?sample=1`],
+  ])("%s shows the unavailable notice and links the sample instead of replaying the placeholder", async (url, sampleHref) => {
+    setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <TourBoardProvider sampleDelayMs={0}>
+          <MemoryRouter initialEntries={[url]}>
+            <Routes><Route path="/tours/book" element={<TourBook />} /><Route path="/tours/playbook/:cityId" element={<CityPlaybook />} /></Routes>
+          </MemoryRouter>
+        </TourBoardProvider>
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText("The showcase recording is unavailable right now.")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open the sample tour" }).getAttribute("href")).toBe(sampleHref);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

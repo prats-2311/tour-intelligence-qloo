@@ -42,4 +42,12 @@ describe("loadRecordings", () => {
     await vi.advanceTimersByTimeAsync(4000);
     expect(await p).toEqual({ showcase: "unavailable", backtest: "unavailable" });
   });
+  it("a recording that loaded is still applied when the other hangs past the cap", async () => {
+    vi.useFakeTimers();
+    const fetchImpl = ((url: RequestInfo | URL) => (String(url).endsWith("/showcase") ? Promise.resolve(json(syntheticShowcase)) : new Promise(() => {}))) as unknown as typeof fetch;
+    const p = loadRecordings({ fetchImpl, timeoutMs: 4000 });
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(await p).toEqual({ showcase: "ok", backtest: "unavailable" });
+    expect(showcaseAvailable()).toBe(true);
+  });
 });

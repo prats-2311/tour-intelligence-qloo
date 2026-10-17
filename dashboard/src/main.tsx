@@ -25,16 +25,20 @@ const queryClient = new QueryClient({
 // first render so every page reads the real data; loadRecordings never throws and gives up after 4 s, in which
 // case the pages fall back to their "unavailable" states.
 void (async () => {
-  await loadRecordings();
-  createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <TourBoardProvider>
-            <App />
-          </TourBoardProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </StrictMode>,
-  );
+  try {
+    await loadRecordings();
+  } finally {
+    // Render no matter what: a throw above must never leave a blank page.
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <TourBoardProvider>
+              <App />
+            </TourBoardProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </StrictMode>,
+    );
+  }
 })();
