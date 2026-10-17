@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// Pin the pipeline to the original config so these assertions do not move when the committed calibration is regenerated.
+vi.mock("../src/scoring/calibration.js", async () => ({ SCORING: (await import("../src/scoring/config.js")).DEFAULT_SCORING }));
+
 import type { City } from "../src/geo/cities.js";
 import { artistTasteArgs } from "../src/pipeline/recArgs.js";
 import { pickCandidates, runTourBoard, type TourBrief } from "../src/pipeline/tourBoard.js";
