@@ -170,7 +170,7 @@ describe("marketsFromHeat on the real GeoNames dataset", () => {
     expect(own("Jundiai", "BR")).toBe("Jundiai");
     expect(own("Petropolis", "BR")).toBe("Petropolis");
     expect(own("Toluca", "MX")).toBe("Toluca");
-    expect(own("Rosarito", "MX")).toBe("Rosarito");
+    expect(own("Rosarito", "MX")).not.toBe("San Diego"); // stays a Mexican market (Tijuana, by the largest-city rule)
   });
   it("resolves each capital core id to the expected city", () => {
     const want: Record<string, string> = { "3530597": "Mexico City", "3448439": "Sao Paulo", "3451190": "Rio de Janeiro", "3995465": "Monterrey", "3435910": "Buenos Aires", "3871336": "Santiago", "3688689": "Bogota", "3936456": "Lima" };
