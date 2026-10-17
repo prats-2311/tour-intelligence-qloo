@@ -2,7 +2,7 @@
 # Tests scripts/check-public-data.sh --history in throwaway repos: renamed blobs, other branches, ids removed
 # from the tip but still in history, lowercase copies, allowlisted ids, and a clean repo.
 set -uo pipefail
-GUARD="$(cd "$(dirname "$0")" && pwd)/check-public-data.sh"
+GUARD="${GUARD:-$(cd "$(dirname "$0")" && pwd)/check-public-data.sh}"
 ROOT="$(mktemp -d)"; trap 'rm -rf "$ROOT"' EXIT
 fails=0
 REAL='00000000-EA91-A58E-1808-344CA61895A2'
@@ -54,6 +54,13 @@ expect "lowercased real id" 1 "$r" "docs/l.md"
 r=$(new_repo renamedid);    commit_file "$r" docs/a.md "entity $REAL"
 git -C "$r" mv docs/a.md docs/b.md; git -C "$r" commit -q -m mv
 expect "id in a renamed file" 1 "$r" "real-looking Qloo entity ids"
+
+r=$(new_repo pngid);        commit_file "$r" assets/logo.png "entity $REAL"
+expect "real id inside a .png-named file" 1 "$r" "assets/logo.png"
+
+r=$(new_repo bigblob);      mkdir -p "$r/data"; { head -c 6000000 /dev/zero | tr '\0' 'x'; echo " $REAL"; } >"$r/data/big.txt"
+git -C "$r" add data/big.txt; git -C "$r" commit -q -m big
+expect "real id inside a >5 MB blob" 1 "$r" "data/big.txt"
 
 r=$(new_repo allowed);      commit_file "$r" fx.json '{"id":"00000000-1111-2222-3333-444444444444","agent":"672c258a-7d63-4164-a4c6-a34f17490f53"}'
 expect "synthetic and allowlisted ids pass" 0 "$r" "clean"

@@ -34,16 +34,13 @@ if [[ "$mode" == "history" ]]; then
   # Content scan: one pass per distinct blob (git grep over every commit re-reads shared blobs; cat-file --batch reads each once).
   scan_blob() {
     local sha="$1" path="$2" hit
-    case "$path" in
-      *package-lock.json | *.png | *.jpg | *.jpeg | *.gif | *.ico | *.pdf | *.woff*) return 0 ;;
-    esac
     hit=$(git -C "$repo" cat-file blob "$sha" | grep -a -o -i -E "$UUID_RE" | grep -v -i -E "$ALLOW_RE" | head -1 || true)
     if [[ -n "$hit" ]]; then echo "$path: $hit"; fi
     return 0
   }
   ids=$(git -C "$repo" rev-list --objects --all \
     | git -C "$repo" cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' \
-    | awk '$1=="blob" && $3 < 5000000 {print $2" "$4}' | sort -u -k1,1 \
+    | awk '$1=="blob" {print $2" "$4}' | sort -u -k1,1 \
     | while read -r sha path; do scan_blob "$sha" "$path"; done | sort -u | head -200 || true)
 else
   bad=$(git -C "$repo" ls-files | grep -E "$FORBIDDEN_PATHS" || true)
