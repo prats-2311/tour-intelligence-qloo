@@ -51,12 +51,14 @@ describe("strategist tools", () => {
     const live = (n: string) => JSON.parse(readFileSync(new URL(`./fixtures/live/${n}.json`, import.meta.url), "utf8"));
     const run = (name: string, args: Record<string, unknown>, file: string) =>
       executeTool({ name, args }, deps({ call: vi.fn(async () => ({ envelope: { operation: name, ...live(file) }, cacheKey: "k", cached: false, stale: false })) } as unknown as QlooCaller));
+    const tagRows = (live("compare").results as { tags: Array<{ name: string; query: { score: number } }> }).tags;
+    const topTag = [...tagRows].sort((a, b) => b.query.score - a.query.score)[0]!.name;
     const cmp = await run("qloo_compare_audiences", { group_a: ["A"], group_b: ["B"] }, "compare");
-    expect(cmp.data).toMatchObject({ sharedTaste: expect.any(Number), sharedTags: ["Funk", expect.any(String), expect.any(String)] });
+    expect(cmp.data).toMatchObject({ sharedTaste: expect.any(Number), sharedTags: [topTag, expect.any(String), expect.any(String)] });
     const demo = await run("qloo_audience_demographics", { entity: "A" }, "demographics");
-    expect((demo.data as Array<{ query: { age: Record<string, number>; gender: Record<string, number> } }>)[0]!.query.gender.female).toBe(0.2);
+    expect((demo.data as Array<{ query: { age: Record<string, number>; gender: Record<string, number> } }>)[0]!.query.gender.female).toBe((live("demographics").results as Array<{ query: { gender: { female: number } } }>)[0]!.query.gender.female);
     expect((await run("qloo_trends", { entities: ["A"], entity_type: "artist", start_date: "2026-01-01", end_date: "2026-02-01" }, "trends-empty")).data).toEqual([]);
-    const rank = await run("qloo_rank", { options: ["Teatro Diana"], option_type: "place" }, "rank-needs-input");
+    const rank = await run("qloo_rank", { options: ["Synthetic Place 01"], option_type: "place" }, "rank-needs-input");
     expect(rank.status).toBe("needs_input");
     expect((rank.data as Array<{ id: string }>)[0]!.id).toMatch(/^[0-9A-F-]{36}$/i);
   });

@@ -149,7 +149,7 @@ describe("createNarrator", () => {
     });
   });
   describe("leaked entity ids", () => {
-    const uuid = "00000000-E5AA-AE8D-802C-B8C6CB3A59AD";
+    const uuid = "00000000-9129-46E0-AEE7-2C3A81E91385";
     const run = (text: string, numbers: number[]) => createNarrator(deps(async () => answer({ cards: [{ kind: "sponsors", claims: [
       { text, entities: [{ name: "Cerro Alto Mezcal", entityId: uuid }], numbers, evidence_refs: ["sponsors:0"] }] }] })))(input);
     it("keeps a claim with a UUID parenthetical and strips the parenthetical from the stored text", async () => {

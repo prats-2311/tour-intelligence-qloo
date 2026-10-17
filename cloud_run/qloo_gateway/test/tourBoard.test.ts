@@ -110,7 +110,9 @@ describe("runTourBoard", () => {
     const events = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => (t === "qloo_entity_tags" ? liveEnv("entity-tags") : happy(t, a))), cities: CITIES }));
     const tags = (events.find((e) => e.type === "artist_profile") as unknown as { tags: Array<{ name: string }> }).tags;
     expect(tags.length).toBeGreaterThan(0);
-    expect(tags.map((t) => t.name)).not.toContain("Discover");
+    const nonMusic = (liveEnv("entity-tags").results as Array<{ id: string; name: string }>).filter((t) => t.id.startsWith("urn:tag:credit_card:")).map((t) => t.name);
+    expect(nonMusic.length).toBeGreaterThan(0);
+    for (const n of nonMusic) expect(tags.map((t) => t.name)).not.toContain(n);
   });
 
   it("ranks venues by place entity ids, not names", async () => {

@@ -21,6 +21,10 @@ echo "=== qloo_gateway test suite (vitest) ==="
 (cd cloud_run/qloo_gateway && npm test)
 
 echo ""
+echo "=== public-data guard (no Qloo response data tracked) ==="
+bash scripts/check-public-data.sh
+
+echo ""
 echo "=== graft freshness ==="
 if command -v graft >/dev/null 2>&1 && [ -d graft ]; then
   graft check

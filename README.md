@@ -163,7 +163,7 @@ Three methods, same cases, same top-10 cut:
 2. **City popularity:** the same request without the artist, which tests whether the artist's taste adds anything to "what's popular in this city".
 3. **Generic LLM:** Gemini, same question, no Qloo.
 
-Real entity in the top 10, per method (from `backtest/results.json` and `backtest/results-run2.json`):
+Real entity in the top 10, per method (from the two backtest runs; raw results are kept private under Qloo's data policy and served by the app at `/proof`):
 
 | Run | Qloo playbook | City popularity | Generic LLM |
 |---|---|---|---|
@@ -192,19 +192,19 @@ Affinity floors: sponsor_fit 0.92, local_hooks 0.95, venue_fit 0.88. Close calls
 ### Run the backtest
 
 ```bash
-cd cloud_run/qloo_gateway && npm run build && QLOO_GATEWAY_URL=<gateway> node dist/backtest/cli.js --cases ../../backtest/cases.json --out ../../backtest/results.json
+cd cloud_run/qloo_gateway && npm run build && QLOO_GATEWAY_URL=<gateway> node dist/backtest/cli.js --cases ../../backtest/cases.json --run run1   # writes ../../private-data/backtest/results-run1.json
 # run 2 (fresh local-act cases)
-QLOO_GATEWAY_URL=<gateway> node dist/backtest/cli.js --cases ../../backtest/cases-run2.json --out ../../backtest/results-run2.json --method-note "Local acts: city-popular artists re-ranked by taste fit (qloo_rank). Judged on fresh cases reviewed after the method was fixed."
+QLOO_GATEWAY_URL=<gateway> node dist/backtest/cli.js --cases ../../backtest/cases-run2.json --run run2 --method-note "Local acts: city-popular artists re-ranked by taste fit (qloo_rank). Judged on fresh cases reviewed after the method was fixed."
 ```
 
 ### Re-run calibration
 
 ```bash
 cd cloud_run/qloo_gateway && npm run build
-node dist/scoring/calibrateCli.js --in test/fixtures/calibration/*.json --version calibrated-2026-10-17 --write src/scoring/calibration.ts --report ../../docs/qloo/calibration.md
+node dist/scoring/calibrateCli.js --in ../../private-data/calibration/*.json --version calibrated-2026-10-17 --write src/scoring/calibration.ts --report ../../docs/qloo/calibration.md
 ```
 
-The four trimmed recordings that produced `calibrated-2026-10-17` are committed in `cloud_run/qloo_gateway/test/fixtures/calibration/` (only the scores, affinities and zone shares; no entity ids, coordinates or refs), and a test checks that this command reproduces `src/scoring/calibration.ts` exactly. `src/scoring/calibration.ts` is generated; never edit it by hand.
+The four recordings that produced `calibrated-2026-10-17` hold Qloo response data, so they are kept private (`private-data/calibration/`, git-ignored; Qloo's terms forbid storing responses in a public repo). `test/calibrate.test.ts` checks that this command reproduces `src/scoring/calibration.ts` exactly when they are present (`CALIBRATION_FIXTURES_DIR` overrides the location) and skips that check, with a warning, otherwise. `src/scoring/calibration.ts` is generated; never edit it by hand.
 
 ---
 

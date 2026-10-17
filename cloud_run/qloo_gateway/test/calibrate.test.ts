@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { citiesFromRecording, deriveCalibration, fragility, quantile, renderCalibrationTs, renderReport, scoreCity, MIN_CAL_CITIES, type CalCity } from "../src/scoring/calibrate.js";
 import { parseCalArgs } from "../src/scoring/calibrateCli.js";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { DEFAULT_SCORING } from "../src/scoring/config.js";
 import { SCORING } from "../src/scoring/calibration.js";
 
@@ -101,33 +103,50 @@ describe("calibration", () => {
     expect(text).toContain("9 before, 4 after");
   });
 
-  const dir = new URL("./fixtures/calibration/", import.meta.url);
-  it("under DEFAULT_SCORING scoreCity reproduces every recorded score, no city is thin", () => {
-    let checked = 0;
-    for (const f of readdirSync(dir).filter((n) => n.endsWith(".json"))) {
-      const rec = JSON.parse(readFileSync(new URL(f, dir), "utf8")) as { boardEvents: Array<{ type: string; city?: { name: string; verdict: string; activation: { value: number | null }; winnability: { value: number | null }; fanHeat: { value: number | null } } }> };
-      const byName = new Map(citiesFromRecording(rec).map((c) => [c.city, c]));
-      for (const e of rec.boardEvents) {
-        const rc = e.type === "city_scored" ? e.city! : undefined;
-        const c = rc && byName.get(rc.name);
-        if (!rc || !c || rc.activation.value === null) continue;
-        const r = scoreCity(c, DEFAULT_SCORING);
-        expect(r.thin).toBe(false);
-        expect(r.act).toBeCloseTo(rc.activation.value, 6);
-        expect(r.win).toBeCloseTo(rc.winnability.value!, 6);
-        expect(r.verdict).toBe(rc.verdict);
-        checked++;
+  // Real recordings hold Qloo response data, so they live in private-data/ (git-ignored), never in the repo.
+  const dir = process.env.CALIBRATION_FIXTURES_DIR ?? fileURLToPath(new URL("../../../private-data/calibration", import.meta.url));
+  const present = existsSync(dir) && readdirSync(dir).some((f) => f.endsWith(".json"));
+  if (!present) console.warn(`[calibrate.test] SKIPPED reproduction tests: no recordings in ${dir} (set CALIBRATION_FIXTURES_DIR)`);
+
+  describe.skipIf(!present)("calibration reproduces SCORING from the private recordings (needs private-data/calibration)", () => {
+    it("under DEFAULT_SCORING scoreCity reproduces every recorded score, no city is thin", () => {
+      let checked = 0;
+      for (const f of readdirSync(dir).filter((n) => n.endsWith(".json"))) {
+        const rec = JSON.parse(readFileSync(join(dir, f), "utf8")) as { boardEvents: Array<{ type: string; city?: { name: string; verdict: string; activation: { value: number | null }; winnability: { value: number | null }; fanHeat: { value: number | null } } }> };
+        const byName = new Map(citiesFromRecording(rec).map((c) => [c.city, c]));
+        for (const e of rec.boardEvents) {
+          const rc = e.type === "city_scored" ? e.city! : undefined;
+          const c = rc && byName.get(rc.name);
+          if (!rc || !c || rc.activation.value === null) continue;
+          const r = scoreCity(c, DEFAULT_SCORING);
+          expect(r.thin).toBe(false);
+          expect(r.act).toBeCloseTo(rc.activation.value, 6);
+          expect(r.win).toBeCloseTo(rc.winnability.value!, 6);
+          expect(r.verdict).toBe(rc.verdict);
+          checked++;
+        }
       }
-    }
-    expect(checked).toBeGreaterThan(0);
+      expect(checked).toBeGreaterThan(0);
+    });
+
+    it("deriveCalibration over the 4 private recordings reproduces the committed SCORING exactly", () => {
+      const files = readdirSync(dir).filter((n) => n.endsWith(".json")).sort();
+      expect(files).toEqual(["japanese-breakfast.json", "khruangbin.json", "mac-demarco.json", "natalia-lafourcade.json"]);
+      const all = files.flatMap((f) => citiesFromRecording(JSON.parse(readFileSync(join(dir, f), "utf8"))));
+      const { config, report } = deriveCalibration(all, SCORING.version);
+      expect(report.gates.passed).toBe(true);
+      expect(config).toEqual(SCORING);
+    });
   });
 
-  it("deriveCalibration over the 4 committed recordings reproduces the committed SCORING exactly", () => {
-    const files = readdirSync(dir).filter((n) => n.endsWith(".json")).sort();
-    expect(files).toEqual(["japanese-breakfast.json", "khruangbin.json", "mac-demarco.json", "natalia-lafourcade.json"]);
-    const all = files.flatMap((f) => citiesFromRecording(JSON.parse(readFileSync(new URL(f, dir), "utf8"))));
-    const { config, report } = deriveCalibration(all, SCORING.version);
-    expect(report.gates.passed).toBe(true);
-    expect(config).toEqual(SCORING);
+  it("calibration rule runs on synthetic recordings", () => {
+    const rec = (artist: string) => ({ artist, boardEvents: Array.from({ length: 8 }, (_, i) => ({ type: "city_scored", city: { name: `${artist}-${i}`, fanHeat: { value: 50 + ((i * 13) % 50) }, activation: { value: 70, components: { sponsor_fit: 0.88 + ((i * 7) % 11) / 100, local_hooks: 0.9 + (i % 5) / 100, venue_fit: 0.89 }, }, zones: [] } })) });
+    const all = ["S1", "S2", "S3"].flatMap((a) => citiesFromRecording(rec(a)));
+    expect(all).toHaveLength(24);
+    const { config, report } = deriveCalibration(all, "synthetic-recordings");
+    expect(config.version).toBe("synthetic-recordings");
+    expect(typeof report.gates.passed).toBe("boolean");
+    expect(Array.isArray(report.gates.failures)).toBe(true);
+    for (const v of Object.values(config.thresholds)) expect(Number.isFinite(v)).toBe(true);
   });
 });

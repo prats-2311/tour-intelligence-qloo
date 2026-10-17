@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createVertexGenerate, generateJson } from "../narrative/gemini.js";
 import type { QlooEnvelope } from "../types.js";
@@ -7,12 +8,27 @@ import { MIN_CASES, validateCases, type BacktestCase } from "./cases.js";
 import { cleanLlmList, GatewayAuthError, llmPrompt, runCase } from "./run.js";
 import { buildResults, METHODS } from "./score.js";
 
-export function parseArgs(argv: string[]): { cases: string; out: string; only?: string[]; methodNote?: string } {
+const REPO_ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
+const PRIVATE_DIR = resolve(REPO_ROOT, "private-data");
+
+/** Backtest results hold Qloo response data (Qloo terms: never in a public repo). Inside the repo only private-data/ (git-ignored) is allowed. */
+export function assertPrivateOut(out: string, allowTracked: boolean): void {
+  if (allowTracked) return;
+  const abs = resolve(out);
+  const inRepo = abs === REPO_ROOT.replace(/\/$/, "") || abs.startsWith(REPO_ROOT);
+  const inPrivate = abs.startsWith(`${PRIVATE_DIR}${sep}`);
+  if (inRepo && !inPrivate) throw new Error("results contain Qloo data; write them under private-data/ (pass --allow-tracked to override)");
+}
+
+export function parseArgs(argv: string[]): { cases: string; out: string; only?: string[]; methodNote?: string; allowTracked?: boolean } {
   const get = (f: string) => { const i = argv.indexOf(f); return i === -1 ? undefined : argv[i + 1]; };
-  const cases = get("--cases"); const out = get("--out"); const only = get("--only"); const methodNote = get("--method-note");
-  if (!cases) throw new Error("--cases <path> is required");
-  if (!out) throw new Error("--out <path> is required");
-  return { cases, out, ...(only ? { only: only.split(",").map((s) => s.trim()).filter(Boolean) } : {}), ...(methodNote ? { methodNote } : {}) };
+  const only = get("--only"); const methodNote = get("--method-note");
+  const allowTracked = argv.includes("--allow-tracked");
+  const run = get("--run") ?? new Date().toISOString().slice(0, 16).replace(/[-:]/g, "").replace("T", "-");
+  const cases = get("--cases") ?? resolve(REPO_ROOT, "backtest/cases.json");
+  const out = get("--out") ?? resolve(PRIVATE_DIR, "backtest", `results-${run}.json`);
+  assertPrivateOut(out, allowTracked);
+  return { cases, out, ...(only ? { only: only.split(",").map((s) => s.trim()).filter(Boolean) } : {}), ...(methodNote ? { methodNote } : {}), ...(allowTracked ? { allowTracked } : {}) };
 }
 
 /** Budget guard (global constraints): never spend Qloo/Vertex calls on more than this many cases in one run. */
@@ -65,6 +81,7 @@ async function main() {
   const { cases: all, errors, skipped } = validateCases(JSON.parse(readFileSync(args.cases, "utf8")));
   if (errors.length) throw new Error(`invalid cases:\n${errors.join("\n")}`);
   const cases = selectCases(all, args.only, skipped);
+  mkdirSync(dirname(args.out), { recursive: true });
 
   const token = gcloud(["auth", "print-identity-token"]);
   const project = process.env.GCP_PROJECT ?? "liifecalling-academy";

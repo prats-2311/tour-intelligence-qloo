@@ -3,20 +3,22 @@ import { describe, expect, it } from "vitest";
 import { extractCandidates, extractEntities, extractHeatPoints, extractMusicTags, extractSharedTaste, extractTrendPoints } from "../src/extract.js";
 import type { QlooEnvelope } from "../src/types.js";
 
-/** Real hackathon-API responses captured 2026-10-16 (provenance/execution stripped). */
+/** Synthetic fixtures with the shape of real hackathon-API responses (scripts/synthesize-fixture.mjs; Qloo data is never committed). */
 const live = (name: string): QlooEnvelope =>
   ({ operation: name, ...JSON.parse(readFileSync(new URL(`./fixtures/live/${name}.json`, import.meta.url), "utf8")) }) as QlooEnvelope;
 
 describe("live Qloo shapes", () => {
   it("shared taste is the mean of the top-5 shared-tag scores", () => {
     const env = live("compare");
-    const scores = (env.results as { tags: Array<{ query: { score: number } }> }).tags.map((t) => t.query.score).sort((a, b) => b - a).slice(0, 5);
+    const tagRows = (env.results as { tags: Array<{ name: string; query: { score: number } }> }).tags;
+    const scores = tagRows.map((t) => t.query.score).sort((a, b) => b - a).slice(0, 5);
+    const top = [...tagRows].sort((a, b) => b.query.score - a.query.score)[0]!;
     const st = extractSharedTaste(env);
     expect(st.value).toBeGreaterThan(0);
     expect(st.value).toBeLessThanOrEqual(1);
     expect(st.value).toBeCloseTo(scores.reduce((a, b) => a + b, 0) / 5, 10);
     expect(st.tags).toHaveLength(5);
-    expect(st.tags[0]).toEqual({ name: "Funk", score: scores[0] });
+    expect(st.tags[0]).toEqual({ name: top.name, score: scores[0] });
     expect(st.tags.every((t) => t.name !== "")).toBe(true);
   });
   it("shared taste with no (or unscored) tags is null, never NaN", () => {
@@ -47,7 +49,7 @@ describe("live Qloo shapes", () => {
   });
   it("describe results have no type/subtype and so no category", () => {
     const e = extractEntities(live("describe"))[0]!;
-    expect(e.name).toBe("Beach House");
+    expect(e.name).toBe((live("describe").results as Array<{ name: string }>)[0]!.name);
     expect(e.category).toBeUndefined();
   });
   it("category falls back to a non-generic type", () => {
@@ -56,7 +58,7 @@ describe("live Qloo shapes", () => {
   it("rank with names yields entity-id candidates", () => {
     const c = extractCandidates(live("rank-needs-input"));
     expect(c[0]!.id).toMatch(/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/i);
-    expect(c[0]!.name).toBe("Teatro Diana");
+    expect(c[0]!.name).toBe((live("rank-needs-input").resolution as { issues: Array<{ candidates: Array<{ name: string }> }> }).issues[0]!.candidates[0]!.name);
   });
   it("heat points still parse from live where_popular", () => {
     const pts = extractHeatPoints(live("heat-gdl"));

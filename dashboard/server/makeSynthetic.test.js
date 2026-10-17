@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { makeSynthetic, syntheticId } from "../scripts/make-synthetic-recording.mjs";
 
-const ID_A = "00000000-2D59-26CF-6425-CA2B3C752437";
-const ID_B = "00000000-912F-7318-301D-1242E1B1F71B";
+// Invented uppercase ids (built at runtime, never real Qloo ids) standing in for a recording's entity ids.
+const fakeId = (hex) => [8, 4, 4, 4, 12].map((n) => hex.repeat(n).slice(0, n)).join("-").toUpperCase();
+const ID_A = fakeId("a1");
+const ID_B = fakeId("b2");
+const ID_C = fakeId("c3");
+const ID_D = fakeId("d4");
 const KEY = "c58a7f74e4e13e85ee2c050ef5a8d1bfffd9a8d2499c76be06b46ddf88bf17ae";
 const city = { id: "4013708", name: "Ciudad Juarez", country: "MX", lat: 31.7, lon: -106.4, fanHeat: { value: 61.25, refs: [] }, activation: { value: 22.5, refs: [] }, winnability: { value: 41.75, refs: [] }, verdict: "play", closeCall: false };
 const SHOW = {
@@ -66,7 +70,7 @@ describe("makeSynthetic backtest", () => {
         id: "c1", artist: "Coldplay", city: "Vancouver", country: "Canada", activationType: "local_artist",
         realEntity: { name: "Bryan Adams", entityId: ID_B, resolved: true },
         results: {
-          qloo_playbook: { status: "ok", rank, top: [{ name: "Elon Musk", entityId: ID_A }, { name: "Drake", entityId: "00000000-C99F-2D78-C989-AFB877EF75F5" }, { name: "Shawn Mendes", entityId: "00000000-3251-9fe9-2f72-f0b5b84ae6a6" }] },
+          qloo_playbook: { status: "ok", rank, top: [{ name: "Elon Musk", entityId: ID_A }, { name: "Drake", entityId: ID_C }, { name: "Shawn Mendes", entityId: ID_D }] },
           llm_only: { status: "ok", rank: null, top: [{ name: "Celine Dion" }, { name: "Michael Buble" }] },
         },
       }],

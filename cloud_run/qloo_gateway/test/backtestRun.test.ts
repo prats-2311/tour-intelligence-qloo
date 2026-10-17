@@ -208,10 +208,10 @@ describe("LLM list handling", () => {
 
 describe("cli helpers", () => {
   it("parses args", () => {
-    expect(parseArgs(["--cases", "a.json", "--out", "b.json", "--only", "x,y"])).toEqual({ cases: "a.json", out: "b.json", only: ["x", "y"] });
-    expect(() => parseArgs(["--cases", "a.json"])).toThrow(/--out/);
-    expect(parseArgs(["--cases", "a.json", "--out", "b.json", "--method-note", "ranked local acts"]).methodNote).toBe("ranked local acts");
-    expect(parseArgs(["--cases", "a.json", "--out", "b.json"])).not.toHaveProperty("methodNote");
+    expect(parseArgs(["--cases", "a.json", "--out", "/var/tmp/b.json", "--only", "x,y"])).toEqual({ cases: "a.json", out: "/var/tmp/b.json", only: ["x", "y"] });
+    expect(parseArgs(["--cases", "a.json"]).out).toMatch(/private-data\/backtest\/results-/);
+    expect(parseArgs(["--cases", "a.json", "--out", "/var/tmp/b.json", "--method-note", "ranked local acts"]).methodNote).toBe("ranked local acts");
+    expect(parseArgs(["--cases", "a.json", "--out", "/var/tmp/b.json"])).not.toHaveProperty("methodNote");
   });
 
   it("calls the gateway with auth and session headers, retries 5xx, and never leaks the token in errors", async () => {

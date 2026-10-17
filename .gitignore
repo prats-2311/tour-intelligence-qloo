@@ -41,3 +41,5 @@ venv/
 private-data/
 dashboard/src/lib/qloo/fixtures/showcase.json
 dashboard/src/lib/qloo/fixtures/backtest.json
+backtest/results*.json
+cloud_run/qloo_gateway/test/fixtures/calibration/

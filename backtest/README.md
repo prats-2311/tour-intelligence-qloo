@@ -6,7 +6,7 @@ Question: for real past tours, would the Qloo-powered City Playbook have surface
 - `cases.json`: run 1. 14 cases (9 local act, 4 merch collab, 1 sponsor) that Prateek reviewed and accepted on 2026-10-17 (`review.status: "accepted"`). Method v1.
 - `candidates-run2.json` and `cases-run2.json`: run 2. 13 fresh local-act cases, reviewed and accepted by Prateek on 2026-10-17 after the local-act method changed. No artist–city pair repeats run 1's. Method v2: the city's popular artists re-ranked with `qloo_rank` by taste fit.
 - The runner scores one cases file per run (only `review.status: "accepted"` cases).
-- `results.json` (run 1, run at 2026-10-17T00:41Z) and `results-run2.json` (run 2, 2026-10-17T01:33Z): the runner's output. `/proof` renders committed copies of both (`dashboard/src/lib/qloo/fixtures/backtest.json`).
+- `results.json` (run 1, run at 2026-10-17T00:41Z) and `results-run2.json` (run 2, 2026-10-17T01:33Z): the runner's output. Served by the app at `/proof`; the raw results are kept private (Qloo data policy: no Qloo response data in the public repo). The runner writes under `private-data/backtest/` by default.
 
 Each case is scored three ways, with the same top-10 cut:
 1. **Qloo playbook:** what the City Playbook's local-act column was in that run.
