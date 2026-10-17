@@ -42,20 +42,32 @@ const METRO_CORES: ReadonlySet<string> = new Set([
   "4641239", // Memphis, over "New South Memphis" (GeoNames artefact)
   "5391811", // San Diego, over Tijuana (28 km; a cross-border metro keeps its home-country label)
   "5520993", // El Paso, over Ciudad Juarez
+  "3530597", // Mexico City, over Ecatepec de Morelos, Iztapalapa and the other conurbation municipalities
+  "3448439", // Sao Paulo, over Osasco, Guarulhos and Sao Bernardo do Campo
+  "3451190", // Rio de Janeiro, over Niteroi and Duque de Caxias
+  "3995465", // Monterrey, over Guadalupe and San Nicolas de los Garza
+  "3435910", // Buenos Aires, over the Gran Buenos Aires partidos
+  "3871336", // Santiago, over Puente Alto and Maipu
+  "3688689", // Bogota, over Soacha
+  "3936456", // Lima, over Callao and San Juan de Lurigancho
 ]);
 
-/** The most populous city (>= minPopulation) within maxKm of the point; equal populations break by distance. A METRO_CORES city in range beats any non-core city (most populous core wins). Anchors suburbs to their tour city. */
+/** A core's tour market reaches further than a normal anchor: heat cells on the outskirts of a 10M+ metro sit 30-50 km from the GeoNames centre and would otherwise anchor to a suburb. */
+const METRO_CORE_KM = 50;
+
+/** The most populous city (>= minPopulation) within maxKm of the point; equal populations break by distance. A METRO_CORES city in range (up to 50 km) beats any non-core city (most populous core wins). Anchors suburbs to their tour city. */
 export function metroAnchor(cities: City[], p: { lat: number; lon: number }, { maxKm = 50, minPopulation = 100_000 }: { maxKm?: number; minPopulation?: number } = {}): City | null {
   let best: City | null = null;
   let bestKm = Infinity;
-  const dLat = maxKm / 111;
-  const dLonMax = maxKm / (111 * Math.max(Math.cos((p.lat * Math.PI) / 180), 0.01));
+  const reachKm = Math.max(maxKm, METRO_CORE_KM);
+  const dLat = reachKm / 111;
+  const dLonMax = reachKm / (111 * Math.max(Math.cos((p.lat * Math.PI) / 180), 0.01));
   for (const c of cities) {
     if (c.population < minPopulation) continue;
     const dLonDeg = Math.abs(((c.lon - p.lon + 540) % 360) - 180);
     if (Math.abs(c.lat - p.lat) > dLat || dLonDeg > dLonMax) continue;
     const km = haversineKm(c, p);
-    if (km > maxKm) continue;
+    if (km > (METRO_CORES.has(c.id) ? reachKm : maxKm)) continue;
     const coreC = METRO_CORES.has(c.id), coreBest = best !== null && METRO_CORES.has(best.id);
     if (!best || (coreC && !coreBest) || (coreC === coreBest && (c.population > best.population || (c.population === best.population && km < bestKm)))) { best = c; bestKm = km; }
   }

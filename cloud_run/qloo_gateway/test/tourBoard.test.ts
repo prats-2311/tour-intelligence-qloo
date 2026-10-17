@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 // Pin the pipeline to the original config so these assertions do not move when the committed calibration is regenerated.
 vi.mock("../src/scoring/calibration.js", async () => ({ SCORING: (await import("../src/scoring/config.js")).DEFAULT_SCORING }));
 
-import type { City } from "../src/geo/cities.js";
+import { loadCities, type City } from "../src/geo/cities.js";
 import { artistTasteArgs } from "../src/pipeline/recArgs.js";
 import { pickCandidates, runTourBoard, type TourBrief } from "../src/pipeline/tourBoard.js";
 import type { QlooCaller } from "../src/qlooCall.js";
@@ -210,6 +210,24 @@ describe("runTourBoard", () => {
     const events = await collect(runTourBoard({ ...brief, regions: ["Mexico", "Mexico2"] }, { qloo: fakeQloo((t, a) => (t === "qloo_where_popular" && String(a.within).startsWith("Mexico") ? heatMexico : happy(t, a))), cities: CITIES }));
     const names = events.filter((e) => e.type === "city_scored").map((e) => (e as { city: { name: string } }).city.name);
     expect(names).toEqual(["Mexico City", "Monterrey"]);
+  });
+
+  it("scores Mexico City once, and none of its suburbs, when the heat is split across outer-ring suburbs", async () => {
+    const suburbHeat: QlooEnvelope = {
+      operation: "where_popular", status: "ok",
+      results: [
+        { location: { latitude: 19.7, longitude: -99.03 }, query: { affinity: 0.6, popularity: 0.4 } }, // north Ecatepec, 32 km from the centre
+        { location: { latitude: 19.5, longitude: -98.85 }, query: { affinity: 0.55, popularity: 0.4 } }, // Iztapalapa side, 30 km out
+        { location: { latitude: 19.6018, longitude: -99.0507 }, query: { affinity: 0.5, popularity: 0.4 } }, // Ecatepec de Morelos
+        { location: { latitude: 25.68, longitude: -100.31 }, query: { affinity: 0.3, popularity: 0.2 } },
+      ],
+    };
+    const events = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => (t === "qloo_where_popular" && a.within === "Mexico" ? suburbHeat : happy(t, a))), cities: loadCities() }));
+    const names = events.filter((e) => e.type === "city_scored").map((e) => (e as { city: { name: string } }).city.name);
+    expect(names.filter((n) => n === "Mexico City")).toHaveLength(1);
+    expect(names).not.toContain("Ecatepec de Morelos");
+    expect(names).not.toContain("Iztapalapa");
+    expect(names).toContain("Monterrey");
   });
 
   it("issues the brand and artist recommends with the shared artist-taste args", async () => {

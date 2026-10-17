@@ -157,6 +157,18 @@ describe("marketsFromHeat on the real GeoNames dataset", () => {
     expect(nameFor(32.71571, -117.16472)).toBe("San Diego"); // over Tijuana, 28 km away
     expect(nameFor(31.75872, -106.48693)).toBe("El Paso"); // over Ciudad Juarez
   });
+  it("anchors the outer rings of huge metros to the capital core, not to a suburb", () => {
+    const o = { maxKm: 30, minPopulation: 100_000 };
+    expect(metroAnchor(real, { lat: 19.6018, lon: -99.0507 }, o)?.id).toBe("3530597"); // Ecatepec de Morelos
+    expect(metroAnchor(real, { lat: 19.7, lon: -99.03 }, o)?.id).toBe("3530597"); // north Ecatepec, 32 km out
+    expect(metroAnchor(real, { lat: -23.5325, lon: -46.7917 }, o)?.id).toBe("3448439"); // Osasco
+    expect(nameFor(-23.45, -46.95)).toBe("Sao Paulo"); // west of Osasco, 34 km out
+    expect(nameFor(19.5, -98.85)).toBe("Mexico City"); // Iztapalapa side, 30 km out
+  });
+  it("resolves each capital core id to the expected city", () => {
+    const want: Record<string, string> = { "3530597": "Mexico City", "3448439": "Sao Paulo", "3451190": "Rio de Janeiro", "3995465": "Monterrey", "3435910": "Buenos Aires", "3871336": "Santiago", "3688689": "Bogota", "3936456": "Lima" };
+    for (const [id, name] of Object.entries(want)) expect(real.find((c) => c.id === id)?.name).toBe(name);
+  });
   it("does not label the Santos/Guaruja coast as the Sao Paulo suburb Sao Bernardo do Campo", () => {
     const name = nameFor(-23.994, -46.23);
     expect(name).not.toBe("Sao Bernardo do Campo");
