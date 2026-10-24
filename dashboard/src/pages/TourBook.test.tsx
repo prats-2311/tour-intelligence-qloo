@@ -103,6 +103,15 @@ describe("TourBook", () => {
     expect(Number(line[1])).toBe(Number(line[2]) + Number(line[4]));
     expect(screen.getByTestId("calls-total").textContent).toBe(`This book used ${line[1]} Qloo requests (board ${line[2]} + playbooks ${line[4]}).`);
   });
+  it("shows the clocks on a showcase run when its brief carries a window", async () => {
+    const show = parseShowcase(JSON.parse(JSON.stringify(syntheticShowcase)));
+    show.brief = { ...show.brief, dateWindow: { start: "2027-03-12", end: "2027-04-18" } };
+    setShowcase(show);
+    renderAt("/tours/book?showcase=1");
+    await screen.findByRole("heading", { name: "Market selection" });
+    expect((await screen.findAllByTestId("verdict-clocks")).length).toBeGreaterThan(0);
+    expect(screen.getByTestId("clock-rule")).toBeTruthy();
+  });
   it("hides the clocks and the rule without a date window", async () => {
     renderAt("/tours/book", <RunNoWindow />);
     await screen.findByRole("button", { name: "Calendar" });

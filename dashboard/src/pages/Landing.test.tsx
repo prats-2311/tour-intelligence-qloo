@@ -39,13 +39,20 @@ describe("Landing", () => {
     expect(line.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole("link", { name: "How we tested it →" }).getAttribute("href")).toBe("/proof");
   });
-  it("never promises a hidden goldmine or says winnability is better (outside the labelled sample row)", () => {
+  it("never promises a hidden goldmine or says winnability is better, card included", () => {
     setShowcase(parseShowcase(syntheticShowcase));
     const { container } = render(<MemoryRouter><Landing /></MemoryRouter>);
-    for (const el of container.querySelectorAll("section[aria-label$='routing row']")) el.remove();
+    expect(container.querySelector("section[aria-label$='routing row']")).toBeTruthy();
+    expect(container.querySelector("[aria-label*='oldmine'],[title*='oldmine']")).toBeNull();
     const text = container.textContent!;
     expect(text).not.toMatch(/hidden goldmine|better|outperform|\bbeat|smarter/i);
     setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
+  });
+  it("the proof card shows the score and both ranks but no verdict chip", () => {
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    const card = screen.getByRole("region", { name: "Guadalajara sample routing row" });
+    expect(within(card).getByTestId("proof-winnability")).toBeTruthy();
+    expect(within(card).queryByText(/Play|Hidden goldmine|De-risk|Consider|Skip/)).toBeNull();
   });
   it("labels the proof card with the verbatim sample banner and integrity line, and shows no LIVE badge", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
@@ -67,8 +74,8 @@ describe("Landing", () => {
   it("shows the Guadalajara fragment from the sample fixture and omits the backtest link", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
     expect(screen.getByText("Guadalajara")).toBeTruthy();
-    expect(screen.getByText("Ranked 6th on fan density alone. 3rd on winnability.")).toBeTruthy();
-    expect(screen.getByText("Hidden goldmine")).toBeTruthy();
+    expect(screen.getByText("Fan density ranks it 6th of 9. Adding winnability puts it 3rd.")).toBeTruthy();
+    expect(screen.queryByText(/goldmine/i)).toBeNull();
     expect(screen.queryByText(/backtest/i)).toBeNull();
   });
   it("derives the rank line from the fixture", () => {
@@ -76,7 +83,7 @@ describe("Landing", () => {
     const rank = (m: "density" | "winnability") => sortCities(SAMPLE_CITIES, m).findIndex((c) => c.id === id) + 1;
     expect([rank("density"), rank("winnability")]).toEqual([6, 3]);
     render(<MemoryRouter><Landing /></MemoryRouter>);
-    expect(screen.getByText("Ranked 6th on fan density alone. 3rd on winnability.")).toBeTruthy();
+    expect(screen.getByText("Fan density ranks it 6th of 9. Adding winnability puts it 3rd.")).toBeTruthy();
   });
   it("desktop branch: map region is aria-hidden and no LIVE text", async () => {
     vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));

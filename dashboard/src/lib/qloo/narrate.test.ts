@@ -63,6 +63,14 @@ describe("narrate", () => {
     expect(steps[0]!.status).toBe("success");
     expect(steps[0]!.detail).toBe("done");
   });
+  it("an empty-status momentum answer is a neutral note, not a success", () => {
+    const steps = narrate([
+      { type: "tool_call", tool: "qloo_trends", args: {}, cached: false },
+      { type: "tool_result", tool: "qloo_trends", status: "empty", resultCount: 0, cacheKey: "k", stale: false },
+    ]);
+    expect(steps[0]!.status).toBe("info");
+    expect(steps[0]!.detail).toBe("no trend data this quarter");
+  });
   it("an empty momentum answer says so instead of 'done'", () => {
     const steps = narrate([
       { type: "tool_call", tool: "qloo_trends", args: {}, cached: false },
@@ -73,8 +81,8 @@ describe("narrate", () => {
   });
   it("only status 'empty' produces 'no results'", () => {
     const steps = narrate([
-      { type: "tool_call", tool: "qloo_trends", args: {}, cached: false },
-      { type: "tool_result", tool: "qloo_trends", status: "empty", resultCount: 0, cacheKey: "k", stale: false },
+      { type: "tool_call", tool: "qloo_where_popular", args: {}, cached: false },
+      { type: "tool_result", tool: "qloo_where_popular", status: "empty", resultCount: 0, cacheKey: "k", stale: false },
     ]);
     expect(steps[0]!.detail).toBe("no results");
   });

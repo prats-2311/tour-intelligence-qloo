@@ -1,15 +1,13 @@
 import { lazy, Suspense, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { motion, useReducedMotion } from "framer-motion";
 import { DualBars } from "@/components/qloo/DualBars";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
-import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { INTEGRITY_LINE } from "@/lib/qloo/labels";
 import { NextStepLink } from "@/components/qloo/NextStep";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
-import { ordinal, sortCities } from "@/lib/qloo/ranking";
+import { sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
-import { proofFor, SHOWCASE, showcaseCities } from "@/lib/qloo/showcase";
+import { proofFor, rankShiftLine, SHOWCASE, showcaseCities } from "@/lib/qloo/showcase";
 import { storyBeats } from "@/lib/qloo/story";
 import type { ScoredCity } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
@@ -29,7 +27,7 @@ const previewCities = (): ScoredCity[] => (isRecorded() ? showcaseCities() : SAM
 const sampleLine = (): string => {
   const cities = previewCities();
   const rank = (mode: "density" | "winnability") => sortCities(cities, mode).findIndex((c) => c.id === GDL.id) + 1;
-  return `Ranked ${ordinal(rank("density"))} on fan density alone. ${ordinal(rank("winnability"))} on winnability.`;
+  return rankShiftLine(rank("density"), rank("winnability"), cities.length);
 };
 // The recording's own scoring config (when it has one) drives the hero bars' ticks; otherwise the bars keep the default thresholds.
 const recordedThresholds = () => SHOWCASE.boardEvents.find((e) => e.type === "scoring")?.scoring?.thresholds;
@@ -37,7 +35,6 @@ const noop = () => {};
 const CTA = "flex min-h-[52px] items-center justify-center rounded-[10px] px-6 font-sans text-[16px] outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold active:scale-[0.98] motion-reduce:active:scale-100 lg:min-h-12 lg:text-[15px]";
 
 function ProofCard() {
-  const reduce = useReducedMotion();
   const RECORDED = isRecorded();
   const proof = useMemo<{ city: ScoredCity; line: string } | null>(() => (RECORDED ? proofFor(showcaseCities(), Object.keys(SHOWCASE.playbooks)) : { city: GDL, line: sampleLine() }), [RECORDED]);
   if (!proof) return null;
@@ -55,13 +52,6 @@ function ProofCard() {
           <div className="mt-2"><SampleBanner compact source={RECORDED ? "showcase" : "sample"} /></div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
-          <motion.div
-            initial={reduce ? false : { opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.6, duration: 0.18, ease: "easeOut" }}
-          >
-            <VerdictChip verdict={hero.verdict} />
-          </motion.div>
           <span data-testid="proof-winnability" className="font-mono text-[28px] font-bold leading-none text-canvas-text tabular lg:text-4xl">{hero.winnability.value === null ? "—" : Math.round(hero.winnability.value)}</span>
         </div>
       </div>

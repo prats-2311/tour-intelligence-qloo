@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fetchThisWeek, fetchWithoutQloo, SHOWCASE_STRATEGIST_NOTE, streamCityPlaybook, streamStrategist, streamTourBoard } from "./client";
 import { LUMEN_VALE_SAMPLE, SAMPLE_BRIEF, SAMPLE_CITIES } from "./fixtures/lumenVale";
 import { recordedText, SAMPLE_TEXT } from "./labels";
-import { cleanEvents, parseShowcase, proofFor, SHOWCASE, showcaseBannerText } from "./showcase";
+import { cleanEvents, parseShowcase, proofFor, rankShiftLine, SHOWCASE, showcaseBannerText } from "./showcase";
 import type { GatewayEvent, ScoredCity } from "./types";
 
 
@@ -97,7 +97,12 @@ describe("proofFor", () => {
     // density order: a(90) b(80) c(70) d(60); winnability order: d(95) a(60) b(50) c(40)
     const p = proofFor([c("a", 90, 60), c("b", 80, 50), c("c", 70, 40), c("d", 60, 95)])!;
     expect(p.city.id).toBe("d");
-    expect(p.line).toBe("Ranked 4th on fan density alone. 1st on winnability.");
+    expect(p.line).toBe("Fan density ranks it 4th of 4. Adding winnability puts it 1st.");
+  });
+  it("rankShiftLine says keeps when the ranks match, and never says better", () => {
+    expect(rankShiftLine(3, 3, 8)).toBe("Fan density ranks it 3rd of 8. Adding winnability keeps it 3rd.");
+    expect(rankShiftLine(6, 3, 10)).toBe("Fan density ranks it 6th of 10. Adding winnability puts it 3rd.");
+    expect(rankShiftLine(6, 3, 10)).not.toMatch(/better|beat|outperform|smarter|goldmine/i);
   });
   it("makes no shift claim when no city climbs", () => {
     const p = proofFor([c("a", 90, 95), c("b", 80, 50), c("c", 70, 40)])!;

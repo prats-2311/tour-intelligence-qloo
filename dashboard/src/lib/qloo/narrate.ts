@@ -72,7 +72,10 @@ export function narrate(events: GatewayEvent[]): LogStep[] {
           step.detail = "Qloo returned an error";
         } else {
           step.status = "success";
-          if (e.status === "empty") {
+          if (e.tool === "qloo_trends" && e.status === "empty") {
+            step.status = "info";
+            step.detail = "no trend data this quarter";
+          } else if (e.status === "empty") {
             step.detail = "no results";
           } else if (e.tool === "qloo_trends" && e.status === "ok" && e.resultCount === 0) {
             step.detail = "no trend data this quarter";

@@ -67,6 +67,10 @@ export function showcaseCities(show: Showcase = SHOWCASE): ScoredCity[] {
 }
 export const showcasePlaybookCities = (): ScoredCity[] => showcaseCities().filter((c) => SHOWCASE.playbooks[c.id]);
 
+/** "Fan density ranks it 4th of 8. Adding winnability puts it 2nd." Descriptive only: it says nothing about which ranking is better. */
+export const rankShiftLine = (fanRank: number, winRank: number, n: number): string =>
+  `Fan density ranks it ${ordinal(fanRank)} of ${n}. Adding winnability ${fanRank === winRank ? "keeps" : "puts"} it ${ordinal(winRank)}.`;
+
 export interface Proof { city: ScoredCity; line: string }
 
 /** Whole-board rank of a city on fan density or winnability (1 = best); only a strictly higher score ranks ahead. `scored` holds cities with both scores. */
@@ -86,7 +90,7 @@ export function proofFor(all: ScoredCity[], withPlaybook?: readonly string[]): P
   const rankOf = (c: ScoredCity, key: "fanHeat" | "winnability") => boardRank(scored, c, key);
   const rows = pool.map((c) => ({ city: c, d: rankOf(c, "fanHeat"), w: rankOf(c, "winnability") }));
   const best = rows.reduce((a, b) => (b.d - b.w > a.d - a.w ? b : a));
-  if (best.d - best.w > 0) return { city: best.city, line: `Ranked ${ordinal(best.d)} on fan density alone. ${ordinal(best.w)} on winnability.` };
+  if (best.d - best.w > 0) return { city: best.city, line: rankShiftLine(best.d, best.w, scored.length) };
   const top = rows.reduce((a, b) => (b.w < a.w ? b : a));
   return { city: top.city, line: `Ranked ${ordinal(top.w)} of ${scored.length} scored ${scored.length === 1 ? "market" : "markets"} on winnability.` };
 }
