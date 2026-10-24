@@ -49,6 +49,43 @@ describe("WhyThisScore scoring display", () => {
   });
 });
 
+describe("WhyThisScore capped seed", () => {
+  const capped = { ...city, verdict: "consider" as const, candidateSource: "major_market" as const, fanHeatFloor: true, closeCall: true };
+  it("says the market is capped instead of citing Play / Hidden goldmine boundaries", () => {
+    render(<WhyThisScore city={capped} />);
+    expect(screen.getByText(/can't become Play or Hidden goldmine/i)).toBeTruthy();
+    expect(screen.queryByText("Within 2 points of a verdict line — treat as borderline.")).toBeNull();
+    const rules = screen.getByRole("list", { name: "Verdict rules" });
+    expect(rules.textContent).not.toMatch(/45≤fan<70/);
+    expect(rules.textContent).not.toMatch(/fan ≥70 & activation ≥60/);
+    expect(rules.textContent).toMatch(/Play, Hidden goldmine, De-risk:.*capped/i);
+  });
+  it("shows the capped line only when the verdict is consider", () => {
+    const { unmount } = render(<WhyThisScore city={capped} />);
+    expect(screen.getByText(/Capped at Consider: no Qloo fan-heat evidence/)).toBeTruthy();
+    unmount();
+    render(<WhyThisScore city={{ ...capped, verdict: "skip" }} />);
+    expect(screen.queryByText(/Capped at Consider: no Qloo fan-heat evidence/)).toBeNull();
+  });
+});
+
+describe("CityRow secondary line", () => {
+  const major = { ...city, verdict: "consider" as const, candidateSource: "major_market" as const, fanHeatFloor: true, closeCall: true };
+  it("puts chips and the capped line in their own block, apart from the name", () => {
+    render(<ul><CityRow city={major} onOpen={() => {}} /></ul>);
+    const name = screen.getByText(major.name);
+    const chips = screen.getByTestId("row-notes");
+    expect(chips.contains(name)).toBe(false);
+    expect(chips.textContent).toMatch(/Major market/);
+    expect(chips.textContent).toMatch(/Close call/);
+    expect(chips.textContent).toMatch(/Capped at Consider/);
+  });
+  it("hides the capped line unless the verdict is consider", () => {
+    render(<ul><CityRow city={{ ...major, verdict: "skip" }} onOpen={() => {}} /></ul>);
+    expect(screen.queryByText(/Capped at Consider/)).toBeNull();
+  });
+});
+
 describe("DualBars thresholds", () => {
   it("places ticks from injected thresholds", () => {
     const t = { ...DEFAULT_SCORING_DISPLAY.thresholds, deRiskAct: 13, playAct: 28, goldmineAct: 38, goldmineFanMin: 40, playFan: 65 };

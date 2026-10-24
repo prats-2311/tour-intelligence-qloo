@@ -202,11 +202,14 @@ describe("TourBoard", () => {
     const rows = screen.getAllByTestId("city-row");
     expect(within(rows[5]!).getByText("Guadalajara")).toBeTruthy();
   });
-  it("opens Why this score? from the footer action", async () => {
+  it("opens a Why <city> scores <n>? action from the footer, naming the top row by default and the selected city otherwise", async () => {
     renderPage();
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
-    fireEvent.click(screen.getByRole("button", { name: "Why this score?" }));
-    expect(await screen.findByRole("dialog", { name: /why this score/i })).toBeTruthy();
+    const top = screen.getAllByTestId("city-row")[0]!;
+    const name = top.getAttribute("data-city-name")!;
+    const btn = screen.getByRole("button", { name: new RegExp(`^Why ${name} scores \\d+\\?$`) });
+    fireEvent.click(btn);
+    expect(await screen.findByRole("dialog", { name: new RegExp(`${name} — why this score`, "i") })).toBeTruthy();
   });
   it("tapping a city row opens its playbook (sample query kept)", async () => {
     render(
@@ -395,6 +398,21 @@ describe("TourBoard", () => {
       expect(item.querySelector("[data-shape]")!.getAttribute("data-shape")).toBe(VERDICT_SHAPE[v]);
     }
   });
+  it("map legend lists only the verdicts that occur on the board", async () => {
+    const play = SAMPLE_CITIES.find((c) => c.verdict === "play")!, skip = SAMPLE_CITIES.find((c) => c.verdict === "skip")!;
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
+      yield { type: "city_scored", city: play };
+      yield { type: "city_scored", city: skip };
+      yield { type: "done", summary: {} };
+    });
+    renderPage("/tours/board");
+    submitArtist("Ada");
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(2));
+    const legend = screen.getByLabelText("Map legend");
+    expect(within(legend).getByText("Play")).toBeTruthy();
+    expect(within(legend).getByText("Skip")).toBeTruthy();
+    for (const label of ["Hidden goldmine", "De-risk", "Consider", "Not enough data"]) expect(within(legend).queryByText(label)).toBeNull();
+  });
   it("needs_input picker offers 'Search a different artist' that returns to the brief with the artist kept", async () => {
     vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
       yield { type: "needs_input", field: "entity", summary: "Choose", candidates: [{ id: "P1", name: "Pedro Infante" }] };
@@ -449,6 +467,58 @@ describe("TourBoard", () => {
     fireEvent.click(screen.getByRole("link", { name: "Open Tour Book" }));
     expect(await screen.findByText("book page")).toBeTruthy();
     expect(screen.getByTestId("search").textContent).toBe("?sample=1");
+  });
+});
+
+function HoldButton({ id }: { id: string }) {
+  const { toggleShortlist } = useTourBoard();
+  return <button type="button" onClick={() => toggleShortlist(id)}>hold {id}</button>;
+}
+
+describe("TourBoard shortlist count", () => {
+  it("lists every held city, including one whose verdict is not play or goldmine, and every count equals the list length", async () => {
+    const gdl = SAMPLE_CITIES.find((c) => c.verdict === "consider" || c.verdict === "skip")!;
+    expect(["play", "hidden_goldmine"]).not.toContain(gdl.verdict);
+    render(
+      <QueryClientProvider client={qc()}>
+        <TourBoardProvider sampleDelayMs={0}>
+          <MemoryRouter initialEntries={["/tours/board"]}>
+            <Routes><Route path="/tours/board" element={<TourBoard />} /></Routes>
+            <RunOnce brief={SAMPLE_BRIEF} />
+            <HoldButton id={gdl.id} />
+          </MemoryRouter>
+        </TourBoardProvider>
+      </QueryClientProvider>,
+    );
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    fireEvent.click(screen.getByRole("button", { name: `hold ${gdl.id}` }));
+    expect(screen.getByText("5 markets shortlisted")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Shortlist" });
+    expect(within(dialog).getAllByRole("checkbox")).toHaveLength(5);
+    expect(within(dialog).getByRole("checkbox", { name: new RegExp(gdl.name) })).toHaveProperty("checked", true);
+    expect(within(dialog).getByText("5 of max 8 stops")).toBeTruthy();
+  });
+});
+
+describe("TourBoard showcase rows without a recorded playbook", () => {
+  const rec = () => parseShowcase(syntheticShowcase);
+  it("only rows with a recorded playbook are buttons, and a quiet line explains the rest", async () => {
+    setShowcase(rec());
+    const recordedIds = Object.keys(rec().playbooks);
+    renderPage("/tours/board?showcase=1");
+    await waitFor(() => expect(screen.getAllByTestId("city-row").length).toBeGreaterThanOrEqual(8));
+    for (const row of screen.getAllByTestId("city-row")) {
+      const isRecorded = recordedIds.includes(row.getAttribute("data-city-id")!);
+      expect(within(row).queryAllByRole("button").length > 0, row.getAttribute("data-city-name")!).toBe(isRecorded);
+    }
+    expect(screen.getByText(`Playbooks are recorded for ${recordedIds.length} cities in this example. Try your own artist to open any city.`)).toBeTruthy();
+  });
+  it("live and sample mode rows are all buttons and carry no such line", async () => {
+    renderPage("/tours/board?sample=1");
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    for (const row of screen.getAllByTestId("city-row")) expect(within(row).getAllByRole("button").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Playbooks are recorded for/)).toBeNull();
   });
 });
 

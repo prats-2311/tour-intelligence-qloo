@@ -24,12 +24,12 @@ describe("StrategistLauncher", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
     expect(screen.getByRole("dialog", { name: "Ask the strategist" })).toBeTruthy();
   });
-  it("lifts the FAB above the sticky footer on board, playbook and book, not elsewhere", async () => {
+  it("docks the FAB inside the sticky footer on board and playbook (so it never covers scores), lifts it above the Book footer, and leaves it low elsewhere", async () => {
     mm(false);
-    for (const [path, lifted] of [["/tours/board?sample=1", true], ["/tours/playbook/4005539?sample=1", true], ["/tours/book?sample=1", true], ["/insights", false]] as const) {
+    for (const [path, want] of [["/tours/board?sample=1", "bottom-[calc(4.5rem"], ["/tours/playbook/4005539?sample=1", "bottom-[calc(4.5rem"], ["/tours/book?sample=1", "bottom-[calc(9.5rem"], ["/insights", "bottom-[calc(5rem"]] as const) {
       const { unmount } = shell(path);
       const fab = await screen.findByRole("button", { name: "Ask the strategist" });
-      expect(fab.className.includes("bottom-[calc(9.5rem")).toBe(lifted);
+      expect(fab.className.includes(want), `${path} ${fab.className}`).toBe(true);
       unmount();
     }
   });

@@ -17,11 +17,11 @@ import { WhyThisScore } from "@/components/qloo/WhyThisScore";
 import { fetchWithoutQloo } from "@/lib/qloo/client";
 import { LONG_CITY_NAMES, LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_WITHOUT_QLOO } from "@/lib/qloo/fixtures/strategistSample";
-import { showcaseAvailable, showcaseBrief, showcaseWithoutQloo } from "@/lib/qloo/showcase";
+import { showcaseAvailable, showcaseBrief, showcasePlaybookCities, showcasePlaybookEvents, showcaseWithoutQloo } from "@/lib/qloo/showcase";
 import { sortCities, summarize } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
-import { INTEGRITY_LINE, VERDICT_LABEL } from "@/lib/qloo/labels";
+import { INTEGRITY_LINE, recordedPlaybooksLine, VERDICT_LABEL } from "@/lib/qloo/labels";
 import type { TourBrief, Verdict } from "@/lib/qloo/types";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
@@ -92,10 +92,11 @@ function GenericRanking({ ranked }: { ranked: Array<{ name: string; country: str
 
 const LEGEND: Verdict[] = ["play", "hidden_goldmine", "de_risk", "consider", "skip", "insufficient_data"];
 
-function Legend() {
+function Legend({ present }: { present: ReadonlySet<Verdict> }) {
+  if (present.size === 0) return null;
   return (
     <div className="pointer-events-none absolute left-4 top-4 z-10 hidden flex-wrap items-center gap-x-4 gap-y-1 rounded-[8px] bg-canvas-raised px-3 py-2 lg:flex" aria-label="Map legend">
-      {LEGEND.map((v) => <span key={v} className="inline-flex items-center gap-1.5 text-[12px] text-canvas-text"><VerdictGlyph verdict={v} />{VERDICT_LABEL[v]}</span>)}
+      {LEGEND.filter((v) => present.has(v)).map((v) => <span key={v} className="inline-flex items-center gap-1.5 text-[12px] text-canvas-text"><VerdictGlyph verdict={v} />{VERDICT_LABEL[v]}</span>)}
     </div>
   );
 }
@@ -152,9 +153,12 @@ export default function TourBoard() {
 
   const sorted = useMemo(() => sortCities(state.cities, mode === "density" ? "density" : "winnability"), [state.cities, mode]);
   const counts = useMemo(() => summarize(state.cities), [state.cities]);
-  const eligible = useMemo(() => sortCities(state.cities, "winnability").filter((c) => SHORTLIST_VERDICTS.has(c.verdict)), [state.cities]);
+  // The shortlist sheet lists every Play or Hidden goldmine market plus every held city (a playbook can hold any verdict),
+  // so each count on the page is the number of held cities that are listed.
+  const listed = useMemo(() => sortCities(state.cities, "winnability").filter((c) => SHORTLIST_VERDICTS.has(c.verdict) || shortlist.includes(c.id)), [state.cities, shortlist]);
+  const heldCount = useMemo(() => listed.filter((c) => shortlist.includes(c.id)).length, [listed, shortlist]);
   const maxStops = state.brief?.maxStops ?? 8;
-  const atCap = shortlist.length >= maxStops;
+  const atCap = heldCount >= maxStops;
   const sampleQ = state.source === "showcase" ? "?showcase=1" : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
   const bookHref = `/tours/book${sampleQ}`;
   const withoutMode = mode === "without";
@@ -182,13 +186,17 @@ export default function TourBoard() {
     : withoutLive.data;
   const selected = withoutMode ? undefined : state.cities.find((c) => c.id === selectedId);
   const whyCity = state.cities.find((c) => c.id === whyId);
-  const summaryCity = selected ?? eligible.find((c) => c.verdict === "hidden_goldmine") ?? sorted[0];
+  const summaryCity = selected ?? sorted[0];
+  const whyLabel = summaryCity ? (summaryCity.winnability.value === null ? `Why ${summaryCity.name} has no score?` : `Why ${summaryCity.name} scores ${Math.round(summaryCity.winnability.value)}?`) : "Why this score?";
 
   const retry = () => { if (state.brief) run(state.brief, { sample: isSample, sampleSet: state.source === "showcase" ? "showcase" : wantLong ? "long" : "default" }); };
   const showcase = () => (showcaseAvailable()
     ? run(showcaseBrief(), { sample: true, sampleSet: "showcase" })
     : run(SAMPLE_BRIEF, { sample: true, sampleSet: "default" }));
   const showcaseMissing = !showcaseAvailable() && (wantShowcase || state.source === "showcase");
+  // A recorded run replays a few playbooks only: a row without one is not a link (live mode opens every city).
+  const openable = (id: string) => state.source !== "showcase" || showcasePlaybookEvents(id) !== null;
+  const someUnopenable = state.source === "showcase" && state.cities.some((c) => !openable(c.id));
   const openRow = (id: string) => navigate(`/tours/playbook/${id}${sampleQ}`);
   const selectFromMap = (id: string) => {
     setSelectedId(id);
@@ -324,12 +332,13 @@ export default function TourBoard() {
           )}
           {!withoutMode && <ul className="flex flex-col gap-0.5">
             {sorted.map((c) => (
-              <CityRow key={c.id} city={c} selected={c.id === selectedId} dimActivation={mode === "density"} onOpen={openRow} />
+              <CityRow key={c.id} city={c} selected={c.id === selectedId} dimActivation={mode === "density"} onOpen={openRow} openable={openable(c.id)} />
             ))}
             {streaming && [0, 1, 2].slice(0, Math.max(1, 3 - Math.floor(sorted.length / 3))).map((i) => (
               <li key={`sk-${i}`} aria-hidden className="skeleton h-[88px] list-none first:rounded-t-[14px] last:rounded-b-[14px] lg:h-[72px]" />
             ))}
           </ul>}
+          {!withoutMode && someUnopenable && !streaming && <p className="mt-2 px-1 text-[12px] text-canvas-muted">{recordedPlaybooksLine(showcasePlaybookCities().length)}</p>}
         </div>
       )}
       {state.cities.length > 0 && (
@@ -342,15 +351,15 @@ export default function TourBoard() {
   );
 
   const footer = state.cities.length > 0 && !withoutMode && (
-    <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 flex items-center gap-3 bg-canvas-raised px-3 py-2 lg:bottom-0 lg:justify-between lg:py-3">
+    <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 flex items-center gap-3 bg-canvas-raised py-2 pl-3 pr-[68px] lg:bottom-0 lg:px-3 lg:justify-between lg:py-3">
       <span className="hidden min-w-0 text-[13px] text-canvas-muted lg:block">
-        {shortlist.length} {shortlist.length === 1 ? "market" : "markets"} shortlisted
+        {heldCount} {heldCount === 1 ? "market" : "markets"} shortlisted
       </span>
-      <button type="button" disabled={eligible.length === 0} onClick={() => setBuildOpen(true)} className="btn-gold inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:flex-none">
+      <button type="button" disabled={listed.length === 0} onClick={() => setBuildOpen(true)} className="btn-gold inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:flex-none">
         Hold these dates<ArrowRight size={16} className="hidden lg:block" aria-hidden />
       </button>
-      <button type="button" onClick={() => summaryCity && setWhyId(summaryCity.id)} className="inline-flex min-h-11 shrink-0 items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline lg:hidden">
-        Why this score?
+      <button type="button" onClick={() => summaryCity && setWhyId(summaryCity.id)} className="inline-flex min-h-11 shrink-0 items-center px-1 text-left text-[13px] font-medium leading-tight text-canvas-text underline-offset-[0.18em] hover:underline lg:hidden">
+        <span className="line-clamp-2 max-w-[6.5rem]">{whyLabel}</span>
       </button>
     </div>
   );
@@ -379,13 +388,13 @@ export default function TourBoard() {
       </Sheet>
       <Sheet open={buildOpen} onClose={() => setBuildOpen(false)} title="Shortlist">
         <div className="flex flex-col gap-3">
-          {eligible.length === 0 ? (
+          {listed.length === 0 ? (
             <p className="text-[14px] text-canvas-muted">No Play or Hidden goldmine markets in this run.</p>
           ) : (
             <>
-              <p className="text-[13px] tabular-nums text-canvas-muted">{shortlist.length} of max {maxStops} stops</p>
+              <p className="text-[13px] tabular-nums text-canvas-muted">{heldCount} of max {maxStops} stops</p>
               <ul className="flex flex-col gap-0.5">
-                {eligible.map((c) => {
+                {listed.map((c) => {
                   const checked = shortlist.includes(c.id);
                   const blocked = !checked && atCap;
                   return (
@@ -406,8 +415,8 @@ export default function TourBoard() {
                   );
                 })}
               </ul>
-              {eligible.some((c) => !shortlist.includes(c.id)) && atCap && <p id="max-stops-hint" className="text-[13px] text-canvas-muted">Max stops reached — raise it in the brief</p>}
-              {shortlist.length > 0
+              {listed.some((c) => !shortlist.includes(c.id)) && atCap && <p id="max-stops-hint" className="text-[13px] text-canvas-muted">Max stops reached — raise it in the brief</p>}
+              {heldCount > 0
                 ? <Link to={bookHref} className="btn-gold inline-flex h-12 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10">Open Tour Book</Link>
                 : <button type="button" disabled className="btn-gold inline-flex h-12 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10">Open Tour Book</button>}
             </>
@@ -433,14 +442,14 @@ export default function TourBoard() {
     <div className="-mx-4 -mt-6 lg:-mx-8 lg:-my-8">
       {isSample && <SampleBanner source={state.source} />}
       <div className="grid grid-cols-1 lg:grid-cols-12">
-        <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1">{header}</div>
-        <section aria-label="Routing map" className="relative h-[32dvh] min-h-[168px] bg-canvas-raised lg:sticky lg:top-14 lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:h-[calc(100dvh-56px)] lg:self-start">
-          {!withoutMode && <Legend />}
+        <div className="lg:col-span-6 lg:col-start-7 lg:row-start-1 xl:col-span-5 xl:col-start-8">{header}</div>
+        <section aria-label="Routing map" className="relative h-[32dvh] min-h-[168px] bg-canvas-raised lg:sticky lg:top-14 lg:col-span-6 lg:col-start-1 lg:row-span-2 xl:col-span-7 lg:row-start-1 lg:h-[calc(100dvh-56px)] lg:self-start">
+          {!withoutMode && <Legend present={new Set(state.cities.map((c) => c.verdict))} />}
           <Suspense fallback={<div className="size-full bg-canvas-raised" />}>
             <TourMap cities={state.cities} selectedId={withoutMode ? null : selectedId} onSelect={selectFromMap} zones={selected?.zones} neutral={withoutMode} />
           </Suspense>
         </section>
-        <section aria-label="Routing board" className="relative z-10 -mt-5 flex min-w-0 flex-col rounded-t-[18px] bg-canvas-raised lg:col-span-5 lg:col-start-8 lg:row-start-2 lg:mt-0 lg:rounded-none">
+        <section aria-label="Routing board" className="relative z-10 -mt-5 flex min-w-0 flex-col rounded-t-[18px] bg-canvas-raised lg:col-span-6 lg:col-start-7 lg:row-start-2 lg:mt-0 xl:col-span-5 xl:col-start-8 lg:rounded-none">
           <span className="mx-auto mb-0.5 mt-2 h-1 w-9 rounded-full bg-[#47443c] lg:hidden" aria-hidden />
           <div className="flex-1 px-2 pb-3 pt-1 lg:px-6">{body}</div>
           {footer}

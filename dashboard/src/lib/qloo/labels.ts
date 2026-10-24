@@ -27,7 +27,16 @@ export const DEFAULT_SCORING_DISPLAY: ScoringConfig = {
   thresholds: { playFan: 70, playAct: 60, goldmineFanMin: 45, goldmineFanMax: 70, goldmineAct: 75, deRiskFan: 70, deRiskAct: 45, considerWin: 55 },
 };
 
-export function ruleLines(t: Thresholds): Array<{ verdict: Verdict; rule: string }> {
+/** A capped seed (fanHeatFloor): its fan heat is the board's floor, so only Consider, Skip and Not enough data can apply. */
+export function ruleLines(t: Thresholds, capped = false): Array<{ verdict: Verdict; rule: string }> {
+  if (capped) {
+    return [
+      { verdict: "play", rule: "" },
+      { verdict: "consider", rule: `winnability ≥${t.considerWin}` },
+      { verdict: "skip", rule: "otherwise" },
+      { verdict: "insufficient_data", rule: "when inputs are missing" },
+    ];
+  }
   return [
     { verdict: "play", rule: `fan ≥${t.playFan} & activation ≥${t.playAct}` },
     { verdict: "hidden_goldmine", rule: `${t.goldmineFanMin}≤fan<${t.goldmineFanMax} & activation ≥${t.goldmineAct}` },
@@ -44,6 +53,9 @@ export function weightRows(s: ScoringConfig): Array<{ key: ComponentName; label:
 
 export const CLOSE_CALL_LABEL = "Close call";
 export const DEFAULT_CLOSE_CALL_BAND = 2;
+export const CAPPED_CLOSE_CALL_NOTE = "Close to the Consider line. This market is capped at Consider, so it can't become Play or Hidden goldmine.";
+export const CAPPED_RULE_LABEL = "Play, Hidden goldmine, De-risk";
+export const CAPPED_RULE_TEXT = "not available: capped at Consider, no Qloo fan-heat evidence";
 export const closeCallNote = (band: number = DEFAULT_CLOSE_CALL_BAND) => `Within ${band} points of a verdict line — treat as borderline.`;
 
 /** Shown wherever an insufficient_data city has insufficientReason "location_unresolved" (Qloo resolved its name to another place). */
@@ -55,6 +67,8 @@ export const MAJOR_MARKET_LABEL = "Major market";
 const regionNames = (() => { try { return new Intl.DisplayNames(["en"], { type: "region" }); } catch { return undefined; } })();
 /** Shown for a floored major-market seed: its verdict can never be Play or Hidden goldmine. */
 export const FLOORED_SEED_NOTE = "Capped at Consider: no Qloo fan-heat evidence for this market.";
+/** The capped line applies to a floored seed only when the cap is what decided its verdict. */
+export const showsCappedNote = (c: { fanHeatFloor?: boolean; verdict: Verdict }): boolean => c.fanHeatFloor === true && c.verdict === "consider";
 export const countryLabel = (iso2: string): string => { try { return regionNames?.of(iso2) ?? iso2; } catch { return iso2; } };
 export const majorMarketNote = (iso2: string): string =>
   `Largest market in ${countryLabel(iso2)}. We always check it; it isn't in Qloo's top fan hotspots for this artist, so fan heat is shown at the board's floor.`;
@@ -64,3 +78,22 @@ export type VerdictShape = "circle" | "diamond" | "triangle" | "ring" | "x" | "s
 export const VERDICT_SHAPE: Record<Verdict, VerdictShape> = {
   play: "circle", hidden_goldmine: "diamond", de_risk: "triangle", consider: "ring", skip: "x", insufficient_data: "square",
 };
+
+/** Shown where a showcase city has no recorded playbook (the recording holds a few; live mode opens any city). */
+export const recordedPlaybooksLine = (n: number): string =>
+  `Playbooks are recorded for ${n} ${n === 1 ? "city" : "cities"} in this example. Try your own artist to open any city.`;
+
+const TOOL_PLAIN: Record<string, string> = {
+  qloo_describe: "Artist lookup", qloo_audience_demographics: "Fan demographics", qloo_entity_tags: "Fan taste tags", qloo_trends: "Momentum trend",
+  qloo_where_popular: "Fan hotspots", qloo_rank: "Venue ranking", qloo_compare_audiences: "Audience comparison", qloo_find_tags: "Tag search",
+};
+const RECOMMEND_PLAIN: Record<string, string> = { brand: "Sponsor recommendations", place: "Venue recommendations", artist: "Artist recommendations" };
+/** A Qloo tool's plain name for promoters (provenance, logs); `args` tells the flavours of qloo_recommend apart. */
+export function toolPlainName(tool: string, args: Record<string, unknown> = {}): string {
+  if (tool === "qloo_recommend") return RECOMMEND_PLAIN[String(args.target_type ?? "")] ?? "Recommendations";
+  return TOOL_PLAIN[tool] ?? tool.replace(/^qloo_/, "").replace(/_/g, " ");
+}
+const STATUS_PLAIN: Record<string, string> = {
+  ok: "Done", empty: "No results", partial: "Partial result", degraded: "Degraded", error: "Error", needs_input: "Needed more input (skipped)", rejected: "Rejected",
+};
+export const statusPlain = (status: string): string => STATUS_PLAIN[status] ?? status;

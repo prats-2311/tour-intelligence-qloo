@@ -1,4 +1,4 @@
-import type { GatewayEvent, ScoredCity, Verdict } from "./types";
+import type { GatewayEvent, ScoredCity, Thresholds, Verdict } from "./types";
 
 export function cityMarkers(cities: ScoredCity[]) {
   return cities
@@ -77,7 +77,45 @@ export function matrixPoints(cities: ScoredCity[], size: { w: number; h: number;
   }]);
 }
 
-export const QUADRANTS = { heat: [45, 70], activation: [45, 60, 75] } as const;
+export interface Region { fan: [number, number]; act: [number, number] }
+/** The Play, Hidden goldmine and De-risk regions of the fan heat × activation plane, from the scoring thresholds a run applied. */
+export function verdictRegions(t: Thresholds): Record<"play" | "hidden_goldmine" | "de_risk", Region> {
+  return {
+    play: { fan: [t.playFan, 100], act: [t.playAct, 100] },
+    hidden_goldmine: { fan: [t.goldmineFanMin, t.goldmineFanMax], act: [t.goldmineAct, 100] },
+    de_risk: { fan: [t.deRiskFan, 100], act: [0, t.deRiskAct] },
+  };
+}
+
+export interface LabelBox { x0: number; y0: number; x1: number; y1: number }
+export interface PlacedLabel { dx: number; dy: number; anchor: "start" | "end" | "middle"; box: LabelBox }
+
+/**
+ * Greedy label placement for the matrix: points arrive in priority order; each gets the first of right / left / above / below
+ * whose box stays inside the plot and clears every placed label and every mark. A point with no free slot gets no entry
+ * (its name shows on hover, focus or selection instead).
+ */
+export function placeLabels(points: Array<{ id: string; name: string; x: number; y: number }>, size: { w: number; h: number }, opts: { charW?: number; fontH?: number; markR?: number } = {}): Map<string, PlacedLabel> {
+  const charW = opts.charW ?? 7.2, fontH = opts.fontH ?? 13, r = opts.markR ?? 9;
+  const placed = new Map<string, PlacedLabel>();
+  const boxes: LabelBox[] = [];
+  const clear = (a: LabelBox, b: LabelBox) => a.x1 <= b.x0 || b.x1 <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0;
+  for (const p of points) {
+    const w = p.name.length * charW + 4;
+    const options: Array<{ dx: number; dy: number; anchor: PlacedLabel["anchor"]; box: LabelBox }> = [
+      { dx: r + 3, dy: 4, anchor: "start", box: { x0: p.x + r + 3, x1: p.x + r + 3 + w, y0: p.y - fontH / 2, y1: p.y + fontH / 2 } },
+      { dx: -(r + 3), dy: 4, anchor: "end", box: { x0: p.x - r - 3 - w, x1: p.x - r - 3, y0: p.y - fontH / 2, y1: p.y + fontH / 2 } },
+      { dx: 0, dy: -(r + 5), anchor: "middle", box: { x0: p.x - w / 2, x1: p.x + w / 2, y0: p.y - r - 5 - fontH, y1: p.y - r - 5 } },
+      { dx: 0, dy: r + 5 + fontH - 3, anchor: "middle", box: { x0: p.x - w / 2, x1: p.x + w / 2, y0: p.y + r + 2, y1: p.y + r + 2 + fontH } },
+    ];
+    const pick = options.find((o) =>
+      o.box.x0 >= 0 && o.box.x1 <= size.w && o.box.y0 >= 0 && o.box.y1 <= size.h &&
+      boxes.every((b) => clear(o.box, b)) &&
+      points.every((q) => clear(o.box, { x0: q.x - r + 2, x1: q.x + r - 2, y0: q.y - r + 2, y1: q.y + r - 2 })));
+    if (pick) { placed.set(p.id, pick); boxes.push(pick.box); }
+  }
+  return placed;
+}
 
 export function dataQuality(log: GatewayEvent[]) {
   const calls = log.filter((e) => e.type === "tool_call") as Extract<GatewayEvent, { type: "tool_call" }>[];

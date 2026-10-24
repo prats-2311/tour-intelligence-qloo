@@ -17,6 +17,9 @@ export const showsStrategist = (pathname: string): boolean => pathname === "/ins
 export const hasStickyFooter = (pathname: string): boolean =>
   pathname === "/tours/board" || pathname === "/tours/book" || pathname.startsWith("/tours/playbook/");
 
+/** Routes whose sticky footer reserves a right-hand gutter for the FAB: the button sits inside the footer band, never over the list. */
+export const dockedInFooter = (pathname: string): boolean => pathname === "/tours/board" || pathname.startsWith("/tours/playbook/");
+
 function readOpen(): boolean {
   try { return localStorage.getItem(STORAGE_KEY) === "1"; } catch { return false; }
 }
@@ -45,19 +48,20 @@ function useLauncherModel() {
   return { sample, showcase, title, context };
 }
 
-/** Phones: a 56 px FAB above the tab bar that opens a full-height sheet. */
+/** Phones: a FAB above the tab bar (56 px; 48 px when docked in a footer) that opens a full-height sheet. */
 export function StrategistFab() {
   const [open, setOpen] = useState(false);
   const { sample, showcase, title, context } = useLauncherModel();
   const { pathname } = useLocation();
-  const lift = hasStickyFooter(pathname) ? "bottom-[calc(9.5rem+env(safe-area-inset-bottom))]" : "bottom-[calc(5rem+env(safe-area-inset-bottom))]";
+  const lift = dockedInFooter(pathname) ? "bottom-[calc(4.5rem+env(safe-area-inset-bottom))] size-12 right-3"
+    : hasStickyFooter(pathname) ? "bottom-[calc(9.5rem+env(safe-area-inset-bottom))] size-14 right-4" : "bottom-[calc(5rem+env(safe-area-inset-bottom))] size-14 right-4";
   return (
     <>
       <button
         type="button"
         aria-label="Ask the strategist"
         onClick={() => setOpen(true)}
-        className={`btn-gold fixed right-4 z-30 flex size-14 items-center justify-center rounded-full ${lift} outline-none focus-visible:ring-2 focus-visible:ring-bone`}
+        className={`btn-gold fixed z-30 flex items-center justify-center rounded-full ${lift} outline-none focus-visible:ring-2 focus-visible:ring-bone`}
       >
         <MessageSquare size={22} aria-hidden />
       </button>

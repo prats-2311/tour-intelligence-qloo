@@ -5,7 +5,7 @@ import type { PlaybookCard, ScoredCity } from "./types";
 export interface StoryBeats {
   decision: { artist: string; regions: string[]; markets: number };
   missed: { city: string; densityRank: number; winnabilityRank: number; verdictLabel: string };
-  plan: { city: string; sponsor: string | null; coBill: string | null; localAct: string | null };
+  plan: { city: string; sponsor: string | null; coBill: string | null };
 }
 
 const firstName = (cards: PlaybookCard[], kind: PlaybookCard["kind"]): string | null => {
@@ -27,6 +27,6 @@ export function storyBeats(show: Showcase): StoryBeats | null {
   return {
     decision: { artist: show.artist, regions: show.brief.regions, markets: all.length },
     missed: { city: best.c.name, densityRank: best.d, winnabilityRank: best.w, verdictLabel: VERDICT_LABEL[best.c.verdict] },
-    plan: { city: best.c.name, sponsor: firstName(cards, "sponsors"), coBill: firstName(cards, "co_billing"), localAct: firstName(cards, "talent") },
+    plan: { city: best.c.name, sponsor: firstName(cards, "sponsors"), coBill: firstName(cards, "co_billing") },
   };
 }

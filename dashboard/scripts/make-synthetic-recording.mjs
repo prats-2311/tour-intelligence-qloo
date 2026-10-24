@@ -206,13 +206,40 @@ function showcase(input) {
     if (isPoint && out.label === "") out.label = `${out.lat.toFixed(3)}, ${out.lon.toFixed(3)}`;
     return out;
   };
-  const result = walk(input, "", []);
+  const result = addSyntheticBoardCases(walk(input, "", []));
   if (!result.withoutQloo) {
     // The recording has no generic ranking: write a clearly labelled synthetic one so the Without Qloo tab can be exercised.
     const scored = (result.boardEvents ?? []).flatMap((e) => (e.type === "city_scored" ? [{ name: e.city.name, country: e.city.country }] : []));
     result.withoutQloo = { status: "ok", ranked: scored.reverse(), model: "synthetic", cached: false };
   }
   return result;
+}
+
+/**
+ * The synthetic fixture must exercise board rows the real recording has (a floored major-market seed and a city Qloo could not place),
+ * which older source recordings lack. Idempotent: does nothing when the board already has such a row. Mutates and returns `rec`.
+ */
+export function addSyntheticBoardCases(rec) {
+  const cities = (rec.boardEvents ?? []).filter((e) => e.type === "city_scored").map((e) => e.city);
+  if (!cities.some((c) => c.candidateSource === "major_market")) {
+    const c = cities.find((x) => x.verdict === "skip" && !x.closeCall && !(rec.playbooks ?? {})[x.id]);
+    if (c) {
+      c.candidateSource = "major_market";
+      c.fanHeatFloor = true;
+      c.verdict = "consider";
+      c.winnability = { ...c.winnability, value: Math.max(c.winnability.value ?? 0, 37) };
+    }
+  }
+  if (!cities.some((c) => c.insufficientReason === "location_unresolved")) {
+    const c = cities.find((x) => x.verdict === "skip" && !x.closeCall && x.candidateSource !== "major_market" && !(rec.playbooks ?? {})[x.id]);
+    if (c) {
+      c.verdict = "insufficient_data";
+      c.insufficientReason = "location_unresolved";
+      c.activation = { value: null, reason: "insufficient_data", refs: [] };
+      c.winnability = { value: null, reason: "insufficient_data", refs: [] };
+    }
+  }
+  return rec;
 }
 
 const ACTIVATION_TYPE = { sponsor: "Brand", merch_collab: "Brand", local_artist: "Artist" };

@@ -1,4 +1,4 @@
-import { closeCallNote, DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE, FLOORED_SEED_NOTE, LOCATION_UNRESOLVED_NOTE, MAJOR_MARKET_LABEL, VERDICT_LABEL, majorMarketNote, ruleLines, weightRows } from "@/lib/qloo/labels";
+import { CAPPED_CLOSE_CALL_NOTE, CAPPED_RULE_LABEL, CAPPED_RULE_TEXT, closeCallNote, showsCappedNote, DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE, FLOORED_SEED_NOTE, LOCATION_UNRESOLVED_NOTE, MAJOR_MARKET_LABEL, VERDICT_LABEL, majorMarketNote, ruleLines, weightRows } from "@/lib/qloo/labels";
 import type { ScoredCity, ScoringConfig } from "@/lib/qloo/types";
 import { CloseCallChip } from "./CloseCallChip";
 import { DataWarningBadge } from "./DataWarningBadge";
@@ -30,8 +30,8 @@ export function WhyThisScore({ city, scoring }: { city: ScoredCity; scoring?: Sc
       {city.candidateSource === "major_market" && (
         <p className="text-[13px] text-canvas-muted"><span className="mr-2 inline-flex h-6 items-center rounded-[4px] border border-canvas-line px-2 text-[12px] font-medium text-canvas-text">{MAJOR_MARKET_LABEL}</span>{majorMarketNote(city.country)}</p>
       )}
-      {city.fanHeatFloor && <p className="text-[13px] text-canvas-muted">{FLOORED_SEED_NOTE}</p>}
-      {city.closeCall && <p className="text-[13px] text-canvas-muted">{closeCallNote(cfg.closeCallBand)}</p>}
+      {showsCappedNote(city) && <p className="text-[13px] text-canvas-muted">{FLOORED_SEED_NOTE}</p>}
+      {city.closeCall && <p className="text-[13px] text-canvas-muted">{city.fanHeatFloor ? CAPPED_CLOSE_CALL_NOTE : closeCallNote(cfg.closeCallBand)}</p>}
       <DualBars fanHeat={city.fanHeat} activation={city.activation} thresholds={cfg.thresholds} />
       <p className="font-mono text-[13px] text-canvas-muted">winnability = 0.5 × fan heat + 0.5 × activation</p>
       <table className="w-full text-left text-[13px]">
@@ -64,9 +64,9 @@ export function WhyThisScore({ city, scoring }: { city: ScoredCity; scoring?: Sc
       <div>
         <h3 className="mb-1 text-[13px] font-medium text-canvas-muted">Verdict rules</h3>
         <ul aria-label="Verdict rules" className="flex flex-col gap-0.5 text-[13px]">
-          {ruleLines(cfg.thresholds).map(({ verdict, rule }) => (
+          {ruleLines(cfg.thresholds, city.fanHeatFloor === true).map(({ verdict, rule }) => (
             <li key={verdict} className={`flex flex-wrap gap-x-2 ${verdict === city.verdict ? "text-canvas-text" : "text-canvas-muted"}`}>
-              <span className="font-medium">{VERDICT_LABEL[verdict]}:</span><span className="tabular">{rule}</span>
+              <span className="font-medium">{city.fanHeatFloor && verdict === "play" ? CAPPED_RULE_LABEL : VERDICT_LABEL[verdict]}:</span><span className="tabular">{city.fanHeatFloor && verdict === "play" ? CAPPED_RULE_TEXT : rule}</span>
             </li>
           ))}
         </ul>

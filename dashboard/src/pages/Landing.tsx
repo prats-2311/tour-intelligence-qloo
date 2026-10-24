@@ -72,7 +72,7 @@ function Story() {
   const beats = storyBeats(SHOWCASE);
   if (!beats) return null;
   const { decision: d, missed: m, plan: p } = beats;
-  const bill = p.localAct ?? p.coBill;
+  const bill = p.coBill;
   const clauses = [p.sponsor && `pitch ${p.sponsor}`, bill && `put ${bill} on the bill`].filter(Boolean).join(", ");
   const steps = [
     { label: "The hold", text: `${d.artist}: ${d.markets} ${d.markets === 1 ? "market" : "markets"}${d.regions.length ? ` across ${joinList(d.regions)}` : ""}. Which ones get dates?` },

@@ -1,9 +1,9 @@
 import { useId, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { VerdictGlyph, VerdictMark } from "@/components/qloo/VerdictGlyph";
-import { VERDICT_LABEL } from "@/lib/qloo/labels";
-import { linear, matrixPoints, nearestPoint, QUADRANTS } from "@/lib/qloo/geometry";
-import type { ScoredCity, Verdict } from "@/lib/qloo/types";
+import { DEFAULT_SCORING_DISPLAY, VERDICT_LABEL } from "@/lib/qloo/labels";
+import { linear, matrixPoints, nearestPoint, placeLabels, verdictRegions } from "@/lib/qloo/geometry";
+import type { ScoredCity, Thresholds, Verdict } from "@/lib/qloo/types";
 
 const W = 480, H = 320, PAD = 36;
 const LEGEND: Verdict[] = ["play", "hidden_goldmine", "de_risk", "consider", "skip", "insufficient_data"];
@@ -21,17 +21,20 @@ function summary(cities: ScoredCity[], plotted: number): string {
   return `Winnability matrix, fan heat on the x axis against activation on the y axis. ${plotted} ${plotted === 1 ? "market" : "markets"} plotted${skipped > 0 ? `, ${skipped} without activation data not plotted` : ""}. ${parts.join(". ")}${parts.length ? "." : ""}`;
 }
 
-export function WinnabilityMatrix({ cities, selectedId, onSelect, calls, onReset }: { cities: ScoredCity[]; selectedId: string | null; onSelect: (id: string) => void; calls: number; onReset: () => void }) {
+export function WinnabilityMatrix({ cities, thresholds = DEFAULT_SCORING_DISPLAY.thresholds, selectedId, onSelect, calls, onReset }: { cities: ScoredCity[]; thresholds?: Thresholds; selectedId: string | null; onSelect: (id: string) => void; calls: number; onReset: () => void }) {
   const [view, setView] = useState<"matrix" | "table">("matrix");
   const capId = useId();
   const svgRef = useRef<SVGSVGElement>(null);
   const pts = matrixPoints(cities, { w: W, h: H, pad: PAD });
   const sx = linear([0, 100], [PAD, W - PAD]);
   const sy = linear([0, 100], [H - PAD, PAD]);
-  const [h1, h2] = QUADRANTS.heat;
-  const [a1, a2, a3] = QUADRANTS.activation;
-  const zone = (x0: number, x1: number, y0: number, y1: number, fill: string) =>
-    <rect x={sx(x0)} y={sy(y1)} width={sx(x1) - sx(x0)} height={sy(y0) - sy(y1)} fill={fill} />;
+  const regions = verdictRegions(thresholds);
+  const zone = (id: string, [x0, x1]: [number, number], [y0, y1]: [number, number], fill: string) =>
+    <rect data-testid={`region-${id}`} x={sx(x0)} y={sy(y1)} width={sx(x1) - sx(x0)} height={sy(y0) - sy(y1)} fill={fill} />;
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  // Label the plays and goldmines first, highest winnability first; whatever does not fit is named on hover, focus or selection.
+  const labelOrder = [...pts].filter((p) => p.verdict === "play" || p.verdict === "hidden_goldmine").sort((a, b) => a.y - b.y);
+  const labels = placeLabels(labelOrder, { w: W, h: H });
   // Pointer hits resolve to the nearest point within 22 CSS px, so close neighbours never shadow each other.
   const pickNearest = (e: MouseEvent) => {
     const box = svgRef.current?.getBoundingClientRect();
@@ -70,10 +73,9 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls, onReset
         <figure role="group" aria-labelledby={capId} className="m-0">
         <figcaption id={capId} className="sr-only">{summary(cities, pts.length)}</figcaption>
         <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="h-auto w-full rounded-[10px] bg-canvas">
-          {zone(h1, h2, a3, 100, "rgba(255,204,0,0.10)")}
-          {zone(h2, 100, a2, 100, "rgba(15,157,138,0.10)")}
-          {zone(h2, 100, 0, a1, "rgba(232,96,111,0.10)")}
-          {zone(0, h1, 0, a2, "rgba(139,135,124,0.08)")}
+          {zone("hidden_goldmine", regions.hidden_goldmine.fan, regions.hidden_goldmine.act, "rgba(255,204,0,0.10)")}
+          {zone("play", regions.play.fan, regions.play.act, "rgba(15,157,138,0.10)")}
+          {zone("de_risk", regions.de_risk.fan, regions.de_risk.act, "rgba(232,96,111,0.10)")}
           {[0, 50, 100].map((t) => (
             <g key={t}>
               <line x1={sx(t)} x2={sx(t)} y1={sy(0)} y2={sy(100)} stroke="rgba(240,238,230,0.06)" />
@@ -82,7 +84,7 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls, onReset
               <text x={PAD - 6} y={sy(t) + 4} textAnchor="end" fontSize={11} fill="var(--color-canvas-muted)">{t}</text>
             </g>
           ))}
-          <text x={sx(h1) + 4} y={sy(100) + 12} {...zoneText}>GOLDMINE</text>
+          <text x={sx(regions.hidden_goldmine.fan[0]) + 4} y={sy(100) + 12} {...zoneText}>GOLDMINE</text>
           <text x={sx(100) - 4} y={sy(100) + 12} textAnchor="end" {...zoneText}>PLAY</text>
           <text x={sx(100) - 4} y={sy(0) - 6} textAnchor="end" {...zoneText}>DE-RISK</text>
           <text x={sx(0) + 4} y={sy(0) - 6} {...zoneText}>CONSIDER / SKIP</text>
@@ -91,8 +93,9 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls, onReset
           <rect data-testid="matrix-overlay" x={0} y={0} width={W} height={H} fill="transparent" onClick={pickNearest} />
           {pts.map((p) => {
             const on = p.id === selectedId;
-            const labelled = p.verdict === "play" || p.verdict === "hidden_goldmine";
-            const flip = p.x > W - PAD - 70;
+            const placed = labels.get(p.id);
+            const showName = !!placed || on || hoverId === p.id;
+            const l = placed ?? { dx: p.x > W - PAD - 70 ? -12 : 12, dy: 4, anchor: p.x > W - PAD - 70 ? "end" as const : "start" as const };
             return (
               <g
                 key={p.id}
@@ -106,10 +109,15 @@ export function WinnabilityMatrix({ cities, selectedId, onSelect, calls, onReset
                 className="cursor-pointer focus-visible:outline-2 focus-visible:outline-gold"
                 onClick={() => onSelect(p.id)}
                 onKeyDown={keyActivate(p.id)}
+                onMouseEnter={() => setHoverId(p.id)}
+                onMouseLeave={() => setHoverId((h) => (h === p.id ? null : h))}
+                onFocus={() => setHoverId(p.id)}
+                onBlur={() => setHoverId((h) => (h === p.id ? null : h))}
               >
+                <title>{`${p.name}: ${VERDICT_LABEL[p.verdict]}`}</title>
                 <Mark verdict={p.verdict} selected={on} />
-                {labelled && (
-                  <text x={flip ? -12 : 12} y={4} textAnchor={flip ? "end" : "start"} fontSize={12} fontWeight={600} fill="var(--color-canvas-text)" stroke="var(--color-canvas)" strokeWidth={3} paintOrder="stroke">{p.name}</text>
+                {showName && (
+                  <text data-testid="matrix-label" x={l.dx} y={l.dy} textAnchor={l.anchor} fontSize={12} fontWeight={600} fill="var(--color-canvas-text)" stroke="var(--color-canvas)" strokeWidth={3} paintOrder="stroke">{p.name}</text>
                 )}
               </g>
             );

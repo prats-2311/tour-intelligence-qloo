@@ -106,8 +106,8 @@ describe("Landing story beats (spec 1.2b rule 1: every number comes from the rec
     expect(missed).toContain(`${ordinal(beats.missed.winnabilityRank)} on winnability`);
     expect(missed).toContain(beats.missed.verdictLabel);
     expect(plan).toContain(beats.plan.sponsor!);
-    const bill = beats.plan.localAct ?? beats.plan.coBill;
-    if (bill) expect(plan).toContain(bill);
+    expect(beats.plan.coBill).not.toBeNull();
+    expect(plan).toContain(`put ${beats.plan.coBill} on the bill`);
   });
   it("degrades to the generic playbook line when the city has no playbook", () => {
     const copy = parseShowcase(JSON.parse(JSON.stringify(syntheticShowcase)));
@@ -121,7 +121,7 @@ describe("Landing story beats (spec 1.2b rule 1: every number comes from the rec
     expect(plan).not.toContain("pitch");
     expect(plan).toContain("on the bill");
     cleanup();
-    editCards((c) => { if (c.kind === "talent" || c.kind === "co_billing") c.status = "empty"; });
+    editCards((c) => { if (c.kind === "co_billing") c.status = "empty"; });
     plan = renderBeats()[2]!.textContent!;
     expect(plan).toContain("pitch");
     expect(plan).not.toContain("on the bill");

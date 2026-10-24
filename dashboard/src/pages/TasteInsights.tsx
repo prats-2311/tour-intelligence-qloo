@@ -139,7 +139,7 @@ export default function TasteInsights() {
         <div className={`flex min-w-0 flex-col gap-4 ${isDesktop ? "lg:col-span-9" : "lg:col-span-12"}`}>
           <DataQualityTiles log={log} />
           <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-5">
-            <div className="min-w-0 xl:col-span-3"><WinnabilityMatrix cities={visible} selectedId={selected} onSelect={setSelectedId} calls={calls} onReset={() => setFilters(defaultFilters())} /></div>
+            <div className="min-w-0 xl:col-span-3"><WinnabilityMatrix cities={visible} thresholds={state.scoring?.thresholds} selectedId={selected} onSelect={setSelectedId} calls={calls} onReset={() => setFilters(defaultFilters())} /></div>
             <section aria-label="Market map" className="flex min-w-0 flex-col gap-2 rounded-[14px] bg-paper p-3 lg:p-4 xl:col-span-2">
               <h2 className="font-title text-[20px] leading-tight text-canvas-text">Market map</h2>
               <p className="text-[12px] text-canvas-muted">{visible.length} {visible.length === 1 ? "market" : "markets"} in focus</p>

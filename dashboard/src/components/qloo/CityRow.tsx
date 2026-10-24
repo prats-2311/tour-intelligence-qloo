@@ -1,12 +1,12 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { LOCATION_UNRESOLVED_NOTE, LOCATION_UNRESOLVED_SHORT, FLOORED_SEED_NOTE, MAJOR_MARKET_LABEL, majorMarketNote } from "@/lib/qloo/labels";
+import { LOCATION_UNRESOLVED_NOTE, LOCATION_UNRESOLVED_SHORT, FLOORED_SEED_NOTE, MAJOR_MARKET_LABEL, majorMarketNote, showsCappedNote } from "@/lib/qloo/labels";
 import type { Score, ScoredCity } from "@/lib/qloo/types";
 import { DataWarningBadge, warningLabel } from "./DataWarningBadge";
 import { CloseCallChip } from "./CloseCallChip";
 import { VerdictChip } from "./VerdictChip";
 
 /** Column template shared with the desktop header row in TourBoard. */
-export const ROW_COLS_LG = "lg:grid-cols-[minmax(0,1fr)_minmax(0,110px)_132px_36px]";
+export const ROW_COLS_LG = "lg:grid-cols-[minmax(0,1fr)_96px_124px_32px]";
 
 function MiniBar({ label, score, color, testId }: { label: string; score: Score; color: string; testId: string }) {
   const v = score.value === null || !Number.isFinite(score.value) ? null : Math.min(100, Math.max(0, Math.round(score.value)));
@@ -20,21 +20,49 @@ function MiniBar({ label, score, color, testId }: { label: string; score: Score;
       <span {...a11y} className="relative h-[5px] min-w-0 flex-1 rounded-[3px] bg-[rgba(240,238,230,0.08)] lg:h-[4px]">
         {v !== null && <span data-testid={testId} className="absolute inset-y-0 left-0 rounded-[3px]" style={{ width: `${v}%`, background: color }} />}
       </span>
-      <span className="min-w-6 shrink-0 text-right font-mono text-[12px] font-bold leading-none text-canvas-text tabular" aria-hidden>{v === null ? "—" : v}</span>
+      <span data-testid="row-bar-value" className="min-w-6 shrink-0 text-right font-mono text-[12px] font-bold leading-none text-canvas-text tabular" aria-hidden>{v === null ? "—" : v}</span>
     </span>
   );
 }
 
-export function CityRow({ city, selected, dimActivation, onOpen }: { city: ScoredCity; selected?: boolean; dimActivation?: boolean; onOpen: (id: string) => void }) {
+/** `openable: false` (a showcase city with no recorded playbook) renders a plain row: no button, no open affordance. */
+export function CityRow({ city, selected, dimActivation, onOpen, openable = true }: { city: ScoredCity; selected?: boolean; dimActivation?: boolean; onOpen: (id: string) => void; openable?: boolean }) {
   const reduce = useReducedMotion();
   const w = city.winnability.value;
   const num = (s: { value: number | null }) => (s.value === null ? "not enough data" : String(Math.round(s.value)));
   const warn = warningLabel(city.warnings);
   const major = city.candidateSource === "major_market";
   const unplaced = city.insufficientReason === "location_unresolved";
+  const capped = showsCappedNote(city);
+  const hasNotes = major || city.closeCall === true || !!warn || unplaced || capped;
   // The button's name is its visible content (WCAG 2.5.3 label-in-name); the numbers that content leaves out go in the description.
   const describedBy = `city-row-desc-${city.id}`;
-  const description = `Winnability ${w === null ? "not available" : Math.round(w)}, fan heat ${num(city.fanHeat)}, activation ${num(city.activation)}. ${major ? `${majorMarketNote(city.country)} ` : ""}${city.fanHeatFloor ? `${FLOORED_SEED_NOTE} ` : ""}${unplaced ? `${LOCATION_UNRESOLVED_NOTE} ` : ""}Open score breakdown`;
+  const description = `Winnability ${w === null ? "not available" : Math.round(w)}, fan heat ${num(city.fanHeat)}, activation ${num(city.activation)}. ${major ? `${majorMarketNote(city.country)} ` : ""}${capped ? `${FLOORED_SEED_NOTE} ` : ""}${unplaced ? `${LOCATION_UNRESOLVED_NOTE} ` : ""}${openable ? "Open score breakdown" : ""}`;
+  const rowBody = (
+    <>
+        <span className="col-start-1 row-start-1 flex min-w-0 flex-col gap-0.5">
+          <span data-testid="city-name" className="flex min-w-0 items-baseline gap-x-1.5">
+            <span data-testid="city-name-text" className="font-title min-w-0 truncate text-[16px] leading-tight text-canvas-text">{city.name}</span>
+            <span className="shrink-0 text-[12px] font-medium text-canvas-muted">{city.country}</span>
+          </span>
+          {hasNotes && (
+            <span data-testid="row-notes" className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              {major && <span title={majorMarketNote(city.country)} className="inline-flex h-6 items-center whitespace-nowrap rounded-[4px] border border-canvas-line px-2 text-[12px] font-medium text-canvas-text">{MAJOR_MARKET_LABEL}</span>}
+              {city.closeCall && <CloseCallChip />}
+              {warn && <DataWarningBadge warnings={city.warnings} />}
+              {unplaced && <span className="text-[12px] text-canvas-muted">{LOCATION_UNRESOLVED_SHORT}</span>}
+              {capped && <span className="basis-full text-[12px] leading-snug text-canvas-muted">{FLOORED_SEED_NOTE}</span>}
+            </span>
+          )}
+        </span>
+        <span className={`col-span-3 col-start-1 row-start-2 grid min-w-0 grid-cols-2 gap-3 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:grid-cols-1 lg:gap-1.5 ${dimActivation ? "[&_[data-testid=bar-activation]]:opacity-30" : ""}`}>
+          <MiniBar label="Fan heat" score={city.fanHeat} color="var(--color-bone)" testId="bar-fanheat" />
+          <MiniBar label="Activation" score={city.activation} color="var(--color-gold)" testId="bar-activation" />
+        </span>
+        <span data-testid="row-chip" className="col-start-2 row-start-1 justify-self-end lg:col-start-3"><VerdictChip verdict={city.verdict} /></span>
+        <span data-testid="row-score" className="col-start-3 row-start-1 min-w-8 text-right lg:col-start-4 font-mono text-[20px] font-bold leading-none text-canvas-text tabular lg:text-[18px]" aria-hidden>{w === null ? "—" : Math.round(w)}</span>
+    </>
+  );
   return (
     <motion.li
       id={`city-row-${city.id}`}
@@ -45,31 +73,23 @@ export function CityRow({ city, selected, dimActivation, onOpen }: { city: Score
       initial={reduce ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 420, damping: 38 }}
-      className={`list-none first:rounded-t-[14px] last:rounded-b-[14px] ${selected ? "bg-paper-raised" : "bg-paper hover:bg-paper-raised"}`}
+      className={`list-none first:rounded-t-[14px] last:rounded-b-[14px] ${selected ? "bg-paper-raised" : openable ? "bg-paper hover:bg-paper-raised" : "bg-paper"}`}
     >
       <span id={describedBy} className="sr-only">{description}</span>
-      <button
-        type="button"
-        onClick={() => onOpen(city.id)}
-        aria-describedby={describedBy}
-        className={`grid min-h-[64px] w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-1.5 rounded-[inherit] px-3 py-2 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gold lg:min-h-[48px] lg:gap-y-0 lg:py-1 ${ROW_COLS_LG}`}
-      >
-        <span className="col-start-1 row-start-1 flex min-w-0 flex-wrap items-baseline gap-x-1.5 lg:flex-nowrap">
-          <span className="font-title min-w-0 max-w-full truncate text-[16px] leading-tight text-canvas-text">{city.name}</span>
-          <span className="shrink-0 text-[12px] font-medium text-canvas-muted">{city.country}</span>
-          {major && <span className="basis-full lg:basis-auto"><span title={majorMarketNote(city.country)} className="inline-flex h-6 items-center whitespace-nowrap rounded-[4px] border border-canvas-line px-2 text-[12px] font-medium text-canvas-text">{MAJOR_MARKET_LABEL}</span></span>}
-          {city.closeCall && <span className="basis-full lg:basis-auto"><CloseCallChip /></span>}
-          {city.fanHeatFloor && <span className="basis-full text-[12px] text-canvas-muted">{FLOORED_SEED_NOTE}</span>}
-          {unplaced && <span className="basis-full text-[12px] text-canvas-muted lg:basis-auto">{LOCATION_UNRESOLVED_SHORT}</span>}
-          {warn && <span className="basis-full lg:basis-auto"><DataWarningBadge warnings={city.warnings} /></span>}
-        </span>
-        <span className={`col-span-3 col-start-1 row-start-2 grid min-w-0 grid-cols-2 gap-3 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:grid-cols-1 lg:gap-1.5 ${dimActivation ? "[&_[data-testid=bar-activation]]:opacity-30" : ""}`}>
-          <MiniBar label="Fan heat" score={city.fanHeat} color="var(--color-bone)" testId="bar-fanheat" />
-          <MiniBar label="Activation" score={city.activation} color="var(--color-gold)" testId="bar-activation" />
-        </span>
-        <span className="col-start-2 row-start-1 justify-self-end lg:col-start-3"><VerdictChip verdict={city.verdict} /></span>
-        <span className="col-start-3 row-start-1 min-w-8 text-right lg:col-start-4 font-mono text-[20px] font-bold leading-none text-canvas-text tabular lg:text-[18px]" aria-hidden>{w === null ? "—" : Math.round(w)}</span>
-      </button>
+      {openable ? (
+        <button
+          type="button"
+          onClick={() => onOpen(city.id)}
+          aria-describedby={describedBy}
+          className={`grid min-h-[64px] w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-1.5 rounded-[inherit] px-3 py-2 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gold lg:min-h-[48px] lg:gap-y-0 lg:py-1 ${ROW_COLS_LG}`}
+        >
+          {rowBody}
+        </button>
+      ) : (
+        <div data-static-row className={`grid min-h-[64px] w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 gap-y-1.5 rounded-[inherit] px-3 py-2 text-left lg:min-h-[48px] lg:gap-y-0 lg:py-1 ${ROW_COLS_LG}`}>
+          {rowBody}
+        </div>
+      )}
     </motion.li>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SAMPLE_CITIES } from "./fixtures/lumenVale";
-import { boundsFor, cityMarkers, linear, MAP_STYLE_URL, matrixPoints, nearestPoint, shouldRefit, tintFor } from "./geometry";
+import { boundsFor, cityMarkers, linear, placeLabels, verdictRegions, MAP_STYLE_URL, matrixPoints, nearestPoint, shouldRefit, tintFor } from "./geometry";
 
 describe("map geometry", () => {
   it("markers use lon,lat and label only play/goldmine", () => {
@@ -68,5 +68,32 @@ describe("nearestPoint hit testing", () => {
   it("returns null when nothing is within maxDist", () => {
     expect(nearestPoint(pts, -500, -500, 30)).toBeNull();
     expect(nearestPoint([], 0, 0, 30)).toBeNull();
+  });
+});
+
+describe("verdict regions and label placement", () => {
+  const t = { playFan: 70, playAct: 28, goldmineFanMin: 45, goldmineFanMax: 70, goldmineAct: 38, deRiskFan: 70, deRiskAct: 13, considerWin: 36 };
+  it("regions come from the scoring thresholds", () => {
+    const r = verdictRegions(t);
+    expect(r.play).toEqual({ fan: [70, 100], act: [28, 100] });
+    expect(r.hidden_goldmine).toEqual({ fan: [45, 70], act: [38, 100] });
+    expect(r.de_risk).toEqual({ fan: [70, 100], act: [0, 13] });
+  });
+  it("labels never overlap each other, and an unplaceable label is dropped (shown on hover instead)", () => {
+    const pts = [
+      { id: "a", name: "Los Angeles", x: 400, y: 100 },
+      { id: "b", name: "Mexico City", x: 402, y: 104 },
+      { id: "c", name: "Austin", x: 398, y: 108 },
+      { id: "d", name: "Portland", x: 300, y: 200 },
+    ];
+    const placed = placeLabels(pts, { w: 480, h: 320 });
+    const boxes = pts.flatMap((p) => { const l = placed.get(p.id); return l ? [l.box] : []; });
+    expect(placed.get("d")).toBeTruthy();
+    expect(boxes.length).toBeGreaterThanOrEqual(2);
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+      const a = boxes[i]!, b = boxes[j]!;
+      expect(a.x1 <= b.x0 || b.x1 <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0).toBe(true);
+    }
+    for (const b of boxes) { expect(b.x0).toBeGreaterThanOrEqual(0); expect(b.x1).toBeLessThanOrEqual(480); }
   });
 });
