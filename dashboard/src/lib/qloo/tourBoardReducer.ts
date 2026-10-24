@@ -5,7 +5,7 @@ export type BoardState = {
   source: Source;
   sampleSet?: SampleSet;
   brief?: TourBrief;
-  artist?: { entityId: string; name: string };
+  artist?: { entityId: string; name: string; popularity?: number };
   profile?: ArtistProfile;
   cities: ScoredCity[];
   /** The scoring config the gateway applied; null until the event arrives (sample data, older recordings). */

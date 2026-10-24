@@ -13,8 +13,7 @@ export function Sponsors({ card }: { card: PlaybookCard }) {
         {shown.map((it, i) => {
           const lift = num(it.lift);
           if (lift === null) return <Row key={i} name={str(it.name)} aside={fit(num(it.affinity))} />;
-          const sub = `fit ${fit(num(it.affinity))}${it.baselineMissing === true ? " · not in the city's baseline list" : ""}`;
-          return <Row key={i} name={str(it.name)} sub={sub} aside={liftVsCity(lift)} />;
+          return <Row key={i} name={str(it.name)} aside={liftVsCity(lift)} />;
         })}
       </Rows>
       {more > 0 && <Caption>+{more} more</Caption>}

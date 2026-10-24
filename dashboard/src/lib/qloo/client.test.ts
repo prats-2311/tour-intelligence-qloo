@@ -93,6 +93,15 @@ describe("callQlooTool", () => {
 });
 
 describe("streamCityPlaybook sample mode and fetchThisWeek", () => {
+  it("a live playbook request carries the headliner's popularity when known, and omits it otherwise", async () => {
+    const fetchImpl = vi.fn(async () => sseResponse(['event: done\ndata: {"type":"done","summary":{}}\n\n']));
+    const run = async (q: Parameters<typeof streamCityPlaybook>[0]) => { for await (const _ of streamCityPlaybook(q, { fetchImpl: fetchImpl as unknown as typeof fetch })) void _; };
+    await run({ artist: "A", artistEntityId: "E", artistPopularity: 0.62, city: "Lima", country: "PE" });
+    await run({ artist: "A", artistEntityId: "E", city: "Lima", country: "PE" });
+    const qs = (i: number) => new URL((fetchImpl.mock.calls[i] as unknown as [string])[0], "http://x").searchParams;
+    expect(qs(0).get("artistPopularity")).toBe("0.62");
+    expect(qs(1).has("artistPopularity")).toBe(false);
+  });
   it("a live playbook request carries the board's city id and coordinates so the gateway can check the location", async () => {
     const fetchImpl = vi.fn(async () => sseResponse(['event: done\ndata: {"type":"done","summary":{}}\n\n']));
     for await (const _ of streamCityPlaybook({ artist: "A", artistEntityId: "E", city: "Lima", country: "PE" }, { cityId: "3936456", lat: -12.04, lon: -77.03, fetchImpl: fetchImpl as unknown as typeof fetch })) void _;

@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { cityCode, fit, liftLine, metaLine, pct, removalText } from "./format";
+import { cityCode, coBillLine, fit, liftLine, liftVsCity, metaLine, pct, removalText } from "./format";
 
 describe("playbook format", () => {
   it("formats fits, shares and lift", () => {
     expect(fit(0.91)).toBe("0.91"); expect(fit(Number.NaN)).toBe("—"); expect(fit(null)).toBe("—");
     expect(pct(0.38)).toBe("38%");
     expect(liftLine(0.34, 0.88, 0.2992)).toBe("0.34 × 0.88 = 0.30");
+  });
+  it("liftVsCity takes the sign from the rounded value, never '-0'", () => {
+    expect(liftVsCity(0.304)).toBe("+30 vs city");
+    expect(liftVsCity(-0.02)).toBe("-2 vs city");
+    expect(liftVsCity(-0.004)).toBe("0 vs city");
+    expect(liftVsCity(0.004)).toBe("0 vs city");
+  });
+  it("coBillLine says it in plain words", () => {
+    expect(coBillLine(0.34, 0.88)).toBe("Fans share taste 34% · the city likes them 88%");
   });
   it("builds the mono meta line from the city code and item count", () => {
     expect(metaLine("GDL", "sponsors", { kind: "sponsors", status: "ok", items: new Array(10).fill({}), refs: [], warnings: [] })).toBe("GDL · SPONSORS · 10 BRANDS");

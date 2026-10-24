@@ -14,6 +14,11 @@ describe("playbookStore", () => {
     expect(spy).toHaveBeenCalledTimes(1);
     expect(getPlaybook(playbookKey("sample-lumen-vale", "4005539"))?.status).toBe("done");
   });
+  it("passes the headliner's popularity to the playbook request", async () => {
+    const spy = vi.spyOn(client, "streamCityPlaybook");
+    await loadPlaybook({ ...gdl, artistPopularity: 0.62 });
+    expect(spy.mock.calls[0]![0]).toMatchObject({ artistPopularity: 0.62 });
+  });
   it("reuses a finished playbook without streaming again", async () => {
     await loadPlaybook(gdl);
     const spy = vi.spyOn(client, "streamCityPlaybook");

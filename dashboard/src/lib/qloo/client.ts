@@ -54,7 +54,7 @@ export function streamTourBoard(brief: TourBrief, opts: StreamOpts = {}): AsyncG
   }, opts);
 }
 
-export function streamCityPlaybook(q: { artist: string; artistEntityId: string; city: string; country: string }, opts: StreamOpts & { cityId?: string; lat?: number; lon?: number } = {}): AsyncGenerator<GatewayEvent> {
+export function streamCityPlaybook(q: { artist: string; artistEntityId: string; artistPopularity?: number; city: string; country: string }, opts: StreamOpts & { cityId?: string; lat?: number; lon?: number } = {}): AsyncGenerator<GatewayEvent> {
   if (opts.sample) {
     if (opts.sampleSet === "showcase") {
       const rec = opts.cityId ? showcasePlaybookEvents(opts.cityId) : null;
@@ -63,7 +63,9 @@ export function streamCityPlaybook(q: { artist: string; artistEntityId: string; 
     const events = opts.cityId ? samplePlaybookEvents(opts.cityId, { long: opts.sampleSet === "long" }) : null;
     return sample(events ?? [{ type: "error", code: "NO_SAMPLE", message: `No sample playbook for ${q.city}` }], opts);
   }
-  const params = new URLSearchParams(q);
+  const { artistPopularity, ...rest } = q;
+  const params = new URLSearchParams(rest);
+  if (typeof artistPopularity === "number" && Number.isFinite(artistPopularity)) params.set("artistPopularity", String(artistPopularity));
   if (opts.cityId) params.set("cityId", opts.cityId);
   if (typeof opts.lat === "number" && typeof opts.lon === "number") { params.set("lat", String(opts.lat)); params.set("lon", String(opts.lon)); }
   const qs = params.toString();

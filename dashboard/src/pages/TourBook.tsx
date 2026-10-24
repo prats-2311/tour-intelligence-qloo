@@ -92,7 +92,7 @@ function TourBookPage() {
   }, [state.cities, state.brief?.maxStops, shortlist, usingDefault]);
   const prepKey = `${sample}|${state.sampleSet ?? ""}|${artist?.entityId ?? ""}|${picked.map((c) => c.id).join(",")}`;
   const requests = useMemo<PlaybookRequest[]>(
-    () => (artist ? picked.map((c) => ({ artist: artist.name, artistEntityId: artist.entityId, city: { id: c.id, name: c.name, country: c.country }, sample, sampleSet: state.sampleSet, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined })) : []),
+    () => (artist ? picked.map((c) => ({ artist: artist.name, artistEntityId: artist.entityId, artistPopularity: artist.popularity, city: { id: c.id, name: c.name, country: c.country }, sample, sampleSet: state.sampleSet, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined })) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [prepKey],
   );

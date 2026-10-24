@@ -92,7 +92,7 @@ describe("playbook cards", () => {
     render(<CardBody card={{ ...base, items, summary: { note: "Ranked by how much more this artist's fans like the brand than the city overall." } }} city="Guadalajara" />);
     expect(screen.getByText("-2 vs city")).toBeTruthy();
     expect(screen.getAllByText("+30 vs city")).toHaveLength(2);
-    expect(screen.getByText("fit 0.70 · not in the city's baseline list")).toBeTruthy();
+    expect(screen.queryByText(/fit 0\./)).toBeNull(); // plain wording only: no "fit" sub-line
     expect(screen.getByText("Ranked by how much more this artist's fans like the brand than the city overall.")).toBeTruthy();
   });
   it("sponsors without lift fall back to the affinity and show no note", () => {
@@ -108,6 +108,10 @@ describe("playbook cards", () => {
     render(<CardBody card={{ ...card("talent"), status: "empty", items: [], summary: { sharedTaste: null, sharedTags: [], emptyCopy: copy } }} city="Guadalajara" />);
     expect(screen.getByText(copy)).toBeTruthy();
   });
+  it("support cards that could not be size-checked say so", () => {
+    render(<CardBody card={{ ...card("co_billing"), summary: { sizeNote: "Couldn't check act size for this artist." } }} city="Guadalajara" />);
+    expect(screen.getByText("Couldn't check act size for this artist.")).toBeTruthy();
+  });
   it("promo zones list the rows by share, strongest first", () => {
     const items = [{ label: "Small", share: 0.1 }, { label: "Central Guadalajara", share: 0.6 }, { label: "Mid", share: 0.3 }];
     render(<CardBody card={{ ...card("promo_zones"), items }} city="Guadalajara" />);
@@ -116,8 +120,10 @@ describe("playbook cards", () => {
   });
   it("co-billing shows both lift factors", () => {
     render(<CardBody card={card("co_billing")} city="Guadalajara" />);
-    expect(screen.getByText("0.34 × 0.88 = 0.30")).toBeTruthy();
-    expect(screen.getByText("fit = how much fans share taste × how much the city likes them")).toBeTruthy();
+    expect(screen.getByText("Fans share taste 34% · the city likes them 88%")).toBeTruthy();
+    expect(screen.getByText("Fans share taste 34% · the city likes them 88%").getAttribute("title")).toBe("0.34 × 0.88 = 0.30");
+    expect(screen.queryByText(/×/)).toBeNull();
+    expect(screen.getByText("How much fans share taste, and how much the city likes the act")).toBeTruthy();
   });
   it("talent shows shared taste, tags and the proxy list", () => {
     render(<CardBody card={card("talent")} city="Guadalajara" />);

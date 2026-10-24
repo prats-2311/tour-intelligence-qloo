@@ -10,7 +10,7 @@ const city = (id, name, fan, win, verdict) => ({
 const BOARD = [
   { type: "tool_call", tool: "qloo_where_popular", args: { within: "Mexico", secret: "x", nested: { a: 1 } }, cached: false },
   { type: "tool_result", tool: "qloo_where_popular", status: "ok", resultCount: 3, cacheKey: "k", stale: false },
-  { type: "resolve", entity: { entityId: "E1", name: "Test Artist" } },
+  { type: "resolve", entity: { entityId: "E1", name: "Test Artist", popularity: 0.62 } },
   { type: "city_scored", city: city("1", "Alpha", 90, 60, "play") },
   { type: "city_scored", city: city("2", "Beta", 40, 80, "hidden_goldmine") },
   { type: "city_scored", city: city("3", "Gamma", 30, 20, "skip") },
@@ -41,6 +41,14 @@ describe("record-showcase", () => {
     expect(() => parseArgs(["--artist", "A"])).toThrow(/--regions/);
   });
 
+  it("--window ends up in the recorded brief as dateWindow, and is absent without it", async () => {
+    const parsed = parseArgs(["--artist", "Test Artist", "--regions", "Mexico", "--out", "o.json", "--window", "2027-03-12:2027-04-18"]);
+    const withWindow = await record({ ...parsed, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl: mockFetch([]) });
+    expect(withWindow.brief.dateWindow).toEqual({ start: "2027-03-12", end: "2027-04-18" });
+    const bare = parseArgs(["--artist", "Test Artist", "--regions", "Mexico", "--out", "o.json"]);
+    expect((await record({ ...bare, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl: mockFetch([]) })).brief).not.toHaveProperty("dateWindow");
+  });
+
   it("writes the expected shape and calls the dashboard's routes with auth and session headers", async () => {
     const calls = [];
     const out = await record({ artist: "Test Artist", regions: ["Mexico"], window: { start: "2027-03-12", end: "2027-04-18" }, maxPlaybooks: 4, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl: mockFetch(calls), now: new Date("2026-10-16T10:00:00Z") });
@@ -55,6 +63,7 @@ describe("record-showcase", () => {
     const pb = calls.find((c) => c.url.includes("/v1/city-playbook"));
     const q = new URL(pb.url).searchParams;
     expect([q.get("artist"), q.get("artistEntityId"), q.get("city"), q.get("country")]).toEqual(["Test Artist", "E1", "Beta", "MX"]);
+    expect(q.get("artistPopularity")).toBe("0.62"); // the showcase playbooks are size-checked
     expect(pb.init.headers.authorization).toBe(`Bearer ${TOKEN}`);
     expect(pb.init.headers["x-session-id"]).toMatch(/^showcase-2026-10-16-test-artist-[a-z0-9]{6}$/);
     expect(new URL(calls.find((c) => c.url.includes("/v1/this-week")).url).searchParams.get("start")).toBe("2027-03-12");

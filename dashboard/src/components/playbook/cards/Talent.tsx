@@ -30,6 +30,7 @@ export function Talent({ card, city, artist }: { card: PlaybookCard; city: strin
       </div>
       <Rows>{items.map((it, i) => <Row key={i} name={str(it.name)} sub={SOURCE_LABEL[str(it.source)]} aside={unranked ? null : fit(num(it.affinity))} />)}</Rows>
       <Caption>{caption}</Caption>
+      {typeof card.summary?.sizeNote === "string" && <p className="mt-1 text-[13px] text-canvas-muted">{card.summary.sizeNote}</p>}
       {unresolved > 0 && <p className="mt-1 text-[13px] text-canvas-muted">{unresolved === 1 ? "1 suggestion wasn't found in Qloo and is not shown." : `${unresolved} suggestions weren't found in Qloo and are not shown.`}</p>}
       {skipped > 0 && <p className="mt-1 text-[13px] text-canvas-muted">{skipped === 1 ? "1 more wasn't checked (lookup limit)." : `${skipped} more weren't checked (lookup limit).`}</p>}
     </>

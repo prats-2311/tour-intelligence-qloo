@@ -2,7 +2,12 @@ import type { CardKind, PlaybookCard, RemovalReason } from "@/lib/qloo/types";
 
 export const fit = (v: unknown): string => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(2) : "—");
 /** Lift over the city baseline as whole points: 0.304 -> "+30 vs city". */
-export const liftVsCity = (lift: number): string => `${lift < 0 ? "-" : "+"}${Math.abs(Math.round(lift * 100))} vs city`;
+export const liftVsCity = (lift: number): string => {
+  const n = Math.round(lift * 100); // the sign comes from the rounded value, so a tiny negative reads "0", never "-0"
+  return `${n < 0 ? "-" : n > 0 ? "+" : ""}${Math.abs(n)} vs city`;
+};
+/** Plain-words co-billing line; the formula lives in the tooltip. */
+export const coBillLine = (sharedTaste: number, localAffinity: number): string => `Fans share taste ${Math.round(sharedTaste * 100)}% · the city likes them ${Math.round(localAffinity * 100)}%`;
 export const pct = (share: number): string => `${Math.round(share * 100)}%`;
 export const liftLine = (sharedTaste: number, a: number, lift: number): string => `${sharedTaste.toFixed(2)} × ${a.toFixed(2)} = ${lift.toFixed(2)}`;
 

@@ -134,7 +134,7 @@ export async function record({ artist, regions, window, maxPlaybooks = 4, gatewa
   const thisWeek = {};
   for (const c of picks) {
     log(`Recording the playbook for ${c.name}...`);
-    const qs = new URLSearchParams({ artist, artistEntityId: resolved.entity.entityId, city: c.name, country: c.country }).toString();
+    const qs = new URLSearchParams({ artist, artistEntityId: resolved.entity.entityId, ...(Number.isFinite(resolved.entity.popularity) ? { artistPopularity: String(resolved.entity.popularity) } : {}), city: c.name, country: c.country }).toString();
     const pbEvents = await events(`/v1/city-playbook?${qs}`, { method: "GET", headers });
     if (!pbEvents.some((e) => e.type === "done") || pbEvents.at(-1)?.type === "error") {
       warn(`playbook for ${c.name} did not finish cleanly; leaving it out`);

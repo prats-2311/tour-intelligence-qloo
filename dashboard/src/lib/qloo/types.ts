@@ -73,7 +73,7 @@ export interface ArtistProfile {
 }
 export type StrategistToolStatus = "ok" | "empty" | "needs_input" | "partial" | "degraded" | "error" | "rejected";
 export type GatewayEvent =
-  | { type: "resolve"; entity: { entityId: string; name: string } }
+  | { type: "resolve"; entity: { entityId: string; name: string; popularity?: number } }
   | { type: "scoring"; scoring: ScoringConfig; closeCallBand?: number }
   | ({ type: "artist_profile" } & ArtistProfile)
   | { type: "region_unavailable"; region: string; code: string; message: string }
