@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { City } from "../src/geo/cities.js";
+import { majorMarkets } from "../src/pipeline/majorMarkets.js";
 import { runTourBoard, type TourBrief } from "../src/pipeline/tourBoard.js";
 import type { QlooCaller } from "../src/qlooCall.js";
 import type { GatewayEvent, QlooEnvelope } from "../src/types.js";
@@ -14,7 +15,8 @@ const BR_2: City = { id: "b2", name: "Curitiba", country: "BR", lat: -25.43, lon
 const US_BIG: City = { id: "u1", name: "New York City", country: "US", lat: 40.71, lon: -74.0, population: 8_800_000 };
 const US_2: City = { id: "u2", name: "Austin", country: "US", lat: 30.27, lon: -97.74, population: 960_000 };
 const CA_BIG: City = { id: "c1", name: "Toronto", country: "CA", lat: 43.65, lon: -79.38, population: 2_700_000 };
-const ALL = [MX_BIG, MX_2, MX_3, BR_BIG, BR_2, US_BIG, US_2, CA_BIG];
+const CA_2: City = { id: "c2", name: "Montreal", country: "CA", lat: 45.5, lon: -73.57, population: 1_700_000 };
+const ALL = [MX_BIG, MX_2, MX_3, BR_BIG, BR_2, US_BIG, US_2, CA_BIG, CA_2];
 
 const heatOf = (cs: City[]): QlooEnvelope => ({ operation: "where_popular", status: "ok", results: cs.map((c, i) => ({ location: { latitude: c.lat, longitude: c.lon }, query: { affinity: 0.9 - i * 0.2, popularity: 0.6 - i * 0.1 } })) });
 const around = (c: City): QlooEnvelope => ({ operation: "where_popular", status: "ok", results: [[0, 0, 0.8], [0.01, 0.01, 0.5], [-0.01, 0, 0.3]].map(([a, b, aff]) => ({ location: { latitude: c.lat + a!, longitude: c.lon + b! }, query: { affinity: aff!, popularity: 0.3 } })) });
@@ -78,7 +80,10 @@ describe("major markets", () => {
     // Nine metros in the heat list and maxStops 1: the shortlist is 8, so the least-hot ninth (New York City) would be left out.
     const filler: City[] = Array.from({ length: 8 }, (_, i) => ({ id: `f${i}`, name: `Filler${i}`, country: "US", lat: 10 + i * 3, lon: -100, population: 200_000 }));
     const events = await collect(runTourBoard(brief(["United States"]), { qloo: fake({ "United States": [...filler, US_BIG] }), cities: [...ALL, ...filler] }));
-    expect(citiesOf(events).find((c) => c.id === "u1")).toMatchObject({ candidateSource: "heat" });
+    const ny = citiesOf(events).find((c) => c.id === "u1")!;
+    expect(ny.candidateSource).toBe("heat");
+    expect(ny.fanHeatFloor).toBeUndefined();
+    expect(ny.fanHeat.refs.length).toBeGreaterThan(0);
   });
 
   it("a region that is not a country gets no seed", async () => {
@@ -88,11 +93,18 @@ describe("major markets", () => {
     expect(citiesOf(events2).map((c) => c.id)).toEqual(["u2"]);
   });
 
-  it("seeds at most one per region and three per board", async () => {
-    const heat = { Mexico: [MX_2], Brazil: [BR_2], "United States": [US_2], Canada: [] as City[] };
-    const events = await collect(runTourBoard(brief(["Mexico", "Brazil", "United States", "Canada"]), { qloo: fake({ ...heat, Canada: [CA_BIG] }), cities: ALL }));
-    const seeds = citiesOf(events).filter((c) => c.candidateSource === "major_market");
-    expect(seeds.map((c) => c.id).sort()).toEqual(["b1", "m1", "u1"]);
+  it("seeds at most one per region and three per board (the fourth country's largest city is absent from its heat list and stays out)", async () => {
+    const heat = { Mexico: [MX_2], Brazil: [BR_2], "United States": [US_2], Canada: [CA_2] };
+    const events = await collect(runTourBoard(brief(["Mexico", "Brazil", "United States", "Canada"]), { qloo: fake(heat), cities: ALL }));
+    const cs = citiesOf(events);
+    expect(cs.filter((c) => c.candidateSource === "major_market").map((c) => c.id).sort()).toEqual(["b1", "m1", "u1"]);
+    expect(cs.map((c) => c.id)).not.toContain("c1");
+  });
+
+  it("majorMarkets(): one per country region, brief order, at most 3; states and cities get none", () => {
+    expect(majorMarkets(["Mexico", "Brazil", "United States", "Canada"], ALL).map((c) => c.id)).toEqual(["m1", "b1", "u1"]);
+    expect(majorMarkets(["Mexico", "mexico", "Texas", "Texas, United States", "Monterrey"], ALL).map((c) => c.id)).toEqual(["m1"]);
+    expect(majorMarkets([], ALL)).toEqual([]);
   });
 
   it("two regions of one country seed its largest city once", async () => {

@@ -16,7 +16,7 @@ Caveat: doc pages were summarised by a fetch model; treat exact field names as "
 - /search reference mentions 429 and caps (take max 199, 100 pages, radius max 100 mi). /v2/tags and /v2/audiences: take max 50, 100 pages. Insights: take default 20, max 50 (DD).
 - Caching, bulk use, redistribution: docs silent. Terms: https://www.qloo.com/legal/terms (not read; says API terms ship with client docs). Devpost rules not read here; check mcp devpost get_hackathon_rules before claiming caching is allowed.
 - Harness-side caps: limit 1-20 per call, default 10 (QLOO_TOOL_DEFAULT_LIMIT/MAX_RESULTS), arrays bounded to 20 items, strings 2000 chars. Our validate.ts:60 limit 1-20 matches. rank has no limit arg and uses take=options.length.
-- Implication: tourBoard fans out 3 + regions + per shortlisted city 7 calls (x8 cities) plus entity resolution calls. Quota is unknown, so measure calls/run first (section 6, call 0).
+- Implication: tourBoard fans out 3 + regions + per shortlisted city 7 calls (8 cities by default, up to maxStops, plus up to 3 major-market seeds on boards of 11 or fewer) plus entity resolution calls. Quota is unknown, so measure calls/run first (section 6, call 0).
 
 ## 3. Per-tool findings
 
@@ -90,7 +90,7 @@ Count calls (Qloo-side) per gateway request from provenance to estimate quota bu
 | get-trending-artists-this-week | /v2/trending filter.type=urn:entity:artist, start/end date, results.entities[].properties.trend_rank | trends, talent/"city mainstream" | not exposed by qloo_trends (entity-scoped only). Optional: call /v2/trending without entity for a mainstream benchmark; otherwise only fix tourBoard.ts:150 + adapters.ts:20-40 |
 | personalize-by-age-gender-and-location | artist, signal.demographics.gender/age, signal.location.query | activation recs, city mainstream proxy | cityPlaybook.ts:72 -> signal_location + demographic; tourBoard.ts:67,69-71 add demographic to prove city variance |
 | recommendations-for-restaurants-similar-to-balthazar / ...given-place | place, signal.interests.entities, filter.location.query or POINT+radius, query.affinity/distance | activation place recs, venue rank | tourBoard.ts:68 MATCH; use query.distance if exposed (not by compactEntity) |
-| get-the-top-restaurants-per-city-across-multiple-markets | place, signal entity, diversify.by=properties.geocode.city, diversify.take | multi-market comparison in one call | not exposed in harness; would cut shortlist place calls (tourBoard.ts:68 x8) to 1. Needs direct client |
+| get-the-top-restaurants-per-city-across-multiple-markets | place, signal entity, diversify.by=properties.geocode.city, diversify.take | multi-market comparison in one call | not exposed in harness; would cut shortlist place calls (tourBoard.ts:68, once per shortlisted city) to 1. Needs direct client |
 | get-the-taste-tags-that-describe-an-entitys-audience | urn:tag + signal entity; query.affinity 0-1 | tags/merch | cityPlaybook.ts:71 MATCH |
 | explore...charlize-theron (index mislabeled: shows Michelin+Resy places within 2 km) | place, filter.external.exists=resy,michelin, operator intersection, radius | venue fit | optional filter for venue_fit candidates (not in harness) |
 | find-italian-restaurants..., find-restaurants-in-nyc-except-midtown | filter.tags / filter.exclude.tags / filter.exclude.location.query | include_tags/exclude_tags | already supported by qloo_recommend include_tags/exclude_tags; exclude.location not exposed |

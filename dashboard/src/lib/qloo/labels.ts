@@ -53,6 +53,8 @@ export const LOCATION_UNRESOLVED_SHORT = "Couldn't place this city";
 /** Tag and explainer for a major-market seed (candidateSource "major_market"). Never says Qloo "found" it. */
 export const MAJOR_MARKET_LABEL = "Major market";
 const regionNames = (() => { try { return new Intl.DisplayNames(["en"], { type: "region" }); } catch { return undefined; } })();
+/** Shown for a floored major-market seed: its verdict can never be Play or Hidden goldmine. */
+export const FLOORED_SEED_NOTE = "Capped at Consider: no Qloo fan-heat evidence for this market.";
 export const countryLabel = (iso2: string): string => { try { return regionNames?.of(iso2) ?? iso2; } catch { return iso2; } };
 export const majorMarketNote = (iso2: string): string =>
   `Largest market in ${countryLabel(iso2)}. We always check it; it isn't in Qloo's top fan hotspots for this artist, so fan heat is shown at the board's floor.`;

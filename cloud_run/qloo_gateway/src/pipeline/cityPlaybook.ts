@@ -162,7 +162,7 @@ export async function* runCityPlaybook(
       card("promo_zones", uniqueZones(a.zones).slice(0, 5), [ref("qloo_where_popular", raw.inCity)], warningsFor("qloo_where_popular", raw.inCity)),
       card("local_moment",
         interleave([extractEntities(raw.artists.envelope), extractEntities(raw.films.envelope), extractEntities(raw.tv.envelope), a.placeEntities], 9),
-        [ref("qloo_recommend", raw.artists), ref("qloo_recommend", raw.films), ref("qloo_recommend", raw.tv), ref("qloo_recommend", raw.places)],
+        [ref("qloo_recommend", raw.artists), ref("qloo_recommend", raw.films), ref("qloo_recommend", raw.tv), ...(a.placeEntities.length > 0 ? [ref("qloo_recommend", raw.places)] : [])],
         [raw.artists, raw.films, raw.tv, raw.places].flatMap((r) => warningsFor("qloo_recommend", r))),
       card("venue_fit", a.venues.items, a.venues.refs, [...(raw.ranked ? warningsFor("qloo_rank", raw.ranked) : []), ...a.venues.warnings]),
       card("co_billing", coBill, coBill.map((c) => c.ref), compared.flatMap((c) => c.warnings)),

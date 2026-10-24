@@ -32,6 +32,8 @@ export interface ScoredCity {
 interface Deps { qloo: QlooCaller; cities: City[]; signal?: AbortSignal; concurrency?: number }
 
 const SHORTLIST = 8;
+/** Largest board (scored cities) once major-market seeds are added; a longer shortlist gets no seeds. */
+const MAX_BOARD_WITH_SEEDS = 11;
 const MID_BAND = { min: 45, max: 70 };
 const MID_CENTRE = (MID_BAND.min + MID_BAND.max) / 2;
 
@@ -148,7 +150,7 @@ export async function activationInputs(artist: string, loc: { where: string; inC
   const hooks = meanTopK([...placeEntities, ...extractEntities(films.envelope), ...extractEntities(artists.envelope), ...extractEntities(tv.envelope)].map((e) => e.affinity), 5);
   if (hooks !== null) {
     rawComponents.local_hooks = hooks;
-    components.local_hooks = { value: rescaleAffinity(hooks, SCORING.affinityFloors.local_hooks), refs: [ref("qloo_recommend", places), ref("qloo_recommend", films), ref("qloo_recommend", artists), ref("qloo_recommend", tv)] };
+    components.local_hooks = { value: rescaleAffinity(hooks, SCORING.affinityFloors.local_hooks), refs: [...(placeEntities.length > 0 ? [ref("qloo_recommend", places)] : []), ref("qloo_recommend", films), ref("qloo_recommend", artists), ref("qloo_recommend", tv)] };
   }
   const shares = zones.map((z) => z.share);
   const conc = fanConcentration(shares);
@@ -261,15 +263,17 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
     const seeds = pooled.length > 0 ? majorMarkets(brief.regions, deps.cities) : [];
     const shortlist: Array<(typeof pooled)[number] & { source: "heat" | "major_market" }> = picked.map((m) => ({ ...m, source: "heat" as const }));
     const have = new Set(shortlist.map((m) => m.city.id));
+    // Seeds never push the board past max(MAX_BOARD_WITH_SEEDS, the shortlist size): a big board is already near the session budget.
+    const cap = Math.max(MAX_BOARD_WITH_SEEDS, picked.length);
     for (const seed of seeds) {
       const inPool = byId.get(seed.id);
-      if (inPool && !have.has(seed.id)) { shortlist.push({ ...inPool, source: "heat" }); have.add(seed.id); }
+      if (inPool && !have.has(seed.id) && shortlist.length < cap) { shortlist.push({ ...inPool, source: "heat" }); have.add(seed.id); }
     }
     const heatValues = shortlist.map((m) => heat.get(m.city.id)?.value).filter((v): v is number => typeof v === "number");
     if (heatValues.length > 0) {
       const floor = Math.min(...heatValues);
       for (const seed of seeds) {
-        if (have.has(seed.id)) continue;
+        if (have.has(seed.id) || shortlist.length >= cap) continue;
         heat.set(seed.id, { value: floor, refs: [] });
         shortlist.push({ city: seed, affinity: Number.NaN, popularity: Number.NaN, refs: [], warnings: [], source: "major_market" });
         have.add(seed.id);
@@ -297,7 +301,10 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
           // Rule 8: a thin-data city is insufficient_data, never 0 (same isThin as calibration's scoreCity).
           const act = { ...(isThin(adjusted, SCORING.weights) ? { ...scoredAct, value: null, reason: "insufficient_data" as const } : scoredAct), rawComponents: inputs.rawComponents };
           const win = winnability(fan, act);
-          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), closeCall: closeCall(fan, act, SCORING.thresholds), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]), locationQuery: loc.where, locationAttempts: loc.attempts } };
+          const v = verdict(fan, act, win, SCORING.thresholds);
+          // A floored seed has no Qloo fan-heat evidence, so it can never earn the headline verdicts.
+          const capped = m.source === "major_market" && (v === "play" || v === "hidden_goldmine") ? "consider" : v;
+          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: capped, closeCall: closeCall(fan, act, SCORING.thresholds), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]), locationQuery: loc.where, locationAttempts: loc.attempts } };
         } catch (err) {
           if (err instanceof Aborted || err instanceof BudgetStop) return { stop: err };
           const act = { ...activation({}, SCORING.weights), rawComponents: {} as Partial<Record<ComponentName, number>> };

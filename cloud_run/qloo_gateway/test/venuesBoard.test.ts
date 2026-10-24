@@ -29,7 +29,7 @@ function fake(places: unknown[], calls: Call[]): QlooCaller {
         if (tool === "qloo_rank") return { operation: "rank", status: "ok", results: (args.options as string[]).map((id, i) => ({ entity_id: id, name: id.replace("00000000-venue-", "Ranked "), affinity: 0.9 - i * 0.1 })) } as QlooEnvelope;
         return { operation: tool, status: "ok", results: [] };
       })();
-      return { envelope: env, cacheKey: `${tool}:${calls.length}`, cached: false, stale: false };
+      return { envelope: env, cacheKey: tool === "qloo_recommend" && args.target_type === "place" ? "places-key" : `${tool}:${calls.length}`, cached: false, stale: false };
     },
   };
 }
@@ -66,6 +66,22 @@ describe("board venues", () => {
     const events = await collect(runTourBoard(brief, { qloo: fake([place("only", "El Testo")], []), cities: CITIES }));
     const scored = events.find((e) => e.type === "city_scored") as unknown as Scored;
     expect(scored.city.activation.components.venue_fit).toBeDefined();
+  });
+});
+
+describe("evidence refs when no venue survives", () => {
+  const refsOf = (events: GatewayEvent[]) => JSON.stringify((events.find((e) => e.type === "city_scored") as unknown as { city: { activation: { refs: unknown[] } } }).city.activation.refs);
+  it("local_hooks does not cite the places call unless a venue contributed", async () => {
+    const none = await collect(runTourBoard(brief, { qloo: fake([place("town", "Sunny Park")], []), cities: CITIES }));
+    expect(refsOf(none)).not.toContain("places-key");
+    const some = await collect(runTourBoard(brief, { qloo: fake(MIXED, []), cities: CITIES }));
+    expect(refsOf(some)).toContain("places-key");
+  });
+  it("the local-moment card cites the places call only when a venue contributed", async () => {
+    const input = { artist: "Test Artist", artistEntityId: "A1", city: { name: "El Testo", country: "ZZ" }, sessionId: "s" };
+    const refs = async (places: unknown[]) => JSON.stringify(((await collect(runCityPlaybook(input, { qloo: fake(places, []), cities: CITIES }))).find((e) => e.type === "playbook") as unknown as { playbook: { cards: Array<{ kind: string; refs: unknown[] }> } }).playbook.cards.find((c) => c.kind === "local_moment")!.refs);
+    expect(await refs([place("town", "Sunny Park")])).not.toContain("places-key");
+    expect(await refs(MIXED)).toContain("places-key");
   });
 });
 

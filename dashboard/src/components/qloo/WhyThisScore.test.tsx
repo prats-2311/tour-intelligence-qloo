@@ -107,6 +107,17 @@ describe("major market", () => {
     render(<WhyThisScore city={{ ...seed, country: "MX" }} />);
     expect(screen.getByText("Largest market in Mexico. We always check it; it isn't in Qloo's top fan hotspots for this artist, so fan heat is shown at the board's floor.")).toBeTruthy();
   });
+  it("a floored seed says it is capped at Consider, in the row and the sheet", () => {
+    const LINE = "Capped at Consider: no Qloo fan-heat evidence for this market.";
+    render(<ul><CityRow city={{ ...seed, verdict: "consider" }} onOpen={() => {}} /></ul>);
+    expect(screen.getByText(LINE)).toBeTruthy();
+    cleanup();
+    render(<WhyThisScore city={{ ...seed, verdict: "consider" }} />);
+    expect(screen.getByText(LINE)).toBeTruthy();
+    cleanup();
+    render(<WhyThisScore city={{ ...city, candidateSource: "heat" }} />);
+    expect(screen.queryByText(LINE)).toBeNull();
+  });
   it("a heat candidate has no tag and no note", () => {
     render(<ul><CityRow city={{ ...city, candidateSource: "heat" }} onOpen={() => {}} /></ul>);
     expect(screen.queryByText("Major market")).toBeNull();

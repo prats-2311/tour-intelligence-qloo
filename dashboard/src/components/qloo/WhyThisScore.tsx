@@ -1,4 +1,4 @@
-import { closeCallNote, DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE, LOCATION_UNRESOLVED_NOTE, MAJOR_MARKET_LABEL, VERDICT_LABEL, majorMarketNote, ruleLines, weightRows } from "@/lib/qloo/labels";
+import { closeCallNote, DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE, FLOORED_SEED_NOTE, LOCATION_UNRESOLVED_NOTE, MAJOR_MARKET_LABEL, VERDICT_LABEL, majorMarketNote, ruleLines, weightRows } from "@/lib/qloo/labels";
 import type { ScoredCity, ScoringConfig } from "@/lib/qloo/types";
 import { CloseCallChip } from "./CloseCallChip";
 import { DataWarningBadge } from "./DataWarningBadge";
@@ -30,6 +30,7 @@ export function WhyThisScore({ city, scoring }: { city: ScoredCity; scoring?: Sc
       {city.candidateSource === "major_market" && (
         <p className="text-[13px] text-canvas-muted"><span className="mr-2 inline-flex h-6 items-center rounded-[4px] border border-canvas-line px-2 text-[12px] font-medium text-canvas-text">{MAJOR_MARKET_LABEL}</span>{majorMarketNote(city.country)}</p>
       )}
+      {city.fanHeatFloor && <p className="text-[13px] text-canvas-muted">{FLOORED_SEED_NOTE}</p>}
       {city.closeCall && <p className="text-[13px] text-canvas-muted">{closeCallNote(cfg.closeCallBand)}</p>}
       <DualBars fanHeat={city.fanHeat} activation={city.activation} thresholds={cfg.thresholds} />
       <p className="font-mono text-[13px] text-canvas-muted">winnability = 0.5 × fan heat + 0.5 × activation</p>

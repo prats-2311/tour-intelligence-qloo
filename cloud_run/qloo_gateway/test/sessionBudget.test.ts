@@ -77,6 +77,9 @@ function route(tool: string, args: Record<string, unknown>): QlooEnvelope {
   }
 }
 
+const BIG: City[] = Array.from({ length: 22 }, (_, i) => ({ id: `big${i}`, name: `Bigtown${String.fromCharCode(65 + i)}`, country: "MX", lat: 10 + (i % 11) * 3, lon: -110 + Math.floor(i / 11) * 12, population: 400_000 }));
+CITIES.push(...BIG);
+
 async function collect(g: AsyncGenerator<GatewayEvent>) { const o: GatewayEvent[] = []; for await (const e of g) o.push(e); return o; }
 
 describe("one session: cold board plus 4 hybrid playbooks", () => {
@@ -139,5 +142,23 @@ describe("one session: cold board plus 4 hybrid playbooks", () => {
     // Gemini: 4 local-acts attempts + 4 narrative attempts = 8 of the 20-per-session ceiling (This-week syntheses add at most 1 per chapter: 12).
     expect(geminiAttempts).toBe(8);
     expect(geminiBudget.remaining(sessionId).session).toBe(20 - 8);
+  });
+});
+
+describe("a 20-stop board with major markets requested", () => {
+  it("adds no seed beyond max(11, shortlist) and never goes over the session budget", async () => {
+    ACTIVE = { Mexico: BIG };
+    MISPLACED.clear();
+    const sessionId = "big-session";
+    let qlooCalls = 0;
+    const budget = new BudgetGuard({ perSession: SESSION_QLOO_BUDGET, perDay: 2000 });
+    const qloo = createQlooCaller({ mcp: { async callTool(name, args) { qlooCalls += 1; return route(name, args); } }, cache: new MemoryCache(), budget, sleep: async () => {} });
+    const board = await collect(runTourBoard({ artist: "Test Artist", regions: ["Mexico"], maxStops: 20, sessionId, today: "2026-10-20" }, { qloo, cities: CITIES }));
+    const scored = board.filter((e) => e.type === "city_scored") as Array<{ city: { candidateSource: string } }>;
+    expect(scored.length).toBeLessThanOrEqual(20);
+    expect(scored.filter((e) => e.city.candidateSource === "major_market")).toHaveLength(0); // the 20-city shortlist is already past 11
+    expect(qlooCalls).toBeLessThanOrEqual(SESSION_QLOO_BUDGET);
+    const errors = board.filter((e) => e.type === "error") as Array<{ code: string }>;
+    expect(errors.every((e) => e.code === "BUDGET")).toBe(true); // either done, or the existing BUDGET stop; never over
   });
 });

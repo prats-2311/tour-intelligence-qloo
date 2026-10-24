@@ -16,6 +16,9 @@ export const venueArgs = (artistId: string, where: string) =>
 
 export const noVenuesCopy = (city: string) => `Qloo lists no music venues in ${city} for this artist`;
 
+/** Folded name without a trailing "city" word, so Qloo's "New York" equals the list's "New York City" (the country code must match too). */
+const key = (name: string): string => { const f = fold(name); const k = f.replace(/ city$/, ""); return k === "" ? f : k; };
+
 interface Placed { geocode?: { city?: string; countryCode?: string } }
 
 /**
@@ -23,8 +26,8 @@ interface Placed { geocode?: { city?: string; countryCode?: string } }
  * name also counts). Qloo's order is kept; places without a geocode are dropped, never guessed. At most VENUE_RANK_MAX.
  */
 export function sameCityVenues<T extends Placed>(places: T[], city: { name: string; country: string }, locationQuery: string): T[] {
-  const names = new Set([fold(city.name), fold(locationQuery.split(",")[0] ?? "")].filter((n) => n !== ""));
+  const names = new Set([key(city.name), key(locationQuery.split(",")[0] ?? "")].filter((n) => n !== ""));
   const country = fold(city.country);
   return places.filter((p) => p.geocode?.city !== undefined && p.geocode.countryCode !== undefined
-    && fold(p.geocode.countryCode) === country && names.has(fold(p.geocode.city))).slice(0, VENUE_RANK_MAX);
+    && fold(p.geocode.countryCode) === country && names.has(key(p.geocode.city))).slice(0, VENUE_RANK_MAX);
 }

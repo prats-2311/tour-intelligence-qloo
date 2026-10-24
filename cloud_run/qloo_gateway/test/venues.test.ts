@@ -34,6 +34,14 @@ describe("sameCityVenues", () => {
     expect(sameCityVenues([v("B", { city: "Ciudad Juárez", countryCode: "ZZ" })], { name: "Ciudad Juarez", country: "ZZ" }, "Ciudad Juarez, Mexico")).toHaveLength(1);
     expect(sameCityVenues([v("C", { city: "Alias Town", countryCode: "ZZ" })], city, "Alias Town, Zedland")).toHaveLength(1);
   });
+  it("strips a trailing city word on both sides: Qloo's New York matches New York City, in the same country only", () => {
+    expect(sameCityVenues([v("NY", { city: "New York", countryCode: "US" })], { name: "New York City", country: "US" }, "New York City, US")).toHaveLength(1);
+    expect(sameCityVenues([v("NY", { city: "New York", countryCode: "CA" })], { name: "New York City", country: "US" }, "New York City, US")).toHaveLength(0);
+    expect(sameCityVenues([v("MX", { city: "Mexico City", countryCode: "MX" })], { name: "Mexico City", country: "MX" }, "Mexico City, MX")).toHaveLength(1);
+    // Accepted side effect of the generic rule: country and Qloo's own location filter scope the match.
+    expect(sameCityVenues([v("K", { city: "Kansas", countryCode: "US" })], { name: "Kansas City", country: "US" }, "Kansas City, US")).toHaveLength(1);
+    expect(sameCityVenues([v("C", { city: "City", countryCode: "US" })], { name: "Kansas City", country: "US" }, "Kansas City, US")).toHaveLength(0);
+  });
   it("caps at 10", () => {
     const many = Array.from({ length: 14 }, (_, i) => v(`V${i}`, { city: "Testville", countryCode: "ZZ" }));
     expect(sameCityVenues(many, city, "Testville, ZZ")).toHaveLength(10);

@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { LOCATION_UNRESOLVED_NOTE, LOCATION_UNRESOLVED_SHORT, MAJOR_MARKET_LABEL, majorMarketNote } from "@/lib/qloo/labels";
+import { LOCATION_UNRESOLVED_NOTE, LOCATION_UNRESOLVED_SHORT, FLOORED_SEED_NOTE, MAJOR_MARKET_LABEL, majorMarketNote } from "@/lib/qloo/labels";
 import type { Score, ScoredCity } from "@/lib/qloo/types";
 import { DataWarningBadge, warningLabel } from "./DataWarningBadge";
 import { CloseCallChip } from "./CloseCallChip";
@@ -34,7 +34,7 @@ export function CityRow({ city, selected, dimActivation, onOpen }: { city: Score
   const unplaced = city.insufficientReason === "location_unresolved";
   // The button's name is its visible content (WCAG 2.5.3 label-in-name); the numbers that content leaves out go in the description.
   const describedBy = `city-row-desc-${city.id}`;
-  const description = `Winnability ${w === null ? "not available" : Math.round(w)}, fan heat ${num(city.fanHeat)}, activation ${num(city.activation)}. ${major ? `${majorMarketNote(city.country)} ` : ""}${unplaced ? `${LOCATION_UNRESOLVED_NOTE} ` : ""}Open score breakdown`;
+  const description = `Winnability ${w === null ? "not available" : Math.round(w)}, fan heat ${num(city.fanHeat)}, activation ${num(city.activation)}. ${major ? `${majorMarketNote(city.country)} ` : ""}${city.fanHeatFloor ? `${FLOORED_SEED_NOTE} ` : ""}${unplaced ? `${LOCATION_UNRESOLVED_NOTE} ` : ""}Open score breakdown`;
   return (
     <motion.li
       id={`city-row-${city.id}`}
@@ -59,6 +59,7 @@ export function CityRow({ city, selected, dimActivation, onOpen }: { city: Score
           <span className="shrink-0 text-[12px] font-medium text-canvas-muted">{city.country}</span>
           {major && <span className="basis-full lg:basis-auto"><span title={majorMarketNote(city.country)} className="inline-flex h-6 items-center whitespace-nowrap rounded-[4px] border border-canvas-line px-2 text-[12px] font-medium text-canvas-text">{MAJOR_MARKET_LABEL}</span></span>}
           {city.closeCall && <span className="basis-full lg:basis-auto"><CloseCallChip /></span>}
+          {city.fanHeatFloor && <span className="basis-full text-[12px] text-canvas-muted">{FLOORED_SEED_NOTE}</span>}
           {unplaced && <span className="basis-full text-[12px] text-canvas-muted lg:basis-auto">{LOCATION_UNRESOLVED_SHORT}</span>}
           {warn && <span className="basis-full lg:basis-auto"><DataWarningBadge warnings={city.warnings} /></span>}
         </span>
