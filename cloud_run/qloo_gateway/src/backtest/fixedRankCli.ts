@@ -40,7 +40,7 @@ export async function main(argv: string[], io: CliIo = defaultIo()): Promise<num
   if (args.dryRun) {
     io.log(`Proof v3 Test B (fixed candidates): ${cases.length} cases. DRY RUN: no Qloo or Gemini call is made.`);
     io.log(`Protocol commit ${commit}; output ${args.out}`);
-    io.log("Stop at once on: a Qloo 429, any quota/rate-limit/limit text, or an error rate above 10% over the last 20 calls (evaluated once 10 are seen).");
+    io.log("Stop at once on: a Qloo 429, any quota/rate-limit/limit text, or a Qloo error rate above 10% over the last 20 Qloo calls (evaluated once 10 are seen; Gemini errors are not in that rate).");
     for (const c of cases) io.log(`- ${c.id}: ${c.artist} in ${c.city}, ${c.country} (${c.activationType}); real pick ${c.realEntity.name}; session proof-v3-fixed-${c.id}; 4 Qloo calls (2 describes, popularity list, rank), 1-2 Gemini calls`);
     io.log(`Expected: ~${cases.length * 4} Qloo calls at most (popularity lists and describes may be cached; protocol estimate 60-90), ${cases.length}-${cases.length * 2} Gemini calls.`);
     return 0;

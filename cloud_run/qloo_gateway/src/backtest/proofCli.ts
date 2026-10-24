@@ -75,7 +75,7 @@ export function assemble(opts: {
   const results: ProofV3Results = {
     schemaVersion: 3, generatedAt: opts.now.toISOString(),
     protocol: { path: PROTOCOL_PATH, commit: opts.commit }, calibrationVersion: SCORING.version,
-    models: { gemini: opts.models, geminiUsed: opts.geminiUsed }, callCounts: { ...counts },
+    models: { gemini: opts.models, geminiUsed: opts.geminiUsed }, callCounts: { ...counts }, geminiErrorTexts: [...(opts.monitor?.geminiErrorTexts ?? [])],
     stop: opts.stop ? { status: "stopped", reason: opts.stop } : { status: opts.running ? "running" : "complete" },
     ...opts.sections, summary: [],
   };

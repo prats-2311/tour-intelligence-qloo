@@ -12,7 +12,7 @@ function artist(position: number, name: string, r: R, N = 4, count = 10, bo: Cit
 }
 const base = (): ProofV3Results => ({
   schemaVersion: 3, generatedAt: "2026-10-24T00:00:00Z", protocol: { path: "docs/qloo/proof-v3-protocol.md", commit: "abc" }, calibrationVersion: "cal",
-  models: { gemini: ["g1"], geminiUsed: ["g1"] }, callCounts: { qloo: 0, gemini: 0, qlooErrors: 0, geminiErrors: 0 }, stop: { status: "complete" }, summary: [],
+  models: { gemini: ["g1"], geminiUsed: ["g1"] }, callCounts: { qloo: 0, gemini: 0, qlooErrors: 0, geminiErrors: 0 }, geminiErrorTexts: [], stop: { status: "complete" }, summary: [],
 });
 const withA = (artists: CityRankArtist[], extra: Partial<NonNullable<ProofV3Results["cityRank"]>> = {}): ProofV3Results =>
   ({ ...base(), cityRank: { batch: 1, plannedArtists: 6, plannedTotal: 12, artists, dropped: [], notRun: [], stats: computeCityRankStats(artists), ...extra } });

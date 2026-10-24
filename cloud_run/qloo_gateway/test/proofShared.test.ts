@@ -93,7 +93,7 @@ describe("createPermutationRanker", () => {
   it("accepts a permutation, sends temperature 0.2 and an enum-constrained schema", async () => {
     const m = new StopMonitor();
     const seen: Array<{ model: string; body: Record<string, unknown> }> = [];
-    const r = createPermutationRanker({ generate: async (model, b) => { seen.push({ model, body: b }); return body(JSON.stringify({ ranking: ["Gamma, X", "Alpha, X", "Beta, X"] })); }, models: ["m1", "m2"], monitor: m });
+    const r = createPermutationRanker({ generate: async (model, b) => { seen.push({ model, body: b }); return body(JSON.stringify({ ranking: ["Gamma, X", "Alpha, X", "Beta, X"] })); }, models: ["m1", "m2"], monitor: m, sleep: async () => {} });
     const out = await r.rank("PROMPT", labels);
     expect(out).toMatchObject({ order: ["Gamma, X", "Alpha, X", "Beta, X"], attempts: 1, model: "m1" });
     const cfg = seen[0]!.body.generationConfig as { temperature: number; responseSchema: { properties: { ranking: { items: { enum: string[] } } } } };
@@ -118,21 +118,49 @@ describe("createPermutationRanker", () => {
     const r = createPermutationRanker({ generate: async () => { n += 1; return body(n === 1 ? "not json" : JSON.stringify({ ranking: labels })); }, models: ["m1"], monitor: m });
     expect(await r.rank("P", labels)).toMatchObject({ order: labels, attempts: 2 });
   });
-  it("every Gemini model failing is an infrastructure stop, not 'no answer'; a 429 stops the run", async () => {
+  const noSleep = { sleep: async () => {} };
+  it("every Gemini model failing after its retries is an infrastructure stop, not 'no answer'", async () => {
     const m = new StopMonitor();
     let n = 0;
-    const r = createPermutationRanker({ generate: async () => { n += 1; throw new Error("Vertex 500"); }, models: ["m1", "m2"], monitor: m });
+    const r = createPermutationRanker({ generate: async () => { n += 1; throw new Error("Vertex 500"); }, models: ["m1", "m2"], monitor: m, ...noSleep });
     await expect(r.rank("P", labels)).rejects.toBeInstanceOf(StopRun);
     expect(m.stopped).toMatch(/all Gemini models failed.*Vertex 500/);
-    expect(n).toBe(2);
-    const m2 = new StopMonitor();
-    const r2 = createPermutationRanker({ generate: async () => { throw new Error("Vertex 429"); }, models: ["m1", "m2"], monitor: m2 });
-    await expect(r2.rank("P", labels)).rejects.toBeInstanceOf(StopRun);
-    expect(m2.counts.gemini).toBe(1); // the fallback model is not tried after a 429
+    expect(n).toBe(6); // 3 attempts per model
+    expect(m.counts).toMatchObject({ gemini: 6, geminiErrors: 6 });
   });
-  it("falls back to the second model only on a non-limit Vertex failure and reports the model used", async () => {
+  it("a transient 404 then 200 uses the answer and counts no error toward the rate (Amendment 3)", async () => {
     const m = new StopMonitor();
-    const r = createPermutationRanker({ generate: async (model) => { if (model === "m1") throw new Error("Vertex 503"); return body(JSON.stringify({ ranking: labels })); }, models: ["m1", "m2"], monitor: m });
+    const sleeps: number[] = [];
+    let n = 0;
+    const r = createPermutationRanker({ generate: async () => { n += 1; if (n === 1) throw new Error("Vertex 404"); return body(JSON.stringify({ ranking: labels })); }, models: ["m1", "m2"], monitor: m, sleep: async (ms) => { sleeps.push(ms); } });
+    expect(await r.rank("P", labels)).toMatchObject({ order: labels, model: "m1", attempts: 1 });
+    expect(sleeps).toEqual([2000]);
+    expect(m.stopped).toBeUndefined();
+    expect(m.counts).toMatchObject({ gemini: 2, geminiErrors: 1 });
+    expect(m.geminiErrorTexts).toEqual(["Vertex 404"]);
+  });
+  it("three failures on the primary then the fallback answering: the answer is the fallback's and nothing stops, even past 10 errors in the window", async () => {
+    const m = new StopMonitor();
+    const sleeps: number[] = [];
+    const r = createPermutationRanker({ generate: async (model) => { if (model === "m1") throw new Error("Vertex 404 <html>" + "x".repeat(400)); return body(JSON.stringify({ ranking: labels })); }, models: ["m1", "m2"], monitor: m, sleep: async (ms) => { sleeps.push(ms); } });
+    for (let i = 0; i < 6; i += 1) expect(await r.rank("P", labels)).toMatchObject({ order: labels, model: "m2" });
+    expect(sleeps.slice(0, 2)).toEqual([2000, 6000]);
+    expect(m.stopped).toBeUndefined();
+    expect(m.counts.geminiErrors).toBe(18);
+    expect(m.geminiErrorTexts.every((t) => t.length <= 200)).toBe(true);
+  });
+  it("retries 429, 5xx and a non-JSON body; a 400 is not retried", async () => {
+    for (const [err, calls] of [[new Error("Vertex 429"), 3], [new Error("Vertex 503"), 3], [new SyntaxError("Unexpected token <"), 3], [new Error("Vertex 400"), 1]] as const) {
+      const m = new StopMonitor();
+      let n = 0;
+      const r = createPermutationRanker({ generate: async () => { n += 1; throw err; }, models: ["m1"], monitor: m, ...noSleep });
+      await expect(r.rank("P", labels)).rejects.toBeInstanceOf(StopRun);
+      expect(n).toBe(calls);
+    }
+  });
+  it("falls back to the second model and reports the model used", async () => {
+    const m = new StopMonitor();
+    const r = createPermutationRanker({ generate: async (model) => { if (model === "m1") throw new Error("Vertex 503"); return body(JSON.stringify({ ranking: labels })); }, models: ["m1", "m2"], monitor: m, ...noSleep });
     expect(await r.rank("P", labels)).toMatchObject({ order: labels, model: "m2" });
   });
 });

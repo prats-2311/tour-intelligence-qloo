@@ -43,7 +43,7 @@ describe("StopMonitor", () => {
   });
   it.each(["Quota exceeded for project", "rate limit hit", "Rate-Limit", "rate_limit", "daily limit reached", "RATE wait", "RATE_LIMITED", "Too many requests", "resource exhausted"])("stops on error text %s", (text) => {
     const m = new StopMonitor();
-    m.record("gemini", { ok: false, text });
+    m.record("qloo", { ok: false, text });
     expect(m.stopped).toBeDefined();
   });
   it("a plain error message does not stop; words that merely contain 'rate' do not either", () => {
@@ -73,13 +73,16 @@ describe("StopMonitor", () => {
     for (let i = 0; i < 40; i += 1) m.record("qloo", { ok: true });
     expect(m.stopped).toBeUndefined();
   });
-  it("Qloo and Gemini calls share one window and count separately", () => {
+  it("the error rate counts Qloo calls only: Gemini errors are counted and their text kept (200 chars), but never stop the run", () => {
     const m = new StopMonitor();
     for (let i = 0; i < 9; i += 1) m.record("qloo", { ok: true });
-    m.record("gemini", { ok: false, text: "boom" });
-    m.record("gemini", { ok: false, text: "boom" });
-    expect(m.stopped).toMatch(/error rate/);
-    expect(m.counts).toMatchObject({ qloo: 9, gemini: 2, geminiErrors: 2 });
+    for (let i = 0; i < 30; i += 1) m.record("gemini", { ok: false, text: `Vertex 404 ${"x".repeat(300)}` });
+    expect(m.stopped).toBeUndefined();
+    expect(m.counts).toMatchObject({ qloo: 9, gemini: 30, geminiErrors: 30 });
+    expect(m.geminiErrorTexts).toHaveLength(30);
+    expect(m.geminiErrorTexts[0]).toHaveLength(200);
+    m.record("gemini", { ok: false, text: "HTTP 429 quota" }); // Gemini limit text is handled by the ranker's retries, not the monitor
+    expect(m.stopped).toBeUndefined();
   });
   it("stops at once when the gateway's session budget is exhausted", () => {
     const m = new StopMonitor();

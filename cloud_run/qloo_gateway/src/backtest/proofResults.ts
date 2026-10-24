@@ -147,6 +147,8 @@ export interface ProofV3Results {
   calibrationVersion: string;
   models: { /** Configured, primary first. */ gemini: string[]; geminiUsed: string[] };
   callCounts: { qloo: number; gemini: number; qlooErrors: number; geminiErrors: number };
+  /** First 200 characters of each Gemini error (retried ones included), for diagnosing a stop. */
+  geminiErrorTexts: string[];
   stop: { status: "running" | "complete" | "stopped"; reason?: string };
   cityRank?: CityRankSection;
   fixedRank?: FixedRankSection;

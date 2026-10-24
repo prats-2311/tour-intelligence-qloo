@@ -334,9 +334,9 @@ describe("runCityRank", () => {
     expect(out.section.notRun.map((d) => d.position)).toEqual([2]);
   });
 
-  it("a Gemini quota error stops the run too", async () => {
+  it("every Gemini model failing stops the run", async () => {
     const monitor = new StopMonitor();
-    const ranker = createPermutationRanker({ generate: async () => { throw new Error("Vertex 429"); }, models: ["m1"], monitor });
+    const ranker = createPermutationRanker({ generate: async () => { throw new Error("Vertex 429"); }, models: ["m1"], monitor, sleep: async () => {} });
     const out = await runCityRank({ cases: [caseOf(1, "Art One", played), caseOf(2, "Art Two", played)], batch: 1, plannedTotal: 12 }, baseDeps(world(), ranker, monitor));
     expect(out.stop).toMatch(/429/);
     expect(out.section.artists).toEqual([]);

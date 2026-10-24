@@ -37,12 +37,14 @@ const BUDGET_CODE = /\bBUDGET\b/;
 
 /**
  * The protocol's stop rule. After every Qloo or Gemini call: a 429, any error envelope code or message, or thrown error message, matching rate/quota/limit (the gateway's RATE code included), or an
- * error rate above 10% over the last `window` calls (once at least `minCalls` have been seen) sets `stopped` (first reason wins).
+ * error rate above 10% over the last `window` Qloo calls (once at least `minCalls` have been seen) sets `stopped` (first reason wins).
  * Callers call `assertOk()` before each call so nothing is sent after a stop.
  */
 export class StopMonitor {
   readonly counts = { qloo: 0, gemini: 0, qlooErrors: 0, geminiErrors: 0 };
   stopped: string | undefined;
+  /** The first 200 characters of every Gemini error, in order, so a future stop can be diagnosed (Amendment 3). */
+  readonly geminiErrorTexts: string[] = [];
   private recent: boolean[] = [];
 
   constructor(private readonly opts: { window?: number; minCalls?: number; maxErrorRate?: number } = {}) {}
@@ -50,6 +52,9 @@ export class StopMonitor {
   record(kind: CallKind, outcome: CallOutcome): void {
     this.counts[kind] += 1;
     if (!outcome.ok) this.counts[kind === "qloo" ? "qlooErrors" : "geminiErrors"] += 1;
+    // Amendment 3: Gemini outcomes are counted and kept, but never enter the error-rate window or the text rules. A Gemini failure stops the run
+    // only when every model has failed after its retries (the ranker halts the monitor).
+    if (kind === "gemini") { if (!outcome.ok) this.geminiErrorTexts.push((outcome.text ?? "").slice(0, 200)); return; }
     const window = this.opts.window ?? 20;
     this.recent.push(outcome.ok);
     if (this.recent.length > window) this.recent.shift();

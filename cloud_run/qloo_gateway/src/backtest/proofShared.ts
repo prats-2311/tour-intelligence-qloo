@@ -77,16 +77,28 @@ export interface PermutationRanker { rank(prompt: string, labels: string[]): Pro
  * Gemini ranking at temperature 0.2 with a response schema that forces each label to be one of the given strings. A non-permutation is retried
  * once; a second miss is "no answer". A failed Vertex call (every model) is "no answer" without a retry; the stop rule watches every real call.
  */
-export function createPermutationRanker(opts: { generate: GenerateFn; models: string[]; monitor: StopMonitor }): PermutationRanker {
+const GEMINI_BACKOFF_MS = [2000, 6000];
+const TRANSIENT = /\b(404|429|5\d\d)\b/;
+
+export function createPermutationRanker(opts: { generate: GenerateFn; models: string[]; monitor: StopMonitor; sleep?: (ms: number) => Promise<void> }): PermutationRanker {
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const { monitor } = opts;
+  // Amendment 3: HTTP 404, 429, 5xx or a non-JSON body is retried up to twice (2 s, then 6 s) on the same model before the fallback model is tried.
   const generate: GenerateFn = async (model, body) => {
-    try {
-      const r = await opts.generate(model, body);
-      monitor.record("gemini", { ok: true });
-      return r;
-    } catch (err) {
-      monitor.record("gemini", { ok: false, text: String((err as Error)?.message ?? err) });
-      throw err;
+    for (let attempt = 0; ; attempt += 1) {
+      monitor.assertOk();
+      try {
+        const r = await opts.generate(model, body);
+        monitor.record("gemini", { ok: true });
+        return r;
+      } catch (err) {
+        if (err instanceof StopRun) throw err;
+        const message = String((err as Error)?.message ?? err);
+        monitor.record("gemini", { ok: false, text: message });
+        const transient = err instanceof SyntaxError || TRANSIENT.test(message);
+        if (!transient || attempt >= GEMINI_BACKOFF_MS.length) throw err instanceof SyntaxError ? new Error(`non-JSON body from Vertex: ${message}`) : err;
+        await sleep(GEMINI_BACKOFF_MS[attempt]!);
+      }
     }
   };
   return {
