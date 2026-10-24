@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { NextStepLink } from "@/components/qloo/NextStep";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { DualBars } from "@/components/qloo/DualBars";
@@ -65,7 +66,7 @@ export default function CityPlaybook() {
 
 function CityPlaybookPage() {
   const { cityId = "" } = useParams();
-  const { state, run, shortlist, toggleShortlist, accentOrder } = useTourBoard();
+  const { state, run, shortlist, toggleShortlist, accentOrder, setLastOpened } = useTourBoard();
   const [params] = useSearchParams();
   const sampleParam = params.get("sample");
   const wantLong = sampleParam === "long";
@@ -99,6 +100,9 @@ function CityPlaybookPage() {
   const city = ready ? state.cities.find((c) => c.id === cityId) : undefined;
   const shownCity = city ?? (wantSample ? (wantShowcase ? showcaseCities() : SAMPLE_CITIES).find((c) => c.id === cityId) : undefined);
   const artist = ready ? state.artist : undefined;
+  // The Playbook step of the journey returns to the city opened last in this run.
+  const openedHere = ready && !!state.brief && state.cities.some((c) => c.id === cityId);
+  useEffect(() => { if (openedHere) setLastOpened(cityId); }, [openedHere, cityId, setLastOpened]);
   // A showcase city with no recorded playbook has nothing to open: say so instead of showing empty tiles.
   const unrecorded = (wantShowcase || state.source === "showcase") && ready && !!shownCity && showcasePlaybookEvents(cityId) === null;
   const req: PlaybookRequest | null = shownCity && artist && !unrecorded
@@ -228,9 +232,9 @@ function CityPlaybookPage() {
     <div className="flex min-w-0 flex-1 flex-col gap-1 lg:flex-none lg:items-start">
       {inTour ? (
         <div className="flex min-w-0 flex-1 flex-col items-stretch gap-0.5 lg:flex-none lg:flex-row-reverse lg:items-center lg:gap-2">
-          <Link data-testid="primary-action" to={nextHeld ? `/tours/playbook/${nextHeld.id}${sampleQ}` : `/tours/book${sampleQ}`} className="btn-gold inline-flex min-h-12 min-w-0 items-center justify-center rounded-[10px] px-4 py-2 text-center text-[15px] font-semibold leading-tight lg:h-10 lg:min-h-0 lg:px-5">
+          <NextStepLink data-testid="primary-action" to={nextHeld ? `/tours/playbook/${nextHeld.id}${sampleQ}` : `/tours/book${sampleQ}`} className="btn-gold inline-flex min-h-12 min-w-0 items-center justify-center rounded-[10px] px-4 py-2 text-center text-[15px] font-semibold leading-tight lg:h-10 lg:min-h-0 lg:px-5">
             <span className="min-w-0 break-words">{nextHeld ? `Next: ${nextHeld.name}` : "Next: Tour Book"}</span>
-          </Link>
+          </NextStepLink>
           <button type="button" onClick={() => toggleShortlist(shownCity.id)} className={removeBtn}>Remove from tour</button>
         </div>
       ) : (
@@ -314,7 +318,7 @@ function CityPlaybookPage() {
           {budget && (
             <Notice>
               <span className="min-w-0">Session limit reached — try the showcase tour</span>
-              <Link to="/tours/board?showcase=1" className={smallBtn}>Try the showcase tour</Link>
+              <Link to="/tours/board?showcase=1" className={smallBtn}>See the example tour</Link>
             </Notice>
           )}
           {unplaced && (
@@ -327,7 +331,7 @@ function CityPlaybookPage() {
             <Notice>
               <span className="min-w-0">{pb.status === "interrupted" ? "Connection lost while building this playbook." : "This playbook could not be built."}</span>
               <button type="button" onClick={retry} className={smallBtn}>Try again</button>
-              <Link to="/tours/board?showcase=1" className={smallBtn}>Try the showcase tour</Link>
+              <Link to="/tours/board?showcase=1" className={smallBtn}>See the example tour</Link>
             </Notice>
           )}
           {isDesktop && <div className="flex flex-wrap items-center gap-3">{addToTour}{whyBtn}</div>}

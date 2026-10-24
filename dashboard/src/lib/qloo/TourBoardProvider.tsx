@@ -1,16 +1,22 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import { SAMPLE_ACCENT_ORDER } from "./cityAccent";
 import { isSampleMode, streamTourBoard } from "./client";
+import { runKey } from "./journey";
 import { defaultShortlist } from "./ranking";
 import { boardReducer, initialBoard, type BoardState } from "./tourBoardReducer";
 import type { SampleSet, StrategistContext, TourBrief } from "./types";
 
-type Ctx = { state: BoardState; strategistContext: StrategistContext; shortlist: string[]; accentOrder: string[]; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: SampleSet }): void; abort(): void; reset(): void };
+type Ctx = { state: BoardState; strategistContext: StrategistContext; shortlist: string[]; accentOrder: string[]; /** The city whose playbook was opened last in the current run (null before any). */ lastOpenedId: string | null; setLastOpened(id: string): void; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: SampleSet }): void; abort(): void; reset(): void };
 const TourBoardContext = createContext<Ctx | null>(null);
 
 export function TourBoardProvider({ children, sampleDelayMs }: { children: ReactNode; sampleDelayMs?: number }) {
   const [state, dispatch] = useReducer(boardReducer, initialBoard);
   const controllerRef = useRef<AbortController | null>(null);
+  // The last-opened playbook city, keyed by run so a choice never leaks into another run.
+  const [opened, setOpened] = useState<Record<string, string>>({});
+  const key = runKey(state.source, state.sampleSet, state.brief?.artist);
+  const lastOpenedId = opened[key] ?? null;
+  const setLastOpened = useCallback((id: string) => setOpened((o) => (o[key] === id ? o : { ...o, [key]: id })), [key]);
 
   const silentAbort = useCallback((): boolean => {
     const c = controllerRef.current;
@@ -68,7 +74,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
     return ctx;
   }, [state.artist, state.brief?.regions, state.cities]);
 
-  const value = useMemo(() => ({ state, strategistContext, shortlist, accentOrder, setShortlist, toggleShortlist, run, abort, reset }), [state, strategistContext, shortlist, accentOrder, setShortlist, toggleShortlist, run, abort, reset]);
+  const value = useMemo(() => ({ state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, abort, reset }), [state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, abort, reset]);
   return <TourBoardContext.Provider value={value}>{children}</TourBoardContext.Provider>;
 }
 

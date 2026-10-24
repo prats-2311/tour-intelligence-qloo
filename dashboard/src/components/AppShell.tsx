@@ -1,16 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Compass, Route, ChartColumn, ChevronsUpDown, Plus, Check, HelpCircle, ArrowLeftRight, Globe2 } from "lucide-react";
+import { ChevronsUpDown, Plus, Check, HelpCircle, ArrowLeftRight, Globe2 } from "lucide-react";
 import { useCampaignContext } from "../lib/campaignContext";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 import { StrategistDock, StrategistFab, StrategistToggle, showsStrategist, useStrategistDock } from "./strategist/StrategistLauncher";
+import { JourneyStepper } from "./JourneyStepper";
 import { TourGuide, hasSeenTour } from "./ui/TourGuide";
-
-const NAV_ITEMS = [
-  { to: "/", label: "Discover", icon: Compass, end: true },
-  { to: "/tours/board", label: "Tours", icon: Route, end: false },
-  { to: "/insights", label: "Taste", icon: ChartColumn, end: false },
-];
 
 const toolLink = ({ isActive }: { isActive: boolean }) =>
   `flex min-h-11 items-center gap-1.5 rounded-lg px-2 font-sans text-[13px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold ${
@@ -164,27 +159,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="font-title text-[18px] font-semibold text-bone">Tour Intelligence</span>
               <span className="font-sans text-[13px] font-medium text-canvas-muted">× Qloo</span>
             </div>
-            <nav aria-label="Primary" className="flex items-center gap-6">
-              {NAV_ITEMS.map(({ to, label, end }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  end={end}
-                  className={({ isActive }) =>
-                    `relative flex h-14 items-center font-sans text-[14px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold ${
-                      isActive ? "text-bone" : "text-canvas-muted hover:text-bone"
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      {label}
-                      {isActive && <span aria-hidden className="absolute inset-x-0 bottom-2 h-0.5 bg-gold" />}
-                    </>
-                  )}
-                </NavLink>
-              ))}
-            </nav>
+            <nav aria-label="Primary"><JourneyStepper variant="top" /></nav>
           </div>
           <div className="flex items-center gap-2">
             {strategistRoute && <StrategistToggle open={dock.open} onToggle={() => dock.setOpen(!dock.open)} />}
@@ -197,28 +172,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           aria-label="Primary"
           className="fixed inset-x-0 bottom-0 z-40 bg-canvas-raised pb-[env(safe-area-inset-bottom)]"
         >
-          <div className="flex h-16 items-stretch justify-around">
-            {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  `relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold ${
-                    isActive ? "text-bone" : "text-canvas-muted"
-                  }`
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    {isActive && <span aria-hidden className="absolute top-2 h-[3px] w-5 bg-gold" />}
-                    <Icon size={22} aria-hidden className="mt-1" />
-                    <span className="font-display text-[11px] uppercase tracking-[0.08em]">{label}</span>
-                  </>
-                )}
-              </NavLink>
-            ))}
-          </div>
+          <JourneyStepper variant="bottom" />
         </nav>
       )}
 

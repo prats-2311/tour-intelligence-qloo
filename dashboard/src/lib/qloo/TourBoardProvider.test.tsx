@@ -7,7 +7,7 @@ import * as client from "./client";
 import type { GatewayEvent } from "./types";
 
 function Probe() {
-  const { state, run, abort } = useTourBoard();
+  const { state, run, abort, lastOpenedId, setLastOpened } = useTourBoard();
   return (<div>
     <span data-testid="status">{state.status}</span>
     <span data-testid="count">{state.cities.length}</span>
@@ -16,10 +16,29 @@ function Probe() {
     <button onClick={() => run(SAMPLE_BRIEF, { sample: true })}>run</button>
     <button onClick={() => run(SAMPLE_BRIEF, { sample: true, sampleSet: "long" })}>runlong</button>
     <button onClick={abort}>abort</button>
+    <span data-testid="opened">{lastOpenedId ?? ""}</span>
+    <button onClick={() => setLastOpened("4005539")}>open-gdl</button>
   </div>);
 }
 
 afterEach(() => { vi.restoreAllMocks(); });
+
+describe("TourBoardProvider last-opened city", () => {
+  it("is remembered for the run it was opened in and not carried into another run", async () => {
+    render(<TourBoardProvider sampleDelayMs={0}><Probe /></TourBoardProvider>);
+    act(() => screen.getByText("run").click());
+    await waitFor(() => expect(screen.getByTestId("status").textContent).toBe("done"));
+    expect(screen.getByTestId("opened").textContent).toBe("");
+    act(() => screen.getByText("open-gdl").click());
+    expect(screen.getByTestId("opened").textContent).toBe("4005539");
+    act(() => screen.getByText("runlong").click());
+    await waitFor(() => expect(screen.getByTestId("status").textContent).toBe("done"));
+    expect(screen.getByTestId("opened").textContent).toBe("");
+    act(() => screen.getByText("run").click());
+    await waitFor(() => expect(screen.getByTestId("status").textContent).toBe("done"));
+    expect(screen.getByTestId("opened").textContent).toBe("4005539");
+  });
+});
 
 describe("TourBoardProvider", () => {
   it("runs a sample stream to done", async () => {

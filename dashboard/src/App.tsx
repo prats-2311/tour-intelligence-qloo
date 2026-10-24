@@ -6,6 +6,7 @@ import { CampaignProvider } from "./lib/campaignContext";
 import { CityDetailSkeleton, CompareCitiesSkeleton, NewCampaignSkeleton, AddCitiesSkeleton, TasteInsightsSkeleton, TourBoardSkeleton, PlaybookSkeleton } from "./components/ui/Skeletons";
 import { WebMcpTools } from "./components/WebMcpTools";
 import { QlooWebMcpTools } from "./components/QlooWebMcpTools";
+import { routeImports } from "./lib/routeImports";
 
 // Dashboard (/campaign) is loaded eagerly. Landing and every other route ship
 // as separate chunks so the initial bundle stays small; each gets a fixed-height
@@ -13,12 +14,12 @@ import { QlooWebMcpTools } from "./components/QlooWebMcpTools";
 function LandingSkeleton() {
   return <div aria-hidden className="mx-auto min-h-[480px] w-full max-w-[1240px] rounded-[18px] bg-canvas-raised/40" />;
 }
-const Landing = lazy(() => import("./pages/Landing"));
-const TourBoard = lazy(() => import("./pages/TourBoard"));
-const CityPlaybook = lazy(() => import("./pages/CityPlaybook"));
-const Proof = lazy(() => import("./pages/Proof"));
-const TourBook = lazy(() => import("./pages/TourBook"));
-const TasteInsights = lazy(() => import("./pages/TasteInsights"));
+const Landing = lazy(routeImports.landing);
+const TourBoard = lazy(routeImports.board);
+const CityPlaybook = lazy(routeImports.playbook);
+const Proof = lazy(routeImports.proof);
+const TourBook = lazy(routeImports.book);
+const TasteInsights = lazy(routeImports.insights);
 const CityDetail = lazy(() => import("./pages/CityDetail").then((m) => ({ default: m.CityDetail })));
 const CompareCities = lazy(() => import("./pages/CompareCities").then((m) => ({ default: m.CompareCities })));
 const NewCampaign = lazy(() => import("./pages/NewCampaign").then((m) => ({ default: m.NewCampaign })));

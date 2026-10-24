@@ -58,7 +58,16 @@ const renderAt = (url: string, extra?: React.ReactNode) =>
     </QueryClientProvider>,
   );
 
+function Opened() {
+  return <span data-testid="opened">{useTourBoard().lastOpenedId ?? ""}</span>;
+}
+
 describe("CityPlaybook", () => {
+  it("records the opened city in the run so the Playbook step returns to it", async () => {
+    renderAt("/tours/playbook/4005539?sample=1", <Opened />);
+    await screen.findByRole("heading", { name: "Guadalajara" });
+    await waitFor(() => expect(screen.getByTestId("opened").textContent).toBe("4005539"));
+  });
   it("renders the Guadalajara sample playbook standalone from ?sample=1", async () => {
     renderAt("/tours/playbook/4005539?sample=1");
     expect(await screen.findByRole("heading", { name: "Guadalajara" })).toBeTruthy();
@@ -262,7 +271,7 @@ describe("CityPlaybook (shared)", () => {
       yield { type: "error", code, message: "boom" };
     });
     renderAt("/tours/playbook/4005539?sample=1");
-    const link = await screen.findByRole("link", { name: "Try the showcase tour" });
+    const link = await screen.findByRole("link", { name: "See the example tour" });
     expect(link.getAttribute("href")).toBe("/tours/board?showcase=1");
     expect(!!screen.queryByRole("button", { name: "Try again" })).toBe(code !== "BUDGET");
   });

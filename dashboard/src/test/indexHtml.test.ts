@@ -12,6 +12,18 @@ describe("index.html", () => {
   });
 });
 
+describe("speculation rules", () => {
+  const rules = () => JSON.parse(html.match(/<script type="speculationrules">([\s\S]*?)<\/script>/)![1]!);
+  it("prefetches /proof and /tours/board, same-origin, moderate eagerness, and never prerenders", () => {
+    const r = rules();
+    expect(r.prerender).toBeUndefined();
+    expect(r.prefetch).toHaveLength(1);
+    expect(r.prefetch[0].eagerness).toBe("moderate");
+    expect(r.prefetch[0].urls).toEqual(["/proof", "/tours/board"]);
+    for (const u of r.prefetch[0].urls) expect(u.startsWith("/") && !u.startsWith("//")).toBe(true);
+  });
+});
+
 describe("origin-trial injection (VITE_WEBMCP_OT_TOKEN)", () => {
   const page = "<html><head>\n</head><body></body></html>";
   const metas = (out: string) => [...out.matchAll(/<meta http-equiv="origin-trial" content="([^"]*)">/g)].map((m) => m[1]);
