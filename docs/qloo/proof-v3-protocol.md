@@ -138,3 +138,16 @@ No Qloo or Gemini call has been made.
    - Any error envelope whose code or message matches rate/quota/limit, any `stale: true` answer (a cached fallback served because a live call failed), and any HTTP 429 from Cloud Run all stop the run at once.
    - A region whose heat lookup is unavailable drops that artist, and the drop is listed.
    - All Gemini models failing for an artist is an infrastructure failure, not "no answer". The run stops and it is reported.
+
+## Amendment 3 (2026-10-24, infrastructure only, before re-running Test B)
+**What happened:** Test B's first run stopped after 12 Qloo calls (0 Qloo errors) and 3 Gemini calls. Two of the Gemini calls failed with intermittent HTML 404 pages from the Vertex front end; the same requests returned 200 minutes later, on both models. The stop rule counted each failed Gemini model attempt toward the 10% error rate, even when the fallback model then answered.
+
+The stopped run is kept (`private-data/backtest/proof-v3-fixed.stopped-1.json`) and reported. Under the protocol's rule, this counts as an infrastructure failure.
+
+**Changes:** these affect only infrastructure handling, not candidates, arms, metrics or claims.
+1. **Gemini retries:** a Gemini call that fails with HTTP 404, 429 or 5xx, or a non-JSON body, is retried up to 2 times with backoff (2 s, 6 s) before moving to the fallback model.
+2. **Error-rate stop:** the 10% error-rate rule counts Qloo calls only.
+3. **Gemini stop:** a Gemini answer counts as failed only when every model has failed after its retries, and that already stops the run as an infrastructure failure.
+4. **Unchanged:** the Qloo stop conditions (429, rate/quota/limit, stale answers) stay exactly as they are.
+
+Test B is re-run from the start under this amendment. Test A batch 1 had no stop and is unaffected; its 1 Gemini error was covered by the fallback.
