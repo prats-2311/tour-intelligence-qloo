@@ -4,7 +4,12 @@
 //
 //   QLOO_GATEWAY_URL=https://qloo-gateway-602700957663.us-central1.run.app \
 //   node dashboard/scripts/record-showcase.mjs --artist "<name>" --regions "Mexico,Brazil,United States" \
-//     --out private-data/showcase.json [--window 2027-03-12:2027-04-18] [--max-playbooks 4]
+//     --out private-data/showcase.json [--window 2027-03-12:2027-04-18] [--max-playbooks 4] \
+//     [--cities "Portland, US; Austin, US; Mexico City, MX; Guadalajara, MX; Boise, US; Querétaro, MX"]
+//
+// --cities (at most 8, "City" or "City, Country" separated by ;) also records a second board in "paste your cities" mode under the
+// key `routing`: { cities, boardEvents, playbooks } with playbooks for its top 2 scored cities. It runs in its own gateway session
+// (<session>-routing) because the per-session Qloo budget (160) cannot hold both boards and their playbooks.
 //
 // The identity token comes from `gcloud auth print-identity-token`, lives in memory only, and is never
 // logged or written. Recording spends real Qloo, Vertex and Tavily quota: run it deliberately.
@@ -12,6 +17,8 @@ import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+const MAX_ROUTING_CITIES = 8;
+const ROUTING_PLAYBOOKS = 2;
 const SHORTLIST_VERDICTS = new Set(["hidden_goldmine", "play"]);
 // The only tool_call arg keys the UI shows (see narrate.ts); everything else is dropped from the recording.
 const VISIBLE_ARG_KEYS = ["entity", "within", "signal_location", "filter_location", "target_type", "query", "signals"];
@@ -33,7 +40,19 @@ export function parseArgs(argv) {
     window = { start, end };
   }
   const maxPlaybooks = Math.min(4, Math.max(0, Number(get("--max-playbooks") ?? 4) || 0));
-  return { artist, regions, out, ...(window ? { window } : {}), maxPlaybooks };
+  const citiesArg = get("--cities");
+  let cities;
+  if (citiesArg !== undefined) {
+    cities = citiesArg.split(";").map((c) => c.trim()).filter(Boolean).map((c) => {
+      const i = c.lastIndexOf(",");
+      const name = (i === -1 ? c : c.slice(0, i)).trim();
+      const country = i === -1 ? "" : c.slice(i + 1).trim();
+      return country ? { name, country } : { name };
+    }).filter((c) => c.name);
+    if (cities.length === 0) throw new Error('--cities needs at least one city ("City, CC; City, CC")');
+    if (cities.length > MAX_ROUTING_CITIES) throw new Error(`--cities takes at most ${MAX_ROUTING_CITIES} cities`);
+  }
+  return { artist, regions, out, ...(window ? { window } : {}), maxPlaybooks, ...(cities ? { cities } : {}) };
 }
 
 const isPlain = (v) => !!v && typeof v === "object" && !Array.isArray(v);
@@ -92,7 +111,7 @@ function makeSessionId(artist, now) {
   return `showcase-${now.toISOString().slice(0, 10)}-${slug}-${rand}`;
 }
 
-export async function record({ artist, regions, window, maxPlaybooks = 4, gatewayUrl, token, fetchImpl = fetch, now = new Date(), sessionId = makeSessionId(artist, now), log = () => {}, warn = (m) => console.error(`warning: ${m}`) }) {
+export async function record({ artist, regions, window, maxPlaybooks = 4, cities: pasted, gatewayUrl, token, fetchImpl = fetch, now = new Date(), sessionId = makeSessionId(artist, now), log = () => {}, warn = (m) => console.error(`warning: ${m}`) }) {
   if (!gatewayUrl) throw new Error("QLOO_GATEWAY_URL is not set");
   if (!token) throw new Error("no identity token");
   const base = gatewayUrl.replace(/\/+$/, "");
@@ -130,12 +149,15 @@ export async function record({ artist, regions, window, maxPlaybooks = 4, gatewa
     .sort((a, b) => (a.verdict === b.verdict ? 0 : a.verdict === "hidden_goldmine" ? -1 : 1) || (b.winnability.value ?? -1) - (a.winnability.value ?? -1))
     .slice(0, maxPlaybooks);
 
+  const playbookEvents = (c, hdrs, pin) => {
+    const qs = new URLSearchParams({ artist, artistEntityId: resolved.entity.entityId, ...(Number.isFinite(resolved.entity.popularity) ? { artistPopularity: String(resolved.entity.popularity) } : {}), city: c.name, country: c.country, ...(pin ? { cityId: String(c.id), lat: String(c.lat), lon: String(c.lon) } : {}) }).toString();
+    return events(`/v1/city-playbook?${qs}`, { method: "GET", headers: hdrs });
+  };
   const playbooks = {};
   const thisWeek = {};
   for (const c of picks) {
     log(`Recording the playbook for ${c.name}...`);
-    const qs = new URLSearchParams({ artist, artistEntityId: resolved.entity.entityId, ...(Number.isFinite(resolved.entity.popularity) ? { artistPopularity: String(resolved.entity.popularity) } : {}), city: c.name, country: c.country }).toString();
-    const pbEvents = await events(`/v1/city-playbook?${qs}`, { method: "GET", headers });
+    const pbEvents = await playbookEvents(c, headers, false);
     if (!pbEvents.some((e) => e.type === "done") || pbEvents.at(-1)?.type === "error") {
       warn(`playbook for ${c.name} did not finish cleanly; leaving it out`);
       continue;
@@ -146,7 +168,31 @@ export async function record({ artist, regions, window, maxPlaybooks = 4, gatewa
       thisWeek[c.id] = await (await call(`/v1/this-week?${wq}`, { method: "GET", headers })).json();
     }
   }
-  return { recordedAt: now.toISOString(), artist: resolved.entity.name, brief, boardEvents, withoutQloo, playbooks, thisWeek };
+  const rec = { recordedAt: now.toISOString(), artist: resolved.entity.name, brief, boardEvents, withoutQloo, playbooks, thisWeek };
+
+  if (pasted?.length) {
+    // The routing example: the same artist, the pasted cities only. A separate session id keeps it off the main run's budget; whatever
+    // the two boards share is already cached, so it costs less than a cold board.
+    const rHeaders = { ...headers, "x-session-id": `${sessionId}-routing` };
+    log(`Recording the routing board for ${pasted.length} pasted ${pasted.length === 1 ? "city" : "cities"}...`);
+    try {
+      const rBoard = await events("/v1/tour-board", { method: "POST", headers: { ...rHeaders, "content-type": "application/json" }, body: JSON.stringify({ artist, artistEntityId: resolved.entity.entityId, regions, maxStops: 8, cities: pasted }) });
+      if (!rBoard.some((e) => e.type === "done")) throw new Error("the routing board stream did not finish");
+      const scoredCities = rBoard.filter((e) => e.type === "city_scored").map((e) => e.city);
+      const rPicks = scoredCities.filter((c) => c.winnability?.value !== null && c.winnability?.value !== undefined).sort((a, b) => b.winnability.value - a.winnability.value).slice(0, ROUTING_PLAYBOOKS);
+      const rPlaybooks = {};
+      for (const c of rPicks) {
+        log(`Recording the routing playbook for ${c.name}...`);
+        const pb = await playbookEvents(c, rHeaders, true);
+        if (!pb.some((e) => e.type === "done") || pb.at(-1)?.type === "error") { warn(`routing playbook for ${c.name} did not finish cleanly; leaving it out`); continue; }
+        rPlaybooks[c.id] = pb;
+      }
+      rec.routing = { cities: pasted, boardEvents: rBoard, playbooks: rPlaybooks };
+    } catch (err) {
+      warn(`routing example not recorded (${err.message})`);
+    }
+  }
+  return rec;
 }
 
 /** One line per city: verdict, then its fan-density rank against its winnability rank. */
@@ -156,7 +202,15 @@ export function summarize(rec) {
   const dens = rank("fanHeat");
   const win = rank("winnability");
   const lines = cities.map((c) => `${c.name} (${c.country}) [${c.candidateSource ?? "heat"}${c.fanHeatFloor ? ", fan heat at floor" : ""}] ${c.verdict}: density #${dens.indexOf(c.id) + 1}, winnability #${win.indexOf(c.id) + 1}`);
-  return [`${rec.artist}, recorded ${rec.recordedAt}`, ...lines, `playbooks: ${Object.keys(rec.playbooks).join(", ") || "none"}`].join("\n");
+  const out = [`${rec.artist}, recorded ${rec.recordedAt}`, ...lines, `playbooks: ${Object.keys(rec.playbooks).join(", ") || "none"}`];
+  if (rec.routing) {
+    const rc = rec.routing.boardEvents.filter((e) => e.type === "city_scored").map((e) => e.city);
+    const unmatched = rec.routing.boardEvents.filter((e) => e.type === "routing_unmatched").flatMap((e) => e.names);
+    out.push(`routing (${rec.routing.cities.length} pasted):`, ...rc.map((c) => `  ${c.name} (${c.country}) [${c.candidateSource ?? "?"}${c.fanHeatFloor ? ", fan heat at floor" : ""}] ${c.verdict}`));
+    if (unmatched.length) out.push(`  not in our city list: ${unmatched.join(", ")}`);
+    out.push(`  routing playbooks: ${Object.keys(rec.routing.playbooks).join(", ") || "none"}`);
+  }
+  return out.join("\n");
 }
 
 function identityToken() {

@@ -31,7 +31,7 @@ import { firstOkName } from "@/lib/qloo/playbookFacts";
 import { loadPlaybook, usePlaybook, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
-import { showcaseAvailable, showcaseBrief, showcaseCities, showcasePlaybookCities, showcasePlaybookEvents } from "@/lib/qloo/showcase";
+import { isRoutingBrief, setShowcaseVariant, showcaseAvailable, showcaseBrief, showcaseCities, showcaseParam, showcasePlaybookCities, showcasePlaybookEvents, showcaseQuery, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
 import type { CardKind, PlaybookCard as Card, SampleSet } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
@@ -63,7 +63,7 @@ const first = (cards: Card[], kind: CardKind, key: string): string => firstOkNam
 
 export default function CityPlaybook() {
   const [params] = useSearchParams();
-  if (params.get("showcase") === "1" && !showcaseAvailable()) return <ShowcaseUnavailable sampleHref={`/tours/playbook/${SAMPLE_CITIES[2]!.id}?sample=1`} />;
+  if (showcaseParam(params.get("showcase")) !== null && !showcaseAvailable()) return <ShowcaseUnavailable sampleHref={`/tours/playbook/${SAMPLE_CITIES[2]!.id}?sample=1`} />;
   return <CityPlaybookPage />;
 }
 
@@ -73,12 +73,15 @@ function CityPlaybookPage() {
   const [params] = useSearchParams();
   const sampleParam = params.get("sample");
   const wantLong = sampleParam === "long";
-  const wantShowcase = params.get("showcase") === "1";
+  const showParam = showcaseParam(params.get("showcase"));
+  const wantShowcase = showParam !== null;
+  const wantRouting = showParam === "routing" && showcaseRoutingAvailable();
+  setShowcaseVariant(wantRouting ? "routing" : "main"); // before any accessor below reads the recording (see useShowcaseVariant)
   const wantSample = sampleParam === "1" || wantLong || wantShowcase;
   const wantSet: SampleSet = wantShowcase ? "showcase" : wantLong ? "long" : "default";
   // The URL decides; a run already held on the board is the fallback, so Back never drops the showcase or sample flag.
-  const sampleQ = wantShowcase ? "?showcase=1" : wantLong ? "?sample=long" : wantSample ? "?sample=1"
-    : state.source === "showcase" ? "?showcase=1" : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
+  const sampleQ = wantShowcase ? showcaseQuery(wantRouting) : wantLong ? "?sample=long" : wantSample ? "?sample=1"
+    : state.source === "showcase" ? showcaseQuery(isRoutingBrief(state.brief)) : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
   // Bare url, no run: open the example (as the stepper does) instead of an empty state.
   const bareExample = useWantsExample(!wantSample);
   useOpenExampleRun(bareExample);
@@ -97,12 +100,12 @@ function CityPlaybookPage() {
   useEffect(() => {
     if (!wantSample || started.current === wantSet) return;
     started.current = wantSet;
-    if (state.source === "live" || (state.sampleSet ?? "default") !== wantSet) run(wantShowcase ? showcaseBrief() : wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
-  }, [wantSample, wantLong, wantSet, state.source, state.sampleSet, run]);
+    if (state.source === "live" || (state.sampleSet ?? "default") !== wantSet || (wantShowcase && isRoutingBrief(state.brief) !== wantRouting)) run(wantShowcase ? showcaseBrief() : wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
+  }, [wantSample, wantLong, wantSet, wantRouting, state.source, state.sampleSet, state.brief, run]);
 
   const sample = state.source !== "live";
   // While a requested sample run has not started, nothing from an earlier live run is shown.
-  const ready = !wantSample || (sample && (state.sampleSet ?? "default") === wantSet);
+  const ready = !wantSample || (sample && (state.sampleSet ?? "default") === wantSet && (!wantShowcase || isRoutingBrief(state.brief) === wantRouting));
   const city = ready ? state.cities.find((c) => c.id === cityId) : undefined;
   const shownCity = city ?? (wantSample ? (wantShowcase ? showcaseCities() : SAMPLE_CITIES).find((c) => c.id === cityId) : undefined);
   const artist = ready ? state.artist : undefined;

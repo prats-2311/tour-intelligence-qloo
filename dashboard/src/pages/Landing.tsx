@@ -7,7 +7,7 @@ import { NextStepLink } from "@/components/qloo/NextStep";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
 import { sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
-import { proofFor, rankShiftLine, SHOWCASE, showcaseCities } from "@/lib/qloo/showcase";
+import { proofFor, rankShiftLine, SHOWCASE, showcaseCities, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
 import { storyBeats } from "@/lib/qloo/story";
 import type { ScoredCity } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
@@ -116,7 +116,10 @@ export default function Landing() {
           <NextStepLink to="/tours/board?showcase=1" className={`${CTA} bg-gold font-semibold text-on-gold hover:bg-gold-soft active:bg-[#efb900]`}>See the example tour</NextStepLink>
           <Link to="/tours/board?new=1" className={`${CTA} bg-paper-raised font-medium text-canvas-text hover:bg-[#3a3932]`}>Try your own artist</Link>
         </div>
-        <Link to="/proof" className="mt-1 inline-flex min-h-11 items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{PROOF_LINK_TEXT} →</Link>
+        {showcaseRoutingAvailable() && (
+          <NextStepLink to="/tours/board?showcase=routing" className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Try a routing</NextStepLink>
+        )}
+        <Link to="/proof" className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{PROOF_LINK_TEXT} →</Link>
       </div>
       <Story />
       <div className="flex flex-col gap-6 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">

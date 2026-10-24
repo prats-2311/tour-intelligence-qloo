@@ -37,7 +37,7 @@ export interface ScoredCity {
   /** Why a city has no activation score. Only "location_unresolved" today: Qloo placed the city somewhere else, so it was not scored. */
   insufficientReason?: "location_unresolved";
   /** "major_market": the largest city of a brief country, checked though absent from Qloo's fan-heat list (fan heat is the board's floor). Absent on older recordings: treat as "heat". */
-  candidateSource?: "heat" | "major_market";
+  candidateSource?: "heat" | "major_market" | "your_routing";
   fanHeatFloor?: boolean;
   /** The location string Qloo resolved this city with and how many lookups that took (unresolved: all that were tried). */
   locationQuery?: string;
@@ -81,6 +81,7 @@ export type GatewayEvent =
   | { type: "tool_call"; tool: string; args: Record<string, unknown>; cached: boolean }
   | { type: "tool_result"; tool: string; status: QlooStatus; resultCount: number; cacheKey: string; stale: boolean }
   | { type: "region_empty"; region: string }
+  | { type: "routing_unmatched"; names: string[] }
   | { type: "city_scored"; city: ScoredCity }
   | { type: "playbook"; playbook: { city: { name: string; country: string }; cards: PlaybookCard[] } }
   | { type: "narrative"; narrative: Narrative }
@@ -91,7 +92,10 @@ export type GatewayEvent =
   | { type: "strategist_error"; code: "CAPPED" | "UNAVAILABLE" | "ABORTED" | "INTERNAL"; message: string }
   | { type: "done"; summary: unknown }
   | { type: "error"; code: string; message: string };
-export interface TourBrief { artist: string; artistEntityId?: string; regions: string[]; maxStops: number; dateWindow?: DateWindow }
+/** One pasted city: "City" or "City, Country" (country as ISO-2 or English name). */
+export interface RoutingCity { name: string; country?: string }
+/** `cities` set means "paste your cities" mode: the board scores only those (at most 8), and `regions` only help match names without a country. */
+export interface TourBrief { artist: string; artistEntityId?: string; regions: string[]; maxStops: number; dateWindow?: DateWindow; cities?: RoutingCity[] }
 export interface ChatMessage { role: "user" | "assistant"; text: string }
 export interface StrategistContext {
   artist?: { name: string; entityId: string };

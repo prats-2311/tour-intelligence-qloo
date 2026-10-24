@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { isRoutingBrief } from "@/lib/qloo/showcase";
 import { journeyLinks, stepOf, STEPS, type StepId } from "@/lib/qloo/journey";
 import { usePreloadWhenVisible } from "@/lib/routePreload";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
@@ -35,7 +36,7 @@ function Step({ id, label, n, state, to, preload, bottom }: { id: StepId; label:
 export function JourneyStepper({ variant }: { variant: "top" | "bottom" }) {
   const { pathname } = useLocation();
   const { state, shortlist, lastOpenedId } = useTourBoard();
-  const links = journeyLinks({ status: state.status, source: state.source, sampleSet: state.sampleSet, cities: state.cities, shortlist, lastOpenedId });
+  const links = journeyLinks({ status: state.status, source: state.source, sampleSet: state.sampleSet, routing: isRoutingBrief(state.brief), cities: state.cities, shortlist, lastOpenedId });
   const current = stepOf(pathname);
   const at = current ? STEPS.findIndex((s) => s.id === current) : -1;
   const bottom = variant === "bottom";

@@ -1,7 +1,7 @@
 import { SAMPLE_PLAYBOOK_CITY_IDS } from "./fixtures/lumenValePlaybooks";
 import { SAMPLE_CITIES } from "./fixtures/lumenVale";
 import { defaultShortlist, sortCities } from "./ranking";
-import { showcaseAvailable, showcaseBrief, showcaseCities, showcasePlaybookEvents } from "./showcase";
+import { showcaseAvailable, showcaseBrief, showcaseCities, showcasePlaybookEvents, showcaseQuery, showcaseVariant } from "./showcase";
 import type { SampleSet, ScoredCity, Source } from "./types";
 
 export type StepId = "markets" | "decide" | "playbook" | "book";
@@ -31,10 +31,12 @@ export type JourneyInput = {
   cities: ScoredCity[];
   shortlist: string[];
   lastOpenedId: string | null;
+  /** The run is the recorded (or live) pasted-cities routing, so showcase links carry ?showcase=routing. */
+  routing?: boolean;
 };
 
-const queryFor = (source: Source, sampleSet?: SampleSet): string =>
-  source === "showcase" ? "?showcase=1" : source === "sample" ? (sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
+const queryFor = (source: Source, sampleSet?: SampleSet, routing = false): string =>
+  source === "showcase" ? showcaseQuery(routing) : source === "sample" ? (sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
 
 const hasPlaybook = (source: Source, id: string): boolean =>
   source === "showcase" ? showcasePlaybookEvents(id) !== null : source === "sample" ? (SAMPLE_PLAYBOOK_CITY_IDS as readonly string[]).includes(id) : true;
@@ -42,15 +44,17 @@ const hasPlaybook = (source: Source, id: string): boolean =>
 /** Where each journey step leads right now. With no run it always leads into the showcase example (or the sample when no recording loaded). */
 export function journeyLinks(input: JourneyInput): Record<StepId, string> {
   const hasRun = input.status !== "idle" || input.cities.length > 0;
+  let routing = input.routing === true;
   let source = input.source, sampleSet = input.sampleSet, cities = input.cities, shortlist = input.shortlist, lastOpened = input.lastOpenedId;
   if (!hasRun) {
     source = showcaseAvailable() ? "showcase" : "sample";
     sampleSet = undefined;
+    routing = showcaseVariant() === "routing";
     cities = source === "showcase" ? showcaseCities() : SAMPLE_CITIES;
     shortlist = defaultShortlist(cities, source === "showcase" ? showcaseBrief().maxStops : 8);
     lastOpened = null;
   }
-  const q = queryFor(source, sampleSet);
+  const q = queryFor(source, sampleSet, routing);
   const decide = `/tours/board${q}`;
   const byId = new Map(cities.map((c) => [c.id, c]));
   const candidates = [lastOpened, ...shortlist, ...sortCities(cities, "winnability").map((c) => c.id)];

@@ -1,3 +1,4 @@
+import { showcaseParam } from "@/lib/qloo/showcase";
 import { useCallback, useState } from "react";
 import { useLocation, matchPath } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
@@ -38,7 +39,7 @@ function useLauncherModel() {
   const { pathname, search } = useLocation();
   const { state, strategistContext } = useTourBoard();
   const sampleParam = new URLSearchParams(search).get("sample");
-  const showcase = state.source === "showcase" || (state.status === "idle" && new URLSearchParams(search).get("showcase") === "1");
+  const showcase = state.source === "showcase" || (state.status === "idle" && showcaseParam(new URLSearchParams(search).get("showcase")) !== null);
   const sample = showcase || state.source === "sample" || (state.status === "idle" && (isSampleMode() || sampleParam === "1" || sampleParam === "long"));
   const focusCityId = matchPath("/tours/playbook/:cityId", pathname)?.params.cityId;
   const cityName = focusCityId

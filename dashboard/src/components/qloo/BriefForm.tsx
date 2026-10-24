@@ -1,5 +1,6 @@
 import { Check, CircleAlert, Plus } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
+import { parsePastedCities, ROUTING_CAP_NOTE, routingLabel } from "@/lib/qloo/routing";
 import type { TourBrief } from "@/lib/qloo/types";
 
 const PRESETS = ["Mexico", "Brazil", "United States", "Colombia", "Argentina", "United Kingdom", "Spain", "Japan", "India"];
@@ -9,17 +10,19 @@ const MAX_WINDOW_DAYS = 62; // the gateway rejects longer This week windows
 const field = "h-12 w-full min-w-0 rounded-[10px] bg-paper-raised px-3 text-[15px] text-canvas-text placeholder:text-canvas-muted lg:h-10";
 
 export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBrief) => void; defaultBrief?: TourBrief }) {
-  const ids = { artist: useId(), stops: useId(), region: useId(), err: useId(), wStart: useId(), wEnd: useId(), wErr: useId() };
+  const ids = { paste: useId(), pasteHint: useId(), artist: useId(), stops: useId(), region: useId(), err: useId(), wStart: useId(), wEnd: useId(), wErr: useId() };
   const [artist, setArtist] = useState(defaultBrief?.artist ?? "");
   const [regions, setRegions] = useState<string[]>(defaultBrief?.regions ?? DEFAULT_REGIONS);
   const [custom, setCustom] = useState<string[]>(() => (defaultBrief?.regions ?? []).filter((r) => !PRESETS.includes(r)));
   const [draft, setDraft] = useState("");
   const [stops, setStops] = useState(String(defaultBrief?.maxStops ?? 6));
   const [error, setError] = useState<string | null>(null);
+  const [pasted, setPasted] = useState(() => (defaultBrief?.cities ?? []).map(routingLabel).join("\n"));
   const [winStart, setWinStart] = useState(defaultBrief?.dateWindow?.start ?? "");
   const [winEnd, setWinEnd] = useState(defaultBrief?.dateWindow?.end ?? "");
   const [winError, setWinError] = useState<string | null>(null);
 
+  const routing = parsePastedCities(pasted);
   const chips = [...PRESETS, ...custom];
   const has = (r: string) => regions.some((x) => x.toLowerCase() === r.toLowerCase());
   const toggle = (r: string) => {
@@ -46,14 +49,14 @@ export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBr
     const name = artist.trim();
     const n = Number(stops);
     if (!name) return setError("Enter an artist.");
-    if (regions.length < 1) return setError("Pick at least one region.");
+    if (regions.length < 1 && routing.cities.length === 0) return setError("Pick at least one region.");
     if (!Number.isInteger(n) || n < 1 || n > 20) return setError("Max stops must be a whole number from 1 to 20.");
     if ((winStart === "") !== (winEnd === "")) return setWinError("Add both dates or neither");
     if (winStart && winEnd && winEnd < winStart) return setWinError("Window end must be on or after the start");
     if (winStart && winEnd && (Date.parse(winEnd) - Date.parse(winStart)) / 86_400_000 > MAX_WINDOW_DAYS) return setWinError(`Date window can be at most ${MAX_WINDOW_DAYS} days`);
     setError(null);
     setWinError(null);
-    onSubmit({ ...(defaultBrief?.artistEntityId && name === defaultBrief.artist ? { artistEntityId: defaultBrief.artistEntityId } : {}), artist: name, regions, maxStops: n, ...(winStart && winEnd ? { dateWindow: { start: winStart, end: winEnd } } : {}) });
+    onSubmit({ ...(defaultBrief?.artistEntityId && name === defaultBrief.artist ? { artistEntityId: defaultBrief.artistEntityId } : {}), artist: name, regions, maxStops: n, ...(routing.cities.length > 0 ? { cities: routing.cities } : {}), ...(winStart && winEnd ? { dateWindow: { start: winStart, end: winEnd } } : {}) });
   };
 
   return (
@@ -96,6 +99,24 @@ export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBr
           </button>
         </div>
       </fieldset>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={ids.paste} className="text-[13px] font-medium text-canvas-muted">Paste your cities</label>
+        <textarea
+          id={ids.paste}
+          value={pasted}
+          onChange={(e) => setPasted(e.target.value)}
+          rows={4}
+          autoComplete="off"
+          spellCheck={false}
+          aria-describedby={ids.pasteHint}
+          placeholder={"Portland, US\nMexico City, MX"}
+          className="min-h-24 w-full min-w-0 rounded-[10px] bg-paper-raised px-3 py-3 text-[15px] text-canvas-text placeholder:text-canvas-muted"
+        />
+        <p id={ids.pasteHint} className="text-[12px] text-canvas-muted">
+          Optional. One city per line: &ldquo;City&rdquo; or &ldquo;City, Country&rdquo;. Only these cities are scored; regions above just help match names without a country.
+        </p>
+        {routing.capped && <p role="status" className="text-[13px] text-canvas-text">{ROUTING_CAP_NOTE}</p>}
+      </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor={ids.stops} className="text-[13px] font-medium text-canvas-muted">Max stops</label>
         <input id={ids.stops} type="number" inputMode="numeric" min={1} max={20} value={stops} onChange={(e) => setStops(e.target.value)} className={`${field} sm:max-w-32`} />

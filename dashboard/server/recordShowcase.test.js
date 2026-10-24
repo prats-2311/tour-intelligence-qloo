@@ -176,4 +176,96 @@ describe("record-showcase", () => {
       expect(await run("Test Artist", { sessionId: "pinned-123" })).toBe("pinned-123");
     });
   });
+
+  describe("--cities (the recorded routing)", () => {
+    const LIST = "Alpha, MX; Beta, MX; Gamma, US; Delta; Atlantis, ZZ";
+    const routingFetch = (calls, board = BOARD2) => {
+      const base = mockFetch(calls);
+      return async (url, init) => {
+        const u = new URL(String(url));
+        if (u.pathname === "/v1/tour-board" && JSON.parse(init.body).cities) {
+          calls.push({ url: String(url), init, routing: true });
+          return new Response(sse(board), { status: 200 });
+        }
+        return base(url, init);
+      };
+    };
+    const routed = (c, id, name, fan, win, verdict) => ({ ...c(id, name, fan, win, verdict), candidateSource: "your_routing" });
+    const BOARD2 = [
+      { type: "resolve", entity: { entityId: "E1", name: "Test Artist", popularity: 0.62 } },
+      { type: "routing_unmatched", names: ["Atlantis, ZZ"] },
+      { type: "city_scored", city: routed(city, "10", "Alpha", 80, 70, "play") },
+      { type: "city_scored", city: routed(city, "11", "Beta", 50, 65, "consider") },
+      { type: "city_scored", city: routed(city, "12", "Gamma", 40, 20, "skip") },
+      { type: "city_scored", city: { ...routed(city, "13", "Delta", 10, 0, "insufficient_data"), winnability: { value: null, reason: "insufficient_data", refs: [] } } },
+      { type: "done", summary: {} },
+    ];
+
+    it("parses 'A, CC; B, CC' into cities, a bare name has no country, and more than 8 is refused", () => {
+      const a = parseArgs(["--artist", "A", "--regions", "Mexico", "--out", "o.json", "--cities", LIST]);
+      expect(a.cities).toEqual([{ name: "Alpha", country: "MX" }, { name: "Beta", country: "MX" }, { name: "Gamma", country: "US" }, { name: "Delta" }, { name: "Atlantis", country: "ZZ" }]);
+      expect(parseArgs(["--artist", "A", "--regions", "Mexico", "--out", "o.json"])).not.toHaveProperty("cities");
+      expect(() => parseArgs(["--artist", "A", "--regions", "Mexico", "--out", "o.json", "--cities", Array.from({ length: 9 }, (_, i) => `C${i}`).join(";")])).toThrow(/at most 8/);
+      expect(() => parseArgs(["--artist", "A", "--regions", "Mexico", "--out", "o.json", "--cities", " ; "])).toThrow(/--cities/);
+    });
+
+    it("records a second board under the routing key: cities, boardEvents, playbooks for the top 2 scored cities only", async () => {
+      const calls = [];
+      const parsed = parseArgs(["--artist", "Test Artist", "--regions", "Mexico", "--out", "o.json", "--cities", LIST]);
+      const out = await record({ ...parsed, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl: routingFetch(calls), sessionId: "s1" });
+      expect(Object.keys(out).sort()).toEqual(["artist", "boardEvents", "brief", "playbooks", "recordedAt", "routing", "thisWeek", "withoutQloo"]);
+      expect(Object.keys(out.routing).sort()).toEqual(["boardEvents", "cities", "playbooks"]);
+      expect(out.routing.cities).toEqual(parsed.cities);
+      expect(out.routing.boardEvents.map((e) => e.type)).toEqual(["resolve", "routing_unmatched", "city_scored", "city_scored", "city_scored", "city_scored", "done"]);
+      expect(Object.keys(out.routing.playbooks).sort()).toEqual(["10", "11"]); // top 2 by winnability; the unscored city is never picked
+      // The main recording is unchanged by the routing run.
+      expect(Object.keys(out.playbooks).sort()).toEqual(["1", "2"]);
+      expect(out.boardEvents).toHaveLength(BOARD.length);
+    });
+
+    it("sends the pasted cities to the gateway with the resolved artist id and its own session (the 160-call budget is per session)", async () => {
+      const calls = [];
+      const parsed = parseArgs(["--artist", "Test Artist", "--regions", "Mexico", "--out", "o.json", "--cities", LIST]);
+      await record({ ...parsed, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl: routingFetch(calls), sessionId: "s1" });
+      const rb = calls.find((c) => c.routing);
+      expect(JSON.parse(rb.init.body)).toEqual({ artist: "Test Artist", artistEntityId: "E1", regions: ["Mexico"], maxStops: 8, cities: parsed.cities });
+      expect(rb.init.headers["x-session-id"]).toBe("s1-routing");
+      const main = calls.find((c) => c.url.includes("/v1/tour-board") && !c.routing);
+      expect(main.init.headers["x-session-id"]).toBe("s1");
+      // playbooks of the routing pin the city by id and coordinates so a same-named city elsewhere cannot be picked
+      const pbs = calls.filter((c) => c.url.includes("/v1/city-playbook") && c.init.headers["x-session-id"] === "s1-routing");
+      expect(pbs).toHaveLength(2);
+      const q = new URL(pbs[0].url).searchParams;
+      expect([q.get("city"), q.get("cityId"), q.get("artistEntityId"), q.get("artistPopularity")]).toEqual(["Alpha", "10", "E1", "0.62"]);
+      expect(q.has("lat") && q.has("lon")).toBe(true);
+    });
+
+    it("keeps the main recording and warns when the routing board does not finish", async () => {
+      const warnings = [];
+      const calls = [];
+      const parsed = parseArgs(["--artist", "Test Artist", "--regions", "Mexico", "--out", "o.json", "--cities", LIST]);
+      const out = await record({ ...parsed, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl: routingFetch(calls, [{ type: "error", code: "ROUTING_EMPTY", message: "none" }]), warn: (m) => warnings.push(m), sessionId: "s" });
+      expect(out).not.toHaveProperty("routing");
+      expect(warnings.some((w) => /routing/.test(w))).toBe(true);
+      expect(Object.keys(out.playbooks)).toHaveLength(2);
+    });
+
+    it("never carries the token or secret-looking args", async () => {
+      const parsed = parseArgs(["--artist", "Test Artist", "--regions", "Mexico", "--out", "o.json", "--cities", LIST]);
+      const board = [{ type: "tool_call", tool: "qloo_where_popular", args: { within: "Alpha, MX", token: TOKEN }, cached: false }, ...BOARD2];
+      const out = await record({ ...parsed, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl: routingFetch([], board) });
+      expect(out.routing.boardEvents[0].args).toEqual({ within: "Alpha, MX" });
+      expect(JSON.stringify(out)).not.toContain(TOKEN);
+    });
+
+    it("summarises the routing board too", async () => {
+      const parsed = parseArgs(["--artist", "Test Artist", "--regions", "Mexico", "--out", "o.json", "--cities", LIST]);
+      const out = await record({ ...parsed, gatewayUrl: "https://gw.example", token: TOKEN, fetchImpl: routingFetch([]) });
+      const text = summarize(out);
+      expect(text).toMatch(/routing/i);
+      expect(text).toContain("Alpha");
+      expect(text).toContain("Atlantis, ZZ");
+    });
+  });
 });
+

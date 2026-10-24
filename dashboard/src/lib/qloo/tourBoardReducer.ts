@@ -15,6 +15,8 @@ export type BoardState = {
   log: GatewayEvent[];
   regionsEmpty: string[];
   regionsUnavailable: Array<{ region: string; code: string; message: string }>;
+  /** Pasted city names ("paste your cities" mode) that matched nothing in the city list, as the gateway listed them. */
+  routingUnmatched: string[];
   needsInput?: Extract<GatewayEvent, { type: "needs_input" }>;
   error?: { code: string; message: string };
   interruptReason?: "user" | "connection";
@@ -27,7 +29,7 @@ export type BoardAction =
   | { type: "shortlist"; ids: string[] }
   | { type: "reset" };
 
-export const initialBoard: BoardState = { status: "idle", source: "live", cities: [], scoring: null, shortlist: null, log: [], regionsEmpty: [], regionsUnavailable: [] };
+export const initialBoard: BoardState = { status: "idle", source: "live", cities: [], scoring: null, shortlist: null, log: [], regionsEmpty: [], regionsUnavailable: [], routingUnmatched: [] };
 
 export function boardReducer(state: BoardState, action: BoardAction): BoardState {
   switch (action.type) {
@@ -51,6 +53,7 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
         }
         case "region_empty": return { ...state, log, regionsEmpty: [...state.regionsEmpty, e.region] };
         case "region_unavailable": return { ...state, log, regionsUnavailable: [...state.regionsUnavailable, { region: e.region, code: e.code, message: e.message }] };
+        case "routing_unmatched": return { ...state, log, routingUnmatched: e.names };
         case "needs_input": return { ...state, log, status: "needs_input", needsInput: e };
         // Arrival order is load-bearing (accentOrder): never sort here, and a re-scored city keeps its slot.
         case "city_scored": return { ...state, log, cities: state.cities.some((c) => c.id === e.city.id) ? state.cities.map((c) => (c.id === e.city.id ? e.city : c)) : [...state.cities, e.city] };

@@ -165,3 +165,25 @@ describe("Landing story beats (spec 1.2b rule 1: every number comes from the rec
     expect(screen.getByRole("region", { name: "Guadalajara sample routing row" })).toBeTruthy();
   });
 });
+
+describe("Landing Try a routing", () => {
+  it("links to the recorded routing under the example tour when the recording has one", () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    const example = screen.getByRole("link", { name: "See the example tour" });
+    const routing = screen.getByRole("link", { name: "Try a routing" });
+    expect(routing.getAttribute("href")).toBe("/tours/board?showcase=routing");
+    expect(example.compareDocumentPosition(routing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
+  });
+  it("is hidden without a routing in the recording (placeholder, or an older recording)", () => {
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    expect(screen.queryByRole("link", { name: "Try a routing" })).toBeNull();
+    setShowcase(parseShowcase({ ...(syntheticShowcase as object), routing: undefined }));
+    cleanup();
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    expect(screen.queryByRole("link", { name: "Try a routing" })).toBeNull();
+    setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
+  });
+});
+

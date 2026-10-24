@@ -1,3 +1,4 @@
+import { isRoutingBrief, showcaseParam, showcaseQuery } from "@/lib/qloo/showcase";
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { loadPlaybook } from "../lib/qloo/playbookStore";
@@ -47,7 +48,8 @@ export function QlooWebMcpTools() {
 
     const sampleQuery = (): string => {
       const { board: b, location: l } = live.current;
-      if (b.state.source === "showcase" || new URLSearchParams(l.search).get("showcase") === "1") return "showcase=1";
+      const showParam = showcaseParam(new URLSearchParams(l.search).get("showcase"));
+      if (b.state.source === "showcase" || showParam !== null) return showcaseQuery(b.state.source === "showcase" ? isRoutingBrief(b.state.brief) : showParam === "routing").slice(1);
       const fromUrl = new URLSearchParams(l.search).get("sample");
       const flag = fromUrl ?? (b.state.source === "sample" ? (b.state.sampleSet === "long" ? "long" : "1") : null);
       return flag ? `sample=${flag}` : "";

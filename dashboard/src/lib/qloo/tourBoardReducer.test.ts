@@ -86,3 +86,18 @@ describe("boardReducer scoring", () => {
     expect(boardReducer(run([{ type: "scoring", scoring }]), { type: "reset" }).scoring).toBeNull();
   });
 });
+
+describe("boardReducer routing_unmatched", () => {
+  it("keeps the unmatched pasted names, resets on a new run", () => {
+    const s = run([{ type: "routing_unmatched", names: ["Atlantis", "Nowhere, MX"] }]);
+    expect(s.routingUnmatched).toEqual(["Atlantis", "Nowhere, MX"]);
+    expect(s.status).toBe("streaming");
+    expect(boardReducer(s, { type: "start", brief: SAMPLE_BRIEF, source: "live" }).routingUnmatched).toEqual([]);
+  });
+  it("an empty list stays empty; a ROUTING_EMPTY error keeps the names for the banner", () => {
+    expect(run([{ type: "routing_unmatched", names: [] }]).routingUnmatched).toEqual([]);
+    const s = run([{ type: "routing_unmatched", names: ["Atlantis"] }, { type: "error", code: "ROUTING_EMPTY", message: "None of the pasted cities are in our city list." }]);
+    expect(s).toMatchObject({ status: "error", routingUnmatched: ["Atlantis"], error: { code: "ROUTING_EMPTY" } });
+  });
+});
+

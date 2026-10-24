@@ -19,6 +19,7 @@ export const COMPONENT_WORDS: Record<ComponentName, string> = {
 export const NO_CLEAR_DRIVER_LINE = "No clear driver: components sit near the board median.";
 export const NO_DETAIL_LINE = "No activation detail recorded.";
 export const MAJOR_MARKET_SUFFIX = " · major market, fan heat at the board's floor";
+export const PASTED_FLOOR_SUFFIX = " · your routing, fan heat at the board's floor";
 const COMPONENTS = Object.keys(COMPONENT_WORDS) as ComponentName[];
 
 /** Every city with both scores, with its two ranks and the difference. Largest absolute move first; ties by winnability (higher first), then name. */
@@ -56,7 +57,7 @@ const pct = (x: number) => Math.round(x * 100);
  */
 export function reasonFor(move: Move, cities: ScoredCity[], scoring?: Pick<ScoringConfig, "weights"> | null): string {
   const { city, delta } = move;
-  const suffix = city.fanHeatFloor ? MAJOR_MARKET_SUFFIX : "";
+  const suffix = city.fanHeatFloor ? (city.candidateSource === "your_routing" ? PASTED_FLOOR_SUFFIX : MAJOR_MARKET_SUFFIX) : "";
   const own = city.activation.components;
   if (!own || delta === 0) return (own ? "" : NO_DETAIL_LINE) + suffix;
   const pool = cities.filter(hasBothScores);

@@ -1,3 +1,4 @@
+import { useShowcaseVariant } from "@/lib/qloo/useShowcaseVariant";
 import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
@@ -26,6 +27,7 @@ const NewCampaign = lazy(() => import("./pages/NewCampaign").then((m) => ({ defa
 const AddCities = lazy(() => import("./pages/AddCities").then((m) => ({ default: m.AddCities })));
 
 export default function App() {
+  useShowcaseVariant();
   return (
     <CampaignProvider>
       <WebMcpTools />

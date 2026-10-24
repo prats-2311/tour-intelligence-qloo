@@ -654,3 +654,88 @@ describe("TourBoard moves section", () => {
     expect(document.querySelector(`[data-testid="city-row"][data-city-name="${name}"]`)).toBeTruthy();
   });
 });
+
+describe("TourBoard paste your cities", () => {
+  const pastedCity = (i: number) => ({ type: "city_scored" as const, city: { ...SAMPLE_CITIES[i]!, candidateSource: "your_routing" as const } });
+
+  it("runs the board in pasted mode and shows Your routing on each city plus the unmatched banner above the list", async () => {
+    const spy = vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
+      yield { type: "routing_unmatched", names: ["Atlantis", "Nowhere, MX"] };
+      yield pastedCity(0); yield pastedCity(1);
+      yield { type: "done", summary: {} };
+    });
+    renderPage("/tours/board?new=1");
+    fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "Lumen Vale" } });
+    fireEvent.change(screen.getByLabelText("Paste your cities"), { target: { value: "Aldea, MX\nAtlantis\nNowhere, MX" } });
+    fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(2));
+    expect(spy.mock.calls[0]![0].cities).toEqual([{ name: "Aldea", country: "MX" }, { name: "Atlantis" }, { name: "Nowhere", country: "MX" }]);
+    expect(screen.getAllByText("Your routing")).toHaveLength(2);
+    const banner = screen.getByText("Not in our city list: Atlantis, Nowhere, MX. Check the spelling or add the country.");
+    const list = screen.getAllByTestId("city-row")[0]!;
+    expect(banner.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText(/Your routing · 3 cities/)).toBeTruthy();
+  });
+  it("no banner and no tag on a normal run", async () => {
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield cityEvent(0); yield { type: "done", summary: {} }; });
+    renderPage("/tours/board?new=1");
+    submitArtist("X");
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(1));
+    expect(screen.queryByText(/Not in our city list/)).toBeNull();
+    expect(screen.queryByText("Your routing")).toBeNull();
+  });
+  it("nothing matched: the banner and the error show, with no Retry that would fail the same way", async () => {
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
+      yield { type: "routing_unmatched", names: ["Atlantis"] };
+      yield { type: "error", code: "ROUTING_EMPTY", message: "None of the pasted cities are in our city list." };
+    });
+    renderPage("/tours/board?new=1");
+    fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "X" } });
+    fireEvent.change(screen.getByLabelText("Paste your cities"), { target: { value: "Atlantis" } });
+    fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
+    expect(await screen.findByText("Not in our city list: Atlantis. Check the spelling or add the country.")).toBeTruthy();
+    expect(screen.getByText("None of the pasted cities are in our city list.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+  });
+});
+
+describe("TourBoard recorded routing example", () => {
+  it("?showcase=routing replays the recorded routing with zero live calls, tags, and the unmatched banner", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    const stream = vi.spyOn(client, "streamTourBoard");
+    renderPage("/tours/board?showcase=routing");
+    await waitFor(() => expect(screen.getAllByTestId("city-row").length).toBe(6), { timeout: 4000 });
+    expect(screen.getAllByText("Your routing")).toHaveLength(6);
+    expect(screen.getByText("Not in our city list: Atlantis. Check the spelling or add the country.")).toBeTruthy();
+    expect(stream.mock.calls[0]![1]).toMatchObject({ sample: true, sampleSet: "showcase" });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(screen.queryByText("Major market")).toBeNull();
+  });
+  it("opens a recorded city with the routing query and a city with no recorded playbook is not a link", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    render(
+      <QueryClientProvider client={qc()}>
+        <TourBoardProvider sampleDelayMs={0}>
+          <MemoryRouter initialEntries={["/tours/board?showcase=routing"]}>
+            <Routes><Route path="/tours/board" element={<TourBoard />} /><Route path="/tours/playbook/:cityId" element={<><PlaybookStub /><Where /></>} /></Routes>
+          </MemoryRouter>
+        </TourBoardProvider>
+      </QueryClientProvider>,
+    );
+    await waitFor(() => expect(screen.getAllByTestId("city-row").length).toBe(6), { timeout: 4000 });
+    const recordedId = Object.keys(parseShowcase(syntheticShowcase).routing!.playbooks)[0]!;
+    const name = parseShowcase(syntheticShowcase).routing!.boardEvents.flatMap((e) => (e.type === "city_scored" && e.city.id === recordedId ? [e.city.name] : []))[0]!;
+    fireEvent.click(within(document.querySelector(`[data-testid="city-row"][data-city-name="${name}"]`) as HTMLElement).getByRole("button"));
+    expect(await screen.findByText(`playbook ${recordedId}`)).toBeTruthy();
+    expect(screen.getByTestId("search").textContent).toBe("?showcase=routing");
+  });
+  it("without a routing in the recording, ?showcase=routing falls back to the main example", async () => {
+    setShowcase(parseShowcase({ ...(syntheticShowcase as object), routing: undefined }));
+    renderPage("/tours/board?showcase=routing");
+    await waitFor(() => expect(screen.getAllByTestId("city-row").length).toBe(8), { timeout: 4000 });
+    expect(screen.queryByText("Your routing")).toBeNull();
+  });
+});
+

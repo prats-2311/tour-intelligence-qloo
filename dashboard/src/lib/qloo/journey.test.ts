@@ -5,7 +5,7 @@ import { PLACEHOLDER_SHOWCASE } from "./placeholderShowcase";
 import { journeyLinks, runKey, stepOf, STEPS } from "./journey";
 import type { ScoredCity } from "./types";
 import { defaultShortlist, sortCities } from "./ranking";
-import { parseShowcase, setShowcase, showcaseCities, showcasePlaybookEvents } from "./showcase";
+import { parseShowcase, setShowcase, setShowcaseVariant, showcaseCities, showcasePlaybookEvents } from "./showcase";
 
 describe("stepOf", () => {
   it("maps the four journey routes and nothing else", () => {
@@ -83,3 +83,23 @@ describe("journeyLinks", () => {
     expect(l.playbook).toBe("/tours/board");
   });
 });
+
+describe("journeyLinks for the recorded routing", () => {
+  beforeEach(() => { setShowcase(parseShowcase(syntheticShowcase)); setShowcaseVariant("routing"); });
+  afterEach(() => { setShowcaseVariant("main"); setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE)); });
+  it("a routing run keeps ?showcase=routing on every step, and Playbook leads to a city with a recorded playbook", () => {
+    const cities = showcaseCities();
+    const l = journeyLinks({ status: "done", source: "showcase", sampleSet: "showcase", routing: true, cities, shortlist: cities.map((c) => c.id), lastOpenedId: null });
+    expect(l.decide).toBe("/tours/board?showcase=routing");
+    expect(l.book).toBe("/tours/book?showcase=routing");
+    const id = l.playbook.match(/playbook\/([^?]+)/)![1]!;
+    expect(showcasePlaybookEvents(id)).not.toBeNull();
+    expect(l.playbook.endsWith("?showcase=routing")).toBe(true);
+  });
+  it("the main run keeps ?showcase=1", () => {
+    setShowcaseVariant("main");
+    const cities = showcaseCities();
+    expect(journeyLinks({ status: "done", source: "showcase", sampleSet: "showcase", cities, shortlist: [], lastOpenedId: null }).decide).toBe("/tours/board?showcase=1");
+  });
+});
+

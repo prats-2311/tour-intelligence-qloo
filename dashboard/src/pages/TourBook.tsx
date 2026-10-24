@@ -23,7 +23,7 @@ import { buildTourBook, campaignTitle } from "@/lib/qloo/tourBook";
 import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
-import { showcaseAvailable, showcaseBannerText, showcaseBrief } from "@/lib/qloo/showcase";
+import { isRoutingBrief, setShowcaseVariant, showcaseAvailable, showcaseBannerText, showcaseBrief, showcaseParam, showcaseQuery, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
 import type { SampleSet, ThisWeek } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
@@ -41,7 +41,7 @@ function Centered({ children }: { children: React.ReactNode }) {
 
 export default function TourBook() {
   const [params] = useSearchParams();
-  if (params.get("showcase") === "1" && !showcaseAvailable()) return <ShowcaseUnavailable sampleHref="/tours/book?sample=1" />;
+  if (showcaseParam(params.get("showcase")) !== null && !showcaseAvailable()) return <ShowcaseUnavailable sampleHref="/tours/book?sample=1" />;
   return <TourBookPage />;
 }
 
@@ -50,12 +50,15 @@ function TourBookPage() {
   const [params] = useSearchParams();
   const sampleParam = params.get("sample");
   const wantLong = sampleParam === "long";
-  const wantShowcase = params.get("showcase") === "1";
+  const showParam = showcaseParam(params.get("showcase"));
+  const wantShowcase = showParam !== null;
+  const wantRouting = showParam === "routing" && showcaseRoutingAvailable();
+  setShowcaseVariant(wantRouting ? "routing" : "main"); // before any accessor below reads the recording (see useShowcaseVariant)
   const wantSample = sampleParam === "1" || wantLong || wantShowcase;
   const wantSet: SampleSet = wantShowcase ? "showcase" : wantLong ? "long" : "default";
   // The URL decides; the run the board already holds is the fallback, so Close never drops the showcase or sample flag.
-  const sampleQ = wantShowcase ? "?showcase=1" : wantLong ? "?sample=long" : wantSample ? "?sample=1"
-    : state.source === "showcase" ? "?showcase=1" : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
+  const sampleQ = wantShowcase ? showcaseQuery(wantRouting) : wantLong ? "?sample=long" : wantSample ? "?sample=1"
+    : state.source === "showcase" ? showcaseQuery(isRoutingBrief(state.brief)) : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
   const bareExample = useWantsExample(!wantSample);
   useOpenExampleRun(bareExample);
   const isDesktop = useIsDesktop();
@@ -74,11 +77,11 @@ function TourBookPage() {
   useEffect(() => {
     if (!wantSample || started.current) return;
     started.current = true;
-    if (state.source === "live" || (state.sampleSet ?? "default") !== wantSet) run(wantShowcase ? showcaseBrief() : wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
-  }, [wantSample, wantLong, wantSet, state.source, state.sampleSet, run]);
+    if (state.source === "live" || (state.sampleSet ?? "default") !== wantSet || (wantShowcase && isRoutingBrief(state.brief) !== wantRouting)) run(wantShowcase ? showcaseBrief() : wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
+  }, [wantSample, wantLong, wantSet, wantRouting, state.source, state.sampleSet, state.brief, run]);
 
   const sample = state.source !== "live";
-  const ready = !wantSample || (sample && (state.sampleSet ?? "default") === wantSet);
+  const ready = !wantSample || (sample && (state.sampleSet ?? "default") === wantSet && (!wantShowcase || isRoutingBrief(state.brief) === wantRouting));
   const artist = ready ? state.artist : undefined;
   const streaming = state.status === "streaming" || !ready || bareExample;
   const boardReady = ready && !streaming && !!artist && !!state.brief && state.cities.length > 0;

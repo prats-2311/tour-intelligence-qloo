@@ -430,3 +430,62 @@ test("the landing leads with the pitch: headline, protagonist and no overflow, a
   if (dir) await page.screenshot({ path: path.join(dir, `landing-${info.project.name.includes("mobile") ? "375" : "1280"}.png`), fullPage: true });
   expect(qloo).toEqual([]);
 });
+
+test("Try a routing replays the recorded routing: tagged cities, unmatched banner, zero Qloo calls, axe clean, no overflow", async ({ page }, info) => {
+  const qloo: string[] = [];
+  const errors: string[] = [];
+  page.on("request", (r) => { if (/\/api\/qloo/.test(r.url())) qloo.push(r.url()); });
+  page.on("console", (m) => { if (m.type() === "error" && !TILE_HOST.test(m.text()) && !TILE_HOST.test(m.location().url)) errors.push(`console: ${m.text()}`); });
+  page.on("pageerror", (e) => { if (!TILE_HOST.test(e.message)) errors.push(`pageerror: ${e.message}`); });
+  const shot = async (name: string) => { const dir = process.env.SHOT_DIR; if (dir) await page.screenshot({ path: path.join(dir, `${name}-${info.project.name.includes("mobile") ? "375" : "1280"}.png`), fullPage: true }); };
+
+  await page.goto("/");
+  const link = page.getByRole("link", { name: "Try a routing" });
+  test.skip(LIVE && (await link.count()) === 0, "the deployed recording has no routing yet");
+  await expect(link).toBeVisible();
+  expect(await noOverflow(page), "landing overflow").toBe(true);
+  await expectNoSeriousA11y(page, "landing with Try a routing");
+  await shot("landing-routing");
+  await link.click();
+
+  await expect(page).toHaveURL(/\/tours\/board\?showcase=routing/);
+  const rows = page.getByTestId("city-row");
+  await expect(rows.first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("button", { name: "Stop" })).toHaveCount(0, { timeout: 30_000 });
+  const n = await rows.count();
+  expect(n).toBeGreaterThanOrEqual(2);
+  await expect(page.getByText("Your routing", { exact: true })).toHaveCount(n);
+  await expect(page.getByText("Major market", { exact: true })).toHaveCount(0);
+  const banner = page.getByText(/^Not in our city list: .+\. Check the spelling or add the country\.$/);
+  if (!LIVE) await expect(banner).toBeVisible();
+  expect(await noOverflow(page), "routing board overflow").toBe(true);
+  await expectNoSeriousA11y(page, "routing board");
+  await shot("board-routing");
+
+  // A recorded playbook opens with the routing query; the rest of the journey is the same pages.
+  const openable = rows.locator("button");
+  await openable.first().click();
+  await expect(page).toHaveURL(/\/tours\/playbook\/[^?]+\?showcase=routing/);
+  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  expect(await noOverflow(page), "routing playbook overflow").toBe(true);
+  await page.getByRole("link", { name: /Tour Book/ }).first().click();
+  await expect(page).toHaveURL(/\/tours\/book\?showcase=routing/);
+  await expect(page.getByRole("heading", { name: "Market selection" })).toBeVisible({ timeout: 20_000 });
+  expect(await noOverflow(page), "routing book overflow").toBe(true);
+  expect(qloo, "the recorded routing makes zero /api/qloo calls").toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test("Paste your cities: the textarea, the cap message and no overflow, axe clean", async ({ page }, info) => {
+  test.skip(LIVE, "form-only check, local run");
+  await page.goto("/tours/board?new=1");
+  const ta = page.getByLabel("Paste your cities");
+  await expect(ta).toBeVisible();
+  await expect(page.getByText(/One city per line/)).toBeVisible();
+  await ta.fill(Array.from({ length: 10 }, (_, i) => `Town ${i}, MX`).join("\n"));
+  await expect(page.getByText("Up to 8 cities — the first 8 will be used.")).toBeVisible();
+  expect(await noOverflow(page), "brief form overflow").toBe(true);
+  await expectNoSeriousA11y(page, "brief form with pasted cities");
+  const dir = process.env.SHOT_DIR;
+  if (dir) await page.screenshot({ path: path.join(dir, `brief-paste-${info.project.name.includes("mobile") ? "375" : "1280"}.png`), fullPage: true });
+});

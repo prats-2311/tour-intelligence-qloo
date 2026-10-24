@@ -206,7 +206,7 @@ function showcase(input) {
     if (isPoint && out.label === "") out.label = `${out.lat.toFixed(3)}, ${out.lon.toFixed(3)}`;
     return out;
   };
-  const result = addSyntheticBoardCases(walk(input, "", []));
+  const result = addSyntheticRouting(addSyntheticBoardCases(walk(input, "", [])));
   if (!result.withoutQloo) {
     // The recording has no generic ranking: write a clearly labelled synthetic one so the Without Qloo tab can be exercised.
     const scored = (result.boardEvents ?? []).flatMap((e) => (e.type === "city_scored" ? [{ name: e.city.name, country: e.city.country }] : []));
@@ -239,6 +239,39 @@ export function addSyntheticBoardCases(rec) {
       c.winnability = { value: null, reason: "insufficient_data", refs: [] };
     }
   }
+  return rec;
+}
+
+/**
+ * The synthetic fixture must also exercise the recorded "paste your cities" example (`routing`), which older source recordings lack.
+ * Built only from the (already synthetic) main recording: up to 6 of its cities (the ones with playbooks first, then the rest in board
+ * order) become the pasted routing, labelled `your_routing`; the last two placed ones are shown as floored (absent from the regional heat), one name
+ * is "not in our city list", and the playbooks of the first two are reused. Idempotent: does nothing when `routing` already exists.
+ * Mutates and returns `rec`.
+ */
+export function addSyntheticRouting(rec) {
+  if (rec.routing) return rec;
+  const events = rec.boardEvents ?? [];
+  const cities = events.filter((e) => e.type === "city_scored").map((e) => e.city);
+  const withBook = cities.filter((c) => (rec.playbooks ?? {})[c.id]);
+  const rest = cities.filter((c) => !withBook.includes(c));
+  const chosen = [...withBook.slice(0, 2), ...rest, ...withBook.slice(2)].slice(0, 6);
+  if (chosen.length < 3) return rec;
+  const lastTwo = new Set(chosen.filter((c) => !c.insufficientReason).slice(-2).map((c) => c.id));
+  const asRouting = (c) => ({ ...structuredClone(c), candidateSource: "your_routing", ...(lastTwo.has(c.id) ? { fanHeatFloor: true } : {}) });
+  const unmatched = "Atlantis";
+  const boardEvents = [];
+  for (const e of events) {
+    if (e.type === "city_scored") continue;
+    if (e.type === "done") continue;
+    boardEvents.push(structuredClone(e));
+    if (e.type === "scoring") boardEvents.push({ type: "routing_unmatched", names: [unmatched] });
+  }
+  for (const c of chosen) boardEvents.push({ type: "city_scored", city: asRouting(c) });
+  boardEvents.push({ type: "done", summary: { artist: events.find((e) => e.type === "done")?.summary?.artist, cities: chosen.length } });
+  const playbooks = {};
+  for (const c of withBook.slice(0, 2)) playbooks[c.id] = structuredClone(rec.playbooks[c.id]);
+  rec.routing = { cities: [...chosen.map((c) => ({ name: c.name, country: c.country })), { name: unmatched }], boardEvents, playbooks };
   return rec;
 }
 

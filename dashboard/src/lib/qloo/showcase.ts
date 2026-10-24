@@ -1,7 +1,7 @@
 import { recordedText } from "./labels";
 import { PLACEHOLDER_SHOWCASE } from "./placeholderShowcase";
 import { ordinal } from "./ranking";
-import type { GatewayEvent, ScoredCity, ThisWeek, TourBrief, WithoutQloo } from "./types";
+import type { GatewayEvent, RoutingCity, ScoredCity, ThisWeek, TourBrief, WithoutQloo } from "./types";
 import { parseWithoutQloo, WITHOUT_SHOWCASE_MISSING } from "./withoutQloo";
 
 /** One recorded Tour Board run (see scripts/record-showcase.mjs). `recordedAt: null` marks the committed placeholder built from the Lumen Vale sample. */
@@ -14,11 +14,15 @@ export interface Showcase {
   thisWeek: Record<string, ThisWeek>;
   /** The recorded generic-LLM ranking; null when the recording predates it or it was malformed. */
   withoutQloo: WithoutQloo | null;
+  /** The recorded "paste your cities" example (record-showcase.mjs --cities); null when the recording has none, which hides the "Try a routing" link. */
+  routing: RoutingShowcase | null;
 }
+/** A second recorded board, run in pasted-cities mode: the cities that were pasted, the board stream, and playbooks for the top few. */
+export interface RoutingShowcase { cities: RoutingCity[]; boardEvents: GatewayEvent[]; playbooks: Record<string, GatewayEvent[]> }
 
 const KNOWN_EVENTS: ReadonlySet<string> = new Set([
   "resolve", "artist_profile", "region_unavailable", "needs_input", "tool_call", "tool_result", "region_empty",
-  "city_scored", "scoring", "playbook", "narrative", "strategist_thinking", "strategist_tool_call", "strategist_tool_result",
+  "routing_unmatched", "city_scored", "scoring", "playbook", "narrative", "strategist_thinking", "strategist_tool_call", "strategist_tool_result",
   "strategist_message", "strategist_error", "done", "error",
 ]);
 
@@ -27,6 +31,24 @@ export function cleanEvents(events: unknown): GatewayEvent[] {
   if (!Array.isArray(events)) return [];
   return events.filter((e): e is GatewayEvent => !!e && typeof e === "object" && typeof (e as { type?: unknown }).type === "string" && KNOWN_EVENTS.has((e as { type: string }).type))
     .filter((e) => e.type !== "scoring" || (!!e.scoring && typeof e.scoring === "object" && !!e.scoring.thresholds && typeof e.scoring.thresholds === "object"));
+}
+
+/** The optional `routing` key: needs 1-8 `{name, country?}` cities and a non-empty board stream, otherwise there is no routing example. */
+function parseRouting(input: unknown): RoutingShowcase | null {
+  if (!input || typeof input !== "object") return null;
+  const o = input as Record<string, unknown>;
+  if (!Array.isArray(o.cities) || o.cities.length < 1 || o.cities.length > 8) return null;
+  const cities: RoutingCity[] = [];
+  for (const c of o.cities) {
+    const x = c as { name?: unknown; country?: unknown } | null;
+    if (!x || typeof x !== "object" || typeof x.name !== "string" || !x.name.trim() || (x.country !== undefined && typeof x.country !== "string")) return null;
+    cities.push({ name: x.name, ...(x.country !== undefined ? { country: x.country as string } : {}) });
+  }
+  const boardEvents = cleanEvents(o.boardEvents);
+  if (boardEvents.length === 0) return null;
+  const playbooks: Record<string, GatewayEvent[]> = {};
+  for (const [id, evs] of Object.entries((o.playbooks ?? {}) as Record<string, unknown>)) playbooks[id] = cleanEvents(evs);
+  return { cities, boardEvents, playbooks };
 }
 
 export function parseShowcase(input: unknown): Showcase {
@@ -42,6 +64,7 @@ export function parseShowcase(input: unknown): Showcase {
     playbooks,
     thisWeek: ((o.thisWeek ?? {}) as Record<string, ThisWeek>),
     withoutQloo: parseWithoutQloo(o.withoutQloo),
+    routing: parseRouting(o.routing),
   };
 }
 
@@ -55,17 +78,41 @@ export function setShowcase(s: Showcase): void { SHOWCASE = s; }
 /** True once a real recording has been loaded (the placeholder has `recordedAt: null`). */
 export const showcaseAvailable = (): boolean => SHOWCASE.recordedAt !== null;
 
-export const showcaseBrief = (): TourBrief => SHOWCASE.brief;
-export const showcaseBoardEvents = (): GatewayEvent[] => SHOWCASE.boardEvents;
-export const showcasePlaybookEvents = (cityId: string): GatewayEvent[] | null => SHOWCASE.playbooks[cityId] ?? null;
-export const showcaseThisWeek = (cityId: string): ThisWeek | null => SHOWCASE.thisWeek[cityId] ?? null;
-export const showcaseWithoutQloo = (): WithoutQloo => SHOWCASE.withoutQloo ?? WITHOUT_SHOWCASE_MISSING;
+/**
+ * Which recording the accessors below read: the main example, or the recorded "paste your cities" routing (`?showcase=routing`).
+ * Every page reads the active one through these accessors, so the board, playbook and book work on either without knowing which.
+ * The app sets it from the URL on each navigation (`App`); tests set it directly. Asking for routing without one recorded means main.
+ */
+let variant: "main" | "routing" = "main";
+export function setShowcaseVariant(v: "main" | "routing"): void { variant = v === "routing" && SHOWCASE.routing ? "routing" : "main"; }
+/** What `?showcase=` asks for: "1" the main example, "routing" the recorded routing, anything else (or absent) neither. */
+export const showcaseParam = (v: string | null): "main" | "routing" | null => (v === "1" ? "main" : v === "routing" ? "routing" : null);
+/** The query that reopens the same recording: pages carry it from step to step. */
+export const showcaseQuery = (routing: boolean): string => (routing ? "?showcase=routing" : "?showcase=1");
+/** True for a brief that ran in pasted-cities mode (live, or the recorded routing). */
+export const isRoutingBrief = (b: { cities?: unknown[] } | undefined): boolean => !!b?.cities?.length;
+export const showcaseVariant = (): "main" | "routing" => variant;
+export const showcaseRoutingAvailable = (): boolean => SHOWCASE.routing !== null;
+const routing = (): RoutingShowcase | null => (variant === "routing" ? SHOWCASE.routing : null);
+const routingBrief = (r: RoutingShowcase): TourBrief => ({ ...SHOWCASE.brief, artist: SHOWCASE.artist, maxStops: r.cities.length, cities: r.cities });
+const routingBriefMemo = new WeakMap<RoutingShowcase, TourBrief>();
+
+export const showcaseBrief = (): TourBrief => {
+  const r = routing();
+  if (!r) return SHOWCASE.brief;
+  if (!routingBriefMemo.has(r)) routingBriefMemo.set(r, routingBrief(r));
+  return routingBriefMemo.get(r)!;
+};
+export const showcaseBoardEvents = (): GatewayEvent[] => routing()?.boardEvents ?? SHOWCASE.boardEvents;
+export const showcasePlaybookEvents = (cityId: string): GatewayEvent[] | null => (routing()?.playbooks ?? SHOWCASE.playbooks)[cityId] ?? null;
+export const showcaseThisWeek = (cityId: string): ThisWeek | null => (routing() ? null : SHOWCASE.thisWeek[cityId] ?? null);
+export const showcaseWithoutQloo = (): WithoutQloo => (routing() ? WITHOUT_SHOWCASE_MISSING : SHOWCASE.withoutQloo ?? WITHOUT_SHOWCASE_MISSING);
 export const showcaseBannerText = (): string => recordedText(SHOWCASE.recordedAt);
 
-export function showcaseCities(show: Showcase = SHOWCASE): ScoredCity[] {
-  return show.boardEvents.flatMap((e) => (e.type === "city_scored" ? [e.city] : []));
+export function showcaseCities(show?: Showcase): ScoredCity[] {
+  return (show ? show.boardEvents : showcaseBoardEvents()).flatMap((e) => (e.type === "city_scored" ? [e.city] : []));
 }
-export const showcasePlaybookCities = (): ScoredCity[] => showcaseCities().filter((c) => SHOWCASE.playbooks[c.id]);
+export const showcasePlaybookCities = (): ScoredCity[] => showcaseCities().filter((c) => showcasePlaybookEvents(c.id));
 
 /** "Fan density ranks it 4th of 8. Adding winnability puts it 2nd." Descriptive only: it says nothing about which ranking is better. */
 export const rankShiftLine = (fanRank: number, winRank: number, n: number): string =>

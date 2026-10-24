@@ -85,3 +85,12 @@ describe("reasonFor", () => {
     expect(MAJOR_MARKET_SUFFIX).toBe(" · major market, fan heat at the board's floor");
   });
 });
+
+import { PASTED_FLOOR_SUFFIX, reasonFor as reasonForPasted } from "./moves";
+describe("floored pasted city", () => {
+  it("says your routing, not major market", () => {
+    const c = { id: "x", name: "X", country: "MX", lat: 0, lon: 0, fanHeat: { value: 10, refs: [] }, activation: { value: 5, refs: [] }, winnability: { value: 7, refs: [] }, verdict: "skip", zones: [], warnings: [], fanHeatFloor: true, candidateSource: "your_routing" } as never;
+    expect(reasonForPasted({ city: c, delta: 0 } as never, [c])).toContain(PASTED_FLOOR_SUFFIX);
+  });
+});
+
