@@ -151,3 +151,46 @@ The stopped run is kept (`private-data/backtest/proof-v3-fixed.stopped-1.json`) 
 4. **Unchanged:** the Qloo stop conditions (429, rate/quota/limit, stale answers) stay exactly as they are.
 
 Test B is re-run from the start under this amendment. Test A batch 1 had no stop and is unaffected; its 1 Gemini error was covered by the fallback.
+
+## Amendment 4: Test C, grounding (2026-10-24, before any Test C call)
+**Question:** do the names a playbook gives (venues, sponsor brands, local acts) really exist in the city? We compare Qloo's playbook as shipped against an LLM-only playbook for the same artist and city. Decided by Prateek.
+
+**Artist and cities (fixed rule):**
+- The artist is the showcase artist, Mac DeMarco.
+- The cities are every city on the recorded showcase board (recorded 2026-10-24) that has both a fan-heat and a winnability score, ordered by `sha256(city id)` ascending, at most 10.
+- Expected list: Portland, Austin, Los Angeles and New York City (US); Mexico City and Guadalajara (MX); São Paulo, Salvador and Fortaleza (BR). That is 9 cities.
+- Oaxaca is excluded because Qloo couldn't place it. If the recorded board differs from this list, the recorded board wins and the difference is reported.
+
+**Arms and caps (the same caps for both arms):** at most 4 venues, 4 brands and 3 local acts per city.
+- **(a) Qloo playbook as shipped:** the City Playbook pipeline run through the gateway (session `proof-v3-ground-<city id>`, narrative off).
+  - Venues: the venue card items (music-venue categories plus the same-city filter), in card order.
+  - Brands: the sponsors card items, in card order.
+  - Local acts: the Local acts (talent) card items, in card order. This is the shipped hybrid, where Gemini proposes and Qloo verifies.
+  - Fewer items than the cap are recorded as they are.
+- **(b) LLM-only:**
+  - Gemini (`GEMINI_MODEL`, fallback `GEMINI_FALLBACK_MODEL`, the Amendment 3 retry rules), temperature 0.2, no Qloo data.
+  - The response schema has three string arrays, capped as above.
+  - Fixed prompt: "You are planning a concert in {city}, {country} for {artist}. List up to 4 real music venues in {city}, up to 4 real brands that could sponsor the show, and up to 3 real local artists from {city} who could open. Only names that exist in {city}."
+  - Fewer items are recorded as they are. An invalid JSON answer is retried once, then recorded as no answer for that city.
+
+**Blinded review sheet:**
+- **Rows:** all names from both arms, de-duplicated per (city, category, normalised name). A name that both arms gave becomes one row credited to both.
+- **Order:** rows are sorted by `sha256(city + category + name)`.
+- **Columns:** row id, city, country, category, name, a free map-search link (`https://www.google.com/maps/search/?api=1&query=<name> <city>`) and a free web-search link. No arm, score or source field.
+- **Key:** the arm key is written to a separate private file, `private-data/backtest/proof-v3-ground-key.json`, that the reviewer does not open.
+- **Format:** the sheet is a local HTML page in `private-data/backtest/` with one radio choice per row: "Exists, in this city" / "Exists, in another city" / "Doesn't exist" / "Can't tell". Answers are kept in the browser, with a "Download CSV" button.
+- **Reviewer:** Prateek.
+- **Expected size:** at most 9 × 2 × 11 = 198 rows before de-duplication.
+
+**Metric and claims:**
+- Per arm and per category: the share of rows rated "Exists, in this city". "Can't tell" rows are excluded from the denominator and reported as a separate count.
+- Per city, per arm: the same share over all three categories.
+- Sign test: a paired, per-city, two-sided exact sign test, Qloo vs LLM, ties dropped.
+- The claim rule is as before: a higher mean, more city wins than losses, and p < 0.05. Otherwise the result is reported as "what we learned".
+- Every row's rating is published in aggregate only. The names stay private, because Qloo-returned names are Qloo data.
+
+**Budget and stop rule:**
+- About 9 playbooks, roughly 4 of them cached from the showcase recording, at ≤ 11 Qloo calls each, plus location checks: ≈ 60–110 Qloo calls.
+- Gemini: 9 calls for the LLM arm plus up to 9 for the shipped local-acts suggestions: ≈ 10–30.
+- No Tavily.
+- The same stop rule as Amendment 3 applies.
