@@ -159,8 +159,12 @@ describe("playbook cards", () => {
     expect(screen.getByText("Qloo returned no neighbourhood data for Curitiba")).toBeTruthy();
   });
   it("other empty cards say what Qloo did not return", () => {
+    render(<CardBody card={{ ...card("sponsors"), status: "empty", items: [] }} city="Curitiba" />);
+    expect(screen.getByText("Qloo returned no sponsors for Curitiba")).toBeTruthy();
+  });
+  it("an empty venue card says Qloo lists no music venues, never a padded list", () => {
     render(<CardBody card={{ ...card("venue_fit"), status: "empty", items: [] }} city="Curitiba" />);
-    expect(screen.getByText("Qloo returned no venue fit for Curitiba")).toBeTruthy();
+    expect(screen.getByText("Qloo lists no music venues in Curitiba for this artist")).toBeTruthy();
   });
   it("labels the merch creative direction as a model suggestion", () => {
     render(<CardBody card={card("merch")} merch={narrative.status === "ok" ? narrative.merch : null} city="Guadalajara" />);

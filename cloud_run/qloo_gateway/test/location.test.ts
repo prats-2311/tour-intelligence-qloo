@@ -79,3 +79,16 @@ describe("findCity", () => {
     expect(findCity(LIST, { name: "Springfield", country: "US" })?.id).toBe("3");
   });
 });
+
+import { countryCodeFor } from "../src/geo/location.js";
+describe("countryCodeFor", () => {
+  it("resolves English country names, case and accent-insensitively; nothing for a state or a city", () => {
+    expect(countryCodeFor("United States")).toBe("US");
+    expect(countryCodeFor("mexico")).toBe("MX");
+    expect(countryCodeFor("Brazil")).toBe("BR");
+    expect(countryCodeFor("USA")).toBe("US");
+    expect(countryCodeFor("Texas")).toBeUndefined();
+    expect(countryCodeFor("Texas, United States")).toBeUndefined();
+    expect(countryCodeFor("")).toBeUndefined();
+  });
+});

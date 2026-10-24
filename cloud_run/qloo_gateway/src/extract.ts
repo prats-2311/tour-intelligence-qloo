@@ -16,6 +16,15 @@ function categoryOf(e: Record<string, unknown>): { category?: string } {
   return category === "" ? {} : { category };
 }
 
+/** A place's geocode city and ISO-2 country, when Qloo gave them (other entity types have none). */
+function geocodeOf(e: Record<string, unknown>): { geocode?: { city?: string; countryCode?: string } } {
+  const g = rec(rec(e.properties)?.geocode);
+  if (!g) return {};
+  const city = typeof g.city === "string" && g.city.trim() !== "" ? g.city : undefined;
+  const countryCode = typeof g.country_code === "string" && g.country_code.trim() !== "" ? g.country_code : undefined;
+  return city || countryCode ? { geocode: { ...(city ? { city } : {}), ...(countryCode ? { countryCode } : {}) } } : {};
+}
+
 export function extractEntities(env: QlooEnvelope) {
   return list(env).flatMap((raw, index) => {
     const e = rec(raw);
@@ -26,6 +35,7 @@ export function extractEntities(env: QlooEnvelope) {
       entityId, name: e.name,
       ...(typeof e.subtype === "string" ? { type: e.subtype } : typeof e.type === "string" ? { type: e.type } : {}),
       ...categoryOf(e),
+      ...geocodeOf(e),
       affinity: num(e.affinity), popularity: num(e.popularity), index,
     }];
   });

@@ -30,6 +30,24 @@ function countryName(code: string): string | undefined {
   } catch { return undefined; }
 }
 
+const COUNTRY_ALIASES: Record<string, string> = { usa: "US", uk: "GB" };
+let codeByName: Map<string, string> | undefined;
+
+/** ISO-2 for a brief region that is a country (English name, accent- and case-insensitive); undefined for a state, a city or anything else. */
+export function countryCodeFor(region: string): string | undefined {
+  if (!codeByName) {
+    codeByName = new Map();
+    const A = "A".charCodeAt(0);
+    for (let i = 0; i < 26; i += 1) for (let j = 0; j < 26; j += 1) {
+      const code = String.fromCharCode(A + i, A + j);
+      const n = countryName(code);
+      if (n) codeByName.set(fold(n), code);
+    }
+  }
+  const key = fold(region);
+  return COUNTRY_ALIASES[key] ?? codeByName.get(key);
+}
+
 /**
  * Query strings to try, in order. The first is the original "<name>, <ISO-2>" and must stay byte-identical so cached boards keep serving;
  * the second spells the country out. The bare name is never offered (too ambiguous).
@@ -42,7 +60,7 @@ export function locationQueries(city: { name: string; country: string }): string
   return [...new Set(out)].slice(0, MAX_LOCATION_ATTEMPTS);
 }
 
-const fold = (v: string): string => v.normalize("NFD").replace(/\p{M}+/gu, "").toLowerCase().trim().replace(/\s+/g, " ");
+export const fold = (v: string): string => v.normalize("NFD").replace(/\p{M}+/gu, "").toLowerCase().trim().replace(/\s+/g, " ");
 
 /**
  * The city a playbook request means, so its location can always be checked. By id when given; otherwise by accent- and case-insensitive

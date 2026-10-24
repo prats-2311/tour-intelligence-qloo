@@ -15,7 +15,9 @@ export function CardBody({ card, merch, city, artist }: { card: PlaybookCard; me
   const empty = card.status === "empty" && card.kind !== "promo_zones";
   let body;
   if (empty) {
-    body = <p className="text-[13px] text-canvas-muted">Qloo returned no {CARD_TITLE[card.kind].toLowerCase()} for {city}</p>;
+    body = card.kind === "venue_fit"
+      ? <p className="text-[13px] text-canvas-muted">Qloo lists no music venues in {city} for this artist</p>
+      : <p className="text-[13px] text-canvas-muted">Qloo returned no {CARD_TITLE[card.kind].toLowerCase()} for {city}</p>;
   } else {
     switch (card.kind) {
       case "sponsors": body = <Sponsors card={card} />; break;

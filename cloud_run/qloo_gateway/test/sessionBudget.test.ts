@@ -27,7 +27,23 @@ const REGIONS: Record<string, City[]> = {
     { id: "u2", name: "Portland", country: "US", lat: 45.52, lon: -122.68, population: 650_000 },
   ],
 };
-const CITIES = Object.values(REGIONS).flat();
+// Smaller metros, only in Qloo's heat list in the "major-market seeds" case below (the largest city of each country is left out of that list).
+const EXTRA: City[] = [
+  { id: "x1", name: "Puebla", country: "MX", lat: 19.04, lon: -98.2, population: 500_000 },
+  { id: "x2", name: "Merida", country: "MX", lat: 20.97, lon: -89.62, population: 500_000 },
+  { id: "x3", name: "Recife", country: "BR", lat: -8.05, lon: -34.88, population: 500_000 },
+  { id: "x4", name: "Salvador", country: "BR", lat: -12.97, lon: -38.5, population: 500_000 },
+  { id: "x5", name: "Denver", country: "US", lat: 39.74, lon: -104.99, population: 500_000 },
+  { id: "x6", name: "Boise", country: "US", lat: 43.62, lon: -116.2, population: 300_000 },
+];
+const SEEDED: Record<string, City[]> = {
+  Mexico: [REGIONS.Mexico![1]!, REGIONS.Mexico![2]!, EXTRA[0]!, EXTRA[1]!],
+  Brazil: [REGIONS.Brazil![1]!, REGIONS.Brazil![2]!, EXTRA[2]!, EXTRA[3]!],
+  "United States": [REGIONS["United States"]![1]!, EXTRA[4]!, EXTRA[5]!],
+};
+let ACTIVE: Record<string, City[]> = REGIONS;
+const CITIES = [...Object.values(REGIONS).flat(), ...EXTRA];
+const placeOf = (where: string) => CITIES.find((c) => where.startsWith(`${c.name},`))!;
 const heat = (cs: City[]): QlooEnvelope => ({ operation: "where_popular", status: "ok", results: cs.map((c, i) => ({ location: { latitude: c.lat, longitude: c.lon }, query: { affinity: 0.9 - i * 0.05, popularity: 0.5 } })) });
 const cityZones = (c: City): QlooEnvelope => ({ operation: "where_popular", status: "ok", results: [0, 1, 2].map((i) => ({ location: { latitude: c.lat + i * 0.01, longitude: c.lon }, query: { affinity: 0.8 - i * 0.2, popularity: 0.3 } })) });
 const tags = [["Funk", 0.9], ["Soul", 0.7], ["Pop", 0.5]].map(([n, s]) => ({ tag_id: `urn:tag:genre:music:${n}`, name: n, type: "urn:tag", query: { score: s } }));
@@ -43,11 +59,15 @@ function route(tool: string, args: Record<string, unknown>): QlooEnvelope {
   switch (tool) {
     case "qloo_describe": return args.entity === "Test Artist" ? describeOk : { operation: "describe", status: "ok", results: [{ entity_id: `D-${String(args.entity)}`, name: String(args.entity) }] };
     case "qloo_where_popular": {
-      const region = REGIONS[String(args.within)];
+      const region = ACTIVE[String(args.within)];
       if (MISPLACED.has(String(args.within))) return misplaced;
       return region ? heat(region) : cityZones(CITIES.find((c) => [`${c.name}, ${c.country}`, `${c.name}, ${FULL[c.country]}`].includes(String(args.within)))!);
     }
     case "qloo_recommend": {
+      if (args.target_type === "place") {
+        const city = placeOf(where);
+        return { operation: "recommend", status: "ok", results: Array.from({ length: 10 }, (_, i) => ({ entity_id: `${slug(`venue ${where}`)}-${i}`, name: `venue ${where} ${i}`, affinity: 0.9 - i * 0.01, popularity: 0.5, properties: { geocode: { city: city.name, country_code: city.country } } })) };
+      }
       const names = args.signals ? Array.from({ length: 10 }, (_, i) => `${String(args.target_type)} ${where} ${i}`) : Array.from({ length: 20 }, (_, i) => `Pool ${where} ${i}`);
       return { operation: "recommend", status: "ok", results: names.map((name, i) => ({ entity_id: `${slug(name)}-${i}`, name, affinity: 0.9 - i * 0.01, popularity: 0.5 })) };
     }
@@ -60,11 +80,15 @@ function route(tool: string, args: Record<string, unknown>): QlooEnvelope {
 async function collect(g: AsyncGenerator<GatewayEvent>) { const o: GatewayEvent[] = []; for await (const e of g) o.push(e); return o; }
 
 describe("one session: cold board plus 4 hybrid playbooks", () => {
-  it.each([
+  it.each<[string, string[], ("seeded" | undefined)?]>([
     ["every city resolves on the first string", []],
+    ["a cold board with 3 major-market seeds absent from Qloo's heat list (11 cities), all resolving on the first string", [], "seeded"],
     ["one board city needs a second string and one never resolves", ["Sao Paulo, BR", "Portland, US", "Portland, United States"]],
     ["every board city except one needs its second string (worst case: one extra lookup per city)", ["Mexico City, MX", "Monterrey, MX", "Guadalajara, MX", "Sao Paulo, BR", "Rio de Janeiro, BR", "Curitiba, BR", "Austin, US"]],
-  ])("never hits the Qloo or Gemini session limits: %s", async (_name, misplacedStrings) => {
+    ["the largest city of each country is missing from Qloo's heat list: 3 major-market seeds, every seed needing its second string", ["Mexico City, MX", "Sao Paulo, BR", "Austin, US"], "seeded"],
+  ])("never hits the Qloo or Gemini session limits: %s", async (_name, misplacedStrings, mode) => {
+    ACTIVE = mode === "seeded" ? SEEDED : REGIONS;
+    const seeded = mode === "seeded";
     MISPLACED.clear();
     for (const m of misplacedStrings) MISPLACED.add(m);
     const sessionId = "judge-session";
@@ -90,10 +114,12 @@ describe("one session: cold board plus 4 hybrid playbooks", () => {
     const board = await collect(runTourBoard({ artist: "Test Artist", regions: Object.keys(REGIONS), maxStops: 8, sessionId, today: "2026-10-20" }, { qloo, cities: CITIES }));
     const scored = board.filter((e) => e.type === "city_scored");
     expect(board.filter((e) => e.type === "error")).toEqual([]);
-    expect(scored).toHaveLength(8);
+    expect(scored).toHaveLength(seeded ? 11 : 8);
+    if (seeded) expect((scored as Array<{ city: { candidateSource: string } }>).filter((e) => e.city.candidateSource === "major_market")).toHaveLength(3);
     const boardCalls = qlooCalls;
     const unresolved = (scored as Array<{ city: { insufficientReason?: string } }>).filter((e) => e.city.insufficientReason === "location_unresolved");
     expect(unresolved).toHaveLength(misplacedStrings.includes("Portland, United States") ? 1 : 0);
+
 
     const stops = (scored as Array<{ city: { name: string; country: string; insufficientReason?: string } }>).filter((e) => !e.city.insufficientReason).slice(0, 4).map((e) => e.city);
     expect(stops).toHaveLength(4);

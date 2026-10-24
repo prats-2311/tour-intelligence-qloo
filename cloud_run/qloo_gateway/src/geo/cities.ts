@@ -14,6 +14,13 @@ export function loadCities(path: string = DEFAULT_PATH): City[] {
   return memo;
 }
 
+/** The most populous city of an ISO-2 country (ties: first in the list), or undefined. */
+export function largestCityOf(cities: City[], country: string): City | undefined {
+  let best: City | undefined;
+  for (const c of cities) if (c.country === country && (!best || c.population > best.population)) best = c;
+  return best;
+}
+
 export function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
   const rad = Math.PI / 180;
   const dLat = (b.lat - a.lat) * rad, dLon = (b.lon - a.lon) * rad;

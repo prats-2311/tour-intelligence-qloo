@@ -94,3 +94,24 @@ describe("location_unresolved", () => {
   });
 });
 
+
+describe("major market", () => {
+  const seed = { ...city, candidateSource: "major_market" as const, fanHeatFloor: true };
+  it("the row carries a Major market tag with its explainer, never the word found", () => {
+    render(<ul><CityRow city={{ ...seed, country: "MX" }} onOpen={() => {}} /></ul>);
+    expect(screen.getByText("Major market")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /major market/i })).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/\bfound\b/i);
+  });
+  it("the score sheet explains it in full", () => {
+    render(<WhyThisScore city={{ ...seed, country: "MX" }} />);
+    expect(screen.getByText("Largest market in Mexico. We always check it; it isn't in Qloo's top fan hotspots for this artist, so fan heat is shown at the board's floor.")).toBeTruthy();
+  });
+  it("a heat candidate has no tag and no note", () => {
+    render(<ul><CityRow city={{ ...city, candidateSource: "heat" }} onOpen={() => {}} /></ul>);
+    expect(screen.queryByText("Major market")).toBeNull();
+    cleanup();
+    render(<WhyThisScore city={{ ...city, candidateSource: "heat" }} />);
+    expect(screen.queryByText(/Largest market in/)).toBeNull();
+  });
+});

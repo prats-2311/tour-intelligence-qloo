@@ -50,6 +50,13 @@ export const closeCallNote = (band: number = DEFAULT_CLOSE_CALL_BAND) => `Within
 export const LOCATION_UNRESOLVED_NOTE = "Qloo couldn't place this city precisely, so we didn't score it.";
 export const LOCATION_UNRESOLVED_SHORT = "Couldn't place this city";
 
+/** Tag and explainer for a major-market seed (candidateSource "major_market"). Never says Qloo "found" it. */
+export const MAJOR_MARKET_LABEL = "Major market";
+const regionNames = (() => { try { return new Intl.DisplayNames(["en"], { type: "region" }); } catch { return undefined; } })();
+export const countryLabel = (iso2: string): string => { try { return regionNames?.of(iso2) ?? iso2; } catch { return iso2; } };
+export const majorMarketNote = (iso2: string): string =>
+  `Largest market in ${countryLabel(iso2)}. We always check it; it isn't in Qloo's top fan hotspots for this artist, so fan heat is shown at the board's floor.`;
+
 export type VerdictShape = "circle" | "diamond" | "triangle" | "ring" | "x" | "square";
 /** DESIGN.md section 2.5: shape carries the verdict on the map, the matrix and every legend. */
 export const VERDICT_SHAPE: Record<Verdict, VerdictShape> = {

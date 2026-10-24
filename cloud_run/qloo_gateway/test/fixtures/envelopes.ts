@@ -28,3 +28,11 @@ export const cityHeat: QlooEnvelope = {
     { location: { latitude: 19.40, longitude: -99.20 }, query: { affinity: 0.1, popularity: 0.2 } },
   ],
 };
+/** Place recommendations whose geocode puts them in the queried city ("<city>, <ISO-2>"), as Qloo's same-city venues do. */
+export const placesIn = (where: unknown, names: string[], affinities: number[]): QlooEnvelope => {
+  const [city, country_code] = String(where).split(", ");
+  return {
+    operation: "recommend", status: "ok",
+    results: names.map((name, i) => ({ entity_id: `E${i}`, name, affinity: affinities[i] ?? 0, popularity: 0.5, properties: { geocode: { city, country_code } } })),
+  };
+};

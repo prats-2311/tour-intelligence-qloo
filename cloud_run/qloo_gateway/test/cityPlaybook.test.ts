@@ -5,7 +5,7 @@ import { runCityPlaybook } from "../src/pipeline/cityPlaybook.js";
 import type { QlooCaller } from "../src/qlooCall.js";
 import type { GatewayEvent, QlooEnvelope } from "../src/types.js";
 import { readFileSync } from "node:fs";
-import { cityHeat, recs } from "./fixtures/envelopes.js";
+import { cityHeat, placesIn, recs } from "./fixtures/envelopes.js";
 
 const CITIES: City[] = [{ id: "1", name: "Mexico City", country: "MX", lat: 19.4326, lon: -99.1332, population: 9_000_000 }, { id: "3", name: "Coyoacan", country: "MX", lat: 19.35, lon: -99.162, population: 600_000 }];
 const liveEnv = (name: string): QlooEnvelope => ({ operation: name, ...JSON.parse(readFileSync(new URL(`./fixtures/live/${name}.json`, import.meta.url), "utf8")) }) as QlooEnvelope;
@@ -26,7 +26,7 @@ const happy = (t: string, a: Record<string, unknown>): QlooEnvelope => {
   if (t === "qloo_compare_audiences") return compare;
   if (t === "qloo_rank" && a.option_type === "artist") return proxies(["Proxy 2", "Proxy 1"], [0.95, 0.4]);
   if (t === "qloo_rank") return recs(["Venue A", "Venue B"], [0.8, 0.6]);
-  if (t === "qloo_recommend" && a.target_type === "place") return recs(["Place 1", "Place 2", "Place 3", "Place 4"], [0.5, 0.9, 0.7, 0.8]);
+  if (t === "qloo_recommend" && a.target_type === "place") return placesIn(a.filter_location, ["Place 1", "Place 2", "Place 3", "Place 4"], [0.5, 0.9, 0.7, 0.8]);
   if (t === "qloo_recommend" && a.target_type === "artist") return recs(["Opener 1", "Opener 2", "Opener 3", "Opener 4"], [0.9, 0.8, 0.7, 0.6]);
   return recs(["X", "Y"], [0.7, 0.5]);
 };
@@ -236,7 +236,7 @@ describe("runCityPlaybook", () => {
         if (t !== "qloo_recommend") return happy(t, a);
         const m: Record<string, [string, number]> = { artist: ["Art", 10], movie: ["Film", 2], tv_show: ["Tv", 1], place: ["Place", 2] };
         const [p, n] = m[String(a.target_type)] ?? ["Brand", 2];
-        return recs(names(p, n), names(p, n).map(() => 0.5));
+        return a.target_type === "place" ? placesIn(a.filter_location, names(p, n), names(p, n).map(() => 0.5)) : recs(names(p, n), names(p, n).map(() => 0.5));
       }),
       cities: CITIES,
     }));

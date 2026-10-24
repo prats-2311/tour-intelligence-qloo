@@ -198,3 +198,14 @@ describe("marketsFromHeat on the real GeoNames dataset", () => {
     expect(["Santos", "Guarujá"]).toContain(name);
   });
 });
+
+import { largestCityOf } from "../src/geo/cities.js";
+describe("largestCityOf (real cities file)", () => {
+  it("is the most populous city of the country", () => {
+    const cities = loadCities();
+    expect(largestCityOf(cities, "US")?.name).toBe("New York City");
+    expect(largestCityOf(cities, "MX")?.name).toBe("Mexico City");
+    expect(largestCityOf(cities, "BR")?.name).toBe("Sao Paulo");
+    expect(largestCityOf(cities, "ZZ")).toBeUndefined();
+  });
+});

@@ -155,7 +155,7 @@ export function summarize(rec) {
   const rank = (key) => [...cities].sort((a, b) => b[key].value - a[key].value || a.name.localeCompare(b.name)).map((c) => c.id);
   const dens = rank("fanHeat");
   const win = rank("winnability");
-  const lines = cities.map((c) => `${c.name} (${c.country}) ${c.verdict}: density #${dens.indexOf(c.id) + 1}, winnability #${win.indexOf(c.id) + 1}`);
+  const lines = cities.map((c) => `${c.name} (${c.country}) [${c.candidateSource ?? "heat"}${c.fanHeatFloor ? ", fan heat at floor" : ""}] ${c.verdict}: density #${dens.indexOf(c.id) + 1}, winnability #${win.indexOf(c.id) + 1}`);
   return [`${rec.artist}, recorded ${rec.recordedAt}`, ...lines, `playbooks: ${Object.keys(rec.playbooks).join(", ") || "none"}`].join("\n");
 }
 

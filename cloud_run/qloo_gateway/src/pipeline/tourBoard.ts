@@ -1,6 +1,7 @@
 import { extractEntities, extractHeatPoints, extractIssues, extractMusicTags, extractTrendPoints } from "../extract.js";
 import type { City } from "../geo/cities.js";
 import { locationQueries, locationResolved } from "../geo/location.js";
+import { majorMarkets } from "./majorMarkets.js";
 import { marketsFromHeat, zonesFromHeat } from "../geo/heat.js";
 import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { activation, fanConcentration, meanTopK, type ComponentName } from "../scoring/activation.js";
@@ -9,6 +10,7 @@ import { concentrationValue, isThin, rescaleAffinity } from "../scoring/config.j
 import { fanHeat } from "../scoring/fanHeat.js";
 import { CLOSE_CALL_BAND, closeCall, verdict, winnability } from "../scoring/winnability.js";
 import { artistTasteArgs } from "./recArgs.js";
+import { noVenuesCopy, sameCityVenues, venueArgs } from "./venues.js";
 import type { DataWarning, EvidenceRef, GatewayEvent, Score, Verdict } from "../types.js";
 
 export interface TourBrief { artist: string; artistEntityId?: string; regions: string[]; maxStops: number; sessionId: string; today: string }
@@ -19,6 +21,10 @@ export interface ScoredCity {
   warnings: DataWarning[];
   /** Machine-readable reason a city has no activation score (today only "location_unresolved"). */
   insufficientReason?: "location_unresolved";
+  /** Where the city came from: Qloo's regional fan-heat list, or the largest market of a brief region that the list did not contain. */
+  candidateSource: "heat" | "major_market";
+  /** True when fan heat is the board's floor (the minimum among heat candidates) because Qloo's heat list does not include this city: no Qloo evidence. */
+  fanHeatFloor?: true;
   /** The query string Qloo resolved this city with, and how many in-city lookups it took (unresolved: all that were tried). */
   locationQuery?: string;
   locationAttempts?: number;
@@ -106,18 +112,19 @@ export async function resolveLocation(artist: string, city: { name: string; coun
   return { status: "unresolved", attempts: tried.length, tried };
 }
 
-export async function activationInputs(artist: string, loc: { where: string; inCity: CallResult }, deps: Deps, sessionId: string, events: GatewayEvent[], venueFallbackMessage = "venue ranking unresolved — showing place recommendations") {
+export async function activationInputs(artist: string, loc: { where: string; inCity: CallResult; city: { name: string; country: string } }, deps: Deps, sessionId: string, events: GatewayEvent[], venueFallbackMessage = "venue ranking unresolved — showing place recommendations") {
   const { where, inCity } = loc;
   const [brands, places, films, artists, tv] = await settleAll([
     call(deps, sessionId, "qloo_recommend", artistTasteArgs("brand", artist, where, 10), events),
-    call(deps, sessionId, "qloo_recommend", { target_type: "place", signals: [artist], filter_location: where, limit: 10 }, events),
+    call(deps, sessionId, "qloo_recommend", venueArgs(artist, where), events),
     call(deps, sessionId, "qloo_recommend", { target_type: "movie", signals: [artist], signal_location: where, limit: 10 }, events),
     call(deps, sessionId, "qloo_recommend", artistTasteArgs("artist", artist, where, 10), events),
     call(deps, sessionId, "qloo_recommend", { target_type: "tv_show", signals: [artist], signal_location: where, limit: 10 }, events),
   ] as const);
-  const placeEntities = extractEntities(places.envelope);
+  // Only real venues in this city count: Qloo also returns places in neighbouring towns and countries, and ones with no geocode.
+  const placeEntities = sameCityVenues(extractEntities(places.envelope), loc.city, where);
   // F6: qloo_rank needs entity ids; names come back as needs_input with candidates.
-  const venueIds = placeEntities.slice(0, 10).map((e) => e.entityId);
+  const venueIds = placeEntities.map((e) => e.entityId);
   const ranked = venueIds.length > 0
     ? await call(deps, sessionId, "qloo_rank", { options: venueIds, option_type: "place", signals: [artist], signal_location: where }, events)
     : undefined;
@@ -126,7 +133,8 @@ export async function activationInputs(artist: string, loc: { where: string; inC
   const venues = {
     items: venueFallback ? [...placeEntities].sort((a, b) => (Number.isNaN(b.affinity) ? -1 : b.affinity) - (Number.isNaN(a.affinity) ? -1 : a.affinity)).slice(0, 3) : rankedVenues.slice(0, 3),
     refs: ranked && !venueFallback ? [ref("qloo_rank", ranked)] : placeEntities.length > 0 ? [ref("qloo_recommend", places)] : [],
-    warnings: venueFallback ? [{ tool: "qloo_rank", kind: "partial" as const, message: venueFallbackMessage }] : [],
+    warnings: venueFallback ? [{ tool: "qloo_rank", kind: "partial" as const, message: venueFallbackMessage }]
+      : placeEntities.length === 0 ? [{ tool: "qloo_recommend", kind: "partial" as const, message: noVenuesCopy(loc.city.name) }] : [],
   };
 
   const zones = zonesFromHeat(extractHeatPoints(inCity.envelope), deps.cities);
@@ -159,7 +167,7 @@ export async function activationInputs(artist: string, loc: { where: string; inC
     ...(ranked ? warningsOf("qloo_rank", ranked) : []),
     ...venues.warnings,
   ]);
-  return { components, rawComponents, zones, warnings, venues, raw: { brands, places, films, artists, tv, inCity, ranked } };
+  return { components, rawComponents, zones, warnings, venues, placeEntities, raw: { brands, places, films, artists, tv, inCity, ranked } };
 }
 
 export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerator<GatewayEvent> {
@@ -247,14 +255,33 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
     const pooled = [...byId.values()];
 
     const heat = fanHeat(pooled.map((m) => ({ id: m.city.id, affinity: m.affinity, popularity: m.popularity, refs: m.refs })));
-    const shortlist = pickCandidates(pooled, heat, Math.max(SHORTLIST, brief.maxStops));
+    const picked = pickCandidates(pooled, heat, Math.max(SHORTLIST, brief.maxStops));
+    // Major markets we always check: the largest city of each country region, at most MAX_MAJOR_MARKETS. One already in the heat pool is
+    // a heat candidate (added if the shortlist skipped it); one absent from Qloo's list gets the board's fan-heat floor and no Qloo evidence.
+    const seeds = pooled.length > 0 ? majorMarkets(brief.regions, deps.cities) : [];
+    const shortlist: Array<(typeof pooled)[number] & { source: "heat" | "major_market" }> = picked.map((m) => ({ ...m, source: "heat" as const }));
+    const have = new Set(shortlist.map((m) => m.city.id));
+    for (const seed of seeds) {
+      const inPool = byId.get(seed.id);
+      if (inPool && !have.has(seed.id)) { shortlist.push({ ...inPool, source: "heat" }); have.add(seed.id); }
+    }
+    const heatValues = shortlist.map((m) => heat.get(m.city.id)?.value).filter((v): v is number => typeof v === "number");
+    if (heatValues.length > 0) {
+      const floor = Math.min(...heatValues);
+      for (const seed of seeds) {
+        if (have.has(seed.id)) continue;
+        heat.set(seed.id, { value: floor, refs: [] });
+        shortlist.push({ city: seed, affinity: Number.NaN, popularity: Number.NaN, refs: [], warnings: [], source: "major_market" });
+        have.add(seed.id);
+      }
+    }
 
     type CityOutcome = { ok: ScoredCity } | { stop: unknown };
     const limit = Math.max(deps.concurrency ?? 3, 1);
     for (let i = 0; i < shortlist.length; i += limit) {
       const batch: CityOutcome[] = await Promise.all(shortlist.slice(i, i + limit).map(async (m): Promise<CityOutcome> => {
         const fan = heat.get(m.city.id)!;
-        const base = { id: m.city.id, name: m.city.name, country: m.city.country, lat: m.city.lat, lon: m.city.lon };
+        const base = { id: m.city.id, name: m.city.name, country: m.city.country, lat: m.city.lat, lon: m.city.lon, candidateSource: m.source, ...(m.source === "major_market" ? { fanHeatFloor: true as const } : {}) };
         try {
           const loc = await resolveLocation(signalArtist, m.city, deps, brief.sessionId, events);
           if (loc.status === "unresolved") {
@@ -264,7 +291,7 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
             const warning: DataWarning = { tool: "qloo_where_popular", kind: "partial", code: "LOCATION_UNRESOLVED", message: "Qloo couldn't place this city precisely, so we didn't score it." };
             return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), closeCall: false, zones: [], warnings: dedupeWarnings([...m.warnings, warning]), insufficientReason: "location_unresolved", locationAttempts: loc.attempts } };
           }
-          const inputs = await activationInputs(signalArtist, loc, deps, brief.sessionId, events, "venue ranking unresolved — venue fit not scored");
+          const inputs = await activationInputs(signalArtist, { ...loc, city: m.city }, deps, brief.sessionId, events, "venue ranking unresolved — venue fit not scored");
           const adjusted = Object.fromEntries(Object.entries(inputs.components).map(([k, c]) => [k, c.value]));
           const scoredAct = activation(inputs.components, SCORING.weights);
           // Rule 8: a thin-data city is insufficient_data, never 0 (same isThin as calibration's scoreCity).

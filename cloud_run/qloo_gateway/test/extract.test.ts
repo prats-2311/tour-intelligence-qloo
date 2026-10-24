@@ -27,3 +27,16 @@ describe("extract", () => {
     expect(e.map((x) => x.name)).toEqual(["Ok"]);
   });
 });
+
+describe("extract place geocode", () => {
+  it("keeps a place's geocode city and country code, and nothing when it is absent", () => {
+    const e = extractEntities({ operation: "recommend", status: "ok", results: [
+      { entity_id: "00000000-0000-0000-0000-000000000001", name: "Hall A", properties: { geocode: { city: "Testville", country_code: "ZZ", admin1_region: "TS" } } },
+      { entity_id: "00000000-0000-0000-0000-000000000002", name: "Hall B", properties: {} },
+      { entity_id: "00000000-0000-0000-0000-000000000003", name: "Hall C", properties: { geocode: { city: "", country_code: "ZZ" } } },
+    ] });
+    expect(e[0]!.geocode).toEqual({ city: "Testville", countryCode: "ZZ" });
+    expect(e[1]!.geocode).toBeUndefined();
+    expect(e[2]!.geocode).toEqual({ countryCode: "ZZ" });
+  });
+});

@@ -13,7 +13,7 @@ import { activation } from "../src/scoring/activation.js";
 import { DEFAULT_SCORING, isThin, rescaleAffinity } from "../src/scoring/config.js";
 import { CLOSE_CALL_BAND, closeCall, verdict, winnability } from "../src/scoring/winnability.js";
 import { SCORING } from "../src/scoring/calibration.js";
-import { cityHeat, describeAmbiguous, describeOk, heatEmpty, heatMexico, recs } from "./fixtures/envelopes.js";
+import { cityHeat, describeAmbiguous, describeOk, heatEmpty, heatMexico, placesIn, recs } from "./fixtures/envelopes.js";
 
 const CITIES: City[] = [
   { id: "1", name: "Mexico City", country: "MX", lat: 19.4326, lon: -99.1332, population: 9_000_000 },
@@ -42,6 +42,7 @@ const heatNear = (within: unknown): QlooEnvelope => {
 const happy = (tool: string, args: Record<string, unknown>): QlooEnvelope => {
   if (tool === "qloo_describe") return describeOk;
   if (tool === "qloo_where_popular") return args.within === "Mexico" ? heatMexico : heatNear(args.within);
+  if (tool === "qloo_recommend" && args.target_type === "place") return placesIn(args.filter_location, ["One", "Two", "Three"], [0.9, 0.7, 0.5]);
   if (tool === "qloo_recommend") return recs(["One", "Two", "Three"], [0.9, 0.7, 0.5]);
   if (tool === "qloo_rank") return recs(["Venue A"], [0.8]);
   return { operation: tool, status: "ok", results: [] };

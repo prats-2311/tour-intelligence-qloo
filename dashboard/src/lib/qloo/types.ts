@@ -36,6 +36,9 @@ export interface ScoredCity {
   warnings: DataWarning[];
   /** Why a city has no activation score. Only "location_unresolved" today: Qloo placed the city somewhere else, so it was not scored. */
   insufficientReason?: "location_unresolved";
+  /** "major_market": the largest city of a brief country, checked though absent from Qloo's fan-heat list (fan heat is the board's floor). Absent on older recordings: treat as "heat". */
+  candidateSource?: "heat" | "major_market";
+  fanHeatFloor?: boolean;
   /** The location string Qloo resolved this city with and how many lookups that took (unresolved: all that were tried). */
   locationQuery?: string;
   locationAttempts?: number;
