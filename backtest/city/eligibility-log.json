@@ -3,13 +3,13 @@
     "title": "+−=÷× Tour",
     "artist": "Ed Sheeran",
     "eligible": false,
-    "reason": "(c) 21 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 22 of 25 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "− Tour",
     "artist": "Ed Sheeran",
     "eligible": true,
-    "reason": "eligible: 17 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 17 US/MX/BR shows, 0 big-venue 0/17, 15 anchored cities"
   },
   {
     "title": "40 Years \"Total Eclipse of the Heart\" Tour",
@@ -33,25 +33,25 @@
     "title": "9 Sad Symphonies Tour",
     "artist": "Kate Nash",
     "eligible": true,
-    "reason": "eligible: 15 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 15 US/MX/BR shows, 0 big-venue 0/15, 14 anchored cities"
   },
   {
     "title": "A Drummer Boy Christmas Tour",
     "artist": "For King & Country",
-    "eligible": true,
-    "reason": "eligible: 88 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 55 of 88 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "After Hours til Dawn Tour",
     "artist": "The Weeknd",
     "eligible": false,
-    "reason": "(c) 59 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 61 of 65 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Alicia + Keys World Tour",
     "artist": "Alicia Keys",
     "eligible": true,
-    "reason": "eligible: 35 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 35 US/MX/BR shows, 15 big-venue 15/35, 30 anchored cities"
   },
   {
     "title": "Alpha Tour",
@@ -68,20 +68,20 @@
   {
     "title": "American Dream Tour",
     "artist": "21 Savage",
-    "eligible": true,
-    "reason": "eligible: 27 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 22 of 27 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "An Evening with Whitney: The Whitney Houston Hologram Tour",
     "artist": "Whitney Houston",
-    "eligible": true,
-    "reason": "eligible: 42 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(f) 1 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "An Unfunny Evening with Tim Minchin and His Piano",
     "artist": "Tim Minchin",
     "eligible": true,
-    "reason": "eligible: 12 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 12 US/MX/BR shows, 1 big-venue 1/12, 10 anchored cities"
   },
   {
     "title": "ASMR World Tour",
@@ -92,8 +92,8 @@
   {
     "title": "At Their Very Best",
     "artist": "The 1975",
-    "eligible": false,
-    "reason": "not selected: artist has a better tour (Still... At Their Very Best, 36 vs 34 US/MX/BR shows)"
+    "eligible": true,
+    "reason": "eligible: 34 US/MX/BR shows, 10 big-venue 10/34, 28 anchored cities"
   },
   {
     "title": "Aurora's 2024 Norwegian tour",
@@ -105,7 +105,7 @@
     "title": "Autopoiética Tour",
     "artist": "Mon Laferte",
     "eligible": true,
-    "reason": "eligible: 27 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 27 US/MX/BR shows, 6 big-venue 6/27, 22 anchored cities"
   },
   {
     "title": "Avatar: The Last Airbender in Concert",
@@ -117,13 +117,13 @@
     "title": "Back to Reggaeton Tour",
     "artist": "Don Omar",
     "eligible": false,
-    "reason": "(c) 7 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 38 of 46 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Bad Reputation Tour",
     "artist": "Kid Rock",
-    "eligible": true,
-    "reason": "eligible: 54 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 41 of 54 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Baile Funk Experience",
@@ -141,13 +141,13 @@
     "title": "Bewitched Tour",
     "artist": "Laufey",
     "eligible": true,
-    "reason": "eligible: 54 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 54 US/MX/BR shows, 2 big-venue 2/54, 27 anchored cities"
   },
   {
     "title": "Billy Joel in Concert",
     "artist": "Billy Joel",
     "eligible": false,
-    "reason": "(c) 49 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 206 of 248 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Biniverse (tour)",
@@ -171,31 +171,31 @@
     "title": "Blood Stained Blonde Tour",
     "artist": "Ethel Cain",
     "eligible": true,
-    "reason": "eligible: 27 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 27 US/MX/BR shows, 2 big-venue 2/27, 19 anchored cities"
   },
   {
     "title": "Born in the Wild Tour",
     "artist": "Tems",
     "eligible": true,
-    "reason": "eligible: 16 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 16 US/MX/BR shows, 2 big-venue 2/16, 16 anchored cities"
   },
   {
     "title": "Born Pink World Tour",
     "artist": "Blackpink",
     "eligible": false,
-    "reason": "(c) 6 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 16 of 19 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Brat Tour",
     "artist": "Charli XCX",
     "eligible": false,
-    "reason": "not selected: artist has a better tour (Crash: The Live Tour, 35 vs 12 US/MX/BR shows)"
+    "reason": "(c) 8 of 12 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Bruno Mars Live",
     "artist": "Bruno Mars",
     "eligible": false,
-    "reason": "(c) 15 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 19 of 24 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Buzz World Tour",
@@ -207,7 +207,7 @@
     "title": "Capable of Love Tour",
     "artist": "PinkPantheress",
     "eligible": true,
-    "reason": "eligible: 12 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 12 US/MX/BR shows, 1 big-venue 1/12, 10 anchored cities"
   },
   {
     "title": "Carnival World Tour",
@@ -219,19 +219,19 @@
     "title": "Cerrando Ciclos",
     "artist": "Aventura",
     "eligible": false,
-    "reason": "(c) 4 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 64 of 67 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Champagne and Roses Tour",
     "artist": "Ne-Yo",
-    "eligible": true,
-    "reason": "eligible: 16 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 13 of 16 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Charm Tour",
     "artist": "Clairo",
     "eligible": true,
-    "reason": "eligible: 37 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 37 US/MX/BR shows, 4 big-venue 4/37, 21 anchored cities"
   },
   {
     "title": "Chō-genjitsu Asia Tour",
@@ -249,31 +249,31 @@
     "title": "Chris Stapleton's All-American Road Show Tour",
     "artist": "Chris Stapleton",
     "eligible": false,
-    "reason": "(c) 41 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 339 of 419 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Circus Maximus Tour",
     "artist": "Travis Scott",
     "eligible": false,
-    "reason": "(c) 4 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 45 of 50 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Cornucopia (concert tour)",
     "artist": "Björk",
-    "eligible": true,
-    "reason": "eligible: 18 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(f) 4 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "Crash World Tour",
     "artist": "Kehlani",
-    "eligible": true,
-    "reason": "eligible: 31 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 17 of 31 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Crash: The Live Tour",
     "artist": "Charli XCX",
     "eligible": true,
-    "reason": "eligible: 35 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 35 US/MX/BR shows, 2 big-venue 2/35, 28 anchored cities"
   },
   {
     "title": "Creepy Nuts One Man Tour 2024",
@@ -284,20 +284,20 @@
   {
     "title": "D-Day Tour",
     "artist": "Suga",
-    "eligible": true,
-    "reason": "eligible: 11 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 8 of 11 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Dance Fever Tour",
     "artist": "Florence and the Machine",
-    "eligible": true,
-    "reason": "eligible: 24 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 17 of 24 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Dark Matter World Tour",
     "artist": "Pearl Jam",
     "eligible": false,
-    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 23 of 33 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Dead & Company Summer Tour 2023",
@@ -314,14 +314,14 @@
   {
     "title": "Deeper Well World Tour",
     "artist": "Kacey Musgraves",
-    "eligible": true,
-    "reason": "eligible: 33 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 30 of 33 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Denim & Rhinestones Tour",
     "artist": "Carrie Underwood",
-    "eligible": true,
-    "reason": "eligible: 43 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 42 of 43 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Denkōsekka Arena Tour",
@@ -338,20 +338,20 @@
   {
     "title": "DNA World Tour",
     "artist": "Backstreet Boys",
-    "eligible": true,
-    "reason": "eligible: 111 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(c) 89 of 111 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Doing It Again Tour",
     "artist": "Girl in Red",
     "eligible": true,
-    "reason": "eligible: 16 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 16 US/MX/BR shows, 2 big-venue 2/16, 13 anchored cities"
   },
   {
     "title": "Dominate World Tour",
     "artist": "Stray Kids",
     "eligible": false,
-    "reason": "(c) 13 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 13 of 17 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Douyin Online Concert: Ke",
@@ -368,20 +368,20 @@
   {
     "title": "Emails I Can't Send Tour",
     "artist": "Sabrina Carpenter",
-    "eligible": true,
-    "reason": "eligible: 52 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(f) 34 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "End of the Road World Tour",
     "artist": "Kiss",
     "eligible": false,
-    "reason": "(c) 5 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 152 of 178 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Ephemeral Gaze",
     "artist": "Taemin",
     "eligible": true,
-    "reason": "eligible: 8 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 8 US/MX/BR shows, 3 big-venue 3/8, 8 anchored cities"
   },
   {
     "title": "Everybody Say JLS: The Hits Tour",
@@ -398,8 +398,8 @@
   {
     "title": "Éxodo Tour",
     "artist": "Peso Pluma",
-    "eligible": true,
-    "reason": "eligible: 38 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 34 of 38 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Extraterrestrial World Tour",
@@ -410,8 +410,8 @@
   {
     "title": "Faith in the Future World Tour",
     "artist": "Louis Tomlinson",
-    "eligible": true,
-    "reason": "eligible: 43 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(c) 27 of 43 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Fantastic Old Fashioned 2024: Movie Star Rising",
@@ -429,7 +429,7 @@
     "title": "Farewell Yellow Brick Road",
     "artist": "Elton John",
     "eligible": false,
-    "reason": "(c) 19 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 152 of 164 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Fear and Dreams World Tour",
@@ -441,25 +441,25 @@
     "title": "Feed the Beast World Tour",
     "artist": "Kim Petras",
     "eligible": true,
-    "reason": "eligible: 23 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 23 US/MX/BR shows, 5 big-venue 5/23, 23 anchored cities"
   },
   {
     "title": "Ferxxocalipsis World Tour",
     "artist": "Feid",
     "eligible": false,
-    "reason": "(c) 5 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 28 of 29 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Final Nights of Six",
     "artist": "You Me at Six",
     "eligible": true,
-    "reason": "eligible: 21 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 21 US/MX/BR shows, 0 big-venue 0/21, 21 anchored cities"
   },
   {
     "title": "Five Albums. One Night. The World Tour",
     "artist": "Jonas Brothers",
     "eligible": false,
-    "reason": "(c) 6 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 61 of 63 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Flame Rises Tour",
@@ -471,7 +471,7 @@
     "title": "Flo Live",
     "artist": "Flo",
     "eligible": true,
-    "reason": "eligible: 8 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 8 US/MX/BR shows, 0 big-venue 0/8, 8 anchored cities"
   },
   {
     "title": "Follow Tour",
@@ -483,37 +483,37 @@
     "title": "For Friends and Family Only Tour",
     "artist": "Shawn Mendes",
     "eligible": true,
-    "reason": "eligible: 9 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 9 US/MX/BR shows, 1 big-venue 1/9, 8 anchored cities"
   },
   {
     "title": "Forever Tour",
     "artist": "Big Time Rush",
-    "eligible": true,
-    "reason": "eligible: 49 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 34 of 49 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Fórmula, Vol. 3: La Gira",
     "artist": "Romeo Santos",
     "eligible": false,
-    "reason": "(c) 8 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 33 of 40 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Found Heaven On Tour",
     "artist": "Conan Gray",
     "eligible": true,
-    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 20 US/MX/BR shows, 9 big-venue 9/20, 19 anchored cities"
   },
   {
     "title": "From Zero World Tour",
     "artist": "Linkin Park",
     "eligible": false,
-    "reason": "(c) 8 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 36 of 43 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Garbage & Noel Gallagher's High Flying Birds: Live in Concert",
     "artist": "Garbage and Noel Gallagher's High Flying Birds",
     "eligible": false,
-    "reason": "(d) multiple artists in infobox: Garbage and Noel Gallagher's High Flying Birds"
+    "reason": "(c) 20 of 25 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Garbage 2024",
@@ -524,20 +524,20 @@
   {
     "title": "Gigaton Tour",
     "artist": "Pearl Jam",
-    "eligible": true,
-    "reason": "eligible: 36 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 30 of 36 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Gira mi salida contigo",
     "artist": "Ha*Ash",
-    "eligible": true,
-    "reason": "eligible: 75 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(f) 41 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "Girls Just Wanna Have Fun Farewell Tour",
     "artist": "Cyndi Lauper",
-    "eligible": true,
-    "reason": "eligible: 43 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 35 of 43 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Gloria the Blackout",
@@ -548,62 +548,62 @@
   {
     "title": "Gloria the Tour",
     "artist": "Sam Smith",
-    "eligible": true,
-    "reason": "eligible: 28 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 24 of 28 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "God Said No World Tour",
     "artist": "Omar Apollo",
-    "eligible": true,
-    "reason": "eligible: 25 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(c) 18 of 25 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Good Riddance Tour",
     "artist": "Gracie Abrams",
     "eligible": false,
-    "reason": "(c) 29 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 29 of 50 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Got Back",
     "artist": "Paul McCartney",
     "eligible": false,
-    "reason": "(c) 13 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 37 of 51 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Greatest Hits Tour (Avril Lavigne)",
     "artist": "Avril Lavigne",
     "eligible": false,
-    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 27 of 38 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Growin' Up and Gettin' Old Tour",
     "artist": "Luke Combs",
     "eligible": false,
-    "reason": "(c) 21 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 25 of 25 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Guns N' Roses 2023 Tour",
     "artist": "Guns N' Roses",
     "eligible": false,
-    "reason": "(c) 6 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 19 of 28 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Guts World Tour",
     "artist": "Olivia Rodrigo",
     "eligible": false,
-    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 42 of 47 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Hackney Diamonds Tour",
     "artist": "The Rolling Stones",
     "eligible": false,
-    "reason": "(c) 17 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 18 of 19 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Happier Than Ever, The World Tour",
     "artist": "Billie Eilish",
     "eligible": false,
-    "reason": "not selected: artist has a better tour (Hit Me Hard and Soft: The Tour, 53 vs 41 US/MX/BR shows)"
+    "reason": "(c) 30 of 41 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Happiness: My Dear, ReVe1uv",
@@ -615,7 +615,7 @@
     "title": "Hard Tour",
     "artist": "Tove Styrke",
     "eligible": true,
-    "reason": "eligible: 13 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 13 US/MX/BR shows, 0 big-venue 0/13, 13 anchored cities"
   },
   {
     "title": "Hearts On the Run Tour",
@@ -626,38 +626,38 @@
   {
     "title": "Higher Tour",
     "artist": "Michael Bublé",
-    "eligible": true,
-    "reason": "eligible: 37 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 33 of 37 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Hit Me Hard and Soft: The Tour",
     "artist": "Billie Eilish",
-    "eligible": true,
-    "reason": "eligible: 53 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 48 of 53 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Hope Tour",
     "artist": "NF",
-    "eligible": true,
-    "reason": "eligible: 45 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 41 of 45 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Hot Girl Summer Tour",
     "artist": "Megan Thee Stallion",
     "eligible": false,
-    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 26 of 31 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Hotel California 2020 Tour",
     "artist": "Eagles",
-    "eligible": true,
-    "reason": "eligible: 84 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 79 of 84 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Human. :II: Nature. World Tour",
     "artist": "Nightwish",
     "eligible": true,
-    "reason": "eligible: 14 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 14 US/MX/BR shows, 3 big-venue 3/14, 12 anchored cities"
   },
   {
     "title": "I Am Ayu Tour",
@@ -686,8 +686,8 @@
   {
     "title": "I/O The Tour",
     "artist": "Peter Gabriel",
-    "eligible": true,
-    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 18 of 20 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Iconic (concert)",
@@ -704,38 +704,38 @@
   {
     "title": "Imperatour",
     "artist": "Ghost",
-    "eligible": true,
-    "reason": "eligible: 73 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 62 of 73 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Imploding the Mirage Tour",
     "artist": "The Killers",
     "eligible": false,
-    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 43 of 74 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "In Holy Flux Tour",
     "artist": "Weyes Blood",
-    "eligible": true,
-    "reason": "eligible: 54 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(f) 37 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "In Pieces Tour",
     "artist": "Chloe Bailey",
     "eligible": true,
-    "reason": "eligible: 24 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 24 US/MX/BR shows, 1 big-venue 1/24, 22 anchored cities"
   },
   {
     "title": "Indie Rock Road Trip",
     "artist": "Weezer",
-    "eligible": true,
-    "reason": "eligible: 30 US/MX/BR shows, 2 stadium/field"
+    "eligible": false,
+    "reason": "(c) 20 of 30 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "It's All a Blur Tour",
     "artist": "Drake, 21 Savage & J. Cole",
     "eligible": false,
-    "reason": "(d) multiple artists in infobox: Drake, 21 Savage & J. Cole"
+    "reason": "(c) 75 of 82 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "IU HEREH World Tour",
@@ -752,14 +752,14 @@
   {
     "title": "Janet Jackson: Together Again",
     "artist": "Janet Jackson",
-    "eligible": true,
-    "reason": "eligible: 79 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(c) 68 of 79 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "JJ20 World Tour",
     "artist": "JJ Lin",
-    "eligible": true,
-    "reason": "eligible: 11 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 10 of 11 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Jubilee Tour",
@@ -771,13 +771,13 @@
     "title": "Keys to the Summer Tour",
     "artist": "Alicia Keys",
     "eligible": false,
-    "reason": "not selected: artist has a better tour (Alicia + Keys World Tour, 35 vs 21 US/MX/BR shows)"
+    "reason": "(c) 19 of 21 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Kiss Road",
     "artist": "Kiss of Life",
     "eligible": true,
-    "reason": "eligible: 18 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 18 US/MX/BR shows, 2 big-venue 2/18, 15 anchored cities"
   },
   {
     "title": "Knock On Vol.1 Tour",
@@ -794,44 +794,44 @@
   {
     "title": "Lana Del Rey's 2023 tour",
     "artist": "Lana Del Rey",
-    "eligible": true,
-    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 13 of 20 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Las Leyendas Nunca Mueren Tour",
     "artist": "Anuel AA",
     "eligible": false,
-    "reason": "not selected: artist has a better tour (Real Hasta la Muerte 2 Tour, 25 vs 22 US/MX/BR shows)"
+    "reason": "(c) 14 of 22 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Last Lap Tour",
     "artist": "Rod Wave",
-    "eligible": true,
-    "reason": "eligible: 46 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 44 of 46 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Life Is Yours Tour",
     "artist": "Foals",
     "eligible": true,
-    "reason": "eligible: 49 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 49 US/MX/BR shows, 17 big-venue 17/49, 28 anchored cities"
   },
   {
     "title": "Life's So Fun Tour",
     "artist": "Muna",
     "eligible": true,
-    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 20 US/MX/BR shows, 3 big-venue 3/20, 16 anchored cities"
   },
   {
     "title": "List of 2023 AJR festival shows",
     "artist": null,
     "eligible": false,
-    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+    "reason": "(d) headlining artist not determinable: no concert infobox"
   },
   {
     "title": "Long Live Montero Tour",
     "artist": "Lil Nas X",
     "eligible": true,
-    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 20 US/MX/BR shows, 2 big-venue 2/20, 15 anchored cities"
   },
   {
     "title": "Lonsdaleite Tour",
@@ -843,31 +843,31 @@
     "title": "Loom World Tour",
     "artist": "Imagine Dragons",
     "eligible": false,
-    "reason": "(c) 8 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 38 of 45 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Lost in Heaven Tour",
     "artist": "Chase Atlantic",
     "eligible": true,
-    "reason": "eligible: 24 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 24 US/MX/BR shows, 6 big-venue 6/24, 23 anchored cities"
   },
   {
     "title": "Love On Tour",
     "artist": "Harry Styles",
-    "eligible": true,
-    "reason": "eligible: 95 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 70 of 95 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Love Sick Tour",
     "artist": "Don Toliver",
-    "eligible": false,
-    "reason": "not selected: artist has a better tour (Psycho Tour (Don Toliver), 21 vs 19 US/MX/BR shows)"
+    "eligible": true,
+    "reason": "eligible: 19 US/MX/BR shows, 7 big-venue 7/19, 18 anchored cities"
   },
   {
     "title": "Love Sux Tour",
     "artist": "Avril Lavigne",
-    "eligible": true,
-    "reason": "eligible: 8 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(f) 4 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "LSR/CITY",
@@ -878,68 +878,68 @@
   {
     "title": "Luck and Strange (concerts)",
     "artist": "David Gilmour",
-    "eligible": true,
-    "reason": "eligible: 9 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 9 of 9 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Luis Miguel Tour 2023–24",
     "artist": "Luis Miguel",
     "eligible": false,
-    "reason": "(c) 40 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 122 of 133 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Luke Combs World Tour",
     "artist": "Luke Combs",
     "eligible": false,
-    "reason": "(c) 19 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 19 of 19 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "M72 World Tour",
     "artist": "Metallica",
     "eligible": false,
-    "reason": "(c) 49 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 53 of 54 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Mañana Será Bonito Tour",
     "artist": "Karol G",
     "eligible": false,
-    "reason": "(c) 18 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 22 of 23 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Maniac World Tour",
     "artist": "Stray Kids",
-    "eligible": true,
-    "reason": "eligible: 16 US/MX/BR shows, 2 stadium/field"
+    "eligible": false,
+    "reason": "(c) 14 of 16 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Mariah Carey's Christmas Time",
     "artist": "Mariah Carey",
-    "eligible": true,
-    "reason": "eligible: 31 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 20 of 34 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Match My Freak: World Tour",
     "artist": "Tinashe",
     "eligible": true,
-    "reason": "eligible: 21 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 21 US/MX/BR shows, 4 big-venue 4/21, 20 anchored cities"
   },
   {
     "title": "Memento Mori World Tour",
     "artist": "Depeche Mode",
-    "eligible": true,
-    "reason": "eligible: 38 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 32 of 38 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Mercury World Tour",
     "artist": "Imagine Dragons",
     "eligible": false,
-    "reason": "(c) 7 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 37 of 49 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Merry Christmas One and All!",
     "artist": "Mariah Carey",
     "eligible": false,
-    "reason": "not selected: artist has a better tour (Mariah Carey's Christmas Time, 31 vs 16 US/MX/BR shows)"
+    "reason": "(c) 15 of 16 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Metamorph (tour)",
@@ -951,7 +951,7 @@
     "title": "Mi Casa, Tu Casa Tour",
     "artist": "Becky G",
     "eligible": true,
-    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 20 US/MX/BR shows, 4 big-venue 4/20, 15 anchored cities"
   },
   {
     "title": "Minut Srca Mog Tour",
@@ -962,44 +962,44 @@
   {
     "title": "Miracle Nights Tour",
     "artist": "Brandon Lake",
-    "eligible": false,
-    "reason": "(a) table cannot be parsed reliably: 26 of 26 rows have no determinable country"
+    "eligible": true,
+    "reason": "eligible: 26 US/MX/BR shows, 3 big-venue 3/26, 22 anchored cities"
   },
   {
     "title": "Most Wanted Tour (Bad Bunny)",
     "artist": "Bad Bunny",
-    "eligible": true,
-    "reason": "eligible: 46 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 46 of 46 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Music of the Spheres World Tour",
     "artist": "Coldplay",
     "eligible": false,
-    "reason": "(c) 41 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 47 of 52 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "My Chemical Romance Reunion Tour",
     "artist": "My Chemical Romance",
-    "eligible": true,
-    "reason": "eligible: 40 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 26 of 40 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "My Songs Tour",
     "artist": "Sting",
     "eligible": true,
-    "reason": "eligible: 78 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 78 US/MX/BR shows, 39 big-venue 39/78, 27 anchored cities"
   },
   {
     "title": "Na Jednu Noć Tour",
     "artist": "Tea Tairović",
     "eligible": true,
-    "reason": "eligible: 10 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 10 US/MX/BR shows, 1 big-venue 1/10, 8 anchored cities"
   },
   {
     "title": "Naked in North America Tour",
     "artist": "Chappell Roan",
-    "eligible": false,
-    "reason": "not selected: artist has a better tour (The Midwest Princess Tour, 76 vs 19 US/MX/BR shows)"
+    "eligible": true,
+    "reason": "eligible: 19 US/MX/BR shows, 0 big-venue 0/19, 19 anchored cities"
   },
   {
     "title": "Neka Gori Balkan Tour",
@@ -1010,8 +1010,8 @@
   {
     "title": "Neo City – The Link",
     "artist": "NCT 127",
-    "eligible": true,
-    "reason": "eligible: 9 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 5 of 9 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Neo City – The Unity",
@@ -1022,14 +1022,14 @@
   {
     "title": "Neon Pill Tour",
     "artist": "Cage the Elephant",
-    "eligible": true,
-    "reason": "eligible: 41 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(c) 28 of 41 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Never Sleep Tour",
     "artist": "Nav",
     "eligible": true,
-    "reason": "eligible: 21 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 21 US/MX/BR shows, 2 big-venue 2/21, 21 anchored cities"
   },
   {
     "title": "Nevermore 2023/2024",
@@ -1041,13 +1041,13 @@
     "title": "Nicole World Tour",
     "artist": "Niki",
     "eligible": true,
-    "reason": "eligible: 33 US/MX/BR shows, 1 stadium/field"
+    "reason": "eligible: 33 US/MX/BR shows, 6 big-venue 6/33, 25 anchored cities"
   },
   {
     "title": "Nier: Orchestra Concert 12024 – The end of data",
     "artist": "Square Enix",
     "eligible": true,
-    "reason": "eligible: 9 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 9 US/MX/BR shows, 2 big-venue 2/9, 8 anchored cities"
   },
   {
     "title": "Nina and Me Tour",
@@ -1065,7 +1065,7 @@
     "title": "Nostalgia Tour",
     "artist": "Rod Wave",
     "eligible": false,
-    "reason": "not selected: artist has a better tour (Last Lap Tour, 46 vs 34 US/MX/BR shows)"
+    "reason": "(c) 32 of 34 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "O-New-Note",
@@ -1083,19 +1083,19 @@
     "title": "One Assassination Under God Tour",
     "artist": "Marilyn Manson",
     "eligible": false,
-    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+    "reason": "(f) 57 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "One More Time Tour",
     "artist": "Blink-182",
     "eligible": false,
-    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 26 of 35 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Only Love Tour",
     "artist": "Kesha",
     "eligible": true,
-    "reason": "eligible: 25 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 25 US/MX/BR shows, 1 big-venue 1/25, 21 anchored cities"
   },
   {
     "title": "Pagtatag! World Tour",
@@ -1106,32 +1106,32 @@
   {
     "title": "Pandemonium (Joji)",
     "artist": "Joji",
-    "eligible": true,
-    "reason": "eligible: 21 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 20 of 21 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Peace Out: The Farewell Tour",
     "artist": "Aerosmith",
-    "eligible": true,
-    "reason": "eligible: 41 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 40 of 41 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Pentatonix: The World Tour",
     "artist": "Pentatonix",
-    "eligible": true,
-    "reason": "eligible: 69 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 53 of 69 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "People Watching Tour",
     "artist": "Sam Fender",
     "eligible": true,
-    "reason": "eligible: 14 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 14 US/MX/BR shows, 1 big-venue 1/14, 13 anchored cities"
   },
   {
     "title": "Pink Friday 2 World Tour",
     "artist": "Nicki Minaj",
-    "eligible": true,
-    "reason": "eligible: 55 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 51 of 55 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Pop Out Zepp Tour",
@@ -1142,32 +1142,32 @@
   {
     "title": "Popular MonsTOUR II: World Domination",
     "artist": "Falling in Reverse",
-    "eligible": true,
-    "reason": "eligible: 27 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 22 of 27 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Power Up Tour",
     "artist": "AC/DC",
     "eligible": false,
-    "reason": "(c) 28 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 31 of 31 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Psycho Tour (Don Toliver)",
     "artist": "Don Toliver",
-    "eligible": true,
-    "reason": "eligible: 21 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 19 of 21 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Queen of Me Tour",
     "artist": "Shania Twain",
-    "eligible": true,
-    "reason": "eligible: 42 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 39 of 42 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Queens of R&B Tour",
     "artist": "Xscape and SWV",
     "eligible": false,
-    "reason": "(d) multiple artists in infobox: Xscape and SWV"
+    "reason": "(c) 24 of 29 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "R to V",
@@ -1179,37 +1179,37 @@
     "title": "Radical Optimism Tour",
     "artist": "Dua Lipa",
     "eligible": false,
-    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 22 of 27 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Rammstein Stadium Tour",
     "artist": "Rammstein",
     "eligible": false,
-    "reason": "(c) 5 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 9 of 12 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Re:SET Concert Series",
     "artist": null,
     "eligible": false,
-    "reason": "(c) 6 US/MX/BR shows at stadium/field venues"
+    "reason": "(d) headlining artist not determinable: no concert infobox"
   },
   {
     "title": "Ready to Be World Tour",
     "artist": "Twice",
     "eligible": false,
-    "reason": "(c) 4 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 11 of 16 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Real Hasta la Muerte 2 Tour",
     "artist": "Anuel AA",
-    "eligible": true,
-    "reason": "eligible: 25 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 25 of 25 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Rebel Diamonds Tour",
     "artist": "The Killers",
     "eligible": false,
-    "reason": "(c) 5 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 7 of 9 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Regine Rocks",
@@ -1221,13 +1221,13 @@
     "title": "Renaissance World Tour",
     "artist": "Beyoncé",
     "eligible": false,
-    "reason": "(c) 29 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 33 of 33 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Right Here World Tour",
     "artist": "Seventeen",
-    "eligible": true,
-    "reason": "eligible: 10 US/MX/BR shows, 2 stadium/field"
+    "eligible": false,
+    "reason": "(c) 10 of 10 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Riizing Day",
@@ -1250,8 +1250,8 @@
   {
     "title": "Rough and Rowdy Ways World Wide Tour",
     "artist": "Bob Dylan",
-    "eligible": true,
-    "reason": "eligible: 182 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(f) 93 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "Rush! World Tour",
@@ -1263,25 +1263,25 @@
     "title": "Saturno World Tour",
     "artist": "Rauw Alejandro",
     "eligible": false,
-    "reason": "(c) 7 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 32 of 36 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Seasons Tour",
     "artist": "Thirty Seconds to Mars",
-    "eligible": true,
-    "reason": "eligible: 28 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 22 of 28 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Sexyy Red 4 President Tour",
     "artist": "Sexyy Red",
-    "eligible": true,
-    "reason": "eligible: 28 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(c) 22 of 28 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Sharp Dressed Simple Man Tour",
     "artist": "Lynyrd Skynyrd and ZZ Top",
     "eligible": false,
-    "reason": "(d) multiple artists in infobox: Lynyrd Skynyrd and ZZ Top"
+    "reason": "(c) 53 of 64 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Shinee World VI: Perfect Illumination",
@@ -1293,19 +1293,19 @@
     "title": "Short n' Sweet Tour",
     "artist": "Sabrina Carpenter",
     "eligible": false,
-    "reason": "not selected: artist has a better tour (Emails I Can't Send Tour, 52 vs 45 US/MX/BR shows)"
+    "reason": "(c) 43 of 45 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Show What I Have World Tour",
     "artist": "Ive",
-    "eligible": true,
-    "reason": "eligible: 8 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 5 of 8 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Shows of a Lost World",
     "artist": "The Cure",
-    "eligible": true,
-    "reason": "eligible: 34 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 30 of 34 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "SM Town Live 2023: SMCU Palace",
@@ -1317,13 +1317,13 @@
     "title": "So Much For (Tour) Dust",
     "artist": "Fall Out Boy",
     "eligible": false,
-    "reason": "(c) 4 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 47 of 52 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Solar Power Tour",
     "artist": "Lorde",
     "eligible": true,
-    "reason": "eligible: 29 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 29 US/MX/BR shows, 6 big-venue 6/29, 21 anchored cities"
   },
   {
     "title": "Something to Give Each Other Tour",
@@ -1335,37 +1335,37 @@
     "title": "Sonic Symphony",
     "artist": "Sega",
     "eligible": true,
-    "reason": "eligible: 37 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 37 US/MX/BR shows, 17 big-venue 17/37, 25 anchored cities"
   },
   {
     "title": "SOS Tour",
     "artist": "SZA",
-    "eligible": true,
-    "reason": "eligible: 36 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 34 of 36 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Soy Rebelde Tour",
     "artist": "RBD",
     "eligible": false,
-    "reason": "(c) 18 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 39 of 50 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Springsteen and E Street Band 2023–2025 Tour",
     "artist": "Bruce Springsteen and the E Street Band",
     "eligible": false,
-    "reason": "(c) 7 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 58 of 74 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Stage, Screen & Everything In Between Tour",
     "artist": "Lea Salonga",
     "eligible": true,
-    "reason": "eligible: 26 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 26 US/MX/BR shows, 12 big-venue 12/26, 21 anchored cities"
   },
   {
     "title": "Stairway to the Sky Tour",
     "artist": "Zayn Malik",
     "eligible": true,
-    "reason": "eligible: 13 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 13 US/MX/BR shows, 0 big-venue 0/13, 6 anchored cities"
   },
   {
     "title": "Stardew Valley: Festival of Seasons",
@@ -1376,8 +1376,8 @@
   {
     "title": "Still... At Their Very Best",
     "artist": "The 1975",
-    "eligible": true,
-    "reason": "eligible: 36 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 32 of 36 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Sugar High World Tour",
@@ -1389,19 +1389,19 @@
     "title": "Sugar Honey Iced Tea Tour",
     "artist": "Latto",
     "eligible": true,
-    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 20 US/MX/BR shows, 6 big-venue 6/20, 20 anchored cities"
   },
   {
     "title": "Summer Carnival (tour)",
     "artist": "Pink",
     "eligible": false,
-    "reason": "(c) 20 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 24 of 37 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Summer Worship Nights Tour",
     "artist": "Brandon Lake and Phil Wickham",
     "eligible": false,
-    "reason": "(a) table cannot be parsed reliably: 44 of 45 rows have no determinable country"
+    "reason": "(c) 43 of 45 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Super Show 9: Road",
@@ -1413,25 +1413,25 @@
     "title": "Sweat (concert tour)",
     "artist": "Charli XCX and Troye Sivan",
     "eligible": false,
-    "reason": "(d) multiple artists in infobox: Charli XCX and Troye Sivan"
+    "reason": "(c) 18 of 20 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Synk: Hyper Line",
     "artist": "Aespa",
     "eligible": true,
-    "reason": "eligible: 10 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 10 US/MX/BR shows, 4 big-venue 4/10, 10 anchored cities"
   },
   {
     "title": "Synk: Parallel Line",
     "artist": "Aespa",
     "eligible": false,
-    "reason": "not selected: artist has a better tour (Synk: Hyper Line, 10 vs 8 US/MX/BR shows)"
+    "reason": "(c) 6 of 8 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The 5 Seconds of Summer Show",
     "artist": "5 Seconds of Summer",
-    "eligible": true,
-    "reason": "eligible: 21 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 11 of 21 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Big Five-O Live",
@@ -1442,32 +1442,32 @@
   {
     "title": "The Big Steppers Tour",
     "artist": "Kendrick Lamar",
-    "eligible": true,
-    "reason": "eligible: 50 US/MX/BR shows, 2 stadium/field"
+    "eligible": false,
+    "reason": "(c) 38 of 50 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Car Tour",
     "artist": "Arctic Monkeys",
-    "eligible": true,
-    "reason": "eligible: 33 US/MX/BR shows, 2 stadium/field"
+    "eligible": false,
+    "reason": "(c) 20 of 33 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Celebration of Mimi",
     "artist": "Mariah Carey",
     "eligible": false,
-    "reason": "not selected: artist has a better tour (Mariah Carey's Christmas Time, 31 vs 28 US/MX/BR shows)"
+    "reason": "(f) 3 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "The Celebration Tour",
     "artist": "Madonna",
-    "eligible": true,
-    "reason": "eligible: 54 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 43 of 54 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Chicks Tour",
     "artist": "The Chicks",
-    "eligible": true,
-    "reason": "eligible: 56 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(c) 43 of 56 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Childish Behaviour Tour",
@@ -1479,61 +1479,61 @@
     "title": "The Clancy World Tour",
     "artist": "Twenty One Pilots",
     "eligible": false,
-    "reason": "(c) 7 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 56 of 62 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Connie Co Show Tour",
     "artist": "Stephen Sanchez",
     "eligible": true,
-    "reason": "eligible: 34 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 34 US/MX/BR shows, 11 big-venue 11/34, 26 anchored cities"
   },
   {
     "title": "The Dream Show 2: In A Dream",
     "artist": "NCT Dream",
-    "eligible": true,
-    "reason": "eligible: 9 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 7 of 9 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Dream Show 3: Dream( )scape",
     "artist": "NCT Dream",
     "eligible": false,
-    "reason": "not selected: artist has a better tour (The Dream Show 2: In A Dream, 9 vs 9 US/MX/BR shows)"
+    "reason": "(c) 7 of 9 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The End Is Nero World Tour",
     "artist": "Queens of the Stone Age",
-    "eligible": true,
-    "reason": "eligible: 56 US/MX/BR shows, 2 stadium/field"
+    "eligible": false,
+    "reason": "(f) 44 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "The Eras Tour",
     "artist": "Taylor Swift",
     "eligible": false,
-    "reason": "(c) 62 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 65 of 72 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Final Lap Tour",
     "artist": "50 Cent",
-    "eligible": true,
-    "reason": "eligible: 37 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 33 of 37 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The First Time Tour",
     "artist": "The Kid Laroi",
     "eligible": true,
-    "reason": "eligible: 28 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 28 US/MX/BR shows, 7 big-venue 7/28, 28 anchored cities"
   },
   {
     "title": "The Forget Tomorrow World Tour",
     "artist": "Justin Timberlake",
-    "eligible": true,
-    "reason": "eligible: 73 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(c) 64 of 73 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Future Past World Tour",
     "artist": "Iron Maiden",
-    "eligible": true,
-    "reason": "eligible: 24 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(c) 19 of 24 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Girls Aloud Show",
@@ -1545,49 +1545,49 @@
     "title": "The Gods We Can Touch Tour",
     "artist": "Aurora",
     "eligible": true,
-    "reason": "eligible: 19 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 19 US/MX/BR shows, 5 big-venue 5/19, 17 anchored cities"
   },
   {
     "title": "The Good Life Tour",
     "artist": "Ledisi",
     "eligible": true,
-    "reason": "eligible: 29 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 29 US/MX/BR shows, 8 big-venue 8/29, 28 anchored cities"
   },
   {
     "title": "The Hardest Part Tour",
     "artist": "Noah Cyrus",
-    "eligible": true,
-    "reason": "eligible: 50 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(f) 44 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "The Jaguar Tour",
     "artist": "Victoria Monét",
     "eligible": true,
-    "reason": "eligible: 24 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 24 US/MX/BR shows, 0 big-venue 0/24, 21 anchored cities"
   },
   {
     "title": "The Last of the Street Survivors Farewell Tour",
     "artist": "Lynyrd Skynyrd",
     "eligible": false,
-    "reason": "(c) 6 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 127 of 184 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Magic Summer Tour (2024)",
     "artist": "New Kids on the Block, Paula Abdul & DJ Jazzy Jeff",
     "eligible": false,
-    "reason": "(d) multiple artists in infobox: New Kids on the Block, Paula Abdul & DJ Jazzy Jeff"
+    "reason": "(c) 37 of 45 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Midwest Princess Tour",
     "artist": "Chappell Roan",
-    "eligible": true,
-    "reason": "eligible: 76 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(f) 55 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "The New World Tour (Childish Gambino)",
     "artist": "Donald Glover",
-    "eligible": true,
-    "reason": "eligible: 30 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 29 of 30 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Odd of Love",
@@ -1598,56 +1598,56 @@
   {
     "title": "The Old Friends Acoustic Tour",
     "artist": "Ben Rector",
-    "eligible": true,
-    "reason": "eligible: 45 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(f) 36 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "The Older Tour",
     "artist": "Lizzy McAlpine",
     "eligible": true,
-    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 20 US/MX/BR shows, 3 big-venue 3/20, 13 anchored cities"
   },
   {
     "title": "The Over and Out Tour",
     "artist": "Electric Light Orchestra",
-    "eligible": true,
-    "reason": "eligible: 29 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 27 of 29 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Rhapsody Tour",
     "artist": "Queen + Adam Lambert",
-    "eligible": true,
-    "reason": "eligible: 47 US/MX/BR shows, 2 stadium/field"
+    "eligible": false,
+    "reason": "(c) 42 of 47 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Saviors Tour",
     "artist": "Green Day",
     "eligible": false,
-    "reason": "(c) 10 US/MX/BR shows at stadium/field venues"
+    "reason": "(f) 32 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "The Scarlet Tour",
     "artist": "Doja Cat",
-    "eligible": true,
-    "reason": "eligible: 27 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 25 of 27 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Secret of Us Tour",
     "artist": "Gracie Abrams",
     "eligible": true,
-    "reason": "eligible: 35 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 35 US/MX/BR shows, 10 big-venue 10/35, 18 anchored cities"
   },
   {
     "title": "The Show: Live on Tour",
     "artist": "Niall Horan",
-    "eligible": true,
-    "reason": "eligible: 41 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 30 of 41 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Slow Rush Tour",
     "artist": "Tame Impala",
-    "eligible": true,
-    "reason": "eligible: 66 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 44 of 66 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Smashing Pumpkins and Weezer UK & Ireland Tour 2024",
@@ -1659,55 +1659,55 @@
     "title": "The So Nice Tour",
     "artist": "Carly Rae Jepsen",
     "eligible": true,
-    "reason": "eligible: 39 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 39 US/MX/BR shows, 4 big-venue 4/39, 27 anchored cities"
   },
   {
     "title": "The Special Tour",
     "artist": "Lizzo",
-    "eligible": true,
-    "reason": "eligible: 44 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 39 of 44 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Spicy Meatball Tour",
     "artist": "Tenacious D",
     "eligible": true,
-    "reason": "eligible: 14 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 14 US/MX/BR shows, 5 big-venue 5/14, 11 anchored cities"
   },
   {
     "title": "The Spinnin Tour",
     "artist": "Madison Beer",
     "eligible": true,
-    "reason": "eligible: 30 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 30 US/MX/BR shows, 4 big-venue 4/30, 30 anchored cities"
   },
   {
     "title": "The Stick Season (We'll All Be Here Forever) Tour",
     "artist": "Noah Kahan",
-    "eligible": true,
-    "reason": "eligible: 43 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(c) 28 of 43 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Timeless Tour",
     "artist": "Meghan Trainor",
-    "eligible": true,
-    "reason": "eligible: 25 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 20 of 25 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Tipping Point World Tour",
     "artist": "Tears for Fears",
-    "eligible": true,
-    "reason": "eligible: 41 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 36 of 41 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Trilogy Tour (Melanie Martinez)",
     "artist": "Melanie Martinez",
-    "eligible": true,
-    "reason": "eligible: 31 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 27 of 31 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "The Unfortunate Return of the Ridiculously Self-Indulgent, Ill-Advised Vanity Tour",
     "artist": "\"Weird Al\" Yankovic",
-    "eligible": true,
-    "reason": "eligible: 126 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(f) 85 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "The Unhealthy Club Tour",
@@ -1719,31 +1719,31 @@
     "title": "The Wild Dreams Tour",
     "artist": "Westlife",
     "eligible": true,
-    "reason": "eligible: 8 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 8 US/MX/BR shows, 2 big-venue 2/8, 7 anchored cities"
   },
   {
     "title": "The World Tour (Def Leppard and Mötley Crüe)",
     "artist": "Def Leppard and Mötley Crüe",
     "eligible": false,
-    "reason": "(c) 5 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 9 of 14 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Think Later World Tour",
     "artist": "Tate McRae",
     "eligible": true,
-    "reason": "eligible: 25 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 25 US/MX/BR shows, 12 big-venue 12/25, 20 anchored cities"
   },
   {
     "title": "This Is Not a Drill",
     "artist": "Roger Waters",
-    "eligible": true,
-    "reason": "eligible: 44 US/MX/BR shows, 2 stadium/field"
+    "eligible": false,
+    "reason": "(c) 39 of 44 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "This Is Why Tour",
     "artist": "Paramore",
-    "eligible": true,
-    "reason": "eligible: 39 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(c) 27 of 39 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "This Life on Tour",
@@ -1778,26 +1778,26 @@
   {
     "title": "Tour of the Setting Sum",
     "artist": "Sum 41",
-    "eligible": true,
-    "reason": "eligible: 43 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(f) 36 distinct US/MX/BR cities after anchoring (need 6-30)"
   },
   {
     "title": "Train of Terror Tour",
     "artist": "Insane Clown Posse, Ouija Macc, Shaggy The Airhead, Wakko The Kidd, Monster Wolf, Juggalo Championship Wrestling",
     "eligible": false,
-    "reason": "(a) table cannot be parsed reliably: 7 of 7 rows have no determinable country"
+    "reason": "(b) only 7 US/MX/BR shows (7 parsed, 0 country-unknown)"
   },
   {
     "title": "Trustfall Tour",
     "artist": "Pink",
-    "eligible": true,
-    "reason": "eligible: 34 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 33 of 34 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Twelve Carat Tour",
     "artist": "Post Malone",
-    "eligible": true,
-    "reason": "eligible: 35 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 32 of 35 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Tyla Tour",
@@ -1839,13 +1839,13 @@
     "title": "Unlimited Love Tour",
     "artist": "Red Hot Chili Peppers",
     "eligible": false,
-    "reason": "(c) 19 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 39 of 70 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Usher: Past Present Future",
     "artist": "Usher",
-    "eligible": true,
-    "reason": "eligible: 58 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 58 of 58 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Venus Tour",
@@ -1856,26 +1856,26 @@
   {
     "title": "Viva Las Vengeance Tour",
     "artist": "Panic! at the Disco",
-    "eligible": true,
-    "reason": "eligible: 27 US/MX/BR shows, 0 stadium/field"
+    "eligible": false,
+    "reason": "(c) 25 of 27 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Voyage to the Blue Planet",
     "artist": "Weezer",
     "eligible": false,
-    "reason": "not selected: artist has a better tour (Indie Rock Road Trip, 30 vs 22 US/MX/BR shows)"
+    "reason": "(c) 19 of 22 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Walkerverse: The Tour",
     "artist": "Alan Walker",
     "eligible": true,
-    "reason": "eligible: 14 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 14 US/MX/BR shows, 1 big-venue 1/14, 12 anchored cities"
   },
   {
     "title": "We Trust You Tour",
     "artist": "Future & Metro Boomin",
     "eligible": false,
-    "reason": "(d) multiple artists in infobox: Future & Metro Boomin"
+    "reason": "(c) 23 of 25 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "Welcome Back Tour",
@@ -1887,7 +1887,7 @@
     "title": "What Are We Waiting For Tour",
     "artist": "For King & Country",
     "eligible": false,
-    "reason": "not selected: artist has a better tour (A Drummer Boy Christmas Tour, 88 vs 58 US/MX/BR shows)"
+    "reason": "(c) 56 of 58 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "What Happened to the Earth?",
@@ -1904,20 +1904,20 @@
   {
     "title": "Will of the People World Tour",
     "artist": "Muse",
-    "eligible": true,
-    "reason": "eligible: 31 US/MX/BR shows, 1 stadium/field"
+    "eligible": false,
+    "reason": "(c) 21 of 31 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "World Tour 2023/2024",
     "artist": "Blink-182",
     "eligible": false,
-    "reason": "(c) 4 US/MX/BR shows at stadium/field venues"
+    "reason": "(c) 33 of 42 US/MX/BR shows in stadium/arena-class venues (venue-name rule)"
   },
   {
     "title": "World Tour 2024",
     "artist": "King Gizzard & the Lizard Wizard",
     "eligible": true,
-    "reason": "eligible: 38 US/MX/BR shows, 2 stadium/field"
+    "reason": "eligible: 38 US/MX/BR shows, 19 big-venue 19/38, 30 anchored cities"
   },
   {
     "title": "XXV Tour",
@@ -1929,7 +1929,7 @@
     "title": "Y2K! World Tour",
     "artist": "Ice Spice",
     "eligible": true,
-    "reason": "eligible: 17 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 17 US/MX/BR shows, 1 big-venue 1/17, 15 anchored cities"
   },
   {
     "title": "Yoasobi Asia Tour 2023–2024",
@@ -1947,7 +1947,7 @@
     "title": "Young Forever Tour",
     "artist": "Nessa Barrett",
     "eligible": true,
-    "reason": "eligible: 19 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 19 US/MX/BR shows, 0 big-venue 0/19, 14 anchored cities"
   },
   {
     "title": "Zuhause bei Dir Tour",
@@ -1959,6 +1959,6 @@
     "title": "Zunge Tour",
     "artist": "Till Lindemann",
     "eligible": true,
-    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+    "reason": "eligible: 20 US/MX/BR shows, 3 big-venue 3/20, 19 anchored cities"
   }
 ]
