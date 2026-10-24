@@ -25,6 +25,15 @@ describe("runStrategist", () => {
     const second = generate.mock.calls[1]![1] as { contents: Array<{ role: string; parts: Array<Record<string, unknown>> }> };
     expect(second.contents.at(-1)!.parts[0]!.functionResponse).toMatchObject({ name: "qloo_recommend" });
   });
+  it("reports resultCount on a Qloo tool result: the envelope's result_count, else the results length, and none on a rejection", async () => {
+    const withCount: QlooCaller = { call: vi.fn(async () => ({ envelope: { ...recs(["A", "B"], [0.9, 0.8]), result_count: 42 }, cacheKey: "k", cached: false, stale: false })) } as unknown as QlooCaller;
+    const a = await collect(runStrategist(input, deps(script(call("qloo_recommend", { target_type: "brand" }), text("x")), withCount as never)));
+    expect(a.find((e) => e.type === "strategist_tool_result")).toMatchObject({ resultCount: 42 });
+    const b = await collect(runStrategist(input, deps(script(call("qloo_recommend", { target_type: "brand" }), text("x")))));
+    expect(b.find((e) => e.type === "strategist_tool_result")).toMatchObject({ resultCount: 1 });
+    const c = await collect(runStrategist(input, deps(script(call("qloo_capabilities", {}), text("x")))));
+    expect(c.find((e) => e.type === "strategist_tool_result")).not.toHaveProperty("resultCount");
+  });
   it("feeds a rejected tool back to the model instead of calling Qloo", async () => {
     const q = qloo();
     const events = await collect(runStrategist(input, deps(script(call("qloo_capabilities", {}), text("I can't use that tool.")), q)));

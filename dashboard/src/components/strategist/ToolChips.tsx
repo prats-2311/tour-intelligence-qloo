@@ -17,6 +17,15 @@ function StatusIcon({ status, streaming }: { status: ToolChip["status"]; streami
   return <CircleAlert size={14} aria-hidden className="text-state-stale" />;
 }
 
+/** "7 results" / "1 card" from the gateway's resultCount; older recordings only have the summary text. */
+export function countText(chip: ToolChip): string | undefined {
+  if (typeof chip.resultCount === "number") {
+    const noun = chip.name === "get_city_playbook" ? "card" : "result";
+    return `${chip.resultCount} ${noun}${chip.resultCount === 1 ? "" : "s"}`;
+  }
+  return chip.summary;
+}
+
 function Chip({ chip, streaming }: { chip: ToolChip; streaming: boolean }) {
   const [open, setOpen] = useState(false);
   return (
@@ -25,7 +34,7 @@ function Chip({ chip, streaming }: { chip: ToolChip; streaming: boolean }) {
         <StatusIcon status={chip.status} streaming={streaming} />
         {toolLabel(chip.name)}
         {chip.status && <span className="font-normal text-canvas-muted">{chip.status.replace(/_/g, " ")}</span>}
-        {chip.status && chip.summary && <span className="break-words text-left font-normal text-canvas-muted">{chip.summary}</span>}
+        {chip.status && countText(chip) && <span className="break-words text-left font-normal text-canvas-muted">{countText(chip)}</span>}
         {chip.cached && <span className="font-normal text-canvas-muted">From cache</span>}
         {!chip.status && !streaming && <span className="font-normal text-canvas-muted">No result</span>}
       </button>

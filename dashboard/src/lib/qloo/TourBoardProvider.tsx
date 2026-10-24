@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 import { SAMPLE_ACCENT_ORDER } from "./cityAccent";
 import { isSampleMode, streamTourBoard } from "./client";
 import { runKey } from "./journey";
-import { effectiveRegions } from "./routing";
+import { buildStrategistContext } from "./strategistContext";
 import { variantOfBrief } from "./showcase";
 import { defaultShortlist } from "./ranking";
 import { boardReducer, initialBoard, type BoardState } from "./tourBoardReducer";
@@ -63,18 +63,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
     setShortlist(shortlist.includes(id) ? shortlist.filter((x) => x !== id) : [...shortlist, id]);
   }, [shortlist, setShortlist]);
 
-  const strategistContext = useMemo<StrategistContext>(() => {
-    const ctx: StrategistContext = {};
-    if (state.artist) ctx.artist = { name: state.artist.name, entityId: state.artist.entityId };
-    if (state.brief) ctx.regions = effectiveRegions(state.brief, state.cities);
-    if (state.cities.length > 0) {
-      ctx.cities = state.cities.slice(0, 20).map((c) => ({
-        id: c.id, name: c.name, country: c.country, verdict: c.verdict,
-        fanHeat: c.fanHeat?.value ?? null, activation: c.activation?.value ?? null, winnability: c.winnability?.value ?? null,
-      }));
-    }
-    return ctx;
-  }, [state.artist, state.brief, state.cities]);
+  const strategistContext = useMemo<StrategistContext>(() => buildStrategistContext(state.artist, state.brief, state.cities), [state.artist, state.brief, state.cities]);
 
   const value = useMemo(() => ({ state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, abort, reset }), [state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, abort, reset]);
   return <TourBoardContext.Provider value={value}>{children}</TourBoardContext.Provider>;

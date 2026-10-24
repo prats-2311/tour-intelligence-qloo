@@ -45,10 +45,20 @@ describe("StrategistLauncher", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour" }));
     expect(await screen.findByText("Ask about a tour")).toBeTruthy();
   });
+  it("an idle showcase panel invites a tap on a recorded question; live keeps the generic wording", async () => {
+    mm(false);
+    const { unmount } = shell("/tours/board?showcase=1");
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour" }));
+    expect(await screen.findByText("Tap a recorded question to replay how the agent answered it.")).toBeTruthy();
+    unmount();
+    vi.spyOn(client, "isSampleMode").mockReturnValue(false);
+    shell("/insights");
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour" }));
+    expect(await screen.findByText("Ask about a tour")).toBeTruthy();
+  });
   it("does not show the launcher on legacy campaign routes", () => {
     mm(false);
     shell("/campaign");
-    expect(screen.queryByRole("button", { name: "Ask about this tour" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Ask about this tour" })).toBeNull();
   });
   it("desktop docks the panel, pushes the main area and remembers it open", async () => {

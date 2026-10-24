@@ -80,7 +80,7 @@ export async function* runStrategist(input: { messages: ChatMessage[]; context: 
         const out: ToolOutcome = await executeTool(c, { qloo: deps.qloo, cities: deps.cities, sessionId: input.sessionId, ...(deps.signal ? { signal: deps.signal } : {}) });
         if (out.data !== null && out.data !== undefined) collected.push(out.data);
         summaries.push(`${out.name}: ${out.summary}`);
-        yield { type: "strategist_tool_result", id: cid, name: out.name, status: out.status, summary: out.summary, cached: out.cached ?? false };
+        yield { type: "strategist_tool_result", id: cid, name: out.name, status: out.status, summary: out.summary, ...(out.resultCount !== undefined ? { resultCount: out.resultCount } : {}), cached: out.cached ?? false };
         responses.push({ functionResponse: { name: out.name, response: { status: out.status, summary: out.summary, data: out.data } } });
       }
       // Every functionCall in the model turn needs a response; calls skipped by the cap are answered as not run.

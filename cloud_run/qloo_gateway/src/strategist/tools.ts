@@ -61,6 +61,8 @@ export interface ToolOutcome {
   name: string;
   status: StrategistToolStatus;
   summary: string;
+  /** How many results or cards the tool returned; absent when it did not run. */
+  resultCount?: number;
   data: unknown;
   cacheKey?: string;
   cached?: boolean;
@@ -133,7 +135,7 @@ async function playbook(args: Record<string, unknown>, deps: Deps): Promise<Tool
         return out;
       }),
     }));
-    return { name, status: "ok", summary: `${data.length} cards`, data };
+    return { name, status: "ok", summary: `${data.length} cards`, resultCount: data.length, data };
   } catch (err) {
     return failed(name, err);
   }
@@ -150,10 +152,11 @@ export async function executeTool(call: { name: string; args: Record<string, unk
     const r = await deps.qloo.call(name, args, deps.sessionId);
     const e = r.envelope;
     const n = Array.isArray(e.results) ? e.results.length : 0;
+    const resultCount = typeof e.result_count === "number" && Number.isFinite(e.result_count) ? e.result_count : n;
     const data = name === "qloo_trends" ? extractTrendPoints(e).slice(0, 8)
       : e.status === "needs_input" ? extractCandidates(e).slice(0, 5) // F6: ids the model can retry with
       : compactResults(e.results);
-    return { name, status: e.status, summary: e.summary ?? `${n} results`, data, cacheKey: r.cacheKey, cached: r.cached };
+    return { name, status: e.status, summary: e.summary ?? `${n} results`, resultCount, data, cacheKey: r.cacheKey, cached: r.cached };
   } catch (err) {
     return err instanceof ValidationError ? rejected(name, err.message) : failed(name, err);
   }

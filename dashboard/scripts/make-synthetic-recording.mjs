@@ -305,19 +305,17 @@ export function addSyntheticRouting(rec) {
 
 /**
  * Two invented "Ask about this tour" Q&As (the fixed final-recording questions) with a full work log: a reasoning summary, one Qloo-style
- * call per tool with a result count, and an answer. Text is made up and mentions only the synthetic cities of the board; there is no Qloo data.
+ * call per tool with a result count, and an answer. Text is made up (it names the cities in the questions); there is no Qloo data.
  * Rebuilt every time (a source `strategist` is dropped first). Mutates and returns `rec`.
  */
 export function addSyntheticStrategist(rec) {
-  const names = (rec.boardEvents ?? []).filter((e) => e.type === "city_scored").map((e) => e.city.name);
-  const [a = "the first market", b = "the second market"] = names;
   const turn = (question, thought, calls, answer) => ({
     question,
     events: [
       { type: "strategist_thinking", summary: thought },
-      ...calls.flatMap(([id, name, args, summary], i) => [
+      ...calls.flatMap(([id, name, args, summary, resultCount], i) => [
         { type: "strategist_tool_call", id, name, args },
-        { type: "strategist_tool_result", id, name, status: "ok", summary, cached: i > 0 },
+        { type: "strategist_tool_result", id, name, status: "ok", summary, resultCount, cached: i > 0 },
       ]),
       { type: "strategist_message", text: answer, unsupportedNumbers: [], stoppedEarly: false, model: "synthetic" },
       { type: "done", summary: { rounds: 2, toolCalls: calls.length, forcedFinal: false } },
@@ -326,15 +324,15 @@ export function addSyntheticStrategist(rec) {
   rec.strategist = [
     turn(
       "Why does Los Angeles rank above São Paulo here?",
-      `Invented reasoning for the test fixture: compare the two scored markets, then check the playbook for ${a}.`,
-      [["s1", "get_city_playbook", { city: a }, "7 cards"], ["s2", "qloo_recommend", { target_type: "brand", signal_location: b }, "5 results"]],
-      `Invented test answer: ${a} ranks above ${b} because its sponsor fit is stronger in this fixture.`,
+      "Invented reasoning for the test fixture: compare Los Angeles with São Paulo on sponsor fit, then check the Los Angeles playbook.",
+      [["s1", "get_city_playbook", { city: "Los Angeles", country: "US" }, "7 cards", 7], ["s2", "qloo_recommend", { target_type: "brand", signal_location: "São Paulo, BR" }, "5 results", 5]],
+      "Invented test answer: Los Angeles ranks above São Paulo because its sponsor fit is stronger in this fixture.",
     ),
     turn(
       "Which sponsor should I pitch first in Mexico City, and why?",
-      "Invented reasoning for the test fixture: look at sponsor fit for the market, then pick the closest match.",
-      [["s1", "qloo_recommend", { target_type: "brand", signal_location: a }, "4 results"]],
-      "Invented test answer: pitch the first sponsor in the list, because it matches the crowd best in this fixture.",
+      "Invented reasoning for the test fixture: look at sponsor fit for Mexico City, then pick the closest match.",
+      [["s1", "qloo_recommend", { target_type: "brand", signal_location: "Mexico City, MX" }, "4 results", 4]],
+      "Invented test answer: pitch the first sponsor in the list in Mexico City, because it matches the crowd best in this fixture.",
     ),
   ];
   return rec;

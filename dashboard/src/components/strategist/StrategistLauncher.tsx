@@ -10,6 +10,7 @@ import { StrategistPanel } from "./StrategistPanel";
 
 const STORAGE_KEY = "strategistOpen";
 export const DOCK_WIDTH = 380;
+const SHOWCASE_IDLE_HINT = "Tap a recorded question to replay how the agent answered it.";
 
 /** Tour routes and Taste only; the legacy campaign pages never get the launcher. */
 export const showsStrategist = (pathname: string): boolean => pathname === "/insights" || pathname === "/tours" || pathname.startsWith("/tours/") || pathname.startsWith("/insights/");
@@ -45,7 +46,7 @@ function useLauncherModel() {
   const cityName = focusCityId
     ? (state.cities.find((c) => c.id === focusCityId)?.name ?? (sample && state.cities.length === 0 ? SAMPLE_CITIES.find((c) => c.id === focusCityId)?.name : undefined))
     : undefined;
-  const title = cityName ? `About ${cityName}` : state.artist ? `About ${state.artist.name}` : "Ask about a tour";
+  const title = cityName ? `About ${cityName}` : state.artist ? `About ${state.artist.name}` : showcase ? SHOWCASE_IDLE_HINT : "Ask about a tour";
   const context = focusCityId ? { ...strategistContext, focusCityId } : strategistContext;
   return { sample, showcase, title, context };
 }

@@ -87,7 +87,7 @@ export type GatewayEvent =
   | { type: "narrative"; narrative: Narrative }
   | { type: "strategist_thinking"; summary: string }
   | { type: "strategist_tool_call"; id: string; name: string; args: Record<string, unknown> }
-  | { type: "strategist_tool_result"; id: string; name: string; status: StrategistToolStatus; summary: string; cached: boolean }
+  | { type: "strategist_tool_result"; id: string; name: string; status: StrategistToolStatus; summary: string; /** Results or cards the tool returned; older recordings lack it. */ resultCount?: number; cached: boolean }
   | { type: "strategist_message"; text: string; unsupportedNumbers: string[]; stoppedEarly: boolean; model: string }
   | { type: "strategist_error"; code: "CAPPED" | "UNAVAILABLE" | "ABORTED" | "INTERNAL"; message: string }
   | { type: "done"; summary: unknown }

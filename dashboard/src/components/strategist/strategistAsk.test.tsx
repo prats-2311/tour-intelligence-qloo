@@ -51,6 +51,26 @@ describe("Ask about this tour: showcase", () => {
     expect(within(tools).getByRole("button", { name: /Qloo · recommend/ })).toBeTruthy();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+  it("shows the gateway's resultCount, singular or plural, and falls back to the summary text for old recordings", async () => {
+    vi.spyOn(client, "streamStrategist").mockImplementation(async function* () {
+      yield { type: "strategist_tool_call", id: "a", name: "qloo_recommend", args: {} } as const;
+      yield { type: "strategist_tool_result", id: "a", name: "qloo_recommend", status: "ok", summary: "Found some matches for you", resultCount: 12, cached: false } as const;
+      yield { type: "strategist_tool_call", id: "b", name: "get_city_playbook", args: {} } as const;
+      yield { type: "strategist_tool_result", id: "b", name: "get_city_playbook", status: "ok", summary: "7 cards", resultCount: 1, cached: false } as const;
+      yield { type: "strategist_tool_call", id: "c", name: "qloo_describe", args: {} } as const;
+      yield { type: "strategist_tool_result", id: "c", name: "qloo_describe", status: "ok", summary: "old summary text", cached: false } as const;
+      yield { type: "strategist_message", text: "A.", unsupportedNumbers: [], stoppedEarly: false, model: "m" } as const;
+      yield { type: "done", summary: {} } as const;
+    });
+    render(<StrategistPanel context={{}} sample={false} title="t" />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "q" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    const tools = await screen.findByRole("list", { name: "Tools used" });
+    expect(within(tools).getByText("12 results")).toBeTruthy();
+    expect(within(tools).getByText("1 card")).toBeTruthy();
+    expect(within(tools).getByText("old summary text")).toBeTruthy();
+    expect(within(tools).queryByText("Found some matches for you")).toBeNull();
+  });
   it("the first answer's work log is open, a later one starts collapsed and can be opened; unsupported numbers stay flagged", async () => {
     recorded();
     render(<StrategistPanel context={{}} sample showcase title="t" />);

@@ -91,16 +91,26 @@ export function sanitizeEvent(e) {
   return { type: "tool_call", tool: e.tool, args, cached: Boolean(e.cached) };
 }
 
+const regionNames = (() => { try { return new Intl.DisplayNames(["en"], { type: "region" }); } catch { return null; } })();
+const countryLabel = (iso2) => { try { return regionNames?.of(iso2) ?? iso2; } catch { return iso2; } };
+
 /**
- * The strategist's context for a recorded board. Mirrors `strategistContext` in dashboard/src/lib/qloo/TourBoardProvider.tsx exactly
- * (artist from the resolve event, the brief's regions, the first 20 cities in arrival order with their three scores); keep the two in step.
+ * The strategist's context for a recorded board. A mirror of `buildStrategistContext` (dashboard/src/lib/qloo/strategistContext.ts, used by
+ * TourBoardProvider): artist from the resolve event, `effectiveRegions` (a pasted brief's regions are its cities' English country names),
+ * the first 20 cities in arrival order with a re-scored id keeping its first slot (as the board reducer does). src/lib/qloo/recordQuestions.test.ts
+ * builds both from the same events and asserts deep equality; keep them in step.
  */
 export function strategistContext(boardEvents, brief) {
   const ctx = {};
   const resolved = boardEvents.find((e) => e.type === "resolve");
   if (resolved) ctx.artist = { name: resolved.entity.name, entityId: resolved.entity.entityId };
-  if (brief?.regions) ctx.regions = brief.regions;
-  const cities = boardEvents.filter((e) => e.type === "city_scored").map((e) => e.city);
+  const cities = [];
+  for (const e of boardEvents) {
+    if (e.type !== "city_scored") continue;
+    const i = cities.findIndex((c) => c.id === e.city.id);
+    if (i === -1) cities.push(e.city); else cities[i] = e.city;
+  }
+  if (brief) ctx.regions = brief.cities?.length ? [...new Set(cities.map((c) => countryLabel(c.country)))] : brief.regions;
   if (cities.length > 0) {
     ctx.cities = cities.slice(0, 20).map((c) => ({ id: c.id, name: c.name, country: c.country, verdict: c.verdict, fanHeat: c.fanHeat?.value ?? null, activation: c.activation?.value ?? null, winnability: c.winnability?.value ?? null }));
   }

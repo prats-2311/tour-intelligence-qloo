@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { parseShowcase } from "./showcase";
+import { boardReducer, initialBoard } from "./tourBoardReducer";
+import { buildStrategistContext } from "./strategistContext";
+import type { GatewayEvent, TourBrief } from "./types";
 
 // The recorder is a plain .mjs script; load it by variable path so tsc does not type-check it.
 const SCRIPT = "../../../scripts/record-showcase.mjs";
@@ -62,6 +65,31 @@ describe("record-showcase --questions", () => {
     expect((await rec.record({ ...base, questions: ["Q?"] })).strategist).toEqual([]);
     expect(warns.join()).toContain("Q?");
     expect((await rec.record(base)).strategist).toBeUndefined();
+  });
+});
+
+describe("strategistContext parity with the dashboard", () => {
+  const events = (): GatewayEvent[] => [
+    { type: "resolve", entity: { entityId: "e1", name: "A", popularity: 0.5 } } as GatewayEvent,
+    ...Array.from({ length: 23 }, (_, i) => ({ type: "city_scored", city: { ...city(i), country: i % 2 ? "MX" : "US" } }) as unknown as GatewayEvent),
+    { type: "city_scored", city: { ...city(3), name: "Rescored 3", country: "BR" } } as unknown as GatewayEvent, // same id again: keeps its slot
+    { type: "done", summary: {} } as GatewayEvent,
+  ];
+  const both = (brief: TourBrief) => {
+    const evs = events();
+    let state = boardReducer(initialBoard, { type: "start", source: "live", brief } as never);
+    for (const event of evs) state = boardReducer(state, { type: "event", event });
+    return { dash: buildStrategistContext(state.artist, state.brief, state.cities), script: rec.strategistContext(evs, brief) };
+  };
+  it("matches for a regional brief", () => {
+    const { dash, script } = both({ artist: "A", regions: ["Mexico", "Brazil"], maxStops: 8 });
+    expect(script).toEqual(dash);
+    expect((script as { cities: Array<{ name: string }> }).cities[3]!.name).toBe("Rescored 3");
+  });
+  it("matches for a pasted-cities brief (regions are the cities' countries)", () => {
+    const { dash, script } = both({ artist: "A", regions: [], maxStops: 8, cities: [{ name: "x" }] });
+    expect(script).toEqual(dash);
+    expect((script as { regions: string[] }).regions).toEqual(["United States", "Mexico", "Brazil"]);
   });
 });
 
