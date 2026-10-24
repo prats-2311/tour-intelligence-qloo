@@ -107,3 +107,34 @@ This is a known property of the method, stated in the results: the two Qloo arms
 4. **Chance level:** each artist's chance R-precision (N / candidate count) is reported next to the four arms, along with the mean chance level over all artists.
 
 Everything else stands: artist order by sha256, batches of 6, the stop rule, metrics, the claim rule and the published limits. The eligible list is regenerated under the amended rules, and `backtest/city/artists.json` and `cases.json` are replaced. The first list stays in git history (96b2ed6).
+
+## Amendment 2 (2026-10-24, before any Qloo or Gemini call)
+**Why:** the runner review (task 4a) found that Amendment 1's candidate rule biases the comparison.
+- Every added city was a played city, and every added city sits at or below the fan-heat floor.
+- So "added" leaked "played". The fan-heat arm was capped, while winnability's activation half could lift added cities. "Winnability beat fan heat" would have been close to guaranteed.
+
+No Qloo or Gemini call has been made.
+
+**Changes:**
+1. **Balanced extras.**
+   - After the board's own cities, extras are added in pairs: one played city (in `sha256(artist + city id)` order), then one unplayed decoy.
+   - **Decoys:** cities in `cities5000` in the artist's regions (ISO-2 of each region) that were not played, are not already candidates, are within the location-check rules, and have population ≥ the smallest played city's population. They are taken in `sha256(artist + "decoy" + city id)` order.
+   - Pairs are added while the list has ≤ 14 cities and played cities are ≤ half of it.
+   - Decoys are scored by the same pipeline. Like played extras, they get floor fan heat when absent from Qloo's heat list.
+   - Among extras, then, fan heat carries no information: they tie at the floor and are ordered by the hash tie-break. Any advantage winnability gains there comes only from activation, which is the claim being tested.
+2. **Board-only comparison** (reported alongside the full list): R-precision of winnability vs fan heat over the board's own cities only, where both arms have real Qloo fan heat. This is secondary.
+3. **Claim rule:** "X beat Y" now requires a higher mean, more per-artist wins than losses, and a sign test p < 0.05.
+4. **Played-city anchoring:** the runner re-anchors every played city from `cases.json` with the board's own anchoring function at load time, so the ground truth and the board use identical city ids. Any change is listed in the results.
+5. **Test B decoys** exclude the case's real pick by entity id, by name and by every alias.
+6. **Catch rate:**
+   - **Planting:**
+     - half of the number plants use a number that appears elsewhere in the playbook's evidence but not in the cited cards (a plausible wrong number);
+     - the other half use a number absent from all evidence;
+     - entity plants swap in a name that appears in another card.
+     - Each plant changes exactly one token.
+   - **Reported:** the catch rate for each plant type. The false-alarm rate is not presented as a finding, because true claims are drawn from claims the verifier already accepted; we say so.
+   - If plausible-wrong plants are missed, that is reported as a limit of the checker.
+7. **Stop rule coverage:**
+   - Any error envelope whose code or message matches rate/quota/limit, any `stale: true` answer (a cached fallback served because a live call failed), and any HTTP 429 from Cloud Run all stop the run at once.
+   - A region whose heat lookup is unavailable drops that artist, and the drop is listed.
+   - All Gemini models failing for an artist is an infrastructure failure, not "no answer". The run stops and it is reported.
