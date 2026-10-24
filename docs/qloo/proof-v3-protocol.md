@@ -194,3 +194,28 @@ Test B is re-run from the start under this amendment. Test A batch 1 had no stop
 - Gemini: 9 calls for the LLM arm plus up to 9 for the shipped local-acts suggestions: ≈ 10–30.
 - No Tavily.
 - The same stop rule as Amendment 3 applies.
+
+## Amendment 5: Test C rating definitions and a secondary analysis (2026-10-24, before any Test C call or rating)
+**Why:** the Test C review found two gaps.
+- "Exists, in this city" was undefined per category. The shipped Local acts card can include popular artists who are not from the city, and most brands are national.
+- The venue card holds at most 3 items, while the LLM may return 4.
+
+**Rating definitions.** These are printed at the top of the sheet and are binding for the reviewer.
+- **Venue:**
+  - "Exists, in this city": a real venue that hosts live music or performances, located in this city or its immediate metro area.
+  - "Exists, in another city": real, but elsewhere.
+- **Brand:**
+  - "Exists, in this city": a real brand that sells or operates in this city's country.
+  - "Exists, in another city": real, but not present in that country.
+- **Local act:**
+  - "Exists, in this city": a real artist based in or from this city or its metro area.
+  - "Exists, in another city": a real artist from somewhere else, including famous acts that are merely popular there.
+- **All categories:**
+  - "Doesn't exist": no evidence the name exists as described (a venue, a brand, or a music act).
+  - "Can't tell": evidence is unclear after a quick map and web check.
+
+**Disclosure:** the reviewer (Prateek) has seen the shipped showcase playbooks for these cities. The sheet carries no arm information, but this rating is not fully blind to prior exposure.
+
+**Secondary analysis (pre-registered, same ratings, no new rows):** truncate each arm per city and category to the smaller of the two arms' counts, using the recorded ranks, then recompute the shares and the paired sign test. The primary result stays as defined in Amendment 4.
+
+**Method note** (published with the results): the Qloo arm runs the City Playbook with narrative off. This matches the shipped hybrid local-acts path but not the narrative text, which plays no part in Test C.
