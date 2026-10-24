@@ -3,11 +3,12 @@ import { getSessionId } from "./session";
 import { SseParser } from "./sse";
 import { samplePlaybookEvents, sampleThisWeek } from "./fixtures/lumenValePlaybooks";
 import { SAMPLE_WITHOUT_QLOO, sampleStrategistEvents } from "./fixtures/strategistSample";
-import { showcaseBoardEvents, showcasePlaybookEvents, showcaseThisWeek, showcaseWithoutQloo } from "./showcase";
+import { recordedQuestion, showcaseBoardEvents, showcaseStrategist, showcasePlaybookEvents, showcaseThisWeek, showcaseWithoutQloo } from "./showcase";
 import { parseWithoutQloo } from "./withoutQloo";
 import type { ChatMessage, DateWindow, GatewayEvent, SampleSet, StrategistContext, ThisWeek, TourBrief, WithoutQloo } from "./types";
 
 export const SHOWCASE_STRATEGIST_NOTE = "The live strategist needs a live run";
+export const SHOWCASE_ASK_NOTE = "This example can replay the two recorded questions. Try your own artist to ask anything.";
 
 type StreamOpts = { signal?: AbortSignal; fetchImpl?: typeof fetch; sample?: boolean; sampleSet?: SampleSet; delayMs?: number };
 
@@ -74,8 +75,13 @@ export function streamCityPlaybook(q: { artist: string; artistEntityId: string; 
 
 export function streamStrategist(body: { messages: ChatMessage[]; context: StrategistContext }, opts: StreamOpts = {}): AsyncGenerator<GatewayEvent> {
   if (opts.sample && opts.sampleSet === "showcase") {
+    // Recorded Q&As replay with their full work log; a recording without any keeps the original note.
+    const hasRecorded = showcaseStrategist().length > 0;
+    const lastUser = [...body.messages].reverse().find((m) => m.role === "user");
+    const rec = lastUser ? recordedQuestion(lastUser.text) : null;
+    if (rec) return sample(rec.events.some((e) => e.type === "done") ? rec.events : [...rec.events, { type: "done", summary: {} }], opts);
     return sample([
-      { type: "strategist_error", code: "UNAVAILABLE", message: SHOWCASE_STRATEGIST_NOTE },
+      { type: "strategist_error", code: "UNAVAILABLE", message: hasRecorded ? SHOWCASE_ASK_NOTE : SHOWCASE_STRATEGIST_NOTE },
       { type: "done", summary: {} },
     ], opts);
   }

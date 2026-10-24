@@ -21,14 +21,14 @@ describe("StrategistLauncher", () => {
   it("shows the FAB on tour routes on phones and opens a full-height strategist sheet", async () => {
     mm(false);
     shell("/tours/board?sample=1");
-    fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
-    expect(screen.getByRole("dialog", { name: "Ask the strategist" })).toBeTruthy();
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour" }));
+    expect(screen.getByRole("dialog", { name: "Ask about this tour" })).toBeTruthy();
   });
   it("docks the FAB inside the sticky footer on board and playbook (so it never covers scores), lifts it above the Book footer, and leaves it low elsewhere", async () => {
     mm(false);
     for (const [path, want] of [["/tours/board?sample=1", "bottom-[calc(4.5rem"], ["/tours/playbook/4005539?sample=1", "bottom-[calc(4.5rem"], ["/tours/book?sample=1", "bottom-[calc(9.5rem"], ["/insights", "bottom-[calc(5rem"], ["/tours/board?sample=1&mode=without", "bottom-[calc(5rem"]] as const) {
       const { unmount } = shell(path);
-      const fab = await screen.findByRole("button", { name: "Ask the strategist" });
+      const fab = await screen.findByRole("button", { name: "Ask about this tour" });
       expect(fab.className.includes(want), `${path} ${fab.className}`).toBe(true);
       unmount();
     }
@@ -36,27 +36,28 @@ describe("StrategistLauncher", () => {
   it("titles the panel after the playbook city", async () => {
     mm(false);
     shell("/tours/playbook/4005539?sample=1");
-    fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour" }));
     expect(await screen.findByText("About Guadalajara")).toBeTruthy();
   });
   it("shows the launcher on insights and titles it generically without a run", async () => {
     mm(false);
     shell("/insights");
-    fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour" }));
     expect(await screen.findByText("Ask about a tour")).toBeTruthy();
   });
   it("does not show the launcher on legacy campaign routes", () => {
     mm(false);
     shell("/campaign");
-    expect(screen.queryByRole("button", { name: "Ask the strategist" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Strategist" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ask about this tour" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ask about this tour" })).toBeNull();
   });
   it("desktop docks the panel, pushes the main area and remembers it open", async () => {
     mm(true);
     shell("/tours/board?sample=1");
-    expect(screen.queryByRole("button", { name: "Ask the strategist" })).toBeNull();
-    fireEvent.click(await screen.findByRole("button", { name: "Strategist" }));
-    expect(screen.getByRole("complementary", { name: "Ask the strategist" })).toBeTruthy();
+    // Desktop has the top-bar toggle (aria-pressed), never the phone FAB.
+    expect(await screen.findAllByRole("button", { name: "Ask about this tour" })).toHaveLength(1);
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour", pressed: false }));
+    expect(screen.getByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
     expect(localStorage.getItem("strategistOpen")).toBe("1");
     expect(document.querySelector("main")!.className).toContain("lg:pr-[380px]");
   });
@@ -64,7 +65,7 @@ describe("StrategistLauncher", () => {
     mm(true);
     localStorage.setItem("strategistOpen", "1");
     shell("/insights");
-    expect(await screen.findByRole("complementary", { name: "Ask the strategist" })).toBeTruthy();
+    expect(await screen.findByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
   });
 });
 
@@ -90,20 +91,20 @@ describe("launcher sample flag", () => {
   it("is true after a sample run, and the title names the artist", async () => {
     withRunner("/tours/board");
     act(() => screen.getByText("sample-run").click());
-    fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour" }));
     await waitFor(() => expect(screen.getByText("About Lumen Vale")).toBeTruthy());
     expect(panelProps.last!.sample).toBe(true);
   });
   it("is true when idle in a fixtures build", async () => {
     vi.spyOn(client, "isSampleMode").mockReturnValue(true);
     shell("/tours/board");
-    fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour" }));
     expect(panelProps.last!.sample).toBe(true);
   });
   it("is false idle in a live build", async () => {
     vi.spyOn(client, "isSampleMode").mockReturnValue(false);
     shell("/tours/board");
-    fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour" }));
     expect(panelProps.last!.sample).toBe(false);
   });
   it("is false after a live run", async () => {
@@ -111,14 +112,14 @@ describe("launcher sample flag", () => {
     vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { /* no events */ });
     withRunner("/tours/board");
     act(() => screen.getByText("live-run").click());
-    fireEvent.click(await screen.findByRole("button", { name: "Ask the strategist" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour" }));
     expect(panelProps.last!.sample).toBe(false);
   });
   it("survives localStorage.getItem throwing", async () => {
     mm(true);
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("blocked"); });
     shell("/insights");
-    expect(await screen.findByRole("button", { name: "Strategist" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Ask about this tour" })).toBeTruthy();
     expect(screen.queryByRole("complementary")).toBeNull();
   });
 });

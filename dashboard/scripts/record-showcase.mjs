@@ -11,6 +11,12 @@
 // key `routing`: { cities, boardEvents, playbooks } with playbooks for its top 2 scored cities. It runs in its own gateway session
 // (<session>-routing) because the per-session Qloo budget (160) cannot hold both boards and their playbooks.
 //
+// --questions "Q1|Q2" (separated by |) also records "Ask about this tour" Q&As under the key `strategist`: [{ question, events }]. Each
+// question is posted to /v1/strategist after the board, with the recorded board as context (built by strategistContext below, which
+// mirrors TourBoardProvider.strategistContext in the dashboard: artist, regions, the first 20 scored cities; no focus city). Every
+// question runs in its own gateway session (<session>-ask-<n>), so the board's budget is untouched. Fixed questions for the final run:
+//   --questions "Why does Los Angeles rank above São Paulo here?|Which sponsor should I pitch first in Mexico City, and why?"
+//
 // The identity token comes from `gcloud auth print-identity-token`, lives in memory only, and is never
 // logged or written. Recording spends real Qloo, Vertex and Tavily quota: run it deliberately.
 import { execFileSync } from "node:child_process";
@@ -52,7 +58,10 @@ export function parseArgs(argv) {
     if (cities.length === 0) throw new Error('--cities needs at least one city ("City, CC; City, CC")');
     if (cities.length > MAX_ROUTING_CITIES) throw new Error(`--cities takes at most ${MAX_ROUTING_CITIES} cities`);
   }
-  return { artist, regions, out, ...(window ? { window } : {}), maxPlaybooks, ...(cities ? { cities } : {}) };
+  const questionsArg = get("--questions");
+  const questions = questionsArg === undefined ? undefined : questionsArg.split("|").map((q) => q.trim()).filter(Boolean);
+  if (questionsArg !== undefined && questions.length === 0) throw new Error('--questions needs at least one question ("Q1|Q2")');
+  return { artist, regions, out, ...(window ? { window } : {}), maxPlaybooks, ...(cities ? { cities } : {}), ...(questions ? { questions } : {}) };
 }
 
 const isPlain = (v) => !!v && typeof v === "object" && !Array.isArray(v);
@@ -80,6 +89,22 @@ export function sanitizeEvent(e) {
     if (v !== undefined) args[k] = v;
   }
   return { type: "tool_call", tool: e.tool, args, cached: Boolean(e.cached) };
+}
+
+/**
+ * The strategist's context for a recorded board. Mirrors `strategistContext` in dashboard/src/lib/qloo/TourBoardProvider.tsx exactly
+ * (artist from the resolve event, the brief's regions, the first 20 cities in arrival order with their three scores); keep the two in step.
+ */
+export function strategistContext(boardEvents, brief) {
+  const ctx = {};
+  const resolved = boardEvents.find((e) => e.type === "resolve");
+  if (resolved) ctx.artist = { name: resolved.entity.name, entityId: resolved.entity.entityId };
+  if (brief?.regions) ctx.regions = brief.regions;
+  const cities = boardEvents.filter((e) => e.type === "city_scored").map((e) => e.city);
+  if (cities.length > 0) {
+    ctx.cities = cities.slice(0, 20).map((c) => ({ id: c.id, name: c.name, country: c.country, verdict: c.verdict, fanHeat: c.fanHeat?.value ?? null, activation: c.activation?.value ?? null, winnability: c.winnability?.value ?? null }));
+  }
+  return ctx;
 }
 
 async function* readSse(res) {
@@ -111,7 +136,7 @@ function makeSessionId(artist, now) {
   return `showcase-${now.toISOString().slice(0, 10)}-${slug}-${rand}`;
 }
 
-export async function record({ artist, regions, window, maxPlaybooks = 4, cities: pasted, gatewayUrl, token, fetchImpl = fetch, now = new Date(), sessionId = makeSessionId(artist, now), log = () => {}, warn = (m) => console.error(`warning: ${m}`) }) {
+export async function record({ artist, regions, window, maxPlaybooks = 4, cities: pasted, questions, gatewayUrl, token, fetchImpl = fetch, now = new Date(), sessionId = makeSessionId(artist, now), log = () => {}, warn = (m) => console.error(`warning: ${m}`) }) {
   if (!gatewayUrl) throw new Error("QLOO_GATEWAY_URL is not set");
   if (!token) throw new Error("no identity token");
   const base = gatewayUrl.replace(/\/+$/, "");
@@ -192,6 +217,21 @@ export async function record({ artist, regions, window, maxPlaybooks = 4, cities
       warn(`routing example not recorded (${err.message})`);
     }
   }
+
+  if (questions?.length) {
+    const context = strategistContext(boardEvents, brief);
+    rec.strategist = [];
+    for (const [i, question] of questions.entries()) {
+      log(`Recording the answer to "${question}"...`);
+      try {
+        const evs = await events("/v1/strategist", { method: "POST", headers: { ...headers, "x-session-id": `${sessionId}-ask-${i + 1}`, "content-type": "application/json" }, body: JSON.stringify({ messages: [{ role: "user", text: question }], context }) });
+        if (!evs.some((e) => e.type === "strategist_message") || !evs.some((e) => e.type === "done")) throw new Error("no finished answer");
+        rec.strategist.push({ question, events: evs });
+      } catch (err) {
+        warn(`answer to "${question}" not recorded (${err.message})`);
+      }
+    }
+  }
   return rec;
 }
 
@@ -210,6 +250,7 @@ export function summarize(rec) {
     if (unmatched.length) out.push(`  not in our city list: ${unmatched.join(", ")}`);
     out.push(`  routing playbooks: ${Object.keys(rec.routing.playbooks).join(", ") || "none"}`);
   }
+  if (rec.strategist) out.push(`ask about this tour: ${rec.strategist.map((q) => `"${q.question}" (${q.events.filter((e) => e.type === "strategist_tool_call").length} calls)`).join("; ") || "none recorded"}`);
   return out.join("\n");
 }
 

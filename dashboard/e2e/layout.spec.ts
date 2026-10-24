@@ -110,8 +110,8 @@ test.describe("touch targets are at least 44x44 on mobile", () => {
   test("open strategist sheet: no horizontal scroll and 44px targets inside the dialog", async ({ page }) => {
     await page.goto("/tours/board?sample=1");
     await boardDone(page);
-    await page.getByRole("button", { name: "Ask the strategist" }).click();
-    const dialog = page.getByRole("dialog", { name: "Ask the strategist" });
+    await page.getByRole("button", { name: "Ask about this tour" }).click();
+    const dialog = page.getByRole("dialog", { name: "Ask about this tour" });
     await expect(dialog).toBeVisible();
     await noHorizontalScroll(page);
     const small = await dialog.evaluate((root) => [...root.querySelectorAll("button, a, [role=tab], textarea, input")]
@@ -145,7 +145,7 @@ test.describe("touch targets are at least 44x44 on mobile", () => {
     test(`strategist FAB does not cover the sticky footer: ${path}`, async ({ page }) => {
       await page.goto(path);
       await done(page);
-      await expect(page.getByRole("button", { name: "Ask the strategist" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Ask about this tour" })).toBeVisible();
       const res = await footerOccluded(page);
       expect(res.footers).toBeGreaterThan(0);
       expect(res.out).toEqual([]);

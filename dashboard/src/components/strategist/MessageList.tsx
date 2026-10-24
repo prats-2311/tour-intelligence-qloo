@@ -1,21 +1,19 @@
 import { useEffect, useRef } from "react";
 import type { StrategistTurn } from "@/lib/qloo/strategistReducer";
 import { ChatBubble, TypingIndicator } from "@/components/ui/ChatBits";
-import { StrategistThinking } from "./StrategistThinking";
-import { ToolChips } from "./ToolChips";
+import { WorkLog } from "./WorkLog";
 
 export function numbersNote(tokens: string[]): string {
   return `${tokens.length} ${tokens.length === 1 ? "number" : "numbers"} not found in tool results: ${tokens.join(", ")}`;
 }
 
-function Turn({ turn, onRetry, retryDisabled }: { turn: StrategistTurn; onRetry: (q: string) => void; retryDisabled: boolean }) {
+function Turn({ turn, onRetry, retryDisabled, logOpen }: { turn: StrategistTurn; onRetry: (q: string) => void; retryDisabled: boolean; logOpen: boolean }) {
   const { answer } = turn;
   const failure = turn.status === "error" && turn.error ? turn.error.message : turn.status === "done" && !answer ? "No answer came back — try again" : undefined;
   return (
     <li className="flex flex-col gap-2">
       <ChatBubble role="user">{turn.question}</ChatBubble>
-      <ToolChips tools={turn.tools} streaming={turn.status === "streaming"} />
-      <StrategistThinking summaries={turn.thinking} />
+      <WorkLog turn={turn} defaultOpen={logOpen} />
       {answer && (
         <div className="flex flex-col gap-1.5">
           <ChatBubble role="assistant"><span className="whitespace-pre-wrap">{answer.text}</span></ChatBubble>
@@ -35,12 +33,13 @@ function Turn({ turn, onRetry, retryDisabled }: { turn: StrategistTurn; onRetry:
   );
 }
 
-export function MessageList({ turns, onRetry, busy }: { turns: StrategistTurn[]; onRetry: (q: string) => void; busy: boolean }) {
+/** `replay`: recorded answers; only the first one starts with its work log open (live answers always do). */
+export function MessageList({ turns, onRetry, busy, replay = false }: { turns: StrategistTurn[]; onRetry: (q: string) => void; busy: boolean; replay?: boolean }) {
   const endRef = useRef<HTMLLIElement>(null);
   useEffect(() => { endRef.current?.scrollIntoView?.({ block: "end" }); }, [turns]);
   return (
     <ol aria-live="polite" className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 py-3">
-      {turns.map((t, i) => <Turn key={i} turn={t} onRetry={onRetry} retryDisabled={busy} />)}
+      {turns.map((t, i) => <Turn key={i} turn={t} onRetry={onRetry} retryDisabled={busy} logOpen={!replay || i === 0} />)}
       <li ref={endRef} aria-hidden />
     </ol>
   );

@@ -52,7 +52,7 @@ test("showcase → Guadalajara playbook → Hold these dates → Book", async ({
 
 test("strategist answers a suggested question with tool chips in the showcase", async ({ page }) => {
   await page.goto("/tours/board?sample=1");
-  const open = page.getByRole("button", { name: /Ask the strategist|Strategist/ }).first();
+  const open = page.getByRole("button", { name: /Ask about this tour/ }).first();
   await open.click();
   await page.getByRole("button", { name: "Why is Guadalajara a hidden goldmine?" }).click();
   await expect(page.getByText(/Hidden goldmine verdict means/)).toBeVisible();
@@ -86,9 +86,9 @@ test("showcase mode replays the recording with zero gateway calls", async ({ pag
   await page.getByTestId("city-row").first().getByRole("button").first().click();
   await expect(page).toHaveURL(/\/tours\/playbook\/[^?]+\?showcase=1/);
   await expect(page.getByText(SHOWCASE_BANNER).first()).toBeVisible();
-  const open = page.getByRole("button", { name: /Ask the strategist|Strategist/ }).first();
+  const open = page.getByRole("button", { name: /Ask about this tour/ }).first();
   await open.click();
-  await page.getByRole("button", { name: /^Why is .* ranked here\?$/ }).click();
-  await expect(page.getByText("The live strategist needs a live run")).toBeVisible();
+  await page.getByRole("button", { name: "Why does Los Angeles rank above São Paulo here?" }).click();
+  await expect(page.getByText(/Invented test answer/)).toBeVisible();
   expect(api).toEqual([]);
 });

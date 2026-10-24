@@ -144,18 +144,18 @@ for (const width of [1280, 1024]) {
 test("mobile: the strategist button never covers a visible score, verdict pill or fan heat value on the board", async ({ page }, info) => {
   test.skip(info.project.name !== "mobile");
   await openShowcaseBoard(page);
-  const fab = page.getByRole("button", { name: "Ask the strategist" });
+  const fab = page.getByRole("button", { name: "Ask about this tour" });
   await expect(fab).toBeVisible();
   const stops = await page.evaluate(() => Math.ceil(document.documentElement.scrollHeight / 200));
   for (let i = 0; i <= stops; i++) {
     await page.evaluate((y) => window.scrollTo(0, y), i * 200);
     const hits = await page.evaluate(() => {
-      const f = document.querySelector<HTMLElement>("[aria-label='Ask the strategist']")!.getBoundingClientRect();
+      const f = document.querySelector<HTMLElement>("[aria-label='Ask about this tour']")!.getBoundingClientRect();
       const out: string[] = [];
       for (const el of document.querySelectorAll<HTMLElement>("[data-testid=row-score], [data-testid=row-chip], [data-testid=row-bar-value]")) {
         const r = el.getBoundingClientRect();
         if (r.width < 1 || r.bottom < 0 || r.top > window.innerHeight) continue;
-        const top = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((e) => !e.closest("[aria-label='Ask the strategist']"));
+        const top = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((e) => !e.closest("[aria-label='Ask about this tour']"));
         if (!top || !el.contains(top) && !top.contains(el)) continue; // hidden under the sticky footer, not covered by the button
         const overlap = r.left < f.right && r.right > f.left && r.top < f.bottom && r.bottom > f.top;
         if (overlap) out.push(`${el.getAttribute("data-testid")} "${(el.textContent ?? "").trim()}" under the button`);
@@ -219,7 +219,7 @@ test("mobile: without a sticky footer (?mode=without) the strategist button leav
   await expect(page.getByRole("list", { name: "Generic ranking" })).toBeVisible({ timeout: 20_000 });
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   const r = await page.evaluate(() => {
-    const f = document.querySelector("[aria-label='Ask the strategist']")!.getBoundingClientRect();
+    const f = document.querySelector("[aria-label='Ask about this tour']")!.getBoundingClientRect();
     const items = [...document.querySelectorAll("[aria-label='Generic ranking'] li")];
     const last = items[items.length - 1]!.getBoundingClientRect();
     return { fabTop: f.top, fabBottom: f.bottom, fabLeft: f.left, lastTop: last.top, lastBottom: last.bottom, lastRight: last.right };

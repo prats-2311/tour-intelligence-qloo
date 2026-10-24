@@ -2,8 +2,8 @@ import { ChevronDown } from "lucide-react";
 import { useId, useState } from "react";
 
 /** Collapsible model reasoning summary for one strategist turn; same look as the playbook ReasoningSummary. */
-export function StrategistThinking({ summaries }: { summaries: string[] }) {
-  const [open, setOpen] = useState(false);
+export function StrategistThinking({ summaries, defaultOpen = false }: { summaries: string[]; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
   const id = useId();
   if (summaries.length === 0) return null;
   return (
@@ -13,6 +13,7 @@ export function StrategistThinking({ summaries }: { summaries: string[] }) {
         <ChevronDown size={18} strokeWidth={1.75} aria-hidden className={open ? "rotate-180" : ""} />
       </button>
       <div id={id} hidden={!open} className="pb-4">
+        <p className="mb-1 text-[12px] text-canvas-muted">Gemini's own summary of its reasoning</p>
         <p className="whitespace-pre-wrap text-[14px] leading-[1.5] text-canvas-muted">{summaries.join("\n\n")}</p>
       </div>
     </div>

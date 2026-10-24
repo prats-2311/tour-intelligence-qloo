@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
+import { showcaseStrategist } from "@/lib/qloo/showcase";
 import { useStrategist } from "@/lib/qloo/useStrategist";
 import type { StrategistContext } from "@/lib/qloo/types";
 import { Composer } from "./Composer";
@@ -7,11 +8,13 @@ import { MessageList } from "./MessageList";
 
 export function StrategistPanel({ context, sample, showcase = false, title, onClose, hideHeading }: { context: StrategistContext; sample: boolean; showcase?: boolean; title: string; onClose?: () => void; hideHeading?: boolean }) {
   const { state, ask, stop, busy } = useStrategist(context, { sample, showcase });
+  // A showcase with recorded Q&As replays them (chips, no typing); without any it keeps the plain composer and its note.
+  const replay = showcase && showcaseStrategist().length > 0;
   return (
     <section aria-label="Strategist" className="flex h-full min-h-0 flex-col bg-canvas text-canvas-text">
       <header className="flex items-start justify-between gap-3 px-4 pt-4">
         <div>
-          {!hideHeading && <h2 className="font-title text-[20px] leading-tight">Ask the strategist</h2>}
+          {!hideHeading && <h2 className="font-title text-[20px] leading-tight">Ask about this tour</h2>}
           <p className={hideHeading ? "text-[13px] text-canvas-muted" : "mt-0.5 text-[13px] text-canvas-muted"}>{title}</p>
         </div>
         {onClose && (
@@ -21,8 +24,8 @@ export function StrategistPanel({ context, sample, showcase = false, title, onCl
         )}
       </header>
       {sample && <div className="px-4 pt-2"><SampleBanner compact source={showcase ? "showcase" : "sample"} /></div>}
-      <MessageList turns={state.turns} onRetry={ask} busy={busy} />
-      <Composer busy={busy} empty={state.turns.length === 0} sample={sample} showcase={showcase} context={context} onAsk={ask} onStop={stop} />
+      <MessageList turns={state.turns} onRetry={ask} busy={busy} replay={replay} />
+      <Composer replay={replay} busy={busy} empty={state.turns.length === 0} sample={sample} showcase={showcase} context={context} onAsk={ask} onStop={stop} />
     </section>
   );
 }

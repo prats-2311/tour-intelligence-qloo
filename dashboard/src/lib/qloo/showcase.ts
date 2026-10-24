@@ -16,7 +16,11 @@ export interface Showcase {
   withoutQloo: WithoutQloo | null;
   /** The recorded "paste your cities" example (record-showcase.mjs --cities); null when the recording has none, which hides the "Try a routing" link. */
   routing: RoutingShowcase | null;
+  /** Recorded "Ask about this tour" Q&As (record-showcase.mjs --questions); empty when the recording has none. */
+  strategist: StrategistRecording[];
 }
+/** One recorded strategist turn: the question and every event the gateway streamed for it (reasoning summary, Qloo calls, answer). */
+export interface StrategistRecording { question: string; events: GatewayEvent[] }
 /** A second recorded board, run in pasted-cities mode: the cities that were pasted, the board stream, and playbooks for the top few. */
 export interface RoutingShowcase { cities: RoutingCity[]; boardEvents: GatewayEvent[]; playbooks: Record<string, GatewayEvent[]> }
 
@@ -51,6 +55,22 @@ function parseRouting(input: unknown): RoutingShowcase | null {
   return { cities, boardEvents, playbooks };
 }
 
+/** The optional `strategist` key: keeps entries with a non-empty question and at least one known event; anything else is dropped. */
+function parseStrategist(input: unknown): StrategistRecording[] {
+  if (!Array.isArray(input)) return [];
+  const out: StrategistRecording[] = [];
+  for (const r of input) {
+    const x = r as { question?: unknown; events?: unknown } | null;
+    if (!x || typeof x !== "object" || typeof x.question !== "string" || !x.question.trim()) continue;
+    const events = cleanEvents(x.events);
+    if (events.length > 0) out.push({ question: x.question, events });
+  }
+  return out;
+}
+
+/** Question text compared case-, accent- and punctuation-insensitively in spacing only: letters (accents included) must match. */
+export const normaliseQuestion = (q: string): string => q.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+
 export function parseShowcase(input: unknown): Showcase {
   const o = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
   const playbooks: Record<string, GatewayEvent[]> = {};
@@ -65,6 +85,7 @@ export function parseShowcase(input: unknown): Showcase {
     thisWeek: ((o.thisWeek ?? {}) as Record<string, ThisWeek>),
     withoutQloo: parseWithoutQloo(o.withoutQloo),
     routing: parseRouting(o.routing),
+    strategist: parseStrategist(o.strategist),
   };
 }
 
@@ -92,6 +113,12 @@ export const showcaseQuery = (routing: boolean): string => (routing ? "?showcase
 /** True for a brief that ran in pasted-cities mode (live, or the recorded routing). */
 export const isRoutingBrief = (b: { cities?: unknown[] } | undefined): boolean => !!b?.cities?.length;
 export const showcaseVariant = (): "main" | "routing" => variant;
+/** The recorded Q&As of the main example (the routing example has none). */
+export const showcaseStrategist = (): StrategistRecording[] => (variant === "routing" ? [] : SHOWCASE.strategist);
+export const recordedQuestion = (text: string): StrategistRecording | null => {
+  const n = normaliseQuestion(text);
+  return n ? showcaseStrategist().find((r) => normaliseQuestion(r.question) === n) ?? null : null;
+};
 export const showcaseRoutingAvailable = (): boolean => SHOWCASE.routing !== null;
 const routing = (): RoutingShowcase | null => (variant === "routing" ? SHOWCASE.routing : null);
 const routingBrief = (r: RoutingShowcase): TourBrief => ({ ...SHOWCASE.brief, artist: SHOWCASE.artist, maxStops: r.cities.length, cities: r.cities });

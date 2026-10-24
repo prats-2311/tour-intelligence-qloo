@@ -83,6 +83,8 @@ function typeFromEntity(o, hint) {
 }
 
 function showcase(input) {
+  // A recorded strategist section holds real model text and Qloo-derived answers: never carried over, always rebuilt from invented text.
+  if (isObj(input) && "strategist" in input) { input = { ...input }; delete input.strategist; }
   const ctx = makeContext();
   const cities = new Set();
   const collect = (node, hint, path) => {
@@ -206,7 +208,7 @@ function showcase(input) {
     if (isPoint && out.label === "") out.label = `${out.lat.toFixed(3)}, ${out.lon.toFixed(3)}`;
     return out;
   };
-  const result = addSyntheticRouting(addSyntheticBoardCases(walk(input, "", [])));
+  const result = addSyntheticStrategist(addSyntheticRouting(addSyntheticBoardCases(walk(input, "", []))));
   if (!result.withoutQloo) {
     // The recording has no generic ranking: write a clearly labelled synthetic one so the Without Qloo tab can be exercised.
     const scored = (result.boardEvents ?? []).flatMap((e) => (e.type === "city_scored" ? [{ name: e.city.name, country: e.city.country }] : []));
@@ -272,6 +274,43 @@ export function addSyntheticRouting(rec) {
   const playbooks = {};
   for (const c of withBook.slice(0, 2)) playbooks[c.id] = structuredClone(rec.playbooks[c.id]);
   rec.routing = { cities: [...chosen.map((c) => ({ name: c.name, country: c.country })), { name: unmatched }], boardEvents, playbooks };
+  return rec;
+}
+
+/**
+ * Two invented "Ask about this tour" Q&As (the fixed final-recording questions) with a full work log: a reasoning summary, one Qloo-style
+ * call per tool with a result count, and an answer. Text is made up and mentions only the synthetic cities of the board; there is no Qloo data.
+ * Rebuilt every time (a source `strategist` is dropped first). Mutates and returns `rec`.
+ */
+export function addSyntheticStrategist(rec) {
+  const names = (rec.boardEvents ?? []).filter((e) => e.type === "city_scored").map((e) => e.city.name);
+  const [a = "the first market", b = "the second market"] = names;
+  const turn = (question, thought, calls, answer) => ({
+    question,
+    events: [
+      { type: "strategist_thinking", summary: thought },
+      ...calls.flatMap(([id, name, args, summary], i) => [
+        { type: "strategist_tool_call", id, name, args },
+        { type: "strategist_tool_result", id, name, status: "ok", summary, cached: i > 0 },
+      ]),
+      { type: "strategist_message", text: answer, unsupportedNumbers: [], stoppedEarly: false, model: "synthetic" },
+      { type: "done", summary: { rounds: 2, toolCalls: calls.length, forcedFinal: false } },
+    ],
+  });
+  rec.strategist = [
+    turn(
+      "Why does Los Angeles rank above São Paulo here?",
+      `Invented reasoning for the test fixture: compare the two scored markets, then check the playbook for ${a}.`,
+      [["s1", "get_city_playbook", { city: a }, "7 cards"], ["s2", "qloo_recommend", { target_type: "brand", signal_location: b }, "5 results"]],
+      `Invented test answer: ${a} ranks above ${b} because its sponsor fit is stronger in this fixture.`,
+    ),
+    turn(
+      "Which sponsor should I pitch first in Mexico City, and why?",
+      "Invented reasoning for the test fixture: look at sponsor fit for the market, then pick the closest match.",
+      [["s1", "qloo_recommend", { target_type: "brand", signal_location: a }, "4 results"]],
+      "Invented test answer: pitch the first sponsor in the list, because it matches the crowd best in this fixture.",
+    ),
+  ];
   return rec;
 }
 

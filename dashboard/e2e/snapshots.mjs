@@ -120,7 +120,7 @@ for (const [vp, size] of [["mobile", { width: 375, height: 812 }], ["desktop", {
     if (name === "without") await page.getByText("Generic LLM answer — no taste evidence").waitFor({ timeout: 15000 });
     if (name === "strategist") { // open panel with a finished sample answer and tool chips
       await page.getByText(/10 markets scored/).waitFor({ timeout: 15000 });
-      await page.getByRole("button", { name: /Ask the strategist|Strategist/ }).first().click();
+      await page.getByRole("button", { name: /Ask about this tour/ }).first().click();
       await page.getByRole("button", { name: "Why is Guadalajara a hidden goldmine?" }).click();
       await page.getByText(/Hidden goldmine verdict means/).waitFor({ timeout: 15000 });
     }

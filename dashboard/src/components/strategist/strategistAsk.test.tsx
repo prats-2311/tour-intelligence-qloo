@@ -1,0 +1,87 @@
+// @vitest-environment jsdom
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import * as client from "@/lib/qloo/client";
+import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
+import { parseShowcase, SHOWCASE, setShowcase } from "@/lib/qloo/showcase";
+import type { GatewayEvent } from "@/lib/qloo/types";
+import { StrategistPanel } from "./StrategistPanel";
+
+const Q1 = "Why does Los Angeles rank above São Paulo here?";
+const Q2 = "Which sponsor should I pitch first in Mexico City, and why?";
+const events = (answer: string, thought: string): GatewayEvent[] => [
+  { type: "strategist_thinking", summary: thought },
+  { type: "strategist_tool_call", id: "a", name: "qloo_recommend", args: { target_type: "brand" } },
+  { type: "strategist_tool_result", id: "a", name: "qloo_recommend", status: "ok", summary: "4 results", cached: false },
+  { type: "strategist_tool_call", id: "b", name: "get_city_playbook", args: { city: "Invented" } },
+  { type: "strategist_tool_result", id: "b", name: "get_city_playbook", status: "partial", summary: "2 cards", cached: false },
+  { type: "strategist_message", text: answer, unsupportedNumbers: answer.includes("99") ? ["99"] : [], stoppedEarly: false, model: "m" },
+  { type: "done", summary: {} },
+];
+const original = SHOWCASE;
+const recorded = () => setShowcase(parseShowcase({ ...PLACEHOLDER_SHOWCASE, strategist: [{ question: Q1, events: events("Invented answer one.", "Invented thought one.") }, { question: Q2, events: events("Invented answer 99 two.", "Invented thought two.") }] }));
+afterEach(() => { cleanup(); setShowcase(original); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+
+describe("Ask about this tour: showcase", () => {
+  it("shows the two recorded questions as chips and the one-line note, with no text input", () => {
+    recorded();
+    render(<StrategistPanel context={{}} sample showcase title="t" />);
+    expect(screen.getByRole("button", { name: Q1 })).toBeTruthy();
+    expect(screen.getByRole("button", { name: Q2 })).toBeTruthy();
+    expect(screen.getByText("This example can replay the two recorded questions. Try your own artist to ask anything.")).toBeTruthy();
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Ask about this tour" })).toBeTruthy();
+  });
+  it("replays a tapped question with the work log open: reasoning label, tool lines with counts, answer", async () => {
+    recorded();
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    render(<StrategistPanel context={{}} sample showcase title="t" />);
+    fireEvent.click(screen.getByRole("button", { name: Q1 }));
+    expect(await screen.findByText("Invented answer one.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Work log" }).getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: "Model reasoning summary" })).toBeTruthy();
+    expect(screen.getByText("Gemini's own summary of its reasoning")).toBeTruthy();
+    expect(screen.getByText("Invented thought one.")).toBeTruthy();
+    const tools = screen.getByRole("list", { name: "Tools used" });
+    expect(within(tools).getByText("4 results")).toBeTruthy();
+    expect(within(tools).getByText("2 cards")).toBeTruthy();
+    expect(within(tools).getByText("ok")).toBeTruthy();
+    expect(within(tools).getByText("partial")).toBeTruthy();
+    expect(within(tools).getByRole("button", { name: /Qloo · recommend/ })).toBeTruthy();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+  it("the first answer's work log is open, a later one starts collapsed and can be opened; unsupported numbers stay flagged", async () => {
+    recorded();
+    render(<StrategistPanel context={{}} sample showcase title="t" />);
+    fireEvent.click(screen.getByRole("button", { name: Q1 }));
+    await screen.findByText("Invented answer one.");
+    await vi.waitFor(() => { expect(screen.queryByRole("button", { name: "Stop" })).toBeNull(); });
+    await new Promise((r) => setTimeout(r, 120)); // the replay's done event lands after the answer
+    fireEvent.click(screen.getByRole("button", { name: Q2 }));
+    await screen.findByText("Invented answer 99 two.");
+    const logs = screen.getAllByRole("button", { name: "Work log" });
+    expect(logs.map((b) => b.getAttribute("aria-expanded"))).toEqual(["true", "false"]);
+    fireEvent.click(logs[1]!);
+    expect(logs[1]!.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText("1 number not found in tool results: 99")).toBeTruthy();
+  });
+  it("a showcase without recorded questions keeps the existing composer", () => {
+    render(<StrategistPanel context={{}} sample showcase title="t" />);
+    expect(screen.getByRole("textbox")).toBeTruthy();
+    expect(screen.queryByText(/replay the two recorded questions/)).toBeNull();
+  });
+});
+
+describe("Ask about this tour: live", () => {
+  it("keeps the text composer and board-aware suggestions, with the work log open by default", async () => {
+    vi.spyOn(client, "streamStrategist").mockImplementation(async function* () { for (const e of events("Live answer.", "Live thought.")) yield e; });
+    render(<StrategistPanel context={{}} sample={false} title="t" />);
+    expect(screen.queryByText(/replay the two recorded questions/)).toBeNull();
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "q" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    expect(await screen.findByText("Live answer.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Work log" }).getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: /Playbook/ })).toBeTruthy();
+  });
+});

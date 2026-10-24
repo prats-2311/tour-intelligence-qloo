@@ -61,13 +61,13 @@ export function StrategistFab() {
     <>
       <button
         type="button"
-        aria-label="Ask the strategist"
+        aria-label="Ask about this tour"
         onClick={() => setOpen(true)}
         className={`btn-gold fixed z-30 flex items-center justify-center rounded-full ${lift} outline-none focus-visible:ring-2 focus-visible:ring-bone`}
       >
         <MessageSquare size={22} aria-hidden />
       </button>
-      <Sheet open={open} onClose={() => setOpen(false)} title="Ask the strategist" full>
+      <Sheet open={open} onClose={() => setOpen(false)} title="Ask about this tour" full>
         <div className="-mx-4 -mb-4 min-h-0 flex-1">
           <StrategistPanel context={context} sample={sample} showcase={showcase} title={title} hideHeading />
         </div>
@@ -85,7 +85,7 @@ export function StrategistToggle({ open, onToggle }: { open: boolean; onToggle()
       onClick={onToggle}
       className={`flex min-h-11 items-center gap-1.5 rounded-lg px-2 font-sans text-[13px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold ${open ? "text-gold" : "text-canvas-muted hover:text-bone"}`}
     >
-      <MessageSquare size={15} aria-hidden /> Strategist
+      <MessageSquare size={15} aria-hidden /> Ask about this tour
     </button>
   );
 }
@@ -94,7 +94,7 @@ export function StrategistToggle({ open, onToggle }: { open: boolean; onToggle()
 export function StrategistDock({ onClose }: { onClose(): void }) {
   const { sample, showcase, title, context } = useLauncherModel();
   return (
-    <aside aria-label="Ask the strategist" style={{ width: DOCK_WIDTH }} className="fixed bottom-0 right-0 top-14 z-20 border-l border-canvas-line bg-canvas">
+    <aside aria-label="Ask about this tour" style={{ width: DOCK_WIDTH }} className="fixed bottom-0 right-0 top-14 z-20 border-l border-canvas-line bg-canvas">
       <StrategistPanel context={context} sample={sample} showcase={showcase} title={title} onClose={onClose} />
     </aside>
   );
