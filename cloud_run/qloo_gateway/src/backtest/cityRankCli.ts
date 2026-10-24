@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadCities } from "../geo/cities.js";
-import { BOARD_MAX_STOPS, MAX_CANDIDATES, runCityRank, type CityCase } from "./cityRank.js";
+import { loadCities, type City } from "../geo/cities.js";
+import { BOARD_MAX_STOPS, MAX_CANDIDATES, reanchorPlayed, runCityRank, type CityCase } from "./cityRank.js";
 import { assemble, defaultIo, geminiModels, protocolCommit, privateOut, REPO_ROOT, writeJson, type CliIo } from "./proofCli.js";
 import { createPermutationRanker } from "./proofShared.js";
 import { StopMonitor } from "./proofStats.js";
@@ -39,15 +39,18 @@ export function loadPlan(batch: number, root: string = REPO_ROOT): CityCase[] {
   });
 }
 
-export function renderPlan(cases: CityCase[], args: CityRankArgs, models: string[], commit: string): string[] {
+export function renderPlan(cases: CityCase[], args: CityRankArgs, models: string[], commit: string, cities?: City[]): string[] {
   const lines = [
     `Proof v3 Test A (city ranking), batch ${args.batch}: ${cases.length} artists. DRY RUN: no Qloo or Gemini call is made.`,
     `Protocol commit ${commit}; board maxStops ${BOARD_MAX_STOPS}, candidate cap ${MAX_CANDIDATES}; Gemini ${models.join(" -> ")}; output ${args.out}`,
-    "Stop at once on: a Qloo 429, any quota/rate-limit/limit text, or an error rate above 10% over the last 20 calls.", "",
+    "Stop at once on: a Qloo 429, an error envelope or message matching rate/quota/limit, a stale answer, or an error rate above 10% over the last 20 calls. A region whose heat lookup fails drops the artist; all Gemini models failing stops the run.",
+    "Candidates (Amendment 2): the board's cities, then played/unplayed-decoy pairs while the list is <= 14 and played cities <= half. Played cities are re-anchored with the board's anchoring function first.", "",
   ];
   for (const c of cases) {
-    const played = new Set(c.played.map((p) => p.city_id)).size;
+    const re = cities ? reanchorPlayed(cities, c.played) : undefined;
+    const played = re ? re.played.length : new Set(c.played.map((p) => p.city_id)).size;
     lines.push(`${c.position}. ${c.artist} - ${c.tour_title} (${c.first_show_year}); regions: ${c.regions.join(", ")}; ${played} played cities (${c.played.map((p) => p.name).join(", ")}); session proof-v3-city-${c.position}; ~${TYPICAL_QLOO_PER_ARTIST} Qloo calls (worst case ${WORST_QLOO_PER_ARTIST} of the 160 session budget), 1-2 Gemini calls`);
+    if (re?.changes.length) lines.push(`   re-anchored played cities: ${re.changes.map((x) => `${x.from} -> ${x.to}`).join(", ")}`);
   }
   lines.push("", `Expected for the batch: ~${cases.length * TYPICAL_QLOO_PER_ARTIST} Qloo calls, ${cases.length}-${cases.length * 2} Gemini calls (hard ceiling ${cases.length * WORST_QLOO_PER_ARTIST} Qloo calls).`);
   return lines;
@@ -57,7 +60,7 @@ export async function main(argv: string[], io: CliIo = defaultIo()): Promise<num
   const args = parseArgs(argv);
   const cases = loadPlan(args.batch);
   const commit = protocolCommit();
-  if (args.dryRun) { for (const l of renderPlan(cases, args, geminiModels(io.env), commit)) io.log(l); return 0; }
+  if (args.dryRun) { for (const l of renderPlan(cases, args, geminiModels(io.env), commit, loadCities())) io.log(l); return 0; }
 
   const clients = io.makeClients(io.env);
   const monitor = new StopMonitor();

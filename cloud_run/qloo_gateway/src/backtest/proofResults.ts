@@ -11,14 +11,18 @@ export type CityArmResult =
 
 export interface CandidateRow {
   id: string; name: string; country: string; population: number;
-  /** Where the city came from: the live board (heat or major market) or added from the tour's played cities. */
-  origin: "board" | "added_played"; candidateSource: string; played: boolean;
+  /** The live board, or an extra (a played city or an unplayed decoy: the two are indistinguishable here and in every arm's input). */
+  origin: "board" | "extra"; candidateSource: string; /** Ground truth; read only when scoring, never by an arm. */ played: boolean;
   winnability: number | null; fanHeat: number | null; verdict: string; fanHeatFloor?: true; insufficientReason?: string;
 }
 
 export interface CityRankArtist {
   position: number; artist: string; tourTitle: string; url: string; sessionId: string; regions: string[]; firstShowYear: number;
-  playedTotal: number; boardCount: number; addedCount: number; boardMostlyPlayed: boolean;
+  playedTotal: number; boardCount: number; /** Extras added after the board: played cities and unplayed decoys, in pairs. */ playedExtras: number; decoyExtras: number; boardMostlyPlayed: boolean;
+  /** Played cities the runner re-anchored with the board's anchoring function (Amendment 2.4). */
+  anchoring: Array<{ from: string; to: string }>;
+  /** Secondary: R-precision over the board's own cities only (both arms have real Qloo fan heat). Null when the board has no played city. */
+  boardOnly: { n: number; count: number; winnability: number; fan_heat: number } | null;
   candidateCount: number; /** Played cities among the candidates. */ n: number; /** n / candidateCount. */ chance: number;
   candidates: CandidateRow[];
   arms: Record<ArmName, CityArmResult>;
@@ -29,6 +33,8 @@ export type SignRow = SignResult & { pairs: number };
 export interface CityRankStats {
   arms: Record<ArmName, { answered: number; mean: number | null }>;
   meanChance: number | null;
+  /** Secondary (Amendment 2.2): winnability vs fan heat over the board's own cities. */
+  boardOnly: { answered: number; winnability: number | null; fan_heat: number | null; signTest: SignRow };
   signTests: { vs_fan_heat: SignRow; vs_llm: SignRow; vs_population: SignRow };
 }
 
@@ -48,13 +54,21 @@ function paired(artists: CityRankArtist[], other: ArmName): SignRow {
   return { ...signTest(pairs), pairs: pairs.length };
 }
 
+function boardOnlyStats(artists: CityRankArtist[]): CityRankStats["boardOnly"] {
+  const rows = artists.filter((a) => a.boardOnly !== null).map((a) => a.boardOnly!);
+  return {
+    answered: rows.length, winnability: mean(rows.map((r) => r.winnability)), fan_heat: mean(rows.map((r) => r.fan_heat)),
+    signTest: { ...signTest(rows.map((r) => [r.winnability, r.fan_heat] as const)), pairs: rows.length },
+  };
+}
+
 export function computeCityRankStats(artists: CityRankArtist[]): CityRankStats {
   const arms = Object.fromEntries(ARMS.map((arm) => {
     const xs = artists.map((a) => rOf(a, arm)).filter((x): x is number => x !== null);
     return [arm, { answered: xs.length, mean: mean(xs) }];
   })) as CityRankStats["arms"];
   return {
-    arms, meanChance: mean(artists.map((a) => a.chance)),
+    arms, meanChance: mean(artists.map((a) => a.chance)), boardOnly: boardOnlyStats(artists),
     signTests: { vs_fan_heat: paired(artists, "fan_heat"), vs_llm: paired(artists, "llm"), vs_population: paired(artists, "population") },
   };
 }
@@ -108,13 +122,20 @@ export function computeFixedStats(cases: FixedCaseResult[]): FixedStats {
 
 // Catch rate -----------------------------------------------------------------------------------------------------------------------
 
+/** number_plausible: a number real elsewhere in the playbook but not on the cited cards; number_absent: a number in no evidence; entity: a name from another card. */
+export type PlantKind = "number_plausible" | "number_absent" | "entity";
+export const PLANT_KINDS: readonly PlantKind[] = ["number_plausible", "number_absent", "entity"];
 export interface CatchRow {
-  id: string; playbook: string; text: string; planted: boolean; plantKind?: "number" | "entity"; original?: string;
+  id: string; playbook: string; text: string; planted: boolean; plantKind?: PlantKind; original?: string;
   removed: boolean; reason?: string; detail?: string;
 }
 export interface CatchRateSection {
   source: string; claims: number; planted: number; caught: number; catchRate: number;
-  trueClaims: number; falseAlarms: number; falseAlarmRate: number; rows: CatchRow[];
+  trueClaims: number; falseAlarms: number; falseAlarmRate: number;
+  /** Catch rate per plant type (the headline numbers). */
+  byType: Record<PlantKind, { planted: number; caught: number; catchRate: number | null }>;
+  /** Why falseAlarmRate is not a finding. */
+  falseAlarmNote: string; rows: CatchRow[];
 }
 
 // Whole file -----------------------------------------------------------------------------------------------------------------------
@@ -133,6 +154,16 @@ export interface ProofV3Results {
   summary: string[];
 }
 
+/** Fixed disclosures the protocol requires with Test A's results (the method's properties, the known limits, and the amendments). */
+export const DISCLOSURES: readonly string[] = [
+  "Method: cities added after the board (played cities and unplayed decoys, in pairs) that are absent from Qloo's heat list get fan heat at the board's floor, so among them fan heat carries no information and ties break by hash order; any advantage winnability gains there comes only from activation.",
+  "Data timing: Qloo's taste data is current, not as of the tour date, so some fan heat may reflect the tour itself; Gemini's training data may include the tour.",
+  "What it tests: agreement with the routing an agent chose, not whether those cities were the most profitable.",
+  "Sample size: 12 artists (or 6) is a small sample, so the sign test has low power.",
+  "Eligibility proxy: excluding tours by venue name lets some arena-tier acts through, so this is a mid-tier test only approximately.",
+  "Amendments 1 and 2 to the protocol were made before any Qloo or Gemini call.",
+];
+
 // Claim rule -----------------------------------------------------------------------------------------------------------------------
 
 const fmtP = (p: number): string => (p < 0.001 ? "<0.001" : p.toFixed(3));
@@ -144,14 +175,14 @@ interface Name { start: string; inline: string }
 const N = (start: string, inline = start.toLowerCase()): Name => ({ start, inline });
 
 /**
- * The protocol's claim rule: "X beat Y" only where the mean is higher AND the two-sided sign test gives p < 0.05. Otherwise the difference is
+ * The protocol's claim rule (Amendment 2.3): "X beat Y" only where the mean is higher AND there are more per-artist wins than losses AND the two-sided sign test gives p < 0.05. Otherwise the difference is
  * reported as not significant at this sample size, with its direction. A significant result against us is stated as plainly as one for us.
  */
 function compare(ours: Name, theirs: Name, a: number | null, b: number | null, t: SignRow, metric: string, unit: string): string {
   const detail = `${plural(t.wins, "win")}, ${plural(t.losses, "loss", "losses")}${t.ties ? `, ${plural(t.ties, "tie")}` : ""} over ${plural(t.pairs, unit)}`;
   if (a === null || b === null || t.pairs === 0) return `Not significant at this sample size: ${ours.inline} has no paired ${metric} against ${theirs.inline} yet.`;
-  if (t.p < 0.05 && a > b) return `${ours.start} beat ${theirs.inline} (p=${fmtP(t.p)}): mean ${metric} ${fmtV(a)} vs ${fmtV(b)}, ${detail}.`;
-  if (t.p < 0.05 && b > a) return `${theirs.start} beat ${ours.inline} (p=${fmtP(t.p)}): mean ${metric} ${fmtV(b)} vs ${fmtV(a)}, ${detail}.`;
+  if (t.p < 0.05 && a > b && t.wins > t.losses) return `${ours.start} beat ${theirs.inline} (p=${fmtP(t.p)}): mean ${metric} ${fmtV(a)} vs ${fmtV(b)}, ${detail}.`;
+  if (t.p < 0.05 && b > a && t.losses > t.wins) return `${theirs.start} beat ${ours.inline} (p=${fmtP(t.p)}): mean ${metric} ${fmtV(b)} vs ${fmtV(a)}, ${detail}.`;
   const dir = a > b ? "leads" : a < b ? "trails" : "ties";
   return `Not significant at this sample size: ${ours.inline} ${dir} ${theirs.inline} on mean ${metric} (${fmtV(a)} vs ${fmtV(b)}; p=${fmtP(t.p)}; ${detail}).`;
 }
@@ -167,6 +198,8 @@ export function summarise(r: ProofV3Results): string[] {
     out.push(compare(N("Winnability"), N("Fan heat", "fan heat"), s.arms.winnability.mean, s.arms.fan_heat.mean, s.signTests.vs_fan_heat, "R-precision", "artist"));
     out.push(compare(N("Winnability"), N("The generic LLM", "the generic LLM"), s.arms.winnability.mean, s.arms.llm.mean, s.signTests.vs_llm, "R-precision", "artist"));
     out.push(`Secondary: ${compare(N("Winnability"), N("Population", "population"), s.arms.winnability.mean, s.arms.population.mean, s.signTests.vs_population, "R-precision", "artist")}`);
+    const bo = s.boardOnly;
+    out.push(`Secondary, board cities only (both arms have real Qloo fan heat; ${plural(bo.answered, "artist")}): ${compare(N("Winnability"), N("Fan heat", "fan heat"), bo.winnability, bo.fan_heat, { ...bo.signTest }, "R-precision", "artist")}`);
     for (const a of c.artists) {
       const w = a.arms.winnability.status === "ok" ? a.arms.winnability.rPrecision : null;
       if (w === null) continue;
@@ -177,6 +210,8 @@ export function summarise(r: ProofV3Results): string[] {
       if (a.boardMostlyPlayed) out.push(`Board mostly played for ${a.artist}: no cities were added.`);
     }
     for (const d of c.dropped) out.push(`${d.artist} was dropped (${d.reason}).`);
+    for (const a of c.artists) for (const ch of a.anchoring) out.push(`${a.artist}: played city ${ch.from} was re-anchored to ${ch.to}, the way the board anchors it.`);
+    out.push(...DISCLOSURES);
   }
   if (r.fixedRank) {
     const f = r.fixedRank, s = f.stats;
@@ -193,7 +228,11 @@ export function summarise(r: ProofV3Results): string[] {
   }
   if (r.catchRate) {
     const k = r.catchRate;
-    out.push(`The claim checker removed ${k.caught} of ${k.planted} planted false claims (catch rate ${fmtV(k.catchRate)}) and ${k.falseAlarms} of ${k.trueClaims} true claims (false-alarm rate ${fmtV(k.falseAlarmRate)}).`);
+    out.push(`The claim checker removed ${k.caught} of ${k.planted} planted false claims (catch rate ${fmtV(k.catchRate)}).`);
+    const label: Record<PlantKind, string> = { number_plausible: "a plausible wrong number (real elsewhere in the playbook)", number_absent: "a number found nowhere in the evidence", entity: "a name swapped in from another card" };
+    for (const t of PLANT_KINDS) if (k.byType[t].planted > 0) out.push(`Planted as ${label[t]}: caught ${k.byType[t].caught} of ${k.byType[t].planted}.`);
+    if (k.byType.number_plausible.planted > 0 && k.byType.number_plausible.caught < k.byType.number_plausible.planted) out.push("The checker missed some plausible wrong numbers: a limit of the checker.");
+    out.push(`False alarms (${k.falseAlarms} of ${k.trueClaims}) are not a finding: ${k.falseAlarmNote}`);
   }
   return out;
 }

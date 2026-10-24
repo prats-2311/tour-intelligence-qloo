@@ -27,12 +27,31 @@ describe("monitoredCallTool", () => {
     const call = monitoredCallTool(async () => { throw new GatewayAuthError(401); }, m);
     await expect(call("a", {}, "s")).rejects.toBeInstanceOf(StopRun);
   });
-  it("a non-error envelope whose summary mentions a limit stops the run, an ok one with limit in a result name does not", async () => {
+  it("ok and partial answers are never scanned for limit words (summary or result names)", async () => {
     const m = new StopMonitor();
-    const call = monitoredCallTool(async (name) => (name === "p" ? { operation: "x", status: "partial", summary: "daily limit near" } : { operation: "x", status: "ok", results: [{ name: "Limitless" }] }), m);
+    const call = monitoredCallTool(async (name) => (name === "p" ? { operation: "x", status: "partial", summary: "limited to 20 results (limit 20)" } : { operation: "x", status: "ok", results: [{ name: "Limitless" }] }), m);
     await call("ok", {}, "s");
+    await call("p", {}, "s");
     expect(m.stopped).toBeUndefined();
-    await expect(call("p", {}, "s")).rejects.toBeInstanceOf(StopRun);
+  });
+  it.each([
+    ["the gateway's RATE code", { code: "RATE", retryable: true, recovery: "wait" }, undefined],
+    ["a quota message in the recovery text", { code: "UPSTREAM", retryable: false, recovery: "Daily quota used up" }, undefined],
+    ["a limit word in the summary", { code: "UPSTREAM", retryable: false, recovery: "x" }, "usage limit reached"],
+  ])("an error envelope with %s stops the run", async (_n, error, summary) => {
+    const m = new StopMonitor();
+    const call = monitoredCallTool(async () => ({ operation: "x", status: "error", ...(summary ? { summary } : {}), error }) as QlooEnvelope, m);
+    await expect(call("t", {}, "s")).rejects.toBeInstanceOf(StopRun);
+    expect(m.stopped).toBeDefined();
+  });
+  it("a stale answer (a cached fallback after a failed live call) stops the run even though its status is ok", async () => {
+    const m = new StopMonitor();
+    let sent = 0;
+    const call = monitoredCallTool(async () => { sent += 1; return { ...ok(), stale: true } as QlooEnvelope; }, m);
+    await expect(call("t", {}, "s")).rejects.toBeInstanceOf(StopRun);
+    expect(m.stopped).toMatch(/stale/);
+    await expect(call("t", {}, "s")).rejects.toBeInstanceOf(StopRun);
+    expect(sent).toBe(1);
   });
   it("a plain transport error is an error but not a stop", async () => {
     const m = new StopMonitor();
@@ -99,12 +118,13 @@ describe("createPermutationRanker", () => {
     const r = createPermutationRanker({ generate: async () => { n += 1; return body(n === 1 ? "not json" : JSON.stringify({ ranking: labels })); }, models: ["m1"], monitor: m });
     expect(await r.rank("P", labels)).toMatchObject({ order: labels, attempts: 2 });
   });
-  it("a Vertex failure is no answer without a retry; a 429 stops the run", async () => {
+  it("every Gemini model failing is an infrastructure stop, not 'no answer'; a 429 stops the run", async () => {
     const m = new StopMonitor();
     let n = 0;
-    const r = createPermutationRanker({ generate: async () => { n += 1; throw new Error("Vertex 500"); }, models: ["m1"], monitor: m });
-    expect(await r.rank("P", labels)).toMatchObject({ order: null, reason: "gemini_error" });
-    expect(n).toBe(1);
+    const r = createPermutationRanker({ generate: async () => { n += 1; throw new Error("Vertex 500"); }, models: ["m1", "m2"], monitor: m });
+    await expect(r.rank("P", labels)).rejects.toBeInstanceOf(StopRun);
+    expect(m.stopped).toMatch(/all Gemini models failed.*Vertex 500/);
+    expect(n).toBe(2);
     const m2 = new StopMonitor();
     const r2 = createPermutationRanker({ generate: async () => { throw new Error("Vertex 429"); }, models: ["m1", "m2"], monitor: m2 });
     await expect(r2.rank("P", labels)).rejects.toBeInstanceOf(StopRun);

@@ -73,7 +73,10 @@ const caseOf: CityCase = {
   played: ["m1", "b1", "s0", "s1", "s2", "s3", "s4", "s5"].map((id) => { const c = WORLD.find((w) => w.id === id)!; return { city_id: id, name: c.name, country: c.country, shows: 1 }; }),
 };
 
-describe("Test A budget: one artist with 14 candidates in one gateway session", () => {
+// Measured with this world (a change to the pipeline's call pattern changes these on purpose): board 11 + one played/decoy pair = 13 candidates.
+const FIRST = 98, WORST = 111;
+
+describe("Test A budget: one artist with a full board and a played/decoy pair in one gateway session", () => {
   it.each([[false, "every city resolves on the first string"], [true, "every city needs its second location string (worst case)"]])("stays within SESSION_QLOO_BUDGET (%s: %s)", async (legacyMisplaced) => {
     let uncached = 0;
     const budget = new BudgetGuard({ perSession: SESSION_QLOO_BUDGET, perDay: 2000 });
@@ -86,12 +89,13 @@ describe("Test A budget: one artist with 14 candidates in one gateway session", 
     expect(out.section.dropped).toEqual([]);
     const a = out.section.artists[0]!;
     expect(a.boardCount).toBe(11);
-    expect(a.addedCount).toBe(3);
-    expect(a.candidateCount).toBe(14);
+    expect(a.playedExtras).toBe(1);
+    expect(a.decoyExtras).toBe(1);
+    expect(a.candidateCount).toBe(13); // one more pair would make 15
     expect(uncached).toBeLessThanOrEqual(SESSION_QLOO_BUDGET);
     expect(budget.remaining("proof-v3-city-1").session).toBe(SESSION_QLOO_BUDGET - uncached);
     expect(out.callCounts.qloo).toBe(uncached); // the runner's own count equals what the gateway spent
     expect(out.callCounts.gemini).toBe(0); // the fake ranker makes no Vertex call
-    console.log(`proof v3 budget (${legacyMisplaced ? "worst case" : "first string"}): ${uncached} uncached Qloo calls of ${SESSION_QLOO_BUDGET} for 14 candidates (board ${a.boardCount} + ${a.addedCount} added)`);
+    expect(uncached).toBe(legacyMisplaced ? WORST : FIRST);
   });
 });

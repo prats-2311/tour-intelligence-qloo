@@ -1,7 +1,7 @@
 import { numberTokens, verifyClaims, type EvidenceItem } from "../claims/verify.js";
 import { buildEvidence } from "../narrative/evidence.js";
 import type { Claim, PlaybookCard } from "../types.js";
-import type { CatchRateSection, CatchRow } from "./proofResults.js";
+import { PLANT_KINDS, type CatchRateSection, type CatchRow, type PlantKind } from "./proofResults.js";
 import { sha256Hex } from "./proofStats.js";
 
 /** Protocol: 30 claims from the recorded showcase playbooks, 10 of them planted false (one number or one entity name changed). */
@@ -9,7 +9,7 @@ export const CLAIMS_TOTAL = 30;
 export const PLANTED = 10;
 
 export interface CatchItem {
-  id: string; playbook: string; planted: boolean; plantKind?: "number" | "entity";
+  id: string; playbook: string; planted: boolean; plantKind?: PlantKind;
   originalText: string; original: Claim; claim: Claim;
 }
 export interface CatchSet {
@@ -30,8 +30,17 @@ function validClaim(c: unknown): c is Claim {
     && Array.isArray(x.numbers) && x.numbers.every((n) => typeof n === "number") && Array.isArray(x.evidence_refs) && x.evidence_refs.every((r) => typeof r === "string");
 }
 
-function plantNumber(claim: Claim, evidence: EvidenceItem[]): Claim | null {
-  const pool = evidence.flatMap((e) => e.numbers);
+const hashLess = (x: string, y: string): number => { const a = sha256Hex(x), b = sha256Hex(y); return a < b ? -1 : a > b ? 1 : 0; };
+const cardOf = (evidenceId: string): string => evidenceId.split(":")[0]!;
+
+/**
+ * Change exactly one number token (the first occurrence). `plausible`: to a number that is real elsewhere in the playbook's evidence but on none of
+ * the cited cards' items (a believable wrong number); `absent`: to a number found in no evidence at all.
+ */
+function plantNumber(claim: Claim, evidence: EvidenceItem[], variant: "plausible" | "absent"): Claim | null {
+  const all = evidence.flatMap((e) => e.numbers);
+  const cited = evidence.filter((e) => claim.evidence_refs.includes(e.id)).flatMap((e) => e.numbers);
+  const elsewhere = evidence.filter((e) => !claim.evidence_refs.includes(e.id)).flatMap((e) => e.numbers);
   for (let idx = 0; idx < claim.numbers.length; idx += 1) {
     const n = claim.numbers[idx]!;
     const str = String(n);
@@ -42,11 +51,17 @@ function plantNumber(claim: Claim, evidence: EvidenceItem[]): Claim | null {
     if (numberTokens(claim.text).some((t) => t.scaled)) continue;
     const d = decimalsOf(str);
     const tol = 0.5 * 10 ** -d + 1e-9;
-    const step = 7 * 10 ** -d;
-    for (const raw of [n * 1.5, n * 0.6, n + step, n - step, n * 2.3, n * 0.31, n + 3 * step]) {
-      if (!Number.isFinite(raw) || raw < 0) continue;
-      const c = Number(raw.toFixed(d));
-      if (c === n || pool.some((v) => Math.abs(v - c) <= tol || Math.abs(v * 100 - c) <= tol) || claim.numbers.includes(c)) continue;
+    const near = (pool: number[], c: number) => pool.some((v) => Math.abs(v - c) <= tol || Math.abs(v * 100 - c) <= tol);
+    let candidates: number[];
+    if (variant === "plausible") {
+      candidates = [...new Set(elsewhere.map((v) => Number(v.toFixed(d))))].sort((x, y) => hashLess(claim.text + x, claim.text + y));
+    } else {
+      const step = 7 * 10 ** -d;
+      candidates = [n * 1.5, n * 0.6, n + step, n - step, n * 2.3, n * 0.31, n + 3 * step].filter((v) => Number.isFinite(v) && v >= 0).map((v) => Number(v.toFixed(d)));
+    }
+    for (const c of candidates) {
+      if (c === n || claim.numbers.includes(c) || near(cited, c)) continue;
+      if (variant === "absent" && near(all, c)) continue;
       const numbers = [...claim.numbers];
       numbers[idx] = c;
       return { ...claim, text: claim.text.replace(re, c.toFixed(d)), numbers };
@@ -55,31 +70,39 @@ function plantNumber(claim: Claim, evidence: EvidenceItem[]): Claim | null {
   return null;
 }
 
+/** Change exactly one entity name (its first occurrence) to a name from another card; the same card's uncited items are the fallback. */
 function plantEntity(claim: Claim, evidence: EvidenceItem[], knownNames: string[]): Claim | null {
-  const cited = new Set(evidence.filter((e) => claim.evidence_refs.includes(e.id)).flatMap((e) => e.names).concat(knownNames).map((n) => n.toLowerCase()));
-  const options: Array<{ name: string; entityId?: string }> = [];
-  for (const e of evidence) e.names.forEach((name, i) => { if (!/\d/.test(name) && name.length >= 3 && !cited.has(name.toLowerCase())) options.push({ name, ...(e.entityIds[i] ? { entityId: e.entityIds[i]! } : {}) }); });
-  options.sort((a, b) => { const x = sha256Hex(claim.text + a.name), y = sha256Hex(claim.text + b.name); return x < y ? -1 : x > y ? 1 : 0; });
+  const citedItems = evidence.filter((e) => claim.evidence_refs.includes(e.id));
+  const citedCards = new Set(citedItems.map((e) => cardOf(e.id)));
+  const cited = new Set(citedItems.flatMap((e) => e.names).concat(knownNames).map((n) => n.toLowerCase()));
+  const options: Array<{ name: string; entityId?: string; otherCard: boolean }> = [];
+  for (const e of evidence) {
+    if (claim.evidence_refs.includes(e.id)) continue;
+    e.names.forEach((name, i) => { if (!/\d/.test(name) && name.length >= 3 && !cited.has(name.toLowerCase())) options.push({ name, ...(e.entityIds[i] ? { entityId: e.entityIds[i]! } : {}), otherCard: !citedCards.has(cardOf(e.id)) }); });
+  }
+  options.sort((a, b) => (a.otherCard !== b.otherCard ? (a.otherCard ? -1 : 1) : hashLess(claim.text + a.name, claim.text + b.name)));
   const pick = options[0];
   if (!pick) return null;
   for (let idx = 0; idx < claim.entities.length; idx += 1) {
     const e = claim.entities[idx]!;
     if (e.name === "" || !claim.text.includes(e.name)) continue;
     const entities = claim.entities.map((x, k) => (k === idx ? { name: pick.name, ...(pick.entityId ? { entityId: pick.entityId } : {}) } : x));
-    return { ...claim, text: claim.text.split(e.name).join(pick.name), entities };
+    return { ...claim, text: claim.text.replace(e.name, pick.name), entities };
   }
   return null;
 }
 
 /**
- * A false copy of the claim with exactly one number or one entity name changed, to a value or name that appears nowhere in the playbook's cited
- * evidence. Which kind goes first is the parity of the first hex digit of sha256(claim text); the other kind is the fallback. Null when neither is possible.
+ * A false copy of the claim with exactly one token changed (Amendment 2.6). `want` is tried first, then the other kinds; null when none is possible.
  */
-export function plantFalse(claim: Claim, evidence: EvidenceItem[], knownNames: string[]): { claim: Claim; kind: "number" | "entity" } | null {
-  const numberFirst = parseInt(sha256Hex(claim.text)[0]!, 16) % 2 === 0;
-  const tries: Array<["number" | "entity", () => Claim | null]> = [["number", () => plantNumber(claim, evidence)], ["entity", () => plantEntity(claim, evidence, knownNames)]];
-  if (!numberFirst) tries.reverse();
-  for (const [kind, make] of tries) { const planted = make(); if (planted) return { claim: planted, kind }; }
+export function plantFalse(claim: Claim, evidence: EvidenceItem[], knownNames: string[], want?: PlantKind): { claim: Claim; kind: PlantKind } | null {
+  const make: Record<PlantKind, () => Claim | null> = {
+    number_plausible: () => plantNumber(claim, evidence, "plausible"),
+    number_absent: () => plantNumber(claim, evidence, "absent"),
+    entity: () => plantEntity(claim, evidence, knownNames),
+  };
+  const order: PlantKind[] = want ? [want, ...PLANT_KINDS.filter((k) => k !== want)] : [...PLANT_KINDS];
+  for (const kind of order) { const planted = make[kind](); if (planted) return { claim: planted, kind }; }
   return null;
 }
 
@@ -93,7 +116,7 @@ export function buildCatchSet(doc: unknown): CatchSet {
   const playbooks = rec(rec(doc).playbooks);
   const evidenceOf = new Map<string, EvidenceItem[]>();
   const namesOf = new Map<string, string[]>();
-  const pool: Array<{ id: string; playbook: string; claim: Claim; plantable: { claim: Claim; kind: "number" | "entity" } }> = [];
+  const pool: Array<{ id: string; playbook: string; claim: Claim; plantable: { claim: Claim; kind: PlantKind } }> = [];
   let skipped = 0;
   for (const [pid, events] of Object.entries(playbooks)) {
     if (!Array.isArray(events)) continue;
@@ -126,11 +149,23 @@ export function buildCatchSet(doc: unknown): CatchSet {
     const x = sha256Hex(a.claim.text), y = sha256Hex(b.claim.text);
     return x < y ? -1 : x > y ? 1 : a.id < b.id ? -1 : 1;
   }).slice(0, PLANTED).map((c) => c.id));
+  // Plants are assigned in hash order. The parity of the first hex digit of sha256(text) prefers a number or a name; number plants alternate
+  // plausible / absent so half of them are believable wrong numbers.
+  const plantOf = new Map<string, { claim: Claim; kind: PlantKind }>();
+  let numberPlants = 0;
+  for (const c of [...chosen].filter((x) => plantedIds.has(x.id)).sort((a, b) => hashLess(a.claim.text, b.claim.text) || (a.id < b.id ? -1 : 1))) {
+    const names = namesOf.get(c.playbook)!, ev = evidenceOf.get(c.playbook)!;
+    const numberFirst = parseInt(sha256Hex(c.claim.text)[0]!, 16) % 2 === 0;
+    const variant: PlantKind = numberPlants % 2 === 0 ? "number_plausible" : "number_absent";
+    const planted = plantFalse(c.claim, ev, names, numberFirst ? variant : "entity")!;
+    if (planted.kind !== "entity") numberPlants += 1;
+    plantOf.set(c.id, planted);
+  }
   const items: CatchItem[] = chosen.map((c) => {
-    const planted = plantedIds.has(c.id);
+    const planted = plantOf.get(c.id);
     return {
-      id: c.id, playbook: c.playbook, planted, ...(planted ? { plantKind: c.plantable.kind } : {}),
-      originalText: c.claim.text, original: c.claim, claim: planted ? c.plantable.claim : c.claim,
+      id: c.id, playbook: c.playbook, planted: planted !== undefined, ...(planted ? { plantKind: planted.kind } : {}),
+      originalText: c.claim.text, original: c.claim, claim: planted ? planted.claim : c.claim,
     };
   });
   return { items, evidenceOf, namesOf, skipped };
@@ -154,8 +189,15 @@ export function runCatchRate(doc: unknown, source: string, verify: Verify = veri
   });
   const planted = rows.filter((r) => r.planted), real = rows.filter((r) => !r.planted);
   const caught = planted.filter((r) => r.removed).length, falseAlarms = real.filter((r) => r.removed).length;
+  const byType = Object.fromEntries(PLANT_KINDS.map((k) => {
+    const of = planted.filter((r) => r.plantKind === k);
+    const c = of.filter((r) => r.removed).length;
+    return [k, { planted: of.length, caught: c, catchRate: of.length ? c / of.length : null }];
+  })) as CatchRateSection["byType"];
   return {
     source, claims: rows.length, planted: planted.length, caught, catchRate: caught / planted.length,
-    trueClaims: real.length, falseAlarms, falseAlarmRate: falseAlarms / real.length, rows,
+    trueClaims: real.length, falseAlarms, falseAlarmRate: falseAlarms / real.length, byType,
+    falseAlarmNote: "the true claims were drawn from claims the verifier had already accepted when the playbook was recorded, so this rate can only show drift, not real precision.",
+    rows,
   };
 }

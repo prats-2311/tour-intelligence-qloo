@@ -67,7 +67,9 @@ export async function scoreFixedCase(c: BacktestCase, deps: FixedDeps): Promise<
   const popEnv = await call("qloo_recommend", cityPopularityArgs(target, where, WIDE_CUTOFF), sessionId);
   if (popEnv.status !== "ok" && popEnv.status !== "partial" && popEnv.status !== "degraded") throw new CaseExcluded(`popularity list unavailable (${popEnv.status})`);
   const popular = extractEntities(popEnv).map((e) => ({ name: e.name, entityId: e.entityId }));
-  const decoys = pickDecoys(c.id, popular, { ...real, ...(c.realEntity.aliases ? { aliases: c.realEntity.aliases } : {}) });
+  // The real pick is excluded by entity id and by every name it goes by: Qloo's resolved name, the case's own name and each alias (Amendment 2.5).
+  const realNames = [c.realEntity.name, ...(c.realEntity.aliases ?? [])];
+  const decoys = pickDecoys(c.id, popular, { ...real, aliases: realNames });
   if (decoys.length < DECOYS) throw new CaseExcluded(`too few candidates (${decoys.length} decoys, need ${DECOYS})`);
 
   const candidates = [{ name: real.name, entityId: real.entityId, real: true }, ...decoys.map((d) => ({ ...d, real: false }))];
@@ -75,7 +77,13 @@ export async function scoreFixedCase(c: BacktestCase, deps: FixedDeps): Promise<
   const tie = (a: string, b: string) => cmp(sha256Hex(c.id + a), sha256Hex(c.id + b));
 
   // Popularity: list order; a candidate not on the list (only the real pick can be) goes after every listed one.
-  const listIdx = (id: string) => { const i = popular.findIndex((p) => lc(p.entityId) === lc(id)); return i === -1 ? Number.POSITIVE_INFINITY : i; };
+  // The real pick's list position: by entity id first, then by name or alias (the list may carry it under another id).
+  const realNameSet = new Set([real.name, ...realNames].map(normaliseName).filter((n) => n !== ""));
+  const listIdx = (id: string) => {
+    let i = popular.findIndex((p) => lc(p.entityId) === lc(id));
+    if (i === -1 && lc(id) === lc(real.entityId)) i = popular.findIndex((p) => realNameSet.has(normaliseName(p.name)));
+    return i === -1 ? Number.POSITIVE_INFINITY : i;
+  };
   const popOrder = [...ids].sort((a, b) => (listIdx(a) === listIdx(b) ? tie(a, b) : listIdx(a) - listIdx(b)));
 
   // Qloo rank: the protocol request. Ids it leaves out go after the ranked ones, in hash order.

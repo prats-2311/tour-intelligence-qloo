@@ -41,17 +41,16 @@ describe("StopMonitor", () => {
     expect(m.stopped).toMatch(/429/);
     expect(() => m.assertOk()).toThrow(StopRun);
   });
-  it.each(["Quota exceeded for project", "rate limit hit", "Rate-Limit", "rate_limit", "daily limit reached"])("stops on error text %s", (text) => {
+  it.each(["Quota exceeded for project", "rate limit hit", "Rate-Limit", "rate_limit", "daily limit reached", "RATE wait", "RATE_LIMITED", "Too many requests", "resource exhausted"])("stops on error text %s", (text) => {
     const m = new StopMonitor();
     m.record("gemini", { ok: false, text });
     expect(m.stopped).toBeDefined();
   });
-  it("stops on a non-ok envelope that mentions a limit, but not on a plain error message", () => {
+  it("a plain error message does not stop; words that merely contain 'rate' do not either", () => {
     const m = new StopMonitor();
     m.record("qloo", { ok: false, text: "Vertex 500" });
+    m.record("qloo", { ok: false, text: "could not generate or integrate the answer" });
     expect(m.stopped).toBeUndefined();
-    m.record("qloo", { ok: true, text: "usage limit nearly reached" });
-    expect(m.stopped).toBeDefined();
   });
   it("an ok call with no text never stops", () => {
     const m = new StopMonitor();

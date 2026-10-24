@@ -10,8 +10,8 @@ export type CallTool = (name: string, args: Record<string, unknown>, sessionId: 
 
 /**
  * Wraps a caller with the protocol's stop rule: no call is sent once the run has stopped, every call's outcome is recorded
- * (counts, 429, quota/limit text, error rate), and a stop surfaces as `StopRun`. Only error envelopes and non-ok/empty envelopes
- * are scanned for limit text: a successful result's entity names are data, not a signal.
+ * (counts, 429, rate/quota/limit text, error rate), and a stop surfaces as `StopRun`. Only error envelopes and thrown errors are
+ * scanned for limit text; a stale answer stops the run.
  */
 export function monitoredCallTool(inner: CallTool, monitor: StopMonitor): CallTool {
   return async (name, args, sessionId) => {
@@ -25,10 +25,11 @@ export function monitoredCallTool(inner: CallTool, monitor: StopMonitor): CallTo
       monitor.assertOk();
       throw err;
     }
+    // The gateway serves a stale cache entry only after a live call failed, so a stale answer is an upstream error that was swallowed.
+    if (envelope.stale === true) { monitor.record("qloo", { ok: false, text: "stale" }); monitor.halt(`qloo stale answer served after an upstream failure (${name})`); monitor.assertOk(); }
     const isError = envelope.status === "error";
-    const nonOk = !isError && envelope.status !== "ok" && envelope.status !== "empty";
-    const text = isError ? [envelope.summary, envelope.error?.code, envelope.error?.recovery].filter((x): x is string => typeof x === "string").join(" ")
-      : nonOk ? envelope.summary : undefined;
+    // Only error envelopes are scanned for limit text; a summary on an ok or partial answer is data.
+    const text = isError ? [envelope.summary, envelope.error?.code, envelope.error?.recovery, (envelope.error as { message?: unknown } | undefined)?.message].filter((x): x is string => typeof x === "string").join(" ") : undefined;
     monitor.record("qloo", { ok: !isError, ...(text ? { text } : {}) });
     monitor.assertOk();
     return envelope;
@@ -107,7 +108,11 @@ export function createPermutationRanker(opts: { generate: GenerateFn; models: st
         } catch (err) {
           if (err instanceof StopRun) throw err;
           monitor.assertOk();
-          if (!(err instanceof SyntaxError)) return { order: null, attempts: attempt, reason: "gemini_error" };
+          if (!(err instanceof SyntaxError)) {
+            // Every model failed: an infrastructure failure, not "no answer". The run stops and says so.
+            monitor.halt(`all Gemini models failed (${String((err as Error)?.message ?? err)})`);
+            monitor.assertOk();
+          }
         }
         const answer = (json as { ranking?: unknown } | null | undefined)?.ranking;
         if (isPermutation(labels, answer)) return { order: answer, attempts: attempt, ...(model ? { model } : {}) };

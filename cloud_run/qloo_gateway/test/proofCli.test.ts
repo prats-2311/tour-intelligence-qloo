@@ -30,6 +30,16 @@ describe("createGatewayCaller noRetryStatuses", () => {
   });
 });
 
+describe("createGatewayCaller stale flag", () => {
+  it("keeps the gateway's stale flag on the envelope", async () => {
+    const body = (stale: boolean) => new Response(JSON.stringify({ envelope: { operation: "x", status: "ok", results: [] }, cacheKey: "k", cached: true, stale }), { status: 200 });
+    const stale = createGatewayCaller({ baseUrl: "https://gw.example", token: "SECRET-TOKEN", fetchImpl: vi.fn().mockResolvedValue(body(true)) });
+    expect((await stale("t", {}, "s")).stale).toBe(true);
+    const fresh = createGatewayCaller({ baseUrl: "https://gw.example", token: "SECRET-TOKEN", fetchImpl: vi.fn().mockResolvedValue(body(false)) });
+    expect((await fresh("t", {}, "s")).stale).toBeUndefined();
+  });
+});
+
 describe("Test A CLI", () => {
   it("--batch is required and must be 1 or 2; --out defaults under private-data/backtest and refuses tracked paths", () => {
     expect(() => cityCli.parseArgs([])).toThrow(/--batch/);
@@ -60,6 +70,9 @@ describe("Test A CLI", () => {
     expect(text).toMatch(/DRY RUN/);
     expect(text).toMatch(/Qloo calls/);
     expect(text).toMatch(/429/);
+    expect(text).toMatch(/Amendment 2/);
+    expect(text).toContain("Queens -> New York City"); // re-anchored played cities are listed up front
+    expect(text).toContain("Vallejo -> Concord");
     expect(text).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}/); // no Qloo ids
   });
 

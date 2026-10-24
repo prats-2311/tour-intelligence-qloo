@@ -3,12 +3,12 @@ import { ARMS, computeCityRankStats, computeFixedStats, summarise, type ArmName,
 
 type R = Partial<Record<ArmName, number | null>>;
 /** One scored artist with the given R-precision per arm (null = no answer). N = 4 of 10 candidates unless said otherwise. */
-function artist(position: number, name: string, r: R, N = 4, count = 10): CityRankArtist {
+function artist(position: number, name: string, r: R, N = 4, count = 10, bo: CityRankArtist["boardOnly"] = null): CityRankArtist {
   const arms = Object.fromEntries(ARMS.map((a) => {
     const v = r[a];
     return [a, v === null || v === undefined ? { status: "no_answer", reason: "not_a_permutation" } : { status: "ok", ranking: [], rPrecision: v, hits: [] }];
   })) as CityRankArtist["arms"];
-  return { position, artist: name, tourTitle: "T", url: "u", sessionId: `proof-v3-city-${position}`, regions: ["Mexico"], firstShowYear: 2024, playedTotal: 8, boardCount: 8, addedCount: count - 8, boardMostlyPlayed: false, candidateCount: count, n: N, chance: N / count, candidates: [], arms };
+  return { position, artist: name, tourTitle: "T", url: "u", sessionId: `proof-v3-city-${position}`, regions: ["Mexico"], firstShowYear: 2024, playedTotal: 8, boardCount: 8, playedExtras: (count - 8) / 2, decoyExtras: (count - 8) / 2, boardMostlyPlayed: false, anchoring: [], boardOnly: bo, candidateCount: count, n: N, chance: N / count, candidates: [], arms };
 }
 const base = (): ProofV3Results => ({
   schemaVersion: 3, generatedAt: "2026-10-24T00:00:00Z", protocol: { path: "docs/qloo/proof-v3-protocol.md", commit: "abc" }, calibrationVersion: "cal",
@@ -33,6 +33,12 @@ describe("computeCityRankStats", () => {
     expect(s.signTests.vs_population).toMatchObject({ wins: 3, losses: 0 });
     expect(s.signTests.vs_population.p).toBeCloseTo(0.25, 10);
   });
+  it("board-only R-precision: mean and sign test over artists that have a played board city", () => {
+    const as = [artist(1, "A", { winnability: 1 }, 4, 10, { n: 2, count: 8, winnability: 1, fan_heat: 0.5 }), artist(2, "B", { winnability: 1 }), artist(3, "C", { winnability: 1 }, 4, 10, { n: 3, count: 8, winnability: 0.5, fan_heat: 1 })];
+    const s = computeCityRankStats(as);
+    expect(s.boardOnly).toMatchObject({ answered: 2, winnability: 0.75, fan_heat: 0.75 });
+    expect(s.boardOnly.signTest).toMatchObject({ wins: 1, losses: 1, p: 1 });
+  });
   it("empty input has null means and p=1", () => {
     const s = computeCityRankStats([]);
     expect(s.arms.winnability).toEqual({ answered: 0, mean: null });
@@ -48,6 +54,26 @@ describe("summarise: claim rule", () => {
     const text = summarise(withA(six([1, 1, 1, 1, 1, 1], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5], [1, 1, 1, 1, 1, 1], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]))).join("\n");
     expect(text).toMatch(/Winnability beat fan heat \(p=0\.031\)/);
     expect(text).toMatch(/Not significant at this sample size: .*LLM/i); // tied with the LLM
+  });
+  it("the winner needs more per-artist wins than losses: 2 big wins and 10 narrow losses (p=0.039, higher mean) is no claim", () => {
+    const as = [...Array.from({ length: 2 }, (_, i) => artist(i + 1, `Big${i}`, { winnability: 1, fan_heat: 0, llm: 0, population: 0 })), ...Array.from({ length: 10 }, (_, i) => artist(i + 3, `Narrow${i}`, { winnability: 0.25, fan_heat: 0.3, llm: 0.3, population: 0.3 }))];
+    const stats = computeCityRankStats(as);
+    expect(stats.signTests.vs_fan_heat).toMatchObject({ wins: 2, losses: 10 });
+    expect(stats.signTests.vs_fan_heat.p).toBeLessThan(0.05);
+    expect(stats.arms.winnability.mean!).toBeGreaterThan(stats.arms.fan_heat.mean!);
+    const text = summarise(withA(as)).join("\n");
+    expect(text).not.toMatch(/Winnability beat/);
+    expect(text).toMatch(/Not significant at this sample size: winnability leads fan heat/);
+    // and the mirror: the other arm cannot claim a win it lost on the sign test either
+    const mirror = summarise(withA(as.map((a) => ({ ...a, arms: { ...a.arms, winnability: a.arms.fan_heat, fan_heat: a.arms.winnability } })) as CityRankArtist[])).join("\n");
+    expect(mirror).not.toMatch(/Fan heat beat winnability \(p/);
+  });
+  it("reports the secondary board-only comparison, the re-anchoring changes and the protocol's disclosures", () => {
+    const a = { ...artist(1, "A", { winnability: 1, fan_heat: 0.5, llm: 0.5, population: 0.5 }, 4, 10, { n: 2, count: 8, winnability: 1, fan_heat: 0.5 }), anchoring: [{ from: "Queens", to: "New York City" }] };
+    const text = summarise(withA([a])).join("\n");
+    expect(text).toMatch(/Secondary, board cities only/);
+    expect(text).toContain("Queens was re-anchored to New York City");
+    for (const needle of [/floor/, /Data timing/, /routing an agent chose/, /Sample size/, /venue name/, /Amendments 1 and 2/]) expect(text).toMatch(needle);
   });
   it("5-1 is not significant even though the mean is higher, and the loss is named", () => {
     const as = six([1, 1, 1, 1, 1, 0.25], [0.5, 0.5, 0.5, 0.5, 0.5, 0.75], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]);
@@ -114,9 +140,12 @@ describe("Test B stats and summary", () => {
 });
 
 describe("catch rate summary", () => {
-  it("states both rates", () => {
-    const text = summarise({ ...base(), catchRate: { source: "s", claims: 30, planted: 10, caught: 9, catchRate: 0.9, trueClaims: 20, falseAlarms: 1, falseAlarmRate: 0.05, rows: [] } }).join("\n");
-    expect(text).toContain("9 of 10 planted false claims");
-    expect(text).toContain("1 of 20 true claims");
+  it("states the catch rate per plant type, names a miss on plausible numbers as a limit, and does not present the false-alarm rate as a finding", () => {
+    const byType = { number_plausible: { planted: 4, caught: 2, catchRate: 0.5 }, number_absent: { planted: 3, caught: 3, catchRate: 1 }, entity: { planted: 3, caught: 3, catchRate: 1 } };
+    const text = summarise({ ...base(), catchRate: { source: "s", claims: 30, planted: 10, caught: 8, catchRate: 0.8, trueClaims: 20, falseAlarms: 1, falseAlarmRate: 0.05, byType, falseAlarmNote: "drawn from claims the verifier had already accepted.", rows: [] } }).join("\n");
+    expect(text).toContain("8 of 10 planted false claims");
+    expect(text).toContain("plausible wrong number (real elsewhere in the playbook): caught 2 of 4");
+    expect(text).toContain("a limit of the checker");
+    expect(text).toMatch(/False alarms \(1 of 20\) are not a finding: drawn from claims/);
   });
 });

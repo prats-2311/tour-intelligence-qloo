@@ -31,12 +31,12 @@ export class StopRun extends Error {
   constructor(public readonly reason: string) { super(`stopped: ${reason}`); this.name = "StopRun"; }
 }
 
-const LIMIT_TEXT = /quota|rate.?limit|limit/i;
+const LIMIT_TEXT = /\brate\b|rate.?limit|quota|limit|too many requests|exhaust/i;
 const HTTP_429 = /\b429\b/;
 const BUDGET_CODE = /\bBUDGET\b/;
 
 /**
- * The protocol's stop rule. After every Qloo or Gemini call: a 429, any error or non-ok response text matching /quota|rate.?limit|limit/i, or an
+ * The protocol's stop rule. After every Qloo or Gemini call: a 429, any error envelope code or message, or thrown error message, matching rate/quota/limit (the gateway's RATE code included), or an
  * error rate above 10% over the last `window` calls (once at least `minCalls` have been seen) sets `stopped` (first reason wins).
  * Callers call `assertOk()` before each call so nothing is sent after a stop.
  */

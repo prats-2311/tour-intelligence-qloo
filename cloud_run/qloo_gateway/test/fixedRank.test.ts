@@ -97,6 +97,17 @@ describe("scoreFixedCase", () => {
     expect(a.ranking.at(-1)).toBe("00000000-real"); // last on the list, so last among the candidates too
   });
 
+  it("the case's own name and aliases are excluded as decoys even when Qloo resolved the real pick to a different name; the popularity arm finds it by name", async () => {
+    // describe resolves "Real Brand" to "Real Brand Official"; the popularity list carries the same brand as "Real Brand" (RB) under another id.
+    const popular = [ent("00000000-dupe", "Real Brand"), ent("00000000-dupe2", "RB"), ...pool(12).map((p) => ent(p.entityId, p.name))];
+    const r = await scoreFixedCase(caseOf(), { callTool: fakeQloo({ popular }), ranker: ranker((l) => l), monitor: new StopMonitor() });
+    expect(r.realPick.name).toBe("Real Brand Official");
+    expect(r.candidates.map((c) => c.entityId)).not.toContain("00000000-dupe");
+    expect(r.candidates.map((c) => c.entityId)).not.toContain("00000000-dupe2");
+    expect(r.candidates).toHaveLength(10);
+    expect(r.arms.popularity).toMatchObject({ status: "ok", rank: 1 });
+  });
+
   it("Qloo rank: ids it leaves out go after the ones it ranked, in hash order; an empty rank is no answer", async () => {
     const r = await scoreFixedCase(caseOf(), { callTool: fakeQloo({ rank: "reverse" }), ranker: ranker((l) => l), monitor: new StopMonitor() });
     const q = r.arms.qloo_rank;

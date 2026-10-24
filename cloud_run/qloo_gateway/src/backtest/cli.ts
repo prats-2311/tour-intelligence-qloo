@@ -61,9 +61,11 @@ export function createGatewayCaller(opts: { baseUrl: string; token: string; fetc
         if (opts.noRetryStatuses?.includes(res.status)) throw new Error(`HTTP ${res.status}`);
         if (res.status >= 500 || res.status === 429) { last = `HTTP ${res.status}`; continue; }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const envelope = ((await res.json()) as { envelope?: unknown } | null)?.envelope;
+        const body = (await res.json()) as { envelope?: unknown; stale?: unknown } | null;
+        const envelope = body?.envelope;
         if (typeof envelope !== "object" || envelope === null) throw new Error("malformed response (no envelope)");
-        return envelope as QlooEnvelope;
+        // The gateway serves a stale cache entry only after a live call failed: keep the flag so Proof v3 can stop on it.
+        return (body?.stale === true ? { ...(envelope as QlooEnvelope), stale: true } : envelope) as QlooEnvelope;
       } catch (err) {
         if (err instanceof GatewayAuthError) throw err;
         last = String((err as Error)?.message ?? err).replaceAll(opts.token, "[token]");
