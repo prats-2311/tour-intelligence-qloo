@@ -91,3 +91,19 @@ This is a known property of the method, stated in the results: the two Qloo arms
 - `private-data/backtest/proof-v3-*.json`: raw results, which include Qloo-derived ranks, so they stay private.
 - `/proof` shows Test A first, then Test B, the catch rate and the earlier runs, each with its method note.
 - The README quotes only the published summary numbers.
+
+## Amendment 1 (2026-10-24, before any Qloo or Gemini call)
+**Why:** the first eligible list (commit 96b2ed6) showed two design flaws. We saw the artist names and their show counts, and no outcome of any arm.
+- **Flaw 1:** rule (c) let arena acts through (Bob Dylan, Sting, Sabrina Carpenter, Tears for Fears, Weezer, Lil Nas X). The product is for mid-tier artists.
+- **Flaw 2:** for very large tours (Bob Dylan played 93 distinct cities), nearly every candidate is a played city. R-precision then approaches 1 for every arm, so the test measures nothing.
+
+**Changes:**
+1. **Rule (c) is replaced.** A tour is excluded if more than half of its US/MX/BR shows are in venues whose name contains any of: Stadium, Estadio, Stadion, Field, Arena, Center, Centre, Coliseum, Dome, Garden, Amphitheatre, Amphitheater, Pavilion, Bowl, Speedway, Fairgrounds (case-insensitive).
+2. **New rule (f):** the tour played between 6 and 30 distinct US/MX/BR cities after anchoring.
+3. **Candidates:**
+   - Start from the board's scored cities.
+   - Add played cities in `sha256(artist + city id)` order while played cities make up at most half of the list and the list has at most 14 cities.
+   - If the board's own cities already include more played cities than unplayed, keep them all, add nothing, and flag the artist as "board mostly played".
+4. **Chance level:** each artist's chance R-precision (N / candidate count) is reported next to the four arms, along with the mean chance level over all artists.
+
+Everything else stands: artist order by sha256, batches of 6, the stop rule, metrics, the claim rule and the published limits. The eligible list is regenerated under the amended rules, and `backtest/city/artists.json` and `cases.json` are replaced. The first list stays in git history (96b2ed6).
