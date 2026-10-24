@@ -143,3 +143,46 @@ describe("score CLI", () => {
     expect(res.summary.length).toBeGreaterThan(0);
   });
 });
+
+describe("run id, secondary analysis and published codes", () => {
+  it("refuses a key and an items file from different runs", () => {
+    n = 0;
+    const f = fixture([s("1", "venue", ["qloo"], "in_city"), s("1", "venue", ["llm"], "in_city")]);
+    f.key.runId = "aaaa"; f.items.runId = "bbbb";
+    expect(() => scoreGrounding(f)).toThrow(/different runs/);
+    f.items.runId = "aaaa";
+    expect(() => scoreGrounding(f)).not.toThrow();
+  });
+  it("truncates each arm per city and category to the smaller count by rank, with the same ratings, and reports it as Secondary", () => {
+    n = 0;
+    // Qloo gave 1 venue, the LLM gave 3 (rank 1 shared, ranks 2 and 3 not): the LLM's ranks 2 and 3 are cut.
+    const specs = [s("1", "venue", ["llm", "qloo"], "in_city"), s("1", "venue", ["llm"], "not_exist"), s("1", "venue", ["llm"], "not_exist")];
+    const f = fixture(specs);
+    const it_ = (arm: "qloo" | "llm", name: string, rank: number) => ({ cityId: "1", city: "City1", country: "MX", category: "venue" as const, arm, name, rank });
+    f.items.items = [it_("qloo", "n-r001", 1), it_("llm", "n-r001", 1), it_("llm", "n-r002", 2), it_("llm", "n-r003", 3)];
+    const r = scoreGrounding(f);
+    expect(r.byArm.llm.overall.share).toBeCloseTo(1 / 3, 10); // primary: all three
+    expect(r.secondary.names).toEqual({ qloo: 1, llm: 1 });
+    expect(r.secondary.perCity[0]).toMatchObject({ qloo: 1, llm: 1 });
+    expect(r.summary.some((l) => l.startsWith("Secondary"))).toBe(true);
+    expect(r.summary.join(" ")).toMatch(/narrative off/);
+    expect(r.summary.join(" ")).toMatch(/had seen the shipped showcase playbooks/);
+  });
+  it("published sentences carry error codes only, never raw messages", () => {
+    n = 0;
+    const f = fixture([s("1", "venue", ["qloo"], "in_city"), s("1", "venue", ["llm"], "in_city")]);
+    f.items.excluded = [{ cityId: "9", city: "Elsewhere", reason: "INTERNAL: secret raw upstream text", code: "INTERNAL" }];
+    f.items.stop = { status: "stopped", reason: "qloo HTTP 429: raw body text" };
+    const r = scoreGrounding(f);
+    const text = r.summary.join(" ");
+    expect(text).toContain("Elsewhere was excluded (INTERNAL)");
+    expect(text).not.toMatch(/secret|raw/);
+  });
+});
+
+it("stopCode reduces a stop reason to a code", async () => {
+  const { stopCode } = await import("../src/backtest/proofResults.js");
+  expect(stopCode("qloo HTTP 429: raw body text")).toBe("HTTP 429");
+  expect(stopCode("Qloo call ceiling of 198 reached")).toBe("Qloo call ceiling");
+  expect(stopCode("something odd with text")).toBe("stop rule");
+});

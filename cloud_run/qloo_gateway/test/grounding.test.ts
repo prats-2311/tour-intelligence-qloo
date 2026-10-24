@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, existsSync } from "node:fs";
+import { mkdtempSync, readFileSync, existsSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -244,5 +244,105 @@ describe("Test C CLI", () => {
     if (!existsSync(p)) return;
     const sel = selectCities(JSON.parse(readFileSync(p, "utf8")));
     expect(sel.cities.length).toBeLessThanOrEqual(10);
+  });
+});
+
+describe("Gemini call accounting (Amendment 3)", () => {
+  const isLlm = (body: unknown) => JSON.stringify(body).includes('"venues"');
+  it("a clean run records exactly one LLM-arm Gemini call per city plus the local-acts calls, each counted once", async () => {
+    let llm = 0, other = 0;
+    const generate: GenerateFn = async (_m, body) => { if (isLlm(body)) { llm += 1; return genText({ venues: ["V"], brands: [], local_acts: [] }); } other += 1; return genText({ items: [{ name: "Suggested Act" }] }); };
+    const d = deps({ generate });
+    const cities = Array.from({ length: 9 }, (_, i) => ({ ...city1, id: String(i + 1), name: `Mexico City` }));
+    const playbook = (async function* () { yield { type: "playbook", playbook: { city: {}, cards: [] } }; yield { type: "done", summary: {} }; }) as never;
+    // the real pipeline for every city: reuse city 1's known id in the list
+    const run = await runGrounding(plan(cities.map((c) => ({ ...c, id: "1" }))), { ...d, playbook });
+    expect(llm).toBe(9);
+    expect(run.stop).toBeUndefined();
+    expect(d.monitor.counts.gemini).toBe(llm + other);
+  });
+  it("with the real pipeline the local-act calls are counted once too", async () => {
+    let total = 0;
+    const generate: GenerateFn = async (_m, body) => { total += 1; return isLlm(body) ? genText({ venues: ["V"], brands: [], local_acts: [] }) : genText({ items: [{ name: "Suggested Act" }] }); };
+    const d = deps({ generate });
+    await runGrounding(plan([city1]), d);
+    expect(total).toBe(2);
+    expect(d.monitor.counts.gemini).toBe(2);
+  });
+  it("a persistent 404 on the LLM call is 3 attempts per model, with 2 backoff sleeps per model, then the run halts", async () => {
+    const attempts: string[] = [];
+    const sleeps: number[] = [];
+    const generate: GenerateFn = async (m, body) => { if (isLlm(body)) { attempts.push(m); throw new Error("Vertex 404"); } return genText({ items: [] }); };
+    const d = deps({ generate, models: ["a", "b"], sleep: async (ms) => { sleeps.push(ms); } });
+    const run = await runGrounding(plan([city1]), d);
+    expect(attempts).toEqual(["a", "a", "a", "b", "b", "b"]);
+    expect(sleeps).toEqual([2000, 6000, 2000, 6000]);
+    expect(run.stop).toMatch(/all Gemini models failed/);
+  });
+});
+
+describe("other run guards", () => {
+  it("stops when the Qloo call ceiling is reached", async () => {
+    const d = deps({ qlooCeiling: 3 });
+    const run = await runGrounding(plan([city1]), d);
+    expect(run.stop).toMatch(/ceiling of 3/);
+    expect(d.sent.length).toBeLessThanOrEqual(3 + 6); // calls already in flight may finish
+    expect(run.items).toEqual([]);
+  });
+  it("a total failure of the local-act suggestions halts the run as an infrastructure failure", async () => {
+    const generate: GenerateFn = async (_m, body) => { if (JSON.stringify(body).includes('"venues"')) return genText({ venues: [], brands: [], local_acts: [] }); throw new Error("Vertex 400"); };
+    const run = await runGrounding(plan([city1]), deps({ generate }));
+    expect(run.stop).toMatch(/local act/);
+    expect(run.notRun.map((c) => c.cityId)).toEqual(["1"]);
+  });
+  it("excluded cities carry an error code", async () => {
+    const run = await runGrounding(plan([city1]), deps({ callTool: async (tool) => ({ operation: tool, status: "empty", results: [] }) }));
+    expect(run.excluded[0]!.code).toBe("LOCATION_UNRESOLVED");
+  });
+  it("de-duplication folds & into and, for the sheet only", () => {
+    const base = { cityId: "5", city: "T", country: "MX", category: "venue" as const, rank: 1 };
+    expect(buildRows([{ ...base, arm: "qloo", name: "Bar & Grill" }, { ...base, arm: "llm", name: "Bar and Grill" }])).toHaveLength(1);
+  });
+});
+
+describe("Test C CLI runs", () => {
+  const cityRow = scored("3530597", "Mexico City", "MX", 90, 40);
+  const file = () => { const dir = mkdtempSync(join(tmpdir(), "ground-")); const f = join(dir, "showcase.json"); writeFileSync(f, JSON.stringify(showcase([cityRow]))); return { dir, f }; };
+  const genFn: GenerateFn = async (_m, body) => (JSON.stringify(body).includes('"venues"') ? genText({ venues: ["LV1"], brands: ["Brand 1"], local_acts: ["LT1"] }) : genText({ items: [{ name: "Suggested Act" }] }));
+  const makeIo = (callTool: (t: string, a: Record<string, unknown>) => QlooEnvelope): CliIo & { lines: string[] } => {
+    const lines: string[] = [];
+    return { lines, log: (l) => lines.push(l), env: {}, now: () => new Date("2026-10-24T12:00:00Z"), makeClients: () => ({ callTool: async (t, a) => callTool(t, a), generate: genFn, models: ["m1"] }) };
+  };
+  it("a full run writes items, key, sheet and CSV that share one run id", async () => {
+    const { dir, f } = file();
+    const code = await cli.mainWith({ showcase: f, outDir: join(dir, "out"), dryRun: false }, makeIo(happy));
+    expect(code).toBe(0);
+    const p = cli.outputPathsUnchecked(join(dir, "out"));
+    for (const x of [p.items, p.key, p.sheet, p.csv]) expect(existsSync(x)).toBe(true);
+    const items = JSON.parse(readFileSync(p.items, "utf8"));
+    const key = JSON.parse(readFileSync(p.key, "utf8"));
+    expect(items.runId).toMatch(/^[0-9a-f]{16}$/);
+    expect(key.runId).toBe(items.runId);
+    expect(items.stop.status).toBe("complete");
+    expect(readFileSync(p.sheet, "utf8")).toContain("<!doctype html>");
+  });
+  it("a stopped run writes no sheet, and a re-run keeps the stopped items file as *.stopped-1.json", async () => {
+    const { dir, f } = file();
+    const rate = (t: string, a: Record<string, unknown>): QlooEnvelope => (t === "qloo_recommend" ? ({ operation: t, status: "error", summary: "rate limited", error: { code: "RATE" }, results: null } as unknown as QlooEnvelope) : happy(t, a));
+    const out = join(dir, "out");
+    expect(await cli.mainWith({ showcase: f, outDir: out, dryRun: false }, makeIo(rate))).toBe(1);
+    const p = cli.outputPathsUnchecked(out);
+    expect(existsSync(p.sheet)).toBe(false);
+    expect(existsSync(p.key)).toBe(false);
+    expect(JSON.parse(readFileSync(p.items, "utf8")).stop.status).toBe("stopped");
+    expect(await cli.mainWith({ showcase: f, outDir: out, dryRun: false }, makeIo(happy))).toBe(0);
+    const kept = p.items.replace(/\.json$/, ".stopped-1.json");
+    expect(JSON.parse(readFileSync(kept, "utf8")).stop.status).toBe("stopped");
+    expect(JSON.parse(readFileSync(p.items, "utf8")).stop.status).toBe("complete");
+  });
+  it("Test C outputs are refused anywhere but private-data/backtest, including outside the repo", () => {
+    expect(() => cli.parseArgs(["--out-dir", join(tmpdir(), "x")])).toThrow(/private-data\/backtest/);
+    expect(() => cli.parseArgs(["--out-dir", resolve(REPO_ROOT, "private-data/other")])).toThrow(/private-data\/backtest/);
+    expect(() => cli.parseArgs(["--out-dir", resolve(REPO_ROOT, "private-data/backtest/sub")])).not.toThrow();
   });
 });

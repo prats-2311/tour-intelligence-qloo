@@ -24,13 +24,19 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-app
 main{max-width:760px;margin:0 auto;padding:16px}
 h1{font-size:1.4rem;margin:8px 0}
 #instructions{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+#instructions ol{list-style:decimal;padding-left:1.4em;margin:8px 0}
 #instructions li{margin:4px 0}
+#warn{background:#fff3cd;color:#5c4400;border:1px solid #e0b84a;border-radius:8px;padding:8px 12px;margin:10px 0}
+#warn[hidden]{display:none}
+table{border-collapse:collapse;width:100%;font-size:.88rem;margin:8px 0}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.note{font-size:.88rem;color:var(--mute);margin:6px 0}
 .bar{position:sticky;top:0;z-index:2;background:var(--bg);padding:10px 0;display:flex;gap:12px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);margin-bottom:12px}
 button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
-ol{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+ol.rows{list-style:none;margin:0;padding:0;display:grid;gap:12px}
 .row{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .row.done{background:var(--done)}
-.row:focus{outline:3px solid var(--focus);outline-offset:1px}
+.row:focus,.row:focus-within{outline:3px solid var(--focus);outline-offset:1px}
 .meta{display:flex;flex-wrap:wrap;gap:8px;color:var(--mute);font-size:.85rem}
 .rid{font-variant-numeric:tabular-nums;font-weight:600}
 .name{font-size:1.15rem;font-weight:600;margin:4px 0}
@@ -46,8 +52,11 @@ const SCRIPT = (hash: string, ids: string[]): string => `
 (function(){
   var KEY="grounding-sheet-${hash}", CODES=${JSON.stringify(RATING_CODES)}, IDS=${JSON.stringify(ids)};
   var answers={};
-  try{answers=JSON.parse(window.localStorage.getItem(KEY)||"{}")||{};}catch(e){answers={};}
-  function save(){try{window.localStorage.setItem(KEY,JSON.stringify(answers));}catch(e){}}
+  var storageOk=true;
+  try{answers=JSON.parse(window.localStorage.getItem(KEY)||"{}")||{};window.localStorage.setItem(KEY+"-probe","1");window.localStorage.removeItem(KEY+"-probe");}catch(e){storageOk=false;answers={};}
+  function warn(){var w=document.getElementById("warn");if(w)w.hidden=false;}
+  if(!storageOk)warn();
+  function save(){try{window.localStorage.setItem(KEY,JSON.stringify(answers));}catch(e){storageOk=false;warn();}}
   function count(){var n=0;for(var i=0;i<IDS.length;i++){if(answers[IDS[i]])n++;}document.getElementById("done").textContent=String(n);}
   function paint(id){
     var row=document.getElementById(id);if(!row)return;
@@ -57,23 +66,21 @@ const SCRIPT = (hash: string, ids: string[]): string => `
     row.className=v?"row done":"row";
   }
   function pick(id,code){answers[id]=code;save();paint(id);count();}
+  function rowOf(el){return el&&el.closest?el.closest(".row"):null;}
   for(var i=0;i<IDS.length;i++){paint(IDS[i]);}
   count();
   document.addEventListener("change",function(e){
     var t=e.target;
     if(t&&t.type==="radio"&&t.checked){pick(t.name,t.value);}
   });
-  var current=null;
-  document.addEventListener("focusin",function(e){
-    var t=e.target;
-    var row=t&&t.closest?t.closest(".row"):null;
-    if(row)current=row;
+  document.addEventListener("click",function(e){
+    var row=rowOf(e.target);
+    if(row&&rowOf(document.activeElement)!==row){row.focus();}
   });
   document.addEventListener("keydown",function(e){
     if(e.ctrlKey||e.metaKey||e.altKey)return;
     if(!/^[1-4]$/.test(e.key))return;
-    var row=current;
-    if(!row){for(var i=0;i<IDS.length;i++){if(!answers[IDS[i]]){row=document.getElementById(IDS[i]);break;}}}
+    var row=rowOf(document.activeElement);
     if(!row)return;
     e.preventDefault();
     pick(row.id,CODES[Number(e.key)-1]);
@@ -122,12 +129,22 @@ export function renderSheet(rows: GroundRow[]): { html: string; hash: string } {
 <ol>
 <li>Click <b>Map</b> or <b>Search</b> to look the name up. Both are free web searches.</li>
 <li>Choose one answer: exists in this city, exists but in another city, doesn't exist, or you can't tell.</li>
-<li>Keyboard: press 1, 2, 3 or 4 to answer the highlighted card; the next card is then highlighted.</li>
+<li>Keyboard: click a card (or tab to it), then press 1, 2, 3 or 4 to answer it; the next card is then highlighted.</li>
 <li>Your answers are saved in this browser as you go. When you are done, press Download CSV and send that file back.</li>
 </ol>
+<p><b>What the answers mean</b></p>
+<table>
+<tr><th></th><th>Exists, in this city</th><th>Exists, in another city</th></tr>
+<tr><th>Venue</th><td>A real venue that hosts live music or performances, located in this city or its immediate metro area.</td><td>Real, but elsewhere.</td></tr>
+<tr><th>Brand</th><td>A real brand that sells or operates in this city's country.</td><td>Real, but not present in that country.</td></tr>
+<tr><th>Local act</th><td>A real artist based in or from this city or its metro area.</td><td>A real artist from somewhere else, including famous acts that are merely popular there.</td></tr>
+</table>
+<p><b>Doesn't exist:</b> no evidence the name exists as described (a venue, a brand, or a music act). <b>Can't tell:</b> evidence is unclear after a quick map and web check.</p>
+<p class="note">Disclosure: you have seen the showcase playbooks for these cities, so this rating is not fully blind to prior exposure.</p>
 </div>
+<div id="warn" hidden>Your browser is blocking storage, so download the CSV before closing this page.</div>
 <div class="bar"><span><span id="done">0</span> of ${ordered.length} rated</span><button id="download" type="button">Download CSV</button></div>
-<ol>
+<ol class="rows">
 ${ordered.map(rowHtml).join("\n")}
 </ol>
 </main>

@@ -6,6 +6,8 @@ import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import { suggestLocalActs } from "../pipeline/localActs.js";
 import type { PlaybookCard } from "../types.js";
 import type { GroundArm, GroundCategory } from "./proofResults.js";
+import { resolve, sep } from "node:path";
+import { REPO_ROOT } from "./proofCli.js";
 import { countryLabel, memoQloo, monitoredCallTool, retryingGenerate, type CallTool } from "./proofShared.js";
 import { sha256Hex, StopMonitor, StopRun } from "./proofStats.js";
 
@@ -23,14 +25,14 @@ export interface GroundCity { id: string; name: string; country: string; lat: nu
 export interface GroundItem { cityId: string; city: string; country: string; category: GroundCategory; arm: GroundArm; name: string; rank: number }
 export interface GroundRow { id: string; cityId: string; city: string; country: string; category: GroundCategory; name: string; arms: GroundArm[] }
 /** The private arm key: row id to arms (and the row's city and category, so the scorer needs nothing else). */
-export interface GroundKey { rows: Record<string, Omit<GroundRow, "id">> }
+export interface GroundKey { /** Shared with the items file; the scorer refuses a mismatch. */ runId?: string; rows: Record<string, Omit<GroundRow, "id">> }
 export interface CityStatus { cityId: string; city: string; country: string; qloo: "ok" | "excluded" | "not_run"; qlooReason?: string; llm: "ok" | "no_answer" | "not_run" }
 export interface GroundItemsFile {
-  schemaVersion: 1; generatedAt: string; protocolCommit: string; artist: string; models: string[]; geminiUsed: string[];
+  schemaVersion: 1; runId?: string; generatedAt: string; protocolCommit: string; artist: string; models: string[]; geminiUsed: string[];
   callCounts: { qloo: number; gemini: number; qlooErrors: number; geminiErrors: number };
   stop: { status: "running" | "complete" | "stopped"; reason?: string };
   cityDifference: { missing: string[]; extra: string[] };
-  excluded: Array<{ cityId: string; city: string; reason: string }>;
+  excluded: Array<{ cityId: string; city: string; reason: string; code?: string }>;
   notRun: Array<{ cityId: string; city: string; reason?: string }>;
   cities: CityStatus[];
   items: GroundItem[];
@@ -154,6 +156,9 @@ export async function askLlm(input: { artist: string; city: string; country: str
   return { status: "no_answer", reason: "invalid_json_twice", ...(model ? { model } : {}) };
 }
 
+/** The de-duplication key for a name: `normaliseName` with "&" read as "and" (sheet only; claims/verify.ts is untouched). */
+export const dedupeKey = (name: string): string => normaliseName(name.replace(/&/g, " and "));
+
 // Rows -----------------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -163,7 +168,7 @@ export async function askLlm(input: { artist: string; city: string; country: str
 export function buildRows(items: GroundItem[]): GroundRow[] {
   const groups = new Map<string, Omit<GroundRow, "id" | "arms"> & { arms: Set<GroundArm> }>();
   for (const it of items) {
-    const norm = normaliseName(it.name);
+    const norm = dedupeKey(it.name);
     if (norm === "") continue;
     const key = `${it.cityId}\u0000${it.category}\u0000${norm}`;
     const g = groups.get(key);
@@ -175,8 +180,8 @@ export function buildRows(items: GroundItem[]): GroundRow[] {
   return rows.map(({ hash: _h, ...r }, i) => ({ id: `r${String(i + 1).padStart(3, "0")}`, ...r }));
 }
 
-export function buildKey(rows: GroundRow[]): GroundKey {
-  return { rows: Object.fromEntries(rows.map(({ id, ...rest }) => [id, rest])) };
+export function buildKey(rows: GroundRow[], runId?: string): GroundKey {
+  return { ...(runId ? { runId } : {}), rows: Object.fromEntries(rows.map(({ id, ...rest }) => [id, rest])) };
 }
 
 // Runner ---------------------------------------------------------------------------------------------------------------------------
@@ -187,10 +192,14 @@ export interface GroundDeps {
   sleep?: (ms: number) => Promise<void>;
   /** The playbook pipeline; real by default, replaceable in tests. */
   playbook?: typeof runCityPlaybook;
+  /** Real Qloo calls allowed for the whole run (default 198, the protocol budget ceiling); reaching it stops the run. */
+  qlooCeiling?: number;
 }
+
+export const QLOO_CEILING = 198;
 export interface GroundRun {
   items: GroundItem[]; cityStatus: CityStatus[];
-  excluded: Array<{ cityId: string; city: string; reason: string }>;
+  excluded: Array<{ cityId: string; city: string; reason: string; code: string }>;
   notRun: Array<{ cityId: string; city: string; reason?: string }>;
   stop?: string; geminiUsed: string[];
 }
@@ -213,11 +222,17 @@ export async function runGrounding(plan: GroundPlan, deps: GroundDeps, onProgres
   let stop: string | undefined;
   const snapshot = (): GroundRun => ({ items: [...items], cityStatus: cityStatus.map((s) => ({ ...s })), excluded: [...excluded], notRun: [...notRun], ...(stop ? { stop } : {}), geminiUsed: [...used] });
 
-  // Every Gemini call (playbook suggestions and the LLM arm) goes through the retry wrapper and the monitor.
-  const retrying = retryingGenerate({ generate: deps.generate, monitor, ...(deps.sleep ? { sleep: deps.sleep } : {}) });
+  // Every real Gemini attempt passes the tracker once. The retry-and-count wrapper (Amendment 3) is applied exactly once on top of it, by each user:
+  // `askLlm` for the LLM arm and `suggestGenerate` for the playbook's local-act suggestions.
   let failuresInRow = 0;
-  const generate: GenerateFn = async (model, body) => {
-    try { const r = await retrying(model, body); used.add(model); failuresInRow = 0; return r; } catch (err) { failuresInRow += 1; throw err; }
+  const tracked: GenerateFn = async (model, body) => {
+    try { const r = await deps.generate(model, body); used.add(model); failuresInRow = 0; return r; } catch (err) { failuresInRow += 1; throw err; }
+  };
+  const suggestGenerate = retryingGenerate({ generate: tracked, monitor, ...(deps.sleep ? { sleep: deps.sleep } : {}) });
+  const ceiling = deps.qlooCeiling ?? QLOO_CEILING;
+  const capped: CallTool = async (name, args, session) => {
+    if (monitor.counts.qloo >= ceiling) monitor.halt(`Qloo call ceiling of ${ceiling} reached`);
+    return monitoredCallTool(deps.callTool, monitor)(name, args, session);
   };
 
   for (const [index, city] of plan.cities.entries()) {
@@ -227,7 +242,7 @@ export async function runGrounding(plan: GroundPlan, deps: GroundDeps, onProgres
       break;
     }
     const status = cityStatus[index]!;
-    const qloo = memoQloo(monitoredCallTool(deps.callTool, monitor));
+    const qloo = memoQloo(capped);
     const sessionId = `proof-v3-ground-${city.id}`;
     deps.log(`[${index + 1}/${plan.cities.length}] ${city.name}, ${city.country}: Qloo playbook (session ${sessionId})`);
     failuresInRow = 0;
@@ -238,7 +253,7 @@ export async function runGrounding(plan: GroundPlan, deps: GroundDeps, onProgres
       {
         qloo, cities: deps.cities,
         localActs: async (input) => {
-          const names = await suggestLocalActs(input, { generate, models: deps.models, ceiling: { ceiling: NO_CEILING } });
+          const names = await suggestLocalActs(input, { generate: suggestGenerate, models: deps.models, ceiling: { ceiling: NO_CEILING } });
           // suggestLocalActs swallows errors; a total failure (every model, after retries) is an infrastructure failure and stops the run.
           if (names === null && failuresInRow >= deps.models.length) monitor.halt("all Gemini models failed (local act suggestions)");
           return names;
@@ -257,7 +272,7 @@ export async function runGrounding(plan: GroundPlan, deps: GroundDeps, onProgres
     if (!cards) {
       const reason = failure ? `${failure.code}: ${failure.message}` : "no playbook returned";
       status.qloo = "excluded"; status.qlooReason = reason;
-      excluded.push({ cityId: city.id, city: city.name, reason });
+      excluded.push({ cityId: city.id, city: city.name, reason, code: failure?.code ?? "NO_PLAYBOOK" });
       deps.log(`  excluded: ${reason}`);
       onProgress?.(snapshot());
       continue;
@@ -271,7 +286,7 @@ export async function runGrounding(plan: GroundPlan, deps: GroundDeps, onProgres
     deps.log(`  LLM-only list`);
     let answer: LlmAnswer;
     try {
-      answer = await askLlm({ artist: plan.artist.name, city: city.name, country: countryLabel(city.country) }, { generate, models: deps.models, monitor, ...(deps.sleep ? { sleep: deps.sleep } : {}) });
+      answer = await askLlm({ artist: plan.artist.name, city: city.name, country: countryLabel(city.country) }, { generate: tracked, models: deps.models, monitor, ...(deps.sleep ? { sleep: deps.sleep } : {}) });
     } catch (err) {
       if (!(err instanceof StopRun)) throw err;
       stop = monitor.stopped ?? err.reason;
@@ -290,4 +305,12 @@ export async function runGrounding(plan: GroundPlan, deps: GroundDeps, onProgres
     onProgress?.(snapshot());
   }
   return snapshot();
+}
+
+/** Test C writes Qloo-derived names: only inside `<repo>/private-data/backtest/`, with no override (not even a path outside the repo). */
+export function groundingOut(path: string): string {
+  const abs = resolve(path);
+  const dir = resolve(REPO_ROOT, "private-data/backtest");
+  if (abs !== dir && !abs.startsWith(dir + sep)) throw new Error(`Test C outputs go under private-data/backtest/ only (got ${abs})`);
+  return abs;
 }

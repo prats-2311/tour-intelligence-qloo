@@ -4,7 +4,8 @@ import { fileURLToPath } from "node:url";
 import type { GroundKey } from "./grounding.js";
 import { ratingsFromCsv } from "./groundingSheet.js";
 import { scoreGrounding, type GroundItemsFile } from "./groundingScore.js";
-import { assemble, defaultIo, privateOut, REPO_ROOT, writeJson, type CliIo } from "./proofCli.js";
+import { groundingOut } from "./grounding.js";
+import { assemble, defaultIo, REPO_ROOT, writeJson, type CliIo } from "./proofCli.js";
 import { summarise } from "./proofResults.js";
 
 /**
@@ -20,7 +21,7 @@ export function parseArgs(argv: string[]): ScoreArgs {
   const dir = resolve(REPO_ROOT, "private-data/backtest");
   return {
     csv: resolve(csv), key: resolve(get("--key") ?? resolve(dir, "proof-v3-ground-key.json")), items: resolve(get("--items") ?? resolve(dir, "proof-v3-ground-items.json")),
-    out: privateOut(get("--out") ?? resolve(dir, "proof-v3-ground.json")), allowPartial: argv.includes("--allow-partial"),
+    out: groundingOut(get("--out") ?? resolve(dir, "proof-v3-ground.json")), allowPartial: argv.includes("--allow-partial"),
   };
 }
 

@@ -153,7 +153,8 @@ export interface GroundingSection {
   artist: string;
   /** Cities rated: those with a Qloo playbook (excluded and not-run ones are listed apart). */
   cities: Array<{ cityId: string; city: string; country: string }>;
-  excluded: Array<{ cityId: string; city: string; reason: string }>;
+  /** Error codes only: raw messages stay in the private items file. */
+  excluded: Array<{ cityId: string; city: string; code: string }>;
   notRun: Array<{ cityId: string; city: string }>;
   /** Cities with no LLM answer (invalid JSON twice): unpaired. */
   llmNoAnswer: string[];
@@ -165,6 +166,8 @@ export interface GroundingSection {
   /** Means over the paired cities only. */
   meanPerCity: Record<GroundArm, number | null>;
   signTest: SignRow;
+  /** Amendment 5, pre-registered secondary: each arm truncated per city and category to the smaller arm count by recorded rank, same ratings. */
+  secondary: { names: Record<GroundArm, number>; perCity: Array<{ cityId: string; city: string; qloo: number | null; llm: number | null }>; meanPerCity: Record<GroundArm, number | null>; signTest: SignRow };
 }
 
 // Whole file -----------------------------------------------------------------------------------------------------------------------
@@ -221,6 +224,19 @@ export function compare(ours: Name, theirs: Name, a: number | null, b: number | 
 }
 
 
+/** A stop reason reduced to a code, so no raw upstream text reaches a published sentence. */
+export function stopCode(reason: string | undefined): string {
+  const t = reason ?? "";
+  if (/\b429\b/.test(t)) return "HTTP 429";
+  if (/BUDGET/.test(t)) return "BUDGET";
+  if (/stale/i.test(t)) return "stale answer";
+  if (/error rate/i.test(t)) return "Qloo error rate above 10%";
+  if (/ceiling/i.test(t)) return "Qloo call ceiling";
+  if (/Gemini/.test(t)) return "Gemini failure";
+  if (/quota|limit|rate/i.test(t)) return "rate or quota limit";
+  return "stop rule";
+}
+
 /** Pure: Test C's sentences. No venue, brand or act names: only counts, shares and city names. */
 export function groundingSummary(g: GroundingSection, stopNote = ""): string[] {
   const out: string[] = [];
@@ -233,10 +249,13 @@ export function groundingSummary(g: GroundingSection, stopNote = ""): string[] {
   }
   out.push(compare(N("Qloo", "Qloo"), N("The LLM-only playbook", "the LLM-only playbook"), g.meanPerCity.qloo, g.meanPerCity.llm, g.signTest, "share in city", "city"));
   for (const c of g.perCity) if (c.qloo !== null && c.llm !== null && c.llm > c.qloo + 1e-9) out.push(`The LLM-only playbook beat Qloo in ${c.city}.`);
-  for (const e of g.excluded) out.push(`${e.city} was excluded (${e.reason}).`);
+  out.push(`Secondary (pre-registered, Amendment 5; same ratings, each playbook truncated per city and category to the smaller of the two counts by recorded rank; ${g.secondary.names.qloo} Qloo and ${g.secondary.names.llm} LLM-only names kept): ${compare(N("Qloo", "Qloo"), N("The LLM-only playbook", "the LLM-only playbook"), g.secondary.meanPerCity.qloo, g.secondary.meanPerCity.llm, g.secondary.signTest, "share in city", "city")}`);
+  for (const e of g.excluded) out.push(`${e.city} was excluded (${e.code}).`);
   for (const c of g.llmNoAnswer) out.push(`The LLM-only playbook gave no valid answer for ${c}, so it is unpaired.`);
   if (g.cityDifference.missing.length || g.cityDifference.extra.length) out.push(`The recorded board differs from the protocol's expected city list (missing: ${g.cityDifference.missing.join(", ") || "none"}; extra: ${g.cityDifference.extra.join(", ") || "none"}); the recorded board was used.`);
-  out.push("Method: one reviewer, blind to which playbook gave each name; 'exists in another city' counts as not in this city; a name both playbooks gave counts for both; ratings are published in aggregate only because the names stay private.");
+  out.push("Method: the Qloo playbook runs with narrative off. This matches the shipped hybrid local-acts path but not the narrative text, which plays no part in Test C.");
+  out.push("Disclosure: the reviewer had seen the shipped showcase playbooks for these cities. The sheet carries no arm information (rows unlabelled and shuffled), but the rating is not fully blind to prior exposure.");
+  out.push("Method: one reviewer; ratings follow the per-category definitions of Amendment 5 (a brand is 'in this city' if it operates in the city's country; a local act only if based in or from the city or its metro); a name both playbooks gave counts for both; ratings are published in aggregate only because the names stay private.");
   return out;
 }
 
@@ -288,6 +307,6 @@ export function summarise(r: ProofV3Results): string[] {
     out.push("Method: one token means one number or one whole entity name (a multi-word name counts as one); plausible numbers exclude every number on the cited items.");
     out.push(`False alarms (${k.falseAlarms} of ${k.trueClaims}) are not a finding: ${k.falseAlarmNote}`);
   }
-  if (r.grounding) out.push(...groundingSummary(r.grounding, r.stop.status === "stopped" ? ` The run stopped early: ${r.stop.reason ?? "stop rule"}.` : ""));
+  if (r.grounding) out.push(...groundingSummary(r.grounding, r.stop.status === "stopped" ? ` The run stopped early (${stopCode(r.stop.reason)}).` : ""));
   return out;
 }
