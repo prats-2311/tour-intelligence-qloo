@@ -117,4 +117,27 @@ describe("thisWeek", () => {
     expect(generate).not.toHaveBeenCalled();
     expect(r).toMatchObject({ status: "ok", summarised: false });
   });
+  it("asks Tavily for music and culture, not generic events", async () => {
+    const d = deps();
+    await thisWeek(input, d);
+    expect(d.search).toHaveBeenCalledWith("live music concerts festivals in Guadalajara this week");
+  });
+  it("keeps only results about music or culture (en/es/pt) and cites only those", async () => {
+    const mixed = [
+      { id: "w1", url: "https://a.example/1", title: "Guadalajara film festival", content: "Film festival 13-19 March 2027." },
+      { id: "w2", url: "https://a.example/2", title: "Season finale recap", content: "A hockey game and a drama series ended." },
+      { id: "w3", url: "https://a.example/3", title: "Nuevo concierto en el Auditorio", content: "Entradas a la venta." },
+      { id: "w4", url: "https://a.example/4", title: "Resumo", content: "Música ao vivo no centro neste sábado." },
+      { id: "w5", url: "https://a.example/5", title: "Party planning", content: "Smart start for a charter school." },
+      { id: "w6", url: "https://a.example/6", title: "Exposición de arte", content: "Museo abierto hasta las 9." },
+    ];
+    const r = await thisWeek(input, deps({ search: vi.fn(async () => mixed) }));
+    expect(r.status === "ok" && r.citations.map((c) => c.id)).toEqual(["w1", "w3", "w4", "w6"]);
+  });
+  it("matches whole words only: art does not match party or start", async () => {
+    const { isMusicOrCulture } = await import("../src/web/thisWeek.js");
+    expect(isMusicOrCulture({ title: "Party at the start", content: "smart cart" })).toBe(false);
+    expect(isMusicOrCulture({ title: "Art walk", content: "" })).toBe(true);
+    expect(isMusicOrCulture({ title: "", content: "A DJ set and two bands" })).toBe(true);
+  });
 });

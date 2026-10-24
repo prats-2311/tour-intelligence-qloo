@@ -50,3 +50,12 @@ export function uniqueZones<T extends { label: string; share: number }>(zones: T
   }
   return [...byLabel.values()];
 }
+
+const fold = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+
+/** Display only (promo-zones card): a zone named like the city itself reads "Central <city>", rows are unique by label, strongest share first. Scoring keeps using the per-point zones. */
+export function displayZones<T extends { label: string; share: number }>(zones: T[], cityName: string): T[] {
+  const own = fold(cityName);
+  const relabelled = zones.map((z) => (fold(z.label) === own ? { ...z, label: `Central ${cityName}` } : z));
+  return uniqueZones(relabelled).sort((a, b) => b.share - a.share);
+}

@@ -1,13 +1,17 @@
 import { extractEntities, extractMusicTags, extractSharedTaste } from "../extract.js";
 import type { City } from "../geo/cities.js";
 import { findCity } from "../geo/location.js";
-import { uniqueZones } from "../geo/heat.js";
+import { displayZones } from "../geo/heat.js";
 import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { coBillLift } from "../scoring/winnability.js";
 import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narrative, PlaybookCard } from "../types.js";
 import { activationInputs, Aborted, BudgetStop, resolveLocation, trackedCall } from "./tourBoard.js";
 import { LOCAL_DESCRIBE_CAP, LOCAL_SUGGESTIONS, matchPool, matchSuggestion } from "./localActs.js";
 import { cityPopularityArgs, LOCAL_ACT_POOL, localActRankArgs } from "./recArgs.js";
+import { genreTagNames, HEADLINER_SIZE_UNKNOWN, liftRanked, NO_SUPPORT_COPY, smallerThanHeadliner, SPONSOR_LIFT_NOTE } from "./playbookTrust.js";
+
+/** Size of the baseline lists (the city's own favourites) that lift is measured against. */
+const BASELINE_LIMIT = 20;
 
 export type { PlaybookCard } from "../types.js";
 
@@ -43,7 +47,7 @@ function card<T>(kind: CardKind, items: T[], refs: EvidenceRef[], warnings: Data
 }
 
 export async function* runCityPlaybook(
-  input: { artist: string; artistEntityId: string; city: { name: string; country: string; id?: string; lat?: number; lon?: number }; sessionId: string; narrative?: boolean },
+  input: { artist: string; artistEntityId: string; city: { name: string; country: string; id?: string; lat?: number; lon?: number }; sessionId: string; narrative?: boolean; artistPopularity?: number },
   deps: { qloo: QlooCaller; cities: City[]; signal?: AbortSignal; narrate?: NarrateFn; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null> },
 ): AsyncGenerator<GatewayEvent> {
   const events: GatewayEvent[] = [];
@@ -60,7 +64,22 @@ export async function* runCityPlaybook(
     while (events.length) yield events.shift()!;
     const ref = (tool: string, r: { cacheKey: string }) => ({ tool, cacheKey: r.cacheKey });
 
-    const candidates = extractEntities(a.raw.artists.envelope).slice(0, 3);
+    // Support acts must be smaller than the headliner: use the caller's popularity, else one (cached) describe by name.
+    const sizeWarnings: DataWarning[] = [];
+    let headliner = input.artistPopularity !== undefined && Number.isFinite(input.artistPopularity) ? input.artistPopularity : undefined;
+    if (headliner === undefined) {
+      try {
+        const d = await trackedCall(deps, input.sessionId, "qloo_describe", { entity: input.artist, type: "artist" }, events);
+        const self = extractEntities(d.envelope).find((e) => e.entityId === input.artistEntityId);
+        if (self && Number.isFinite(self.popularity)) headliner = self.popularity;
+      } catch (err) {
+        if (err instanceof Aborted || err instanceof BudgetStop) throw err;
+      }
+      while (events.length) yield events.shift()!;
+    }
+    if (headliner === undefined) sizeWarnings.push({ tool: "qloo_describe", kind: "partial", message: HEADLINER_SIZE_UNKNOWN });
+    const coScale = smallerThanHeadliner(extractEntities(a.raw.artists.envelope), headliner);
+    const candidates = coScale.kept.slice(0, 3);
     const settled = await Promise.allSettled(candidates.map(async (c) => {
       const r = await trackedCall(deps, input.sessionId, "qloo_compare_audiences", { group_a: [input.artistEntityId], group_b: [c.entityId] }, events);
       const warnings = [...warningsFor("qloo_compare_audiences", r), ...needsInputWarning("qloo_compare_audiences", r)];
@@ -70,7 +89,7 @@ export async function* runCityPlaybook(
       }
       return {
         warnings,
-        lift: { name: c.name, entityId: c.entityId, sharedTaste, localAffinity: c.affinity, lift: coBillLift(sharedTaste, c.affinity), sharedTags: tags.slice(0, 3).map((t) => t.name), ref: ref("qloo_compare_audiences", r) },
+        lift: { name: c.name, entityId: c.entityId, sharedTaste, localAffinity: c.affinity, lift: coBillLift(sharedTaste, c.affinity), sharedTags: genreTagNames(tags), ref: ref("qloo_compare_audiences", r) },
       };
     }));
     while (events.length) yield events.shift()!;
@@ -80,20 +99,30 @@ export async function* runCityPlaybook(
     const coBill = compared.flatMap((c) => (c.lift ? [c.lift] : [])).sort((x, y) => y.lift - x.lift);
 
     const where = loc.where;
-    const [tagsS, proxyS, suggestedS] = await Promise.allSettled([
+    const [tagsS, proxyS, suggestedS, brandBaseS, movieBaseS, tvBaseS] = await Promise.allSettled([
       trackedCall(deps, input.sessionId, "qloo_entity_tags", { entities: [input.artistEntityId], entity_type: "artist", limit: 10 }, events),
       trackedCall(deps, input.sessionId, "qloo_recommend", cityPopularityArgs("artist", where, LOCAL_ACT_POOL), events),
       deps.localActs ? deps.localActs({ artist: input.artist, city: input.city, sessionId: input.sessionId }) : Promise.resolve(null),
+      // City baselines (no artist signal) for lift. Display only: the board's scoring never sees them.
+      trackedCall(deps, input.sessionId, "qloo_recommend", cityPopularityArgs("brand", where, BASELINE_LIMIT), events),
+      trackedCall(deps, input.sessionId, "qloo_recommend", cityPopularityArgs("movie", where, BASELINE_LIMIT), events),
+      trackedCall(deps, input.sessionId, "qloo_recommend", cityPopularityArgs("tv_show", where, BASELINE_LIMIT), events),
     ]);
     while (events.length) yield events.shift()!;
     const failed = [tagsS, proxyS].filter((s): s is PromiseRejectedResult => s.status === "rejected").map((s) => s.reason);
     if (failed.length) throw failed.find((b) => b instanceof Aborted || b instanceof BudgetStop) ?? failed[0];
+    const fatalBase = [brandBaseS, movieBaseS, tvBaseS].filter((s): s is PromiseRejectedResult => s.status === "rejected").map((s) => s.reason).find((e) => e instanceof Aborted || e instanceof BudgetStop);
+    if (fatalBase) throw fatalBase;
+    const baselineOf = (s: PromiseSettledResult<CallResult>) => (s.status === "fulfilled" && s.value.envelope.status !== "error" ? s.value : null);
+    const brandBase = baselineOf(brandBaseS), movieBase = baselineOf(movieBaseS), tvBase = baselineOf(tvBaseS);
     const tags = (tagsS as PromiseFulfilledResult<CallResult>).value;
     const proxyRecs = (proxyS as PromiseFulfilledResult<CallResult>).value;
     const candidatesPop = extractEntities(proxyRecs.envelope);
-    const proxies = candidatesPop.slice(0, 5);
+    const proxies = candidatesPop.slice(0, 5); // the city's mainstream: the shared-taste comparison baseline, whatever its size
+    const poolScale = smallerThanHeadliner(candidatesPop, headliner);
+    const poolKept = poolScale.kept;
     let talentShared: { value: number | null; tags: string[] } = { value: null, tags: [] };
-    const talentWarnings: DataWarning[] = [...warningsFor("qloo_recommend", proxyRecs), ...needsInputWarning("qloo_recommend", proxyRecs)];
+    const talentWarnings: DataWarning[] = [...warningsFor("qloo_recommend", proxyRecs), ...needsInputWarning("qloo_recommend", proxyRecs), ...sizeWarnings];
     const talentRefs: EvidenceRef[] = [ref("qloo_recommend", proxyRecs)];
     // Gemini names are unverified until Qloo finds them: only resolved entities ever become candidates.
     const suggested = suggestedS.status === "fulfilled" ? suggestedS.value : null;
@@ -122,9 +151,12 @@ export async function* runCityPlaybook(
       if (r.status === "fulfilled") talentRefs.push(ref("qloo_describe", r.value));
     }
     const suggestedIds = new Set([...novel, ...poolHits].map((e) => e.entityId));
-    const candidateActs = suggested === null ? candidatesPop : [...new Map([...novel, ...candidatesPop].map((e) => [e.entityId, e])).values()].slice(0, LOCAL_SUGGESTIONS);
+    const novelScale = smallerThanHeadliner(novel, headliner);
+    const candidateActs = suggested === null ? poolKept : [...new Map([...novelScale.kept, ...poolKept].map((e) => [e.entityId, e])).values()].slice(0, LOCAL_SUGGESTIONS);
+    const talentBigger = poolScale.biggerThanHeadliner + novelScale.biggerThanHeadliner;
+    const talentUnknown = poolScale.popularityUnknown + novelScale.popularityUnknown;
     let rankUnavailable = false;
-    let localActs = suggested === null ? proxies : candidateActs.slice(0, 5);
+    let localActs = candidateActs.slice(0, 5);
     if (candidateActs.length > 0) {
       let ranked: CallResult | null = null;
       try {
@@ -148,26 +180,35 @@ export async function* runCityPlaybook(
       talentWarnings.push(...warningsFor("qloo_compare_audiences", cmp), ...needsInputWarning("qloo_compare_audiences", cmp));
       const st = extractSharedTaste(cmp.envelope);
       if (st.value === null) talentWarnings.push({ tool: "qloo_compare_audiences", kind: "partial", message: "shared taste unavailable for city mainstream" });
-      else talentShared = { value: st.value, tags: st.tags.slice(0, 3).map((t) => t.name) };
+      else talentShared = { value: st.value, tags: genreTagNames(st.tags) };
     }
     while (events.length) yield events.shift()!;
 
     const { raw } = a;
-    const sponsors = extractEntities(raw.brands.envelope);
+    const sponsorLift = liftRanked(extractEntities(raw.brands.envelope), brandBase ? extractEntities(brandBase.envelope) : null);
+    const sponsors = sponsorLift.items;
+    const baselineRefs = (r: CallResult | null) => (r ? [ref("qloo_recommend", r)] : []);
+    const filmLift = liftRanked(extractEntities(raw.films.envelope), movieBase ? extractEntities(movieBase.envelope) : null);
+    const tvLift = liftRanked(extractEntities(raw.tv.envelope), tvBase ? extractEntities(tvBase.envelope) : null);
+    const coSummary = { biggerThanHeadliner: coScale.biggerThanHeadliner, popularityUnknown: coScale.popularityUnknown };
+    const noSupport = (kept: number, bigger: number, unknown: number): Record<string, string> => (kept === 0 && bigger + unknown > 0 ? { emptyCopy: NO_SUPPORT_COPY(input.artist) } : {});
     const artistTags = extractMusicTags(tags.envelope).map((t, index) => ({ ...t, entityId: t.id, index }));
     const cards: PlaybookCard[] = [
-      card("sponsors", sponsors, [ref("qloo_recommend", raw.brands)], warningsFor("qloo_recommend", raw.brands)),
-      card("merch", artistTags, [ref("qloo_entity_tags", tags), ref("qloo_recommend", raw.brands)],
+      { ...card("sponsors", sponsors, [ref("qloo_recommend", raw.brands), ...(sponsorLift.lifted ? baselineRefs(brandBase) : [])], warningsFor("qloo_recommend", raw.brands)),
+        ...(sponsorLift.lifted ? { summary: { note: SPONSOR_LIFT_NOTE } } : {}) },
+      { ...card("merch", artistTags, [ref("qloo_entity_tags", tags), ref("qloo_recommend", raw.brands)],
         [...warningsFor("qloo_entity_tags", tags), ...warningsFor("qloo_recommend", raw.brands)], artistTags.length > 0 || sponsors.length > 0),
-      card("promo_zones", uniqueZones(a.zones).slice(0, 5), [ref("qloo_where_popular", raw.inCity)], warningsFor("qloo_where_popular", raw.inCity)),
+        ...(sponsors.length > 0 ? { summary: { brands: sponsors.slice(0, 5).map((b) => b.name) } } : {}) },
+      card("promo_zones", displayZones(a.zones, known!.name).slice(0, 5), [ref("qloo_where_popular", raw.inCity)], warningsFor("qloo_where_popular", raw.inCity)),
       card("local_moment",
-        interleave([extractEntities(raw.artists.envelope), extractEntities(raw.films.envelope), extractEntities(raw.tv.envelope), a.placeEntities], 9),
-        [ref("qloo_recommend", raw.artists), ref("qloo_recommend", raw.films), ref("qloo_recommend", raw.tv), ...(a.placeEntities.length > 0 ? [ref("qloo_recommend", raw.places)] : [])],
+        interleave([extractEntities(raw.artists.envelope), filmLift.items, tvLift.items, a.placeEntities], 9),
+        [ref("qloo_recommend", raw.artists), ref("qloo_recommend", raw.films), ref("qloo_recommend", raw.tv), ...(a.placeEntities.length > 0 ? [ref("qloo_recommend", raw.places)] : []), ...(filmLift.lifted ? baselineRefs(movieBase) : []), ...(tvLift.lifted ? baselineRefs(tvBase) : [])],
         [raw.artists, raw.films, raw.tv, raw.places].flatMap((r) => warningsFor("qloo_recommend", r))),
       card("venue_fit", a.venues.items, a.venues.refs, [...(raw.ranked ? warningsFor("qloo_rank", raw.ranked) : []), ...a.venues.warnings]),
-      card("co_billing", coBill, coBill.map((c) => c.ref), compared.flatMap((c) => c.warnings)),
+      { ...card("co_billing", coBill, coBill.map((c) => c.ref), [...compared.flatMap((c) => c.warnings), ...sizeWarnings]),
+        summary: { ...coSummary, ...noSupport(coBill.length, coScale.biggerThanHeadliner, coScale.popularityUnknown) } },
       { ...card("talent", localActs.map(({ name, entityId, affinity }) => ({ name, entityId, affinity, ...(suggested === null ? {} : { source: suggestedIds.has(entityId) ? "suggested" : "city_popular" }) })), talentRefs, talentWarnings),
-        summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags, ...(rankUnavailable ? { rankUnavailable: true } : {}), ...(suggested === null ? {} : { suggestionsUnresolved: unresolved, suggestionsSkipped: skipped }) } },
+        summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags, ...(headliner === undefined ? {} : { biggerThanHeadliner: talentBigger, popularityUnknown: talentUnknown }), ...noSupport(localActs.length, talentBigger, talentUnknown), ...(rankUnavailable ? { rankUnavailable: true } : {}), ...(suggested === null ? {} : { suggestionsUnresolved: unresolved, suggestionsSkipped: skipped }) } },
     ];
     yield { type: "playbook", playbook: { city: input.city, cards } };
     if (input.narrative !== false && deps.narrate) {

@@ -18,7 +18,7 @@ function qloo(route: (t: string, a: Record<string, unknown>) => QlooEnvelope): Q
   let n = 0;
   return { async call(tool, args) { n += 1; return { envelope: route(tool, args), cacheKey: `k${n}`, cached: false, stale: false }; } };
 }
-const proxies = (names: string[], affs: number[]): QlooEnvelope => ({ operation: "recommend", status: "ok", results: names.map((name, i) => ({ entity_id: `P${i}`, name, affinity: affs[i] })) });
+const proxies = (names: string[], affs: number[]): QlooEnvelope => ({ operation: "recommend", status: "ok", results: names.map((name, i) => ({ entity_id: `P${i}`, name, affinity: affs[i], popularity: 0.5 })) });
 const happy = (t: string, a: Record<string, unknown>): QlooEnvelope => {
   if (t === "qloo_where_popular") return cityHeat;
   if (t === "qloo_entity_tags") return liveEnv("entity-tags");
@@ -31,7 +31,7 @@ const happy = (t: string, a: Record<string, unknown>): QlooEnvelope => {
   return recs(["X", "Y"], [0.7, 0.5]);
 };
 async function collect(g: AsyncGenerator<GatewayEvent>) { const o: GatewayEvent[] = []; for await (const e of g) o.push(e); return o; }
-const input = { artist: "Test Artist", artistEntityId: "A1", city: { name: "Mexico City", country: "MX" }, sessionId: "s" };
+const input = { artist: "Test Artist", artistEntityId: "A1", city: { name: "Mexico City", country: "MX" }, sessionId: "s", artistPopularity: 0.9 };
 type Cards = Array<{ kind: string; status: string; items: Array<Record<string, unknown>>; warnings: Array<{ kind: string }> }>;
 const cardsOf = (events: GatewayEvent[]) => (events.find((e) => e.type === "playbook") as { playbook: { cards: Cards } }).playbook.cards;
 
@@ -46,8 +46,8 @@ describe("runCityPlaybook", () => {
   it("talent compares the artist with the city's mainstream proxy, not with its own recs", async () => {
     const seen: Array<Record<string, unknown>> = [];
     const events = await collect(runCityPlaybook(input, { qloo: qloo((t, a) => { if (t === "qloo_recommend" && !a.signals) seen.push(a); return happy(t, a); }), cities: CITIES }));
-    expect(seen).toEqual([{ target_type: "artist", signal_location: "Mexico City, MX", limit: 10 }]);
-    expect(seen).toEqual([cityPopularityArgs("artist", "Mexico City, MX", 10)]);
+    expect(seen.filter((a) => a.target_type === "artist")).toEqual([{ target_type: "artist", signal_location: "Mexico City, MX", limit: 10 }]);
+    expect(seen.filter((a) => a.target_type === "artist")).toEqual([cityPopularityArgs("artist", "Mexico City, MX", 10)]);
     const talent = cardsOf(events).find((c) => c.kind === "talent")! as unknown as { items: Array<{ name: string }>; summary: { sharedTaste: number | null; sharedTags: string[] } };
     expect(talent.items.map((i) => i.name)).toEqual(["Proxy 2", "Proxy 1"]);
     expect(talent.summary.sharedTaste).toBeCloseTo(0.5, 10);
@@ -203,7 +203,7 @@ describe("runCityPlaybook", () => {
       cities: CITIES,
     }));
     const talent = cardsOf(events).find((c) => c.kind === "talent")! as unknown as { summary: { sharedTaste: number | null; sharedTags: string[] }; warnings: Array<{ message?: string }> };
-    expect(talent.summary).toEqual({ sharedTaste: null, sharedTags: [] });
+    expect(talent.summary).toEqual({ sharedTaste: null, sharedTags: [], biggerThanHeadliner: 0, popularityUnknown: 0 });
     expect(talent.warnings.map((w) => w.message)).toContain("shared taste unavailable for city mainstream");
   });
   it("venue rank is called with place entity ids, not names", async () => {
@@ -257,7 +257,7 @@ describe("runCityPlaybook", () => {
 
   describe("hybrid local acts", () => {
     const sug = (...names: string[]) => ({ localActs: async () => names });
-    const entity = (id: string, name: string, affinity?: number): QlooEnvelope => ({ operation: "describe", status: "ok", results: [{ entity_id: id, name, ...(affinity === undefined ? {} : { affinity }) }] });
+    const entity = (id: string, name: string, affinity?: number): QlooEnvelope => ({ operation: "describe", status: "ok", results: [{ entity_id: id, name, popularity: 0.4, ...(affinity === undefined ? {} : { affinity }) }] });
     const nameOf = new Map<string, string>([["P0", "Proxy 1"], ["P1", "Proxy 2"]]);
     // describe: "Drake" -> S-Drake; "Proxy 1" resolves to the pool's own P0; "Ghost" is unknown to Qloo.
     const hybrid = (t: string, a: Record<string, unknown>): QlooEnvelope => {
@@ -332,7 +332,7 @@ describe("runCityPlaybook", () => {
       const t = talentOf(events);
       expect(describes).toBe(0);
       expect(t.items).toEqual([{ name: "Proxy 2", entityId: "P0", affinity: 0.95 }, { name: "Proxy 1", entityId: "P1", affinity: 0.4 }]);
-      expect(t.summary).toEqual({ sharedTaste: expect.any(Number), sharedTags: ["Funk", "Soul", "Pop"] }); // ranked: no rankUnavailable flag
+      expect(t.summary).toEqual({ sharedTaste: expect.any(Number), sharedTags: ["Funk", "Soul", "Pop"], biggerThanHeadliner: 0, popularityUnknown: 0 }); // ranked: no rankUnavailable flag
       expect(t.warnings).toEqual([]);
     });
     it("rank failure falls back to candidate order (suggestions first) with the existing warning", async () => {
@@ -344,7 +344,7 @@ describe("runCityPlaybook", () => {
       expect(t.summary.rankUnavailable).toBe(true);
     });
     it("a suggestion counts only if Qloo resolves the same name", async () => {
-      const results = (...names: string[]): QlooEnvelope => ({ operation: "describe", status: "ok", results: names.map((n, i) => ({ entity_id: `D${i}-${n}`, name: n })) });
+      const results = (...names: string[]): QlooEnvelope => ({ operation: "describe", status: "ok", results: names.map((n, i) => ({ entity_id: `D${i}-${n}`, name: n, popularity: 0.4 })) });
       const route = (t: string, a: Record<string, unknown>): QlooEnvelope => {
         if (t !== "qloo_describe") return hybrid(t, a);
         switch (a.entity) {

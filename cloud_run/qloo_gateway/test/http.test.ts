@@ -67,6 +67,12 @@ describe("http", () => {
     expect((await request(a).get(`${q}&lat=19.4&lon=-99.1`).set("x-session-id", "s")).text).toContain("event: playbook");
     expect((await request(a).get(`${q}&lat=abc&lon=-99.1`).set("x-session-id", "s")).status).toBe(400);
   });
+  it("city-playbook accepts an optional artistPopularity between 0 and 1 and rejects anything else", async () => {
+    const a = createApp({ qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }) });
+    const q = "/v1/city-playbook?artist=A&artistEntityId=A1&city=Mexico%20City&country=MX&narrative=0";
+    expect((await request(a).get(`${q}&artistPopularity=0.6`).set("x-session-id", "s")).text).toContain("event: playbook");
+    for (const bad of ["abc", "1.5", "-0.1"]) expect((await request(a).get(`${q}&artistPopularity=${bad}`).set("x-session-id", "s")).status).toBe(400);
+  });
   it("calls narrate once by default and not at all with narrative=0", async () => {
     const narrate = vi.fn(async () => ({ status: "unavailable" as const, reason: "disabled" as const, message: "m" }));
     const withNarrate = createApp({ qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }), narrate });

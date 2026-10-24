@@ -60,11 +60,16 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
     if ((cityId !== undefined && (typeof cityId !== "string" || cityId.length > 32)) || [latN, lonN].some((n) => n !== undefined && !Number.isFinite(n))) {
       return void res.status(400).json({ error: "cityId must be a short string; lat and lon must be numbers" });
     }
+    // Optional: the headliner's Qloo popularity (0-1), so support acts can be checked against it without a lookup.
+    const popularityN = coord(req.query.artistPopularity);
+    if (popularityN !== undefined && !(Number.isFinite(popularityN) && popularityN >= 0 && popularityN <= 1)) {
+      return void res.status(400).json({ error: "artistPopularity must be a number from 0 to 1" });
+    }
     const controller = new AbortController();
     const narrative = req.query.narrative !== "0";
     // narrative=0 means "no Gemini" and public sessions are the cheap path: both keep the city-pool-only talent card.
     const hybrid = deps.localActs && narrative && !sessionId!.startsWith(PUBLIC_SESSION_PREFIX);
-    await streamSse(res, runCityPlaybook({ artist: String(artist), artistEntityId: String(artistEntityId), city: { name: String(city), country: String(country), ...(typeof cityId === "string" && cityId ? { id: cityId } : {}), ...(latN !== undefined && lonN !== undefined ? { lat: latN, lon: lonN } : {}) }, sessionId: sessionId!, narrative },
+    await streamSse(res, runCityPlaybook({ artist: String(artist), artistEntityId: String(artistEntityId), city: { name: String(city), country: String(country), ...(typeof cityId === "string" && cityId ? { id: cityId } : {}), ...(latN !== undefined && lonN !== undefined ? { lat: latN, lon: lonN } : {}) }, sessionId: sessionId!, narrative, ...(popularityN !== undefined ? { artistPopularity: popularityN } : {}) },
       { qloo: deps.qloo, cities: deps.cities, signal: controller.signal, narrate: deps.narrate, ...(hybrid ? { localActs: deps.localActs! } : {}) }), controller);
   });
 

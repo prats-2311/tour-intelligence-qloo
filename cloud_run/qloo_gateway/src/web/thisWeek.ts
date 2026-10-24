@@ -12,11 +12,23 @@ export interface ThisWeekDeps {
   now?: () => number; log?: (line: string) => void; warn?: (line: string) => void;
 }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const S = { type: "STRING" };
 const SCHEMA = { type: "OBJECT", required: ["items"], properties: { items: { type: "ARRAY", items: { type: "OBJECT", required: ["text", "date", "entities", "citations"], properties: {
   text: S, date: { type: "STRING", nullable: true }, entities: { type: "ARRAY", items: S }, citations: { type: "ARRAY", items: S },
 } } } } };
+
+/** Bumped when the search query changes, so results fetched with an older query are not served from cache. */
+const QUERY_VERSION = "music-v2";
+
+/** Concert-relevant words (English, Spanish, Portuguese). Matched as whole words in the title or snippet; a plural "s" is allowed. */
+const KEYWORDS = [
+  "concert", "gig", "festival", "live music", "band", "dj", "tour", "album", "show at", "venue", "museum", "exhibition", "art", "film festival",
+  "concierto", "música", "musica", "show", "exposición", "exposicion", "museo", "show ao vivo", "música ao vivo", "musica ao vivo", "exposição", "exposicao",
+];
+const KEYWORD_RE = new RegExp(`(?<![\\p{L}\\p{N}])(?:${KEYWORDS.map((k) => k.replace(/ /g, "\\s+")).join("|")})s?(?![\\p{L}\\p{N}])`, "iu");
+
+/** A result is worth a promoter's attention only if its title or snippet mentions live music or culture. */
+export const isMusicOrCulture = (r: { title: string; content: string }): boolean => KEYWORD_RE.test(`${r.title}\n${r.content}`);
 
 const msg = (err: unknown) => String((err as Error)?.message ?? err);
 
@@ -35,12 +47,12 @@ export async function thisWeek(input: { city: string; country: string; start: st
   const log = deps.log ?? console.log;
   const warn = deps.warn ?? console.warn;
   const window = { start: input.start, end: input.end };
-  const key = cacheKey("tavily_this_week", { city: input.city, country: input.country, start: input.start, end: input.end });
+  const key = cacheKey("tavily_this_week", { city: input.city, country: input.country, start: input.start, end: input.end, query: QUERY_VERSION });
   try {
     const hit = await deps.cache.get(key);
     if (hit?.envelope.results) return { ...(hit.envelope.results as Extract<ThisWeek, { status: "ok" }>), cached: true };
   } catch { /* treat as miss */ }
-  const rawKey = cacheKey("tavily_raw", { city: input.city, country: input.country, start: input.start, end: input.end });
+  const rawKey = cacheKey("tavily_raw", { city: input.city, country: input.country, start: input.start, end: input.end, query: QUERY_VERSION });
   let results: WebResult[] | undefined;
   try {
     const raw = await deps.cache.get(rawKey);
@@ -61,14 +73,14 @@ export async function thisWeek(input: { city: string; country: string; start: st
     }
     log(`[tavily] call ${used.day}/${TAVILY_CAPS.perDay} today, ${used.month}/${TAVILY_CAPS.perMonth} this month`);
 
-    const start = new Date(`${input.start}T00:00:00Z`);
-    const query = `${input.city} ${input.country} concerts festivals holidays events ${MONTHS[start.getUTCMonth()]} ${start.getUTCFullYear()}`;
+    const query = `live music concerts festivals in ${input.city} this week`;
     try { results = await deps.search(query); } catch (err) {
       warn(`[this-week] search failed: ${msg(err)}`);
       return { status: "unavailable", reason: "error", message: "Live web context unavailable — search failed" };
     }
     try { await deps.cache.put(rawKey, "tavily_raw", { operation: "this_week_raw", status: "ok", results }); } catch { /* not cached */ }
   }
+  results = results.filter(isMusicOrCulture);
   const citations = results.map(({ id, url, title }) => ({ id, url, title }));
   let items: ThisWeekItem[] = [];
   let removed: Array<{ item: ThisWeekItem; reason: string }> = [];

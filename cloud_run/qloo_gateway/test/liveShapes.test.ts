@@ -18,7 +18,7 @@ describe("live Qloo shapes", () => {
     expect(st.value).toBeLessThanOrEqual(1);
     expect(st.value).toBeCloseTo(scores.reduce((a, b) => a + b, 0) / 5, 10);
     expect(st.tags).toHaveLength(5);
-    expect(st.tags[0]).toEqual({ name: top.name, score: scores[0] });
+    expect(st.tags[0]).toEqual({ id: expect.stringMatching(/^urn:tag:/), name: top.name, score: scores[0] });
     expect(st.tags.every((t) => t.name !== "")).toBe(true);
   });
   it("shared taste with no (or unscored) tags is null, never NaN", () => {

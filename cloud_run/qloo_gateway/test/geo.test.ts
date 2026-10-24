@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { decodeGeohash } from "../src/geo/geohash.js";
 import { haversineKm, loadCities, metroAnchor, nearestCity, type City } from "../src/geo/cities.js";
-import { marketsFromHeat, uniqueZones, zonesFromHeat } from "../src/geo/heat.js";
+import { displayZones, marketsFromHeat, uniqueZones, zonesFromHeat } from "../src/geo/heat.js";
 
 const CITIES: City[] = [
   { id: "1", name: "Mexico City", country: "MX", lat: 19.4326, lon: -99.1332, population: 9_000_000 },
@@ -207,5 +207,20 @@ describe("largestCityOf (real cities file)", () => {
     expect(largestCityOf(cities, "MX")?.name).toBe("Mexico City");
     expect(largestCityOf(cities, "BR")?.name).toBe("Sao Paulo");
     expect(largestCityOf(cities, "ZZ")).toBeUndefined();
+  });
+});
+
+describe("displayZones (playbook card only)", () => {
+  it("labels a zone named like the city Central <city>, merges rows and sorts by share; the per-point scoring zones are untouched", () => {
+    const zones = [
+      { label: "Alpha", share: 0.3, lat: 0, lon: 0, affinity: 1, index: 0 },
+      { label: "Metropolis", share: 0.25, lat: 0, lon: 0, affinity: 1, index: 1 },
+      { label: "Metrópolis", share: 0.2, lat: 0, lon: 0, affinity: 1, index: 2 },
+      { label: "Beta", share: 0.25, lat: 0, lon: 0, affinity: 1, index: 3 },
+    ];
+    const before = JSON.stringify(zones);
+    const shown = displayZones(zones, "Metropolis");
+    expect(shown.map((z) => [z.label, Math.round(z.share * 100)])).toEqual([["Central Metropolis", 45], ["Alpha", 30], ["Beta", 25]]);
+    expect(JSON.stringify(zones)).toBe(before);
   });
 });

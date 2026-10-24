@@ -57,7 +57,7 @@ const slug = (s: string) => s.replace(/\W/g, "");
 function route(tool: string, args: Record<string, unknown>): QlooEnvelope {
   const where = String(args.signal_location ?? args.filter_location ?? args.within ?? "");
   switch (tool) {
-    case "qloo_describe": return args.entity === "Test Artist" ? describeOk : { operation: "describe", status: "ok", results: [{ entity_id: `D-${String(args.entity)}`, name: String(args.entity) }] };
+    case "qloo_describe": return args.entity === "Test Artist" ? describeOk : { operation: "describe", status: "ok", results: [{ entity_id: `D-${String(args.entity)}`, name: String(args.entity), popularity: 0.4 }] };
     case "qloo_where_popular": {
       const region = ACTIVE[String(args.within)];
       if (MISPLACED.has(String(args.within))) return misplaced;
@@ -138,7 +138,7 @@ describe("one session: cold board plus 4 hybrid playbooks", () => {
     expect(qlooCalls).toBeGreaterThan(misplacedStrings.length > 2 ? 90 : 100); // unresolved cities skip their activation calls, so the cold board is cheaper
     expect(qlooCalls).toBeLessThanOrEqual(SESSION_QLOO_BUDGET);
     expect(budget.remaining(sessionId).session).toBe(SESSION_QLOO_BUDGET - qlooCalls);
-    expect(qlooCalls - boardCalls).toBeLessThanOrEqual(4 * 11); // 3 co-bill + 1 pool + <=5 describes + 1 rank + 1 compare per playbook
+    expect(qlooCalls - boardCalls).toBeLessThanOrEqual(4 * 14 + 1); // per playbook: 3 co-bill + 1 pool + <=5 describes + 1 rank + 1 compare + 3 city baselines (brand, movie, tv); +1 once for the headliner's popularity (cached after)
     // Gemini: 4 local-acts attempts + 4 narrative attempts = 8 of the 20-per-session ceiling (This-week syntheses add at most 1 per chapter: 12).
     expect(geminiAttempts).toBe(8);
     expect(geminiBudget.remaining(sessionId).session).toBe(20 - 8);
