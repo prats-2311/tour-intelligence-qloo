@@ -1,0 +1,1352 @@
+[
+  {
+    "position": 1,
+    "artist": "Lil Nas X",
+    "tour_title": "Long Live Montero Tour",
+    "pageid": 70635694,
+    "revid": 1308257231,
+    "url": "https://en.wikipedia.org/wiki/Long_Live_Montero_Tour",
+    "batch": 1
+  },
+  {
+    "position": 2,
+    "artist": "Bob Dylan",
+    "tour_title": "Rough and Rowdy Ways World Wide Tour",
+    "pageid": 69041617,
+    "revid": 1378899431,
+    "url": "https://en.wikipedia.org/wiki/Rough_and_Rowdy_Ways_World_Wide_Tour",
+    "batch": 1
+  },
+  {
+    "position": 3,
+    "artist": "Pentatonix",
+    "tour_title": "Pentatonix: The World Tour",
+    "pageid": 59890008,
+    "revid": 1339571686,
+    "url": "https://en.wikipedia.org/wiki/Pentatonix:_The_World_Tour",
+    "batch": 1
+  },
+  {
+    "position": 4,
+    "artist": "Gracie Abrams",
+    "tour_title": "The Secret of Us Tour",
+    "pageid": 77073466,
+    "revid": 1365504493,
+    "url": "https://en.wikipedia.org/wiki/The_Secret_of_Us_Tour",
+    "batch": 1
+  },
+  {
+    "position": 5,
+    "artist": "Tea Tairović",
+    "tour_title": "Na Jednu Noć Tour",
+    "pageid": 75054795,
+    "revid": 1348770045,
+    "url": "https://en.wikipedia.org/wiki/Na_Jednu_No%C4%87_Tour",
+    "batch": 1
+  },
+  {
+    "position": 6,
+    "artist": "Sting",
+    "tour_title": "My Songs Tour",
+    "pageid": 60857799,
+    "revid": 1300850907,
+    "url": "https://en.wikipedia.org/wiki/My_Songs_Tour",
+    "batch": 1
+  },
+  {
+    "position": 7,
+    "artist": "Weezer",
+    "tour_title": "Indie Rock Road Trip",
+    "pageid": 80456414,
+    "revid": 1313119032,
+    "url": "https://en.wikipedia.org/wiki/Indie_Rock_Road_Trip",
+    "batch": 2
+  },
+  {
+    "position": 8,
+    "artist": "Kehlani",
+    "tour_title": "Crash World Tour",
+    "pageid": 77418088,
+    "revid": 1360143029,
+    "url": "https://en.wikipedia.org/wiki/Crash_World_Tour",
+    "batch": 2
+  },
+  {
+    "position": 9,
+    "artist": "Kiss of Life",
+    "tour_title": "Kiss Road",
+    "pageid": 79460232,
+    "revid": 1379855372,
+    "url": "https://en.wikipedia.org/wiki/Kiss_Road",
+    "batch": 2
+  },
+  {
+    "position": 10,
+    "artist": "Tears for Fears",
+    "tour_title": "The Tipping Point World Tour",
+    "pageid": 71283440,
+    "revid": 1350972514,
+    "url": "https://en.wikipedia.org/wiki/The_Tipping_Point_World_Tour",
+    "batch": 2
+  },
+  {
+    "position": 11,
+    "artist": "Anuel AA",
+    "tour_title": "Real Hasta la Muerte 2 Tour",
+    "pageid": 77934378,
+    "revid": 1365173156,
+    "url": "https://en.wikipedia.org/wiki/Real_Hasta_la_Muerte_2_Tour",
+    "batch": 2
+  },
+  {
+    "position": 12,
+    "artist": "Sabrina Carpenter",
+    "tour_title": "Emails I Can't Send Tour",
+    "pageid": 71528982,
+    "revid": 1380243997,
+    "url": "https://en.wikipedia.org/wiki/Emails_I_Can't_Send_Tour",
+    "batch": 2
+  },
+  {
+    "position": 13,
+    "artist": "Falling in Reverse",
+    "tour_title": "Popular MonsTOUR II: World Domination",
+    "pageid": 77659888,
+    "revid": 1360642312,
+    "url": "https://en.wikipedia.org/wiki/Popular_MonsTOUR_II:_World_Domination",
+    "batch": null
+  },
+  {
+    "position": 14,
+    "artist": "Mon Laferte",
+    "tour_title": "Autopoiética Tour",
+    "pageid": 76049197,
+    "revid": 1380943550,
+    "url": "https://en.wikipedia.org/wiki/Autopoi%C3%A9tica_Tour",
+    "batch": null
+  },
+  {
+    "position": 15,
+    "artist": "Tems",
+    "tour_title": "Born in the Wild Tour",
+    "pageid": 77763159,
+    "revid": 1378986782,
+    "url": "https://en.wikipedia.org/wiki/Born_in_the_Wild_Tour",
+    "batch": null
+  },
+  {
+    "position": 16,
+    "artist": "Lizzo",
+    "tour_title": "The Special Tour",
+    "pageid": 70627486,
+    "revid": 1381374033,
+    "url": "https://en.wikipedia.org/wiki/The_Special_Tour",
+    "batch": null
+  },
+  {
+    "position": 17,
+    "artist": "Doja Cat",
+    "tour_title": "The Scarlet Tour",
+    "pageid": 74111962,
+    "revid": 1340231687,
+    "url": "https://en.wikipedia.org/wiki/The_Scarlet_Tour",
+    "batch": null
+  },
+  {
+    "position": 18,
+    "artist": "The Cure",
+    "tour_title": "Shows of a Lost World",
+    "pageid": 40759068,
+    "revid": 1347602819,
+    "url": "https://en.wikipedia.org/wiki/Shows_of_a_Lost_World",
+    "batch": null
+  },
+  {
+    "position": 19,
+    "artist": "Billie Eilish",
+    "tour_title": "Hit Me Hard and Soft: The Tour",
+    "pageid": 76764950,
+    "revid": 1376116789,
+    "url": "https://en.wikipedia.org/wiki/Hit_Me_Hard_and_Soft:_The_Tour",
+    "batch": null
+  },
+  {
+    "position": 20,
+    "artist": "Don Toliver",
+    "tour_title": "Psycho Tour (Don Toliver)",
+    "pageid": 82453662,
+    "revid": 1378999168,
+    "url": "https://en.wikipedia.org/wiki/Psycho_Tour_(Don_Toliver)",
+    "batch": null
+  },
+  {
+    "position": 21,
+    "artist": "\"Weird Al\" Yankovic",
+    "tour_title": "The Unfortunate Return of the Ridiculously Self-Indulgent, Ill-Advised Vanity Tour",
+    "pageid": 69600295,
+    "revid": 1372389782,
+    "url": "https://en.wikipedia.org/wiki/The_Unfortunate_Return_of_the_Ridiculously_Self-Indulgent,_Ill-Advised_Vanity_Tour",
+    "batch": null
+  },
+  {
+    "position": 22,
+    "artist": "Omar Apollo",
+    "tour_title": "God Said No World Tour",
+    "pageid": 77098122,
+    "revid": 1360001122,
+    "url": "https://en.wikipedia.org/wiki/God_Said_No_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 23,
+    "artist": "Niall Horan",
+    "tour_title": "The Show: Live on Tour",
+    "pageid": 73867652,
+    "revid": 1362933136,
+    "url": "https://en.wikipedia.org/wiki/The_Show:_Live_on_Tour",
+    "batch": null
+  },
+  {
+    "position": 24,
+    "artist": "Suga",
+    "tour_title": "D-Day Tour",
+    "pageid": 73366476,
+    "revid": 1333494128,
+    "url": "https://en.wikipedia.org/wiki/D-Day_Tour",
+    "batch": null
+  },
+  {
+    "position": 25,
+    "artist": "Carrie Underwood",
+    "tour_title": "Denim & Rhinestones Tour",
+    "pageid": 70803229,
+    "revid": 1360979674,
+    "url": "https://en.wikipedia.org/wiki/Denim_%26_Rhinestones_Tour",
+    "batch": null
+  },
+  {
+    "position": 26,
+    "artist": "Alicia Keys",
+    "tour_title": "Alicia + Keys World Tour",
+    "pageid": 62981241,
+    "revid": 1333511804,
+    "url": "https://en.wikipedia.org/wiki/Alicia_%2B_Keys_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 27,
+    "artist": "Lea Salonga",
+    "tour_title": "Stage, Screen & Everything In Between Tour",
+    "pageid": 80364448,
+    "revid": 1374541296,
+    "url": "https://en.wikipedia.org/wiki/Stage,_Screen_%26_Everything_In_Between_Tour",
+    "batch": null
+  },
+  {
+    "position": 28,
+    "artist": "Zayn Malik",
+    "tour_title": "Stairway to the Sky Tour",
+    "pageid": 77904257,
+    "revid": 1356458279,
+    "url": "https://en.wikipedia.org/wiki/Stairway_to_the_Sky_Tour",
+    "batch": null
+  },
+  {
+    "position": 29,
+    "artist": "Thirty Seconds to Mars",
+    "tour_title": "Seasons Tour",
+    "pageid": 75439212,
+    "revid": 1357388886,
+    "url": "https://en.wikipedia.org/wiki/Seasons_Tour",
+    "batch": null
+  },
+  {
+    "position": 30,
+    "artist": "Stephen Sanchez",
+    "tour_title": "The Connie Co Show Tour",
+    "pageid": 83040793,
+    "revid": 1351465800,
+    "url": "https://en.wikipedia.org/wiki/The_Connie_Co_Show_Tour",
+    "batch": null
+  },
+  {
+    "position": 31,
+    "artist": "Clairo",
+    "tour_title": "Charm Tour",
+    "pageid": 77377258,
+    "revid": 1337886246,
+    "url": "https://en.wikipedia.org/wiki/Charm_Tour",
+    "batch": null
+  },
+  {
+    "position": 32,
+    "artist": "Seventeen",
+    "tour_title": "Right Here World Tour",
+    "pageid": 77578978,
+    "revid": 1371133527,
+    "url": "https://en.wikipedia.org/wiki/Right_Here_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 33,
+    "artist": "Joji",
+    "tour_title": "Pandemonium (Joji)",
+    "pageid": 74576542,
+    "revid": 1363718386,
+    "url": "https://en.wikipedia.org/wiki/Pandemonium_(Joji)",
+    "batch": null
+  },
+  {
+    "position": 34,
+    "artist": "Flo",
+    "tour_title": "Flo Live",
+    "pageid": 73670472,
+    "revid": 1370104261,
+    "url": "https://en.wikipedia.org/wiki/Flo_Live",
+    "batch": null
+  },
+  {
+    "position": 35,
+    "artist": "Nightwish",
+    "tour_title": "Human. :II: Nature. World Tour",
+    "pageid": 62844295,
+    "revid": 1380365684,
+    "url": "https://en.wikipedia.org/wiki/Human._:II:_Nature._World_Tour",
+    "batch": null
+  },
+  {
+    "position": 36,
+    "artist": "Tame Impala",
+    "tour_title": "The Slow Rush Tour",
+    "pageid": 83059238,
+    "revid": 1381125279,
+    "url": "https://en.wikipedia.org/wiki/The_Slow_Rush_Tour",
+    "batch": null
+  },
+  {
+    "position": 37,
+    "artist": "Charli XCX",
+    "tour_title": "Crash: The Live Tour",
+    "pageid": 70496864,
+    "revid": 1374593201,
+    "url": "https://en.wikipedia.org/wiki/Crash:_The_Live_Tour",
+    "batch": null
+  },
+  {
+    "position": 38,
+    "artist": "Square Enix",
+    "tour_title": "Nier: Orchestra Concert 12024 – The end of data",
+    "pageid": 80558168,
+    "revid": 1363681425,
+    "url": "https://en.wikipedia.org/wiki/Nier:_Orchestra_Concert_12024_%E2%80%93_The_end_of_data",
+    "batch": null
+  },
+  {
+    "position": 39,
+    "artist": "Florence and the Machine",
+    "tour_title": "Dance Fever Tour",
+    "pageid": 70419193,
+    "revid": 1378352635,
+    "url": "https://en.wikipedia.org/wiki/Dance_Fever_Tour",
+    "batch": null
+  },
+  {
+    "position": 40,
+    "artist": "NCT Dream",
+    "tour_title": "The Dream Show 2: In A Dream",
+    "pageid": 71760483,
+    "revid": 1349419880,
+    "url": "https://en.wikipedia.org/wiki/The_Dream_Show_2:_In_A_Dream",
+    "batch": null
+  },
+  {
+    "position": 41,
+    "artist": "Nessa Barrett",
+    "tour_title": "Young Forever Tour",
+    "pageid": 74942375,
+    "revid": 1374448702,
+    "url": "https://en.wikipedia.org/wiki/Young_Forever_Tour",
+    "batch": null
+  },
+  {
+    "position": 42,
+    "artist": "Madonna",
+    "tour_title": "The Celebration Tour",
+    "pageid": 72773976,
+    "revid": 1371102154,
+    "url": "https://en.wikipedia.org/wiki/The_Celebration_Tour",
+    "batch": null
+  },
+  {
+    "position": 43,
+    "artist": "Kesha",
+    "tour_title": "Only Love Tour",
+    "pageid": 75072115,
+    "revid": 1347057520,
+    "url": "https://en.wikipedia.org/wiki/Only_Love_Tour",
+    "batch": null
+  },
+  {
+    "position": 44,
+    "artist": "Sexyy Red",
+    "tour_title": "Sexyy Red 4 President Tour",
+    "pageid": 77244409,
+    "revid": 1339704340,
+    "url": "https://en.wikipedia.org/wiki/Sexyy_Red_4_President_Tour",
+    "batch": null
+  },
+  {
+    "position": 45,
+    "artist": "Muse",
+    "tour_title": "Will of the People World Tour",
+    "pageid": 70959569,
+    "revid": 1367032033,
+    "url": "https://en.wikipedia.org/wiki/Will_of_the_People_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 46,
+    "artist": "Girl in Red",
+    "tour_title": "Doing It Again Tour",
+    "pageid": 76451192,
+    "revid": 1348730574,
+    "url": "https://en.wikipedia.org/wiki/Doing_It_Again_Tour",
+    "batch": null
+  },
+  {
+    "position": 47,
+    "artist": "Kendrick Lamar",
+    "tour_title": "The Big Steppers Tour",
+    "pageid": 70774202,
+    "revid": 1371406479,
+    "url": "https://en.wikipedia.org/wiki/The_Big_Steppers_Tour",
+    "batch": null
+  },
+  {
+    "position": 48,
+    "artist": "Aespa",
+    "tour_title": "Synk: Hyper Line",
+    "pageid": 73843533,
+    "revid": 1380139674,
+    "url": "https://en.wikipedia.org/wiki/Synk:_Hyper_Line",
+    "batch": null
+  },
+  {
+    "position": 49,
+    "artist": "Sega",
+    "tour_title": "Sonic Symphony",
+    "pageid": 74256160,
+    "revid": 1376060135,
+    "url": "https://en.wikipedia.org/wiki/Sonic_Symphony",
+    "batch": null
+  },
+  {
+    "position": 50,
+    "artist": "Carly Rae Jepsen",
+    "tour_title": "The So Nice Tour",
+    "pageid": 70964992,
+    "revid": 1378887138,
+    "url": "https://en.wikipedia.org/wiki/The_So_Nice_Tour",
+    "batch": null
+  },
+  {
+    "position": 51,
+    "artist": "Ledisi",
+    "tour_title": "The Good Life Tour",
+    "pageid": 77234996,
+    "revid": 1293293249,
+    "url": "https://en.wikipedia.org/wiki/The_Good_Life_Tour",
+    "batch": null
+  },
+  {
+    "position": 52,
+    "artist": "Ne-Yo",
+    "tour_title": "Champagne and Roses Tour",
+    "pageid": 77331751,
+    "revid": 1336411521,
+    "url": "https://en.wikipedia.org/wiki/Champagne_and_Roses_Tour",
+    "batch": null
+  },
+  {
+    "position": 53,
+    "artist": "Westlife",
+    "tour_title": "The Wild Dreams Tour",
+    "pageid": 62215057,
+    "revid": 1374657628,
+    "url": "https://en.wikipedia.org/wiki/The_Wild_Dreams_Tour",
+    "batch": null
+  },
+  {
+    "position": 54,
+    "artist": "NF",
+    "tour_title": "Hope Tour",
+    "pageid": 82471316,
+    "revid": 1364369035,
+    "url": "https://en.wikipedia.org/wiki/Hope_Tour",
+    "batch": null
+  },
+  {
+    "position": 55,
+    "artist": "Tove Styrke",
+    "tour_title": "Hard Tour",
+    "pageid": 71887192,
+    "revid": 1238630264,
+    "url": "https://en.wikipedia.org/wiki/Hard_Tour",
+    "batch": null
+  },
+  {
+    "position": 56,
+    "artist": "Aerosmith",
+    "tour_title": "Peace Out: The Farewell Tour",
+    "pageid": 73725203,
+    "revid": 1380453322,
+    "url": "https://en.wikipedia.org/wiki/Peace_Out:_The_Farewell_Tour",
+    "batch": null
+  },
+  {
+    "position": 57,
+    "artist": "Mariah Carey",
+    "tour_title": "Mariah Carey's Christmas Time",
+    "pageid": 77533476,
+    "revid": 1381730060,
+    "url": "https://en.wikipedia.org/wiki/Mariah_Carey's_Christmas_Time",
+    "batch": null
+  },
+  {
+    "position": 58,
+    "artist": "Lana Del Rey",
+    "tour_title": "Lana Del Rey's 2023 tour",
+    "pageid": 74651944,
+    "revid": 1361319496,
+    "url": "https://en.wikipedia.org/wiki/Lana_Del_Rey's_2023_tour",
+    "batch": null
+  },
+  {
+    "position": 59,
+    "artist": "Björk",
+    "tour_title": "Cornucopia (concert tour)",
+    "pageid": 59041368,
+    "revid": 1374634280,
+    "url": "https://en.wikipedia.org/wiki/Cornucopia_(concert_tour)",
+    "batch": null
+  },
+  {
+    "position": 60,
+    "artist": "Taemin",
+    "tour_title": "Ephemeral Gaze",
+    "pageid": 78763809,
+    "revid": 1337886488,
+    "url": "https://en.wikipedia.org/wiki/Ephemeral_Gaze",
+    "batch": null
+  },
+  {
+    "position": 61,
+    "artist": "Cyndi Lauper",
+    "tour_title": "Girls Just Wanna Have Fun Farewell Tour",
+    "pageid": 77493020,
+    "revid": 1381225702,
+    "url": "https://en.wikipedia.org/wiki/Girls_Just_Wanna_Have_Fun_Farewell_Tour",
+    "batch": null
+  },
+  {
+    "position": 62,
+    "artist": "Avril Lavigne",
+    "tour_title": "Love Sux Tour",
+    "pageid": 74108250,
+    "revid": 1366388018,
+    "url": "https://en.wikipedia.org/wiki/Love_Sux_Tour",
+    "batch": null
+  },
+  {
+    "position": 63,
+    "artist": "Depeche Mode",
+    "tour_title": "Memento Mori World Tour",
+    "pageid": 73277306,
+    "revid": 1357215827,
+    "url": "https://en.wikipedia.org/wiki/Memento_Mori_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 64,
+    "artist": "Sum 41",
+    "tour_title": "Tour of the Setting Sum",
+    "pageid": 77025656,
+    "revid": 1343569992,
+    "url": "https://en.wikipedia.org/wiki/Tour_of_the_Setting_Sum",
+    "batch": null
+  },
+  {
+    "position": 65,
+    "artist": "The Kid Laroi",
+    "tour_title": "The First Time Tour",
+    "pageid": 82463575,
+    "revid": 1375243185,
+    "url": "https://en.wikipedia.org/wiki/The_First_Time_Tour",
+    "batch": null
+  },
+  {
+    "position": 66,
+    "artist": "Lizzy McAlpine",
+    "tour_title": "The Older Tour",
+    "pageid": 76200979,
+    "revid": 1377453032,
+    "url": "https://en.wikipedia.org/wiki/The_Older_Tour",
+    "batch": null
+  },
+  {
+    "position": 67,
+    "artist": "Noah Cyrus",
+    "tour_title": "The Hardest Part Tour",
+    "pageid": 70799794,
+    "revid": 1327284218,
+    "url": "https://en.wikipedia.org/wiki/The_Hardest_Part_Tour",
+    "batch": null
+  },
+  {
+    "position": 68,
+    "artist": "JJ Lin",
+    "tour_title": "JJ20 World Tour",
+    "pageid": 76637963,
+    "revid": 1380005942,
+    "url": "https://en.wikipedia.org/wiki/JJ20_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 69,
+    "artist": "Shawn Mendes",
+    "tour_title": "For Friends and Family Only Tour",
+    "pageid": 80089894,
+    "revid": 1371693246,
+    "url": "https://en.wikipedia.org/wiki/For_Friends_and_Family_Only_Tour",
+    "batch": null
+  },
+  {
+    "position": 70,
+    "artist": "Post Malone",
+    "tour_title": "Twelve Carat Tour",
+    "pageid": 71003176,
+    "revid": 1351230334,
+    "url": "https://en.wikipedia.org/wiki/Twelve_Carat_Tour",
+    "batch": null
+  },
+  {
+    "position": 71,
+    "artist": "Tate McRae",
+    "tour_title": "Think Later World Tour",
+    "pageid": 75247140,
+    "revid": 1352390403,
+    "url": "https://en.wikipedia.org/wiki/Think_Later_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 72,
+    "artist": "5 Seconds of Summer",
+    "tour_title": "The 5 Seconds of Summer Show",
+    "pageid": 83058641,
+    "revid": 1377354232,
+    "url": "https://en.wikipedia.org/wiki/The_5_Seconds_of_Summer_Show",
+    "batch": null
+  },
+  {
+    "position": 73,
+    "artist": "Backstreet Boys",
+    "tour_title": "DNA World Tour",
+    "pageid": 59072880,
+    "revid": 1374476275,
+    "url": "https://en.wikipedia.org/wiki/DNA_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 74,
+    "artist": "Madison Beer",
+    "tour_title": "The Spinnin Tour",
+    "pageid": 75016377,
+    "revid": 1365921799,
+    "url": "https://en.wikipedia.org/wiki/The_Spinnin_Tour",
+    "batch": null
+  },
+  {
+    "position": 75,
+    "artist": "Chase Atlantic",
+    "tour_title": "Lost in Heaven Tour",
+    "pageid": 79496209,
+    "revid": 1357746819,
+    "url": "https://en.wikipedia.org/wiki/Lost_in_Heaven_Tour",
+    "batch": null
+  },
+  {
+    "position": 76,
+    "artist": "Becky G",
+    "tour_title": "Mi Casa, Tu Casa Tour",
+    "pageid": 74484164,
+    "revid": 1377318277,
+    "url": "https://en.wikipedia.org/wiki/Mi_Casa,_Tu_Casa_Tour",
+    "batch": null
+  },
+  {
+    "position": 77,
+    "artist": "Donald Glover",
+    "tour_title": "The New World Tour (Childish Gambino)",
+    "pageid": 77608103,
+    "revid": 1381355040,
+    "url": "https://en.wikipedia.org/wiki/The_New_World_Tour_(Childish_Gambino)",
+    "batch": null
+  },
+  {
+    "position": 78,
+    "artist": "Janet Jackson",
+    "tour_title": "Janet Jackson: Together Again",
+    "pageid": 72505134,
+    "revid": 1358793626,
+    "url": "https://en.wikipedia.org/wiki/Janet_Jackson:_Together_Again",
+    "batch": null
+  },
+  {
+    "position": 79,
+    "artist": "Till Lindemann",
+    "tour_title": "Zunge Tour",
+    "pageid": 77597658,
+    "revid": 1316764561,
+    "url": "https://en.wikipedia.org/wiki/Zunge_Tour",
+    "batch": null
+  },
+  {
+    "position": 80,
+    "artist": "Roger Waters",
+    "tour_title": "This Is Not a Drill",
+    "pageid": 70990102,
+    "revid": 1379332223,
+    "url": "https://en.wikipedia.org/wiki/This_Is_Not_a_Drill",
+    "batch": null
+  },
+  {
+    "position": 81,
+    "artist": "Kacey Musgraves",
+    "tour_title": "Deeper Well World Tour",
+    "pageid": 76214008,
+    "revid": 1355857704,
+    "url": "https://en.wikipedia.org/wiki/Deeper_Well_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 82,
+    "artist": "Kate Nash",
+    "tour_title": "9 Sad Symphonies Tour",
+    "pageid": 79930233,
+    "revid": 1376106929,
+    "url": "https://en.wikipedia.org/wiki/9_Sad_Symphonies_Tour",
+    "batch": null
+  },
+  {
+    "position": 83,
+    "artist": "50 Cent",
+    "tour_title": "The Final Lap Tour",
+    "pageid": 74753828,
+    "revid": 1354687711,
+    "url": "https://en.wikipedia.org/wiki/The_Final_Lap_Tour",
+    "batch": null
+  },
+  {
+    "position": 84,
+    "artist": "NCT 127",
+    "tour_title": "Neo City – The Link",
+    "pageid": 70658715,
+    "revid": 1381600470,
+    "url": "https://en.wikipedia.org/wiki/Neo_City_%E2%80%93_The_Link",
+    "batch": null
+  },
+  {
+    "position": 85,
+    "artist": "Sam Fender",
+    "tour_title": "People Watching Tour",
+    "pageid": 79141679,
+    "revid": 1381287572,
+    "url": "https://en.wikipedia.org/wiki/People_Watching_Tour",
+    "batch": null
+  },
+  {
+    "position": 86,
+    "artist": "For King & Country",
+    "tour_title": "A Drummer Boy Christmas Tour",
+    "pageid": 74058962,
+    "revid": 1381183868,
+    "url": "https://en.wikipedia.org/wiki/A_Drummer_Boy_Christmas_Tour",
+    "batch": null
+  },
+  {
+    "position": 87,
+    "artist": "Laufey",
+    "tour_title": "Bewitched Tour",
+    "pageid": 76859996,
+    "revid": 1374899492,
+    "url": "https://en.wikipedia.org/wiki/Bewitched_Tour",
+    "batch": null
+  },
+  {
+    "position": 88,
+    "artist": "Melanie Martinez",
+    "tour_title": "The Trilogy Tour (Melanie Martinez)",
+    "pageid": 75275961,
+    "revid": 1365545902,
+    "url": "https://en.wikipedia.org/wiki/The_Trilogy_Tour_(Melanie_Martinez)",
+    "batch": null
+  },
+  {
+    "position": 89,
+    "artist": "Whitney Houston",
+    "tour_title": "An Evening with Whitney: The Whitney Houston Hologram Tour",
+    "pageid": 61814849,
+    "revid": 1368628328,
+    "url": "https://en.wikipedia.org/wiki/An_Evening_with_Whitney:_The_Whitney_Houston_Hologram_Tour",
+    "batch": null
+  },
+  {
+    "position": 90,
+    "artist": "Queen + Adam Lambert",
+    "tour_title": "The Rhapsody Tour",
+    "pageid": 59318164,
+    "revid": 1379677608,
+    "url": "https://en.wikipedia.org/wiki/The_Rhapsody_Tour",
+    "batch": null
+  },
+  {
+    "position": 91,
+    "artist": "Niki",
+    "tour_title": "Nicole World Tour",
+    "pageid": 75006091,
+    "revid": 1371438669,
+    "url": "https://en.wikipedia.org/wiki/Nicole_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 92,
+    "artist": "Weyes Blood",
+    "tour_title": "In Holy Flux Tour",
+    "pageid": 76432305,
+    "revid": 1380747526,
+    "url": "https://en.wikipedia.org/wiki/In_Holy_Flux_Tour",
+    "batch": null
+  },
+  {
+    "position": 93,
+    "artist": "Electric Light Orchestra",
+    "tour_title": "The Over and Out Tour",
+    "pageid": 78254035,
+    "revid": 1362973425,
+    "url": "https://en.wikipedia.org/wiki/The_Over_and_Out_Tour",
+    "batch": null
+  },
+  {
+    "position": 94,
+    "artist": "Rod Wave",
+    "tour_title": "Last Lap Tour",
+    "pageid": 78170736,
+    "revid": 1354518010,
+    "url": "https://en.wikipedia.org/wiki/Last_Lap_Tour",
+    "batch": null
+  },
+  {
+    "position": 95,
+    "artist": "Conan Gray",
+    "tour_title": "Found Heaven On Tour",
+    "pageid": 76260547,
+    "revid": 1377085911,
+    "url": "https://en.wikipedia.org/wiki/Found_Heaven_On_Tour",
+    "batch": null
+  },
+  {
+    "position": 96,
+    "artist": "Aurora",
+    "tour_title": "The Gods We Can Touch Tour",
+    "pageid": 78696776,
+    "revid": 1368777468,
+    "url": "https://en.wikipedia.org/wiki/The_Gods_We_Can_Touch_Tour",
+    "batch": null
+  },
+  {
+    "position": 97,
+    "artist": "Muna",
+    "tour_title": "Life's So Fun Tour",
+    "pageid": 73854335,
+    "revid": 1366457331,
+    "url": "https://en.wikipedia.org/wiki/Life's_So_Fun_Tour",
+    "batch": null
+  },
+  {
+    "position": 98,
+    "artist": "Foals",
+    "tour_title": "Life Is Yours Tour",
+    "pageid": 71793605,
+    "revid": 1300798817,
+    "url": "https://en.wikipedia.org/wiki/Life_Is_Yours_Tour",
+    "batch": null
+  },
+  {
+    "position": 99,
+    "artist": "The 1975",
+    "tour_title": "Still... At Their Very Best",
+    "pageid": 74017054,
+    "revid": 1367276826,
+    "url": "https://en.wikipedia.org/wiki/Still..._At_Their_Very_Best",
+    "batch": null
+  },
+  {
+    "position": 100,
+    "artist": "Noah Kahan",
+    "tour_title": "The Stick Season (We'll All Be Here Forever) Tour",
+    "pageid": 78008411,
+    "revid": 1362052765,
+    "url": "https://en.wikipedia.org/wiki/The_Stick_Season_(We'll_All_Be_Here_Forever)_Tour",
+    "batch": null
+  },
+  {
+    "position": 101,
+    "artist": "Chloe Bailey",
+    "tour_title": "In Pieces Tour",
+    "pageid": 73308847,
+    "revid": 1328642105,
+    "url": "https://en.wikipedia.org/wiki/In_Pieces_Tour",
+    "batch": null
+  },
+  {
+    "position": 102,
+    "artist": "Ice Spice",
+    "tour_title": "Y2K! World Tour",
+    "pageid": 77090533,
+    "revid": 1368330239,
+    "url": "https://en.wikipedia.org/wiki/Y2K!_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 103,
+    "artist": "Pink",
+    "tour_title": "Trustfall Tour",
+    "pageid": 73109040,
+    "revid": 1335964374,
+    "url": "https://en.wikipedia.org/wiki/Trustfall_Tour",
+    "batch": null
+  },
+  {
+    "position": 104,
+    "artist": "King Gizzard & the Lizard Wizard",
+    "tour_title": "World Tour 2024",
+    "pageid": 75952790,
+    "revid": 1330992596,
+    "url": "https://en.wikipedia.org/wiki/World_Tour_2024",
+    "batch": null
+  },
+  {
+    "position": 105,
+    "artist": "Stray Kids",
+    "tour_title": "Maniac World Tour",
+    "pageid": 70257725,
+    "revid": 1349407116,
+    "url": "https://en.wikipedia.org/wiki/Maniac_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 106,
+    "artist": "Peso Pluma",
+    "tour_title": "Éxodo Tour",
+    "pageid": 77032994,
+    "revid": 1363965602,
+    "url": "https://en.wikipedia.org/wiki/%C3%89xodo_Tour",
+    "batch": null
+  },
+  {
+    "position": 107,
+    "artist": "Nav",
+    "tour_title": "Never Sleep Tour",
+    "pageid": 75262838,
+    "revid": 1191881230,
+    "url": "https://en.wikipedia.org/wiki/Never_Sleep_Tour",
+    "batch": null
+  },
+  {
+    "position": 108,
+    "artist": "SZA",
+    "tour_title": "SOS Tour",
+    "pageid": 72503277,
+    "revid": 1359128980,
+    "url": "https://en.wikipedia.org/wiki/SOS_Tour",
+    "batch": null
+  },
+  {
+    "position": 109,
+    "artist": "Sam Smith",
+    "tour_title": "Gloria the Tour",
+    "pageid": 73671639,
+    "revid": 1363850413,
+    "url": "https://en.wikipedia.org/wiki/Gloria_the_Tour",
+    "batch": null
+  },
+  {
+    "position": 110,
+    "artist": "Shania Twain",
+    "tour_title": "Queen of Me Tour",
+    "pageid": 72251723,
+    "revid": 1358150723,
+    "url": "https://en.wikipedia.org/wiki/Queen_of_Me_Tour",
+    "batch": null
+  },
+  {
+    "position": 111,
+    "artist": "Latto",
+    "tour_title": "Sugar Honey Iced Tea Tour",
+    "pageid": 80176962,
+    "revid": 1350946209,
+    "url": "https://en.wikipedia.org/wiki/Sugar_Honey_Iced_Tea_Tour",
+    "batch": null
+  },
+  {
+    "position": 112,
+    "artist": "Tenacious D",
+    "tour_title": "The Spicy Meatball Tour",
+    "pageid": 74566900,
+    "revid": 1339703740,
+    "url": "https://en.wikipedia.org/wiki/The_Spicy_Meatball_Tour",
+    "batch": null
+  },
+  {
+    "position": 113,
+    "artist": "Tim Minchin",
+    "tour_title": "An Unfunny Evening with Tim Minchin and His Piano",
+    "pageid": 74493379,
+    "revid": 1374054812,
+    "url": "https://en.wikipedia.org/wiki/An_Unfunny_Evening_with_Tim_Minchin_and_His_Piano",
+    "batch": null
+  },
+  {
+    "position": 114,
+    "artist": "Chappell Roan",
+    "tour_title": "The Midwest Princess Tour",
+    "pageid": 77155079,
+    "revid": 1348730313,
+    "url": "https://en.wikipedia.org/wiki/The_Midwest_Princess_Tour",
+    "batch": null
+  },
+  {
+    "position": 115,
+    "artist": "Pearl Jam",
+    "tour_title": "Gigaton Tour",
+    "pageid": 62484766,
+    "revid": 1360996708,
+    "url": "https://en.wikipedia.org/wiki/Gigaton_Tour",
+    "batch": null
+  },
+  {
+    "position": 116,
+    "artist": "Kid Rock",
+    "tour_title": "Bad Reputation Tour",
+    "pageid": 70621994,
+    "revid": 1358602857,
+    "url": "https://en.wikipedia.org/wiki/Bad_Reputation_Tour",
+    "batch": null
+  },
+  {
+    "position": 117,
+    "artist": "Cage the Elephant",
+    "tour_title": "Neon Pill Tour",
+    "pageid": 83694797,
+    "revid": 1369884325,
+    "url": "https://en.wikipedia.org/wiki/Neon_Pill_Tour",
+    "batch": null
+  },
+  {
+    "position": 118,
+    "artist": "Bad Bunny",
+    "tour_title": "Most Wanted Tour (Bad Bunny)",
+    "pageid": 75099062,
+    "revid": 1336235727,
+    "url": "https://en.wikipedia.org/wiki/Most_Wanted_Tour_(Bad_Bunny)",
+    "batch": null
+  },
+  {
+    "position": 119,
+    "artist": "Tinashe",
+    "tour_title": "Match My Freak: World Tour",
+    "pageid": 77551797,
+    "revid": 1380533534,
+    "url": "https://en.wikipedia.org/wiki/Match_My_Freak:_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 120,
+    "artist": "Meghan Trainor",
+    "tour_title": "The Timeless Tour",
+    "pageid": 76359362,
+    "revid": 1375399084,
+    "url": "https://en.wikipedia.org/wiki/The_Timeless_Tour",
+    "batch": null
+  },
+  {
+    "position": 121,
+    "artist": "Nicki Minaj",
+    "tour_title": "Pink Friday 2 World Tour",
+    "pageid": 75345756,
+    "revid": 1380477554,
+    "url": "https://en.wikipedia.org/wiki/Pink_Friday_2_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 122,
+    "artist": "Panic! at the Disco",
+    "tour_title": "Viva Las Vengeance Tour",
+    "pageid": 70945668,
+    "revid": 1367430144,
+    "url": "https://en.wikipedia.org/wiki/Viva_Las_Vengeance_Tour",
+    "batch": null
+  },
+  {
+    "position": 123,
+    "artist": "Eagles",
+    "tour_title": "Hotel California 2020 Tour",
+    "pageid": 62195050,
+    "revid": 1376140694,
+    "url": "https://en.wikipedia.org/wiki/Hotel_California_2020_Tour",
+    "batch": null
+  },
+  {
+    "position": 124,
+    "artist": "Justin Timberlake",
+    "tour_title": "The Forget Tomorrow World Tour",
+    "pageid": 75923856,
+    "revid": 1370832042,
+    "url": "https://en.wikipedia.org/wiki/The_Forget_Tomorrow_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 125,
+    "artist": "Ethel Cain",
+    "tour_title": "Blood Stained Blonde Tour",
+    "pageid": 73351051,
+    "revid": 1317285803,
+    "url": "https://en.wikipedia.org/wiki/Blood_Stained_Blonde_Tour",
+    "batch": null
+  },
+  {
+    "position": 126,
+    "artist": "Michael Bublé",
+    "tour_title": "Higher Tour",
+    "pageid": 70685924,
+    "revid": 1331176771,
+    "url": "https://en.wikipedia.org/wiki/Higher_Tour",
+    "batch": null
+  },
+  {
+    "position": 127,
+    "artist": "Iron Maiden",
+    "tour_title": "The Future Past World Tour",
+    "pageid": 73912726,
+    "revid": 1379810517,
+    "url": "https://en.wikipedia.org/wiki/The_Future_Past_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 128,
+    "artist": "21 Savage",
+    "tour_title": "American Dream Tour",
+    "pageid": 77282692,
+    "revid": 1330479410,
+    "url": "https://en.wikipedia.org/wiki/American_Dream_Tour",
+    "batch": null
+  },
+  {
+    "position": 129,
+    "artist": "Paramore",
+    "tour_title": "This Is Why Tour",
+    "pageid": 72269563,
+    "revid": 1360936777,
+    "url": "https://en.wikipedia.org/wiki/This_Is_Why_Tour",
+    "batch": null
+  },
+  {
+    "position": 130,
+    "artist": "Alan Walker",
+    "tour_title": "Walkerverse: The Tour",
+    "pageid": 76228693,
+    "revid": 1307514340,
+    "url": "https://en.wikipedia.org/wiki/Walkerverse:_The_Tour",
+    "batch": null
+  },
+  {
+    "position": 131,
+    "artist": "Ed Sheeran",
+    "tour_title": "− Tour",
+    "pageid": 73712785,
+    "revid": 1379881585,
+    "url": "https://en.wikipedia.org/wiki/%E2%88%92_Tour",
+    "batch": null
+  },
+  {
+    "position": 132,
+    "artist": "Queens of the Stone Age",
+    "tour_title": "The End Is Nero World Tour",
+    "pageid": 75682334,
+    "revid": 1378032657,
+    "url": "https://en.wikipedia.org/wiki/The_End_Is_Nero_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 133,
+    "artist": "Louis Tomlinson",
+    "tour_title": "Faith in the Future World Tour",
+    "pageid": 75389645,
+    "revid": 1363219620,
+    "url": "https://en.wikipedia.org/wiki/Faith_in_the_Future_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 134,
+    "artist": "PinkPantheress",
+    "tour_title": "Capable of Love Tour",
+    "pageid": 81728555,
+    "revid": 1364124145,
+    "url": "https://en.wikipedia.org/wiki/Capable_of_Love_Tour",
+    "batch": null
+  },
+  {
+    "position": 135,
+    "artist": "You Me at Six",
+    "tour_title": "Final Nights of Six",
+    "pageid": 79647193,
+    "revid": 1339705953,
+    "url": "https://en.wikipedia.org/wiki/Final_Nights_of_Six",
+    "batch": null
+  },
+  {
+    "position": 136,
+    "artist": "Ghost",
+    "tour_title": "Imperatour",
+    "pageid": 69903688,
+    "revid": 1363854927,
+    "url": "https://en.wikipedia.org/wiki/Imperatour",
+    "batch": null
+  },
+  {
+    "position": 137,
+    "artist": "Ben Rector",
+    "tour_title": "The Old Friends Acoustic Tour",
+    "pageid": 75843599,
+    "revid": 1257194539,
+    "url": "https://en.wikipedia.org/wiki/The_Old_Friends_Acoustic_Tour",
+    "batch": null
+  },
+  {
+    "position": 138,
+    "artist": "Arctic Monkeys",
+    "tour_title": "The Car Tour",
+    "pageid": 72679636,
+    "revid": 1370237790,
+    "url": "https://en.wikipedia.org/wiki/The_Car_Tour",
+    "batch": null
+  },
+  {
+    "position": 139,
+    "artist": "Ive",
+    "tour_title": "Show What I Have World Tour",
+    "pageid": 75254264,
+    "revid": 1380532704,
+    "url": "https://en.wikipedia.org/wiki/Show_What_I_Have_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 140,
+    "artist": "Peter Gabriel",
+    "tour_title": "I/O The Tour",
+    "pageid": 77565384,
+    "revid": 1378643904,
+    "url": "https://en.wikipedia.org/wiki/I%2FO_The_Tour",
+    "batch": null
+  },
+  {
+    "position": 141,
+    "artist": "David Gilmour",
+    "tour_title": "Luck and Strange (concerts)",
+    "pageid": 78335779,
+    "revid": 1352955014,
+    "url": "https://en.wikipedia.org/wiki/Luck_and_Strange_(concerts)",
+    "batch": null
+  },
+  {
+    "position": 142,
+    "artist": "Big Time Rush",
+    "tour_title": "Forever Tour",
+    "pageid": 70262041,
+    "revid": 1326178228,
+    "url": "https://en.wikipedia.org/wiki/Forever_Tour",
+    "batch": null
+  },
+  {
+    "position": 143,
+    "artist": "Kim Petras",
+    "tour_title": "Feed the Beast World Tour",
+    "pageid": 74096056,
+    "revid": 1377726738,
+    "url": "https://en.wikipedia.org/wiki/Feed_the_Beast_World_Tour",
+    "batch": null
+  },
+  {
+    "position": 144,
+    "artist": "Usher",
+    "tour_title": "Usher: Past Present Future",
+    "pageid": 76092731,
+    "revid": 1369291286,
+    "url": "https://en.wikipedia.org/wiki/Usher:_Past_Present_Future",
+    "batch": null
+  },
+  {
+    "position": 145,
+    "artist": "Victoria Monét",
+    "tour_title": "The Jaguar Tour",
+    "pageid": 74823624,
+    "revid": 1374490202,
+    "url": "https://en.wikipedia.org/wiki/The_Jaguar_Tour",
+    "batch": null
+  },
+  {
+    "position": 146,
+    "artist": "Ha*Ash",
+    "tour_title": "Gira mi salida contigo",
+    "pageid": 74093060,
+    "revid": 1230333954,
+    "url": "https://en.wikipedia.org/wiki/Gira_mi_salida_contigo",
+    "batch": null
+  },
+  {
+    "position": 147,
+    "artist": "The Chicks",
+    "tour_title": "The Chicks Tour",
+    "pageid": 73032981,
+    "revid": 1336147281,
+    "url": "https://en.wikipedia.org/wiki/The_Chicks_Tour",
+    "batch": null
+  },
+  {
+    "position": 148,
+    "artist": "Lorde",
+    "tour_title": "Solar Power Tour",
+    "pageid": 68012298,
+    "revid": 1365157565,
+    "url": "https://en.wikipedia.org/wiki/Solar_Power_Tour",
+    "batch": null
+  },
+  {
+    "position": 149,
+    "artist": "My Chemical Romance",
+    "tour_title": "My Chemical Romance Reunion Tour",
+    "pageid": 63241459,
+    "revid": 1381580636,
+    "url": "https://en.wikipedia.org/wiki/My_Chemical_Romance_Reunion_Tour",
+    "batch": null
+  },
+  {
+    "position": 150,
+    "artist": "Harry Styles",
+    "tour_title": "Love On Tour",
+    "pageid": 62331828,
+    "revid": 1380530125,
+    "url": "https://en.wikipedia.org/wiki/Love_On_Tour",
+    "batch": null
+  }
+]

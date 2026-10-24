@@ -1,0 +1,7127 @@
+[
+  {
+    "position": 1,
+    "artist": "Lil Nas X",
+    "tour_title": "Long Live Montero Tour",
+    "url": "https://en.wikipedia.org/wiki/Long_Live_Montero_Tour",
+    "revid": 1308257231,
+    "first_show_year": 2022,
+    "regions": [
+      "United States"
+    ],
+    "played": [
+      {
+        "city_id": "4990729",
+        "name": "Detroit",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4887398",
+        "name": "Chicago",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4930956",
+        "name": "Boston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5128581",
+        "name": "New York City",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4560349",
+        "name": "Philadelphia",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4140963",
+        "name": "Washington",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4180439",
+        "name": "Atlanta",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4644585",
+        "name": "Nashville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4164138",
+        "name": "Miami",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4167147",
+        "name": "Orlando",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4699066",
+        "name": "Houston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4684888",
+        "name": "Dallas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5368361",
+        "name": "Los Angeles",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5308655",
+        "name": "Phoenix",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5391959",
+        "name": "San Francisco",
+        "country": "US",
+        "shows": 1
+      }
+    ],
+    "unmapped": [],
+    "shows": [
+      {
+        "raw_city": "Detroit",
+        "country": "United States",
+        "venue": "Fox Theatre",
+        "date": "September 6, 2022",
+        "geocoded": "Detroit",
+        "city_id": "4990729"
+      },
+      {
+        "raw_city": "Detroit",
+        "country": "United States",
+        "venue": "Fox Theatre",
+        "date": "September 7, 2022",
+        "geocoded": "Detroit",
+        "city_id": "4990729"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Byline Bank Aragon Ballroom",
+        "date": "September 10, 2022",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Byline Bank Aragon Ballroom",
+        "date": "September 11, 2022",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "MGM Music Hall at Fenway",
+        "date": "September 18, 2022",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Radio City Music Hall",
+        "date": "September 20, 2022",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Radio City Music Hall",
+        "date": "September 21, 2022",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Philadelphia",
+        "country": "United States",
+        "venue": "The Met Philadelphia",
+        "date": "September 22, 2022",
+        "geocoded": "Philadelphia",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Washington, D.C.",
+        "country": "United States",
+        "venue": "The Anthem",
+        "date": "September 25, 2022",
+        "geocoded": "Washington",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Atlanta",
+        "country": "United States",
+        "venue": "Coca-Cola Roxy",
+        "date": "September 27, 2022",
+        "geocoded": "Atlanta",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Atlanta",
+        "country": "United States",
+        "venue": "Coca-Cola Roxy",
+        "date": "September 28, 2022",
+        "geocoded": "Atlanta",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Nashville",
+        "country": "United States",
+        "venue": "Nashville Municipal Auditorium",
+        "date": "October 2, 2022",
+        "geocoded": "Nashville",
+        "city_id": "4644585"
+      },
+      {
+        "raw_city": "Miami",
+        "country": "United States",
+        "venue": "James L. Knight Center",
+        "date": "October 4, 2022",
+        "geocoded": "Miami",
+        "city_id": "4164138"
+      },
+      {
+        "raw_city": "Orlando",
+        "country": "United States",
+        "venue": "Hard Rock Live",
+        "date": "October 5, 2022",
+        "geocoded": "Orlando",
+        "city_id": "4167147"
+      },
+      {
+        "raw_city": "Houston",
+        "country": "United States",
+        "venue": "713 Music Hall",
+        "date": "October 11, 2022",
+        "geocoded": "Houston",
+        "city_id": "4699066"
+      },
+      {
+        "raw_city": "Irving",
+        "country": "United States",
+        "venue": "The Pavilion at Toyota Music Factory",
+        "date": "October 12, 2022",
+        "geocoded": "Irving",
+        "city_id": "4684888"
+      },
+      {
+        "raw_city": "Inglewood",
+        "country": "United States",
+        "venue": "YouTube Theater",
+        "date": "October 18, 2022",
+        "geocoded": "Inglewood",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Inglewood",
+        "country": "United States",
+        "venue": "YouTube Theater",
+        "date": "October 19, 2022",
+        "geocoded": "Inglewood",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Phoenix",
+        "country": "United States",
+        "venue": "Arizona Financial Theatre",
+        "date": "October 21, 2022",
+        "geocoded": "Phoenix",
+        "city_id": "5308655"
+      },
+      {
+        "raw_city": "San Francisco",
+        "country": "United States",
+        "venue": "Bill Graham Civic Auditorium",
+        "date": "October 23, 2022",
+        "geocoded": "San Francisco",
+        "city_id": "5391959"
+      }
+    ]
+  },
+  {
+    "position": 2,
+    "artist": "Bob Dylan",
+    "tour_title": "Rough and Rowdy Ways World Wide Tour",
+    "url": "https://en.wikipedia.org/wiki/Rough_and_Rowdy_Ways_World_Wide_Tour",
+    "revid": 1378899431,
+    "first_show_year": 2021,
+    "regions": [
+      "United States"
+    ],
+    "played": [
+      {
+        "city_id": "5263045",
+        "name": "Milwaukee",
+        "country": "US",
+        "shows": 3
+      },
+      {
+        "city_id": "4887398",
+        "name": "Chicago",
+        "country": "US",
+        "shows": 4
+      },
+      {
+        "city_id": "5150529",
+        "name": "Cleveland",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4509177",
+        "name": "Columbus",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5037649",
+        "name": "Minneapolis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4508722",
+        "name": "Cincinnati",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4634946",
+        "name": "Knoxville",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4299276",
+        "name": "Louisville",
+        "country": "US",
+        "shows": 4
+      },
+      {
+        "city_id": "4574324",
+        "name": "Charleston",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5128581",
+        "name": "New York City",
+        "country": "US",
+        "shows": 8
+      },
+      {
+        "city_id": "5110266",
+        "name": "The Bronx",
+        "country": "US",
+        "shows": 4
+      },
+      {
+        "city_id": "5224151",
+        "name": "Providence",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4930956",
+        "name": "Boston",
+        "country": "US",
+        "shows": 4
+      },
+      {
+        "city_id": "4560349",
+        "name": "Philadelphia",
+        "country": "US",
+        "shows": 3
+      },
+      {
+        "city_id": "4140963",
+        "name": "Washington",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5308655",
+        "name": "Phoenix",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5318313",
+        "name": "Tucson",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5454711",
+        "name": "Albuquerque",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5525577",
+        "name": "Lubbock",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4684888",
+        "name": "Dallas",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4699066",
+        "name": "Houston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4726206",
+        "name": "San Antonio",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4671654",
+        "name": "Austin",
+        "country": "US",
+        "shows": 3
+      },
+      {
+        "city_id": "4341513",
+        "name": "Shreveport",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4335045",
+        "name": "New Orleans",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4076784",
+        "name": "Montgomery",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4644585",
+        "name": "Nashville",
+        "country": "US",
+        "shows": 3
+      },
+      {
+        "city_id": "4180439",
+        "name": "Atlanta",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4221552",
+        "name": "Savannah",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4575352",
+        "name": "Columbia",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4460243",
+        "name": "Charlotte",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4469146",
+        "name": "Greensboro",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4612862",
+        "name": "Chattanooga",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4049979",
+        "name": "Birmingham",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4076598",
+        "name": "Mobile",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5586437",
+        "name": "Boise",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4641239",
+        "name": "Memphis",
+        "country": "US",
+        "shows": 3
+      },
+      {
+        "city_id": "4119403",
+        "name": "Little Rock",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4553433",
+        "name": "Tulsa",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4544349",
+        "name": "Oklahoma City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5811696",
+        "name": "Spokane",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "7289169",
+        "name": "Tri-Cities",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5746545",
+        "name": "Portland",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5809844",
+        "name": "Seattle",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5725846",
+        "name": "Eugene",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5391959",
+        "name": "San Francisco",
+        "country": "US",
+        "shows": 3
+      },
+      {
+        "city_id": "5368361",
+        "name": "Los Angeles",
+        "country": "US",
+        "shows": 3
+      },
+      {
+        "city_id": "5391811",
+        "name": "San Diego",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5367929",
+        "name": "Long Beach",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5392171",
+        "name": "San Jose",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5389489",
+        "name": "Sacramento",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5780993",
+        "name": "Salt Lake City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5419384",
+        "name": "Denver",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4393217",
+        "name": "Kansas City",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4407066",
+        "name": "St. Louis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4994358",
+        "name": "Grand Rapids",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4259418",
+        "name": "Indianapolis",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5145476",
+        "name": "Akron",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5134086",
+        "name": "Rochester",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5106834",
+        "name": "Albany",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4839366",
+        "name": "New Haven",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4409896",
+        "name": "Springfield",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4347778",
+        "name": "Baltimore",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4781708",
+        "name": "Richmond",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4782167",
+        "name": "Roanoke",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4300488",
+        "name": "Meads",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4257227",
+        "name": "Evansville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4155966",
+        "name": "Fort Lauderdale",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4171563",
+        "name": "St. Petersburg",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4149962",
+        "name": "Cape Coral",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4167147",
+        "name": "Orlando",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4160021",
+        "name": "Jacksonville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4180386",
+        "name": "Athens",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4466033",
+        "name": "Fayetteville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4330145",
+        "name": "Lafayette",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4281730",
+        "name": "Wichita",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4280539",
+        "name": "Topeka",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5074472",
+        "name": "Omaha",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5254962",
+        "name": "Green Bay",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4853423",
+        "name": "Davenport",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4920423",
+        "name": "Fort Wayne",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4926563",
+        "name": "South Bend",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5174035",
+        "name": "Toledo",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5206379",
+        "name": "Pittsburgh",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5231851",
+        "name": "Sioux Falls",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4850751",
+        "name": "Cedar Rapids",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4907959",
+        "name": "Rockford",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4990729",
+        "name": "Detroit",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4509884",
+        "name": "Dayton",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4431410",
+        "name": "Jackson",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4315588",
+        "name": "Baton Rouge",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4738214",
+        "name": "Tyler",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4669635",
+        "name": "Abilene",
+        "country": "US",
+        "shows": 1
+      }
+    ],
+    "unmapped": [
+      {
+        "raw_city": "Moon Township",
+        "country": "United States",
+        "venue": "UPMC Events Center",
+        "date": "November 15",
+        "reason": "name not found in cities5000"
+      },
+      {
+        "raw_city": "Hershey",
+        "country": "United States",
+        "venue": "Hershey Theatre",
+        "date": "November 16",
+        "reason": "no city >=100k within reach of Hershey"
+      },
+      {
+        "raw_city": "Asheville",
+        "country": "United States",
+        "venue": "Thomas Wolfe Auditorium",
+        "date": "April 2",
+        "reason": "no city >=100k within reach of Asheville"
+      },
+      {
+        "raw_city": "Redding",
+        "country": "United States",
+        "venue": "Redding Civic Auditorium",
+        "date": "June 7",
+        "reason": "no city >=100k within reach of Redding"
+      },
+      {
+        "raw_city": "Santa Barbara",
+        "country": "United States",
+        "venue": "Santa Barbara Bowl",
+        "date": "June 22",
+        "reason": "no city >=100k within reach of Santa Barbara"
+      },
+      {
+        "raw_city": "Bend",
+        "country": "United States",
+        "venue": "Hayden Homes Amphitheater",
+        "date": "June 27",
+        "reason": "no city >=100k within reach of Bend"
+      },
+      {
+        "raw_city": "Grand Junction",
+        "country": "United States",
+        "venue": "Amphitheater at Las Colonias Park",
+        "date": "July 1",
+        "reason": "no city >=100k within reach of Grand Junction"
+      },
+      {
+        "raw_city": "Dillon",
+        "country": "United States",
+        "venue": "Dillon Amphitheater",
+        "date": "July 3",
+        "reason": "no city >=100k within reach of Dillon"
+      },
+      {
+        "raw_city": "Erie",
+        "country": "United States",
+        "venue": "Warner Theatre",
+        "date": "October 23",
+        "reason": "no city >=100k within reach of Erie"
+      },
+      {
+        "raw_city": "Asheville",
+        "country": "United States",
+        "venue": "ExploreAsheville.com Arena",
+        "date": "March 21",
+        "reason": "no city >=100k within reach of Asheville"
+      },
+      {
+        "raw_city": "Sioux City",
+        "country": "United States",
+        "venue": "Orpheum Theatre",
+        "date": "April 2",
+        "reason": "no city >=100k within reach of Sioux City"
+      },
+      {
+        "raw_city": "Mankato",
+        "country": "United States",
+        "venue": "Mayo Clinic Health System Event Center",
+        "date": "April 4",
+        "reason": "no city >=100k within reach of Mankato"
+      },
+      {
+        "raw_city": "Eau Claire",
+        "country": "United States",
+        "venue": "Sonnentag Event Center",
+        "date": "April 5",
+        "reason": "no city >=100k within reach of Eau Claire"
+      },
+      {
+        "raw_city": "West Lafayette",
+        "country": "United States",
+        "venue": "Elliott Hall of Music",
+        "date": "April 11",
+        "reason": "no city >=100k within reach of West Lafayette"
+      },
+      {
+        "raw_city": "Kalamazoo",
+        "country": "United States",
+        "venue": "Miller Auditorium",
+        "date": "April 16",
+        "reason": "no city >=100k within reach of Kalamazoo"
+      },
+      {
+        "raw_city": "Youngstown",
+        "country": "United States",
+        "venue": "Powers Auditorium",
+        "date": "April 19",
+        "reason": "no city >=100k within reach of Youngstown"
+      },
+      {
+        "raw_city": "Williamsport",
+        "country": "United States",
+        "venue": "Community Arts Center",
+        "date": "April 22",
+        "reason": "no city >=100k within reach of Williamsport"
+      },
+      {
+        "raw_city": "La Crosse",
+        "country": "United States",
+        "venue": "La Crosse Center",
+        "date": "March 27",
+        "reason": "no city >=100k within reach of La Crosse"
+      },
+      {
+        "raw_city": "Waukegan",
+        "country": "United States",
+        "venue": "Genesee Theatre",
+        "date": "March 30",
+        "reason": "no city >=100k within reach of Waukegan"
+      },
+      {
+        "raw_city": "Muncie",
+        "country": "United States",
+        "venue": "Emens Auditorum",
+        "date": "March 31",
+        "reason": "no city >=100k within reach of Muncie"
+      },
+      {
+        "raw_city": "Saginaw",
+        "country": "United States",
+        "venue": "The Theater",
+        "date": "April 3",
+        "reason": "no city >=100k within reach of Saginaw"
+      },
+      {
+        "raw_city": "Bowling Green",
+        "country": "United States",
+        "venue": "Southern Kentucky Performing Arts Center",
+        "date": "April 16",
+        "reason": "no city >=100k within reach of Bowling Green"
+      },
+      {
+        "raw_city": "Asheville",
+        "country": "United States",
+        "venue": "Thomas Wolfe Auditorium",
+        "date": "April 19",
+        "reason": "no city >=100k within reach of Asheville"
+      },
+      {
+        "raw_city": "Spartanburg",
+        "country": "United States",
+        "venue": "Spartanburg Memorial Auditorium",
+        "date": "April 20",
+        "reason": "no city >=100k within reach of Spartanburg"
+      },
+      {
+        "raw_city": "Macon",
+        "country": "United States",
+        "venue": "Macon City Auditorium",
+        "date": "April 22",
+        "reason": "no city >=100k within reach of Macon"
+      },
+      {
+        "raw_city": "Dothan",
+        "country": "United States",
+        "venue": "Dothan Civic Center",
+        "date": "April 23",
+        "reason": "no city >=100k within reach of Dothan"
+      }
+    ],
+    "shows": [
+      {
+        "raw_city": "Milwaukee",
+        "country": "United States",
+        "venue": "Riverside Theater",
+        "date": "November 2",
+        "geocoded": "Milwaukee",
+        "city_id": "5263045"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Auditorium Theatre",
+        "date": "November 3",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Cleveland",
+        "country": "United States",
+        "venue": "KeyBank State Theatre",
+        "date": "November 5",
+        "geocoded": "Cleveland",
+        "city_id": "5150529"
+      },
+      {
+        "raw_city": "Columbus",
+        "country": "United States",
+        "venue": "Palace Theatre",
+        "date": "November 6",
+        "geocoded": "Columbus",
+        "city_id": "4509177"
+      },
+      {
+        "raw_city": "Bloomington",
+        "country": "United States",
+        "venue": "IU Auditorium",
+        "date": "November 7",
+        "geocoded": "Bloomington",
+        "city_id": "5037649"
+      },
+      {
+        "raw_city": "Cincinnati",
+        "country": "United States",
+        "venue": "Procter & Gamble Hall",
+        "date": "November 9",
+        "geocoded": "Cincinnati",
+        "city_id": "4508722"
+      },
+      {
+        "raw_city": "Knoxville",
+        "country": "United States",
+        "venue": "Knoxville Civic Auditorium",
+        "date": "November 10",
+        "geocoded": "Knoxville",
+        "city_id": "4634946"
+      },
+      {
+        "raw_city": "Louisville",
+        "country": "United States",
+        "venue": "Palace Theatre",
+        "date": "November 12",
+        "geocoded": "Louisville",
+        "city_id": "4299276"
+      },
+      {
+        "raw_city": "Charleston",
+        "country": "United States",
+        "venue": "Charleston Municipal Auditorium",
+        "date": "November 13",
+        "geocoded": "Charleston",
+        "city_id": "4574324"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Beacon Theatre",
+        "date": "November 19",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Beacon Theatre",
+        "date": "November 20",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Beacon Theatre",
+        "date": "November 21",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Port Chester",
+        "country": "United States",
+        "venue": "Capitol Theatre",
+        "date": "November 23",
+        "geocoded": "Port Chester",
+        "city_id": "5110266"
+      },
+      {
+        "raw_city": "Port Chester",
+        "country": "United States",
+        "venue": "Capitol Theatre",
+        "date": "November 24",
+        "geocoded": "Port Chester",
+        "city_id": "5110266"
+      },
+      {
+        "raw_city": "Providence",
+        "country": "United States",
+        "venue": "Providence Performing Arts Center",
+        "date": "November 26",
+        "geocoded": "Providence",
+        "city_id": "5224151"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "Wang Theatre",
+        "date": "November 27",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "Philadelphia",
+        "country": "United States",
+        "venue": "The Met",
+        "date": "November 29",
+        "geocoded": "Philadelphia",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Philadelphia",
+        "country": "United States",
+        "venue": "The Met",
+        "date": "November 30",
+        "geocoded": "Philadelphia",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Washington, D.C.",
+        "country": "United States",
+        "venue": "The Anthem",
+        "date": "December 2",
+        "geocoded": "Washington",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Phoenix",
+        "country": "United States",
+        "venue": "Arizona Federal Theatre",
+        "date": "March 3",
+        "geocoded": "Phoenix",
+        "city_id": "5308655"
+      },
+      {
+        "raw_city": "Tucson",
+        "country": "United States",
+        "venue": "Tucson Music Hall",
+        "date": "March 4",
+        "geocoded": "Tucson",
+        "city_id": "5318313"
+      },
+      {
+        "raw_city": "Albuquerque",
+        "country": "United States",
+        "venue": "Kiva Auditorium",
+        "date": "March 6",
+        "geocoded": "Albuquerque",
+        "city_id": "5454711"
+      },
+      {
+        "raw_city": "Lubbock",
+        "country": "United States",
+        "venue": "Helen DeVitt Jones Theater",
+        "date": "March 8",
+        "geocoded": "Lubbock",
+        "city_id": "5525577"
+      },
+      {
+        "raw_city": "Irving",
+        "country": "United States",
+        "venue": "Toyota Music Factory",
+        "date": "March 10",
+        "geocoded": "Irving",
+        "city_id": "4684888"
+      },
+      {
+        "raw_city": "Sugar Land",
+        "country": "United States",
+        "venue": "Smart Financial Centre",
+        "date": "March 11",
+        "geocoded": "Sugar Land",
+        "city_id": "4699066"
+      },
+      {
+        "raw_city": "San Antonio",
+        "country": "United States",
+        "venue": "Majestic Theatre",
+        "date": "March 13",
+        "geocoded": "San Antonio",
+        "city_id": "4726206"
+      },
+      {
+        "raw_city": "San Antonio",
+        "country": "United States",
+        "venue": "Majestic Theatre",
+        "date": "March 14",
+        "geocoded": "San Antonio",
+        "city_id": "4726206"
+      },
+      {
+        "raw_city": "Austin",
+        "country": "United States",
+        "venue": "Bass Concert Hall",
+        "date": "March 16",
+        "geocoded": "Austin",
+        "city_id": "4671654"
+      },
+      {
+        "raw_city": "Shreveport",
+        "country": "United States",
+        "venue": "Shreveport Municipal Memorial Auditorium",
+        "date": "March 18",
+        "geocoded": "Shreveport",
+        "city_id": "4341513"
+      },
+      {
+        "raw_city": "New Orleans",
+        "country": "United States",
+        "venue": "Saenger Theatre",
+        "date": "March 19",
+        "geocoded": "New Orleans",
+        "city_id": "4335045"
+      },
+      {
+        "raw_city": "Montgomery",
+        "country": "United States",
+        "venue": "Montgomery Performing Arts Center",
+        "date": "March 21",
+        "geocoded": "Montgomery",
+        "city_id": "4076784"
+      },
+      {
+        "raw_city": "Nashville",
+        "country": "United States",
+        "venue": "Ryman Auditorium",
+        "date": "March 23",
+        "geocoded": "Nashville",
+        "city_id": "4644585"
+      },
+      {
+        "raw_city": "Atlanta",
+        "country": "United States",
+        "venue": "Fox Theatre",
+        "date": "March 24",
+        "geocoded": "Atlanta",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Savannah",
+        "country": "United States",
+        "venue": "Johnny Mercer Theatre",
+        "date": "March 26",
+        "geocoded": "Savannah",
+        "city_id": "4221552"
+      },
+      {
+        "raw_city": "North Charleston",
+        "country": "United States",
+        "venue": "North Charleston Performing Arts Center",
+        "date": "March 27",
+        "geocoded": "North Charleston",
+        "city_id": "4574324"
+      },
+      {
+        "raw_city": "Columbia",
+        "country": "United States",
+        "venue": "Columbia Township Auditorium",
+        "date": "March 29",
+        "geocoded": "Columbia",
+        "city_id": "4575352"
+      },
+      {
+        "raw_city": "Charlotte",
+        "country": "United States",
+        "venue": "Ovens Auditorium",
+        "date": "March 30",
+        "geocoded": "Charlotte",
+        "city_id": "4460243"
+      },
+      {
+        "raw_city": "Greensboro",
+        "country": "United States",
+        "venue": "Steven Tanger Center",
+        "date": "April 1",
+        "geocoded": "Greensboro",
+        "city_id": "4469146"
+      },
+      {
+        "raw_city": "Chattanooga",
+        "country": "United States",
+        "venue": "Tivoli Theatre",
+        "date": "April 4",
+        "geocoded": "Chattanooga",
+        "city_id": "4612862"
+      },
+      {
+        "raw_city": "Birmingham",
+        "country": "United States",
+        "venue": "BJCC Concert Hall",
+        "date": "April 5",
+        "geocoded": "Birmingham",
+        "city_id": "4049979"
+      },
+      {
+        "raw_city": "Mobile",
+        "country": "United States",
+        "venue": "Saenger Theatre",
+        "date": "April 7",
+        "geocoded": "Mobile",
+        "city_id": "4076598"
+      },
+      {
+        "raw_city": "Meridian",
+        "country": "United States",
+        "venue": "Riley Center",
+        "date": "April 8",
+        "geocoded": "Meridian",
+        "city_id": "5586437"
+      },
+      {
+        "raw_city": "Memphis",
+        "country": "United States",
+        "venue": "Orpheum Theatre",
+        "date": "April 9",
+        "geocoded": "Memphis",
+        "city_id": "4641239"
+      },
+      {
+        "raw_city": "Little Rock",
+        "country": "United States",
+        "venue": "Robinson Center",
+        "date": "April 11",
+        "geocoded": "Little Rock",
+        "city_id": "4119403"
+      },
+      {
+        "raw_city": "Tulsa",
+        "country": "United States",
+        "venue": "Tulsa Theater",
+        "date": "April 13",
+        "geocoded": "Tulsa",
+        "city_id": "4553433"
+      },
+      {
+        "raw_city": "Oklahoma City",
+        "country": "United States",
+        "venue": "Thelma Gaylord Performing Arts Theater",
+        "date": "April 14",
+        "geocoded": "Oklahoma City",
+        "city_id": "4544349"
+      },
+      {
+        "raw_city": "Spokane",
+        "country": "United States",
+        "venue": "First Interstate Center for the Arts",
+        "date": "May 28",
+        "geocoded": "Spokane",
+        "city_id": "5811696"
+      },
+      {
+        "raw_city": "Kennewick",
+        "country": "United States",
+        "venue": "Toyota Center",
+        "date": "May 29",
+        "geocoded": "Kennewick",
+        "city_id": "7289169"
+      },
+      {
+        "raw_city": "Portland",
+        "country": "United States",
+        "venue": "Arlene Schnitzer Concert Hall",
+        "date": "May 31",
+        "geocoded": "Portland",
+        "city_id": "5746545"
+      },
+      {
+        "raw_city": "Seattle",
+        "country": "United States",
+        "venue": "Paramount Theatre",
+        "date": "June 1",
+        "geocoded": "Seattle",
+        "city_id": "5809844"
+      },
+      {
+        "raw_city": "Seattle",
+        "country": "United States",
+        "venue": "Paramount Theatre",
+        "date": "June 2",
+        "geocoded": "Seattle",
+        "city_id": "5809844"
+      },
+      {
+        "raw_city": "Eugene",
+        "country": "United States",
+        "venue": "Silva Concert Hall",
+        "date": "June 5",
+        "geocoded": "Eugene",
+        "city_id": "5725846"
+      },
+      {
+        "raw_city": "Oakland",
+        "country": "United States",
+        "venue": "Fox Oakland Theatre",
+        "date": "June 9",
+        "geocoded": "Oakland",
+        "city_id": "5391959"
+      },
+      {
+        "raw_city": "Oakland",
+        "country": "United States",
+        "venue": "Fox Oakland Theatre",
+        "date": "June 10",
+        "geocoded": "Oakland",
+        "city_id": "5391959"
+      },
+      {
+        "raw_city": "Oakland",
+        "country": "United States",
+        "venue": "Fox Oakland Theatre",
+        "date": "June 11",
+        "geocoded": "Oakland",
+        "city_id": "5391959"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "Pantages Theatre",
+        "date": "June 14",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "Pantages Theatre",
+        "date": "June 15",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "Pantages Theatre",
+        "date": "June 16",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "San Diego",
+        "country": "United States",
+        "venue": "San Diego Civic Theatre",
+        "date": "June 18",
+        "geocoded": "San Diego",
+        "city_id": "5391811"
+      },
+      {
+        "raw_city": "Long Beach",
+        "country": "United States",
+        "venue": "Terrace Theater",
+        "date": "June 20",
+        "geocoded": "Long Beach",
+        "city_id": "5367929"
+      },
+      {
+        "raw_city": "Santa Cruz",
+        "country": "United States",
+        "venue": "Santa Cruz Civic Auditorium",
+        "date": "June 23",
+        "geocoded": "Santa Cruz",
+        "city_id": "5392171"
+      },
+      {
+        "raw_city": "Sacramento",
+        "country": "United States",
+        "venue": "Sacramento Memorial Auditorium",
+        "date": "June 25",
+        "geocoded": "Sacramento",
+        "city_id": "5389489"
+      },
+      {
+        "raw_city": "Boise",
+        "country": "United States",
+        "venue": "Morrison Center",
+        "date": "June 28",
+        "geocoded": "Boise",
+        "city_id": "5586437"
+      },
+      {
+        "raw_city": "Salt Lake City",
+        "country": "United States",
+        "venue": "Eccles Theater",
+        "date": "June 30",
+        "geocoded": "Salt Lake City",
+        "city_id": "5780993"
+      },
+      {
+        "raw_city": "Denver",
+        "country": "United States",
+        "venue": "Buell Theater",
+        "date": "July 5",
+        "geocoded": "Denver",
+        "city_id": "5419384"
+      },
+      {
+        "raw_city": "Denver",
+        "country": "United States",
+        "venue": "Buell Theater",
+        "date": "July 6",
+        "geocoded": "Denver",
+        "city_id": "5419384"
+      },
+      {
+        "raw_city": "Kansas City",
+        "country": "United States",
+        "venue": "Midland Theatre",
+        "date": "October 1",
+        "geocoded": "Kansas City",
+        "city_id": "4393217"
+      },
+      {
+        "raw_city": "Kansas City",
+        "country": "United States",
+        "venue": "Midland Theatre",
+        "date": "October 2",
+        "geocoded": "Kansas City",
+        "city_id": "4393217"
+      },
+      {
+        "raw_city": "St. Louis",
+        "country": "United States",
+        "venue": "Stifel Theatre",
+        "date": "October 4",
+        "geocoded": "St. Louis",
+        "city_id": "4407066"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Cadillac Palace Theatre",
+        "date": "October 6",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Cadillac Palace Theatre",
+        "date": "October 7",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Cadillac Palace Theatre",
+        "date": "October 8",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Milwaukee",
+        "country": "United States",
+        "venue": "Riverside Theater",
+        "date": "October 11",
+        "geocoded": "Milwaukee",
+        "city_id": "5263045"
+      },
+      {
+        "raw_city": "Milwaukee",
+        "country": "United States",
+        "venue": "Riverside Theater",
+        "date": "October 12",
+        "geocoded": "Milwaukee",
+        "city_id": "5263045"
+      },
+      {
+        "raw_city": "Grand Rapids",
+        "country": "United States",
+        "venue": "DeVos Performance Hall",
+        "date": "October 14",
+        "geocoded": "Grand Rapids",
+        "city_id": "4994358"
+      },
+      {
+        "raw_city": "Indianapolis",
+        "country": "United States",
+        "venue": "Murat Theatre",
+        "date": "October 16",
+        "geocoded": "Indianapolis",
+        "city_id": "4259418"
+      },
+      {
+        "raw_city": "Indianapolis",
+        "country": "United States",
+        "venue": "Murat Theatre",
+        "date": "October 17",
+        "geocoded": "Indianapolis",
+        "city_id": "4259418"
+      },
+      {
+        "raw_city": "Cincinnati",
+        "country": "United States",
+        "venue": "Andrew J. Brady Music Center",
+        "date": "October 20",
+        "geocoded": "Cincinnati",
+        "city_id": "4508722"
+      },
+      {
+        "raw_city": "Akron",
+        "country": "United States",
+        "venue": "Akron Civic Theatre",
+        "date": "October 21",
+        "geocoded": "Akron",
+        "city_id": "5145476"
+      },
+      {
+        "raw_city": "Rochester",
+        "country": "United States",
+        "venue": "Auditorium Theatre",
+        "date": "October 24",
+        "geocoded": "Rochester",
+        "city_id": "5134086"
+      },
+      {
+        "raw_city": "Schenectady",
+        "country": "United States",
+        "venue": "Proctor's Theatre",
+        "date": "October 30",
+        "geocoded": "Schenectady",
+        "city_id": "5106834"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "Orpheum Theatre",
+        "date": "November 3",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "Orpheum Theatre",
+        "date": "November 4",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "Orpheum Theatre",
+        "date": "November 5",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "Port Chester",
+        "country": "United States",
+        "venue": "Capitol Theatre",
+        "date": "November 7",
+        "geocoded": "Port Chester",
+        "city_id": "5110266"
+      },
+      {
+        "raw_city": "Port Chester",
+        "country": "United States",
+        "venue": "Capitol Theatre",
+        "date": "November 8",
+        "geocoded": "Port Chester",
+        "city_id": "5110266"
+      },
+      {
+        "raw_city": "Providence",
+        "country": "United States",
+        "venue": "Providence Performing Arts Center",
+        "date": "November 10",
+        "geocoded": "Providence",
+        "city_id": "5224151"
+      },
+      {
+        "raw_city": "Waterbury",
+        "country": "United States",
+        "venue": "Palace Theater",
+        "date": "November 11",
+        "geocoded": "Waterbury",
+        "city_id": "4839366"
+      },
+      {
+        "raw_city": "Springfield",
+        "country": "United States",
+        "venue": "Symphony Hall",
+        "date": "November 12",
+        "geocoded": "Springfield",
+        "city_id": "4409896"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Kings Theatre Brooklyn",
+        "date": "November 14",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Kings Theatre Brooklyn",
+        "date": "November 15",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Beacon Theatre",
+        "date": "November 16",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Philadelphia",
+        "country": "United States",
+        "venue": "Fillmore Philadelphia",
+        "date": "November 19",
+        "geocoded": "Philadelphia",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Newark",
+        "country": "United States",
+        "venue": "Prudential Hall",
+        "date": "November 20",
+        "geocoded": "Newark",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Newark",
+        "country": "United States",
+        "venue": "Prudential Hall",
+        "date": "November 21",
+        "geocoded": "Newark",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Baltimore",
+        "country": "United States",
+        "venue": "Joseph Meyerhoff Symphony Hall",
+        "date": "November 24",
+        "geocoded": "Baltimore",
+        "city_id": "4347778"
+      },
+      {
+        "raw_city": "Baltimore",
+        "country": "United States",
+        "venue": "Joseph Meyerhoff Symphony Hall",
+        "date": "November 25",
+        "geocoded": "Baltimore",
+        "city_id": "4347778"
+      },
+      {
+        "raw_city": "Richmond",
+        "country": "United States",
+        "venue": "Altria Theater",
+        "date": "November 27",
+        "geocoded": "Richmond",
+        "city_id": "4781708"
+      },
+      {
+        "raw_city": "Roanoke",
+        "country": "United States",
+        "venue": "Berglund Performing Arts Center",
+        "date": "November 29",
+        "geocoded": "Roanoke",
+        "city_id": "4782167"
+      },
+      {
+        "raw_city": "Huntington",
+        "country": "United States",
+        "venue": "Keith-Albee Theatre",
+        "date": "November 30",
+        "geocoded": "Huntington",
+        "city_id": "4300488"
+      },
+      {
+        "raw_city": "Richmond",
+        "country": "United States",
+        "venue": "EKU Center for the Arts",
+        "date": "December 2",
+        "geocoded": "Richmond",
+        "city_id": "4781708"
+      },
+      {
+        "raw_city": "Evansville",
+        "country": "United States",
+        "venue": "Old National Events Plaza",
+        "date": "December 3",
+        "geocoded": "Evansville",
+        "city_id": "4257227"
+      },
+      {
+        "raw_city": "Fort Lauderdale",
+        "country": "United States",
+        "venue": "Au-Rene Theater",
+        "date": "March 1",
+        "geocoded": "Fort Lauderdale",
+        "city_id": "4155966"
+      },
+      {
+        "raw_city": "Fort Lauderdale",
+        "country": "United States",
+        "venue": "Au-Rene Theater",
+        "date": "March 2",
+        "geocoded": "Fort Lauderdale",
+        "city_id": "4155966"
+      },
+      {
+        "raw_city": "Clearwater",
+        "country": "United States",
+        "venue": "Ruth Eckerd Hall",
+        "date": "March 5",
+        "geocoded": "Clearwater",
+        "city_id": "4171563"
+      },
+      {
+        "raw_city": "Clearwater",
+        "country": "United States",
+        "venue": "Ruth Eckerd Hall",
+        "date": "March 6",
+        "geocoded": "Clearwater",
+        "city_id": "4171563"
+      },
+      {
+        "raw_city": "Fort Myers",
+        "country": "United States",
+        "venue": "Suncoast Credit Union Arena",
+        "date": "March 7",
+        "geocoded": "Fort Myers",
+        "city_id": "4149962"
+      },
+      {
+        "raw_city": "Orlando",
+        "country": "United States",
+        "venue": "Walt Disney Theater",
+        "date": "March 9",
+        "geocoded": "Orlando",
+        "city_id": "4167147"
+      },
+      {
+        "raw_city": "Orlando",
+        "country": "United States",
+        "venue": "Walt Disney Theater",
+        "date": "March 10",
+        "geocoded": "Orlando",
+        "city_id": "4167147"
+      },
+      {
+        "raw_city": "Jacksonville",
+        "country": "United States",
+        "venue": "Moran Theater",
+        "date": "March 12",
+        "geocoded": "Jacksonville",
+        "city_id": "4160021"
+      },
+      {
+        "raw_city": "Athens",
+        "country": "United States",
+        "venue": "Classic Center",
+        "date": "March 14",
+        "geocoded": "Athens",
+        "city_id": "4180386"
+      },
+      {
+        "raw_city": "Athens",
+        "country": "United States",
+        "venue": "Classic Center",
+        "date": "March 15",
+        "geocoded": "Athens",
+        "city_id": "4180386"
+      },
+      {
+        "raw_city": "Charlotte",
+        "country": "United States",
+        "venue": "Belk Theater",
+        "date": "March 17",
+        "geocoded": "Charlotte",
+        "city_id": "4460243"
+      },
+      {
+        "raw_city": "Fayetteville",
+        "country": "United States",
+        "venue": "Crown Theatre",
+        "date": "March 18",
+        "geocoded": "Fayetteville",
+        "city_id": "4466033"
+      },
+      {
+        "raw_city": "Louisville",
+        "country": "United States",
+        "venue": "Palace Theatre",
+        "date": "March 23",
+        "geocoded": "Louisville",
+        "city_id": "4299276"
+      },
+      {
+        "raw_city": "Louisville",
+        "country": "United States",
+        "venue": "Palace Theatre",
+        "date": "March 24",
+        "geocoded": "Louisville",
+        "city_id": "4299276"
+      },
+      {
+        "raw_city": "Nashville",
+        "country": "United States",
+        "venue": "Brooklyn Bowl",
+        "date": "March 26",
+        "geocoded": "Nashville",
+        "city_id": "4644585"
+      },
+      {
+        "raw_city": "Nashville",
+        "country": "United States",
+        "venue": "Brooklyn Bowl",
+        "date": "March 27",
+        "geocoded": "Nashville",
+        "city_id": "4644585"
+      },
+      {
+        "raw_city": "Memphis",
+        "country": "United States",
+        "venue": "Orpheum Theatre",
+        "date": "March 29",
+        "geocoded": "Memphis",
+        "city_id": "4641239"
+      },
+      {
+        "raw_city": "Memphis",
+        "country": "United States",
+        "venue": "Orpheum Theatre",
+        "date": "March 30",
+        "geocoded": "Memphis",
+        "city_id": "4641239"
+      },
+      {
+        "raw_city": "New Orleans",
+        "country": "United States",
+        "venue": "Saenger Theatre",
+        "date": "April 1",
+        "geocoded": "New Orleans",
+        "city_id": "4335045"
+      },
+      {
+        "raw_city": "Lafayette",
+        "country": "United States",
+        "venue": "Heymann Performing Arts Center",
+        "date": "April 2",
+        "geocoded": "Lafayette",
+        "city_id": "4330145"
+      },
+      {
+        "raw_city": "Dallas",
+        "country": "United States",
+        "venue": "Music Hall at Fair Park",
+        "date": "April 4",
+        "geocoded": "Dallas",
+        "city_id": "4684888"
+      },
+      {
+        "raw_city": "Austin",
+        "country": "United States",
+        "venue": "ACL Live at Moody Theater",
+        "date": "April 5",
+        "geocoded": "Austin",
+        "city_id": "4671654"
+      },
+      {
+        "raw_city": "Austin",
+        "country": "United States",
+        "venue": "ACL Live at Moody Theater",
+        "date": "April 6",
+        "geocoded": "Austin",
+        "city_id": "4671654"
+      },
+      {
+        "raw_city": "Tulsa",
+        "country": "United States",
+        "venue": "Tulsa Theater",
+        "date": "March 25",
+        "geocoded": "Tulsa",
+        "city_id": "4553433"
+      },
+      {
+        "raw_city": "Little Rock",
+        "country": "United States",
+        "venue": "Robinson Center",
+        "date": "March 26",
+        "geocoded": "Little Rock",
+        "city_id": "4119403"
+      },
+      {
+        "raw_city": "Springfield",
+        "country": "United States",
+        "venue": "Juanita K. Hammons Hall",
+        "date": "March 28",
+        "geocoded": "Springfield",
+        "city_id": "4409896"
+      },
+      {
+        "raw_city": "Wichita",
+        "country": "United States",
+        "venue": "Century II Concert Hall",
+        "date": "March 29",
+        "geocoded": "Wichita",
+        "city_id": "4281730"
+      },
+      {
+        "raw_city": "Topeka",
+        "country": "United States",
+        "venue": "Topeka Performing Arts Center",
+        "date": "March 30",
+        "geocoded": "Topeka",
+        "city_id": "4280539"
+      },
+      {
+        "raw_city": "Omaha",
+        "country": "United States",
+        "venue": "Orpheum Theater",
+        "date": "April 1",
+        "geocoded": "Omaha",
+        "city_id": "5074472"
+      },
+      {
+        "raw_city": "Green Bay",
+        "country": "United States",
+        "venue": "Weidner Center for the Performing Arts",
+        "date": "April 6",
+        "geocoded": "Green Bay",
+        "city_id": "5254962"
+      },
+      {
+        "raw_city": "Davenport",
+        "country": "United States",
+        "venue": "Adler Theatre",
+        "date": "April 8",
+        "geocoded": "Davenport",
+        "city_id": "4853423"
+      },
+      {
+        "raw_city": "Peoria",
+        "country": "United States",
+        "venue": "Prairie Home Alliance Theater",
+        "date": "April 9",
+        "geocoded": "Peoria",
+        "city_id": "5308655"
+      },
+      {
+        "raw_city": "Fort Wayne",
+        "country": "United States",
+        "venue": "The Embassy Theatre",
+        "date": "April 12",
+        "geocoded": "Fort Wayne",
+        "city_id": "4920423"
+      },
+      {
+        "raw_city": "South Bend",
+        "country": "United States",
+        "venue": "Morris Performing Arts Center",
+        "date": "April 14",
+        "geocoded": "South Bend",
+        "city_id": "4926563"
+      },
+      {
+        "raw_city": "Toledo",
+        "country": "United States",
+        "venue": "Stranahan Theater",
+        "date": "April 17",
+        "geocoded": "Toledo",
+        "city_id": "5174035"
+      },
+      {
+        "raw_city": "Pittsburgh",
+        "country": "United States",
+        "venue": "Benedum Center",
+        "date": "April 21",
+        "geocoded": "Pittsburgh",
+        "city_id": "5206379"
+      },
+      {
+        "raw_city": "Omaha",
+        "country": "United States",
+        "venue": "Orpheum Theatre",
+        "date": "March 21",
+        "geocoded": "Omaha",
+        "city_id": "5074472"
+      },
+      {
+        "raw_city": "Sioux Falls",
+        "country": "United States",
+        "venue": "Mary W. Sommervold Hall",
+        "date": "March 22",
+        "geocoded": "Sioux Falls",
+        "city_id": "5231851"
+      },
+      {
+        "raw_city": "Rochester",
+        "country": "United States",
+        "venue": "Mayo Civic Center",
+        "date": "March 24",
+        "geocoded": "Rochester",
+        "city_id": "5134086"
+      },
+      {
+        "raw_city": "Iowa City",
+        "country": "United States",
+        "venue": "Hancher Auditorium",
+        "date": "March 25",
+        "geocoded": "Iowa City",
+        "city_id": "4850751"
+      },
+      {
+        "raw_city": "Rockford",
+        "country": "United States",
+        "venue": "Coronado Theatre",
+        "date": "March 28",
+        "geocoded": "Rockford",
+        "city_id": "4907959"
+      },
+      {
+        "raw_city": "Grand Rapids",
+        "country": "United States",
+        "venue": "DeVos Performance Hall",
+        "date": "April 2",
+        "geocoded": "Grand Rapids",
+        "city_id": "4994358"
+      },
+      {
+        "raw_city": "Detroit",
+        "country": "United States",
+        "venue": "Detroit Masonic Temple",
+        "date": "April 4",
+        "geocoded": "Detroit",
+        "city_id": "4990729"
+      },
+      {
+        "raw_city": "Louisville",
+        "country": "United States",
+        "venue": "The Louisville Palace",
+        "date": "April 6",
+        "geocoded": "Louisville",
+        "city_id": "4299276"
+      },
+      {
+        "raw_city": "Columbus",
+        "country": "United States",
+        "venue": "Palace Theatre",
+        "date": "April 9",
+        "geocoded": "Columbus",
+        "city_id": "4509177"
+      },
+      {
+        "raw_city": "Cleveland",
+        "country": "United States",
+        "venue": "KeyBank State Theatre",
+        "date": "April 10",
+        "geocoded": "Cleveland",
+        "city_id": "5150529"
+      },
+      {
+        "raw_city": "Dayton",
+        "country": "United States",
+        "venue": "Winsupply Theatre",
+        "date": "April 12",
+        "geocoded": "Dayton",
+        "city_id": "4509884"
+      },
+      {
+        "raw_city": "Knoxville",
+        "country": "United States",
+        "venue": "Knoxville Civic Auditorum",
+        "date": "April 14",
+        "geocoded": "Knoxville",
+        "city_id": "4634946"
+      },
+      {
+        "raw_city": "Chattanooga",
+        "country": "United States",
+        "venue": "Soldiers and Sailors Memorial Auditorium",
+        "date": "April 17",
+        "geocoded": "Chattanooga",
+        "city_id": "4612862"
+      },
+      {
+        "raw_city": "Jackson",
+        "country": "United States",
+        "venue": "Thalia Mara Hall",
+        "date": "April 25",
+        "geocoded": "Jackson",
+        "city_id": "4431410"
+      },
+      {
+        "raw_city": "Baton Rouge",
+        "country": "United States",
+        "venue": "Raising Cane's Theatre for the Performing Arts",
+        "date": "April 27",
+        "geocoded": "Baton Rouge",
+        "city_id": "4315588"
+      },
+      {
+        "raw_city": "Shreveport",
+        "country": "United States",
+        "venue": "Shreveport Municipal Memorial Auditorium",
+        "date": "April 28",
+        "geocoded": "Shreveport",
+        "city_id": "4341513"
+      },
+      {
+        "raw_city": "Tyler",
+        "country": "United States",
+        "venue": "Cowan Center",
+        "date": "April 29",
+        "geocoded": "Tyler",
+        "city_id": "4738214"
+      },
+      {
+        "raw_city": "Abilene",
+        "country": "United States",
+        "venue": "Abilene Auditorium",
+        "date": "May 1",
+        "geocoded": "Abilene",
+        "city_id": "4669635"
+      }
+    ]
+  },
+  {
+    "position": 3,
+    "artist": "Pentatonix",
+    "tour_title": "Pentatonix: The World Tour",
+    "url": "https://en.wikipedia.org/wiki/Pentatonix:_The_World_Tour",
+    "revid": 1339571686,
+    "first_show_year": 2019,
+    "regions": [
+      "United States",
+      "Mexico",
+      "Brazil"
+    ],
+    "played": [
+      {
+        "city_id": "5391959",
+        "name": "San Francisco",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5350937",
+        "name": "Fresno",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5368361",
+        "name": "Los Angeles",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5419384",
+        "name": "Denver",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4553433",
+        "name": "Tulsa",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4726206",
+        "name": "San Antonio",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4068590",
+        "name": "Huntsville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4299276",
+        "name": "Louisville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4469146",
+        "name": "Greensboro",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4167147",
+        "name": "Orlando",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5178127",
+        "name": "Allentown",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5128581",
+        "name": "New York City",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4956184",
+        "name": "Worcester",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4994358",
+        "name": "Grand Rapids",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4509177",
+        "name": "Columbus",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5263045",
+        "name": "Milwaukee",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4644585",
+        "name": "Nashville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4853423",
+        "name": "Davenport",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5254962",
+        "name": "Green Bay",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5037649",
+        "name": "Minneapolis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5059163",
+        "name": "Fargo",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5812944",
+        "name": "Tacoma",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5506956",
+        "name": "Las Vegas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4407066",
+        "name": "St. Louis",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4393217",
+        "name": "Kansas City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4409896",
+        "name": "Springfield",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4887398",
+        "name": "Chicago",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4853828",
+        "name": "Des Moines",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4174757",
+        "name": "Tampa",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4094455",
+        "name": "Tuscaloosa",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4160021",
+        "name": "Jacksonville",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4575352",
+        "name": "Columbia",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4781708",
+        "name": "Richmond",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5282804",
+        "name": "Bridgeport",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "3530597",
+        "name": "Mexico City",
+        "country": "MX",
+        "shows": 1
+      },
+      {
+        "city_id": "4005539",
+        "name": "Guadalajara",
+        "country": "MX",
+        "shows": 1
+      },
+      {
+        "city_id": "3464975",
+        "name": "Curitiba",
+        "country": "BR",
+        "shows": 1
+      },
+      {
+        "city_id": "3451190",
+        "name": "Rio de Janeiro",
+        "country": "BR",
+        "shows": 1
+      },
+      {
+        "city_id": "3448439",
+        "name": "Sao Paulo",
+        "country": "BR",
+        "shows": 1
+      },
+      {
+        "city_id": "4744709",
+        "name": "Arlington",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4460243",
+        "name": "Charlotte",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4221333",
+        "name": "Sandy Springs",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5145476",
+        "name": "Akron",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4487042",
+        "name": "Raleigh",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5392171",
+        "name": "San Jose",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5140405",
+        "name": "Syracuse",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4259418",
+        "name": "Indianapolis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4508722",
+        "name": "Cincinnati",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4898015",
+        "name": "Joliet",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4180439",
+        "name": "Atlanta",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4684888",
+        "name": "Dallas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4684724",
+        "name": "Cypress",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5308655",
+        "name": "Phoenix",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5323810",
+        "name": "Anaheim",
+        "country": "US",
+        "shows": 1
+      }
+    ],
+    "unmapped": [
+      {
+        "raw_city": "Augusta",
+        "country": "United States",
+        "venue": "James Brown Arena",
+        "date": "June 2, 2019",
+        "reason": "no city >=100k within reach of Augusta"
+      },
+      {
+        "raw_city": "Atlantic City",
+        "country": "United States",
+        "venue": "Hard Rock Live",
+        "date": "June 9, 2019",
+        "reason": "no city >=100k within reach of Atlantic City"
+      },
+      {
+        "raw_city": "Uncasville",
+        "country": "United States",
+        "venue": "Mohegan Sun Arena",
+        "date": "June 13, 2019",
+        "reason": "name not found in cities5000"
+      },
+      {
+        "raw_city": "Stateline",
+        "country": "United States",
+        "venue": "Lake Tahoe Outdoor Arena",
+        "date": "July 7, 2019",
+        "reason": "name not found in cities5000"
+      },
+      {
+        "raw_city": "Orange Beach",
+        "country": "United States",
+        "venue": "The Amphitheater at The Wharf",
+        "date": "August 20, 2019",
+        "reason": "no city >=100k within reach of Orange Beach"
+      },
+      {
+        "raw_city": "Gilford",
+        "country": "United States",
+        "venue": "Bank of New Hampshire Pavilion",
+        "date": "August 29, 2019",
+        "reason": "no city >=100k within reach of Gilford"
+      },
+      {
+        "raw_city": "Canfield",
+        "country": "United States",
+        "venue": "Canfield Fairgrounds",
+        "date": "September 1, 2019",
+        "reason": "no city >=100k within reach of Canfield"
+      },
+      {
+        "raw_city": "Holmdel",
+        "country": "United States",
+        "venue": "PNC Bank Arts Center",
+        "date": "August 20, 2023",
+        "reason": "name not found in cities5000"
+      }
+    ],
+    "shows": [
+      {
+        "raw_city": "Oakland",
+        "country": "United States",
+        "venue": "Oracle Arena",
+        "date": "May 11, 2019",
+        "geocoded": "Oakland",
+        "city_id": "5391959"
+      },
+      {
+        "raw_city": "Fresno",
+        "country": "United States",
+        "venue": "Save Mart Center",
+        "date": "May 14, 2019",
+        "geocoded": "Fresno",
+        "city_id": "5350937"
+      },
+      {
+        "raw_city": "Inglewood",
+        "country": "United States",
+        "venue": "The Forum",
+        "date": "May 16, 2019",
+        "geocoded": "Inglewood",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Denver",
+        "country": "United States",
+        "venue": "Pepsi Center",
+        "date": "May 19, 2019",
+        "geocoded": "Denver",
+        "city_id": "5419384"
+      },
+      {
+        "raw_city": "Tulsa",
+        "country": "United States",
+        "venue": "BOK Center",
+        "date": "May 21, 2019",
+        "geocoded": "Tulsa",
+        "city_id": "4553433"
+      },
+      {
+        "raw_city": "San Antonio",
+        "country": "United States",
+        "venue": "AT&T Center",
+        "date": "May 23, 2019",
+        "geocoded": "San Antonio",
+        "city_id": "4726206"
+      },
+      {
+        "raw_city": "Huntsville",
+        "country": "United States",
+        "venue": "Propst Arena",
+        "date": "May 25, 2019",
+        "geocoded": "Huntsville",
+        "city_id": "4068590"
+      },
+      {
+        "raw_city": "Louisville",
+        "country": "United States",
+        "venue": "KFC Yum! Center",
+        "date": "May 26, 2019",
+        "geocoded": "Louisville",
+        "city_id": "4299276"
+      },
+      {
+        "raw_city": "Greensboro",
+        "country": "United States",
+        "venue": "Greensboro Coliseum",
+        "date": "May 30, 2019",
+        "geocoded": "Greensboro",
+        "city_id": "4469146"
+      },
+      {
+        "raw_city": "Orlando",
+        "country": "United States",
+        "venue": "Amway Center",
+        "date": "June 1, 2019",
+        "geocoded": "Orlando",
+        "city_id": "4167147"
+      },
+      {
+        "raw_city": "Allentown",
+        "country": "United States",
+        "venue": "PPL Center",
+        "date": "June 4, 2019",
+        "geocoded": "Allentown",
+        "city_id": "5178127"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Madison Square Garden",
+        "date": "June 6, 2019",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Worcester",
+        "country": "United States",
+        "venue": "DCU Center",
+        "date": "June 8, 2019",
+        "geocoded": "Worcester",
+        "city_id": "4956184"
+      },
+      {
+        "raw_city": "Grand Rapids",
+        "country": "United States",
+        "venue": "Van Andel Arena",
+        "date": "June 15, 2019",
+        "geocoded": "Grand Rapids",
+        "city_id": "4994358"
+      },
+      {
+        "raw_city": "Columbus",
+        "country": "United States",
+        "venue": "Nationwide Arena",
+        "date": "June 16, 2019",
+        "geocoded": "Columbus",
+        "city_id": "4509177"
+      },
+      {
+        "raw_city": "Milwaukee",
+        "country": "United States",
+        "venue": "Fiserv Forum",
+        "date": "June 18, 2019",
+        "geocoded": "Milwaukee",
+        "city_id": "5263045"
+      },
+      {
+        "raw_city": "Nashville",
+        "country": "United States",
+        "venue": "Bridgestone Arena",
+        "date": "June 20, 2019",
+        "geocoded": "Nashville",
+        "city_id": "4644585"
+      },
+      {
+        "raw_city": "Moline",
+        "country": "United States",
+        "venue": "TaxSlayer Center",
+        "date": "June 22, 2019",
+        "geocoded": "Moline",
+        "city_id": "4853423"
+      },
+      {
+        "raw_city": "Green Bay",
+        "country": "United States",
+        "venue": "Resch Center",
+        "date": "June 23, 2019",
+        "geocoded": "Green Bay",
+        "city_id": "5254962"
+      },
+      {
+        "raw_city": "Saint Paul",
+        "country": "United States",
+        "venue": "Xcel Energy Center",
+        "date": "June 25, 2019",
+        "geocoded": "Saint Paul",
+        "city_id": "5037649"
+      },
+      {
+        "raw_city": "Fargo",
+        "country": "United States",
+        "venue": "Fargodome",
+        "date": "June 26, 2019",
+        "geocoded": "Fargo",
+        "city_id": "5059163"
+      },
+      {
+        "raw_city": "Tacoma",
+        "country": "United States",
+        "venue": "Tacoma Dome",
+        "date": "July 3, 2019",
+        "geocoded": "Tacoma",
+        "city_id": "5812944"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "Mandalay Bay Events Center",
+        "date": "July 6, 2019",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Maryland Heights",
+        "country": "United States",
+        "venue": "Hollywood Casino Amphitheatre",
+        "date": "August 11, 2019",
+        "geocoded": "Maryland Heights",
+        "city_id": "4407066"
+      },
+      {
+        "raw_city": "Kansas City",
+        "country": "United States",
+        "venue": "Starlight Theatre",
+        "date": "August 13, 2019",
+        "geocoded": "Kansas City",
+        "city_id": "4393217"
+      },
+      {
+        "raw_city": "Springfield",
+        "country": "United States",
+        "venue": "Illinois State Fair",
+        "date": "August 14, 2019",
+        "geocoded": "Springfield",
+        "city_id": "4409896"
+      },
+      {
+        "raw_city": "Highland Park",
+        "country": "United States",
+        "venue": "Ravinia Pavilion",
+        "date": "August 15, 2019",
+        "geocoded": "Highland Park",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Des Moines",
+        "country": "United States",
+        "venue": "Iowa State Fairgrounds",
+        "date": "August 17, 2019",
+        "geocoded": "Des Moines",
+        "city_id": "4853828"
+      },
+      {
+        "raw_city": "Brandon",
+        "country": "United States",
+        "venue": "Brandon Amphitheater",
+        "date": "August 19, 2019",
+        "geocoded": "Brandon",
+        "city_id": "4174757"
+      },
+      {
+        "raw_city": "Tuscaloosa",
+        "country": "United States",
+        "venue": "Tuscaloosa Amphitheater",
+        "date": "August 22, 2019",
+        "geocoded": "Tuscaloosa",
+        "city_id": "4094455"
+      },
+      {
+        "raw_city": "Jacksonville",
+        "country": "United States",
+        "venue": "Daily's Place",
+        "date": "August 24, 2019",
+        "geocoded": "Jacksonville",
+        "city_id": "4160021"
+      },
+      {
+        "raw_city": "Columbia",
+        "country": "United States",
+        "venue": "Merriweather Post Pavilion",
+        "date": "August 26, 2019",
+        "geocoded": "Columbia",
+        "city_id": "4575352"
+      },
+      {
+        "raw_city": "Hopewell",
+        "country": "United States",
+        "venue": "Marvin Sands Amphitheater",
+        "date": "August 27, 2019",
+        "geocoded": "Hopewell",
+        "city_id": "4781708"
+      },
+      {
+        "raw_city": "Bethel",
+        "country": "United States",
+        "venue": "Bethel Woods Center for the Arts",
+        "date": "August 31, 2019",
+        "geocoded": "Bethel",
+        "city_id": "5282804"
+      },
+      {
+        "raw_city": "Mexico City",
+        "country": "Mexico",
+        "venue": "Teatro Metropólitan",
+        "date": "October 15, 2019",
+        "geocoded": "Mexico City",
+        "city_id": "3530597"
+      },
+      {
+        "raw_city": "Guadalajara",
+        "country": "Mexico",
+        "venue": "Teatro Diana",
+        "date": "October 16, 2019",
+        "geocoded": "Guadalajara",
+        "city_id": "4005539"
+      },
+      {
+        "raw_city": "Curitiba",
+        "country": "Brazil",
+        "venue": "Teatro Positivo",
+        "date": "October 22, 2019",
+        "geocoded": "Curitiba",
+        "city_id": "3464975"
+      },
+      {
+        "raw_city": "Rio de Janeiro",
+        "country": "Brazil",
+        "venue": "Vivo Rio",
+        "date": "October 24, 2019",
+        "geocoded": "Rio de Janeiro",
+        "city_id": "3451190"
+      },
+      {
+        "raw_city": "São Paulo",
+        "country": "Brazil",
+        "venue": "Tom Brasil",
+        "date": "October 26, 2019",
+        "geocoded": "Sao Paulo",
+        "city_id": "3448439"
+      },
+      {
+        "raw_city": "Jacksonville",
+        "country": "United States",
+        "venue": "Daily's Place",
+        "date": "August 9, 2023",
+        "geocoded": "Jacksonville",
+        "city_id": "4160021"
+      },
+      {
+        "raw_city": "Tampa",
+        "country": "United States",
+        "venue": "MidFlorida Credit Union Amphitheatre",
+        "date": "August 10, 2023",
+        "geocoded": "Tampa",
+        "city_id": "4174757"
+      },
+      {
+        "raw_city": "Bristow",
+        "country": "United States",
+        "venue": "Jiffy Lube Live",
+        "date": "August 12, 2023",
+        "geocoded": "Bristow",
+        "city_id": "4744709"
+      },
+      {
+        "raw_city": "Charlotte",
+        "country": "United States",
+        "venue": "PNC Music Pavlion",
+        "date": "August 13, 2023",
+        "geocoded": "Charlotte",
+        "city_id": "4460243"
+      },
+      {
+        "raw_city": "Alpharetta",
+        "country": "United States",
+        "venue": "Ameris Bank Amphitheatre",
+        "date": "August 15, 2023",
+        "geocoded": "Alpharetta",
+        "city_id": "4221333"
+      },
+      {
+        "raw_city": "Cuyahoga Falls",
+        "country": "United States",
+        "venue": "Blossom Music Center",
+        "date": "August 17, 2023",
+        "geocoded": "Cuyahoga Falls",
+        "city_id": "5145476"
+      },
+      {
+        "raw_city": "Raleigh",
+        "country": "United States",
+        "venue": "Coastal Credit Union Park",
+        "date": "August 19, 2023",
+        "geocoded": "Raleigh",
+        "city_id": "4487042"
+      },
+      {
+        "raw_city": "Saratoga",
+        "country": "United States",
+        "venue": "Saratoga Performing Arts Center",
+        "date": "August 23, 2023",
+        "geocoded": "Saratoga",
+        "city_id": "5392171"
+      },
+      {
+        "raw_city": "Syracuse",
+        "country": "United States",
+        "venue": "St. Joesph's Health Amphitheater at Lakeview",
+        "date": "August 24, 2023",
+        "geocoded": "Syracuse",
+        "city_id": "5140405"
+      },
+      {
+        "raw_city": "Noblesville",
+        "country": "United States",
+        "venue": "Ruoff Music Center",
+        "date": "August 26, 2023",
+        "geocoded": "Noblesville",
+        "city_id": "4259418"
+      },
+      {
+        "raw_city": "Maryland Heights",
+        "country": "United States",
+        "venue": "Hollywood Casino Amphitheatre",
+        "date": "August 28, 2023",
+        "geocoded": "Maryland Heights",
+        "city_id": "4407066"
+      },
+      {
+        "raw_city": "Cincinnati",
+        "country": "United States",
+        "venue": "Riverbend Music Center",
+        "date": "August 29, 2023",
+        "geocoded": "Cincinnati",
+        "city_id": "4508722"
+      },
+      {
+        "raw_city": "Milwaukee",
+        "country": "United States",
+        "venue": "American Family Insurance Amphitheater",
+        "date": "August 31, 2023",
+        "geocoded": "Milwaukee",
+        "city_id": "5263045"
+      },
+      {
+        "raw_city": "Tinley Park",
+        "country": "United States",
+        "venue": "Hollywood Casino Amphitheatre",
+        "date": "September 2, 2023",
+        "geocoded": "Tinley Park",
+        "city_id": "4898015"
+      },
+      {
+        "raw_city": "Clarkston",
+        "country": "United States",
+        "venue": "Pine Knob Music Theatre",
+        "date": "September 3, 2023",
+        "geocoded": "Clarkston",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Dallas",
+        "country": "United States",
+        "venue": "Dos Equis Pavilion",
+        "date": "September 6, 2023",
+        "geocoded": "Dallas",
+        "city_id": "4684888"
+      },
+      {
+        "raw_city": "The Woodlands",
+        "country": "United States",
+        "venue": "Cynthia Woods Mitchell Pavilion",
+        "date": "September 7, 2023",
+        "geocoded": "The Woodlands",
+        "city_id": "4684724"
+      },
+      {
+        "raw_city": "Phoenix",
+        "country": "United States",
+        "venue": "Talking Stick Resort Amphitheatre",
+        "date": "September 9, 2023",
+        "geocoded": "Phoenix",
+        "city_id": "5308655"
+      },
+      {
+        "raw_city": "Irvine",
+        "country": "United States",
+        "venue": "FivePoint Amphitheatre",
+        "date": "September 11, 2023",
+        "geocoded": "Irvine",
+        "city_id": "5323810"
+      },
+      {
+        "raw_city": "Mountain View",
+        "country": "United States",
+        "venue": "Shoreline Amphitheatre",
+        "date": "September 12, 2023",
+        "geocoded": "Mountain View",
+        "city_id": "5392171"
+      },
+      {
+        "raw_city": "Ridgefield",
+        "country": "United States",
+        "venue": "RV Inn Style Resorts Amphitheater",
+        "date": "September 14, 2023",
+        "geocoded": "Ridgefield",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Puyallup",
+        "country": "United States",
+        "venue": "Washington State Fair Events Center",
+        "date": "September 16, 2023",
+        "geocoded": "Puyallup",
+        "city_id": "5812944"
+      }
+    ]
+  },
+  {
+    "position": 4,
+    "artist": "Gracie Abrams",
+    "tour_title": "The Secret of Us Tour",
+    "url": "https://en.wikipedia.org/wiki/The_Secret_of_Us_Tour",
+    "revid": 1365504493,
+    "first_show_year": 2024,
+    "regions": [
+      "United States",
+      "Mexico"
+    ],
+    "played": [
+      {
+        "city_id": "5746545",
+        "name": "Portland",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5809844",
+        "name": "Seattle",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5391959",
+        "name": "San Francisco",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5368361",
+        "name": "Los Angeles",
+        "country": "US",
+        "shows": 5
+      },
+      {
+        "city_id": "5419384",
+        "name": "Denver",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4684888",
+        "name": "Dallas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4699066",
+        "name": "Houston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4671654",
+        "name": "Austin",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4393217",
+        "name": "Kansas City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5037649",
+        "name": "Minneapolis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4887398",
+        "name": "Chicago",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4644585",
+        "name": "Nashville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4180439",
+        "name": "Atlanta",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4140963",
+        "name": "Washington",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5128581",
+        "name": "New York City",
+        "country": "US",
+        "shows": 5
+      },
+      {
+        "city_id": "4930956",
+        "name": "Boston",
+        "country": "US",
+        "shows": 3
+      },
+      {
+        "city_id": "4560349",
+        "name": "Philadelphia",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "3530597",
+        "name": "Mexico City",
+        "country": "MX",
+        "shows": 2
+      }
+    ],
+    "unmapped": [
+      {
+        "raw_city": "Morrison",
+        "country": "United States",
+        "venue": "Red Rocks Amphitheatre",
+        "date": "August 11",
+        "reason": "name not found in cities5000"
+      },
+      {
+        "raw_city": "Morrison",
+        "country": "United States",
+        "venue": "Red Rocks Amphitheatre",
+        "date": "August 12",
+        "reason": "name not found in cities5000"
+      }
+    ],
+    "shows": [
+      {
+        "raw_city": "Portland",
+        "country": "United States",
+        "venue": "Alaska Airlines' Theater of the Clouds",
+        "date": "September 5",
+        "geocoded": "Portland",
+        "city_id": "5746545"
+      },
+      {
+        "raw_city": "Seattle",
+        "country": "United States",
+        "venue": "WaMu Theater",
+        "date": "September 6",
+        "geocoded": "Seattle",
+        "city_id": "5809844"
+      },
+      {
+        "raw_city": "Berkeley",
+        "country": "United States",
+        "venue": "The Greek Theatre",
+        "date": "September 8",
+        "geocoded": "Berkeley",
+        "city_id": "5391959"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "Greek Theatre",
+        "date": "September 9",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "Greek Theatre",
+        "date": "September 11",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "Greek Theatre",
+        "date": "September 12",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Denver",
+        "country": "United States",
+        "venue": "Fillmore Auditorium",
+        "date": "September 15",
+        "geocoded": "Denver",
+        "city_id": "5419384"
+      },
+      {
+        "raw_city": "Denver",
+        "country": "United States",
+        "venue": "Fillmore Auditorium",
+        "date": "September 16",
+        "geocoded": "Denver",
+        "city_id": "5419384"
+      },
+      {
+        "raw_city": "Irving",
+        "country": "United States",
+        "venue": "The Pavilion at Toyota Music Factory",
+        "date": "September 19",
+        "geocoded": "Irving",
+        "city_id": "4684888"
+      },
+      {
+        "raw_city": "Houston",
+        "country": "United States",
+        "venue": "713 Music Hall",
+        "date": "September 20",
+        "geocoded": "Houston",
+        "city_id": "4699066"
+      },
+      {
+        "raw_city": "Austin",
+        "country": "United States",
+        "venue": "Moody Amphitheater",
+        "date": "September 22",
+        "geocoded": "Austin",
+        "city_id": "4671654"
+      },
+      {
+        "raw_city": "Kansas City",
+        "country": "United States",
+        "venue": "Uptown Theater",
+        "date": "September 24",
+        "geocoded": "Kansas City",
+        "city_id": "4393217"
+      },
+      {
+        "raw_city": "Minneapolis",
+        "country": "United States",
+        "venue": "The Armory",
+        "date": "September 25",
+        "geocoded": "Minneapolis",
+        "city_id": "5037649"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Byline Bank Aragon Ballroom",
+        "date": "September 27",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Nashville",
+        "country": "United States",
+        "venue": "Ryman Auditorium",
+        "date": "September 29",
+        "geocoded": "Nashville",
+        "city_id": "4644585"
+      },
+      {
+        "raw_city": "Atlanta",
+        "country": "United States",
+        "venue": "Coca-Cola Roxy",
+        "date": "September 30",
+        "geocoded": "Atlanta",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Washington, D.C.",
+        "country": "United States",
+        "venue": "The Anthem",
+        "date": "October 2",
+        "geocoded": "Washington",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Radio City Music Hall",
+        "date": "October 4",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Radio City Music Hall",
+        "date": "October 5",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "MGM Music Hall at Fenway",
+        "date": "October 9",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "Portland",
+        "country": "United States",
+        "venue": "State Theatre",
+        "date": "October 10",
+        "geocoded": "Portland",
+        "city_id": "5746545"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Radio City Music Hall",
+        "date": "October 14",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Philadelphia",
+        "country": "United States",
+        "venue": "The Met Philadelphia",
+        "date": "October 15",
+        "geocoded": "Philadelphia",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "TD Garden",
+        "date": "July 23",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "TD Garden",
+        "date": "July 24",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Madison Square Garden",
+        "date": "July 28",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Madison Square Garden",
+        "date": "July 29",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Grant Park",
+        "date": "July 31",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Inglewood",
+        "country": "United States",
+        "venue": "Kia Forum",
+        "date": "August 6",
+        "geocoded": "Inglewood",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Inglewood",
+        "country": "United States",
+        "venue": "Kia Forum",
+        "date": "August 7",
+        "geocoded": "Inglewood",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "San Francisco",
+        "country": "United States",
+        "venue": "Golden Gate Park",
+        "date": "August 9",
+        "geocoded": "San Francisco",
+        "city_id": "5391959"
+      },
+      {
+        "raw_city": "Mexico City",
+        "country": "Mexico",
+        "venue": "Pepsi Center WTC",
+        "date": "August 26",
+        "geocoded": "Mexico City",
+        "city_id": "3530597"
+      },
+      {
+        "raw_city": "Mexico City",
+        "country": "Mexico",
+        "venue": "Pepsi Center WTC",
+        "date": "August 27",
+        "geocoded": "Mexico City",
+        "city_id": "3530597"
+      }
+    ]
+  },
+  {
+    "position": 5,
+    "artist": "Tea Tairović",
+    "tour_title": "Na Jednu Noć Tour",
+    "url": "https://en.wikipedia.org/wiki/Na_Jednu_No%C4%87_Tour",
+    "revid": 1348770045,
+    "first_show_year": 2023,
+    "regions": [
+      "United States"
+    ],
+    "played": [
+      {
+        "city_id": "4180439",
+        "name": "Atlanta",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4887398",
+        "name": "Chicago",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4160021",
+        "name": "Jacksonville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4164138",
+        "name": "Miami",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4990729",
+        "name": "Detroit",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4407066",
+        "name": "St. Louis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5506956",
+        "name": "Las Vegas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4174757",
+        "name": "Tampa",
+        "country": "US",
+        "shows": 1
+      }
+    ],
+    "unmapped": [
+      {
+        "raw_city": "Utica",
+        "country": "United States",
+        "venue": "Valentino’s Banquet Hall",
+        "date": "September 24, 2023",
+        "reason": "no city >=100k within reach of Utica"
+      },
+      {
+        "raw_city": "New Jersey",
+        "country": "United States",
+        "venue": "The Meadowbrook",
+        "date": "September 30, 2023",
+        "reason": "name not found in cities5000"
+      }
+    ],
+    "shows": [
+      {
+        "raw_city": "Atlanta",
+        "country": "United States",
+        "venue": "Ehall Atlant",
+        "date": "September 15, 2023",
+        "geocoded": "Atlanta",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Stereo Nightclub",
+        "date": "September 16, 2023",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Jacksonville",
+        "country": "United States",
+        "venue": "Jax Events & Lounge",
+        "date": "September 17, 2023",
+        "geocoded": "Jacksonville",
+        "city_id": "4160021"
+      },
+      {
+        "raw_city": "Miami",
+        "country": "United States",
+        "venue": "Gala Club",
+        "date": "September 20, 2023",
+        "geocoded": "Miami",
+        "city_id": "4164138"
+      },
+      {
+        "raw_city": "Detroit",
+        "country": "United States",
+        "venue": "Imperial House",
+        "date": "September 22, 2023",
+        "geocoded": "Detroit",
+        "city_id": "4990729"
+      },
+      {
+        "raw_city": "St. Louis",
+        "country": "United States",
+        "venue": "Falls Convention Center",
+        "date": "September 23, 2023",
+        "geocoded": "St. Louis",
+        "city_id": "4407066"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "Cafe Derbi",
+        "date": "September 27, 2023",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "St. Petersburg",
+        "country": "United States",
+        "venue": "MK Event Hall",
+        "date": "September 29, 2023",
+        "geocoded": "St. Petersburg",
+        "city_id": "4174757"
+      }
+    ]
+  },
+  {
+    "position": 6,
+    "artist": "Sting",
+    "tour_title": "My Songs Tour",
+    "url": "https://en.wikipedia.org/wiki/My_Songs_Tour",
+    "revid": 1300850907,
+    "first_show_year": 2019,
+    "regions": [
+      "United States"
+    ],
+    "played": [
+      {
+        "city_id": "4887398",
+        "name": "Chicago",
+        "country": "US",
+        "shows": 4
+      },
+      {
+        "city_id": "4140963",
+        "name": "Washington",
+        "country": "US",
+        "shows": 8
+      },
+      {
+        "city_id": "4160021",
+        "name": "Jacksonville",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5368361",
+        "name": "Los Angeles",
+        "country": "US",
+        "shows": 5
+      },
+      {
+        "city_id": "4560349",
+        "name": "Philadelphia",
+        "country": "US",
+        "shows": 3
+      },
+      {
+        "city_id": "5506956",
+        "name": "Las Vegas",
+        "country": "US",
+        "shows": 22
+      },
+      {
+        "city_id": "4994358",
+        "name": "Grand Rapids",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4259418",
+        "name": "Indianapolis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4644585",
+        "name": "Nashville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4174757",
+        "name": "Tampa",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4791259",
+        "name": "Virginia Beach",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5140405",
+        "name": "Syracuse",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5106834",
+        "name": "Albany",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5282804",
+        "name": "Bridgeport",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4930956",
+        "name": "Boston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5133273",
+        "name": "Queens",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4180439",
+        "name": "Atlanta",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4671654",
+        "name": "Austin",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5780993",
+        "name": "Salt Lake City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5746545",
+        "name": "Portland",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5809844",
+        "name": "Seattle",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5511077",
+        "name": "Reno",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5378538",
+        "name": "Oakland",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5391811",
+        "name": "San Diego",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5308655",
+        "name": "Phoenix",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4684888",
+        "name": "Dallas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4684724",
+        "name": "Cypress",
+        "country": "US",
+        "shows": 1
+      }
+    ],
+    "unmapped": [
+      {
+        "raw_city": "Aspen",
+        "country": "United States",
+        "venue": "Town Park",
+        "date": "1 September 2019",
+        "reason": "no city >=100k within reach of Aspen"
+      },
+      {
+        "raw_city": "Taos",
+        "country": "United States",
+        "venue": "Kit Carson Park",
+        "date": "2 September 2019",
+        "reason": "no city >=100k within reach of Taos"
+      },
+      {
+        "raw_city": "Atlantic City",
+        "country": "United States",
+        "venue": "Hard Rock Live Etess Arena",
+        "date": "15 November 2019",
+        "reason": "no city >=100k within reach of Atlantic City"
+      },
+      {
+        "raw_city": "Atlantic City",
+        "country": "United States",
+        "venue": "Hard Rock Live Etess Arena",
+        "date": "13 May 2022",
+        "reason": "no city >=100k within reach of Atlantic City"
+      },
+      {
+        "raw_city": "Atlantic City",
+        "country": "United States",
+        "venue": "Hard Rock Live Etess Arena",
+        "date": "14 May 2022",
+        "reason": "no city >=100k within reach of Atlantic City"
+      },
+      {
+        "raw_city": "Uncasville",
+        "country": "United States",
+        "venue": "Mohegan Sun Arena",
+        "date": "15 May 2022",
+        "reason": "name not found in cities5000"
+      },
+      {
+        "raw_city": "Gilford",
+        "country": "United States",
+        "venue": "Bank of New Hampshire Pavilion",
+        "date": "10 September 2022",
+        "reason": "no city >=100k within reach of Gilford"
+      },
+      {
+        "raw_city": "Bangor",
+        "country": "United States",
+        "venue": "Maine Savings Amphitheater",
+        "date": "11 September 2022",
+        "reason": "no city >=100k within reach of Bangor"
+      },
+      {
+        "raw_city": "Atlantic City",
+        "country": "United States",
+        "venue": "Hard Rock Live Etess Arena",
+        "date": "3 September 2023",
+        "reason": "no city >=100k within reach of Atlantic City"
+      },
+      {
+        "raw_city": "Morrison",
+        "country": "United States",
+        "venue": "Red Rocks Amphitheatre",
+        "date": "20 September 2023",
+        "reason": "name not found in cities5000"
+      },
+      {
+        "raw_city": "Morrison",
+        "country": "United States",
+        "venue": "Red Rocks Amphitheatre",
+        "date": "21 September 2023",
+        "reason": "name not found in cities5000"
+      },
+      {
+        "raw_city": "Palm Desert",
+        "country": "United States",
+        "venue": "Acrisure Arena",
+        "date": "5 October 2023",
+        "reason": "no city >=100k within reach of Palm Desert"
+      },
+      {
+        "raw_city": "Rogers",
+        "country": "United States",
+        "venue": "Walmart Arkansas Music Pavilion",
+        "date": "12 October 2023",
+        "reason": "no city >=100k within reach of Rogers"
+      }
+    ],
+    "shows": [
+      {
+        "raw_city": "Highland Park",
+        "country": "United States",
+        "venue": "Ravinia Pavilion",
+        "date": "23 August 2019",
+        "geocoded": "Highland Park",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Highland Park",
+        "country": "United States",
+        "venue": "Ravinia Pavilion",
+        "date": "24 August 2019",
+        "geocoded": "Highland Park",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Vienna",
+        "country": "United States",
+        "venue": "Filene Center at Wolf Trap",
+        "date": "26 August 2019",
+        "geocoded": "Vienna",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Vienna",
+        "country": "United States",
+        "venue": "Filene Center at Wolf Trap",
+        "date": "27 August 2019",
+        "geocoded": "Vienna",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Vienna",
+        "country": "United States",
+        "venue": "Filene Center at Wolf Trap",
+        "date": "28 August 2019",
+        "geocoded": "Vienna",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Jacksonville",
+        "country": "United States",
+        "venue": "Daily's Place",
+        "date": "8 November 2019",
+        "geocoded": "Jacksonville",
+        "city_id": "4160021"
+      },
+      {
+        "raw_city": "Hollywood",
+        "country": "United States",
+        "venue": "Hard Rock Live",
+        "date": "9 November 2019",
+        "geocoded": "Hollywood",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Philadelphia",
+        "country": "United States",
+        "venue": "The Met",
+        "date": "17 November 2019",
+        "geocoded": "Philadelphia",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "29 October 2021",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "30 October 2021",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "3 November 2021",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "5 November 2021",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "6 November 2021",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "10 November 2021",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "12 November 2021",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "13 November 2021",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Grand Rapids",
+        "country": "United States",
+        "venue": "Van Andel Arena",
+        "date": "7 May 2022",
+        "geocoded": "Grand Rapids",
+        "city_id": "4994358"
+      },
+      {
+        "raw_city": "Carmel",
+        "country": "United States",
+        "venue": "The Palladium at the Center",
+        "date": "8 May 2022",
+        "geocoded": "Carmel",
+        "city_id": "4259418"
+      },
+      {
+        "raw_city": "Philadelphia",
+        "country": "United States",
+        "venue": "The Met",
+        "date": "10 May 2022",
+        "geocoded": "Philadelphia",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Philadelphia",
+        "country": "United States",
+        "venue": "The Met",
+        "date": "11 May 2022",
+        "geocoded": "Philadelphia",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Nashville",
+        "country": "United States",
+        "venue": "Ascend Amphitheater",
+        "date": "18 May 2022",
+        "geocoded": "Nashville",
+        "city_id": "4644585"
+      },
+      {
+        "raw_city": "Jacksonville",
+        "country": "United States",
+        "venue": "Daily's Place",
+        "date": "20 May 2022",
+        "geocoded": "Jacksonville",
+        "city_id": "4160021"
+      },
+      {
+        "raw_city": "Tampa",
+        "country": "United States",
+        "venue": "Hard Rock Live Tampa",
+        "date": "21 May 2022",
+        "geocoded": "Tampa",
+        "city_id": "4174757"
+      },
+      {
+        "raw_city": "Hollywood",
+        "country": "United States",
+        "venue": "Hard Rock Live",
+        "date": "22 May 2022",
+        "geocoded": "Hollywood",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "3 June 2022",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "4 June 2022",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "8 June 2022",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "10 June 2022",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "11 June 2022",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "15 June 2022",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "17 June 2022",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "18 June 2022",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Highland Park",
+        "country": "United States",
+        "venue": "Ravinia Pavilion",
+        "date": "27 August 2022",
+        "geocoded": "Highland Park",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Highland Park",
+        "country": "United States",
+        "venue": "Ravinia Pavilion",
+        "date": "28 August 2022",
+        "geocoded": "Highland Park",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Virginia Beach",
+        "country": "United States",
+        "venue": "Veterans United Home Loans Amphitheater",
+        "date": "31 August 2022",
+        "geocoded": "Virginia Beach",
+        "city_id": "4791259"
+      },
+      {
+        "raw_city": "Vienna",
+        "country": "United States",
+        "venue": "Filene Center at Wolf Trap",
+        "date": "2 September 2022",
+        "geocoded": "Vienna",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Vienna",
+        "country": "United States",
+        "venue": "Filene Center at Wolf Trap",
+        "date": "3 September 2022",
+        "geocoded": "Vienna",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Vienna",
+        "country": "United States",
+        "venue": "Filene Center at Wolf Trap",
+        "date": "4 September 2022",
+        "geocoded": "Vienna",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Syracuse",
+        "country": "United States",
+        "venue": "St. Joseph's Health Amphitheater",
+        "date": "6 September 2022",
+        "geocoded": "Syracuse",
+        "city_id": "5140405"
+      },
+      {
+        "raw_city": "Saratoga Springs",
+        "country": "United States",
+        "venue": "Saratoga Performing Arts Center",
+        "date": "7 September 2022",
+        "geocoded": "Saratoga Springs",
+        "city_id": "5106834"
+      },
+      {
+        "raw_city": "Bridgeport",
+        "country": "United States",
+        "venue": "Hartford HealthCare Amphitheater",
+        "date": "9 September 2022",
+        "geocoded": "Bridgeport",
+        "city_id": "5282804"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "1 April 2023",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "2 April 2023",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "5 April 2023",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "7 April 2023",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "8 April 2023",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Colosseum at Caesars Palace",
+        "date": "9 April 2023",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Vienna",
+        "country": "United States",
+        "venue": "Filene Center at Wolf Trap",
+        "date": "1 September 2023",
+        "geocoded": "Vienna",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Vienna",
+        "country": "United States",
+        "venue": "Filene Center at Wolf Trap",
+        "date": "2 September 2023",
+        "geocoded": "Vienna",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "MGM Music Hall at Fenway",
+        "date": "7 September 2023",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "Wantagh",
+        "country": "United States",
+        "venue": "Northwell Health at Jones Beach Theater",
+        "date": "8 September 2023",
+        "geocoded": "Wantagh",
+        "city_id": "5133273"
+      },
+      {
+        "raw_city": "Hollywood",
+        "country": "United States",
+        "venue": "Hard Rock Live",
+        "date": "12 September 2023",
+        "geocoded": "Hollywood",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Hollywood",
+        "country": "United States",
+        "venue": "Hard Rock Live",
+        "date": "13 September 2023",
+        "geocoded": "Hollywood",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Atlanta",
+        "country": "United States",
+        "venue": "Cadence Bank Amphitheatre",
+        "date": "15 September 2023",
+        "geocoded": "Atlanta",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Austin",
+        "country": "United States",
+        "venue": "Moody Center",
+        "date": "17 September 2023",
+        "geocoded": "Austin",
+        "city_id": "4671654"
+      },
+      {
+        "raw_city": "West Valley City",
+        "country": "United States",
+        "venue": "USANA Amphitheatre",
+        "date": "23 September 2023",
+        "geocoded": "West Valley City",
+        "city_id": "5780993"
+      },
+      {
+        "raw_city": "Portland",
+        "country": "United States",
+        "venue": "Moda Center",
+        "date": "26 September 2023",
+        "geocoded": "Portland",
+        "city_id": "5746545"
+      },
+      {
+        "raw_city": "Seattle",
+        "country": "United States",
+        "venue": "Climate Pledge Arena",
+        "date": "27 September 2023",
+        "geocoded": "Seattle",
+        "city_id": "5809844"
+      },
+      {
+        "raw_city": "Reno",
+        "country": "United States",
+        "venue": "Grand Theatre at The Grand Sierra",
+        "date": "1 October 2023",
+        "geocoded": "Reno",
+        "city_id": "5511077"
+      },
+      {
+        "raw_city": "Concord",
+        "country": "United States",
+        "venue": "Concord Pavilion",
+        "date": "2 October 2023",
+        "geocoded": "Concord",
+        "city_id": "5378538"
+      },
+      {
+        "raw_city": "San Diego",
+        "country": "United States",
+        "venue": "Cal Coast Credit Union Open Air Theatre",
+        "date": "4 October 2023",
+        "geocoded": "San Diego",
+        "city_id": "5391811"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "Hollywood Bowl",
+        "date": "7 October 2023",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Phoenix",
+        "country": "United States",
+        "venue": "Arizona Financial Theatre",
+        "date": "9 October 2023",
+        "geocoded": "Phoenix",
+        "city_id": "5308655"
+      },
+      {
+        "raw_city": "Irving",
+        "country": "United States",
+        "venue": "Pavilion at Toyota Music Factory",
+        "date": "14 October 2023",
+        "geocoded": "Irving",
+        "city_id": "4684888"
+      },
+      {
+        "raw_city": "The Woodlands",
+        "country": "United States",
+        "venue": "Cynthia Woods Mitchell Pavilion",
+        "date": "15 October 2023",
+        "geocoded": "The Woodlands",
+        "city_id": "4684724"
+      }
+    ]
+  },
+  {
+    "position": 7,
+    "artist": "Weezer",
+    "tour_title": "Indie Rock Road Trip",
+    "url": "https://en.wikipedia.org/wiki/Indie_Rock_Road_Trip",
+    "revid": 1313119032,
+    "first_show_year": 2023,
+    "regions": [
+      "United States"
+    ],
+    "played": [
+      {
+        "city_id": "4068590",
+        "name": "Huntsville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4684888",
+        "name": "Dallas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4671654",
+        "name": "Austin",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4544349",
+        "name": "Oklahoma City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4393217",
+        "name": "Kansas City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5037649",
+        "name": "Minneapolis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5261457",
+        "name": "Madison",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5145476",
+        "name": "Akron",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4259418",
+        "name": "Indianapolis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4180439",
+        "name": "Atlanta",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4575352",
+        "name": "Columbia",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4460243",
+        "name": "Charlotte",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4221333",
+        "name": "Sandy Springs",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4560349",
+        "name": "Philadelphia",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5282804",
+        "name": "Bridgeport",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4956184",
+        "name": "Worcester",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4887398",
+        "name": "Chicago",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5206379",
+        "name": "Pittsburgh",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5128581",
+        "name": "New York City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5812944",
+        "name": "Tacoma",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5391959",
+        "name": "San Francisco",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5780993",
+        "name": "Salt Lake City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5419384",
+        "name": "Denver",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5308655",
+        "name": "Phoenix",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5506956",
+        "name": "Las Vegas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5323810",
+        "name": "Anaheim",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5391811",
+        "name": "San Diego",
+        "country": "US",
+        "shows": 1
+      }
+    ],
+    "unmapped": [
+      {
+        "raw_city": "Bangor",
+        "country": "United States",
+        "venue": "Maine Savings Amphitheater",
+        "date": "June 30, 2023",
+        "reason": "no city >=100k within reach of Bangor"
+      },
+      {
+        "raw_city": "Canadaigua",
+        "country": "United States",
+        "venue": "Constellation Brands – Marvin Sands Performing Arts Center",
+        "date": "July 3, 2023",
+        "reason": "name not found in cities5000"
+      },
+      {
+        "raw_city": "Bend",
+        "country": "United States",
+        "venue": "Hayden Homes Amphitheater",
+        "date": "August 22, 2023",
+        "reason": "no city >=100k within reach of Bend"
+      }
+    ],
+    "shows": [
+      {
+        "raw_city": "Huntsville",
+        "country": "United States",
+        "venue": "Orion Amphitheater",
+        "date": "June 4, 2023",
+        "geocoded": "Huntsville",
+        "city_id": "4068590"
+      },
+      {
+        "raw_city": "Irving",
+        "country": "United States",
+        "venue": "The Pavilion at the Toyota Music Factory",
+        "date": "June 6, 2023",
+        "geocoded": "Irving",
+        "city_id": "4684888"
+      },
+      {
+        "raw_city": "Austin",
+        "country": "United States",
+        "venue": "Germania Insurance Amphitheater",
+        "date": "June 8, 2023",
+        "geocoded": "Austin",
+        "city_id": "4671654"
+      },
+      {
+        "raw_city": "Oklahoma City",
+        "country": "United States",
+        "venue": "Zoo Amphitheater",
+        "date": "June 10, 2023",
+        "geocoded": "Oklahoma City",
+        "city_id": "4544349"
+      },
+      {
+        "raw_city": "Bonner Springs",
+        "country": "United States",
+        "venue": "Azura Amphitheater",
+        "date": "June 11, 2023",
+        "geocoded": "Bonner Springs",
+        "city_id": "4393217"
+      },
+      {
+        "raw_city": "Minneapolis",
+        "country": "United States",
+        "venue": "Minneapolis Armory",
+        "date": "June 13, 2023",
+        "geocoded": "Minneapolis",
+        "city_id": "5037649"
+      },
+      {
+        "raw_city": "Madison",
+        "country": "United States",
+        "venue": "Breese Stevens Field",
+        "date": "June 14, 2023",
+        "geocoded": "Madison",
+        "city_id": "5261457"
+      },
+      {
+        "raw_city": "Cuyahoga Falls",
+        "country": "United States",
+        "venue": "Blossom Music Center",
+        "date": "June 16, 2023",
+        "geocoded": "Cuyahoga Falls",
+        "city_id": "5145476"
+      },
+      {
+        "raw_city": "Indianapolis",
+        "country": "United States",
+        "venue": "Garfield Park",
+        "date": "June 17, 2023",
+        "geocoded": "Indianapolis",
+        "city_id": "4259418"
+      },
+      {
+        "raw_city": "Clarkston",
+        "country": "United States",
+        "venue": "Pine Knob Music Theatre",
+        "date": "June 18, 2023",
+        "geocoded": "Clarkston",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Columbia",
+        "country": "United States",
+        "venue": "Merriweather Post Pavilion",
+        "date": "June 23, 2023",
+        "geocoded": "Columbia",
+        "city_id": "4575352"
+      },
+      {
+        "raw_city": "Charlotte",
+        "country": "United States",
+        "venue": "PNC Music Pavilion",
+        "date": "June 24, 2023",
+        "geocoded": "Charlotte",
+        "city_id": "4460243"
+      },
+      {
+        "raw_city": "Alpharetta",
+        "country": "United States",
+        "venue": "Ameris Bank Amphitheatre",
+        "date": "June 25, 2023",
+        "geocoded": "Alpharetta",
+        "city_id": "4221333"
+      },
+      {
+        "raw_city": "Philadelphia",
+        "country": "United States",
+        "venue": "TD Pavilion at the Mann",
+        "date": "June 27, 2023",
+        "geocoded": "Philadelphia",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Bridgeport",
+        "country": "United States",
+        "venue": "Hartford HealthCare Amphitheater",
+        "date": "June 28, 2023",
+        "geocoded": "Bridgeport",
+        "city_id": "5282804"
+      },
+      {
+        "raw_city": "Worcester",
+        "country": "United States",
+        "venue": "The Palladium Outdoors",
+        "date": "July 1, 2023",
+        "geocoded": "Worcester",
+        "city_id": "4956184"
+      },
+      {
+        "raw_city": "Gary",
+        "country": "United States",
+        "venue": "Hard Rock Casino Northern Indiana",
+        "date": "July 9, 2023",
+        "geocoded": "Gary",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Pittsburgh",
+        "country": "United States",
+        "venue": "Stage AE",
+        "date": "July 11, 2023",
+        "geocoded": "Pittsburgh",
+        "city_id": "5206379"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Forest Hills Stadium",
+        "date": "July 13, 2023",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Auburn",
+        "country": "United States",
+        "venue": "White River Amphitheatre",
+        "date": "August 20, 2023",
+        "geocoded": "Auburn",
+        "city_id": "5812944"
+      },
+      {
+        "raw_city": "Berkeley",
+        "country": "United States",
+        "venue": "Greek Theatre",
+        "date": "August 24, 2023",
+        "geocoded": "Berkeley",
+        "city_id": "5391959"
+      },
+      {
+        "raw_city": "Magna",
+        "country": "United States",
+        "venue": "The Great Saltair",
+        "date": "August 27, 2023",
+        "geocoded": "Magna",
+        "city_id": "5780993"
+      },
+      {
+        "raw_city": "Greenwood Village",
+        "country": "United States",
+        "venue": "Fiddler's Green Amphitheatre",
+        "date": "August 28, 2023",
+        "geocoded": "Greenwood Village",
+        "city_id": "5419384"
+      },
+      {
+        "raw_city": "Phoenix",
+        "country": "United States",
+        "venue": "Arizona Federal Theatre",
+        "date": "August 30, 2023",
+        "geocoded": "Phoenix",
+        "city_id": "5308655"
+      },
+      {
+        "raw_city": "Paradise",
+        "country": "United States",
+        "venue": "Zappos Theater",
+        "date": "September 1, 2023",
+        "geocoded": "Paradise",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Irvine",
+        "country": "United States",
+        "venue": "FivePoint Amphitheatre",
+        "date": "September 2, 2023",
+        "geocoded": "Irvine",
+        "city_id": "5323810"
+      },
+      {
+        "raw_city": "San Diego",
+        "country": "United States",
+        "venue": "Gallagher Square",
+        "date": "September 3, 2023",
+        "geocoded": "San Diego",
+        "city_id": "5391811"
+      }
+    ]
+  },
+  {
+    "position": 8,
+    "artist": "Kehlani",
+    "tour_title": "Crash World Tour",
+    "url": "https://en.wikipedia.org/wiki/Crash_World_Tour",
+    "revid": 1360143029,
+    "first_show_year": 2024,
+    "regions": [
+      "United States"
+    ],
+    "played": [
+      {
+        "city_id": "5037649",
+        "name": "Minneapolis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4887398",
+        "name": "Chicago",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4990729",
+        "name": "Detroit",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5282804",
+        "name": "Bridgeport",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4560349",
+        "name": "Philadelphia",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4930956",
+        "name": "Boston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4140963",
+        "name": "Washington",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5128581",
+        "name": "New York City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4791259",
+        "name": "Virginia Beach",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4299276",
+        "name": "Louisville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4180439",
+        "name": "Atlanta",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4335045",
+        "name": "New Orleans",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4487042",
+        "name": "Raleigh",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4460243",
+        "name": "Charlotte",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4671654",
+        "name": "Austin",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4699066",
+        "name": "Houston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4684888",
+        "name": "Dallas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5419384",
+        "name": "Denver",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5780993",
+        "name": "Salt Lake City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5809844",
+        "name": "Seattle",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5746545",
+        "name": "Portland",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5391811",
+        "name": "San Diego",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5506956",
+        "name": "Las Vegas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5308655",
+        "name": "Phoenix",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5368361",
+        "name": "Los Angeles",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5391959",
+        "name": "San Francisco",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4164138",
+        "name": "Miami",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4174757",
+        "name": "Tampa",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5856195",
+        "name": "Honolulu",
+        "country": "US",
+        "shows": 1
+      }
+    ],
+    "unmapped": [
+      {
+        "raw_city": "Rogers",
+        "country": "United States",
+        "venue": "Walmart Arkansas Music Pavilion",
+        "date": "October 12",
+        "reason": "no city >=100k within reach of Rogers"
+      },
+      {
+        "raw_city": "Wheatland",
+        "country": "United States",
+        "venue": "Hard Rock Live",
+        "date": "October 23",
+        "reason": "name not found in cities5000"
+      }
+    ],
+    "shows": [
+      {
+        "raw_city": "Minneapolis",
+        "country": "United States",
+        "venue": "Minneapolis Armory",
+        "date": "September 4",
+        "geocoded": "Minneapolis",
+        "city_id": "5037649"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Aragon Ballroom",
+        "date": "September 6",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Sterling Heights",
+        "country": "United States",
+        "venue": "Michigan Lottery Amphitheatre",
+        "date": "September 10",
+        "geocoded": "Sterling Heights",
+        "city_id": "4990729"
+      },
+      {
+        "raw_city": "Bridgeport",
+        "country": "United States",
+        "venue": "Hartford HealthCare Amphitheater",
+        "date": "September 13",
+        "geocoded": "Bridgeport",
+        "city_id": "5282804"
+      },
+      {
+        "raw_city": "Camden",
+        "country": "United States",
+        "venue": "Freedom Mortgage Pavilion",
+        "date": "September 14",
+        "geocoded": "Camden",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "MGM Music Hall at Fenway",
+        "date": "September 17",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "Fairfax",
+        "country": "United States",
+        "venue": "EagleBank Arena",
+        "date": "September 18",
+        "geocoded": "Fairfax",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Barclays Center",
+        "date": "September 20",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Portsmouth",
+        "country": "United States",
+        "venue": "Atlantic Union Bank Pavilion",
+        "date": "September 21",
+        "geocoded": "Portsmouth",
+        "city_id": "4791259"
+      },
+      {
+        "raw_city": "Louisville",
+        "country": "United States",
+        "venue": "Palace Theatre",
+        "date": "September 23",
+        "geocoded": "Louisville",
+        "city_id": "4299276"
+      },
+      {
+        "raw_city": "Atlanta",
+        "country": "United States",
+        "venue": "Cellairis Amphitheatre",
+        "date": "September 24",
+        "geocoded": "Atlanta",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "New Orleans",
+        "country": "United States",
+        "venue": "The Fillmore New Orleans",
+        "date": "September 25",
+        "geocoded": "New Orleans",
+        "city_id": "4335045"
+      },
+      {
+        "raw_city": "Raleigh",
+        "country": "United States",
+        "venue": "Red Hat Amphitheater",
+        "date": "October 1",
+        "geocoded": "Raleigh",
+        "city_id": "4487042"
+      },
+      {
+        "raw_city": "Charlotte",
+        "country": "United States",
+        "venue": "Skyla Credit Union Amphitheatre",
+        "date": "October 2",
+        "geocoded": "Charlotte",
+        "city_id": "4460243"
+      },
+      {
+        "raw_city": "Austin",
+        "country": "United States",
+        "venue": "Zilker Park",
+        "date": "October 4",
+        "geocoded": "Austin",
+        "city_id": "4671654"
+      },
+      {
+        "raw_city": "Houston",
+        "country": "United States",
+        "venue": "713 Music Hall",
+        "date": "October 8",
+        "geocoded": "Houston",
+        "city_id": "4699066"
+      },
+      {
+        "raw_city": "Irving",
+        "country": "United States",
+        "venue": "Toyota Music Factory",
+        "date": "October 11",
+        "geocoded": "Irving",
+        "city_id": "4684888"
+      },
+      {
+        "raw_city": "Denver",
+        "country": "United States",
+        "venue": "Fillmore Auditorium",
+        "date": "October 15",
+        "geocoded": "Denver",
+        "city_id": "5419384"
+      },
+      {
+        "raw_city": "Salt Lake City",
+        "country": "United States",
+        "venue": "The Complex",
+        "date": "October 16",
+        "geocoded": "Salt Lake City",
+        "city_id": "5780993"
+      },
+      {
+        "raw_city": "Seattle",
+        "country": "United States",
+        "venue": "Climate Pledge Arena",
+        "date": "October 18",
+        "geocoded": "Seattle",
+        "city_id": "5809844"
+      },
+      {
+        "raw_city": "Portland",
+        "country": "United States",
+        "venue": "Theater of the Clouds",
+        "date": "October 19",
+        "geocoded": "Portland",
+        "city_id": "5746545"
+      },
+      {
+        "raw_city": "San Diego",
+        "country": "United States",
+        "venue": "Viejas Arena",
+        "date": "October 25",
+        "geocoded": "San Diego",
+        "city_id": "5391811"
+      },
+      {
+        "raw_city": "Paradise",
+        "country": "United States",
+        "venue": "Michelob Ultra Arena",
+        "date": "October 26",
+        "geocoded": "Paradise",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Phoenix",
+        "country": "United States",
+        "venue": "Talking Stick Resort Amphitheatre",
+        "date": "October 29",
+        "geocoded": "Phoenix",
+        "city_id": "5308655"
+      },
+      {
+        "raw_city": "Inglewood",
+        "country": "United States",
+        "venue": "Kia Forum",
+        "date": "October 30",
+        "geocoded": "Inglewood",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "San Francisco",
+        "country": "United States",
+        "venue": "Chase Center",
+        "date": "November 2",
+        "geocoded": "San Francisco",
+        "city_id": "5391959"
+      },
+      {
+        "raw_city": "Miami",
+        "country": "United States",
+        "venue": "FPL Solar Amphitheater",
+        "date": "December 6",
+        "geocoded": "Miami",
+        "city_id": "4164138"
+      },
+      {
+        "raw_city": "Tampa",
+        "country": "United States",
+        "venue": "Yuengling Center",
+        "date": "December 8",
+        "geocoded": "Tampa",
+        "city_id": "4174757"
+      },
+      {
+        "raw_city": "Honolulu",
+        "country": "United States",
+        "venue": "Waikiki Shell",
+        "date": "March 26",
+        "geocoded": "Honolulu",
+        "city_id": "5856195"
+      }
+    ]
+  },
+  {
+    "position": 9,
+    "artist": "Kiss of Life",
+    "tour_title": "Kiss Road",
+    "url": "https://en.wikipedia.org/wiki/Kiss_Road",
+    "revid": 1379855372,
+    "first_show_year": 2024,
+    "regions": [
+      "United States"
+    ],
+    "played": [
+      {
+        "city_id": "5037649",
+        "name": "Minneapolis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4887398",
+        "name": "Chicago",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4930956",
+        "name": "Boston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4140963",
+        "name": "Washington",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5128581",
+        "name": "New York City",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4180439",
+        "name": "Atlanta",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4699066",
+        "name": "Houston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4684888",
+        "name": "Dallas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4726206",
+        "name": "San Antonio",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5308655",
+        "name": "Phoenix",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5368361",
+        "name": "Los Angeles",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5506956",
+        "name": "Las Vegas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5367929",
+        "name": "Long Beach",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5391959",
+        "name": "San Francisco",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5809844",
+        "name": "Seattle",
+        "country": "US",
+        "shows": 1
+      }
+    ],
+    "unmapped": [],
+    "shows": [
+      {
+        "raw_city": "Minneapolis",
+        "country": "United States",
+        "venue": "Uptown Theater",
+        "date": "November 10, 2024",
+        "geocoded": "Minneapolis",
+        "city_id": "5037649"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Riviera Theatre",
+        "date": "November 12, 2024",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "Orpheum Theatre",
+        "date": "November 16, 2024",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "Silver Spring",
+        "country": "United States",
+        "venue": "The Fillmore",
+        "date": "November 18, 2024",
+        "geocoded": "Silver Spring",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Silver Spring",
+        "country": "United States",
+        "venue": "The Fillmore",
+        "date": "November 19, 2024",
+        "geocoded": "Silver Spring",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "New York",
+        "country": "United States",
+        "venue": "Irving Plaza",
+        "date": "November 21, 2024",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "New York",
+        "country": "United States",
+        "venue": "Hammerstein Ballroom",
+        "date": "November 22, 2024",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Atlanta",
+        "country": "United States",
+        "venue": "The Eastern",
+        "date": "November 24, 2024",
+        "geocoded": "Atlanta",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Houston",
+        "country": "United States",
+        "venue": "713 Music Hall",
+        "date": "November 26, 2024",
+        "geocoded": "Houston",
+        "city_id": "4699066"
+      },
+      {
+        "raw_city": "Dallas",
+        "country": "United States",
+        "venue": "The Factory in Deep Ellum",
+        "date": "November 27, 2024",
+        "geocoded": "Dallas",
+        "city_id": "4684888"
+      },
+      {
+        "raw_city": "San Antonio",
+        "country": "United States",
+        "venue": "The Tobin Center for the Performing Arts",
+        "date": "November 29, 2024",
+        "geocoded": "San Antonio",
+        "city_id": "4726206"
+      },
+      {
+        "raw_city": "Phoenix",
+        "country": "United States",
+        "venue": "The Van Buren",
+        "date": "December 1, 2024",
+        "geocoded": "Phoenix",
+        "city_id": "5308655"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "The Novo",
+        "date": "December 3, 2024",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "The Novo",
+        "date": "December 4, 2024",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "House of Blues",
+        "date": "December 7, 2024",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Anaheim",
+        "country": "United States",
+        "venue": "House of Blues",
+        "date": "December 8, 2024",
+        "geocoded": "Anaheim",
+        "city_id": "5367929"
+      },
+      {
+        "raw_city": "San Francisco",
+        "country": "United States",
+        "venue": "The Warfield",
+        "date": "December 10, 2024",
+        "geocoded": "San Francisco",
+        "city_id": "5391959"
+      },
+      {
+        "raw_city": "Seattle",
+        "country": "United States",
+        "venue": "Moore Theatre",
+        "date": "December 12, 2024",
+        "geocoded": "Seattle",
+        "city_id": "5809844"
+      }
+    ]
+  },
+  {
+    "position": 10,
+    "artist": "Tears for Fears",
+    "tour_title": "The Tipping Point World Tour",
+    "url": "https://en.wikipedia.org/wiki/The_Tipping_Point_World_Tour",
+    "revid": 1350972514,
+    "first_show_year": 2022,
+    "regions": [
+      "United States"
+    ],
+    "played": [
+      {
+        "city_id": "4508722",
+        "name": "Cincinnati",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5145476",
+        "name": "Akron",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4684888",
+        "name": "Dallas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4699066",
+        "name": "Houston",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5308655",
+        "name": "Phoenix",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5419384",
+        "name": "Denver",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5378538",
+        "name": "Oakland",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5392171",
+        "name": "San Jose",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5368361",
+        "name": "Los Angeles",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5391811",
+        "name": "San Diego",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4177887",
+        "name": "West Palm Beach",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4174757",
+        "name": "Tampa",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4221333",
+        "name": "Sandy Springs",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4460243",
+        "name": "Charlotte",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4180439",
+        "name": "Atlanta",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4898015",
+        "name": "Joliet",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4259418",
+        "name": "Indianapolis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4575352",
+        "name": "Columbia",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4560349",
+        "name": "Philadelphia",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4930956",
+        "name": "Boston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5133273",
+        "name": "Queens",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5128581",
+        "name": "New York City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5106834",
+        "name": "Albany",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5282804",
+        "name": "Bridgeport",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4791259",
+        "name": "Virginia Beach",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4487042",
+        "name": "Raleigh",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4644585",
+        "name": "Nashville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4407066",
+        "name": "St. Louis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4393217",
+        "name": "Kansas City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4671654",
+        "name": "Austin",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5746545",
+        "name": "Portland",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5809844",
+        "name": "Seattle",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5389489",
+        "name": "Sacramento",
+        "country": "US",
+        "shows": 1
+      }
+    ],
+    "unmapped": [
+      {
+        "raw_city": "Holmdel",
+        "country": "United States",
+        "venue": "PNC Bank Arts Center",
+        "date": "24 June 2022",
+        "reason": "name not found in cities5000"
+      },
+      {
+        "raw_city": "Atlantic City",
+        "country": "United States",
+        "venue": "Estess Arena",
+        "date": "23 June 2023",
+        "reason": "no city >=100k within reach of Atlantic City"
+      },
+      {
+        "raw_city": "Uncasville",
+        "country": "United States",
+        "venue": "Mohegan Sun Arena",
+        "date": "24 June 2023",
+        "reason": "name not found in cities5000"
+      },
+      {
+        "raw_city": "Bend",
+        "country": "United States",
+        "venue": "Hayden Homes Amphitheater",
+        "date": "26 July 2023",
+        "reason": "no city >=100k within reach of Bend"
+      },
+      {
+        "raw_city": "Palm Springs",
+        "country": "United States",
+        "venue": "Acrisure Arena",
+        "date": "1 August 2023",
+        "reason": "no city >=100k within reach of Palm Springs"
+      }
+    ],
+    "shows": [
+      {
+        "raw_city": "Cincinnati",
+        "country": "United States",
+        "venue": "Riverbend Music Center",
+        "date": "20 May 2022",
+        "geocoded": "Cincinnati",
+        "city_id": "4508722"
+      },
+      {
+        "raw_city": "Cuyahoga Falls",
+        "country": "United States",
+        "venue": "Blossom Music Center",
+        "date": "21 May 2022",
+        "geocoded": "Cuyahoga Falls",
+        "city_id": "5145476"
+      },
+      {
+        "raw_city": "Irving",
+        "country": "United States",
+        "venue": "The Pavilion at Toyota Music Factory",
+        "date": "24 May 2022",
+        "geocoded": "Irving",
+        "city_id": "4684888"
+      },
+      {
+        "raw_city": "Sugar Land",
+        "country": "United States",
+        "venue": "Smart Financial Centre",
+        "date": "25 May 2022",
+        "geocoded": "Sugar Land",
+        "city_id": "4699066"
+      },
+      {
+        "raw_city": "Phoenix",
+        "country": "United States",
+        "venue": "Ak-Chin Pavilion",
+        "date": "27 May 2022",
+        "geocoded": "Phoenix",
+        "city_id": "5308655"
+      },
+      {
+        "raw_city": "Denver",
+        "country": "United States",
+        "venue": "Levitt Pavilion",
+        "date": "29 May 2022",
+        "geocoded": "Denver",
+        "city_id": "5419384"
+      },
+      {
+        "raw_city": "Concord",
+        "country": "United States",
+        "venue": "Concord Pavilion",
+        "date": "1 June 2022",
+        "geocoded": "Concord",
+        "city_id": "5378538"
+      },
+      {
+        "raw_city": "Mountain View",
+        "country": "United States",
+        "venue": "Shoreline Amphitheatre",
+        "date": "2 June 2022",
+        "geocoded": "Mountain View",
+        "city_id": "5392171"
+      },
+      {
+        "raw_city": "Inglewood",
+        "country": "United States",
+        "venue": "Kia Forum",
+        "date": "4 June 2022",
+        "geocoded": "Inglewood",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Chula Vista",
+        "country": "United States",
+        "venue": "North Island Credit Union Amphitheatre",
+        "date": "5 June 2022",
+        "geocoded": "Chula Vista",
+        "city_id": "5391811"
+      },
+      {
+        "raw_city": "West Palm Beach",
+        "country": "United States",
+        "venue": "iTHINK Financial Amphitheatre",
+        "date": "9 June 2022",
+        "geocoded": "West Palm Beach",
+        "city_id": "4177887"
+      },
+      {
+        "raw_city": "Tampa",
+        "country": "United States",
+        "venue": "MidFlorida Credit Union Amphitheatre",
+        "date": "10 June 2022",
+        "geocoded": "Tampa",
+        "city_id": "4174757"
+      },
+      {
+        "raw_city": "Alpharetta",
+        "country": "United States",
+        "venue": "Ameris Bank Amphitheatre",
+        "date": "12 June 2022",
+        "geocoded": "Alpharetta",
+        "city_id": "4221333"
+      },
+      {
+        "raw_city": "Charlotte",
+        "country": "United States",
+        "venue": "PNC Music Pavilion",
+        "date": "13 June 2022",
+        "geocoded": "Charlotte",
+        "city_id": "4460243"
+      },
+      {
+        "raw_city": "Clarkston",
+        "country": "United States",
+        "venue": "Pine Knob Music Theatre",
+        "date": "15 June 2022",
+        "geocoded": "Clarkston",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Tinley Park",
+        "country": "United States",
+        "venue": "Hollywood Casino Amphitheatre",
+        "date": "16 June 2022",
+        "geocoded": "Tinley Park",
+        "city_id": "4898015"
+      },
+      {
+        "raw_city": "Noblesville",
+        "country": "United States",
+        "venue": "Ruoff Music Center",
+        "date": "17 June 2022",
+        "geocoded": "Noblesville",
+        "city_id": "4259418"
+      },
+      {
+        "raw_city": "Columbia",
+        "country": "United States",
+        "venue": "Merriweather Post Pavilion",
+        "date": "19 June 2022",
+        "geocoded": "Columbia",
+        "city_id": "4575352"
+      },
+      {
+        "raw_city": "Philadelphia",
+        "country": "United States",
+        "venue": "TD Pavilion at the Mann",
+        "date": "21 June 2022",
+        "geocoded": "Philadelphia",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "Leader Bank Pavilion",
+        "date": "22 June 2022",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "Wantagh",
+        "country": "United States",
+        "venue": "Northwell Health at Jones Beach Theater",
+        "date": "25 June 2022",
+        "geocoded": "Wantagh",
+        "city_id": "5133273"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Madison Square Garden",
+        "date": "26 June 2023",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Saratoga Springs",
+        "country": "United States",
+        "venue": "Saratoga Performing Arts Center",
+        "date": "2 July 2023",
+        "geocoded": "Saratoga Springs",
+        "city_id": "5106834"
+      },
+      {
+        "raw_city": "Bethel, NY",
+        "country": "United States",
+        "venue": "Bethel Woods Center for the Arts",
+        "date": "5 July 2023",
+        "geocoded": "Bethel",
+        "city_id": "5282804"
+      },
+      {
+        "raw_city": "Virginia Beach",
+        "country": "United States",
+        "venue": "Veterans United Home Loans Amphitheater",
+        "date": "7 July 2023",
+        "geocoded": "Virginia Beach",
+        "city_id": "4791259"
+      },
+      {
+        "raw_city": "Raleigh",
+        "country": "United States",
+        "venue": "Coastal Credit Union Music Park at Walnut Creek",
+        "date": "8 July 2023",
+        "geocoded": "Raleigh",
+        "city_id": "4487042"
+      },
+      {
+        "raw_city": "Franklin, TN",
+        "country": "United States",
+        "venue": "FirstBank Amphitheater",
+        "date": "11 July 2023",
+        "geocoded": "Franklin",
+        "city_id": "4644585"
+      },
+      {
+        "raw_city": "St. Louis",
+        "country": "United States",
+        "venue": "Hollywood Casino Amphitheatre",
+        "date": "13 July 2023",
+        "geocoded": "St. Louis",
+        "city_id": "4407066"
+      },
+      {
+        "raw_city": "Kansas City",
+        "country": "United States",
+        "venue": "Starlight Theatre",
+        "date": "14 July 2023",
+        "geocoded": "Kansas City",
+        "city_id": "4393217"
+      },
+      {
+        "raw_city": "Houston",
+        "country": "United States",
+        "venue": "Cynthia Woods Mitchell Pavilion",
+        "date": "16 July 2023",
+        "geocoded": "Houston",
+        "city_id": "4699066"
+      },
+      {
+        "raw_city": "Austin",
+        "country": "United States",
+        "venue": "Moody Center",
+        "date": "17 July 2023",
+        "geocoded": "Austin",
+        "city_id": "4671654"
+      },
+      {
+        "raw_city": "Denver",
+        "country": "United States",
+        "venue": "Ball Arena",
+        "date": "20 July 2023",
+        "geocoded": "Denver",
+        "city_id": "5419384"
+      },
+      {
+        "raw_city": "Portland",
+        "country": "United States",
+        "venue": "RV Inn Style Resorts Amphitheater",
+        "date": "22 July 2023",
+        "geocoded": "Portland",
+        "city_id": "5746545"
+      },
+      {
+        "raw_city": "Seattle",
+        "country": "United States",
+        "venue": "Climate Pledge Arena",
+        "date": "27 July 2023",
+        "geocoded": "Seattle",
+        "city_id": "5809844"
+      },
+      {
+        "raw_city": "Sacramento",
+        "country": "United States",
+        "venue": "Toyota Amphitheatre",
+        "date": "29 July 2023",
+        "geocoded": "Sacramento",
+        "city_id": "5389489"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "Hollywood Bowl",
+        "date": "2 August 2023",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      }
+    ]
+  },
+  {
+    "position": 11,
+    "artist": "Anuel AA",
+    "tour_title": "Real Hasta la Muerte 2 Tour",
+    "url": "https://en.wikipedia.org/wiki/Real_Hasta_la_Muerte_2_Tour",
+    "revid": 1365173156,
+    "first_show_year": 2024,
+    "regions": [
+      "United States"
+    ],
+    "played": [
+      {
+        "city_id": "4684888",
+        "name": "Dallas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4699066",
+        "name": "Houston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4671654",
+        "name": "Austin",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "3520339",
+        "name": "Reynosa",
+        "country": "MX",
+        "shows": 1
+      },
+      {
+        "city_id": "5308655",
+        "name": "Phoenix",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5506956",
+        "name": "Las Vegas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5367929",
+        "name": "Long Beach",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5387877",
+        "name": "Riverside",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5368361",
+        "name": "Los Angeles",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5392171",
+        "name": "San Jose",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5809844",
+        "name": "Seattle",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5746545",
+        "name": "Portland",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5780993",
+        "name": "Salt Lake City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4887398",
+        "name": "Chicago",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4930956",
+        "name": "Boston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5178127",
+        "name": "Allentown",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5128581",
+        "name": "New York City",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4140963",
+        "name": "Washington",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4460243",
+        "name": "Charlotte",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4180439",
+        "name": "Atlanta",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4167147",
+        "name": "Orlando",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4174757",
+        "name": "Tampa",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4164138",
+        "name": "Miami",
+        "country": "US",
+        "shows": 1
+      }
+    ],
+    "unmapped": [
+      {
+        "raw_city": "Uncasville",
+        "country": "United States",
+        "venue": "Mohegan Sun Arena",
+        "date": "February 28, 2025",
+        "reason": "name not found in cities5000"
+      }
+    ],
+    "shows": [
+      {
+        "raw_city": "Dallas",
+        "country": "United States",
+        "venue": "Dickies Arena",
+        "date": "November 27, 2024",
+        "geocoded": "Dallas",
+        "city_id": "4684888"
+      },
+      {
+        "raw_city": "Houston",
+        "country": "United States",
+        "venue": "Smart Financial Centre",
+        "date": "November 29, 2024",
+        "geocoded": "Houston",
+        "city_id": "4699066"
+      },
+      {
+        "raw_city": "Austin",
+        "country": "United States",
+        "venue": "H-E-B Center at Cedar Park",
+        "date": "November 30, 2024",
+        "geocoded": "Austin",
+        "city_id": "4671654"
+      },
+      {
+        "raw_city": "Hidalgo",
+        "country": "United States",
+        "venue": "Payne Arena",
+        "date": "December 1, 2024",
+        "geocoded": "Hidalgo",
+        "city_id": "3520339"
+      },
+      {
+        "raw_city": "Glendale",
+        "country": "United States",
+        "venue": "Desert Diamond Arena",
+        "date": "December 5, 2024",
+        "geocoded": "Glendale",
+        "city_id": "5308655"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "Michelob Ultra Arena",
+        "date": "December 6, 2024",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Anaheim",
+        "country": "United States",
+        "venue": "Honda Center",
+        "date": "December 8, 2024",
+        "geocoded": "Anaheim",
+        "city_id": "5367929"
+      },
+      {
+        "raw_city": "Ontario",
+        "country": "United States",
+        "venue": "Toyota Arena",
+        "date": "December 12, 2024",
+        "geocoded": "Ontario",
+        "city_id": "5387877"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "Crypto.com Arena",
+        "date": "December 13, 2024",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "San Jose",
+        "country": "United States",
+        "venue": "SAP Center",
+        "date": "December 15, 2024",
+        "geocoded": "San Jose",
+        "city_id": "5392171"
+      },
+      {
+        "raw_city": "Seattle",
+        "country": "United States",
+        "venue": "Climate Pledge Arena",
+        "date": "February 13, 2025",
+        "geocoded": "Seattle",
+        "city_id": "5809844"
+      },
+      {
+        "raw_city": "Portland",
+        "country": "United States",
+        "venue": "Moda Center",
+        "date": "February 14, 2025",
+        "geocoded": "Portland",
+        "city_id": "5746545"
+      },
+      {
+        "raw_city": "Salt Lake City",
+        "country": "United States",
+        "venue": "Delta Center",
+        "date": "February 16, 2025",
+        "geocoded": "Salt Lake City",
+        "city_id": "5780993"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Allstate Arena",
+        "date": "February 21, 2025",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "Agganis Arena",
+        "date": "February 23, 2025",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "Reading",
+        "country": "United States",
+        "venue": "Santander Arena",
+        "date": "February 27, 2025",
+        "geocoded": "Reading",
+        "city_id": "5178127"
+      },
+      {
+        "raw_city": "Brooklyn",
+        "country": "United States",
+        "venue": "Barclays Center",
+        "date": "March 1, 2025",
+        "geocoded": "Brooklyn",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Newark",
+        "country": "United States",
+        "venue": "Prudential Center",
+        "date": "March 2, 2025",
+        "geocoded": "Newark",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Washington",
+        "country": "United States",
+        "venue": "EagleBank Arena",
+        "date": "March 6, 2025",
+        "geocoded": "Washington",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Charlotte",
+        "country": "United States",
+        "venue": "Spectrum Center",
+        "date": "March 7, 2025",
+        "geocoded": "Charlotte",
+        "city_id": "4460243"
+      },
+      {
+        "raw_city": "Atlanta",
+        "country": "United States",
+        "venue": "Gas South Arena",
+        "date": "March 9, 2025",
+        "geocoded": "Atlanta",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Orlando",
+        "country": "United States",
+        "venue": "Kia Center",
+        "date": "March 13, 2025",
+        "geocoded": "Orlando",
+        "city_id": "4167147"
+      },
+      {
+        "raw_city": "Tampa",
+        "country": "United States",
+        "venue": "Amalie Arena",
+        "date": "March 14, 2025",
+        "geocoded": "Tampa",
+        "city_id": "4174757"
+      },
+      {
+        "raw_city": "Miami",
+        "country": "United States",
+        "venue": "Kaseya Center",
+        "date": "March 15, 2025",
+        "geocoded": "Miami",
+        "city_id": "4164138"
+      }
+    ]
+  },
+  {
+    "position": 12,
+    "artist": "Sabrina Carpenter",
+    "tour_title": "Emails I Can't Send Tour",
+    "url": "https://en.wikipedia.org/wiki/Emails_I_Can't_Send_Tour",
+    "revid": 1380243997,
+    "first_show_year": 2022,
+    "regions": [
+      "United States",
+      "Brazil"
+    ],
+    "played": [
+      {
+        "city_id": "4180439",
+        "name": "Atlanta",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4347778",
+        "name": "Baltimore",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4560349",
+        "name": "Philadelphia",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4930956",
+        "name": "Boston",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5128581",
+        "name": "New York City",
+        "country": "US",
+        "shows": 4
+      },
+      {
+        "city_id": "4140963",
+        "name": "Washington",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "4887398",
+        "name": "Chicago",
+        "country": "US",
+        "shows": 3
+      },
+      {
+        "city_id": "5308655",
+        "name": "Phoenix",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5391811",
+        "name": "San Diego",
+        "country": "US",
+        "shows": 2
+      },
+      {
+        "city_id": "5368361",
+        "name": "Los Angeles",
+        "country": "US",
+        "shows": 3
+      },
+      {
+        "city_id": "5391959",
+        "name": "San Francisco",
+        "country": "US",
+        "shows": 3
+      },
+      {
+        "city_id": "4167147",
+        "name": "Orlando",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4174757",
+        "name": "Tampa",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4335045",
+        "name": "New Orleans",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4699066",
+        "name": "Houston",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4684888",
+        "name": "Dallas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4726206",
+        "name": "San Antonio",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4671654",
+        "name": "Austin",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4553433",
+        "name": "Tulsa",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5419384",
+        "name": "Denver",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5780993",
+        "name": "Salt Lake City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5809844",
+        "name": "Seattle",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5506956",
+        "name": "Las Vegas",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4393217",
+        "name": "Kansas City",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5037649",
+        "name": "Minneapolis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5261457",
+        "name": "Madison",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4407066",
+        "name": "St. Louis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4644585",
+        "name": "Nashville",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4259418",
+        "name": "Indianapolis",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4990729",
+        "name": "Detroit",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "5150529",
+        "name": "Cleveland",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "4487042",
+        "name": "Raleigh",
+        "country": "US",
+        "shows": 1
+      },
+      {
+        "city_id": "3451190",
+        "name": "Rio de Janeiro",
+        "country": "BR",
+        "shows": 1
+      },
+      {
+        "city_id": "3448439",
+        "name": "Sao Paulo",
+        "country": "BR",
+        "shows": 1
+      }
+    ],
+    "unmapped": [
+      {
+        "raw_city": "Garden City",
+        "country": "United States",
+        "venue": "Revolution Concert House",
+        "date": "April 2, 2023",
+        "reason": "no city >=100k within reach of Garden City"
+      },
+      {
+        "raw_city": "Wheatland",
+        "country": "United States",
+        "venue": "Hard Rock Live Sacramento",
+        "date": "April 16, 2023",
+        "reason": "name not found in cities5000"
+      },
+      {
+        "raw_city": "Gulf Shores",
+        "country": "United States",
+        "venue": "Gulf Shores Public Beach",
+        "date": "May 20, 2023",
+        "reason": "no city >=100k within reach of Gulf Shores"
+      }
+    ],
+    "shows": [
+      {
+        "raw_city": "Atlanta",
+        "country": "United States",
+        "venue": "Center Stage",
+        "date": "September 29, 2022",
+        "geocoded": "Atlanta",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Baltimore",
+        "country": "United States",
+        "venue": "Rams Head Live!",
+        "date": "October 1, 2022",
+        "geocoded": "Baltimore",
+        "city_id": "4347778"
+      },
+      {
+        "raw_city": "Philadelphia",
+        "country": "United States",
+        "venue": "Theatre of Living Arts",
+        "date": "October 2, 2022",
+        "geocoded": "Philadelphia",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "Big Night Live",
+        "date": "October 3, 2022",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Webster Hall",
+        "date": "October 5, 2022",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Webster Hall",
+        "date": "October 6, 2022",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Washington, D.C.",
+        "country": "United States",
+        "venue": "Lincoln Theatre",
+        "date": "October 7, 2022",
+        "geocoded": "Washington",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "House of Blues Chicago",
+        "date": "October 9, 2022",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Tempe",
+        "country": "United States",
+        "venue": "Marquee Theatre",
+        "date": "October 12, 2022",
+        "geocoded": "Tempe",
+        "city_id": "5308655"
+      },
+      {
+        "raw_city": "San Diego",
+        "country": "United States",
+        "venue": "Observatory North Park",
+        "date": "October 13, 2022",
+        "geocoded": "San Diego",
+        "city_id": "5391811"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "Wiltern Theatre",
+        "date": "October 15, 2022",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "San Francisco",
+        "country": "United States",
+        "venue": "Regency Center",
+        "date": "October 16, 2022",
+        "geocoded": "San Francisco",
+        "city_id": "5391959"
+      },
+      {
+        "raw_city": "Orlando",
+        "country": "United States",
+        "venue": "Hard Rock Live",
+        "date": "October 20, 2022",
+        "geocoded": "Orlando",
+        "city_id": "4167147"
+      },
+      {
+        "raw_city": "Hollywood",
+        "country": "United States",
+        "venue": "Hard Rock Live Seminole",
+        "date": "March 16, 2023",
+        "geocoded": "Hollywood",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "St. Petersburg",
+        "country": "United States",
+        "venue": "Jannus Live",
+        "date": "March 17, 2023",
+        "geocoded": "St. Petersburg",
+        "city_id": "4174757"
+      },
+      {
+        "raw_city": "New Orleans",
+        "country": "United States",
+        "venue": "Orpheum Theater",
+        "date": "March 20, 2023",
+        "geocoded": "New Orleans",
+        "city_id": "4335045"
+      },
+      {
+        "raw_city": "Houston",
+        "country": "United States",
+        "venue": "Warehouse Live",
+        "date": "March 22, 2023",
+        "geocoded": "Houston",
+        "city_id": "4699066"
+      },
+      {
+        "raw_city": "Dallas",
+        "country": "United States",
+        "venue": "The Factory in Deep Ellum",
+        "date": "March 24, 2023",
+        "geocoded": "Dallas",
+        "city_id": "4684888"
+      },
+      {
+        "raw_city": "San Antonio",
+        "country": "United States",
+        "venue": "The Espee",
+        "date": "March 25, 2023",
+        "geocoded": "San Antonio",
+        "city_id": "4726206"
+      },
+      {
+        "raw_city": "Austin",
+        "country": "United States",
+        "venue": "Moody Theater",
+        "date": "March 26, 2023",
+        "geocoded": "Austin",
+        "city_id": "4671654"
+      },
+      {
+        "raw_city": "Tulsa",
+        "country": "United States",
+        "venue": "Tulsa Theater",
+        "date": "March 28, 2023",
+        "geocoded": "Tulsa",
+        "city_id": "4553433"
+      },
+      {
+        "raw_city": "Denver",
+        "country": "United States",
+        "venue": "Mission Ballroom",
+        "date": "March 30, 2023",
+        "geocoded": "Denver",
+        "city_id": "5419384"
+      },
+      {
+        "raw_city": "Salt Lake City",
+        "country": "United States",
+        "venue": "The Union",
+        "date": "April 1, 2023",
+        "geocoded": "Salt Lake City",
+        "city_id": "5780993"
+      },
+      {
+        "raw_city": "Seattle",
+        "country": "United States",
+        "venue": "Paramount Theatre",
+        "date": "April 11, 2023",
+        "geocoded": "Seattle",
+        "city_id": "5809844"
+      },
+      {
+        "raw_city": "San Francisco",
+        "country": "United States",
+        "venue": "The Warfield",
+        "date": "April 14, 2023",
+        "geocoded": "San Francisco",
+        "city_id": "5391959"
+      },
+      {
+        "raw_city": "San Francisco",
+        "country": "United States",
+        "venue": "The Warfield",
+        "date": "April 15, 2023",
+        "geocoded": "San Francisco",
+        "city_id": "5391959"
+      },
+      {
+        "raw_city": "San Diego",
+        "country": "United States",
+        "venue": "Humphreys Concerts By the Bay",
+        "date": "April 19, 2023",
+        "geocoded": "San Diego",
+        "city_id": "5391811"
+      },
+      {
+        "raw_city": "Los Angeles",
+        "country": "United States",
+        "venue": "Greek Theatre",
+        "date": "April 20, 2023",
+        "geocoded": "Los Angeles",
+        "city_id": "5368361"
+      },
+      {
+        "raw_city": "Las Vegas",
+        "country": "United States",
+        "venue": "The Theater at Virgin Hotels",
+        "date": "April 22, 2023",
+        "geocoded": "Las Vegas",
+        "city_id": "5506956"
+      },
+      {
+        "raw_city": "Mesa",
+        "country": "United States",
+        "venue": "Mesa Amphitheatre",
+        "date": "April 23, 2023",
+        "geocoded": "Mesa",
+        "city_id": "5308655"
+      },
+      {
+        "raw_city": "Kansas City",
+        "country": "United States",
+        "venue": "Midland Theatre",
+        "date": "April 26, 2023",
+        "geocoded": "Kansas City",
+        "city_id": "4393217"
+      },
+      {
+        "raw_city": "Minneapolis",
+        "country": "United States",
+        "venue": "State Theatre",
+        "date": "April 27, 2023",
+        "geocoded": "Minneapolis",
+        "city_id": "5037649"
+      },
+      {
+        "raw_city": "Madison",
+        "country": "United States",
+        "venue": "The Sylvee",
+        "date": "April 28, 2023",
+        "geocoded": "Madison",
+        "city_id": "5261457"
+      },
+      {
+        "raw_city": "Chesterfield",
+        "country": "United States",
+        "venue": "The Factory",
+        "date": "April 30, 2023",
+        "geocoded": "Chesterfield",
+        "city_id": "4407066"
+      },
+      {
+        "raw_city": "Nashville",
+        "country": "United States",
+        "venue": "Ryman Auditorium",
+        "date": "May 2, 2023",
+        "geocoded": "Nashville",
+        "city_id": "4644585"
+      },
+      {
+        "raw_city": "Indianapolis",
+        "country": "United States",
+        "venue": "Murat Theatre",
+        "date": "May 3, 2023",
+        "geocoded": "Indianapolis",
+        "city_id": "4259418"
+      },
+      {
+        "raw_city": "Detroit",
+        "country": "United States",
+        "venue": "Masonic Temple Theatre",
+        "date": "May 6, 2023",
+        "geocoded": "Detroit",
+        "city_id": "4990729"
+      },
+      {
+        "raw_city": "Cleveland",
+        "country": "United States",
+        "venue": "Agora Ballroom",
+        "date": "May 7, 2023",
+        "geocoded": "Cleveland",
+        "city_id": "5150529"
+      },
+      {
+        "raw_city": "Boston",
+        "country": "United States",
+        "venue": "Roadrunner",
+        "date": "May 9, 2023",
+        "geocoded": "Boston",
+        "city_id": "4930956"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Terminal 5",
+        "date": "May 10, 2023",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "New York City",
+        "country": "United States",
+        "venue": "Terminal 5",
+        "date": "May 11, 2023",
+        "geocoded": "New York City",
+        "city_id": "5128581"
+      },
+      {
+        "raw_city": "Philadelphia",
+        "country": "United States",
+        "venue": "Franklin Music Hall",
+        "date": "May 13, 2023",
+        "geocoded": "Philadelphia",
+        "city_id": "4560349"
+      },
+      {
+        "raw_city": "Washington, D.C.",
+        "country": "United States",
+        "venue": "The Anthem",
+        "date": "May 14, 2023",
+        "geocoded": "Washington",
+        "city_id": "4140963"
+      },
+      {
+        "raw_city": "Raleigh",
+        "country": "United States",
+        "venue": "The Ritz",
+        "date": "May 16, 2023",
+        "geocoded": "Raleigh",
+        "city_id": "4487042"
+      },
+      {
+        "raw_city": "Atlanta",
+        "country": "United States",
+        "venue": "The Eastern",
+        "date": "May 17, 2023",
+        "geocoded": "Atlanta",
+        "city_id": "4180439"
+      },
+      {
+        "raw_city": "Rio de Janeiro",
+        "country": "Brazil",
+        "venue": "Jockey Club",
+        "date": "May 28, 2023",
+        "geocoded": "Rio de Janeiro",
+        "city_id": "3451190"
+      },
+      {
+        "raw_city": "São Paulo",
+        "country": "Brazil",
+        "venue": "Anhangabaú River",
+        "date": "June 4, 2023",
+        "geocoded": "Sao Paulo",
+        "city_id": "3448439"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "House of Blues Chicago",
+        "date": "August 3, 2023",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      },
+      {
+        "raw_city": "Chicago",
+        "country": "United States",
+        "venue": "Grant Park",
+        "date": "August 4, 2023",
+        "geocoded": "Chicago",
+        "city_id": "4887398"
+      }
+    ]
+  }
+]

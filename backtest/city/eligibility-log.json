@@ -1,0 +1,1964 @@
+[
+  {
+    "title": "+−=÷× Tour",
+    "artist": "Ed Sheeran",
+    "eligible": false,
+    "reason": "(c) 21 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "− Tour",
+    "artist": "Ed Sheeran",
+    "eligible": true,
+    "reason": "eligible: 17 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "40 Years \"Total Eclipse of the Heart\" Tour",
+    "artist": "Bonnie Tyler",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (33 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "5-Star Dome Tour",
+    "artist": "Stray Kids",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (10 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "5525 Back to That Day Tour",
+    "artist": "Mayday",
+    "eligible": false,
+    "reason": "(b) only 1 US/MX/BR shows (162 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "9 Sad Symphonies Tour",
+    "artist": "Kate Nash",
+    "eligible": true,
+    "reason": "eligible: 15 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "A Drummer Boy Christmas Tour",
+    "artist": "For King & Country",
+    "eligible": true,
+    "reason": "eligible: 88 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "After Hours til Dawn Tour",
+    "artist": "The Weeknd",
+    "eligible": false,
+    "reason": "(c) 59 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Alicia + Keys World Tour",
+    "artist": "Alicia Keys",
+    "eligible": true,
+    "reason": "eligible: 35 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Alpha Tour",
+    "artist": "Aitana",
+    "eligible": false,
+    "reason": "(b) only 3 US/MX/BR shows (38 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Amelia Tour",
+    "artist": "Mimi Webb",
+    "eligible": false,
+    "reason": "(b) only 2 US/MX/BR shows (52 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "American Dream Tour",
+    "artist": "21 Savage",
+    "eligible": true,
+    "reason": "eligible: 27 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "An Evening with Whitney: The Whitney Houston Hologram Tour",
+    "artist": "Whitney Houston",
+    "eligible": true,
+    "reason": "eligible: 42 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "An Unfunny Evening with Tim Minchin and His Piano",
+    "artist": "Tim Minchin",
+    "eligible": true,
+    "reason": "eligible: 12 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "ASMR World Tour",
+    "artist": "A-Mei",
+    "eligible": false,
+    "reason": "(b) only 5 US/MX/BR shows (80 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "At Their Very Best",
+    "artist": "The 1975",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Still... At Their Very Best, 36 vs 34 US/MX/BR shows)"
+  },
+  {
+    "title": "Aurora's 2024 Norwegian tour",
+    "artist": "Aurora",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (10 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Autopoiética Tour",
+    "artist": "Mon Laferte",
+    "eligible": true,
+    "reason": "eligible: 27 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Avatar: The Last Airbender in Concert",
+    "artist": "Jeremy Zuckerman",
+    "eligible": false,
+    "reason": "(a) no parseable date/venue table with cities (0 tables found)"
+  },
+  {
+    "title": "Back to Reggaeton Tour",
+    "artist": "Don Omar",
+    "eligible": false,
+    "reason": "(c) 7 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Bad Reputation Tour",
+    "artist": "Kid Rock",
+    "eligible": true,
+    "reason": "eligible: 54 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Baile Funk Experience",
+    "artist": "Anitta",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (1 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Ball of Confusion Tour",
+    "artist": "Blondie",
+    "eligible": false,
+    "reason": "(b) only 5 US/MX/BR shows (16 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Bewitched Tour",
+    "artist": "Laufey",
+    "eligible": true,
+    "reason": "eligible: 54 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Billy Joel in Concert",
+    "artist": "Billy Joel",
+    "eligible": false,
+    "reason": "(c) 49 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Biniverse (tour)",
+    "artist": "Bini",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (13 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Björk Orkestral",
+    "artist": "Björk",
+    "eligible": false,
+    "reason": "(b) only 5 US/MX/BR shows (20 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Bleed Out Tour",
+    "artist": "Within Temptation",
+    "eligible": false,
+    "reason": "(b) only 2 US/MX/BR shows (56 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Blood Stained Blonde Tour",
+    "artist": "Ethel Cain",
+    "eligible": true,
+    "reason": "eligible: 27 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Born in the Wild Tour",
+    "artist": "Tems",
+    "eligible": true,
+    "reason": "eligible: 16 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Born Pink World Tour",
+    "artist": "Blackpink",
+    "eligible": false,
+    "reason": "(c) 6 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Brat Tour",
+    "artist": "Charli XCX",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Crash: The Live Tour, 35 vs 12 US/MX/BR shows)"
+  },
+  {
+    "title": "Bruno Mars Live",
+    "artist": "Bruno Mars",
+    "eligible": false,
+    "reason": "(c) 15 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Buzz World Tour",
+    "artist": "Niki",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Nicole World Tour, 33 vs 20 US/MX/BR shows)"
+  },
+  {
+    "title": "Capable of Love Tour",
+    "artist": "PinkPantheress",
+    "eligible": true,
+    "reason": "eligible: 12 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Carnival World Tour",
+    "artist": "Jay Chou",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (110 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Cerrando Ciclos",
+    "artist": "Aventura",
+    "eligible": false,
+    "reason": "(c) 4 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Champagne and Roses Tour",
+    "artist": "Ne-Yo",
+    "eligible": true,
+    "reason": "eligible: 16 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Charm Tour",
+    "artist": "Clairo",
+    "eligible": true,
+    "reason": "eligible: 37 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Chō-genjitsu Asia Tour",
+    "artist": "Yoasobi",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (14 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Chō-genjitsu Dome Live",
+    "artist": "Yoasobi",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (4 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Chris Stapleton's All-American Road Show Tour",
+    "artist": "Chris Stapleton",
+    "eligible": false,
+    "reason": "(c) 41 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Circus Maximus Tour",
+    "artist": "Travis Scott",
+    "eligible": false,
+    "reason": "(c) 4 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Cornucopia (concert tour)",
+    "artist": "Björk",
+    "eligible": true,
+    "reason": "eligible: 18 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Crash World Tour",
+    "artist": "Kehlani",
+    "eligible": true,
+    "reason": "eligible: 31 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Crash: The Live Tour",
+    "artist": "Charli XCX",
+    "eligible": true,
+    "reason": "eligible: 35 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Creepy Nuts One Man Tour 2024",
+    "artist": "Creepy Nuts",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (13 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "D-Day Tour",
+    "artist": "Suga",
+    "eligible": true,
+    "reason": "eligible: 11 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Dance Fever Tour",
+    "artist": "Florence and the Machine",
+    "eligible": true,
+    "reason": "eligible: 24 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Dark Matter World Tour",
+    "artist": "Pearl Jam",
+    "eligible": false,
+    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Dead & Company Summer Tour 2023",
+    "artist": "Dead & Company",
+    "eligible": false,
+    "reason": "(a) table cannot be parsed reliably: 29 of 29 rows have no determinable country"
+  },
+  {
+    "title": "Deceivers Asia Tour",
+    "artist": "Arch Enemy",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (16 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Deeper Well World Tour",
+    "artist": "Kacey Musgraves",
+    "eligible": true,
+    "reason": "eligible: 33 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Denim & Rhinestones Tour",
+    "artist": "Carrie Underwood",
+    "eligible": true,
+    "reason": "eligible: 43 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Denkōsekka Arena Tour",
+    "artist": "Yoasobi",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (14 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Disciplina Tour",
+    "artist": "Lali",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (40 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "DNA World Tour",
+    "artist": "Backstreet Boys",
+    "eligible": true,
+    "reason": "eligible: 111 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "Doing It Again Tour",
+    "artist": "Girl in Red",
+    "eligible": true,
+    "reason": "eligible: 16 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Dominate World Tour",
+    "artist": "Stray Kids",
+    "eligible": false,
+    "reason": "(c) 13 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Douyin Online Concert: Ke",
+    "artist": "Joker Xue",
+    "eligible": false,
+    "reason": "(a) no parseable date/venue table with cities (0 tables found)"
+  },
+  {
+    "title": "Dreamworld: The Greatest Hits Live",
+    "artist": "Pet Shop Boys",
+    "eligible": false,
+    "reason": "(b) only 5 US/MX/BR shows (117 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Emails I Can't Send Tour",
+    "artist": "Sabrina Carpenter",
+    "eligible": true,
+    "reason": "eligible: 52 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "End of the Road World Tour",
+    "artist": "Kiss",
+    "eligible": false,
+    "reason": "(c) 5 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Ephemeral Gaze",
+    "artist": "Taemin",
+    "eligible": true,
+    "reason": "eligible: 8 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Everybody Say JLS: The Hits Tour",
+    "artist": null,
+    "eligible": false,
+    "reason": "(a) no parseable date/venue table with cities (0 tables found)"
+  },
+  {
+    "title": "Everything (tour)",
+    "artist": "Thom Yorke",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (18 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Éxodo Tour",
+    "artist": "Peso Pluma",
+    "eligible": true,
+    "reason": "eligible: 38 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Extraterrestrial World Tour",
+    "artist": "Joker Xue",
+    "eligible": false,
+    "reason": "(b) only 3 US/MX/BR shows (145 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Faith in the Future World Tour",
+    "artist": "Louis Tomlinson",
+    "eligible": true,
+    "reason": "eligible: 43 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "Fantastic Old Fashioned 2024: Movie Star Rising",
+    "artist": "Jannabi",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (6 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Fantastic Old-fashioned End of the Year Party!",
+    "artist": "Jannabi",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (20 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Farewell Yellow Brick Road",
+    "artist": "Elton John",
+    "eligible": false,
+    "reason": "(c) 19 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Fear and Dreams World Tour",
+    "artist": "Eason Chan",
+    "eligible": false,
+    "reason": "(b) only 4 US/MX/BR shows (182 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Feed the Beast World Tour",
+    "artist": "Kim Petras",
+    "eligible": true,
+    "reason": "eligible: 23 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Ferxxocalipsis World Tour",
+    "artist": "Feid",
+    "eligible": false,
+    "reason": "(c) 5 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Final Nights of Six",
+    "artist": "You Me at Six",
+    "eligible": true,
+    "reason": "eligible: 21 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Five Albums. One Night. The World Tour",
+    "artist": "Jonas Brothers",
+    "eligible": false,
+    "reason": "(c) 6 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Flame Rises Tour",
+    "artist": "Le Sserafim",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (11 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Flo Live",
+    "artist": "Flo",
+    "eligible": true,
+    "reason": "eligible: 8 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Follow Tour",
+    "artist": "Seventeen",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (28 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "For Friends and Family Only Tour",
+    "artist": "Shawn Mendes",
+    "eligible": true,
+    "reason": "eligible: 9 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Forever Tour",
+    "artist": "Big Time Rush",
+    "eligible": true,
+    "reason": "eligible: 49 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Fórmula, Vol. 3: La Gira",
+    "artist": "Romeo Santos",
+    "eligible": false,
+    "reason": "(c) 8 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Found Heaven On Tour",
+    "artist": "Conan Gray",
+    "eligible": true,
+    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "From Zero World Tour",
+    "artist": "Linkin Park",
+    "eligible": false,
+    "reason": "(c) 8 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Garbage & Noel Gallagher's High Flying Birds: Live in Concert",
+    "artist": "Garbage and Noel Gallagher's High Flying Birds",
+    "eligible": false,
+    "reason": "(d) multiple artists in infobox: Garbage and Noel Gallagher's High Flying Birds"
+  },
+  {
+    "title": "Garbage 2024",
+    "artist": "Garbage",
+    "eligible": false,
+    "reason": "(b) only 3 US/MX/BR shows (19 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Gigaton Tour",
+    "artist": "Pearl Jam",
+    "eligible": true,
+    "reason": "eligible: 36 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Gira mi salida contigo",
+    "artist": "Ha*Ash",
+    "eligible": true,
+    "reason": "eligible: 75 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "Girls Just Wanna Have Fun Farewell Tour",
+    "artist": "Cyndi Lauper",
+    "eligible": true,
+    "reason": "eligible: 43 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Gloria the Blackout",
+    "artist": "Sam Smith",
+    "eligible": false,
+    "reason": "(b) only 2 US/MX/BR shows (29 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Gloria the Tour",
+    "artist": "Sam Smith",
+    "eligible": true,
+    "reason": "eligible: 28 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "God Said No World Tour",
+    "artist": "Omar Apollo",
+    "eligible": true,
+    "reason": "eligible: 25 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "Good Riddance Tour",
+    "artist": "Gracie Abrams",
+    "eligible": false,
+    "reason": "(c) 29 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Got Back",
+    "artist": "Paul McCartney",
+    "eligible": false,
+    "reason": "(c) 13 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Greatest Hits Tour (Avril Lavigne)",
+    "artist": "Avril Lavigne",
+    "eligible": false,
+    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Growin' Up and Gettin' Old Tour",
+    "artist": "Luke Combs",
+    "eligible": false,
+    "reason": "(c) 21 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Guns N' Roses 2023 Tour",
+    "artist": "Guns N' Roses",
+    "eligible": false,
+    "reason": "(c) 6 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Guts World Tour",
+    "artist": "Olivia Rodrigo",
+    "eligible": false,
+    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Hackney Diamonds Tour",
+    "artist": "The Rolling Stones",
+    "eligible": false,
+    "reason": "(c) 17 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Happier Than Ever, The World Tour",
+    "artist": "Billie Eilish",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Hit Me Hard and Soft: The Tour, 53 vs 41 US/MX/BR shows)"
+  },
+  {
+    "title": "Happiness: My Dear, ReVe1uv",
+    "artist": "Red Velvet",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (9 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Hard Tour",
+    "artist": "Tove Styrke",
+    "eligible": true,
+    "reason": "eligible: 13 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Hearts On the Run Tour",
+    "artist": "Delta Goodrem",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (15 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Higher Tour",
+    "artist": "Michael Bublé",
+    "eligible": true,
+    "reason": "eligible: 37 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Hit Me Hard and Soft: The Tour",
+    "artist": "Billie Eilish",
+    "eligible": true,
+    "reason": "eligible: 53 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Hope Tour",
+    "artist": "NF",
+    "eligible": true,
+    "reason": "eligible: 45 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Hot Girl Summer Tour",
+    "artist": "Megan Thee Stallion",
+    "eligible": false,
+    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Hotel California 2020 Tour",
+    "artist": "Eagles",
+    "eligible": true,
+    "reason": "eligible: 84 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Human. :II: Nature. World Tour",
+    "artist": "Nightwish",
+    "eligible": true,
+    "reason": "eligible: 14 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "I Am Ayu Tour",
+    "artist": "Ayumi Hamasaki",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (23 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "I Am Free-ty World Tour",
+    "artist": "(G)I-dle",
+    "eligible": false,
+    "reason": "(b) only 6 US/MX/BR shows (24 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "I Am Gloria World Tour",
+    "artist": "G.E.M.",
+    "eligible": false,
+    "reason": "(b) only 3 US/MX/BR shows (182 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "I-dol World Tour",
+    "artist": "(G)I-dle",
+    "eligible": false,
+    "reason": "(b) only 6 US/MX/BR shows (22 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "I/O The Tour",
+    "artist": "Peter Gabriel",
+    "eligible": true,
+    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Iconic (concert)",
+    "artist": "Sharon Cuneta and Regine Velasquez",
+    "eligible": false,
+    "reason": "(d) multiple artists in infobox: Sharon Cuneta and Regine Velasquez"
+  },
+  {
+    "title": "Imam pesmu da vam pevam Tour",
+    "artist": "Lepa Brena",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (35 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Imperatour",
+    "artist": "Ghost",
+    "eligible": true,
+    "reason": "eligible: 73 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Imploding the Mirage Tour",
+    "artist": "The Killers",
+    "eligible": false,
+    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "In Holy Flux Tour",
+    "artist": "Weyes Blood",
+    "eligible": true,
+    "reason": "eligible: 54 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "In Pieces Tour",
+    "artist": "Chloe Bailey",
+    "eligible": true,
+    "reason": "eligible: 24 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Indie Rock Road Trip",
+    "artist": "Weezer",
+    "eligible": true,
+    "reason": "eligible: 30 US/MX/BR shows, 2 stadium/field"
+  },
+  {
+    "title": "It's All a Blur Tour",
+    "artist": "Drake, 21 Savage & J. Cole",
+    "eligible": false,
+    "reason": "(d) multiple artists in infobox: Drake, 21 Savage & J. Cole"
+  },
+  {
+    "title": "IU HEREH World Tour",
+    "artist": "IU",
+    "eligible": false,
+    "reason": "(b) only 6 US/MX/BR shows (31 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Jacky Cheung 60+ Concert Tour",
+    "artist": "Jacky Cheung",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (301 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Janet Jackson: Together Again",
+    "artist": "Janet Jackson",
+    "eligible": true,
+    "reason": "eligible: 79 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "JJ20 World Tour",
+    "artist": "JJ Lin",
+    "eligible": true,
+    "reason": "eligible: 11 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Jubilee Tour",
+    "artist": "Japanese Breakfast",
+    "eligible": false,
+    "reason": "(e) excluded calibration/showcase artist"
+  },
+  {
+    "title": "Keys to the Summer Tour",
+    "artist": "Alicia Keys",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Alicia + Keys World Tour, 35 vs 21 US/MX/BR shows)"
+  },
+  {
+    "title": "Kiss Road",
+    "artist": "Kiss of Life",
+    "eligible": true,
+    "reason": "eligible: 18 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Knock On Vol.1 Tour",
+    "artist": "BoyNextDoor",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (24 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Lali Tour",
+    "artist": "Lali Espósito",
+    "eligible": false,
+    "reason": "(b) only 1 US/MX/BR shows (18 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Lana Del Rey's 2023 tour",
+    "artist": "Lana Del Rey",
+    "eligible": true,
+    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Las Leyendas Nunca Mueren Tour",
+    "artist": "Anuel AA",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Real Hasta la Muerte 2 Tour, 25 vs 22 US/MX/BR shows)"
+  },
+  {
+    "title": "Last Lap Tour",
+    "artist": "Rod Wave",
+    "eligible": true,
+    "reason": "eligible: 46 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Life Is Yours Tour",
+    "artist": "Foals",
+    "eligible": true,
+    "reason": "eligible: 49 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Life's So Fun Tour",
+    "artist": "Muna",
+    "eligible": true,
+    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "List of 2023 AJR festival shows",
+    "artist": null,
+    "eligible": false,
+    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Long Live Montero Tour",
+    "artist": "Lil Nas X",
+    "eligible": true,
+    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Lonsdaleite Tour",
+    "artist": "Baekhyun",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (29 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Loom World Tour",
+    "artist": "Imagine Dragons",
+    "eligible": false,
+    "reason": "(c) 8 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Lost in Heaven Tour",
+    "artist": "Chase Atlantic",
+    "eligible": true,
+    "reason": "eligible: 24 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Love On Tour",
+    "artist": "Harry Styles",
+    "eligible": true,
+    "reason": "eligible: 95 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Love Sick Tour",
+    "artist": "Don Toliver",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Psycho Tour (Don Toliver), 21 vs 19 US/MX/BR shows)"
+  },
+  {
+    "title": "Love Sux Tour",
+    "artist": "Avril Lavigne",
+    "eligible": true,
+    "reason": "eligible: 8 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "LSR/CITY",
+    "artist": null,
+    "eligible": false,
+    "reason": "(a) no parseable date/venue table with cities (0 tables found)"
+  },
+  {
+    "title": "Luck and Strange (concerts)",
+    "artist": "David Gilmour",
+    "eligible": true,
+    "reason": "eligible: 9 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Luis Miguel Tour 2023–24",
+    "artist": "Luis Miguel",
+    "eligible": false,
+    "reason": "(c) 40 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Luke Combs World Tour",
+    "artist": "Luke Combs",
+    "eligible": false,
+    "reason": "(c) 19 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "M72 World Tour",
+    "artist": "Metallica",
+    "eligible": false,
+    "reason": "(c) 49 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Mañana Será Bonito Tour",
+    "artist": "Karol G",
+    "eligible": false,
+    "reason": "(c) 18 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Maniac World Tour",
+    "artist": "Stray Kids",
+    "eligible": true,
+    "reason": "eligible: 16 US/MX/BR shows, 2 stadium/field"
+  },
+  {
+    "title": "Mariah Carey's Christmas Time",
+    "artist": "Mariah Carey",
+    "eligible": true,
+    "reason": "eligible: 31 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Match My Freak: World Tour",
+    "artist": "Tinashe",
+    "eligible": true,
+    "reason": "eligible: 21 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Memento Mori World Tour",
+    "artist": "Depeche Mode",
+    "eligible": true,
+    "reason": "eligible: 38 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Mercury World Tour",
+    "artist": "Imagine Dragons",
+    "eligible": false,
+    "reason": "(c) 7 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Merry Christmas One and All!",
+    "artist": "Mariah Carey",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Mariah Carey's Christmas Time, 31 vs 16 US/MX/BR shows)"
+  },
+  {
+    "title": "Metamorph (tour)",
+    "artist": "Taemin",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (5 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Mi Casa, Tu Casa Tour",
+    "artist": "Becky G",
+    "eligible": true,
+    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Minut Srca Mog Tour",
+    "artist": "Jelena Rozga",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (30 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Miracle Nights Tour",
+    "artist": "Brandon Lake",
+    "eligible": false,
+    "reason": "(a) table cannot be parsed reliably: 26 of 26 rows have no determinable country"
+  },
+  {
+    "title": "Most Wanted Tour (Bad Bunny)",
+    "artist": "Bad Bunny",
+    "eligible": true,
+    "reason": "eligible: 46 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Music of the Spheres World Tour",
+    "artist": "Coldplay",
+    "eligible": false,
+    "reason": "(c) 41 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "My Chemical Romance Reunion Tour",
+    "artist": "My Chemical Romance",
+    "eligible": true,
+    "reason": "eligible: 40 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "My Songs Tour",
+    "artist": "Sting",
+    "eligible": true,
+    "reason": "eligible: 78 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Na Jednu Noć Tour",
+    "artist": "Tea Tairović",
+    "eligible": true,
+    "reason": "eligible: 10 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Naked in North America Tour",
+    "artist": "Chappell Roan",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (The Midwest Princess Tour, 76 vs 19 US/MX/BR shows)"
+  },
+  {
+    "title": "Neka Gori Balkan Tour",
+    "artist": "Tea Tairović",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (55 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Neo City – The Link",
+    "artist": "NCT 127",
+    "eligible": true,
+    "reason": "eligible: 9 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Neo City – The Unity",
+    "artist": "NCT 127",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (19 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Neon Pill Tour",
+    "artist": "Cage the Elephant",
+    "eligible": true,
+    "reason": "eligible: 41 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "Never Sleep Tour",
+    "artist": "Nav",
+    "eligible": true,
+    "reason": "eligible: 21 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Nevermore 2023/2024",
+    "artist": "Mylène Farmer",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (14 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Nicole World Tour",
+    "artist": "Niki",
+    "eligible": true,
+    "reason": "eligible: 33 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "Nier: Orchestra Concert 12024 – The end of data",
+    "artist": "Square Enix",
+    "eligible": true,
+    "reason": "eligible: 9 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Nina and Me Tour",
+    "artist": "Ledisi",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (The Good Life Tour, 29 vs 18 US/MX/BR shows)"
+  },
+  {
+    "title": "Nonante-Cinq Tour",
+    "artist": "Angèle",
+    "eligible": false,
+    "reason": "(b) only 4 US/MX/BR shows (62 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Nostalgia Tour",
+    "artist": "Rod Wave",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Last Lap Tour, 46 vs 34 US/MX/BR shows)"
+  },
+  {
+    "title": "O-New-Note",
+    "artist": "Onew",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (5 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Od Istoka Do Zapada Tour",
+    "artist": "Aleksandra Prijović",
+    "eligible": false,
+    "reason": "(b) only 1 US/MX/BR shows (63 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "One Assassination Under God Tour",
+    "artist": "Marilyn Manson",
+    "eligible": false,
+    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "One More Time Tour",
+    "artist": "Blink-182",
+    "eligible": false,
+    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Only Love Tour",
+    "artist": "Kesha",
+    "eligible": true,
+    "reason": "eligible: 25 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Pagtatag! World Tour",
+    "artist": "SB19",
+    "eligible": false,
+    "reason": "(b) only 6 US/MX/BR shows (21 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Pandemonium (Joji)",
+    "artist": "Joji",
+    "eligible": true,
+    "reason": "eligible: 21 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Peace Out: The Farewell Tour",
+    "artist": "Aerosmith",
+    "eligible": true,
+    "reason": "eligible: 41 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Pentatonix: The World Tour",
+    "artist": "Pentatonix",
+    "eligible": true,
+    "reason": "eligible: 69 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "People Watching Tour",
+    "artist": "Sam Fender",
+    "eligible": true,
+    "reason": "eligible: 14 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Pink Friday 2 World Tour",
+    "artist": "Nicki Minaj",
+    "eligible": true,
+    "reason": "eligible: 55 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Pop Out Zepp Tour",
+    "artist": "Yoasobi",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (12 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Popular MonsTOUR II: World Domination",
+    "artist": "Falling in Reverse",
+    "eligible": true,
+    "reason": "eligible: 27 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Power Up Tour",
+    "artist": "AC/DC",
+    "eligible": false,
+    "reason": "(c) 28 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Psycho Tour (Don Toliver)",
+    "artist": "Don Toliver",
+    "eligible": true,
+    "reason": "eligible: 21 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Queen of Me Tour",
+    "artist": "Shania Twain",
+    "eligible": true,
+    "reason": "eligible: 42 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Queens of R&B Tour",
+    "artist": "Xscape and SWV",
+    "eligible": false,
+    "reason": "(d) multiple artists in infobox: Xscape and SWV"
+  },
+  {
+    "title": "R to V",
+    "artist": "Red Velvet",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (13 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Radical Optimism Tour",
+    "artist": "Dua Lipa",
+    "eligible": false,
+    "reason": "(c) 3 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Rammstein Stadium Tour",
+    "artist": "Rammstein",
+    "eligible": false,
+    "reason": "(c) 5 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Re:SET Concert Series",
+    "artist": null,
+    "eligible": false,
+    "reason": "(c) 6 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Ready to Be World Tour",
+    "artist": "Twice",
+    "eligible": false,
+    "reason": "(c) 4 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Real Hasta la Muerte 2 Tour",
+    "artist": "Anuel AA",
+    "eligible": true,
+    "reason": "eligible: 25 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Rebel Diamonds Tour",
+    "artist": "The Killers",
+    "eligible": false,
+    "reason": "(c) 5 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Regine Rocks",
+    "artist": "Regine Velasquez",
+    "eligible": false,
+    "reason": "(b) only 4 US/MX/BR shows (6 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Renaissance World Tour",
+    "artist": "Beyoncé",
+    "eligible": false,
+    "reason": "(c) 29 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Right Here World Tour",
+    "artist": "Seventeen",
+    "eligible": true,
+    "reason": "eligible: 10 US/MX/BR shows, 2 stadium/field"
+  },
+  {
+    "title": "Riizing Day",
+    "artist": "Riize",
+    "eligible": false,
+    "reason": "(b) only 2 US/MX/BR shows (31 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Rising from the North",
+    "artist": "Arch Enemy and In Flames",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (25 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Rompecorazones Tour",
+    "artist": "Anuel AA",
+    "eligible": false,
+    "reason": "(b) only 1 US/MX/BR shows (16 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Rough and Rowdy Ways World Wide Tour",
+    "artist": "Bob Dylan",
+    "eligible": true,
+    "reason": "eligible: 182 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Rush! World Tour",
+    "artist": "Måneskin",
+    "eligible": false,
+    "reason": "(a) no parseable date/venue table with cities (1 tables found)"
+  },
+  {
+    "title": "Saturno World Tour",
+    "artist": "Rauw Alejandro",
+    "eligible": false,
+    "reason": "(c) 7 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Seasons Tour",
+    "artist": "Thirty Seconds to Mars",
+    "eligible": true,
+    "reason": "eligible: 28 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Sexyy Red 4 President Tour",
+    "artist": "Sexyy Red",
+    "eligible": true,
+    "reason": "eligible: 28 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "Sharp Dressed Simple Man Tour",
+    "artist": "Lynyrd Skynyrd and ZZ Top",
+    "eligible": false,
+    "reason": "(d) multiple artists in infobox: Lynyrd Skynyrd and ZZ Top"
+  },
+  {
+    "title": "Shinee World VI: Perfect Illumination",
+    "artist": "Shinee",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (18 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Short n' Sweet Tour",
+    "artist": "Sabrina Carpenter",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Emails I Can't Send Tour, 52 vs 45 US/MX/BR shows)"
+  },
+  {
+    "title": "Show What I Have World Tour",
+    "artist": "Ive",
+    "eligible": true,
+    "reason": "eligible: 8 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Shows of a Lost World",
+    "artist": "The Cure",
+    "eligible": true,
+    "reason": "eligible: 34 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "SM Town Live 2023: SMCU Palace",
+    "artist": "SM Town",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (4 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "So Much For (Tour) Dust",
+    "artist": "Fall Out Boy",
+    "eligible": false,
+    "reason": "(c) 4 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Solar Power Tour",
+    "artist": "Lorde",
+    "eligible": true,
+    "reason": "eligible: 29 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Something to Give Each Other Tour",
+    "artist": "Troye Sivan",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (29 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Sonic Symphony",
+    "artist": "Sega",
+    "eligible": true,
+    "reason": "eligible: 37 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "SOS Tour",
+    "artist": "SZA",
+    "eligible": true,
+    "reason": "eligible: 36 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Soy Rebelde Tour",
+    "artist": "RBD",
+    "eligible": false,
+    "reason": "(c) 18 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Springsteen and E Street Band 2023–2025 Tour",
+    "artist": "Bruce Springsteen and the E Street Band",
+    "eligible": false,
+    "reason": "(c) 7 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Stage, Screen & Everything In Between Tour",
+    "artist": "Lea Salonga",
+    "eligible": true,
+    "reason": "eligible: 26 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Stairway to the Sky Tour",
+    "artist": "Zayn Malik",
+    "eligible": true,
+    "reason": "eligible: 13 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Stardew Valley: Festival of Seasons",
+    "artist": null,
+    "eligible": false,
+    "reason": "(d) headlining artist not determinable: infobox has no artist field"
+  },
+  {
+    "title": "Still... At Their Very Best",
+    "artist": "The 1975",
+    "eligible": true,
+    "reason": "eligible: 36 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Sugar High World Tour",
+    "artist": "Cyndi Wang",
+    "eligible": false,
+    "reason": "(b) only 2 US/MX/BR shows (71 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Sugar Honey Iced Tea Tour",
+    "artist": "Latto",
+    "eligible": true,
+    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Summer Carnival (tour)",
+    "artist": "Pink",
+    "eligible": false,
+    "reason": "(c) 20 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Summer Worship Nights Tour",
+    "artist": "Brandon Lake and Phil Wickham",
+    "eligible": false,
+    "reason": "(a) table cannot be parsed reliably: 44 of 45 rows have no determinable country"
+  },
+  {
+    "title": "Super Show 9: Road",
+    "artist": "Super Junior",
+    "eligible": false,
+    "reason": "(b) only 4 US/MX/BR shows (26 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Sweat (concert tour)",
+    "artist": "Charli XCX and Troye Sivan",
+    "eligible": false,
+    "reason": "(d) multiple artists in infobox: Charli XCX and Troye Sivan"
+  },
+  {
+    "title": "Synk: Hyper Line",
+    "artist": "Aespa",
+    "eligible": true,
+    "reason": "eligible: 10 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Synk: Parallel Line",
+    "artist": "Aespa",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Synk: Hyper Line, 10 vs 8 US/MX/BR shows)"
+  },
+  {
+    "title": "The 5 Seconds of Summer Show",
+    "artist": "5 Seconds of Summer",
+    "eligible": true,
+    "reason": "eligible: 21 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Big Five-O Live",
+    "artist": "Cold Chisel",
+    "eligible": false,
+    "reason": "(b) only 2 US/MX/BR shows (27 parsed, 3 country-unknown)"
+  },
+  {
+    "title": "The Big Steppers Tour",
+    "artist": "Kendrick Lamar",
+    "eligible": true,
+    "reason": "eligible: 50 US/MX/BR shows, 2 stadium/field"
+  },
+  {
+    "title": "The Car Tour",
+    "artist": "Arctic Monkeys",
+    "eligible": true,
+    "reason": "eligible: 33 US/MX/BR shows, 2 stadium/field"
+  },
+  {
+    "title": "The Celebration of Mimi",
+    "artist": "Mariah Carey",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Mariah Carey's Christmas Time, 31 vs 28 US/MX/BR shows)"
+  },
+  {
+    "title": "The Celebration Tour",
+    "artist": "Madonna",
+    "eligible": true,
+    "reason": "eligible: 54 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Chicks Tour",
+    "artist": "The Chicks",
+    "eligible": true,
+    "reason": "eligible: 56 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "The Childish Behaviour Tour",
+    "artist": "Ethel Cain",
+    "eligible": false,
+    "reason": "(b) only 7 US/MX/BR shows (16 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "The Clancy World Tour",
+    "artist": "Twenty One Pilots",
+    "eligible": false,
+    "reason": "(c) 7 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "The Connie Co Show Tour",
+    "artist": "Stephen Sanchez",
+    "eligible": true,
+    "reason": "eligible: 34 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Dream Show 2: In A Dream",
+    "artist": "NCT Dream",
+    "eligible": true,
+    "reason": "eligible: 9 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Dream Show 3: Dream( )scape",
+    "artist": "NCT Dream",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (The Dream Show 2: In A Dream, 9 vs 9 US/MX/BR shows)"
+  },
+  {
+    "title": "The End Is Nero World Tour",
+    "artist": "Queens of the Stone Age",
+    "eligible": true,
+    "reason": "eligible: 56 US/MX/BR shows, 2 stadium/field"
+  },
+  {
+    "title": "The Eras Tour",
+    "artist": "Taylor Swift",
+    "eligible": false,
+    "reason": "(c) 62 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "The Final Lap Tour",
+    "artist": "50 Cent",
+    "eligible": true,
+    "reason": "eligible: 37 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The First Time Tour",
+    "artist": "The Kid Laroi",
+    "eligible": true,
+    "reason": "eligible: 28 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Forget Tomorrow World Tour",
+    "artist": "Justin Timberlake",
+    "eligible": true,
+    "reason": "eligible: 73 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "The Future Past World Tour",
+    "artist": "Iron Maiden",
+    "eligible": true,
+    "reason": "eligible: 24 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "The Girls Aloud Show",
+    "artist": "Girls Aloud",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (30 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "The Gods We Can Touch Tour",
+    "artist": "Aurora",
+    "eligible": true,
+    "reason": "eligible: 19 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Good Life Tour",
+    "artist": "Ledisi",
+    "eligible": true,
+    "reason": "eligible: 29 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Hardest Part Tour",
+    "artist": "Noah Cyrus",
+    "eligible": true,
+    "reason": "eligible: 50 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Jaguar Tour",
+    "artist": "Victoria Monét",
+    "eligible": true,
+    "reason": "eligible: 24 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Last of the Street Survivors Farewell Tour",
+    "artist": "Lynyrd Skynyrd",
+    "eligible": false,
+    "reason": "(c) 6 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "The Magic Summer Tour (2024)",
+    "artist": "New Kids on the Block, Paula Abdul & DJ Jazzy Jeff",
+    "eligible": false,
+    "reason": "(d) multiple artists in infobox: New Kids on the Block, Paula Abdul & DJ Jazzy Jeff"
+  },
+  {
+    "title": "The Midwest Princess Tour",
+    "artist": "Chappell Roan",
+    "eligible": true,
+    "reason": "eligible: 76 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "The New World Tour (Childish Gambino)",
+    "artist": "Donald Glover",
+    "eligible": true,
+    "reason": "eligible: 30 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Odd of Love",
+    "artist": "Taeyeon",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (12 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "The Old Friends Acoustic Tour",
+    "artist": "Ben Rector",
+    "eligible": true,
+    "reason": "eligible: 45 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Older Tour",
+    "artist": "Lizzy McAlpine",
+    "eligible": true,
+    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Over and Out Tour",
+    "artist": "Electric Light Orchestra",
+    "eligible": true,
+    "reason": "eligible: 29 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Rhapsody Tour",
+    "artist": "Queen + Adam Lambert",
+    "eligible": true,
+    "reason": "eligible: 47 US/MX/BR shows, 2 stadium/field"
+  },
+  {
+    "title": "The Saviors Tour",
+    "artist": "Green Day",
+    "eligible": false,
+    "reason": "(c) 10 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "The Scarlet Tour",
+    "artist": "Doja Cat",
+    "eligible": true,
+    "reason": "eligible: 27 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Secret of Us Tour",
+    "artist": "Gracie Abrams",
+    "eligible": true,
+    "reason": "eligible: 35 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Show: Live on Tour",
+    "artist": "Niall Horan",
+    "eligible": true,
+    "reason": "eligible: 41 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Slow Rush Tour",
+    "artist": "Tame Impala",
+    "eligible": true,
+    "reason": "eligible: 66 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Smashing Pumpkins and Weezer UK & Ireland Tour 2024",
+    "artist": "The Smashing Pumpkins and Weezer",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (6 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "The So Nice Tour",
+    "artist": "Carly Rae Jepsen",
+    "eligible": true,
+    "reason": "eligible: 39 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Special Tour",
+    "artist": "Lizzo",
+    "eligible": true,
+    "reason": "eligible: 44 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Spicy Meatball Tour",
+    "artist": "Tenacious D",
+    "eligible": true,
+    "reason": "eligible: 14 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Spinnin Tour",
+    "artist": "Madison Beer",
+    "eligible": true,
+    "reason": "eligible: 30 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Stick Season (We'll All Be Here Forever) Tour",
+    "artist": "Noah Kahan",
+    "eligible": true,
+    "reason": "eligible: 43 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "The Timeless Tour",
+    "artist": "Meghan Trainor",
+    "eligible": true,
+    "reason": "eligible: 25 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Tipping Point World Tour",
+    "artist": "Tears for Fears",
+    "eligible": true,
+    "reason": "eligible: 41 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Trilogy Tour (Melanie Martinez)",
+    "artist": "Melanie Martinez",
+    "eligible": true,
+    "reason": "eligible: 31 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Unfortunate Return of the Ridiculously Self-Indulgent, Ill-Advised Vanity Tour",
+    "artist": "\"Weird Al\" Yankovic",
+    "eligible": true,
+    "reason": "eligible: 126 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The Unhealthy Club Tour",
+    "artist": "Anne-Marie",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (30 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "The Wild Dreams Tour",
+    "artist": "Westlife",
+    "eligible": true,
+    "reason": "eligible: 8 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "The World Tour (Def Leppard and Mötley Crüe)",
+    "artist": "Def Leppard and Mötley Crüe",
+    "eligible": false,
+    "reason": "(c) 5 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Think Later World Tour",
+    "artist": "Tate McRae",
+    "eligible": true,
+    "reason": "eligible: 25 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "This Is Not a Drill",
+    "artist": "Roger Waters",
+    "eligible": true,
+    "reason": "eligible: 44 US/MX/BR shows, 2 stadium/field"
+  },
+  {
+    "title": "This Is Why Tour",
+    "artist": "Paramore",
+    "eligible": true,
+    "reason": "eligible: 39 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "This Life on Tour",
+    "artist": "Take That",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (82 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "This Stupid World tour",
+    "artist": "Yo La Tengo",
+    "eligible": false,
+    "reason": "(a) no parseable date/venue table with cities (1 tables found)"
+  },
+  {
+    "title": "Timeless World",
+    "artist": "Zerobaseone",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (14 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Tini Tour",
+    "artist": "Tini",
+    "eligible": false,
+    "reason": "(b) only 7 US/MX/BR shows (60 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Today... is the Day Tour",
+    "artist": "Andy Lau",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (71 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Tour of the Setting Sum",
+    "artist": "Sum 41",
+    "eligible": true,
+    "reason": "eligible: 43 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "Train of Terror Tour",
+    "artist": "Insane Clown Posse, Ouija Macc, Shaggy The Airhead, Wakko The Kidd, Monster Wolf, Juggalo Championship Wrestling",
+    "eligible": false,
+    "reason": "(a) table cannot be parsed reliably: 7 of 7 rows have no determinable country"
+  },
+  {
+    "title": "Trustfall Tour",
+    "artist": "Pink",
+    "eligible": true,
+    "reason": "eligible: 34 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Twelve Carat Tour",
+    "artist": "Post Malone",
+    "eligible": true,
+    "reason": "eligible: 35 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Tyla Tour",
+    "artist": "Tyla",
+    "eligible": false,
+    "reason": "(b) only 3 US/MX/BR shows (10 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "TZN Tour 2023",
+    "artist": "Tiziano Ferro",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (15 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "U.S. Residency Tour",
+    "artist": "King Gizzard & the Lizard Wizard",
+    "eligible": false,
+    "reason": "(a) table cannot be parsed reliably: 14 of 14 rows have no determinable country"
+  },
+  {
+    "title": "Ugly Beauty World Tour",
+    "artist": "Jolin Tsai",
+    "eligible": false,
+    "reason": "(a) table cannot be parsed reliably: 63 of 77 rows have no determinable country"
+  },
+  {
+    "title": "UK + Europe 2023",
+    "artist": "Maroon 5",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (12 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Under the Influence Tour",
+    "artist": "Chris Brown",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (28 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Unlimited Love Tour",
+    "artist": "Red Hot Chili Peppers",
+    "eligible": false,
+    "reason": "(c) 19 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "Usher: Past Present Future",
+    "artist": "Usher",
+    "eligible": true,
+    "reason": "eligible: 58 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Venus Tour",
+    "artist": "Zara Larsson",
+    "eligible": false,
+    "reason": "(b) only 7 US/MX/BR shows (24 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Viva Las Vengeance Tour",
+    "artist": "Panic! at the Disco",
+    "eligible": true,
+    "reason": "eligible: 27 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Voyage to the Blue Planet",
+    "artist": "Weezer",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (Indie Rock Road Trip, 30 vs 22 US/MX/BR shows)"
+  },
+  {
+    "title": "Walkerverse: The Tour",
+    "artist": "Alan Walker",
+    "eligible": true,
+    "reason": "eligible: 14 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "We Trust You Tour",
+    "artist": "Future & Metro Boomin",
+    "eligible": false,
+    "reason": "(d) multiple artists in infobox: Future & Metro Boomin"
+  },
+  {
+    "title": "Welcome Back Tour",
+    "artist": "2NE1",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (27 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "What Are We Waiting For Tour",
+    "artist": "For King & Country",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (A Drummer Boy Christmas Tour, 88 vs 58 US/MX/BR shows)"
+  },
+  {
+    "title": "What Happened to the Earth?",
+    "artist": "Aurora",
+    "eligible": false,
+    "reason": "not selected: artist has a better tour (The Gods We Can Touch Tour, 19 vs 15 US/MX/BR shows)"
+  },
+  {
+    "title": "Who We Used to Be Tour",
+    "artist": "James Blunt",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (91 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Will of the People World Tour",
+    "artist": "Muse",
+    "eligible": true,
+    "reason": "eligible: 31 US/MX/BR shows, 1 stadium/field"
+  },
+  {
+    "title": "World Tour 2023/2024",
+    "artist": "Blink-182",
+    "eligible": false,
+    "reason": "(c) 4 US/MX/BR shows at stadium/field venues"
+  },
+  {
+    "title": "World Tour 2024",
+    "artist": "King Gizzard & the Lizard Wizard",
+    "eligible": true,
+    "reason": "eligible: 38 US/MX/BR shows, 2 stadium/field"
+  },
+  {
+    "title": "XXV Tour",
+    "artist": "Robbie Williams",
+    "eligible": false,
+    "reason": "(b) only 1 US/MX/BR shows (82 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Y2K! World Tour",
+    "artist": "Ice Spice",
+    "eligible": true,
+    "reason": "eligible: 17 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Yoasobi Asia Tour 2023–2024",
+    "artist": "Yoasobi",
+    "eligible": false,
+    "reason": "(b) only 0 US/MX/BR shows (8 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Yoasobi Live in the USA",
+    "artist": "Yoasobi",
+    "eligible": false,
+    "reason": "(b) only 4 US/MX/BR shows (4 parsed, 0 country-unknown)"
+  },
+  {
+    "title": "Young Forever Tour",
+    "artist": "Nessa Barrett",
+    "eligible": true,
+    "reason": "eligible: 19 US/MX/BR shows, 0 stadium/field"
+  },
+  {
+    "title": "Zuhause bei Dir Tour",
+    "artist": "Vanessa Mai",
+    "eligible": false,
+    "reason": "(a) table cannot be parsed reliably: 9 of 9 rows have no determinable country"
+  },
+  {
+    "title": "Zunge Tour",
+    "artist": "Till Lindemann",
+    "eligible": true,
+    "reason": "eligible: 20 US/MX/BR shows, 0 stadium/field"
+  }
+]
