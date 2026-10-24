@@ -375,6 +375,23 @@ test("preloading the next step loads a chunk and makes zero /api/qloo requests",
   expect(qloo, "preload must not call Qloo").toEqual([]);
 });
 
+test("the board leads with where fan heat and winnability disagree", async ({ page }, info) => {
+  const { qloo } = watch(page);
+  await page.goto("/tours/board?showcase=1");
+  const section = page.getByTestId("moves-section");
+  await expect(section.getByRole("heading", { name: "Where fan heat and winnability disagree" })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("button", { name: "Stop" })).toHaveCount(0, { timeout: 30_000 });
+  await expect(section.getByTestId("move-row").first().or(section.getByText("Fan heat and winnability agree on this board."))).toBeVisible();
+  expect(await section.getByTestId("move-row").count()).toBeLessThanOrEqual(3);
+  const above = await page.evaluate(() => document.querySelector('[data-testid="moves-section"]')!.getBoundingClientRect().top < document.querySelector('[role="tablist"][aria-label="Ranking"]')!.getBoundingClientRect().top);
+  expect(above, "the section sits above the tabs").toBe(true);
+  expect(await noOverflow(page)).toBe(true);
+  await expectNoSeriousA11y(page, "board moves section");
+  const dir = process.env.SHOT_DIR;
+  if (dir) await section.screenshot({ path: path.join(dir, `moves-${info.project.name}.png`) });
+  expect(qloo, "the recorded board makes no Qloo calls").toEqual([]);
+});
+
 // Layout shift: the stepper, the tab note and the Suspense fallbacks reserve their height.
 for (const url of ["/tours/board", "/tours/board?showcase=1&mode=density"]) {
   test(`no layout jumps on the board (${url}): total layout shift < 0.1 after the replay settles`, async ({ page }) => {

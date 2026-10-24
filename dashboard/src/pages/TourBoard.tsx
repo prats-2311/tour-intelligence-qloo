@@ -6,6 +6,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { BriefForm } from "@/components/qloo/BriefForm";
 import { CityRow, ROW_COLS_LG } from "@/components/qloo/CityRow";
+import { MovesSection } from "@/components/qloo/MovesSection";
 import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
 import { NextStepButton, NextStepLink } from "@/components/qloo/NextStep";
 import { NeedsInputPicker } from "@/components/qloo/NeedsInputPicker";
@@ -309,6 +310,10 @@ export default function TourBoard() {
           </div>
           <button type="button" onClick={newBrief} className={secondaryBtn}>Try other regions</button>
         </section>
+      )}
+
+      {(state.cities.length > 0 || streaming) && !empty && (
+        <MovesSection cities={state.cities} scoring={state.scoring} done={state.status === "done"} selectedId={selectedId} onSelect={selectFromMap} />
       )}
 
       {state.cities.length > 0 && (

@@ -222,7 +222,8 @@ describe("TourBoard", () => {
         </MemoryRouter>
       </TourBoardProvider></QueryClientProvider>,
     );
-    fireEvent.click(await screen.findByRole("button", { name: /^Guadalajara/ }));
+    await waitFor(() => expect(document.querySelector('[data-testid="city-row"][data-city-name="Guadalajara"]')).toBeTruthy());
+    fireEvent.click(within(document.querySelector('[data-testid="city-row"][data-city-name="Guadalajara"]') as HTMLElement).getByRole("button"));
     expect(await screen.findByText("playbook 4005539")).toBeTruthy();
     expect(screen.getByTestId("search").textContent).toBe("?sample=1");
   });
@@ -631,4 +632,25 @@ describe("TourBoard explains each tab", () => {
     raw.withoutQloo = { status: "ok", ranked: [{ name: "Nowhere Town", country: "XX" }, { name: "El Paso", country: "US" }] };
     setShowcase(parseShowcase(raw));
   }
+});
+
+describe("TourBoard moves section", () => {
+  it("leads the list column above the tabs, filling in when the board finishes", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    renderPage("/tours/board?showcase=1");
+    const heading = await screen.findByRole("heading", { name: "Where fan heat and winnability disagree" });
+    const tabs = screen.getByRole("tablist", { name: "Ranking" });
+    expect(heading.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await waitFor(() => expect(screen.getAllByTestId("move-row").length + (screen.queryByText("Fan heat and winnability agree on this board.") ? 1 : 0)).toBeGreaterThan(0));
+    expect(screen.queryByText("Ranking moves appear when the board finishes.")).toBeNull();
+  });
+  it("selects the city's board row when a move is tapped", async () => {
+    renderPage("/tours/board?sample=1");
+    await waitFor(() => expect(screen.getAllByTestId("move-row").length).toBeGreaterThan(0));
+    const row = screen.getAllByTestId("move-row")[0]!;
+    const name = row.querySelector(".font-title")!.textContent!;
+    fireEvent.click(within(row).getByRole("button"));
+    expect(within(row).getByRole("button").getAttribute("aria-pressed")).toBe("true");
+    expect(document.querySelector(`[data-testid="city-row"][data-city-name="${name}"]`)).toBeTruthy();
+  });
 });
