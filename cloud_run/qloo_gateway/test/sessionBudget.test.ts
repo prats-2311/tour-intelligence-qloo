@@ -31,6 +31,10 @@ const CITIES = Object.values(REGIONS).flat();
 const heat = (cs: City[]): QlooEnvelope => ({ operation: "where_popular", status: "ok", results: cs.map((c, i) => ({ location: { latitude: c.lat, longitude: c.lon }, query: { affinity: 0.9 - i * 0.05, popularity: 0.5 } })) });
 const cityZones = (c: City): QlooEnvelope => ({ operation: "where_popular", status: "ok", results: [0, 1, 2].map((i) => ({ location: { latitude: c.lat + i * 0.01, longitude: c.lon }, query: { affinity: 0.8 - i * 0.2, popularity: 0.3 } })) });
 const tags = [["Funk", 0.9], ["Soul", 0.7], ["Pop", 0.5]].map(([n, s]) => ({ tag_id: `urn:tag:genre:music:${n}`, name: n, type: "urn:tag", query: { score: s } }));
+const FULL: Record<string, string> = { MX: "Mexico", BR: "Brazil", US: "United States" };
+/** Query strings (by exact text) that Qloo resolves to the wrong place: three points at 0,0, far from every test city. */
+const MISPLACED = new Set<string>();
+const misplaced: QlooEnvelope = { operation: "where_popular", status: "ok", results: [0, 1, 2].map((i) => ({ location: { latitude: i * 0.01, longitude: 0 }, query: { affinity: 0.5, popularity: 0.3 } })) };
 const slug = (s: string) => s.replace(/\W/g, "");
 
 /** Fake Qloo MCP: every tool answers ok, with distinct ids per city so no two cities share cache keys. */
@@ -40,7 +44,8 @@ function route(tool: string, args: Record<string, unknown>): QlooEnvelope {
     case "qloo_describe": return args.entity === "Test Artist" ? describeOk : { operation: "describe", status: "ok", results: [{ entity_id: `D-${String(args.entity)}`, name: String(args.entity) }] };
     case "qloo_where_popular": {
       const region = REGIONS[String(args.within)];
-      return region ? heat(region) : cityZones(CITIES.find((c) => `${c.name}, ${c.country}` === args.within)!);
+      if (MISPLACED.has(String(args.within))) return misplaced;
+      return region ? heat(region) : cityZones(CITIES.find((c) => [`${c.name}, ${c.country}`, `${c.name}, ${FULL[c.country]}`].includes(String(args.within)))!);
     }
     case "qloo_recommend": {
       const names = args.signals ? Array.from({ length: 10 }, (_, i) => `${String(args.target_type)} ${where} ${i}`) : Array.from({ length: 20 }, (_, i) => `Pool ${where} ${i}`);
@@ -55,7 +60,13 @@ function route(tool: string, args: Record<string, unknown>): QlooEnvelope {
 async function collect(g: AsyncGenerator<GatewayEvent>) { const o: GatewayEvent[] = []; for await (const e of g) o.push(e); return o; }
 
 describe("one session: cold board plus 4 hybrid playbooks", () => {
-  it("never hits the Qloo or Gemini session limits", async () => {
+  it.each([
+    ["every city resolves on the first string", []],
+    ["one board city needs a second string and one never resolves", ["Sao Paulo, BR", "Portland, US", "Portland, United States"]],
+    ["every board city except one needs its second string (worst case: one extra lookup per city)", ["Mexico City, MX", "Monterrey, MX", "Guadalajara, MX", "Sao Paulo, BR", "Rio de Janeiro, BR", "Curitiba, BR", "Austin, US"]],
+  ])("never hits the Qloo or Gemini session limits: %s", async (_name, misplacedStrings) => {
+    MISPLACED.clear();
+    for (const m of misplacedStrings) MISPLACED.add(m);
     const sessionId = "judge-session";
     let qlooCalls = 0;
     const budget = new BudgetGuard({ perSession: SESSION_QLOO_BUDGET, perDay: 2000 });
@@ -81,8 +92,11 @@ describe("one session: cold board plus 4 hybrid playbooks", () => {
     expect(board.filter((e) => e.type === "error")).toEqual([]);
     expect(scored).toHaveLength(8);
     const boardCalls = qlooCalls;
+    const unresolved = (scored as Array<{ city: { insufficientReason?: string } }>).filter((e) => e.city.insufficientReason === "location_unresolved");
+    expect(unresolved).toHaveLength(misplacedStrings.includes("Portland, United States") ? 1 : 0);
 
-    const stops = (scored as Array<{ city: { name: string; country: string } }>).slice(0, 4).map((e) => e.city);
+    const stops = (scored as Array<{ city: { name: string; country: string; insufficientReason?: string } }>).filter((e) => !e.city.insufficientReason).slice(0, 4).map((e) => e.city);
+    expect(stops).toHaveLength(4);
     for (const city of stops) {
       const events = await collect(runCityPlaybook({ artist: "Test Artist", artistEntityId: "A1", city, sessionId }, { qloo, cities: CITIES, narrate, localActs }));
       expect(events.filter((e) => e.type === "error")).toEqual([]);
@@ -92,7 +106,7 @@ describe("one session: cold board plus 4 hybrid playbooks", () => {
     }
 
     // The session limit was the problem at 100: the same run now needs more than that, and still fits.
-    expect(qlooCalls).toBeGreaterThan(100);
+    expect(qlooCalls).toBeGreaterThan(misplacedStrings.length > 2 ? 90 : 100); // unresolved cities skip their activation calls, so the cold board is cheaper
     expect(qlooCalls).toBeLessThanOrEqual(SESSION_QLOO_BUDGET);
     expect(budget.remaining(sessionId).session).toBe(SESSION_QLOO_BUDGET - qlooCalls);
     expect(qlooCalls - boardCalls).toBeLessThanOrEqual(4 * 11); // 3 co-bill + 1 pool + <=5 describes + 1 rank + 1 compare per playbook

@@ -1,5 +1,6 @@
 import { extractEntities, extractHeatPoints, extractIssues, extractMusicTags, extractTrendPoints } from "../extract.js";
 import type { City } from "../geo/cities.js";
+import { locationQueries, locationResolved } from "../geo/location.js";
 import { marketsFromHeat, zonesFromHeat } from "../geo/heat.js";
 import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { activation, fanConcentration, meanTopK, type ComponentName } from "../scoring/activation.js";
@@ -16,6 +17,11 @@ export interface ScoredCity {
   fanHeat: Score; activation: Score & { components: Partial<Record<ComponentName, number>>; rawComponents?: Partial<Record<ComponentName, number>> }; winnability: Score; verdict: Verdict; closeCall: boolean;
   zones: ReturnType<typeof zonesFromHeat>;
   warnings: DataWarning[];
+  /** Machine-readable reason a city has no activation score (today only "location_unresolved"). */
+  insufficientReason?: "location_unresolved";
+  /** The query string Qloo resolved this city with, and how many in-city lookups it took (unresolved: all that were tried). */
+  locationQuery?: string;
+  locationAttempts?: number;
 }
 interface Deps { qloo: QlooCaller; cities: City[]; signal?: AbortSignal; concurrency?: number }
 
@@ -79,15 +85,42 @@ async function call(deps: Deps, sessionId: string, tool: string, args: Record<st
 
 export { call as trackedCall };
 
-export async function activationInputs(artist: string, city: { name: string; country: string }, deps: Deps, sessionId: string, events: GatewayEvent[], venueFallbackMessage = "venue ranking unresolved — showing place recommendations") {
-  const where = `${city.name}, ${city.country}`;
-  const [brands, places, films, artists, tv, inCity] = await settleAll([
+export type LocationResolution =
+  | { status: "resolved"; where: string; inCity: CallResult; attempts: number }
+  /** The city could not be checked (no coordinates, or the first lookup failed): the original string is used, as before the check existed. */
+  | { status: "unverified"; where: string; inCity: CallResult; attempts: 1 }
+  | { status: "unresolved"; attempts: number; tried: string[] };
+
+/**
+ * Qloo only gets a city as a fuzzy location query, so it can place it somewhere else entirely. Try each query string in order
+ * (the original first, so cached boards keep serving) until the in-city heat points sit near the city. Shared by the board and the playbook.
+ */
+export async function resolveLocation(artist: string, city: { name: string; country: string; lat?: number; lon?: number }, deps: Deps, sessionId: string, events: GatewayEvent[]): Promise<LocationResolution> {
+  const queries = locationQueries(city);
+  const here = typeof city.lat === "number" && typeof city.lon === "number" ? { lat: city.lat, lon: city.lon } : undefined;
+  const tried: string[] = [];
+  for (const where of queries) {
+    const inCity = await call(deps, sessionId, "qloo_where_popular", { entity: artist, entity_type: "artist", within: where, limit: 20 }, events);
+    tried.push(where);
+    if (!here) return { status: "unverified", where, inCity, attempts: 1 };
+    if (inCity.envelope.status === "error") {
+      // An outage says nothing about where Qloo placed the city: keep the original behaviour for the first string, never score on a later one.
+      if (tried.length === 1) return { status: "unverified", where, inCity, attempts: 1 };
+      break;
+    }
+    if (locationResolved(here, extractHeatPoints(inCity.envelope))) return { status: "resolved", where, inCity, attempts: tried.length };
+  }
+  return { status: "unresolved", attempts: tried.length, tried };
+}
+
+export async function activationInputs(artist: string, loc: { where: string; inCity: CallResult }, deps: Deps, sessionId: string, events: GatewayEvent[], venueFallbackMessage = "venue ranking unresolved — showing place recommendations") {
+  const { where, inCity } = loc;
+  const [brands, places, films, artists, tv] = await settleAll([
     call(deps, sessionId, "qloo_recommend", artistTasteArgs("brand", artist, where, 10), events),
     call(deps, sessionId, "qloo_recommend", { target_type: "place", signals: [artist], filter_location: where, limit: 10 }, events),
     call(deps, sessionId, "qloo_recommend", { target_type: "movie", signals: [artist], signal_location: where, limit: 10 }, events),
     call(deps, sessionId, "qloo_recommend", artistTasteArgs("artist", artist, where, 10), events),
     call(deps, sessionId, "qloo_recommend", { target_type: "tv_show", signals: [artist], signal_location: where, limit: 10 }, events),
-    call(deps, sessionId, "qloo_where_popular", { entity: artist, entity_type: "artist", within: where, limit: 20 }, events),
   ] as const);
   const placeEntities = extractEntities(places.envelope);
   // F6: qloo_rank needs entity ids; names come back as needs_input with candidates.
@@ -230,13 +263,21 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
         const fan = heat.get(m.city.id)!;
         const base = { id: m.city.id, name: m.city.name, country: m.city.country, lat: m.city.lat, lon: m.city.lon };
         try {
-          const inputs = await activationInputs(signalArtist, m.city, deps, brief.sessionId, events, "venue ranking unresolved — venue fit not scored");
+          const loc = await resolveLocation(signalArtist, m.city, deps, brief.sessionId, events);
+          if (loc.status === "unresolved") {
+            // Qloo placed this city somewhere else: no activation calls, never a confident score from another place's data.
+            const act = { ...activation({}, SCORING.weights), rawComponents: {} as Partial<Record<ComponentName, number>> };
+            const win = winnability(fan, act);
+            const warning: DataWarning = { tool: "qloo_where_popular", kind: "partial", code: "LOCATION_UNRESOLVED", message: "Qloo couldn't place this city precisely, so it wasn't scored" };
+            return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), closeCall: false, zones: [], warnings: dedupeWarnings([...m.warnings, warning]), insufficientReason: "location_unresolved", locationAttempts: loc.attempts } };
+          }
+          const inputs = await activationInputs(signalArtist, loc, deps, brief.sessionId, events, "venue ranking unresolved — venue fit not scored");
           const adjusted = Object.fromEntries(Object.entries(inputs.components).map(([k, c]) => [k, c.value]));
           const scoredAct = activation(inputs.components, SCORING.weights);
           // Rule 8: a thin-data city is insufficient_data, never 0 (same isThin as calibration's scoreCity).
           const act = { ...(isThin(adjusted, SCORING.weights) ? { ...scoredAct, value: null, reason: "insufficient_data" as const } : scoredAct), rawComponents: inputs.rawComponents };
           const win = winnability(fan, act);
-          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), closeCall: closeCall(fan, act, SCORING.thresholds), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]) } };
+          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), closeCall: closeCall(fan, act, SCORING.thresholds), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]), ...(loc.status === "resolved" ? { locationQuery: loc.where, locationAttempts: loc.attempts } : {}) } };
         } catch (err) {
           if (err instanceof Aborted || err instanceof BudgetStop) return { stop: err };
           const act = { ...activation({}, SCORING.weights), rawComponents: {} as Partial<Record<ComponentName, number>> };

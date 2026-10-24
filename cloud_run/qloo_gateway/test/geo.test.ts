@@ -69,6 +69,19 @@ describe("zonesFromHeat", () => {
     expect(zones[0]?.share).toBeCloseTo(0.75, 10);
     expect(zones[1]?.label).toBe("Mexico City");
   });
+  it("makes zone rows unique by display name and merges their shares", () => {
+    const zones = zonesFromHeat([
+      { lat: 19.35, lon: -99.16, affinity: 0.4, popularity: 0.1, index: 0 },
+      { lat: 19.43, lon: -99.13, affinity: 0.3, popularity: 0.1, index: 1 },
+      { lat: 19.351, lon: -99.161, affinity: 0.2, popularity: 0.1, index: 2 },
+      { lat: 19.431, lon: -99.131, affinity: 0.1, popularity: 0.1, index: 3 },
+    ], CITIES);
+    expect(zones.map((z) => z.label)).toEqual(["Coyoacan", "Mexico City"]);
+    expect(zones[0]).toMatchObject({ index: 0, affinity: 0.4 }); // the strongest point stands for the merged row
+    expect(zones[0]?.share).toBeCloseTo(0.6, 10);
+    expect(zones[1]?.share).toBeCloseTo(0.4, 10);
+    expect(zones.reduce((s, z) => s + z.share, 0)).toBeCloseTo(1, 10);
+  });
   it("falls back to coordinates when no locality within 8 km", () => {
     expect(zonesFromHeat([{ lat: 10, lon: 10, affinity: 1, popularity: 0, index: 0 }], CITIES)[0]?.label).toBe("10.000, 10.000");
   });

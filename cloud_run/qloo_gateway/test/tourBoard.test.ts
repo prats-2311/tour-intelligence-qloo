@@ -31,9 +31,17 @@ async function collect(gen: AsyncGenerator<GatewayEvent>) { const out: GatewayEv
 
 const liveEnv = (name: string): QlooEnvelope => ({ operation: name, ...JSON.parse(readFileSync(new URL(`./fixtures/live/${name}.json`, import.meta.url), "utf8")) }) as QlooEnvelope;
 
+// In-city heat must sit near the queried city (the board now verifies that Qloo placed the city correctly).
+const POOL_CITIES = Array.from({ length: 12 }, (_, i) => ({ name: `City${i}`, lat: 10 + i * 2, lon: -100 }));
+const heatNear = (within: unknown): QlooEnvelope => {
+  const c = [...CITIES, ...POOL_CITIES].find((x) => x.name === String(within).split(",")[0]);
+  if (!c) return cityHeat;
+  return { operation: "where_popular", status: "ok", results: [[0, 0, 0.6], [0.01, 0.01, 0.3], [-0.01, -0.01, 0.1]].map(([dLat, dLon, affinity]) => ({ location: { latitude: c.lat + dLat!, longitude: c.lon + dLon! }, query: { affinity: affinity!, popularity: 0.2 } })) };
+};
+
 const happy = (tool: string, args: Record<string, unknown>): QlooEnvelope => {
   if (tool === "qloo_describe") return describeOk;
-  if (tool === "qloo_where_popular") return args.within === "Mexico" ? heatMexico : cityHeat;
+  if (tool === "qloo_where_popular") return args.within === "Mexico" ? heatMexico : heatNear(args.within);
   if (tool === "qloo_recommend") return recs(["One", "Two", "Three"], [0.9, 0.7, 0.5]);
   if (tool === "qloo_rank") return recs(["Venue A"], [0.8]);
   return { operation: tool, status: "ok", results: [] };
@@ -221,7 +229,7 @@ describe("runTourBoard", () => {
   });
 
   it("dedupes a city appearing in two regions", async () => {
-    const events = await collect(runTourBoard({ ...brief, regions: ["Mexico", "Mexico2"] }, { qloo: fakeQloo((t, a) => (t === "qloo_where_popular" && String(a.within).startsWith("Mexico") ? heatMexico : happy(t, a))), cities: CITIES }));
+    const events = await collect(runTourBoard({ ...brief, regions: ["Mexico", "Mexico2"] }, { qloo: fakeQloo((t, a) => (t === "qloo_where_popular" && ["Mexico", "Mexico2"].includes(String(a.within)) ? heatMexico : happy(t, a))), cities: CITIES }));
     const names = events.filter((e) => e.type === "city_scored").map((e) => (e as { city: { name: string } }).city.name);
     expect(names).toEqual(["Mexico City", "Monterrey"]);
   });

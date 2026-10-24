@@ -3,7 +3,7 @@ import type { City } from "../geo/cities.js";
 import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { coBillLift } from "../scoring/winnability.js";
 import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narrative, PlaybookCard } from "../types.js";
-import { activationInputs, Aborted, BudgetStop, trackedCall } from "./tourBoard.js";
+import { activationInputs, Aborted, BudgetStop, resolveLocation, trackedCall } from "./tourBoard.js";
 import { LOCAL_DESCRIBE_CAP, LOCAL_SUGGESTIONS, matchPool, matchSuggestion } from "./localActs.js";
 import { cityPopularityArgs, LOCAL_ACT_POOL, localActRankArgs } from "./recArgs.js";
 
@@ -46,7 +46,15 @@ export async function* runCityPlaybook(
 ): AsyncGenerator<GatewayEvent> {
   const events: GatewayEvent[] = [];
   try {
-    const a = await activationInputs(input.artistEntityId, input.city, deps, input.sessionId, events);
+    // Coordinates come from the city list (the board's cities are drawn from it); a city it lacks is looked up unchecked, as before.
+    const known = deps.cities.filter((c) => c.name === input.city.name && c.country === input.city.country).sort((x, y) => y.population - x.population)[0];
+    const loc = await resolveLocation(input.artistEntityId, { ...input.city, ...(known ? { lat: known.lat, lon: known.lon } : {}) }, deps, input.sessionId, events);
+    while (events.length) yield events.shift()!;
+    if (loc.status === "unresolved") {
+      yield { type: "error", code: "LOCATION_UNRESOLVED", message: `Qloo couldn't place ${input.city.name} precisely (${loc.attempts} lookups), so no playbook was built from its data.` };
+      return;
+    }
+    const a = await activationInputs(input.artistEntityId, loc, deps, input.sessionId, events);
     while (events.length) yield events.shift()!;
     const ref = (tool: string, r: { cacheKey: string }) => ({ tool, cacheKey: r.cacheKey });
 
@@ -69,7 +77,7 @@ export async function* runCityPlaybook(
     const compared = settled.map((s) => (s as PromiseFulfilledResult<{ warnings: DataWarning[]; lift?: { name: string; entityId: string; sharedTaste: number; localAffinity: number; lift: number; sharedTags: string[]; ref: EvidenceRef } }>).value);
     const coBill = compared.flatMap((c) => (c.lift ? [c.lift] : [])).sort((x, y) => y.lift - x.lift);
 
-    const where = `${input.city.name}, ${input.city.country}`;
+    const where = loc.where;
     const [tagsS, proxyS, suggestedS] = await Promise.allSettled([
       trackedCall(deps, input.sessionId, "qloo_entity_tags", { entities: [input.artistEntityId], entity_type: "artist", limit: 10 }, events),
       trackedCall(deps, input.sessionId, "qloo_recommend", cityPopularityArgs("artist", where, LOCAL_ACT_POOL), events),

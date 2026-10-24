@@ -1,0 +1,43 @@
+import { haversineKm } from "./cities.js";
+import type { HeatPoint } from "./heat.js";
+
+/** The harness sends a city only as a fuzzy location query, so Qloo can resolve it to the wrong place (Ciudad Juarez -> Mexico City). */
+export const LOCATION_MIN_POINTS = 3;
+export const LOCATION_MAX_MEDIAN_KM = 50;
+/** Most query strings tried per city (each is one qloo_where_popular call, cached). */
+export const MAX_LOCATION_ATTEMPTS = 3;
+
+const median = (xs: number[]): number => {
+  const s = [...xs].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2;
+};
+
+/** True iff Qloo returned enough in-city heat points and their median distance from the city is within the threshold. Pure. */
+export function locationResolved(city: { lat: number; lon: number }, points: HeatPoint[]): boolean {
+  if (points.length < LOCATION_MIN_POINTS) return false;
+  return median(points.map((p) => haversineKm(city, p))) <= LOCATION_MAX_MEDIAN_KM;
+}
+
+const regionNames = (() => {
+  try { return new Intl.DisplayNames(["en"], { type: "region" }); } catch { return undefined; }
+})();
+
+function countryName(code: string): string | undefined {
+  try {
+    const n = regionNames?.of(code);
+    return n && n !== code && !/^unknown region$/i.test(n) ? n : undefined;
+  } catch { return undefined; }
+}
+
+/**
+ * Query strings to try, in order. The first is the original "<name>, <ISO-2>" and must stay byte-identical so cached boards keep serving;
+ * the second spells the country out. The bare name is never offered (too ambiguous).
+ */
+export function locationQueries(city: { name: string; country: string }): string[] {
+  const legacy = `${city.name}, ${city.country}`;
+  const country = countryName(city.country);
+  const out = [legacy];
+  if (country) out.push(`${city.name}, ${country}`);
+  return [...new Set(out)].slice(0, MAX_LOCATION_ATTEMPTS);
+}

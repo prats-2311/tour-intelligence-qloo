@@ -22,16 +22,17 @@ export function marketsFromHeat(points: HeatPoint[], cities: City[], opts: { max
   return [...byCity.values()].sort((a, b) => b.affinity - a.affinity);
 }
 
+/** Zone rows, strongest first, unique by display name: points that land on the same locality merge (shares add, the strongest point stands for the row). */
 export function zonesFromHeat(points: HeatPoint[], cities: City[]) {
   const total = points.reduce((sum, p) => sum + Math.max(0, p.affinity), 0);
-  return [...points]
-    .sort((a, b) => b.affinity - a.affinity)
-    .map((p) => {
-      const near = nearestCity(cities, p, { maxKm: 8, minPopulation: 0 });
-      return {
-        label: near ? near.name : `${p.lat.toFixed(3)}, ${p.lon.toFixed(3)}`,
-        lat: p.lat, lon: p.lon, affinity: p.affinity, index: p.index,
-        share: total > 0 ? Math.max(0, p.affinity) / total : 0,
-      };
-    });
+  const byLabel = new Map<string, { label: string; lat: number; lon: number; affinity: number; index: number; share: number }>();
+  for (const p of [...points].sort((a, b) => b.affinity - a.affinity)) {
+    const near = nearestCity(cities, p, { maxKm: 8, minPopulation: 0 });
+    const label = near ? near.name : `${p.lat.toFixed(3)}, ${p.lon.toFixed(3)}`;
+    const share = total > 0 ? Math.max(0, p.affinity) / total : 0;
+    const prev = byLabel.get(label);
+    if (prev) prev.share += share;
+    else byLabel.set(label, { label, lat: p.lat, lon: p.lon, affinity: p.affinity, index: p.index, share });
+  }
+  return [...byLabel.values()];
 }
