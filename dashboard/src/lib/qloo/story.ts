@@ -1,28 +1,24 @@
-import { VERDICT_LABEL } from "./labels";
-import { boardRank, hasBothScores, showcaseCities, type Showcase } from "./showcase";
+import { computeMoves } from "./moves";
+import { showcaseCities, type Showcase } from "./showcase";
 import { firstOkName } from "./playbookFacts";
-import type { ScoredCity } from "./types";
 
 export interface StoryBeats {
   decision: { artist: string; regions: string[]; markets: number };
-  missed: { city: string; densityRank: number; winnabilityRank: number; verdictLabel: string };
+  /** The city that climbs furthest when winnability is added to fan heat. Descriptive only: it says nothing about which ranking is better. */
+  mover: { city: string; fanRank: number; winRank: number };
   plan: { city: string; sponsor: string | null; coBill: string | null };
 }
 
-
-/** The three-beat Landing story, every figure read from the recording. Null for the placeholder or a board with no climbing city. */
+/** The three-beat Landing story, every figure read from the recording. Null for the placeholder or a board where no city climbs. */
 export function storyBeats(show: Showcase): StoryBeats | null {
   if (show.recordedAt === null) return null;
   const all = showcaseCities(show);
-  const scored = all.filter(hasBothScores);
-  const rows = scored.map((c) => ({ c, d: boardRank(scored, c, "fanHeat"), w: boardRank(scored, c, "winnability") }));
-  const pick = (verdict: ScoredCity["verdict"]) => rows.filter((r) => r.c.verdict === verdict && r.d - r.w > 0).reduce<(typeof rows)[number] | null>((a, b) => (!a || b.d - b.w > a.d - a.w ? b : a), null);
-  const best = pick("hidden_goldmine") ?? pick("play");
-  if (!best) return null;
-  const cards = show.playbooks[best.c.id]?.flatMap((e) => (e.type === "playbook" ? e.playbook.cards : [])) ?? [];
+  const top = computeMoves(all).find((m) => m.delta > 0);
+  if (!top) return null;
+  const cards = show.playbooks[top.city.id]?.flatMap((e) => (e.type === "playbook" ? e.playbook.cards : [])) ?? [];
   return {
     decision: { artist: show.artist, regions: show.brief.regions, markets: all.length },
-    missed: { city: best.c.name, densityRank: best.d, winnabilityRank: best.w, verdictLabel: VERDICT_LABEL[best.c.verdict] },
-    plan: { city: best.c.name, sponsor: firstOkName(cards, "sponsors"), coBill: firstOkName(cards, "co_billing") },
+    mover: { city: top.city.name, fanRank: top.fanRank, winRank: top.winRank },
+    plan: { city: top.city.name, sponsor: firstOkName(cards, "sponsors"), coBill: firstOkName(cards, "co_billing") },
   };
 }

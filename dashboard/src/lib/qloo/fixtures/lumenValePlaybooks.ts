@@ -44,7 +44,7 @@ const CITIES: CityData[] = [
       sponsors: [["Cerro Alto Mezcal is the strongest sponsor fit at 0.91.", ["sponsors:0"], ["Cerro Alto Mezcal"], [0.91]], ["Brisa Vinyl Bar follows at 0.87.", ["sponsors:1"], ["Brisa Vinyl Bar"], [0.87]]],
       promo_zones: [["Colonia Americana holds 38% of in-city fan heat.", ["promo_zones:0"], ["Colonia Americana"], [38]], ["Chapultepec adds another 26%.", ["promo_zones:1"], ["Chapultepec"], [26]]],
       venue_fit: [["C3 Stage ranks first for crowd fit at 0.91.", ["venue_fit:0"], ["C3 Stage"], [0.91]]],
-      co_billing: [["Bruma Nocturna gives the best co-bill lift, 0.34 shared taste × 0.88 local affinity.", ["co_billing:0"], ["Bruma Nocturna"], [0.34, 0.88]]],
+      co_billing: [["Bruma Nocturna is the best support act: 0.34 shared taste with Lumen Vale, 0.88 city fit.", ["co_billing:0"], ["Bruma Nocturna"], [0.34, 0.88]]],
       local_moment: [["Fans here also love Bruma Nocturna (0.88).", ["local_moment:0"], ["Bruma Nocturna"], [0.88]]],
     },
     removed: {
@@ -71,7 +71,7 @@ const CITIES: CityData[] = [
     claims: {
       sponsors: [["Pinhão Roasters leads sponsor fit at 0.86.", ["sponsors:0"], ["Pinhão Roasters"], [0.86]]],
       venue_fit: [["Ópera de Arame is the best crowd fit at 0.82.", ["venue_fit:0"], ["Ópera de Arame"], [0.82]]],
-      co_billing: [["Neblina Azul is the strongest support act, 0.31 shared taste × 0.84 local affinity.", ["co_billing:0"], ["Neblina Azul"], [0.31, 0.84]]],
+      co_billing: [["Neblina Azul is the strongest support act: 0.31 shared taste with Lumen Vale, 0.84 city fit.", ["co_billing:0"], ["Neblina Azul"], [0.31, 0.84]]],
       local_moment: [["Fans here also love Neblina Azul (0.84).", ["local_moment:0"], ["Neblina Azul"], [0.84]]],
       talent: [["Shared taste with the city's mainstream is low at 0.15, so lean into the niche.", ["talent:sharedTaste"], [], [0.15]]],
     },
@@ -95,7 +95,7 @@ const CITIES: CityData[] = [
       sponsors: [["Tinta Roja Mezcal leads sponsor fit at 0.83.", ["sponsors:0"], ["Tinta Roja Mezcal"], [0.83]]],
       promo_zones: [["Roma Norte holds 31% of in-city fan heat.", ["promo_zones:0"], ["Roma Norte"], [31]], ["Condesa adds 24%.", ["promo_zones:1"], ["Condesa"], [24]]],
       venue_fit: [["Foro Indie Rocks ranks first at 0.80.", ["venue_fit:0"], ["Foro Indie Rocks"], [0.80]]],
-      co_billing: [["Eco Lunar gives the best co-bill lift, 0.30 × 0.81.", ["co_billing:0"], ["Eco Lunar"], [0.30, 0.81]]],
+      co_billing: [["Eco Lunar is the best support act: 0.30 shared taste, 0.81 city fit.", ["co_billing:0"], ["Eco Lunar"], [0.30, 0.81]]],
       talent: [["Shared taste with the city's mainstream is 0.10.", ["talent:sharedTaste"], [], [0.10]]],
     },
     removed: {
@@ -121,7 +121,7 @@ const CITIES: CityData[] = [
       sponsors: [["Paulista Vinyl leads sponsor fit at 0.79.", ["sponsors:0"], ["Paulista Vinyl"], [0.79]]],
       promo_zones: [["Pinheiros holds 29% of in-city fan heat.", ["promo_zones:0"], ["Pinheiros"], [29]]],
       venue_fit: [["Cine Joia ranks first at 0.78.", ["venue_fit:0"], ["Cine Joia"], [0.78]]],
-      co_billing: [["Céu Aberto gives the best co-bill lift, 0.28 × 0.78.", ["co_billing:0"], ["Céu Aberto"], [0.28, 0.78]]],
+      co_billing: [["Céu Aberto is the best support act: 0.28 shared taste, 0.78 city fit.", ["co_billing:0"], ["Céu Aberto"], [0.28, 0.78]]],
       local_moment: [["Fans here also love Cinemateca Brasileira (0.76).", ["local_moment:1"], ["Cinemateca Brasileira"], [0.76]]],
     },
     removed: {},

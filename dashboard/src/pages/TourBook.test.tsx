@@ -5,7 +5,8 @@ import { useEffect } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as client from "@/lib/qloo/client";
-import { SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
+import { LUMEN_VALE_SAMPLE, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
+import { countQlooCalls } from "@/lib/qloo/narrate";
 import { resetPlaybooks } from "@/lib/qloo/playbookStore";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
@@ -78,6 +79,36 @@ describe("TourBook", () => {
     expect(document.querySelectorAll(".tour-book [data-print-footer]")).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "Lumen Vale", level: 1 })).toBeTruthy();
     expect(screen.getByText("Don't just find your fans. Win their city.")).toBeTruthy();
+  });
+  it("shows verdict clocks on every chapter, states the 6-week rule once, and appends the Qloo calls", async () => {
+    renderAt("/tours/book?sample=1");
+    await screen.findByRole("heading", { name: "Market selection" });
+    await screen.findByRole("heading", { name: "Curitiba", level: 2 });
+    expect(screen.getAllByTestId("verdict-clocks")).toHaveLength(4);
+    expect(screen.getAllByTestId("verdict-clocks")[0]!.textContent).toMatch(/^on-sale (in \d+ days|today|tomorrow|\d+ days? ago) · posters by .+ · confirm sponsor by /);
+    expect(screen.getAllByText("Dates assume a 6-week on-sale lead before the first show; change the window in the brief.")).toHaveLength(1);
+    const appendix = screen.getByRole("heading", { name: "Qloo calls behind this book", level: 2 });
+    const provenance = screen.getByRole("heading", { name: "Provenance", level: 2 });
+    expect(provenance.compareDocumentPosition(appendix) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getAllByTestId("calls-city")).toHaveLength(4);
+  });
+  it("the board chip, the provenance line and the appendix total reconcile", async () => {
+    renderAt("/tours/book?sample=1");
+    await screen.findByRole("heading", { name: "Curitiba", level: 2 });
+    // The board chip renders countQlooCalls(board log); the book reads the same log.
+    const board = countQlooCalls(LUMEN_VALE_SAMPLE).total;
+    const line = /^This book: (\d+) Qloo requests \(board (\d+) \+ (\d+) playbooks (\d+)\)$/.exec(screen.getByTestId("provenance-calls").textContent!)!;
+    expect(Number(line[2])).toBe(board);
+    expect(Number(line[3])).toBe(4);
+    expect(Number(line[1])).toBe(Number(line[2]) + Number(line[4]));
+    expect(screen.getByTestId("calls-total").textContent).toBe(`This book used ${line[1]} Qloo requests (board ${line[2]} + playbooks ${line[4]}).`);
+  });
+  it("hides the clocks and the rule without a date window", async () => {
+    renderAt("/tours/book", <RunNoWindow />);
+    await screen.findByRole("button", { name: "Calendar" });
+    await screen.findByRole("heading", { name: "Qloo calls behind this book", level: 2 }).catch(() => null);
+    expect(screen.queryByTestId("verdict-clocks")).toBeNull();
+    expect(screen.queryByTestId("clock-rule")).toBeNull();
   });
   it("Download PDF prints and Calendar downloads an .ics named after the artist", async () => {
     const print = vi.fn(); vi.stubGlobal("print", print);

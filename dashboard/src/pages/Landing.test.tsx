@@ -7,7 +7,6 @@ import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { DEFAULT_SCORING_DISPLAY } from "@/lib/qloo/labels";
 import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
-import { ordinal } from "@/lib/qloo/ranking";
 import { parseShowcase, SHOWCASE, setShowcase, showcaseCities } from "@/lib/qloo/showcase";
 import { storyBeats } from "@/lib/qloo/story";
 import Landing from "./Landing";
@@ -26,9 +25,27 @@ afterEach(() => {
 describe("Landing", () => {
   it("has the headline and both entry points", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
-    expect(screen.getByRole("heading", { level: 1, name: "Win their city." })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Route with anything. Win every city with this." })).toBeTruthy();
     expect(screen.getByRole("link", { name: "See the example tour" }).getAttribute("href")).toBe("/tours/board?showcase=1");
     expect(screen.getByRole("link", { name: "Try your own artist" }).getAttribute("href")).toBe("/tours/board?new=1");
+  });
+  it("states the approved pitch copy verbatim", () => {
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    expect(screen.getByText("Routing tools — even a chatbot — can pick your cities. This tells you how to win each one: the sponsor fans over-index on, the local guest, the right room, and every claim checked.")).toBeTruthy();
+    expect(screen.getByText("It's Thursday. Holds expire Friday. Confirm two of five secondary markets.")).toBeTruthy();
+    expect(screen.getByText("Same engine for film press tours.")).toBeTruthy();
+    const cta = screen.getByRole("link", { name: "See the example tour" });
+    const line = screen.getByTestId("protagonist");
+    expect(line.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("link", { name: "How we tested it →" }).getAttribute("href")).toBe("/proof");
+  });
+  it("never promises a hidden goldmine or says winnability is better (outside the labelled sample row)", () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    const { container } = render(<MemoryRouter><Landing /></MemoryRouter>);
+    for (const el of container.querySelectorAll("section[aria-label$='routing row']")) el.remove();
+    const text = container.textContent!;
+    expect(text).not.toMatch(/hidden goldmine|better|outperform|\bbeat|smarter/i);
+    setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
   });
   it("labels the proof card with the verbatim sample banner and integrity line, and shows no LIVE badge", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
@@ -78,11 +95,11 @@ describe("Landing hero default thresholds", () => {
   });
   it("links to the proof page", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
-    expect(screen.getByRole("link", { name: /Checked against real tours/ }).getAttribute("href")).toBe("/proof");
+    expect(screen.getByRole("link", { name: /How we tested it/ }).getAttribute("href")).toBe("/proof");
   });
 });
 
-const goldId = () => showcaseCities(parseShowcase(syntheticShowcase)).find((c) => c.verdict === "hidden_goldmine")!.id;
+const goldId = () => { const s = parseShowcase(syntheticShowcase); return showcaseCities(s).find((c) => c.name === storyBeats(s)!.mover.city)!.id; };
 const editCards = (fn: (c: { kind: string; status: string }) => void) => {
   const copy = parseShowcase(JSON.parse(JSON.stringify(syntheticShowcase)));
   for (const e of copy.playbooks[goldId()]!) if (e.type === "playbook") e.playbook.cards.forEach(fn as never);
@@ -99,12 +116,11 @@ describe("Landing story beats (spec 1.2b rule 1: every number comes from the rec
     setShowcase(parseShowcase(syntheticShowcase));
     const beats = storyBeats(SHOWCASE)!;
     expect(beats.plan.sponsor).not.toBeNull();
-    const [hold, missed, plan] = renderBeats().map((li) => li.textContent!);
+    const [hold, mover, plan] = renderBeats().map((li) => li.textContent!);
     expect(hold).toContain(`${beats.decision.markets} markets`);
-    expect(missed).toContain(beats.missed.city);
-    expect(missed).toContain(`${ordinal(beats.missed.densityRank)} on fan density`);
-    expect(missed).toContain(`${ordinal(beats.missed.winnabilityRank)} on winnability`);
-    expect(missed).toContain(beats.missed.verdictLabel);
+    expect(mover).toContain("Worth a second look");
+    expect(mover).toContain(`${beats.mover.city} moves #${beats.mover.fanRank} → #${beats.mover.winRank} when you add winnability`);
+    expect(mover).not.toMatch(/density|goldmine|miss/i);
     expect(plan).toContain(beats.plan.sponsor!);
     expect(beats.plan.coBill).not.toBeNull();
     expect(plan).toContain(`put ${beats.plan.coBill} on the bill`);

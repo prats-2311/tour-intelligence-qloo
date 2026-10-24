@@ -1,8 +1,9 @@
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { KeyArtPoster } from "@/components/playbook/KeyArtPoster";
+import { CLOCK_RULE } from "@/lib/qloo/clocks";
 import type { BookCityChapter } from "@/lib/qloo/tourBook";
 
-export function BookCover({ artist, regions, season, chapters, sample, showcase }: { artist: string; regions: string[]; season: string; chapters: BookCityChapter[]; sample: boolean; showcase?: boolean }) {
+export function BookCover({ artist, regions, season, chapters, sample, showcase, clocks = false }: { artist: string; regions: string[]; season: string; chapters: BookCityChapter[]; sample: boolean; showcase?: boolean; /** The brief has a tour window, so the chapters carry date clocks and the rule is stated. */ clocks?: boolean }) {
   const tiles = chapters.slice(0, 6);
   return (
     <section id="chapter-cover" aria-label="Cover" className="book-chapter flex min-w-0 flex-col gap-4">
@@ -20,6 +21,7 @@ export function BookCover({ artist, regions, season, chapters, sample, showcase 
         <p className="text-[15px] text-canvas-text">{[regions.join(", "), season].filter(Boolean).join(" · ")}</p>
         <p className="text-[15px] text-canvas-text">{chapters.length} {chapters.length === 1 ? "market held — why it" : "markets held — why each one"}, and how to win it</p>
         <p className="text-[13px] text-canvas-muted">Don't just find your fans. Win their city.</p>
+        {clocks && <p data-testid="clock-rule" className="text-[13px] text-canvas-muted">{CLOCK_RULE}</p>}
       </div>
     </section>
   );

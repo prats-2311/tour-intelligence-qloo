@@ -25,7 +25,7 @@ export type BacktestRuns = Extract<Backtest, { status: "complete" }>;
 export const METHOD_LABEL: Record<Method, string> = {
   qloo_playbook: "Qloo playbook", city_popularity: "City popularity (Qloo, no artist)", llm_only: "Generic LLM (no Qloo)",
 };
-export const PROOF_LINK_TEXT = "Checked against real tours";
+export const PROOF_LINK_TEXT = "How we tested it";
 export const METHODS: Method[] = ["qloo_playbook", "city_popularity", "llm_only"];
 
 const isInt = (n: unknown): boolean => Number.isInteger(n);

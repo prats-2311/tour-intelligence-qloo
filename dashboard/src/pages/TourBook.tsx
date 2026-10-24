@@ -7,6 +7,7 @@ import { BookCover } from "@/components/book/BookCover";
 import { ChapterIndex, type IndexItem } from "@/components/book/ChapterIndex";
 import { CityChapter } from "@/components/book/CityChapter";
 import { MarketChapter } from "@/components/book/MarketChapter";
+import { CallsAppendix } from "@/components/book/CallsAppendix";
 import { ProvenanceAppendix } from "@/components/book/ProvenanceAppendix";
 import { SaveAsCampaign } from "@/components/book/SaveAsCampaign";
 import type { SaveTourInput } from "@/lib/api";
@@ -264,6 +265,7 @@ function TourBookPage() {
     { id: "market", label: "Market selection" },
     ...book.chapters.map((c) => ({ id: c.city.id, label: c.city.name, accent: c.accent, verdict: c.city.verdict })),
     { id: "provenance", label: "Provenance" },
+    { id: "calls", label: "Qloo calls" },
   ];
 
   return (
@@ -289,10 +291,11 @@ function TourBookPage() {
           </aside>
         )}
         <div className="book-page flex min-w-0 flex-col gap-12 pb-24 lg:col-start-2 lg:bg-paper lg:p-14 lg:pb-14">
-          <BookCover artist={artist!.name} regions={state.brief!.regions} season={book.subtitle} chapters={book.chapters} sample={book.source !== "live"} showcase={book.source === "showcase"} />
+          <BookCover artist={artist!.name} regions={state.brief!.regions} season={book.subtitle} chapters={book.chapters} sample={book.source !== "live"} showcase={book.source === "showcase"} clocks={!!dateWindow} />
           <MarketChapter market={book.market} />
-          {book.chapters.map((c) => <CityChapter key={c.city.id} chapter={c} sample={book.source !== "live"} showcase={book.source === "showcase"} artist={artist?.name} />)}
-          <ProvenanceAppendix rows={book.provenance} sample={book.source !== "live"} showcase={book.source === "showcase"} />
+          {book.chapters.map((c) => <CityChapter key={c.city.id} chapter={c} sample={book.source !== "live"} showcase={book.source === "showcase"} artist={artist?.name} window={dateWindow} />)}
+          <ProvenanceAppendix rows={book.provenance} calls={book.calls} sample={book.source !== "live"} showcase={book.source === "showcase"} />
+          <CallsAppendix calls={book.calls} />
           {book.source !== "live" && <p data-print-footer className="print-footer">{book.source === "showcase" ? showcaseBannerText() : SAMPLE_TEXT}</p>}
         </div>
       </div>

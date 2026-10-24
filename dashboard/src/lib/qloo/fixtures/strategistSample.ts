@@ -28,7 +28,7 @@ const SCRIPTS: Record<string, () => GatewayEvent[]> = {
   [SAMPLE_QUESTIONS[1]!]: () => [
     ...call("sample-1", "qloo_recommend", { target_type: "artist", signal_location: "São Paulo, BR" }, "2 results"),
     ...call("sample-2", "qloo_compare_audiences", { group_a: ["Lumen Vale"], group_b: ["Céu Aberto"] }, "shared taste 0.28"),
-    ...finish("Céu Aberto: 0.28 shared taste with Lumen Vale and 0.78 local affinity, the best co-bill lift in São Paulo.", 2, 3),
+    ...finish("Céu Aberto: 0.28 shared taste with Lumen Vale and 0.78 city fit, the best support act in São Paulo.", 2, 3),
   ],
   [SAMPLE_QUESTIONS[2]!]: () => finish("Los Angeles has the fans (fan heat 88) but little to activate (40), so it is a De-risk market: book it only with a sponsor or co-headliner already in hand.", 0, 1),
 };

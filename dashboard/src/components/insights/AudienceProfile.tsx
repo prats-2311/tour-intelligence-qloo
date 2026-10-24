@@ -1,12 +1,17 @@
 import { fit } from "@/components/playbook/format";
-import { toDemographicBars } from "@/lib/qloo/adapters";
+import { toDemographicBars, type DemographicBar } from "@/lib/qloo/adapters";
 import type { ArtistProfile } from "@/lib/qloo/types";
 
-const fmt = (n: number) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n).toFixed(2)}`;
+const MAX_SKEWS = 2;
+
+/** The strongest over-indexed groups in words ("Skews female", "Skews 25–29"); numbers and under-indexes stay out of the way. */
+export function skewWords(bars: DemographicBar[]): string[] {
+  return bars.filter((b) => b.index > 0).sort((x, y) => y.index - x.index).slice(0, MAX_SKEWS).map((b) => `Skews ${b.group === "gender" ? (b.label === "Women" ? "female" : "male") : b.label}`);
+}
 
 export function AudienceProfile({ profile }: { profile: ArtistProfile }) {
   const bars = toDemographicBars(profile.demographics);
-  const max = Math.max(0.01, ...bars.map((b) => Math.abs(b.index)));
+  const skews = skewWords(bars);
   const tags = (profile.tags ?? []).filter((t) => t && typeof t.name === "string");
   return (
     <section aria-label="Audience profile" className="flex min-w-0 flex-col gap-3 rounded-[14px] bg-paper p-3 lg:p-4">
@@ -15,24 +20,14 @@ export function AudienceProfile({ profile }: { profile: ArtistProfile }) {
         <p className="text-[14px] text-canvas-muted">Qloo returned no age or gender breakdown for this artist</p>
       ) : (
         <>
-          <p className="text-[12px] text-canvas-muted">Over/under-index vs average (Qloo)</p>
-          <ul className="flex flex-col gap-2">
-            {bars.map((b) => {
-              const over = b.index >= 0;
-              const w = (Math.abs(b.index) / max) * 50;
-              return (
-                <li key={`${b.group}-${b.label}`} data-testid="demo-bar" className="grid min-h-8 grid-cols-[6rem_1fr_6.5rem] items-center gap-2 text-[13px]">
-                  <span className="text-canvas-text">{b.label}</span>
-                  <svg viewBox="0 0 100 10" preserveAspectRatio="none" className="h-3 w-full" role="img" aria-label={`${b.label}: ${over ? "over" : "under"}-index ${fmt(b.index)}`}>
-                    <rect x="0" y="0" width="100" height="10" fill="var(--color-canvas)" />
-                    <rect x={over ? 50 : 50 - w} y="1" width={w} height="8" fill={over ? "var(--color-bone)" : "var(--color-heat-3)"} />
-                    <line x1="50" x2="50" y1="0" y2="10" stroke="var(--color-canvas-muted)" strokeWidth="0.5" />
-                  </svg>
-                  <span className="font-mono text-[12px] tabular text-canvas-muted">{fmt(b.index)} {over ? "over" : "under"}</span>
-                </li>
-              );
-            })}
-          </ul>
+          <p className="text-[12px] text-canvas-muted">Relative to Qloo's average audience (−1 to +1)</p>
+          {skews.length === 0 ? (
+            <p className="text-[14px] text-canvas-muted">No clear audience skew in Qloo's data.</p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {skews.map((w) => <li key={w} data-testid="demo-skew" className="text-[15px] text-canvas-text">{w}</li>)}
+            </ul>
+          )}
         </>
       )}
       <div>

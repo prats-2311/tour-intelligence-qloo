@@ -1,3 +1,4 @@
+import { CLOCK_RULE } from "@/lib/qloo/clocks";
 import { CAPPED_CLOSE_CALL_NOTE, closeCallNote, showsCappedNote, DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE, FLOORED_SEED_NOTE, LOCATION_UNRESOLVED_NOTE, MAJOR_MARKET_LABEL, majorMarketNote, ruleLines, toolLabel, weightRows } from "@/lib/qloo/labels";
 import type { ScoredCity, ScoringConfig } from "@/lib/qloo/types";
 import { CloseCallChip } from "./CloseCallChip";
@@ -6,7 +7,7 @@ import { DualBars } from "./DualBars";
 import { VerdictChip } from "./VerdictChip";
 
 /** Rules, weights and the floor note come from the scoring config the gateway applied (display only — never recomputed here). */
-export function WhyThisScore({ city, scoring }: { city: ScoredCity; scoring?: ScoringConfig | null }) {
+export function WhyThisScore({ city, scoring, clockRule = false }: { city: ScoredCity; scoring?: ScoringConfig | null; /** The brief has a tour window, so the date clocks are shown elsewhere and their rule is stated here. */ clockRule?: boolean }) {
   const cfg = scoring ?? DEFAULT_SCORING_DISPLAY;
   const floored = Object.values(cfg.affinityFloors).some((f) => f > 0);
   const w = city.winnability.value;
@@ -95,6 +96,7 @@ export function WhyThisScore({ city, scoring }: { city: ScoredCity; scoring?: Sc
         </div>
       )}
       <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
+      {clockRule && <p data-testid="clock-rule" className="text-[12px] text-canvas-muted">{CLOCK_RULE}</p>}
     </div>
   );
 }

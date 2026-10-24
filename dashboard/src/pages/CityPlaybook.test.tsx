@@ -77,6 +77,13 @@ describe("CityPlaybook", () => {
     expect(screen.getByText("Colonia Americana", { selector: "dd" })).toBeTruthy();
     expect(screen.getByText("Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.")).toBeTruthy();
   });
+  it("shows the verdict clocks and the sponsor assumption line", async () => {
+    renderAt("/tours/playbook/4005539?sample=1");
+    await screen.findByRole("heading", { name: "Guadalajara" });
+    expect(screen.getByTestId("verdict-clocks").textContent).toMatch(/^on-sale (in \d+ days|today|tomorrow|\d+ days? ago) · posters by .+ · confirm sponsor by /);
+    expect(screen.getByTestId("sponsor-assumption").textContent).toBe("Assumption: a local sponsor can offset part of the guarantee. We don't estimate amounts.");
+    expect(screen.getByRole("button", { name: /Playbook · \d+ Qloo calls?/ })).toBeTruthy();
+  });
   it("a bare playbook url with no run loads the example, as the stepper does", async () => {
     setShowcase(parseShowcase(syntheticShowcase));
     const id = Object.keys(parseShowcase(syntheticShowcase).playbooks)[0]!;
@@ -295,7 +302,7 @@ describe("CityPlaybook (shared)", () => {
 describe("CityPlaybook proof entry point", () => {
   it("links to the proof page with the explanatory line", async () => {
     renderAt("/tours/playbook/4005539?sample=1");
-    const link = await screen.findByRole("link", { name: /Checked against real tours/ });
+    const link = await screen.findByRole("link", { name: /How we tested it/ });
     expect(link.getAttribute("href")).toBe("/proof");
     expect(screen.getByText("How often this playbook surfaced the sponsor, merch partner or local act real tours used.")).toBeTruthy();
   });

@@ -29,12 +29,19 @@ const playbookEvents = async function* (): AsyncGenerator<GatewayEvent> {
 };
 
 describe("insight panels", () => {
-  it("audience bars and tags", () => {
-    render(<AudienceProfile profile={P} />);
-    expect(screen.getAllByTestId("demo-bar")).toHaveLength(8);
-    expect(screen.getByText("Over/under-index vs average (Qloo)")).toBeTruthy();
-    expect(screen.getByText("Women")).toBeTruthy();
+  it("audience profile labels the scale and states only the two strongest skews in words", () => {
+    const demographics = [{ query: { age: { "24_and_younger": 0.1, "25_to_29": 0.6, "30_to_34": 0.3, "55_and_older": -0.7 }, gender: { male: -0.95, female: 0.95 } } }];
+    const { container } = render(<AudienceProfile profile={{ ...P, demographics }} />);
+    expect(screen.getByText("Relative to Qloo's average audience (−1 to +1)")).toBeTruthy();
+    const skews = screen.getAllByTestId("demo-skew").map((li) => li.textContent);
+    expect(skews).toEqual(["Skews female", "Skews 25–29"]);
+    expect(container.textContent).not.toMatch(/0\.95|\+0\.|Over\/under/);
     expect(screen.getByText("dream pop")).toBeTruthy();
+  });
+  it("audience profile with no positive skew says so instead of listing numbers", () => {
+    render(<AudienceProfile profile={{ ...P, demographics: [{ query: { gender: { male: -0.2, female: -0.1 } } }] }} />);
+    expect(screen.queryAllByTestId("demo-skew")).toHaveLength(0);
+    expect(screen.getByText("No clear audience skew in Qloo's data.")).toBeTruthy();
   });
   it("tag with null affinity renders without NaN/null", () => {
     const { container } = render(<AudienceProfile profile={{ ...P, tags: [{ name: "odd", affinity: null as unknown as number }] }} />);
@@ -46,10 +53,10 @@ describe("insight panels", () => {
     expect(container.querySelector("path")).toBeTruthy();
     expect(container.querySelector("svg")?.getAttribute("role")).toBe("img");
     rerender(<MomentumChart profile={{ ...P, trends: [] }} />);
-    expect(screen.getByText("No trend data from Qloo for this window")).toBeTruthy();
+    expect(screen.getByText("Qloo has no trend data for this artist this quarter.")).toBeTruthy();
     expect(container.querySelector("path")).toBeNull();
     rerender(<MomentumChart profile={{ ...P, trends: "garbage" as unknown as ArtistProfile["trends"] }} />);
-    expect(screen.getByText("No trend data from Qloo for this window")).toBeTruthy();
+    expect(screen.getByText("Qloo has no trend data for this artist this quarter.")).toBeTruthy();
   });
   it("promo zones with shares", () => {
     render(<PromoZones city={SAMPLE_CITIES[2]!} />);
@@ -134,9 +141,9 @@ describe("insight panels", () => {
     expect(await screen.findByText(`Qloo said ${status}`)).toBeTruthy();
     expect(screen.queryByText("Not enough shared taste data")).toBeNull();
   });
-  it("audience profile with gender-only data renders 2 bars and no NaN", () => {
+  it("audience profile with gender-only data renders one skew and no NaN", () => {
     const { container } = render(<AudienceProfile profile={{ ...P, demographics: [{ query: { gender: { male: -0.2, female: 0.2 } } }] }} />);
-    expect(screen.getAllByTestId("demo-bar")).toHaveLength(2);
+    expect(screen.getAllByTestId("demo-skew")).toHaveLength(1);
     expect(container.textContent).not.toMatch(/NaN/);
   });
   it("artist compare shows error-status envelope message", async () => {

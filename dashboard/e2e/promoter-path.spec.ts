@@ -72,7 +72,7 @@ test("promoter judge path: landing → board → playbook → hold → book → 
   await expect(page).toHaveURL(/\/tours\/playbook\//);
   await expect(page.getByRole("heading", { name: cityName }).first()).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole("heading", { name: "Sponsors" }).first()).toBeVisible({ timeout: 20_000 });
-  const proofLink = page.getByRole("link", { name: /Checked against real tours/ }).first();
+  const proofLink = page.getByRole("link", { name: /How we tested it/ }).first();
   await expect(proofLink).toHaveAttribute("href", "/proof");
   expect(await noOverflow(page), "playbook overflow").toBe(true);
   await expectNoSeriousA11y(page, "playbook");
@@ -415,3 +415,18 @@ for (const url of ["/tours/board", "/tours/board?showcase=1&mode=density"]) {
     expect(cls, "total layout-shift score").toBeLessThan(0.1);
   });
 }
+
+test("the landing leads with the pitch: headline, protagonist and no overflow, axe clean, zero Qloo calls", async ({ page }, info) => {
+  const qloo: string[] = [];
+  page.on("request", (r) => { if (/\/api\/qloo/.test(r.url())) qloo.push(r.url()); });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1, name: "Route with anything. Win every city with this." })).toBeVisible();
+  await expect(page.getByText("It's Thursday. Holds expire Friday. Confirm two of five secondary markets.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "How we tested it →" })).toBeVisible();
+  await expect(page.getByText("Same engine for film press tours.")).toBeVisible();
+  expect(await noOverflow(page)).toBe(true);
+  await expectNoSeriousA11y(page, "landing");
+  const dir = process.env.SHOT_DIR;
+  if (dir) await page.screenshot({ path: path.join(dir, `landing-${info.project.name.includes("mobile") ? "375" : "1280"}.png`), fullPage: true });
+  expect(qloo).toEqual([]);
+});

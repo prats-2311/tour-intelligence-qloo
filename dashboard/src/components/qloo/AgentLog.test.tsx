@@ -8,7 +8,7 @@ describe("AgentLog", () => {
   it("chip shows the Qloo call count and opens", () => {
     const onOpen = vi.fn();
     render(<AgentLogChip events={LUMEN_VALE_SAMPLE} onOpen={onOpen} />);
-    screen.getByRole("button", { name: /Agent · 17 Qloo calls/ }).click();
+    screen.getByRole("button", { name: /Board · 17 Qloo calls/ }).click();
     expect(onOpen).toHaveBeenCalled();
   });
   it("chip pluralizes 'call' vs 'calls'", () => {
@@ -19,7 +19,7 @@ describe("AgentLog", () => {
         onOpen={onOpen}
       />
     );
-    screen.getByRole("button", { name: /Agent · 1 Qloo call/ });
+    screen.getByRole("button", { name: /Board · 1 Qloo call/ });
     rerender(
       <AgentLogChip
         events={[
@@ -29,7 +29,7 @@ describe("AgentLog", () => {
         onOpen={onOpen}
       />
     );
-    screen.getByRole("button", { name: /Agent · 2 Qloo calls/ });
+    screen.getByRole("button", { name: /Board · 2 Qloo calls/ });
   });
   it("renders sentences, tool names and the from-cache tag", () => {
     render(<AgentLog events={LUMEN_VALE_SAMPLE} />);

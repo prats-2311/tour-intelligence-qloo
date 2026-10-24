@@ -25,6 +25,12 @@ describe("WhyThisScore scoring display", () => {
     expect(screen.getByText(/dropped — cities barely differ on this/i)).toBeTruthy();
     expect(screen.getByText(/rescaled between the lowest score we count and 1/i)).toBeTruthy();
   });
+  it("states the 6-week on-sale rule only when the clocks are shown", () => {
+    const { rerender } = render(<WhyThisScore city={city} clockRule />);
+    expect(screen.getByTestId("clock-rule").textContent).toBe("Dates assume a 6-week on-sale lead before the first show; change the window in the brief.");
+    rerender(<WhyThisScore city={city} />);
+    expect(screen.queryByTestId("clock-rule")).toBeNull();
+  });
   it("renders a city with no activation components (unplaced) without throwing", () => {
     render(<WhyThisScore city={{ ...city, activation: { value: null, reason: "insufficient_data", refs: [] }, verdict: "insufficient_data" }} />);
     expect(document.body.textContent).not.toMatch(/NaN|undefined/);

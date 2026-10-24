@@ -4,13 +4,14 @@ import { toolLabel } from "@/lib/qloo/labels";
 import { countQlooCalls, narrate, type LogStep } from "@/lib/qloo/narrate";
 import type { GatewayEvent } from "@/lib/qloo/types";
 
-export function AgentLogChip({ events, onOpen }: { events: GatewayEvent[]; onOpen: () => void }) {
+/** `label` names whose calls these are: the board by default, "Playbook" on a playbook page. */
+export function AgentLogChip({ events, onOpen, label: scope = "Board" }: { events: GatewayEvent[]; onOpen: () => void; label?: string }) {
   const { total } = countQlooCalls(events);
   const label = total === 1 ? "call" : "calls";
   return (
     <button type="button" onClick={onOpen} className="inline-flex h-11 items-center gap-2 rounded-md bg-canvas-raised px-3 text-[13px] text-canvas-text">
       <Radio size={16} aria-hidden />
-      <span>Agent · {total} Qloo {label}</span>
+      <span>{scope} · {total} Qloo {label}</span>
     </button>
   );
 }

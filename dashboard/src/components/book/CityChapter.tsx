@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { Notice } from "@/components/qloo/Notice";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
+import { VerdictClockLine } from "@/components/qloo/VerdictClockLine";
 import { AdvanceSheet } from "@/components/playbook/AdvanceSheet";
 import { CardBody, ThisWeekBody } from "@/components/playbook/cardBody";
 import { ClaimsBadge } from "@/components/playbook/ClaimsBadge";
 import { CARD_TITLE, removalText } from "@/components/playbook/format";
 import { KeyArtPoster } from "@/components/playbook/KeyArtPoster";
 import type { BookCityChapter } from "@/lib/qloo/tourBook";
-import type { CardClaims, CardKind } from "@/lib/qloo/types";
+import type { CardClaims, CardKind, DateWindow } from "@/lib/qloo/types";
 
 const ORDER: CardKind[] = ["sponsors", "merch", "promo_zones", "local_moment", "venue_fit", "co_billing", "talent"];
 const TITLE: Record<CardKind, string> = { ...CARD_TITLE };
@@ -35,7 +36,7 @@ function MarginNote({ requests, claims }: { requests: number; claims?: CardClaim
 
 const H3 = "font-title text-[20px] leading-tight text-canvas-text";
 
-export function CityChapter({ chapter, sample = false, showcase = false, artist }: { chapter: BookCityChapter; sample?: boolean; showcase?: boolean; artist?: string }) {
+export function CityChapter({ chapter, sample = false, showcase = false, artist, window }: { chapter: BookCityChapter; sample?: boolean; showcase?: boolean; artist?: string; window?: DateWindow }) {
   const { city, accent, playbook, week } = chapter;
   const narrative = playbook?.narrative;
   const ok = chapter.status === "ready";
@@ -63,6 +64,7 @@ export function CityChapter({ chapter, sample = false, showcase = false, artist 
           {sample && <SampleBanner compact source={showcase ? "showcase" : "sample"} />}
           <h2 id={`title-${city.id}`} className="font-title break-words text-[32px] leading-[1.1] text-canvas-text">{city.name}</h2>
           <div className="flex items-center gap-3"><VerdictChip verdict={city.verdict} size="md" /><span className="text-[13px] text-canvas-muted">{city.country}</span></div>
+          <VerdictClockLine window={window} />
         </div>
         {!ok ? (
           <Notice>Playbook incomplete — {chapter.incompleteReason ?? "Not loaded"}</Notice>

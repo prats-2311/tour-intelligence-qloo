@@ -314,7 +314,7 @@ describe("TourBoard", () => {
     renderPage();
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
     fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
-    const dialog = await screen.findByRole("dialog", { name: "Shortlist" });
+    const dialog = await screen.findByRole("dialog", { name: "Holds" });
     expect(within(dialog).getAllByRole("checkbox")).toHaveLength(4);
     expect(within(dialog).queryByRole("link", { name: "Compare taste" })).toBeNull();
     expect(within(dialog).getByRole("link", { name: "Open Tour Book" }).getAttribute("href")).toBe("/tours/book?sample=1");
@@ -375,14 +375,14 @@ describe("TourBoard", () => {
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
     fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
-    fireEvent.click(within(await screen.findByRole("dialog", { name: "Shortlist" })).getAllByRole("checkbox")[0]!);
+    fireEvent.click(within(await screen.findByRole("dialog", { name: "Holds" })).getAllByRole("checkbox")[0]!);
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     fireEvent.click(screen.getByRole("button", { name: "New brief" }));
     fireEvent.click(await screen.findByRole("button", { name: "See the example tour" }));
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
     fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
-    const boxes = within(await screen.findByRole("dialog", { name: "Shortlist" })).getAllByRole("checkbox") as HTMLInputElement[];
+    const boxes = within(await screen.findByRole("dialog", { name: "Holds" })).getAllByRole("checkbox") as HTMLInputElement[];
     expect(boxes.every((b) => b.checked)).toBe(true);
   });
   it("row accessible name includes the data warning label (from the visible badge)", async () => {
@@ -498,7 +498,7 @@ describe("TourBoard shortlist count", () => {
     fireEvent.click(screen.getByRole("button", { name: `hold ${gdl.id}` }));
     expect(screen.getByText("5 markets shortlisted")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
-    const dialog = await screen.findByRole("dialog", { name: "Shortlist" });
+    const dialog = await screen.findByRole("dialog", { name: "Holds" });
     expect(within(dialog).getAllByRole("checkbox")).toHaveLength(5);
     expect(within(dialog).getByRole("checkbox", { name: new RegExp(gdl.name) })).toHaveProperty("checked", true);
     expect(within(dialog).getByText("5 of max 8 stops")).toBeTruthy();
@@ -529,7 +529,7 @@ describe("TourBoard showcase rows without a recorded playbook", () => {
 describe("TourBoard proof entry point", () => {
   it("links to the proof page", () => {
     renderPage();
-    expect(screen.getByRole("link", { name: /Checked against real tours/ }).getAttribute("href")).toBe("/proof");
+    expect(screen.getByRole("link", { name: /How we tested it/ }).getAttribute("href")).toBe("/proof");
   });
 });
 
@@ -557,7 +557,7 @@ describe("TourBoard opens ready", () => {
     submitArtist("Ada");
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(2));
     fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
-    const dialog = await screen.findByRole("dialog", { name: "Shortlist" });
+    const dialog = await screen.findByRole("dialog", { name: "Holds" });
     expect(within(dialog).getAllByRole("checkbox")).toHaveLength(2);
     expect(within(dialog).getByText("None scored Play, so these are the Consider markets.")).toBeTruthy();
     fireEvent.click(within(dialog).getAllByRole("checkbox")[0]!);
@@ -588,7 +588,7 @@ describe("TourBoard opens ready", () => {
     renderPage();
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
     fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
-    const dialog = await screen.findByRole("dialog", { name: "Shortlist" });
+    const dialog = await screen.findByRole("dialog", { name: "Holds" });
     for (const box of within(dialog).getAllByRole("checkbox") as HTMLInputElement[]) if (box.checked) fireEvent.click(box);
     expect(within(dialog).getByRole("link", { name: "Open Tour Book" }).getAttribute("href")).toBe("/tours/book?sample=1");
     expect(within(dialog).getByText("Nothing held yet, so the book covers the default shortlist.")).toBeTruthy();

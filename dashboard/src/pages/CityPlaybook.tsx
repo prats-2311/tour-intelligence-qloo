@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode 
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
 import { NextStepLink } from "@/components/qloo/NextStep";
+import { SPONSOR_ASSUMPTION } from "@/lib/qloo/labels";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { DualBars } from "@/components/qloo/DualBars";
@@ -11,6 +12,7 @@ import { Notice } from "@/components/qloo/Notice";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { Sheet } from "@/components/qloo/Sheet";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
+import { VerdictClockLine } from "@/components/qloo/VerdictClockLine";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
 import { AdvanceSheet } from "@/components/playbook/AdvanceSheet";
 import { CardBody, ThisWeekBody } from "@/components/playbook/cardBody";
@@ -266,7 +268,7 @@ function CityPlaybookPage() {
       <div className="relative -mx-4 lg:mx-0">
         <div ref={scrollerRef} tabIndex={0} role="region" aria-label="Playbook cards" className="flex snap-x focus-visible:outline-2 focus-visible:outline-gold snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 lg:grid lg:grid-cols-12 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0">
           {activateIds.map((id) => (
-            <div key={id} data-card={id} className={`w-[88%] shrink-0 snap-start lg:w-auto ${PLACE[id]}`}>{cardFor(id)}</div>
+            <div key={id} data-card={id} className={`w-[88%] shrink-0 snap-start lg:w-auto ${PLACE[id]}`}>{cardFor(id)}{id === "sponsors" && <p data-testid="sponsor-assumption" className="mt-2 text-[13px] text-canvas-muted">{SPONSOR_ASSUMPTION}</p>}</div>
           ))}
         </div>
         {shownIdx < activateIds.length - 1 && <span aria-hidden data-testid="swipe-fade" className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-canvas to-transparent lg:hidden" />}
@@ -310,6 +312,7 @@ function CityPlaybookPage() {
             </span>
           </div>
           <DualBars fanHeat={shownCity.fanHeat} activation={shownCity.activation} thresholds={state.scoring?.thresholds} />
+          <VerdictClockLine window={window} />
           {!isDesktop && whyBtn}
           <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
           <AdvanceSheet rows={[
@@ -374,7 +377,7 @@ function CityPlaybookPage() {
         {panels[tab]}
         <div className="mt-4 flex min-w-0 flex-col gap-3">
           <ReasoningSummary narrative={narrative} />
-          <div className="flex"><AgentLogChip events={pb.log} onOpen={() => setLogOpen(true)} /></div>
+          <div className="flex"><AgentLogChip label="Playbook" events={pb.log} onOpen={() => setLogOpen(true)} /></div>
         </div>
       </div>
 
@@ -382,7 +385,7 @@ function CityPlaybookPage() {
         <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 mt-4 flex bg-canvas-raised py-2 pl-3 pr-[68px]">{addToTour}</div>
       )}
 
-      <Sheet open={whyOpen} onClose={() => setWhyOpen(false)} title={`${shownCity.name} — why this score?`}><WhyThisScore city={shownCity} scoring={state.scoring} /></Sheet>
+      <Sheet open={whyOpen} onClose={() => setWhyOpen(false)} title={`${shownCity.name} — why this score?`}><WhyThisScore city={shownCity} scoring={state.scoring} clockRule={!!window} /></Sheet>
       <Sheet open={auditOpen} onClose={() => setAuditOpen(false)} title="Removed claims"><ClaimsAudit claims={audit} /></Sheet>
       <Sheet open={logOpen} onClose={() => setLogOpen(false)} title="Agent log"><AgentLog events={pb.log} /></Sheet>
     </div>

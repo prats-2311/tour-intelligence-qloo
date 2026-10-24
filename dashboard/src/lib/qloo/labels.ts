@@ -93,3 +93,6 @@ const STATUS_PLAIN: Record<string, string> = {
   ok: "Done", empty: "No results", partial: "Partial answer", degraded: "Partial answer", error: "Error", needs_input: "Needed more input (skipped)", rejected: "Not sent (failed safety check)",
 };
 export const statusPlain = (status: string): string => STATUS_PLAIN[status] ?? status;
+
+/** Labelled assumption under the sponsors card in a playbook. No amounts are invented. */
+export const SPONSOR_ASSUMPTION = "Assumption: a local sponsor can offset part of the guarantee. We don't estimate amounts.";

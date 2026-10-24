@@ -57,11 +57,19 @@ describe("narrate", () => {
   });
   it("ok with resultCount 0 is 'done', not 'no results' (gateway counts non-array results as 0)", () => {
     const steps = narrate([
-      { type: "tool_call", tool: "qloo_trends", args: {}, cached: false },
-      { type: "tool_result", tool: "qloo_trends", status: "ok", resultCount: 0, cacheKey: "k", stale: false },
+      { type: "tool_call", tool: "qloo_audience_demographics", args: {}, cached: false },
+      { type: "tool_result", tool: "qloo_audience_demographics", status: "ok", resultCount: 0, cacheKey: "k", stale: false },
     ]);
     expect(steps[0]!.status).toBe("success");
     expect(steps[0]!.detail).toBe("done");
+  });
+  it("an empty momentum answer says so instead of 'done'", () => {
+    const steps = narrate([
+      { type: "tool_call", tool: "qloo_trends", args: {}, cached: false },
+      { type: "tool_result", tool: "qloo_trends", status: "ok", resultCount: 0, cacheKey: "k", stale: false },
+    ]);
+    expect(steps[0]!.detail).toBe("no trend data this quarter");
+    expect(steps[0]!.detail).not.toBe("done");
   });
   it("only status 'empty' produces 'no results'", () => {
     const steps = narrate([

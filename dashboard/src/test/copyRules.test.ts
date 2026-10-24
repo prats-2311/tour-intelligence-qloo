@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 // Raw source of every component/page plus the label table; Vite resolves the globs at test time.
 const raw = {
   ...import.meta.glob("../**/*.tsx", { query: "?raw", import: "default", eager: true }),
-  ...import.meta.glob("../lib/qloo/labels.ts", { query: "?raw", import: "default", eager: true }),
+  ...import.meta.glob(["../lib/qloo/labels.ts", "../lib/qloo/story.ts", "../lib/qloo/callSummary.ts", "../lib/qloo/clocks.ts"], { query: "?raw", import: "default", eager: true }),
 } as Record<string, string>;
 const LEGACY = ["pages/Dashboard.tsx", "pages/CityDetail.tsx", "pages/NewCampaign.tsx", "pages/CompareCities.tsx", "pages/AddCities.tsx"];
 const sources = Object.entries(raw)
@@ -41,6 +41,24 @@ describe("copy rules (promoter language)", () => {
     for (const [path, text] of sources) {
       text.split("\n").forEach((line: string, i: number) => {
         for (const s of copyOf(line)) for (const [name, re] of RULES) if (re.test(s)) hits.push(`${path}:${i + 1} [${name}] ${s.trim()}`);
+      });
+    }
+    expect(hits, hits.join("\n")).toEqual([]);
+  });
+  it("the landing and its story never promise a hidden goldmine or say winnability is better", () => {
+    const hits: string[] = [];
+    for (const [path, text] of sources.filter(([p]) => ["pages/Landing.tsx", "lib/qloo/story.ts"].includes(p))) {
+      text.split("\n").forEach((line: string, i: number) => {
+        for (const s of copyOf(line)) if (/hidden goldmine|\bbetter\b|outperform|\bbeat\b|smarter/i.test(s)) hits.push(`${path}:${i + 1} ${s.trim()}`);
+      });
+    }
+    expect(hits, hits.join("\n")).toEqual([]);
+  });
+  it("no scoring jargon in user-facing strings", () => {
+    const hits: string[] = [];
+    for (const [path, text] of sources) {
+      text.split("\n").forEach((line: string, i: number) => {
+        for (const s of copyOf(line)) if (/lift =|renormali[sz]ed|calibrated floor|shared taste ×|local affinity/i.test(s)) hits.push(`${path}:${i + 1} ${s.trim()}`);
       });
     }
     expect(hits, hits.join("\n")).toEqual([]);

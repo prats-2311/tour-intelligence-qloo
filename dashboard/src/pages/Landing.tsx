@@ -14,6 +14,11 @@ import { storyBeats } from "@/lib/qloo/story";
 import type { ScoredCity } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
+export const HEADLINE = "Route with anything. Win every city with this.";
+export const SUBLINE = "Routing tools — even a chatbot — can pick your cities. This tells you how to win each one: the sponsor fans over-index on, the local guest, the right room, and every claim checked.";
+export const PROTAGONIST = "It's Thursday. Holds expire Friday. Confirm two of five secondary markets.";
+export const SAME_ENGINE = "Same engine for film press tours.";
+
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
 const GDL = SAMPLE_CITIES[2]!;
@@ -72,12 +77,12 @@ const joinList = (xs: string[]): string => (xs.length < 2 ? xs.join("") : `${xs.
 function Story() {
   const beats = storyBeats(SHOWCASE);
   if (!beats) return null;
-  const { decision: d, missed: m, plan: p } = beats;
+  const { decision: d, mover: m, plan: p } = beats;
   const bill = p.coBill;
   const clauses = [p.sponsor && `pitch ${p.sponsor}`, bill && `put ${bill} on the bill`].filter(Boolean).join(", ");
   const steps = [
     { label: "The hold", text: `${d.artist}: ${d.markets} ${d.markets === 1 ? "market" : "markets"}${d.regions.length ? ` across ${joinList(d.regions)}` : ""}. Which ones get dates?` },
-    { label: "The city density misses", text: `${m.city} ranks ${ordinal(m.densityRank)} on fan density and ${ordinal(m.winnabilityRank)} on winnability — ${m.verdictLabel}.` },
+    { label: "Worth a second look", text: `${m.city} moves #${m.fanRank} → #${m.winRank} when you add winnability.` },
     { label: "How you win it", text: clauses ? `Its playbook: ${clauses}.` : "Its playbook: sponsor, venue and promo plan." },
   ];
   return (
@@ -108,14 +113,15 @@ export default function Landing() {
   return (
     <div className="mx-auto grid w-full max-w-[1240px] gap-8 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-12 lg:gap-y-0 lg:pt-6">
       <section className="lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:pt-8">
-        <h1 className="font-hero text-[48px] leading-[1.04] text-bone [text-wrap:balance] lg:text-[88px] lg:leading-[0.95]">
-          Win <br />their city.
+        <h1 className="font-hero text-[40px] leading-[1.04] text-bone [text-wrap:balance] lg:text-[60px] lg:leading-[1]">
+          {HEADLINE}
         </h1>
         <p className="mt-5 max-w-[44ch] text-[17px] leading-[1.45] text-canvas-muted [text-wrap:pretty] lg:mt-6">
-          Find the cities where your artist can win, then get the sponsor, venue and promo plan for each one. Built on Qloo taste data.
+          {SUBLINE}
         </p>
       </section>
       <div className="lg:col-span-5 lg:col-start-1 lg:row-start-2 lg:mt-8 lg:self-start">
+        <p data-testid="protagonist" className="mb-3 max-w-[44ch] text-[15px] leading-[1.45] text-canvas-text [text-wrap:pretty]">{PROTAGONIST}</p>
         <div className="flex flex-col gap-2.5 lg:flex-row lg:gap-4">
           <NextStepLink to="/tours/board?showcase=1" className={`${CTA} bg-gold font-semibold text-on-gold hover:bg-gold-soft active:bg-[#efb900]`}>See the example tour</NextStepLink>
           <Link to="/tours/board?new=1" className={`${CTA} bg-paper-raised font-medium text-canvas-text hover:bg-[#3a3932]`}>Try your own artist</Link>
@@ -127,6 +133,7 @@ export default function Landing() {
         {isDesktop && <MapPreview />}
         <ProofCard />
       </div>
+      <p className="text-[13px] text-canvas-muted lg:col-span-12 lg:row-start-4">{SAME_ENGINE}</p>
     </div>
   );
 }

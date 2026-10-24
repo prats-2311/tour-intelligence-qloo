@@ -7,6 +7,7 @@ import { samplePlaybookEvents, sampleThisWeek } from "@/lib/qloo/fixtures/lumenV
 import { initialPlaybook, playbookReducer, type PlaybookState } from "@/lib/qloo/playbookReducer";
 import { SAMPLE_TEXT } from "@/lib/qloo/labels";
 import { buildTourBook } from "@/lib/qloo/tourBook";
+import { CallsAppendix } from "./CallsAppendix";
 import { CityChapter } from "./CityChapter";
 import { MarketChapter } from "./MarketChapter";
 import { ProvenanceAppendix } from "./ProvenanceAppendix";
@@ -51,6 +52,33 @@ describe("book components", () => {
     }
     expect(screen.getByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.")).toBeTruthy();
     expect(screen.getByText("7 verified · 2 removed")).toBeTruthy();
+  });
+  it("calls appendix lists calls, tools and what each decided per city, and the total", () => {
+    render(<CallsAppendix calls={book.calls} />);
+    expect(screen.getByRole("heading", { name: "Qloo calls behind this book", level: 2 })).toBeTruthy();
+    expect(screen.getByTestId("calls-total").textContent).toBe(`This book used ${book.calls.total} Qloo requests (board ${book.calls.board} + playbooks ${book.calls.playbooks}).`);
+    const rows = screen.getAllByTestId("calls-city");
+    expect(rows).toHaveLength(4);
+    expect(rows[0]!.textContent).toMatch(/Qloo calls?/);
+    expect(rows[0]!.textContent).toContain("Decided:");
+    expect(rows[0]!.textContent).toContain("Tools:");
+    expect(rows[0]!.textContent).not.toMatch(/qloo_/);
+  });
+  it("book call parts add up to the total", () => {
+    expect(book.calls.total).toBe(book.calls.board + book.calls.playbooks);
+    expect(book.calls.cities.reduce((n, c) => n + c.calls, 0)).toBe(book.calls.playbooks);
+    expect(book.calls.board).toBe(LUMEN_VALE_SAMPLE.filter((e) => e.type === "tool_call").length);
+  });
+  it("provenance with a call summary leads with the same split the board chip uses", () => {
+    render(<ProvenanceAppendix rows={book.provenance} calls={book.calls} />);
+    expect(screen.getByRole("heading", { name: "Provenance", level: 2 })).toBeTruthy();
+    expect(screen.getByTestId("provenance-calls").textContent).toBe(`This book: ${book.calls.total} Qloo requests (board ${book.calls.board} + 4 playbooks ${book.calls.playbooks})`);
+  });
+  it("a chapter shows clocks only with a window", () => {
+    const { rerender } = render(<CityChapter chapter={book.chapters[2]!} window={{ start: "2027-03-12", end: "2027-04-18" }} />);
+    expect(screen.getByTestId("verdict-clocks")).toBeTruthy();
+    rerender(<CityChapter chapter={book.chapters[2]!} />);
+    expect(screen.queryByTestId("verdict-clocks")).toBeNull();
   });
   it("provenance appendix counts requests in its title", () => {
     render(<ProvenanceAppendix rows={book.provenance} />);

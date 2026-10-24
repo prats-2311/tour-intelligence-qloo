@@ -4,6 +4,7 @@ import type { PlaybookState } from "./playbookReducer";
 import { toolPlainName } from "./labels";
 import { firstOkName } from "./playbookFacts";
 import { sortCities } from "./ranking";
+import { summariseCalls, type CallSummary } from "./callSummary";
 
 export interface BookCityChapter {
   city: ScoredCity; accent: string; status: "ready" | "incomplete"; incompleteReason?: string;
@@ -17,6 +18,8 @@ export interface TourBook {
   market: { rows: ScoredCity[]; shortlisted: Set<string>; slope: Array<{ id: string; name: string; densityRank: number; winRank: number; highlight: boolean }>; /** Cities Qloo could not place: left out of the slope chart and footnoted. */ unplaced: string[] };
   chapters: BookCityChapter[];
   provenance: ProvenanceRow[];
+  /** Request counts from the same logs the board chip reads. */
+  calls: CallSummary;
 }
 
 const SEASONS = ["Winter", "Winter", "Spring", "Spring", "Spring", "Summer", "Summer", "Summer", "Autumn", "Autumn", "Autumn", "Winter"];
@@ -135,6 +138,7 @@ export function buildTourBook(input: {
     subtitle: seasonLabel(input.brief.dateWindow), source: input.source,
     market: { rows: byWin, shortlisted: new Set(input.shortlist), slope, unplaced: byWin.filter((c) => c.insufficientReason === "location_unresolved").map((c) => c.name) },
     chapters, provenance: buildProvenance(logs),
+    calls: summariseCalls(input.boardLog, chapters.filter((c) => c.playbook).map((c) => ({ id: c.city.id, name: c.city.name, log: c.playbook!.log }))),
   };
 }
 

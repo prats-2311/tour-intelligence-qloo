@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/
 
 test("judge path: landing → showcase → board → why → taste", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1, name: "Win their city." })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Route with anything. Win every city with this." })).toBeVisible();
   await page.goto("/tours/board?sample=1"); // the Lumen Vale sample: its cities are asserted below
   await expect(page.getByText("Sample data — illustrative, not Qloo output").first()).toBeVisible();
   await expect(page.getByTestId("city-row")).toHaveCount(10, { timeout: 15_000 });
