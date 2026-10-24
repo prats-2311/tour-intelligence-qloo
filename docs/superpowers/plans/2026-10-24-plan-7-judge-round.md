@@ -71,6 +71,11 @@
 - Taste Insights (`/insights`), the legacy campaign routes and the separate strategist launcher come off the main path. Routes keep working, with no nav entry. Proof is linked from the score ("How we tested this").
 - No dead ends, no empty cards, no unexplained disabled buttons, no layout jumps. The same names are used everywhere, and every number is explained where it appears. Works at 375 px.
 - The e2e promoter path is updated to the four steps.
+- **Instant next step** (added 2026-10-24, Prateek via hub):
+  - **Why not Speculation Rules:** the dashboard is a client-routed SPA, so step changes are not document navigations, and Speculation Rules would not fire for them. Prerendering a document could also start a live board stream.
+  - **What we do instead:** when the primary "next step" control mounts or becomes visible, preload the next route's lazy chunk and its *static* data only (the recording via the existing `/api/recordings/*` and the client store). Never a Qloo, Gemini or Tavily call: playbook, this-week and without-qloo requests stay on navigation, apart from showcase replays from the loaded recording.
+  - **Document navigations:** add a `<script type="speculationrules">` with `prefetch` (never `prerender`), same-origin, `eagerness: "moderate"`, for document navigations to `/proof` and the landing → board entry only.
+  - **Test:** preloading makes zero `/api/qloo` requests.
 
 ### Task 3 (item 3): the cities that move
 On Decide, the first thing a judge sees is fan-heat rank and winnability rank side by side for each city, with movers highlighted. Each move gets one line of reason built only from its activation components: the biggest component difference versus the board median, named in promoter words, with numbers from the scores. Major markets appear in the same list with their tag: "the markets you'd always check, next to where Qloo says you can win."
@@ -109,6 +114,15 @@ On Decide, the first thing a judge sees is fan-heat rank and winnability rank si
 - **Showcase:** replays 1–2 recorded questions, stored in the private showcase recording under a `strategist` key. Zero live calls.
 - **Cut order:** live typing first, then the UI moves. The replayed log stays.
 - **WebMCP:** the same UI tools on `document.modelContext`, with the origin-trial tokens from Prateek for the Cloud Run and web.app origins via `VITE_WEBMCP_OT_TOKEN`.
+
+### Uptime checks (at C3; added 2026-10-24, Prateek via hub)
+- **What:** Cloud Monitoring uptime checks, every 5 minutes from at least 3 regions, alerting after 2 failed checks, kept through 2026-11-17. They cover:
+  - the dashboard (`https://tour-intel-qloo.web.app/` and its Cloud Run URL);
+  - gateway `/health` (private service, so use OIDC service-agent auth and grant the Monitoring service agent `run.invoker`);
+  - the public MCP endpoint (POST `initialize`, or a reachability check if a POST body isn't supported).
+- **Cost:** within the free tier (4–5 checks × 288/day × 3 regions ≈ 130k executions a month).
+- **Alerts:** email notification channel. Prateek creates it himself with his own address; agents never handle the email.
+- **Who runs it:** the controller writes the `gcloud` commands, Prateek runs them, and the controller verifies them with `gcloud monitoring uptime list-configs`.
 
 ### Closing (controller and Prateek)
 Then come Plan 6's remaining steps, in order:
