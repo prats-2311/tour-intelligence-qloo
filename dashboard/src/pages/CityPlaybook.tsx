@@ -22,7 +22,7 @@ import { fetchThisWeek } from "@/lib/qloo/client";
 import { accentFor } from "@/lib/qloo/cityAccent";
 import { LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks";
-import { INTEGRITY_LINE } from "@/lib/qloo/labels";
+import { INTEGRITY_LINE, LOCATION_UNRESOLVED_NOTE } from "@/lib/qloo/labels";
 import { loadPlaybook, usePlaybook, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
@@ -114,7 +114,8 @@ function CityPlaybookPage() {
   const narrative = pb.narrative;
   const noSample = pb.status === "error" && pb.error?.code === "NO_SAMPLE";
   const budget = pb.status === "error" && pb.error?.code === "BUDGET";
-  const failed = (pb.status === "error" && !noSample && !budget) || pb.status === "interrupted";
+  const unplaced = pb.status === "error" && pb.error?.code === "LOCATION_UNRESOLVED";
+  const failed = (pb.status === "error" && !noSample && !budget && !unplaced) || pb.status === "interrupted";
   const loading = (pb.status === "idle" || pb.status === "streaming") && pb.cards.length === 0;
   const narrativeStatus: "ok" | "unavailable" | "pending" = narrative ? (narrative.status === "ok" ? "ok" : "unavailable") : pb.status === "streaming" ? "pending" : "unavailable";
   const claimsOf = (kind: CardKind) => (narrative?.status === "ok" ? narrative.cards[kind] : undefined);
@@ -283,6 +284,12 @@ function CityPlaybookPage() {
             <Notice>
               <span className="min-w-0">Session limit reached — try the showcase tour</span>
               <Link to="/tours/board?showcase=1" className={smallBtn}>Try the showcase tour</Link>
+            </Notice>
+          )}
+          {unplaced && (
+            <Notice>
+              <span className="min-w-0">{LOCATION_UNRESOLVED_NOTE}</span>
+              <Link to="/tours/board" className={smallBtn}>Back to the Tour Board</Link>
             </Notice>
           )}
           {failed && (

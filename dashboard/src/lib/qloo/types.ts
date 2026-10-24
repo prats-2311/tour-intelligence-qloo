@@ -34,6 +34,11 @@ export interface ScoredCity {
   closeCall?: boolean;
   zones: Zone[];
   warnings: DataWarning[];
+  /** Why a city has no activation score. Only "location_unresolved" today: Qloo placed the city somewhere else, so it was not scored. */
+  insufficientReason?: "location_unresolved";
+  /** The location string Qloo resolved this city with and how many lookups that took (unresolved: all that were tried). */
+  locationQuery?: string;
+  locationAttempts?: number;
 }
 export type CardKind = "sponsors" | "merch" | "promo_zones" | "local_moment" | "venue_fit" | "co_billing" | "talent";
 export interface PlaybookCard {

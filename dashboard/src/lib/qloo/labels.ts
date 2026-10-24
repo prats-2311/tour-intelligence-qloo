@@ -46,6 +46,10 @@ export const CLOSE_CALL_LABEL = "Close call";
 export const DEFAULT_CLOSE_CALL_BAND = 2;
 export const closeCallNote = (band: number = DEFAULT_CLOSE_CALL_BAND) => `Within ${band} points of a verdict line — treat as borderline.`;
 
+/** Shown wherever an insufficient_data city has insufficientReason "location_unresolved" (Qloo resolved its name to another place). */
+export const LOCATION_UNRESOLVED_NOTE = "Qloo couldn't place this city precisely, so we didn't score it.";
+export const LOCATION_UNRESOLVED_SHORT = "Couldn't place this city";
+
 export type VerdictShape = "circle" | "diamond" | "triangle" | "ring" | "x" | "square";
 /** DESIGN.md section 2.5: shape carries the verdict on the map, the matrix and every legend. */
 export const VERDICT_SHAPE: Record<Verdict, VerdictShape> = {

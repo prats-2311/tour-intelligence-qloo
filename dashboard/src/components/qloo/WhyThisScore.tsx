@@ -1,4 +1,4 @@
-import { closeCallNote, DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE, VERDICT_LABEL, ruleLines, weightRows } from "@/lib/qloo/labels";
+import { closeCallNote, DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE, LOCATION_UNRESOLVED_NOTE, VERDICT_LABEL, ruleLines, weightRows } from "@/lib/qloo/labels";
 import type { ScoredCity, ScoringConfig } from "@/lib/qloo/types";
 import { CloseCallChip } from "./CloseCallChip";
 import { DataWarningBadge } from "./DataWarningBadge";
@@ -10,6 +10,7 @@ export function WhyThisScore({ city, scoring }: { city: ScoredCity; scoring?: Sc
   const cfg = scoring ?? DEFAULT_SCORING_DISPLAY;
   const floored = Object.values(cfg.affinityFloors).some((f) => f > 0);
   const w = city.winnability.value;
+  const unplaced = city.insufficientReason === "location_unresolved";
   const comps = city.activation.components;
   const seen = new Set<string>();
   const refs = [...city.fanHeat.refs, ...city.activation.refs, ...city.winnability.refs].filter((r) => {
@@ -24,7 +25,7 @@ export function WhyThisScore({ city, scoring }: { city: ScoredCity; scoring?: Sc
         <VerdictChip verdict={city.verdict} size="md" />
         {city.closeCall && <CloseCallChip />}
         <span className="font-mono text-[24px] font-bold tabular">{w === null ? "—" : Math.round(w)}</span>
-        <span className="text-[13px] text-canvas-muted">{w === null ? "Not enough data to score" : "winnability"}</span>
+        <span className="text-[13px] text-canvas-muted">{w === null ? (unplaced ? LOCATION_UNRESOLVED_NOTE : "Not enough data to score") : "winnability"}</span>
       </div>
       {city.closeCall && <p className="text-[13px] text-canvas-muted">{closeCallNote(cfg.closeCallBand)}</p>}
       <DualBars fanHeat={city.fanHeat} activation={city.activation} thresholds={cfg.thresholds} />

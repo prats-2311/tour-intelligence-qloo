@@ -69,3 +69,28 @@ describe("CityRow close call", () => {
     expect(screen.queryByText("Close call")).toBeNull();
   });
 });
+
+describe("location_unresolved", () => {
+  const unplaced = {
+    ...city, verdict: "insufficient_data" as const, insufficientReason: "location_unresolved" as const, locationAttempts: 2, zones: [], closeCall: false,
+    winnability: { value: null, reason: "insufficient_data" as const, refs: [] },
+    activation: { value: null, reason: "insufficient_data" as const, refs: [], components: {} },
+  };
+  it("explains in plain words why the city was not scored", () => {
+    render(<WhyThisScore city={unplaced} />);
+    expect(screen.getByText("Qloo couldn't place this city precisely, so we didn't score it.")).toBeTruthy();
+    expect(screen.queryByText("Not enough data to score")).toBeNull();
+  });
+  it("keeps the ordinary thin-data wording for other insufficient cities", () => {
+    render(<WhyThisScore city={{ ...unplaced, insufficientReason: undefined }} />);
+    expect(screen.getByText("Not enough data to score")).toBeTruthy();
+    expect(screen.queryByText(/couldn't place this city/)).toBeNull();
+  });
+  it("the board row says so too", () => {
+    render(<ul><CityRow city={unplaced} onOpen={() => {}} /></ul>);
+    expect(screen.getByText("Couldn't place this city")).toBeTruthy();
+    expect(screen.getByRole("button").getAttribute("aria-describedby")).toBeTruthy();
+    expect(document.body.textContent).toContain("Qloo couldn't place this city precisely, so we didn't score it.");
+  });
+});
+

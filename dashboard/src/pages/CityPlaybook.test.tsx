@@ -132,6 +132,15 @@ describe("CityPlaybook", () => {
     expect(await screen.findByText("Session limit reached — try the showcase tour")).toBeTruthy();
     expect(screen.getAllByText("Cerro Alto Mezcal").length).toBeGreaterThan(0);
   });
+  it("an unplaced city shows the plain explanation, no retry, and links back to the board", async () => {
+    vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () {
+      yield { type: "error", code: "LOCATION_UNRESOLVED", message: "Qloo couldn't place Guadalajara precisely (2 lookups), so no playbook was built from its data." };
+    });
+    renderAt("/tours/playbook/4005539?sample=1");
+    expect(await screen.findByText("Qloo couldn't place this city precisely, so we didn't score it.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.queryByText("This playbook could not be built.")).toBeNull();
+  });
   it("other errors show one sentence and Try again reloads the playbook", async () => {
     const spy = vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () {
       yield { type: "error", code: "UPSTREAM", message: "boom" };
