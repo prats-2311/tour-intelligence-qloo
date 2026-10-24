@@ -82,20 +82,25 @@ describe("playbook cards", () => {
     expect(screen.queryByText("Lúpulo Tapatío")).toBeNull();
     expect(screen.getByText("+5 more")).toBeTruthy();
   });
-  it("sponsors show +N vs city next to each brand and the ranking note", () => {
-    const base = card("sponsors");
+  it("sponsors show where fans and the city rank each brand, and the ranking note", () => {
     const items = [
-      { name: "Brand A", entityId: "b1", affinity: 0.8, lift: 0.304, baselineAffinity: 0.5, baselineMissing: false },
-      { name: "Brand B", entityId: "b2", affinity: 0.7, lift: -0.02, baselineAffinity: 0.72, baselineMissing: false },
-      { name: "Brand C", entityId: "b3", affinity: 0.7, lift: 0.3, baselineAffinity: 0.4, baselineMissing: true },
+      { name: "Brand A", entityId: "b1", affinity: 0.8, artistRank: 3, cityRank: null, rankLift: 18 },
+      { name: "Brand B", entityId: "b2", affinity: 0.7, artistRank: 1, cityRank: 2, rankLift: 1 },
     ];
-    render(<CardBody card={{ ...base, items, summary: { note: "Ranked by how much more this artist's fans like the brand than the city overall." } }} city="Guadalajara" />);
-    expect(screen.getByText("-2 vs city")).toBeTruthy();
-    expect(screen.getAllByText("+30 vs city")).toHaveLength(2);
-    expect(screen.queryByText(/fit 0\./)).toBeNull(); // plain wording only: no "fit" sub-line
-    expect(screen.getByText("Ranked by how much more this artist's fans like the brand than the city overall.")).toBeTruthy();
+    render(<CardBody card={{ ...card("sponsors"), items, summary: { note: "Ranked by how much higher this artist's fans rank the brand than the city overall does." } }} city="Guadalajara" />);
+    expect(screen.getByText("Fans #3 · not in the city's top 20")).toBeTruthy();
+    expect(screen.getByText("Fans #1 · city #2")).toBeTruthy();
+    expect(screen.queryByText(/vs city/)).toBeNull();
+    expect(screen.getByText("Ranked by how much higher this artist's fans rank the brand than the city overall does.")).toBeTruthy();
   });
-  it("sponsors without lift fall back to the affinity and show no note", () => {
+  it("local-moment film and tv rows show the same rank line", () => {
+    const items = [{ name: "Film A", entityId: "m1", category: "movie", affinity: 0.8, artistRank: 2, cityRank: null, rankLift: 19 }, { name: "Show B", entityId: "t1", category: "tv_show", affinity: 0.7, artistRank: 1, cityRank: 14, rankLift: 13 }, { name: "Band C", entityId: "a1", category: "artist", affinity: 0.9 }];
+    render(<CardBody card={{ ...card("local_moment"), items }} city="Guadalajara" />);
+    expect(screen.getByText("Fans #2 · not in the city's top 20")).toBeTruthy();
+    expect(screen.getByText("Fans #1 · city #14")).toBeTruthy();
+    expect(screen.getByText("0.90")).toBeTruthy(); // artists keep the affinity
+  });
+  it("sponsors without rank fields fall back to the affinity and show no note", () => {
     render(<CardBody card={{ ...card("sponsors"), items: [{ name: "Brand A", entityId: "b1", affinity: 0.8 }], summary: undefined }} city="Guadalajara" />);
     expect(screen.queryByText(/vs city/)).toBeNull();
     expect(screen.getByText("0.80")).toBeTruthy();

@@ -1,5 +1,5 @@
 import type { PlaybookCard } from "@/lib/qloo/types";
-import { fit, liftVsCity } from "../format";
+import { fit, rankLine } from "../format";
 import { Caption, Row, Rows } from "./rows";
 import { num, str } from "./util";
 
@@ -11,9 +11,9 @@ export function Sponsors({ card }: { card: PlaybookCard }) {
     <>
       <Rows>
         {shown.map((it, i) => {
-          const lift = num(it.lift);
-          if (lift === null) return <Row key={i} name={str(it.name)} aside={fit(num(it.affinity))} />;
-          return <Row key={i} name={str(it.name)} aside={liftVsCity(lift)} />;
+          const a = num(it.artistRank);
+          if (a === null) return <Row key={i} name={str(it.name)} aside={fit(num(it.affinity))} />;
+          return <Row key={i} name={str(it.name)} aside={rankLine(a, num(it.cityRank))} />;
         })}
       </Rows>
       {more > 0 && <Caption>+{more} more</Caption>}
