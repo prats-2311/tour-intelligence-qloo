@@ -54,11 +54,17 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
     if (!validSession(sessionId) || [artist, artistEntityId, city, country].some((v) => typeof v !== "string" || !v)) {
       return void res.status(400).json({ error: "x-session-id, artist, artistEntityId, city, country required" });
     }
+    const { cityId, lat, lon } = req.query;
+    const coord = (v: unknown) => (typeof v === "string" && v !== "" ? Number(v) : undefined);
+    const [latN, lonN] = [coord(lat), coord(lon)];
+    if ((cityId !== undefined && (typeof cityId !== "string" || cityId.length > 32)) || [latN, lonN].some((n) => n !== undefined && !Number.isFinite(n))) {
+      return void res.status(400).json({ error: "cityId must be a short string; lat and lon must be numbers" });
+    }
     const controller = new AbortController();
     const narrative = req.query.narrative !== "0";
     // narrative=0 means "no Gemini" and public sessions are the cheap path: both keep the city-pool-only talent card.
     const hybrid = deps.localActs && narrative && !sessionId!.startsWith(PUBLIC_SESSION_PREFIX);
-    await streamSse(res, runCityPlaybook({ artist: String(artist), artistEntityId: String(artistEntityId), city: { name: String(city), country: String(country) }, sessionId: sessionId!, narrative },
+    await streamSse(res, runCityPlaybook({ artist: String(artist), artistEntityId: String(artistEntityId), city: { name: String(city), country: String(country), ...(typeof cityId === "string" && cityId ? { id: cityId } : {}), ...(latN !== undefined && lonN !== undefined ? { lat: latN, lon: lonN } : {}) }, sessionId: sessionId!, narrative },
       { qloo: deps.qloo, cities: deps.cities, signal: controller.signal, narrate: deps.narrate, ...(hybrid ? { localActs: deps.localActs! } : {}) }), controller);
   });
 

@@ -1,4 +1,4 @@
-import { haversineKm } from "./cities.js";
+import { haversineKm, type City } from "./cities.js";
 import type { HeatPoint } from "./heat.js";
 
 /** The harness sends a city only as a fuzzy location query, so Qloo can resolve it to the wrong place (Ciudad Juarez -> Mexico City). */
@@ -40,4 +40,25 @@ export function locationQueries(city: { name: string; country: string }): string
   const out = [legacy];
   if (country) out.push(`${city.name}, ${country}`);
   return [...new Set(out)].slice(0, MAX_LOCATION_ATTEMPTS);
+}
+
+const fold = (v: string): string => v.normalize("NFD").replace(/\p{M}+/gu, "").toLowerCase().trim().replace(/\s+/g, " ");
+
+/**
+ * The city a playbook request means, so its location can always be checked. By id when given; otherwise by accent- and case-insensitive
+ * name with the country as ISO-2 or English name. Several matches: the one nearest the given coordinates, else the most populous.
+ */
+export function findCity(cities: City[], q: { id?: string; name: string; country: string; lat?: number; lon?: number }): City | undefined {
+  if (q.id) {
+    const byId = cities.find((c) => c.id === q.id);
+    if (byId) return byId;
+  }
+  const name = fold(q.name), country = fold(q.country);
+  const matches = cities.filter((c) => fold(c.name) === name && (fold(c.country) === country || fold(countryName(c.country) ?? "\0") === country));
+  if (matches.length <= 1) return matches[0];
+  if (typeof q.lat === "number" && typeof q.lon === "number") {
+    const here = { lat: q.lat, lon: q.lon };
+    return [...matches].sort((a, b) => haversineKm(a, here) - haversineKm(b, here))[0];
+  }
+  return [...matches].sort((a, b) => b.population - a.population)[0];
 }

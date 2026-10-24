@@ -99,7 +99,7 @@ function CityPlaybookPage() {
   const shownCity = city ?? (wantSample ? (wantShowcase ? showcaseCities() : SAMPLE_CITIES).find((c) => c.id === cityId) : undefined);
   const artist = ready ? state.artist : undefined;
   const req: PlaybookRequest | null = shownCity && artist
-    ? { artist: artist.name, artistEntityId: artist.entityId, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country }, sample, sampleSet: state.sampleSet, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined }
+    ? { artist: artist.name, artistEntityId: artist.entityId, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country, lat: shownCity.lat, lon: shownCity.lon }, sample, sampleSet: state.sampleSet, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined }
     : null;
   const pb = usePlaybook(req);
   const window = state.brief?.dateWindow;

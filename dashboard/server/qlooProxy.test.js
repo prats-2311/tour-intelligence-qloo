@@ -113,6 +113,12 @@ describe("qlooProxy", () => {
     expect(getToken).not.toHaveBeenCalled();
     expect(fetchImpl).not.toHaveBeenCalled();
   });
+  it("forwards the city id and coordinates the gateway needs to check a playbook location", async () => {
+    const fetchImpl = vi.fn(async () => sse(["event: done\ndata: {}\n\n"]));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    await (await fetch(`${base}/api/qloo/city-playbook?artist=A&city=Lima&cityId=7&lat=-12.04&lon=-77.03`, { headers: { "x-session-id": "s" } })).text();
+    expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/city-playbook?artist=A&city=Lima&cityId=7&lat=-12.04&lon=-77.03");
+  });
   it("forwards only whitelisted string city-playbook params", async () => {
     const fetchImpl = vi.fn(async () => sse(["event: done\ndata: {}\n\n"]));
     const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });

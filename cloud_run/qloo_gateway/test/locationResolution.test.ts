@@ -4,6 +4,7 @@ import { runCityPlaybook } from "../src/pipeline/cityPlaybook.js";
 import { runTourBoard, type TourBrief } from "../src/pipeline/tourBoard.js";
 import type { QlooCaller } from "../src/qlooCall.js";
 import type { GatewayEvent, QlooEnvelope } from "../src/types.js";
+import { fanConcentration } from "../src/scoring/activation.js";
 import { describeOk, recs } from "./fixtures/envelopes.js";
 
 // Invented coordinates only. The "wrong" points sit in a different metro, as in the Ciudad Juarez finding.
@@ -79,13 +80,40 @@ describe("Tour Board location resolution", () => {
     expect(events.at(-1)?.type).toBe("done");
   });
 
-  it("a Qloo error on the lookup does not mark the city unresolved: one attempt, legacy string, as before", async () => {
+  it("a Qloo error counts as not passing: the next string is tried, and all-error means unresolved", async () => {
     const calls: Call[] = [];
     const down: QlooEnvelope = { operation: "where_popular", status: "error", results: [], error: { code: "UPSTREAM", retryable: true, recovery: "later" } };
     const events = await collect(runTourBoard(brief, { qloo: fake(() => down, calls), cities: CITIES }));
-    expect(inCityCalls(calls)).toHaveLength(1);
-    expect(scoredOf(events).city).not.toHaveProperty("insufficientReason");
-    expect(whereOf(calls)).toEqual(["Ciudad Juarez, MX"]);
+    expect(inCityCalls(calls)).toHaveLength(2);
+    expect(scoredOf(events).city).toMatchObject({ verdict: "insufficient_data", insufficientReason: "location_unresolved", locationAttempts: 2 });
+    expect(calls.filter((c) => c.tool === "qloo_recommend")).toEqual([]);
+  });
+
+  it("an error on the first string still resolves on the second", async () => {
+    const calls: Call[] = [];
+    const down: QlooEnvelope = { operation: "where_popular", status: "error", results: [], error: { code: "UPSTREAM", retryable: true, recovery: "later" } };
+    const events = await collect(runTourBoard(brief, { qloo: fake((w) => (w === "Ciudad Juarez, MX" ? down : RIGHT), calls), cities: CITIES }));
+    expect(whereOf(calls)).toEqual(["Ciudad Juarez, Mexico"]);
+    expect(scoredOf(events).city).toMatchObject({ locationQuery: "Ciudad Juarez, Mexico", locationAttempts: 2 });
+  });
+
+  it("a cached copy of the old wrong response fails the check and falls through to string 2", async () => {
+    const calls: Call[] = [];
+    const base = fake((w) => (w === "Ciudad Juarez, MX" ? WRONG : RIGHT), calls);
+    const qloo: QlooCaller = { async call(tool, args, sid) { const r = await base.call(tool, args, sid); return { ...r, cached: true }; } };
+    const events = await collect(runTourBoard(brief, { qloo, cities: CITIES }));
+    expect(scoredOf(events).city).toMatchObject({ locationQuery: "Ciudad Juarez, Mexico", locationAttempts: 2 });
+  });
+
+  it("scoring keeps the per-point zone shares: fan_concentration is unchanged when several points share a locality label", async () => {
+    // 5 points that all land on the same city label; an un-merged input has 5 shares, a merged one would have 1.
+    const same = heat([[31.72, -106.46], [31.721, -106.461], [31.722, -106.462], [31.723, -106.463], [31.724, -106.464]]);
+    const events = await collect(runTourBoard(brief, { qloo: fake(() => same), cities: CITIES }));
+    const { city } = scoredOf(events) as unknown as { city: { activation: { rawComponents: { fan_concentration?: number } }; zones: unknown[] } };
+    const aff = [0.8, 0.7, 0.6, 0.5, 0.4];
+    const total = aff.reduce((a, b) => a + b, 0);
+    expect(city.activation.rawComponents.fan_concentration).toBeCloseTo(fanConcentration(aff.map((a) => a / total))!, 10);
+    expect(city.zones).toHaveLength(5);
   });
 });
 
@@ -109,10 +137,37 @@ describe("City Playbook location resolution", () => {
     expect(calls.filter((c) => c.tool !== "qloo_where_popular")).toEqual([]);
   });
 
-  it("a city missing from the city list cannot be checked and keeps the original single-string behaviour", async () => {
+  it("a city missing from the city list is never looked up on an unchecked string", async () => {
     const calls: Call[] = [];
     const events = await collect(runCityPlaybook({ ...input, city: { name: "Elsewhere", country: "MX" } }, { qloo: fake(() => WRONG, calls), cities: CITIES }));
-    expect(inCityCalls(calls)).toHaveLength(1);
+    expect(calls).toEqual([]);
+    expect(events.at(-1)).toMatchObject({ type: "error", code: "LOCATION_UNRESOLVED" });
+  });
+
+  it("matches an accented name and an English country name (the strategist path)", async () => {
+    const calls: Call[] = [];
+    const events = await collect(runCityPlaybook({ ...input, city: { name: "ciudad JUÁREZ", country: "Mexico" } }, { qloo: fake((w) => (w === "Ciudad Juarez, MX" ? RIGHT : WRONG), calls), cities: CITIES }));
     expect(events.find((e) => e.type === "playbook")).toBeDefined();
+  });
+
+  it("passes the board's city id through to the match", async () => {
+    const twin: City[] = [JUAREZ, { ...JUAREZ, id: "8", lat: 19.4, lon: -99.1, population: 9_000_000 }];
+    const calls: Call[] = [];
+    const events = await collect(runCityPlaybook({ ...input, city: { ...input.city, id: "7" } }, { qloo: fake((w) => (w.startsWith("Ciudad Juarez") ? RIGHT : WRONG), calls), cities: twin }));
+    expect(events.at(-1)?.type).toBe("done"); // checked against id 7 (Juarez), not the more populous twin
+  });
+
+  it("an error on every lookup is unresolved, never an unchecked playbook", async () => {
+    const down: QlooEnvelope = { operation: "where_popular", status: "error", results: [], error: { code: "UPSTREAM", retryable: true, recovery: "later" } };
+    const events = await collect(runCityPlaybook(input, { qloo: fake(() => down), cities: CITIES }));
+    expect(events.at(-1)).toMatchObject({ type: "error", code: "LOCATION_UNRESOLVED" });
+  });
+
+  it("the promo zones card lists each locality once (merged shares)", async () => {
+    const same = heat([[31.72, -106.46], [31.721, -106.461], [31.722, -106.462], [31.723, -106.463]]);
+    const events = await collect(runCityPlaybook(input, { qloo: fake(() => same), cities: CITIES }));
+    const card = (events.find((e) => e.type === "playbook") as { playbook: { cards: Array<{ kind: string; items: Array<{ label: string; share: number }> }> } }).playbook.cards.find((c) => c.kind === "promo_zones")!;
+    expect(new Set(card.items.map((i) => i.label)).size).toBe(card.items.length);
+    expect(card.items.reduce((a, i) => a + i.share, 0)).toBeCloseTo(1, 10);
   });
 });

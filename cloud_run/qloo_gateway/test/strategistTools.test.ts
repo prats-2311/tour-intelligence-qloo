@@ -5,7 +5,7 @@ import { ValidationError, type QlooCaller } from "../src/qlooCall.js";
 import { executeTool, STRATEGIST_DECLARATIONS, STRATEGIST_QLOO_TOOLS } from "../src/strategist/tools.js";
 import { cityHeat, recs } from "./fixtures/envelopes.js";
 
-const CITIES: City[] = [{ id: "3", name: "Coyoacan", country: "MX", lat: 19.35, lon: -99.162, population: 600_000 }];
+const CITIES: City[] = [{ id: "1", name: "Mexico City", country: "MX", lat: 19.4326, lon: -99.1332, population: 9_000_000 }, { id: "3", name: "Coyoacan", country: "MX", lat: 19.35, lon: -99.162, population: 600_000 }];
 const okQloo = (): QlooCaller & { call: ReturnType<typeof vi.fn> } => ({ call: vi.fn(async (tool: string) => ({ envelope: tool === "qloo_where_popular" ? cityHeat : recs(["Brand A", "Brand B"], [0.9, 0.8]), cacheKey: "k1", cached: false, stale: false })) });
 const deps = (qloo: QlooCaller) => ({ qloo, cities: CITIES, sessionId: "s" });
 

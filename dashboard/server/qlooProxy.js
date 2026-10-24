@@ -42,7 +42,7 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch })
     }
   }
 
-  const PLAYBOOK_PARAMS = ["artist", "artistEntityId", "city", "country", "narrative"];
+  const PLAYBOOK_PARAMS = ["artist", "artistEntityId", "city", "country", "narrative", "cityId", "lat", "lon"];
 
   app.post("/api/qloo/tour-board", (req, res) => forward(req, res, { route: "tour-board", path: "/v1/tour-board", method: "POST", body: req.body ?? {}, stream: true }));
   // Strategist chat: cheap shape checks here, full validation at the gateway.

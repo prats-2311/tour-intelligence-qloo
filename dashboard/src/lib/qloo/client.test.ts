@@ -93,6 +93,15 @@ describe("callQlooTool", () => {
 });
 
 describe("streamCityPlaybook sample mode and fetchThisWeek", () => {
+  it("a live playbook request carries the board's city id and coordinates so the gateway can check the location", async () => {
+    const fetchImpl = vi.fn(async () => sseResponse(['event: done\ndata: {"type":"done","summary":{}}\n\n']));
+    for await (const _ of streamCityPlaybook({ artist: "A", artistEntityId: "E", city: "Lima", country: "PE" }, { cityId: "3936456", lat: -12.04, lon: -77.03, fetchImpl: fetchImpl as unknown as typeof fetch })) void _;
+    const [url] = fetchImpl.mock.calls[0] as unknown as [string];
+    const qs = new URL(url, "http://x").searchParams;
+    expect(qs.get("cityId")).toBe("3936456");
+    expect(qs.get("lat")).toBe("-12.04");
+    expect(qs.get("lon")).toBe("-77.03");
+  });
   it("streamCityPlaybook in sample mode replays the city's fixture and never fetches", async () => {
     const fetchImpl = vi.fn();
     const out: GatewayEvent[] = [];

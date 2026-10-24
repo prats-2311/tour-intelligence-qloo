@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { locationQueries, locationResolved, LOCATION_MAX_MEDIAN_KM, LOCATION_MIN_POINTS, MAX_LOCATION_ATTEMPTS } from "../src/geo/location.js";
+import { findCity, locationQueries, locationResolved, LOCATION_MAX_MEDIAN_KM, LOCATION_MIN_POINTS, MAX_LOCATION_ATTEMPTS } from "../src/geo/location.js";
 import type { HeatPoint } from "../src/geo/heat.js";
+import type { City } from "../src/geo/cities.js";
 
 const pt = (lat: number, lon: number, index = 0): HeatPoint => ({ lat, lon, affinity: 0.8, popularity: 0.3, index });
 // 1 degree of latitude is about 111 km.
@@ -49,5 +50,32 @@ describe("locationQueries", () => {
   });
   it("skips the long form when the country code has no English name", () => {
     expect(locationQueries({ name: "Nowhere", country: "ZZ" })).toEqual(["Nowhere, ZZ"]);
+  });
+});
+
+describe("findCity", () => {
+  const city = (id: string, name: string, country: string, lat: number, lon: number, population: number): City => ({ id, name, country, lat, lon, population });
+  const LIST = [
+    city("1", "Ciudad Juarez", "MX", 31.72, -106.46, 1_300_000),
+    city("2", "Springfield", "US", 39.8, -89.65, 100_000),
+    city("3", "Springfield", "US", 42.1, -72.59, 150_000),
+    city("4", "Sao Paulo", "BR", -23.55, -46.63, 12_000_000),
+  ];
+  it("matches by id first", () => {
+    expect(findCity(LIST, { id: "2", name: "Springfield", country: "US" })?.id).toBe("2");
+  });
+  it("ignores accents and case, and accepts ISO-2 or the English country name", () => {
+    expect(findCity(LIST, { name: "ciudad juárez", country: "Mexico" })?.id).toBe("1");
+    expect(findCity(LIST, { name: "SÃO PAULO", country: "br" })?.id).toBe("4");
+    expect(findCity(LIST, { name: "Sao Paulo", country: "Brazil" })?.id).toBe("4");
+  });
+  it("returns undefined when nothing matches", () => {
+    expect(findCity(LIST, { name: "Atlantis", country: "US" })).toBeUndefined();
+    expect(findCity(LIST, { name: "Sao Paulo", country: "US" })).toBeUndefined();
+    expect(findCity(LIST, { id: "999", name: "Atlantis", country: "US" })).toBeUndefined();
+  });
+  it("on a duplicate name prefers the one nearest the given coordinates, else the most populous", () => {
+    expect(findCity(LIST, { name: "Springfield", country: "US", lat: 39.8, lon: -89.6 })?.id).toBe("2");
+    expect(findCity(LIST, { name: "Springfield", country: "US" })?.id).toBe("3");
   });
 });

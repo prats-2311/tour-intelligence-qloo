@@ -3,7 +3,7 @@ import { streamCityPlaybook } from "./client";
 import type { SampleSet } from "./types";
 import { initialPlaybook, playbookReducer, type PlaybookState } from "./playbookReducer";
 
-export interface PlaybookRequest { artist: string; artistEntityId: string; city: { id: string; name: string; country: string }; sample: boolean; sampleSet?: SampleSet; delayMs?: number }
+export interface PlaybookRequest { artist: string; artistEntityId: string; city: { id: string; name: string; country: string; lat?: number; lon?: number }; sample: boolean; sampleSet?: SampleSet; delayMs?: number }
 
 const states = new Map<string, PlaybookState>();
 const inflight = new Map<string, Promise<PlaybookState>>();
@@ -35,7 +35,7 @@ export function loadPlaybook(req: PlaybookRequest): Promise<PlaybookState> {
     try {
       const events = streamCityPlaybook(
         { artist: req.artist, artistEntityId: req.artistEntityId, city: req.city.name, country: req.city.country },
-        { sample: req.sample, sampleSet: req.sampleSet, cityId: req.city.id, delayMs: req.delayMs },
+        { sample: req.sample, sampleSet: req.sampleSet, cityId: req.city.id, lat: req.city.lat, lon: req.city.lon, delayMs: req.delayMs },
       );
       for await (const event of events) {
         s = put(key, playbookReducer(s, { type: "event", event }));

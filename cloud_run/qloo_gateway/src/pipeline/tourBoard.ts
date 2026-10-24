@@ -87,28 +87,21 @@ export { call as trackedCall };
 
 export type LocationResolution =
   | { status: "resolved"; where: string; inCity: CallResult; attempts: number }
-  /** The city could not be checked (no coordinates, or the first lookup failed): the original string is used, as before the check existed. */
-  | { status: "unverified"; where: string; inCity: CallResult; attempts: 1 }
   | { status: "unresolved"; attempts: number; tried: string[] };
 
 /**
  * Qloo only gets a city as a fuzzy location query, so it can place it somewhere else entirely. Try each query string in order
- * (the original first, so cached boards keep serving) until the in-city heat points sit near the city. Shared by the board and the playbook.
+ * (the original first, so cached boards keep serving) until the in-city heat points sit near the city. A string passes only on an
+ * answer that checks out: an error, empty or far-away answer (cached or not) is a miss. No string passing means unresolved; a city is
+ * never scored on an unchecked string. Shared by the board and the playbook.
  */
-export async function resolveLocation(artist: string, city: { name: string; country: string; lat?: number; lon?: number }, deps: Deps, sessionId: string, events: GatewayEvent[]): Promise<LocationResolution> {
-  const queries = locationQueries(city);
-  const here = typeof city.lat === "number" && typeof city.lon === "number" ? { lat: city.lat, lon: city.lon } : undefined;
+export async function resolveLocation(artist: string, city: { name: string; country: string; lat: number; lon: number }, deps: Deps, sessionId: string, events: GatewayEvent[]): Promise<LocationResolution> {
   const tried: string[] = [];
-  for (const where of queries) {
+  for (const where of locationQueries(city)) {
     const inCity = await call(deps, sessionId, "qloo_where_popular", { entity: artist, entity_type: "artist", within: where, limit: 20 }, events);
     tried.push(where);
-    if (!here) return { status: "unverified", where, inCity, attempts: 1 };
-    if (inCity.envelope.status === "error") {
-      // An outage says nothing about where Qloo placed the city: keep the original behaviour for the first string, never score on a later one.
-      if (tried.length === 1) return { status: "unverified", where, inCity, attempts: 1 };
-      break;
-    }
-    if (locationResolved(here, extractHeatPoints(inCity.envelope))) return { status: "resolved", where, inCity, attempts: tried.length };
+    if (inCity.envelope.status === "error") continue;
+    if (locationResolved(city, extractHeatPoints(inCity.envelope))) return { status: "resolved", where, inCity, attempts: tried.length };
   }
   return { status: "unresolved", attempts: tried.length, tried };
 }
@@ -268,7 +261,7 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
             // Qloo placed this city somewhere else: no activation calls, never a confident score from another place's data.
             const act = { ...activation({}, SCORING.weights), rawComponents: {} as Partial<Record<ComponentName, number>> };
             const win = winnability(fan, act);
-            const warning: DataWarning = { tool: "qloo_where_popular", kind: "partial", code: "LOCATION_UNRESOLVED", message: "Qloo couldn't place this city precisely, so it wasn't scored" };
+            const warning: DataWarning = { tool: "qloo_where_popular", kind: "partial", code: "LOCATION_UNRESOLVED", message: "Qloo couldn't place this city precisely, so we didn't score it." };
             return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), closeCall: false, zones: [], warnings: dedupeWarnings([...m.warnings, warning]), insufficientReason: "location_unresolved", locationAttempts: loc.attempts } };
           }
           const inputs = await activationInputs(signalArtist, loc, deps, brief.sessionId, events, "venue ranking unresolved — venue fit not scored");
@@ -277,7 +270,7 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
           // Rule 8: a thin-data city is insufficient_data, never 0 (same isThin as calibration's scoreCity).
           const act = { ...(isThin(adjusted, SCORING.weights) ? { ...scoredAct, value: null, reason: "insufficient_data" as const } : scoredAct), rawComponents: inputs.rawComponents };
           const win = winnability(fan, act);
-          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), closeCall: closeCall(fan, act, SCORING.thresholds), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]), ...(loc.status === "resolved" ? { locationQuery: loc.where, locationAttempts: loc.attempts } : {}) } };
+          return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: verdict(fan, act, win, SCORING.thresholds), closeCall: closeCall(fan, act, SCORING.thresholds), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]), locationQuery: loc.where, locationAttempts: loc.attempts } };
         } catch (err) {
           if (err instanceof Aborted || err instanceof BudgetStop) return { stop: err };
           const act = { ...activation({}, SCORING.weights), rawComponents: {} as Partial<Record<ComponentName, number>> };

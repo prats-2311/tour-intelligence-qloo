@@ -7,7 +7,7 @@ import type { GatewayEvent, QlooEnvelope } from "../src/types.js";
 import { readFileSync } from "node:fs";
 import { cityHeat, recs } from "./fixtures/envelopes.js";
 
-const CITIES: City[] = [{ id: "3", name: "Coyoacan", country: "MX", lat: 19.35, lon: -99.162, population: 600_000 }];
+const CITIES: City[] = [{ id: "1", name: "Mexico City", country: "MX", lat: 19.4326, lon: -99.1332, population: 9_000_000 }, { id: "3", name: "Coyoacan", country: "MX", lat: 19.35, lon: -99.162, population: 600_000 }];
 const liveEnv = (name: string): QlooEnvelope => ({ operation: name, ...JSON.parse(readFileSync(new URL(`./fixtures/live/${name}.json`, import.meta.url), "utf8")) }) as QlooEnvelope;
 const tag = (name: string, score: number) => ({ tag_id: `urn:tag:genre:music:${name}`, name, type: "urn:tag", query: { score } });
 const compareOf = (...tags: Array<[string, number]>): QlooEnvelope => ({ operation: "compare_audiences", status: "ok", results: { a: [], b: [], matchEntities: [], tags: tags.map(([n, sc]) => tag(n, sc)) } });
@@ -128,8 +128,9 @@ describe("runCityPlaybook", () => {
     expect(co.items[0]!.lift as number).toBeCloseTo(0.5 * (co.items[0]!.localAffinity as number), 10);
   });
   it("marks cards empty instead of inventing items", async () => {
-    const events = await collect(runCityPlaybook(input, { qloo: qloo((t) => ({ operation: t, status: "empty", results: [] })), cities: CITIES }));
-    expect(cardsOf(events).every((c) => c.status === "empty" && c.items.length === 0)).toBe(true);
+    const events = await collect(runCityPlaybook(input, { qloo: qloo((t) => (t === "qloo_where_popular" ? cityHeat : { operation: t, status: "empty", results: [] })), cities: CITIES }));
+    // the in-city heat is real (the location check needs it), so promo zones is the one card with items
+    expect(cardsOf(events).filter((c) => c.kind !== "promo_zones").every((c) => c.status === "empty" && c.items.length === 0)).toBe(true);
   });
   it("BUDGET during compare yields error BUDGET and no playbook/done", async () => {
     const events = await collect(runCityPlaybook(input, {
@@ -247,7 +248,7 @@ describe("runCityPlaybook", () => {
   it("local_moment includes tv items when only tv returns results", async () => {
     const empty = (t: string): QlooEnvelope => ({ operation: t, status: "empty", results: [] });
     const events = await collect(runCityPlaybook(input, {
-      qloo: qloo((t, a) => (t === "qloo_recommend" && a.target_type === "tv_show" ? recs(["Show 1"], [0.6]) : empty(t))),
+      qloo: qloo((t, a) => (t === "qloo_where_popular" ? cityHeat : t === "qloo_recommend" && a.target_type === "tv_show" ? recs(["Show 1"], [0.6]) : empty(t))),
       cities: CITIES,
     }));
     const lm = cardsOf(events).find((c) => c.kind === "local_moment")!;

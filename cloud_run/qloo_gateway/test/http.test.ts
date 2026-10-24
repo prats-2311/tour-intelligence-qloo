@@ -57,6 +57,16 @@ describe("http", () => {
     expect(res.status).toBe(500);
     expect(res.body).toEqual({ error: "internal error" });
   });
+  it("city-playbook takes the board's cityId and coordinates to pick between same-named cities", async () => {
+    // cityHeat sits in Mexico City; only the twin at id 1 is near it. By default (most populous) the other twin would win.
+    const twins: City[] = [CITIES[0]!, { id: "2", name: "Mexico City", country: "MX", lat: 40, lon: -100, population: 50_000_000 }];
+    const a = createApp({ qloo, cities: twins, health: async () => ({ connected: true, ready: true }) });
+    const q = "/v1/city-playbook?artist=A&artistEntityId=A1&city=Mexico%20City&country=MX&narrative=0";
+    expect((await request(a).get(q).set("x-session-id", "s")).text).toContain("LOCATION_UNRESOLVED");
+    expect((await request(a).get(`${q}&cityId=1`).set("x-session-id", "s")).text).toContain("event: playbook");
+    expect((await request(a).get(`${q}&lat=19.4&lon=-99.1`).set("x-session-id", "s")).text).toContain("event: playbook");
+    expect((await request(a).get(`${q}&lat=abc&lon=-99.1`).set("x-session-id", "s")).status).toBe(400);
+  });
   it("calls narrate once by default and not at all with narrative=0", async () => {
     const narrate = vi.fn(async () => ({ status: "unavailable" as const, reason: "disabled" as const, message: "m" }));
     const withNarrate = createApp({ qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }), narrate });

@@ -54,7 +54,7 @@ export function streamTourBoard(brief: TourBrief, opts: StreamOpts = {}): AsyncG
   }, opts);
 }
 
-export function streamCityPlaybook(q: { artist: string; artistEntityId: string; city: string; country: string }, opts: StreamOpts & { cityId?: string } = {}): AsyncGenerator<GatewayEvent> {
+export function streamCityPlaybook(q: { artist: string; artistEntityId: string; city: string; country: string }, opts: StreamOpts & { cityId?: string; lat?: number; lon?: number } = {}): AsyncGenerator<GatewayEvent> {
   if (opts.sample) {
     if (opts.sampleSet === "showcase") {
       const rec = opts.cityId ? showcasePlaybookEvents(opts.cityId) : null;
@@ -63,7 +63,10 @@ export function streamCityPlaybook(q: { artist: string; artistEntityId: string; 
     const events = opts.cityId ? samplePlaybookEvents(opts.cityId, { long: opts.sampleSet === "long" }) : null;
     return sample(events ?? [{ type: "error", code: "NO_SAMPLE", message: `No sample playbook for ${q.city}` }], opts);
   }
-  const qs = new URLSearchParams(q).toString();
+  const params = new URLSearchParams(q);
+  if (opts.cityId) params.set("cityId", opts.cityId);
+  if (typeof opts.lat === "number" && typeof opts.lon === "number") { params.set("lat", String(opts.lat)); params.set("lon", String(opts.lon)); }
+  const qs = params.toString();
   return stream(`/api/qloo/city-playbook?${qs}`, { method: "GET", headers: { "x-session-id": getSessionId() } }, opts);
 }
 

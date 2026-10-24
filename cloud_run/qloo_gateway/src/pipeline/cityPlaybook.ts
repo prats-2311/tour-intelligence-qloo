@@ -1,5 +1,7 @@
 import { extractEntities, extractMusicTags, extractSharedTaste } from "../extract.js";
 import type { City } from "../geo/cities.js";
+import { findCity } from "../geo/location.js";
+import { uniqueZones } from "../geo/heat.js";
 import type { CallResult, QlooCaller } from "../qlooCall.js";
 import { coBillLift } from "../scoring/winnability.js";
 import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narrative, PlaybookCard } from "../types.js";
@@ -41,17 +43,17 @@ function card<T>(kind: CardKind, items: T[], refs: EvidenceRef[], warnings: Data
 }
 
 export async function* runCityPlaybook(
-  input: { artist: string; artistEntityId: string; city: { name: string; country: string }; sessionId: string; narrative?: boolean },
+  input: { artist: string; artistEntityId: string; city: { name: string; country: string; id?: string; lat?: number; lon?: number }; sessionId: string; narrative?: boolean },
   deps: { qloo: QlooCaller; cities: City[]; signal?: AbortSignal; narrate?: NarrateFn; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null> },
 ): AsyncGenerator<GatewayEvent> {
   const events: GatewayEvent[] = [];
   try {
-    // Coordinates come from the city list (the board's cities are drawn from it); a city it lacks is looked up unchecked, as before.
-    const known = deps.cities.filter((c) => c.name === input.city.name && c.country === input.city.country).sort((x, y) => y.population - x.population)[0];
-    const loc = await resolveLocation(input.artistEntityId, { ...input.city, ...(known ? { lat: known.lat, lon: known.lon } : {}) }, deps, input.sessionId, events);
+    // The location is always checked, using the list's canonical name and ISO-2 country (same strings as the board, so its cache serves): match the city (id, else folded name + country, nearest the given coordinates, else most populous).
+    const known = findCity(deps.cities, input.city);
+    const loc = known ? await resolveLocation(input.artistEntityId, known, deps, input.sessionId, events) : undefined;
     while (events.length) yield events.shift()!;
-    if (loc.status === "unresolved") {
-      yield { type: "error", code: "LOCATION_UNRESOLVED", message: `Qloo couldn't place ${input.city.name} precisely (${loc.attempts} lookups), so no playbook was built from its data.` };
+    if (!loc || loc.status === "unresolved") {
+      yield { type: "error", code: "LOCATION_UNRESOLVED", message: `Qloo couldn't place ${input.city.name} precisely, so no playbook was built from its data.` };
       return;
     }
     const a = await activationInputs(input.artistEntityId, loc, deps, input.sessionId, events);
@@ -157,7 +159,7 @@ export async function* runCityPlaybook(
       card("sponsors", sponsors, [ref("qloo_recommend", raw.brands)], warningsFor("qloo_recommend", raw.brands)),
       card("merch", artistTags, [ref("qloo_entity_tags", tags), ref("qloo_recommend", raw.brands)],
         [...warningsFor("qloo_entity_tags", tags), ...warningsFor("qloo_recommend", raw.brands)], artistTags.length > 0 || sponsors.length > 0),
-      card("promo_zones", a.zones.slice(0, 5), [ref("qloo_where_popular", raw.inCity)], warningsFor("qloo_where_popular", raw.inCity)),
+      card("promo_zones", uniqueZones(a.zones).slice(0, 5), [ref("qloo_where_popular", raw.inCity)], warningsFor("qloo_where_popular", raw.inCity)),
       card("local_moment",
         interleave([raw.artists, raw.films, raw.tv, raw.places].map((r) => extractEntities(r.envelope)), 9),
         [ref("qloo_recommend", raw.artists), ref("qloo_recommend", raw.films), ref("qloo_recommend", raw.tv), ref("qloo_recommend", raw.places)],
