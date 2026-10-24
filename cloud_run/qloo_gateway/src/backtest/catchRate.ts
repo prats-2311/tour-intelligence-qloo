@@ -95,13 +95,14 @@ function plantEntity(claim: Claim, evidence: EvidenceItem[], knownNames: string[
 /**
  * A false copy of the claim with exactly one token changed (Amendment 2.6). `want` is tried first, then the other kinds; null when none is possible.
  */
-export function plantFalse(claim: Claim, evidence: EvidenceItem[], knownNames: string[], want?: PlantKind): { claim: Claim; kind: PlantKind } | null {
+export function plantFalse(claim: Claim, evidence: EvidenceItem[], knownNames: string[], want?: PlantKind | PlantKind[]): { claim: Claim; kind: PlantKind } | null {
   const make: Record<PlantKind, () => Claim | null> = {
     number_plausible: () => plantNumber(claim, evidence, "plausible"),
     number_absent: () => plantNumber(claim, evidence, "absent"),
     entity: () => plantEntity(claim, evidence, knownNames),
   };
-  const order: PlantKind[] = want ? [want, ...PLANT_KINDS.filter((k) => k !== want)] : [...PLANT_KINDS];
+  const first = want === undefined ? [] : Array.isArray(want) ? want : [want];
+  const order: PlantKind[] = [...first, ...PLANT_KINDS.filter((k) => !first.includes(k))];
   for (const kind of order) { const planted = make[kind](); if (planted) return { claim: planted, kind }; }
   return null;
 }
@@ -157,7 +158,9 @@ export function buildCatchSet(doc: unknown): CatchSet {
     const names = namesOf.get(c.playbook)!, ev = evidenceOf.get(c.playbook)!;
     const numberFirst = parseInt(sha256Hex(c.claim.text)[0]!, 16) % 2 === 0;
     const variant: PlantKind = numberPlants % 2 === 0 ? "number_plausible" : "number_absent";
-    const planted = plantFalse(c.claim, ev, names, numberFirst ? variant : "entity")!;
+    const other: PlantKind = variant === "number_plausible" ? "number_absent" : "number_plausible";
+    // An impossible entity plant falls back to the CURRENT alternation variant, so number plants keep their half/half split.
+    const planted = plantFalse(c.claim, ev, names, numberFirst ? [variant, other] : ["entity", variant, other])!;
     if (planted.kind !== "entity") numberPlants += 1;
     plantOf.set(c.id, planted);
   }

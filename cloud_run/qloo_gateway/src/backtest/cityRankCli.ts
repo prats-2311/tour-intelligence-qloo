@@ -43,7 +43,7 @@ export function renderPlan(cases: CityCase[], args: CityRankArgs, models: string
   const lines = [
     `Proof v3 Test A (city ranking), batch ${args.batch}: ${cases.length} artists. DRY RUN: no Qloo or Gemini call is made.`,
     `Protocol commit ${commit}; board maxStops ${BOARD_MAX_STOPS}, candidate cap ${MAX_CANDIDATES}; Gemini ${models.join(" -> ")}; output ${args.out}`,
-    "Stop at once on: a Qloo 429, an error envelope or message matching rate/quota/limit, a stale answer, or an error rate above 10% over the last 20 calls. A region whose heat lookup fails drops the artist; all Gemini models failing stops the run.",
+    "Stop at once on: a Qloo 429, an error envelope or message matching rate/quota/limit, a stale answer, or an error rate above 10% over the last 20 calls (evaluated once 10 are seen). A region whose heat lookup fails drops the artist; all Gemini models failing stops the run.",
     "Candidates (Amendment 2): the board's cities, then played/unplayed-decoy pairs while the list is <= 14 and played cities <= half. Played cities are re-anchored with the board's anchoring function first.", "",
   ];
   for (const c of cases) {

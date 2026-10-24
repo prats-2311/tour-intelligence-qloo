@@ -161,6 +161,7 @@ export const DISCLOSURES: readonly string[] = [
   "What it tests: agreement with the routing an agent chose, not whether those cities were the most profitable.",
   "Sample size: 12 artists (or 6) is a small sample, so the sign test has low power.",
   "Eligibility proxy: excluding tours by venue name lets some arena-tier acts through, so this is a mid-tier test only approximately.",
+  "Stop rule: the gateway itself retries a retryable error envelope, a RATE one included, up to twice upstream before the runner sees it, so a rate limit is noticed after up to 3 upstream attempts.",
   "Amendments 1 and 2 to the protocol were made before any Qloo or Gemini call.",
 ];
 
@@ -232,6 +233,7 @@ export function summarise(r: ProofV3Results): string[] {
     const label: Record<PlantKind, string> = { number_plausible: "a plausible wrong number (real elsewhere in the playbook)", number_absent: "a number found nowhere in the evidence", entity: "a name swapped in from another card" };
     for (const t of PLANT_KINDS) if (k.byType[t].planted > 0) out.push(`Planted as ${label[t]}: caught ${k.byType[t].caught} of ${k.byType[t].planted}.`);
     if (k.byType.number_plausible.planted > 0 && k.byType.number_plausible.caught < k.byType.number_plausible.planted) out.push("The checker missed some plausible wrong numbers: a limit of the checker.");
+    out.push("Method: one token means one number or one whole entity name (a multi-word name counts as one); plausible numbers exclude every number on the cited items.");
     out.push(`False alarms (${k.falseAlarms} of ${k.trueClaims}) are not a finding: ${k.falseAlarmNote}`);
   }
   return out;

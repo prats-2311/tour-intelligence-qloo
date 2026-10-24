@@ -71,6 +71,7 @@ describe("Test A CLI", () => {
     expect(text).toMatch(/Qloo calls/);
     expect(text).toMatch(/429/);
     expect(text).toMatch(/Amendment 2/);
+    expect(text).toContain("over the last 20 calls (evaluated once 10 are seen)");
     expect(text).toContain("Queens -> New York City"); // re-anchored played cities are listed up front
     expect(text).toContain("Vallejo -> Concord");
     expect(text).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}/); // no Qloo ids

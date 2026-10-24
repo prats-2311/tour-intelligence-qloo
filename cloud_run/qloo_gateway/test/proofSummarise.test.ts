@@ -73,7 +73,7 @@ describe("summarise: claim rule", () => {
     const text = summarise(withA([a])).join("\n");
     expect(text).toMatch(/Secondary, board cities only/);
     expect(text).toContain("Queens was re-anchored to New York City");
-    for (const needle of [/floor/, /Data timing/, /routing an agent chose/, /Sample size/, /venue name/, /Amendments 1 and 2/]) expect(text).toMatch(needle);
+    for (const needle of [/retries a retryable error envelope.*up to twice upstream/, /floor/, /Data timing/, /routing an agent chose/, /Sample size/, /venue name/, /Amendments 1 and 2/]) expect(text).toMatch(needle);
   });
   it("5-1 is not significant even though the mean is higher, and the loss is named", () => {
     const as = six([1, 1, 1, 1, 1, 0.25], [0.5, 0.5, 0.5, 0.5, 0.5, 0.75], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]);
@@ -146,6 +146,7 @@ describe("catch rate summary", () => {
     expect(text).toContain("8 of 10 planted false claims");
     expect(text).toContain("plausible wrong number (real elsewhere in the playbook): caught 2 of 4");
     expect(text).toContain("a limit of the checker");
+    expect(text).toMatch(/one token means one number or one whole entity name.*exclude every number on the cited items/);
     expect(text).toMatch(/False alarms \(1 of 20\) are not a finding: drawn from claims/);
   });
 });

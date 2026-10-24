@@ -6,11 +6,11 @@ import { buildEvidence } from "../src/narrative/evidence.js";
 import type { Claim, PlaybookCard } from "../src/types.js";
 
 /** A synthetic recorded showcase: invented brands, `00000000-` ids. Each playbook has one sponsors card of 8 brands and N true claims. */
-function synthetic(playbooks = 4, claimsEach = 10): Record<string, unknown> {
+function synthetic(playbooks = 4, claimsEach = 10, digitNames = false): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (let p = 0; p < playbooks; p += 1) {
-    const items = Array.from({ length: 8 }, (_, i) => ({ entityId: `00000000-p${p}i${i}`, name: `Brand${String.fromCharCode(65 + p)}${String.fromCharCode(97 + i)}x`, affinity: Math.round((0.99 - i * 0.021 - p * 0.003) * 100) / 100, popularity: 0.5, index: i }));
-    const venues = Array.from({ length: 4 }, (_, i) => ({ entityId: `00000000-v${p}i${i}`, name: `Hall${String.fromCharCode(65 + p)}${String.fromCharCode(97 + i)}x`, affinity: Math.round((0.7 - i * 0.043 - p * 0.011) * 100) / 100 }));
+    const items = Array.from({ length: 8 }, (_, i) => ({ entityId: `00000000-p${p}i${i}`, name: digitNames ? `Brand${p}${i}x` : `Brand${String.fromCharCode(65 + p)}${String.fromCharCode(97 + i)}x`, affinity: Math.round((0.99 - i * 0.021 - p * 0.003) * 100) / 100, popularity: 0.5, index: i }));
+    const venues = Array.from({ length: 4 }, (_, i) => ({ entityId: `00000000-v${p}i${i}`, name: digitNames ? `Hall${p}${i}x` : `Hall${String.fromCharCode(65 + p)}${String.fromCharCode(97 + i)}x`, affinity: Math.round((0.7 - i * 0.043 - p * 0.011) * 100) / 100 }));
     const claims: Claim[] = Array.from({ length: claimsEach }, (_, k) => {
       const a = items[k % 8]!, b = items[(k + 3) % 8]!;
       return { text: `${a.name} (${a.affinity}) and ${b.name} (${b.affinity}) fit playbook ${String.fromCharCode(65 + p)} slot ${String.fromCharCode(97 + k)}.`, entities: [{ name: a.name, entityId: a.entityId }, { name: b.name, entityId: b.entityId }], numbers: [a.affinity, b.affinity], evidence_refs: [`sponsors:${k % 8}`, `sponsors:${(k + 3) % 8}`] };
@@ -64,6 +64,14 @@ describe("buildCatchSet", () => {
       expect(cited.some((v) => Math.abs(v - changed) < 0.005)).toBe(false);
       expect(other.some((v) => Math.abs(v - changed) < 0.005)).toBe(kindOf(i) === "number_plausible");
     }
+  });
+  it("when entity plants are impossible they fall back to the current alternation variant, so number plants still split half and half", () => {
+    // Names with digits cannot be swapped in, so every entity plant fails.
+    const s = buildCatchSet(synthetic(4, 10, true));
+    const kinds = s.items.filter((i) => i.planted).map((i) => i.plantKind);
+    expect(kinds).not.toContain("entity");
+    expect(kinds.filter((k) => k === "number_plausible")).toHaveLength(5);
+    expect(kinds.filter((k) => k === "number_absent")).toHaveLength(5);
   });
   it("entity plants swap in a name from another card, never one the claim cites", () => {
     const ents = set.items.filter((i) => i.planted && kindOf(i) === "entity");

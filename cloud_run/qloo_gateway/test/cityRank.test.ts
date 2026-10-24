@@ -188,8 +188,10 @@ describe("runCityRank", () => {
     expect(extras.every((c) => c.candidateSource === "backtest_extra")).toBe(true);
     const boardIds = board.map((b) => b.id);
     const playedOff = played.filter((id) => !boardIds.includes(id));
-    expect(extras.filter((c) => c.played).map((c) => c.id)).toEqual(byHash("Art One", playedOff).slice(0, a.playedExtras));
-    expect(extras.filter((c) => !c.played).map((c) => c.id)).toEqual(decoyPool("Art One", WORLD, ["Mexico"], played, boardIds).map((c) => c.id).slice(0, a.decoyExtras));
+    // stored order does not separate played from decoys: extras are in hash order
+    expect(extras.map((c) => c.id)).toEqual(byHash("Art One", extras.map((c) => c.id)));
+    expect(extras.filter((c) => c.played).map((c) => c.id).sort()).toEqual(byHash("Art One", playedOff).slice(0, a.playedExtras).sort());
+    expect(extras.filter((c) => !c.played).map((c) => c.id).sort()).toEqual(decoyPool("Art One", WORLD, ["Mexico"], played, boardIds).map((c) => c.id).slice(0, a.decoyExtras).sort());
     expect(a.candidateCount).toBe(board.length + extras.length);
     expect(a.candidates.filter((c) => c.played).length * 2).toBeLessThanOrEqual(a.candidateCount);
     expect(a.n).toBe(a.candidates.filter((c) => c.played).length);

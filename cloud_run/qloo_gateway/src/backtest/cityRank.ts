@@ -174,7 +174,8 @@ export async function scoreArtist(c: CityCase, deps: CityRankDeps): Promise<{ ar
   const boardIds = pass1.map((x) => x.id);
   const decoys = decoyPool(c.artist, deps.cities, c.regions, playedIds, boardIds).map((d) => d.id);
   const sel = selectExtras(c.artist, boardIds, playedIds, decoys);
-  const addedIds = [...sel.played, ...sel.decoys];
+  // Hash order, so the stored order does not separate played extras from decoys.
+  const addedIds = [...sel.played, ...sel.decoys].sort(byHash(c.artist));
   const extras = addedIds.map((id) => cityById.get(id)).filter((x): x is City => x !== undefined);
   if (extras.length !== addedIds.length) throw new ArtistDropped("an extra city is missing from cities5000");
 
