@@ -58,7 +58,10 @@ describe("WhyThisScore capped seed", () => {
     const rules = screen.getByRole("list", { name: "Verdict rules" });
     expect(rules.textContent).not.toMatch(/45≤fan<70/);
     expect(rules.textContent).not.toMatch(/fan ≥70 & activation ≥60/);
-    expect(rules.textContent).toMatch(/Play, Hidden goldmine, De-risk:.*capped/i);
+    const capLi = [...rules.querySelectorAll("li")].find((li) => li.textContent!.startsWith("Play, Hidden goldmine, De-risk"))!;
+    expect([...capLi.querySelectorAll("span")].map((x) => x.textContent)).toEqual(["Play, Hidden goldmine, De-risk:", "not available (capped at Consider, no Qloo fan-heat evidence)"]);
+    expect(rules.textContent).not.toMatch(/::|: not available:/);
+    expect(rules.querySelectorAll("li")).toHaveLength(4);
   });
   it("shows the capped line only when the verdict is consider", () => {
     const { unmount } = render(<WhyThisScore city={capped} />);

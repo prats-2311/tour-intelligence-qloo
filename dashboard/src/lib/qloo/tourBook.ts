@@ -2,6 +2,7 @@ import type { CardKind, GatewayEvent, PlaybookCard, ScoredCity, Source, ThisWeek
 import { accentFor } from "./cityAccent";
 import type { PlaybookState } from "./playbookReducer";
 import { toolPlainName } from "./labels";
+import { firstOkName } from "./playbookFacts";
 import { sortCities } from "./ranking";
 
 export interface BookCityChapter {
@@ -39,10 +40,7 @@ function incompleteReason(p?: PlaybookState): string | undefined {
   return "Not loaded";
 }
 
-const firstName = (cards: PlaybookCard[], kind: CardKind, key: string): string => {
-  const v = cards.find((c) => c.kind === kind)?.items[0]?.[key];
-  return typeof v === "string" && v ? v : "—";
-};
+const firstName = (cards: PlaybookCard[], kind: CardKind, key: string): string => firstOkName(cards, kind, key) ?? "—";
 
 function thisWeekValue(week?: ThisWeek): string {
   if (!week) return "—";

@@ -11,7 +11,7 @@ import type { BookCityChapter } from "@/lib/qloo/tourBook";
 import type { CardClaims, CardKind } from "@/lib/qloo/types";
 
 const ORDER: CardKind[] = ["sponsors", "merch", "promo_zones", "local_moment", "venue_fit", "co_billing", "talent"];
-const TITLE: Record<CardKind, string> = { ...CARD_TITLE, talent: "Talent" };
+const TITLE: Record<CardKind, string> = { ...CARD_TITLE };
 
 // Provenance travels with the text: on desktop the chip sits in the margin and brightens when its section is at the reading line.
 function MarginNote({ requests, claims }: { requests: number; claims?: CardClaims }) {

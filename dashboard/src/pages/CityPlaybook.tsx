@@ -23,6 +23,7 @@ import { accentFor } from "@/lib/qloo/cityAccent";
 import { LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks";
 import { INTEGRITY_LINE, LOCATION_UNRESOLVED_NOTE, recordedPlaybooksLine } from "@/lib/qloo/labels";
+import { firstOkName } from "@/lib/qloo/playbookFacts";
 import { loadPlaybook, usePlaybook, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
@@ -49,14 +50,12 @@ const PLACE: Record<CardId, string> = {
 const FALLBACK_MAX_STOPS = 8;
 // Sample playbooks replay ~25 events; the showcase pacing used on the board (60 ms) would make this page feel slow.
 const SAMPLE_PLAYBOOK_DELAY_MS = 10;
-const btnSecondary = "inline-flex h-12 min-w-0 items-center justify-center rounded-[10px] bg-paper-raised px-3 lg:px-5 text-[15px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:h-10";
+// On phones "Remove from tour" is a quiet text button under the primary action, so the primary label never has to share a row with it.
+const removeBtn = "inline-flex min-h-11 items-center justify-center rounded-[10px] px-3 text-[14px] font-semibold text-canvas-muted underline underline-offset-4 hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:h-10 lg:bg-paper-raised lg:px-5 lg:text-[15px] lg:text-canvas-text lg:no-underline lg:hover:bg-[#3a3932]";
 const btnGold = "btn-gold inline-flex h-12 w-full min-w-0 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:w-auto";
 const textBtn = "inline-flex min-h-11 items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 const smallBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
-const first = (card: Card | undefined, key: string): string => {
-  const v = card?.items[0]?.[key];
-  return typeof v === "string" && v ? v : "—";
-};
+const first = (cards: Card[], kind: CardKind, key: string): string => firstOkName(cards, kind, key) ?? "—";
 
 export default function CityPlaybook() {
   const [params] = useSearchParams();
@@ -101,7 +100,7 @@ function CityPlaybookPage() {
   const shownCity = city ?? (wantSample ? (wantShowcase ? showcaseCities() : SAMPLE_CITIES).find((c) => c.id === cityId) : undefined);
   const artist = ready ? state.artist : undefined;
   // A showcase city with no recorded playbook has nothing to open: say so instead of showing empty tiles.
-  const unrecorded = wantShowcase && ready && !!shownCity && showcasePlaybookEvents(cityId) === null;
+  const unrecorded = (wantShowcase || state.source === "showcase") && ready && !!shownCity && showcasePlaybookEvents(cityId) === null;
   const req: PlaybookRequest | null = shownCity && artist && !unrecorded
     ? { artist: artist.name, artistEntityId: artist.entityId, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country, lat: shownCity.lat, lon: shownCity.lon }, sample, sampleSet: state.sampleSet, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined }
     : null;
@@ -153,7 +152,7 @@ function CityPlaybookPage() {
 
   if (unrecorded) {
     return (
-      <div className="mx-auto flex w-full max-w-xl flex-col items-start gap-3 py-6">
+      <div className="mx-auto flex w-full max-w-xl flex-col items-start gap-3 pb-24 pt-6 lg:pb-6">
         <SampleBanner source="showcase" />
         <h1 className="font-title break-words text-[28px] leading-tight text-canvas-text">{shownCity.name}</h1>
         <p className="text-[13px] text-canvas-muted">{shownCity.country}</p>
@@ -228,11 +227,11 @@ function CityPlaybookPage() {
   const addToTour = (
     <div className="flex min-w-0 flex-1 flex-col gap-1 lg:flex-none lg:items-start">
       {inTour ? (
-        <div className="flex min-w-0 flex-1 items-center gap-2 lg:flex-none">
-          <button type="button" onClick={() => toggleShortlist(shownCity.id)} className={`${btnSecondary} shrink-0`}>Remove from tour</button>
-          <Link to={nextHeld ? `/tours/playbook/${nextHeld.id}${sampleQ}` : `/tours/book${sampleQ}`} className="btn-gold inline-flex h-12 min-w-0 flex-1 items-center justify-center rounded-[10px] px-3 text-[15px] font-semibold lg:h-10 lg:flex-none lg:px-5">
-            <span className="truncate">{nextHeld ? `Next: ${nextHeld.name}` : "Next: Tour Book"}</span>
+        <div className="flex min-w-0 flex-1 flex-col items-stretch gap-0.5 lg:flex-none lg:flex-row-reverse lg:items-center lg:gap-2">
+          <Link data-testid="primary-action" to={nextHeld ? `/tours/playbook/${nextHeld.id}${sampleQ}` : `/tours/book${sampleQ}`} className="btn-gold inline-flex min-h-12 min-w-0 items-center justify-center rounded-[10px] px-4 py-2 text-center text-[15px] font-semibold leading-tight lg:h-10 lg:min-h-0 lg:px-5">
+            <span className="min-w-0 break-words">{nextHeld ? `Next: ${nextHeld.name}` : "Next: Tour Book"}</span>
           </Link>
+          <button type="button" onClick={() => toggleShortlist(shownCity.id)} className={removeBtn}>Remove from tour</button>
         </div>
       ) : (
         <button type="button" disabled={full} onClick={() => toggleShortlist(shownCity.id)} className={btnGold}>Add to tour</button>
@@ -275,7 +274,7 @@ function CityPlaybookPage() {
     </>
   );
   const talentCard = cardOf("talent");
-  const talentPanel = noSample ? noSamplePanel : loading ? <div className="skeleton h-[280px] max-w-xl rounded-[18px]" aria-hidden /> : talentCard ? <div className="max-w-xl">{playbookCard("talent")}</div> : <p className="text-[13px] text-canvas-muted">Talent brief unavailable for {shownCity.name}</p>;
+  const talentPanel = noSample ? noSamplePanel : loading ? <div className="skeleton h-[280px] max-w-xl rounded-[18px]" aria-hidden /> : talentCard ? <div className="max-w-xl">{playbookCard("talent")}</div> : <p className="text-[13px] text-canvas-muted">Local acts unavailable for {shownCity.name}</p>;
   const panels: Record<Tab, ReactNode> = { activate: activatePanel, talent: talentPanel };
 
   return (
@@ -306,9 +305,9 @@ function CityPlaybookPage() {
           {!isDesktop && whyBtn}
           <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
           <AdvanceSheet rows={[
-            { label: "TOP ZONE", value: first(cardOf("promo_zones"), "label") },
-            { label: "BEST ROOM", value: first(cardOf("venue_fit"), "name") },
-            { label: "SUPPORT", value: first(cardOf("co_billing"), "name") },
+            { label: "TOP ZONE", value: first(pb.cards, "promo_zones", "label") },
+            { label: "BEST ROOM", value: first(pb.cards, "venue_fit", "name") },
+            { label: "SUPPORT", value: first(pb.cards, "co_billing", "name") },
             { label: "CLAIMS", value: claimsValue },
           ]} />
           {narrative?.status === "unavailable" && <Notice>{narrative.message}</Notice>}

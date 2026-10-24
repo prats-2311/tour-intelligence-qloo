@@ -6,7 +6,7 @@ import { CloseCallChip } from "./CloseCallChip";
 import { VerdictChip } from "./VerdictChip";
 
 /** Column template shared with the desktop header row in TourBoard. */
-export const ROW_COLS_LG = "lg:grid-cols-[minmax(0,1fr)_96px_124px_32px]";
+export const ROW_COLS_LG = "lg:grid-cols-[minmax(0,1fr)_96px_140px_32px]";
 
 function MiniBar({ label, score, color, testId }: { label: string; score: Score; color: string; testId: string }) {
   const v = score.value === null || !Number.isFinite(score.value) ? null : Math.min(100, Math.max(0, Math.round(score.value)));

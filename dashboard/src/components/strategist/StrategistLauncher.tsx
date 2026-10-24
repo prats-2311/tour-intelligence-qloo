@@ -18,7 +18,8 @@ export const hasStickyFooter = (pathname: string): boolean =>
   pathname === "/tours/board" || pathname === "/tours/book" || pathname.startsWith("/tours/playbook/");
 
 /** Routes whose sticky footer reserves a right-hand gutter for the FAB: the button sits inside the footer band, never over the list. */
-export const dockedInFooter = (pathname: string): boolean => pathname === "/tours/board" || pathname.startsWith("/tours/playbook/");
+export const dockedInFooter = (pathname: string, search = ""): boolean =>
+  (pathname === "/tours/board" && new URLSearchParams(search).get("mode") !== "without") || pathname.startsWith("/tours/playbook/");
 
 function readOpen(): boolean {
   try { return localStorage.getItem(STORAGE_KEY) === "1"; } catch { return false; }
@@ -52,9 +53,9 @@ function useLauncherModel() {
 export function StrategistFab() {
   const [open, setOpen] = useState(false);
   const { sample, showcase, title, context } = useLauncherModel();
-  const { pathname } = useLocation();
-  const lift = dockedInFooter(pathname) ? "bottom-[calc(4.5rem+env(safe-area-inset-bottom))] size-12 right-3"
-    : hasStickyFooter(pathname) ? "bottom-[calc(9.5rem+env(safe-area-inset-bottom))] size-14 right-4" : "bottom-[calc(5rem+env(safe-area-inset-bottom))] size-14 right-4";
+  const { pathname, search } = useLocation();
+  const lift = dockedInFooter(pathname, search) ? "bottom-[calc(4.5rem+env(safe-area-inset-bottom))] size-12 right-3"
+    : hasStickyFooter(pathname) && pathname !== "/tours/board" ? "bottom-[calc(9.5rem+env(safe-area-inset-bottom))] size-14 right-4" : "bottom-[calc(5rem+env(safe-area-inset-bottom))] size-14 right-4";
   return (
     <>
       <button

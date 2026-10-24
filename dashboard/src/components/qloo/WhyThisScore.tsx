@@ -1,4 +1,4 @@
-import { CAPPED_CLOSE_CALL_NOTE, CAPPED_RULE_LABEL, CAPPED_RULE_TEXT, closeCallNote, showsCappedNote, DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE, FLOORED_SEED_NOTE, LOCATION_UNRESOLVED_NOTE, MAJOR_MARKET_LABEL, VERDICT_LABEL, majorMarketNote, ruleLines, weightRows } from "@/lib/qloo/labels";
+import { CAPPED_CLOSE_CALL_NOTE, closeCallNote, showsCappedNote, DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE, FLOORED_SEED_NOTE, LOCATION_UNRESOLVED_NOTE, MAJOR_MARKET_LABEL, majorMarketNote, ruleLines, weightRows } from "@/lib/qloo/labels";
 import type { ScoredCity, ScoringConfig } from "@/lib/qloo/types";
 import { CloseCallChip } from "./CloseCallChip";
 import { DataWarningBadge } from "./DataWarningBadge";
@@ -64,9 +64,9 @@ export function WhyThisScore({ city, scoring }: { city: ScoredCity; scoring?: Sc
       <div>
         <h3 className="mb-1 text-[13px] font-medium text-canvas-muted">Verdict rules</h3>
         <ul aria-label="Verdict rules" className="flex flex-col gap-0.5 text-[13px]">
-          {ruleLines(cfg.thresholds, city.fanHeatFloor === true).map(({ verdict, rule }) => (
-            <li key={verdict} className={`flex flex-wrap gap-x-2 ${verdict === city.verdict ? "text-canvas-text" : "text-canvas-muted"}`}>
-              <span className="font-medium">{city.fanHeatFloor && verdict === "play" ? CAPPED_RULE_LABEL : VERDICT_LABEL[verdict]}:</span><span className="tabular">{city.fanHeatFloor && verdict === "play" ? CAPPED_RULE_TEXT : rule}</span>
+          {ruleLines(cfg.thresholds, city.fanHeatFloor === true).map(({ key, verdict, label, rule }) => (
+            <li key={key} className={`flex flex-wrap gap-x-2 ${verdict === city.verdict ? "text-canvas-text" : "text-canvas-muted"}`}>
+              <span className="font-medium">{label}:</span><span className="tabular">{rule}</span>
             </li>
           ))}
         </ul>

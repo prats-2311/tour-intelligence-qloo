@@ -194,3 +194,50 @@ test("a playbook has only How to win and Local acts, and Back keeps ?showcase=1"
   await expect(page).toHaveURL(/\/tours\/board\?showcase=1/);
   await expect(page.getByTestId("city-row").first()).toBeVisible();
 });
+
+// ---- Fix round 1 ----
+
+test("mobile: the held playbook's primary action is never clipped, even for a long next-city name", async ({ page }, info) => {
+  test.skip(info.project.name !== "mobile");
+  for (const url of ["/tours/playbook/4005539?sample=long", "/tours/playbook/3464975?sample=long"]) {
+    await page.goto(url);
+    const primary = page.getByTestId("primary-action");
+    await expect(primary).toBeVisible({ timeout: 20_000 });
+    const m = await primary.evaluate((el) => ({ text: el.textContent, sw: el.scrollWidth, cw: el.clientWidth, inner: [...el.querySelectorAll("span")].map((s) => s.scrollWidth - s.clientWidth) }));
+    expect(m.text, url).toMatch(/^Next: /);
+    expect(m.sw, `${url} "${m.text}" clipped`).toBeLessThanOrEqual(m.cw);
+    for (const d of m.inner) expect(d).toBeLessThanOrEqual(0);
+    expect(await noOverflow(page)).toBe(true);
+  }
+  await page.goto("/tours/playbook/4005539?sample=long");
+  expect(await page.getByTestId("primary-action").textContent()).toContain("San Juan de los Lagos");
+});
+
+test("mobile: without a sticky footer (?mode=without) the strategist button leaves the last row readable", async ({ page }, info) => {
+  test.skip(info.project.name !== "mobile");
+  await page.goto("/tours/board?showcase=1&mode=without");
+  await expect(page.getByRole("list", { name: "Generic ranking" })).toBeVisible({ timeout: 20_000 });
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const r = await page.evaluate(() => {
+    const f = document.querySelector("[aria-label='Ask the strategist']")!.getBoundingClientRect();
+    const items = [...document.querySelectorAll("[aria-label='Generic ranking'] li")];
+    const last = items[items.length - 1]!.getBoundingClientRect();
+    return { fabTop: f.top, fabBottom: f.bottom, fabLeft: f.left, lastTop: last.top, lastBottom: last.bottom, lastRight: last.right };
+  });
+  expect(r.fabBottom, "the button sits in the lifted position, above the tab bar and its gap").toBeLessThanOrEqual(812 - 80);
+  const overlaps = r.fabTop < r.lastBottom && r.fabBottom > r.lastTop && r.fabLeft < r.lastRight;
+  expect(overlaps, JSON.stringify(r)).toBe(false);
+});
+
+test("desktop 1024: the Hidden goldmine chip clears the score bars", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop");
+  await page.setViewportSize({ width: 1024, height: 800 });
+  await openShowcaseBoard(page);
+  const gaps = await page.getByTestId("city-row").evaluateAll((els) => els.filter((el) => /Hidden goldmine/.test(el.textContent ?? "")).map((el) => {
+    const bars = el.querySelector("[data-testid=bar-fanheat]")!.parentElement!.parentElement!.getBoundingClientRect();
+    const chip = el.querySelector("[data-testid=row-chip]")!.getBoundingClientRect();
+    return Math.round(chip.left - bars.right);
+  }));
+  expect(gaps.length).toBeGreaterThan(0);
+  for (const g of gaps) expect(g).toBeGreaterThanOrEqual(8);
+});

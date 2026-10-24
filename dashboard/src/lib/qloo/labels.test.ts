@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ACTIVATION_WEIGHTS, DEFAULT_SCORING_DISPLAY, ruleLines, weightRows, INTEGRITY_LINE, SAMPLE_TEXT, VERDICT_LABEL, VERDICT_SHAPE } from "./labels";
+import { statusPlain, ACTIVATION_WEIGHTS, DEFAULT_SCORING_DISPLAY, ruleLines, weightRows, INTEGRITY_LINE, SAMPLE_TEXT, VERDICT_LABEL, VERDICT_SHAPE } from "./labels";
 
 describe("shared labels", () => {
   it("verdict labels", () => {
@@ -44,5 +44,19 @@ describe("closeCallNote", () => {
     const { closeCallNote } = await import("./labels");
     expect(closeCallNote(3)).toBe("Within 3 points of a verdict line — treat as borderline.");
     expect(closeCallNote()).toBe("Within 2 points of a verdict line — treat as borderline.");
+  });
+});
+
+describe("capped rule lines and status words", () => {
+  it("a capped seed's rule lines carry the capped wording themselves, with no Play row", () => {
+    const rows = ruleLines(DEFAULT_SCORING_DISPLAY.thresholds, true);
+    expect(rows[0]).toEqual({ key: "capped", label: "Play, Hidden goldmine, De-risk", rule: "not available (capped at Consider, no Qloo fan-heat evidence)" });
+    expect(rows.some((r) => r.verdict === "play")).toBe(false);
+  });
+  it("provenance statuses are plain words", () => {
+    expect(statusPlain("degraded")).toBe("Partial answer");
+    expect(statusPlain("partial")).toBe("Partial answer");
+    expect(statusPlain("rejected")).toBe("Not sent (failed safety check)");
+    expect(statusPlain("needs_input")).toBe("Needed more input (skipped)");
   });
 });

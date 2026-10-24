@@ -10,6 +10,7 @@ import { samplePlaybookEvents } from "@/lib/qloo/fixtures/lumenValePlaybooks";
 import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
 import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
+import { showcaseBrief } from "@/lib/qloo/showcase";
 import { resetPlaybooks } from "@/lib/qloo/playbookStore";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import CityPlaybook from "./CityPlaybook";
@@ -166,6 +167,53 @@ describe("CityPlaybook in showcase mode", () => {
     expect(screen.queryByText("—")).toBeNull();
     expect(screen.queryByText("TOP ZONE")).toBeNull();
     expect(screen.queryByRole("tab")).toBeNull();
+  });
+});
+
+function RunShowcase() {
+  const { run } = useTourBoard();
+  useEffect(() => { run(showcaseBrief(), { sample: true, sampleSet: "showcase" }); }, [run]);
+  return null;
+}
+
+describe("CityPlaybook reached without the showcase flag in the URL", () => {
+  const cities = () => parseShowcase(syntheticShowcase).boardEvents.flatMap((e) => (e.type === "city_scored" ? [e.city] : []));
+  const recorded = () => Object.keys(parseShowcase(syntheticShowcase).playbooks);
+  it("keeps the showcase on the back link (falls back to the board run)", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    renderAt(`/tours/playbook/${recorded()[0]}`, <RunShowcase />);
+    const back = await screen.findByRole("link", { name: "Back to Tour Board" });
+    expect(back.getAttribute("href")).toBe("/tours/board?showcase=1");
+  });
+  it("shows the explanation, not empty tiles, for an unrecorded city (WebMCP open_city, in-app links)", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    const missing = cities().find((c) => !recorded().includes(c.id))!;
+    renderAt(`/tours/playbook/${missing.id}`, <RunShowcase />);
+    expect(await screen.findByText(/Playbooks are recorded for \d+ cities in this example\./)).toBeTruthy();
+    expect(screen.queryByText("—")).toBeNull();
+    expect(screen.queryByText("TOP ZONE")).toBeNull();
+  });
+});
+
+describe("CityPlaybook naming and SUPPORT rule", () => {
+  it("the Local acts tab card, fallback and chapter use Local acts, never Talent", async () => {
+    renderAt("/tours/playbook/4005539?sample=1");
+    fireEvent.click(await screen.findByRole("tab", { name: "Local acts" }));
+    expect(await screen.findByRole("heading", { name: "Local acts" })).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/Talent/);
+  });
+  it("SUPPORT shows a dash for a co-billing card that is not ok, even if it carries items (same rule as the landing)", async () => {
+    vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () {
+      for (const e of samplePlaybookEvents("4005539")!) {
+        if (e.type === "playbook") yield { ...e, playbook: { ...e.playbook, cards: e.playbook.cards.map((c) => (c.kind === "co_billing" ? { ...c, status: "empty" as const } : c)) } };
+        else yield e;
+      }
+    });
+    renderAt("/tours/playbook/4005539?sample=1");
+    await screen.findByText("SUPPORT");
+    const tile = (label: string) => screen.getByText(label).closest("div")!.querySelector("dd")!.textContent;
+    await waitFor(() => expect(tile("BEST ROOM")).not.toBe("—")); // the cards did load
+    expect(tile("SUPPORT")).toBe("—");
   });
 });
 

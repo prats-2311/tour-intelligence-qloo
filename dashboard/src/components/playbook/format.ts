@@ -6,7 +6,7 @@ export const liftLine = (sharedTaste: number, a: number, lift: number): string =
 
 export const CARD_TITLE: Record<CardKind | "this_week", string> = {
   sponsors: "Sponsors", merch: "Merch", promo_zones: "Promo zones", local_moment: "Local moment",
-  venue_fit: "Venue fit", co_billing: "Co-billing", talent: "Talent brief", this_week: "This week",
+  venue_fit: "Venue fit", co_billing: "Co-billing", talent: "Local acts", this_week: "This week",
 };
 
 const UNIT: Partial<Record<CardKind, string>> = { sponsors: "BRANDS", venue_fit: "VENUES", co_billing: "ACTS", local_moment: "PICKS" };

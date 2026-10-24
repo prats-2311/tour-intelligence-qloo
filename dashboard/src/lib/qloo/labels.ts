@@ -27,23 +27,19 @@ export const DEFAULT_SCORING_DISPLAY: ScoringConfig = {
   thresholds: { playFan: 70, playAct: 60, goldmineFanMin: 45, goldmineFanMax: 70, goldmineAct: 75, deRiskFan: 70, deRiskAct: 45, considerWin: 55 },
 };
 
-/** A capped seed (fanHeatFloor): its fan heat is the board's floor, so only Consider, Skip and Not enough data can apply. */
-export function ruleLines(t: Thresholds, capped = false): Array<{ verdict: Verdict; rule: string }> {
-  if (capped) {
-    return [
-      { verdict: "play", rule: "" },
-      { verdict: "consider", rule: `winnability ≥${t.considerWin}` },
-      { verdict: "skip", rule: "otherwise" },
-      { verdict: "insufficient_data", rule: "when inputs are missing" },
-    ];
-  }
+export interface RuleLine { key: string; /** Absent on the capped line, which is not a verdict. */ verdict?: Verdict; label: string; rule: string }
+const rule = (verdict: Verdict, text: string): RuleLine => ({ key: verdict, verdict, label: VERDICT_LABEL[verdict], rule: text });
+const CAPPED_RULE_TEXT = "not available (capped at Consider, no Qloo fan-heat evidence)";
+
+/** The verdict rules a score sheet lists. A capped seed (fanHeatFloor) has its fan heat at the board's floor, so one capped line replaces the Play, Hidden goldmine and De-risk rules. */
+export function ruleLines(t: Thresholds, capped = false): RuleLine[] {
+  const tail = [rule("consider", `winnability ≥${t.considerWin}`), rule("skip", "otherwise"), rule("insufficient_data", "when inputs are missing")];
+  if (capped) return [{ key: "capped", label: "Play, Hidden goldmine, De-risk", rule: CAPPED_RULE_TEXT }, ...tail];
   return [
-    { verdict: "play", rule: `fan ≥${t.playFan} & activation ≥${t.playAct}` },
-    { verdict: "hidden_goldmine", rule: `${t.goldmineFanMin}≤fan<${t.goldmineFanMax} & activation ≥${t.goldmineAct}` },
-    { verdict: "de_risk", rule: `fan ≥${t.deRiskFan} & activation <${t.deRiskAct}` },
-    { verdict: "consider", rule: `winnability ≥${t.considerWin}` },
-    { verdict: "skip", rule: "otherwise" },
-    { verdict: "insufficient_data", rule: "when inputs are missing" },
+    rule("play", `fan ≥${t.playFan} & activation ≥${t.playAct}`),
+    rule("hidden_goldmine", `${t.goldmineFanMin}≤fan<${t.goldmineFanMax} & activation ≥${t.goldmineAct}`),
+    rule("de_risk", `fan ≥${t.deRiskFan} & activation <${t.deRiskAct}`),
+    ...tail,
   ];
 }
 
@@ -54,8 +50,6 @@ export function weightRows(s: ScoringConfig): Array<{ key: ComponentName; label:
 export const CLOSE_CALL_LABEL = "Close call";
 export const DEFAULT_CLOSE_CALL_BAND = 2;
 export const CAPPED_CLOSE_CALL_NOTE = "Close to the Consider line. This market is capped at Consider, so it can't become Play or Hidden goldmine.";
-export const CAPPED_RULE_LABEL = "Play, Hidden goldmine, De-risk";
-export const CAPPED_RULE_TEXT = "not available: capped at Consider, no Qloo fan-heat evidence";
 export const closeCallNote = (band: number = DEFAULT_CLOSE_CALL_BAND) => `Within ${band} points of a verdict line — treat as borderline.`;
 
 /** Shown wherever an insufficient_data city has insufficientReason "location_unresolved" (Qloo resolved its name to another place). */
@@ -94,6 +88,6 @@ export function toolPlainName(tool: string, args: Record<string, unknown> = {}):
   return TOOL_PLAIN[tool] ?? tool.replace(/^qloo_/, "").replace(/_/g, " ");
 }
 const STATUS_PLAIN: Record<string, string> = {
-  ok: "Done", empty: "No results", partial: "Partial result", degraded: "Degraded", error: "Error", needs_input: "Needed more input (skipped)", rejected: "Rejected",
+  ok: "Done", empty: "No results", partial: "Partial answer", degraded: "Partial answer", error: "Error", needs_input: "Needed more input (skipped)", rejected: "Not sent (failed safety check)",
 };
 export const statusPlain = (status: string): string => STATUS_PLAIN[status] ?? status;
