@@ -57,7 +57,7 @@ export type ThisWeek =
   | { status: "unavailable"; reason: "no_key" | "capped" | "error"; message: string };
 
 export type GatewayEvent =
-  | { type: "resolve"; entity: { entityId: string; name: string } }
+  | { type: "resolve"; entity: { entityId: string; name: string; popularity?: number } }
   | { type: "scoring"; scoring: ScoringConfig; closeCallBand: number }
   | { type: "artist_profile"; demographics: unknown[]; tags: Array<{ name: string; affinity: number }>; trends: Array<{ date: string; value: number }>; refs: EvidenceRef[]; warnings: DataWarning[] }
   | { type: "region_unavailable"; region: string; code: string; message: string }

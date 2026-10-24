@@ -6,7 +6,7 @@ const rec = (v: unknown) => (v && typeof v === "object" ? (v as Record<string, u
 
 const ZONE_LABEL = "promo zone: affinity (0-1), share = fraction of the city's fan heat, then the same share as a whole-number percent; state only the percent";
 const LIFT_LABEL = "lift = how much more this artist's fans like it than the city overall (affinity minus the city baseline affinity, both 0-1; not a percentage)";
-const CO_BILL_LABEL = "co-bill: sharedTaste (0-1 score, not audience overlap), localAffinity (0-1), lift = shared taste × local affinity; none are percentages";
+const CO_BILL_LABEL = "co-bill: sharedTaste (0-1 score, not audience overlap), the city score (0-1: how much the city likes them), lift = shared taste × how much the city likes them; none are percentages";
 
 /** One evidence item per card item, id "<kind>:<index>"; numbers are the values a claim may quote. */
 export function buildEvidence(cards: PlaybookCard[]): EvidenceItem[] {

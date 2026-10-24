@@ -95,7 +95,7 @@ export function createNarrator(deps: NarrativeDeps): NarrateFn {
       "For each card kind that has evidence, write 1-5 short atomic claims a promoter can act on.",
       "Never write entity ids, UUIDs or urn: ids in the claim text. Entities go only in the entities field.",
       "Every claim must list each entity it names (exact name, entityId when given), every number it states (as in the evidence, scores rounded as below; percentages as whole numbers), and the evidence ids it relies on.",
-      "Co-billing and talent numbers are \"shared taste\" (a 0-1 score): call it \"shared taste\", never \"audience overlap\", and never state it as a percentage. Lift is \"shared taste × local affinity\" (also 0-1, never a percentage). State such numbers as decimals (2 decimal places), never a percentage.",
+      "Co-billing and talent numbers are \"shared taste\" (a 0-1 score): call it \"shared taste\", never \"audience overlap\", and never state it as a percentage. Lift is \"shared taste × how much the city likes them\" (also 0-1, never a percentage). State such numbers as decimals (2 decimal places), never a percentage.",
       "Write every score rounded to 2 decimal places (e.g. 0.98), never more than 2 decimals, and state the same rounded value in the claim's numbers.",
       "Write a promo zone's share as a whole-number percent of the city's fan heat, e.g. \"5% of Guadalajara's fan heat\" (use the whole-number percent from the evidence). Never list the raw affinity, share and index together.",
       "Each claim makes one useful point and cites at most two numbers. Prefer a comparison or implication over reciting a number, e.g. \"Vans (0.98) and Converse (0.97) lead the sponsor fit\".",

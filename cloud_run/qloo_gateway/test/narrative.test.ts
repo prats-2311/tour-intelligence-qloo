@@ -179,7 +179,7 @@ describe("createNarrator", () => {
     expect(prompt).toContain("shared taste");
     expect(prompt).toContain("never");
     expect(prompt).toContain("audience overlap");
-    expect(prompt).toContain("shared taste × local affinity");
+    expect(prompt).toContain("shared taste × how much the city likes them");
   });
   it("tells the model to round scores to 2 dp, state zone share as a whole percent, and keep claims to one point", async () => {
     const generate = vi.fn<GenerateFn>(async () => answer(good));
@@ -242,5 +242,13 @@ describe("evidence for lift and merch brands", () => {
     ]);
     expect(ev[0]).toMatchObject({ id: "sponsors:0", numbers: [0.8, 0.3, 0.5], label: expect.stringContaining("city overall") });
     expect(ev.find((e) => e.id === "merch:brands")).toMatchObject({ names: ["Brand A"] });
+  });
+  it("co-bill evidence labels and the narrative prompt use plain words, not 'local affinity'", async () => {
+    const { buildEvidence } = await import("../src/narrative/evidence.js");
+    const ev = buildEvidence([{ kind: "co_billing", status: "ok", items: [{ name: "X", entityId: "x", sharedTaste: 0.3, localAffinity: 0.8, lift: 0.24 }], refs: [], warnings: [] }]);
+    expect(ev[0]!.label).not.toMatch(/local ?affinity/i);
+    expect(ev[0]!.label).toContain("how much the city likes them");
+    const { readFileSync } = await import("node:fs");
+    expect(readFileSync(new URL("../src/narrative/narrate.ts", import.meta.url), "utf8")).not.toMatch(/local affinity/i);
   });
 });

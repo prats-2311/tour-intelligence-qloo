@@ -2,6 +2,9 @@
 
 export const SPONSOR_LIFT_NOTE = "Ranked by how much more this artist's fans like the brand than the city overall.";
 export const NO_SUPPORT_COPY = (artist: string) => `Every Qloo match is bigger than ${artist}, so no support pick here.`;
+export const SIZE_UNCHECKED_COPY = "Couldn't check act size for this artist.";
+export const NO_SIZE_DATA_COPY = "No support pick: Qloo had no size data for these acts.";
+export const COMPARE_FAILED_COPY = (n: number) => `No support pick: the shared-taste comparison failed for ${n} ${n === 1 ? "act" : "acts"}.`;
 export const HEADLINER_SIZE_UNKNOWN = "headliner popularity unavailable, support acts not size-checked";
 
 interface Scored { entityId: string; affinity: number }
@@ -46,4 +49,16 @@ export function smallerThanHeadliner<T extends { popularity: number }>(items: T[
 /** Shared-taste chips are music genres only: never location, keyword or qloo:* tags. */
 export function genreTagNames(tags: Array<{ id?: string; name: string }>, max = 3): string[] {
   return tags.filter((t) => typeof t.id === "string" && t.id.startsWith("urn:tag:genre:")).slice(0, max).map((t) => t.name);
+}
+
+/** Why a support card is empty, said truthfully. `scaleKept` = candidates left after the size check; `failedCompares` only applies to co-billing. Empty object when the card is not empty for a size reason. */
+export function emptySupportCopy(o: { artist: string; headlinerKnown: boolean; shown: number; scaleKept: number; bigger: number; unknown: number; failedCompares?: number }): Record<string, string> {
+  if (o.shown > 0) return {};
+  if (!o.headlinerKnown) return { emptyCopy: SIZE_UNCHECKED_COPY };
+  if (o.scaleKept === 0) {
+    if (o.unknown > 0) return { emptyCopy: NO_SIZE_DATA_COPY };
+    if (o.bigger > 0) return { emptyCopy: NO_SUPPORT_COPY(o.artist) };
+    return {};
+  }
+  return (o.failedCompares ?? 0) > 0 ? { emptyCopy: COMPARE_FAILED_COPY(o.failedCompares!) } : {};
 }

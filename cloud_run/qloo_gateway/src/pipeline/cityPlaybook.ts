@@ -8,7 +8,7 @@ import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narra
 import { activationInputs, Aborted, BudgetStop, resolveLocation, trackedCall } from "./tourBoard.js";
 import { LOCAL_DESCRIBE_CAP, LOCAL_SUGGESTIONS, matchPool, matchSuggestion } from "./localActs.js";
 import { cityPopularityArgs, LOCAL_ACT_POOL, localActRankArgs } from "./recArgs.js";
-import { genreTagNames, HEADLINER_SIZE_UNKNOWN, liftRanked, NO_SUPPORT_COPY, smallerThanHeadliner, SPONSOR_LIFT_NOTE } from "./playbookTrust.js";
+import { emptySupportCopy, genreTagNames, HEADLINER_SIZE_UNKNOWN, liftRanked, SIZE_UNCHECKED_COPY, smallerThanHeadliner, SPONSOR_LIFT_NOTE } from "./playbookTrust.js";
 
 /** Size of the baseline lists (the city's own favourites) that lift is measured against. */
 const BASELINE_LIMIT = 20;
@@ -64,18 +64,21 @@ export async function* runCityPlaybook(
     while (events.length) yield events.shift()!;
     const ref = (tool: string, r: { cacheKey: string }) => ({ tool, cacheKey: r.cacheKey });
 
-    // Support acts must be smaller than the headliner: use the caller's popularity, else one (cached) describe by name.
+    // Support acts must be smaller than the headliner: use the caller's popularity, else describe by entity id, then by name (cached lookups).
     const sizeWarnings: DataWarning[] = [];
     let headliner = input.artistPopularity !== undefined && Number.isFinite(input.artistPopularity) ? input.artistPopularity : undefined;
     if (headliner === undefined) {
-      try {
-        const d = await trackedCall(deps, input.sessionId, "qloo_describe", { entity: input.artist, type: "artist" }, events);
-        const self = extractEntities(d.envelope).find((e) => e.entityId === input.artistEntityId);
-        if (self && Number.isFinite(self.popularity)) headliner = self.popularity;
-      } catch (err) {
-        if (err instanceof Aborted || err instanceof BudgetStop) throw err;
+      for (const entity of [input.artistEntityId, input.artist]) {
+        try {
+          const d = await trackedCall(deps, input.sessionId, "qloo_describe", { entity, type: "artist" }, events);
+          const self = extractEntities(d.envelope).find((e) => e.entityId === input.artistEntityId);
+          if (self && Number.isFinite(self.popularity)) headliner = self.popularity;
+        } catch (err) {
+          if (err instanceof Aborted || err instanceof BudgetStop) throw err;
+        }
+        while (events.length) yield events.shift()!;
+        if (headliner !== undefined) break;
       }
-      while (events.length) yield events.shift()!;
     }
     if (headliner === undefined) sizeWarnings.push({ tool: "qloo_describe", kind: "partial", message: HEADLINER_SIZE_UNKNOWN });
     const coScale = smallerThanHeadliner(extractEntities(a.raw.artists.envelope), headliner);
@@ -83,13 +86,13 @@ export async function* runCityPlaybook(
     const settled = await Promise.allSettled(candidates.map(async (c) => {
       const r = await trackedCall(deps, input.sessionId, "qloo_compare_audiences", { group_a: [input.artistEntityId], group_b: [c.entityId] }, events);
       const warnings = [...warningsFor("qloo_compare_audiences", r), ...needsInputWarning("qloo_compare_audiences", r)];
-      const { value: sharedTaste, tags } = extractSharedTaste(r.envelope);
+      const { value: sharedTaste, genreTags } = extractSharedTaste(r.envelope);
       if (sharedTaste === null || Number.isNaN(c.affinity)) {
         return { warnings: [...warnings, { tool: "qloo_compare_audiences", kind: "partial" as const, message: `shared taste unavailable for ${c.name}` }] };
       }
       return {
         warnings,
-        lift: { name: c.name, entityId: c.entityId, sharedTaste, localAffinity: c.affinity, lift: coBillLift(sharedTaste, c.affinity), sharedTags: genreTagNames(tags), ref: ref("qloo_compare_audiences", r) },
+        lift: { name: c.name, entityId: c.entityId, sharedTaste, localAffinity: c.affinity, lift: coBillLift(sharedTaste, c.affinity), sharedTags: genreTagNames(genreTags), ref: ref("qloo_compare_audiences", r) },
       };
     }));
     while (events.length) yield events.shift()!;
@@ -180,7 +183,7 @@ export async function* runCityPlaybook(
       talentWarnings.push(...warningsFor("qloo_compare_audiences", cmp), ...needsInputWarning("qloo_compare_audiences", cmp));
       const st = extractSharedTaste(cmp.envelope);
       if (st.value === null) talentWarnings.push({ tool: "qloo_compare_audiences", kind: "partial", message: "shared taste unavailable for city mainstream" });
-      else talentShared = { value: st.value, tags: genreTagNames(st.tags) };
+      else talentShared = { value: st.value, tags: genreTagNames(st.genreTags) };
     }
     while (events.length) yield events.shift()!;
 
@@ -190,9 +193,14 @@ export async function* runCityPlaybook(
     const baselineRefs = (r: CallResult | null) => (r ? [ref("qloo_recommend", r)] : []);
     const filmLift = liftRanked(extractEntities(raw.films.envelope), movieBase ? extractEntities(movieBase.envelope) : null);
     const tvLift = liftRanked(extractEntities(raw.tv.envelope), tvBase ? extractEntities(tvBase.envelope) : null);
-    const coSummary = { biggerThanHeadliner: coScale.biggerThanHeadliner, popularityUnknown: coScale.popularityUnknown };
-    const noSupport = (kept: number, bigger: number, unknown: number): Record<string, string> => (kept === 0 && bigger + unknown > 0 ? { emptyCopy: NO_SUPPORT_COPY(input.artist) } : {});
-    const artistTags = extractMusicTags(tags.envelope).map((t, index) => ({ ...t, entityId: t.id, index }));
+    const sizeKnown = headliner !== undefined;
+    const sizeNote: Record<string, string> = sizeKnown ? {} : { sizeNote: SIZE_UNCHECKED_COPY };
+    const coSummary: Record<string, number | string> = sizeKnown
+      ? { biggerThanHeadliner: coScale.biggerThanHeadliner, popularityUnknown: coScale.popularityUnknown }
+      : sizeNote;
+    const coCopy = emptySupportCopy({ artist: input.artist, headlinerKnown: sizeKnown, shown: coBill.length, scaleKept: coScale.kept.length, bigger: coScale.biggerThanHeadliner, unknown: coScale.popularityUnknown, failedCompares: candidates.length - coBill.length });
+    const talentCopy = emptySupportCopy({ artist: input.artist, headlinerKnown: sizeKnown, shown: localActs.length, scaleKept: candidateActs.length, bigger: talentBigger, unknown: talentUnknown });
+    const artistTags = extractMusicTags(tags.envelope).filter((t) => t.id.startsWith("urn:tag:genre:")).map((t, index) => ({ ...t, entityId: t.id, index }));
     const cards: PlaybookCard[] = [
       { ...card("sponsors", sponsors, [ref("qloo_recommend", raw.brands), ...(sponsorLift.lifted ? baselineRefs(brandBase) : [])], warningsFor("qloo_recommend", raw.brands)),
         ...(sponsorLift.lifted ? { summary: { note: SPONSOR_LIFT_NOTE } } : {}) },
@@ -206,9 +214,9 @@ export async function* runCityPlaybook(
         [raw.artists, raw.films, raw.tv, raw.places].flatMap((r) => warningsFor("qloo_recommend", r))),
       card("venue_fit", a.venues.items, a.venues.refs, [...(raw.ranked ? warningsFor("qloo_rank", raw.ranked) : []), ...a.venues.warnings]),
       { ...card("co_billing", coBill, coBill.map((c) => c.ref), [...compared.flatMap((c) => c.warnings), ...sizeWarnings]),
-        summary: { ...coSummary, ...noSupport(coBill.length, coScale.biggerThanHeadliner, coScale.popularityUnknown) } },
+        summary: { ...coSummary, ...coCopy } },
       { ...card("talent", localActs.map(({ name, entityId, affinity }) => ({ name, entityId, affinity, ...(suggested === null ? {} : { source: suggestedIds.has(entityId) ? "suggested" : "city_popular" }) })), talentRefs, talentWarnings),
-        summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags, ...(headliner === undefined ? {} : { biggerThanHeadliner: talentBigger, popularityUnknown: talentUnknown }), ...noSupport(localActs.length, talentBigger, talentUnknown), ...(rankUnavailable ? { rankUnavailable: true } : {}), ...(suggested === null ? {} : { suggestionsUnresolved: unresolved, suggestionsSkipped: skipped }) } },
+        summary: { sharedTaste: talentShared.value, sharedTags: talentShared.tags, ...(sizeKnown ? { biggerThanHeadliner: talentBigger, popularityUnknown: talentUnknown } : sizeNote), ...talentCopy, ...(rankUnavailable ? { rankUnavailable: true } : {}), ...(suggested === null ? {} : { suggestionsUnresolved: unresolved, suggestionsSkipped: skipped }) } },
     ];
     yield { type: "playbook", playbook: { city: input.city, cards } };
     if (input.narrative !== false && deps.narrate) {

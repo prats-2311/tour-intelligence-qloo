@@ -72,16 +72,19 @@ export function extractIssues(env: QlooEnvelope) {
 const TOP_TAGS = 5;
 
 /** F1: compare_audiences has no scalar overlap; shared taste = mean of the top shared-tag scores (0..1). */
-export function extractSharedTaste(env: QlooEnvelope): { value: number | null; tags: Array<{ id?: string; name: string; score: number }> } {
+export function extractSharedTaste(env: QlooEnvelope): { value: number | null; tags: Array<{ id?: string; name: string; score: number }>; genreTags: Array<{ id?: string; name: string; score: number }> } {
   const raw = rec(env.results)?.tags;
-  const tags = (Array.isArray(raw) ? raw : []).flatMap((t) => {
+  const all = (Array.isArray(raw) ? raw : []).flatMap((t) => {
     const tag = rec(t);
     const score = num(rec(tag?.query)?.score);
     if (!tag || typeof tag.name !== "string" || Number.isNaN(score)) return [];
     return [{ ...(typeof tag.tag_id === "string" ? { id: tag.tag_id } : {}), name: tag.name, score }];
-  }).sort((a, b) => b.score - a.score).slice(0, TOP_TAGS);
-  if (tags.length === 0) return { value: null, tags: [] };
-  return { value: tags.reduce((s, t) => s + t.score, 0) / tags.length, tags };
+  }).sort((a, b) => b.score - a.score);
+  const tags = all.slice(0, TOP_TAGS);
+  // Chips are music genres only; they are picked from every scored tag, not only the top 5 that feed the value.
+  const genreTags = all.filter((t) => t.id?.startsWith("urn:tag:genre:"));
+  if (tags.length === 0) return { value: null, tags: [], genreTags: [] };
+  return { value: tags.reduce((s, t) => s + t.score, 0) / tags.length, tags, genreTags };
 }
 
 const firstFinite = (...vs: unknown[]): number => vs.map(num).find((n) => !Number.isNaN(n)) ?? Number.NaN;

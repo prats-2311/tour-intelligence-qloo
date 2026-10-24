@@ -17,7 +17,7 @@ const list = (rows: Row[]): QlooEnvelope => ({ operation: "recommend", status: "
 const tag = (id: string, name: string, score: number) => ({ tag_id: id, name, type: "urn:tag", query: { score } });
 const compareWith = (...tags: ReturnType<typeof tag>[]): QlooEnvelope => ({ operation: "compare_audiences", status: "ok", results: { a: [], b: [], matchEntities: [], tags } });
 
-interface Fake { brands: Row[]; brandBase: Row[]; movies: Row[]; movieBase: Row[]; tvs: Row[]; tvBase: Row[]; artists: Row[]; pool: Row[]; heat: QlooEnvelope; compare: QlooEnvelope; describePop: number | undefined }
+interface Fake { brands: Row[]; brandBase: Row[]; movies: Row[]; movieBase: Row[]; tvs: Row[]; tvBase: Row[]; artists: Row[]; pool: Row[]; heat: QlooEnvelope; compare: QlooEnvelope; describePop: number | undefined; describeById?: boolean }
 const base = (): Fake => ({
   brands: [{ id: "B1", name: "Brand One", aff: 0.9 }, { id: "B2", name: "Brand Two", aff: 0.75 }, { id: "B3", name: "Brand Three", aff: 0.7 }],
   brandBase: [{ id: "B1", name: "Brand One", aff: 0.85 }, { id: "B2", name: "Brand Two", aff: 0.5 }, { id: "B9", name: "Brand Nine", aff: 0.4 }],
@@ -40,7 +40,10 @@ function fakeQloo(f: Fake, calls: Calls = { recommend: [], all: [] }): QlooCalle
       calls.all.push([tool, args]);
       const envelope = ((): QlooEnvelope => {
         if (tool === "qloo_where_popular") return f.heat;
-        if (tool === "qloo_describe") return { operation: "describe", status: "ok", results: [{ entity_id: "A1", name: "Test Artist", ...(f.describePop === undefined ? {} : { popularity: f.describePop }) }] };
+        if (tool === "qloo_describe") {
+          if (f.describeById === false && args.entity === "A1") return { operation: "describe", status: "empty", results: [] };
+          return { operation: "describe", status: "ok", results: [{ entity_id: "A1", name: "Test Artist", ...(f.describePop === undefined ? {} : { popularity: f.describePop }) }] };
+        }
         if (tool === "qloo_entity_tags") return { operation: "tags", status: "ok", results: [] };
         if (tool === "qloo_compare_audiences") return f.compare;
         if (tool === "qloo_rank") return list((args.options as string[]).map((id, i) => ({ id, name: `R-${id}`, aff: 0.9 - i * 0.1 })));
@@ -182,12 +185,22 @@ describe("support-act scale", () => {
     expect(talent.status).toBe("empty");
     expect(talent.summary?.emptyCopy).toBe("Every Qloo match is bigger than Test Artist, so no support pick here.");
   });
+  it("describes by entity id first (then by name) when the caller gives no popularity", async () => {
+    const calls: Calls = { recommend: [], all: [] };
+    await run(base(), { artistPopularity: undefined } as never, calls);
+    expect(calls.all.filter(([t]) => t === "qloo_describe")).toEqual([["qloo_describe", { entity: "A1", type: "artist" }]]);
+    const byName: Calls = { recommend: [], all: [] };
+    const f = base();
+    f.describeById = false;
+    const co = (await run(f, { artistPopularity: undefined } as never, byName)).card("co_billing");
+    expect(byName.all.filter(([t]) => t === "qloo_describe").map(([, a]) => a.entity)).toEqual(["A1", "Test Artist"]);
+    expect(co.summary).toMatchObject({ biggerThanHeadliner: 0 });
+  });
   it("looks the headliner up once (cached describe) when the caller gives no popularity, and filters with it", async () => {
     const f = base();
     f.artists = [{ id: "C1", name: "Big Act", aff: 0.9, pop: 0.95 }, { id: "C3", name: "Small Act", aff: 0.8, pop: 0.3 }];
     const calls: Calls = { recommend: [], all: [] };
     const { card } = await run(f, { artistPopularity: undefined } as never, calls);
-    expect(calls.all.filter(([t]) => t === "qloo_describe")).toEqual([["qloo_describe", { entity: "Test Artist", type: "artist" }]]);
     expect(card("co_billing").items.map((i) => i.name)).toEqual(["Small Act"]);
   });
   it("does not filter, and says so, when the headliner's popularity is unknown", async () => {
@@ -197,6 +210,30 @@ describe("support-act scale", () => {
     const co = (await run(f, { artistPopularity: undefined } as never)).card("co_billing");
     expect(co.items.map((i) => i.name)).toEqual(["Big Act"]);
     expect(co.warnings).toContainEqual(expect.objectContaining({ kind: "partial", message: "headliner popularity unavailable, support acts not size-checked" }));
+    expect(co.summary).toEqual({ sizeNote: "Couldn't check act size for this artist." }); // no counts: nothing was checked
+  });
+  it("unknown headliner size: an empty card says the size could not be checked, never 'bigger than'", async () => {
+    const f = base();
+    f.describePop = undefined;
+    f.artists = []; f.pool = [];
+    const { card } = await run(f, { artistPopularity: undefined } as never);
+    expect(card("co_billing").summary?.emptyCopy).toBe("Couldn't check act size for this artist.");
+    expect(card("talent").summary?.emptyCopy).toBe("Couldn't check act size for this artist.");
+    expect(card("talent").summary?.sizeNote).toBe("Couldn't check act size for this artist.");
+  });
+  it("empty-card copy tells the truth about why: size, missing size data, or failed compares", async () => {
+    const big = base(); big.artists = [{ id: "C1", name: "Big", aff: 0.9, pop: 0.95 }];
+    expect((await run(big)).card("co_billing").summary?.emptyCopy).toBe("Every Qloo match is bigger than Test Artist, so no support pick here.");
+    const none = base(); none.artists = [{ id: "C1", name: "NoSize", aff: 0.9 }, { id: "C2", name: "NoSize2", aff: 0.8 }];
+    expect((await run(none)).card("co_billing").summary?.emptyCopy).toBe("No support pick: Qloo had no size data for these acts.");
+    const mixed = base(); mixed.artists = [{ id: "C1", name: "Big", aff: 0.9, pop: 0.95 }, { id: "C2", name: "NoSize", aff: 0.8 }];
+    expect((await run(mixed)).card("co_billing").summary?.emptyCopy).toBe("No support pick: Qloo had no size data for these acts.");
+    const failed = base(); failed.compare = compareWith();
+    const co = (await run(failed)).card("co_billing");
+    expect(co.status).toBe("empty");
+    expect(co.summary?.emptyCopy).toBe("No support pick: the shared-taste comparison failed for 1 act.");
+    const poolNone = base(); poolNone.pool = [{ id: "P0", name: "NoSize", aff: 0.7 }];
+    expect((await run(poolNone)).card("talent").summary?.emptyCopy).toBe("No support pick: Qloo had no size data for these acts.");
   });
 });
 
@@ -214,6 +251,28 @@ describe("genre-only chips", () => {
     const { card } = await run(f);
     expect(card("co_billing").items[0]!.sharedTags).toEqual(["Folk", "Indie"]);
     expect(card("talent").summary?.sharedTags).toEqual(["Folk", "Indie"]);
+  });
+});
+
+describe("genre chips are filtered before the top-5 cut", () => {
+  it("keeps genre chips even when five higher-scored non-genre tags crowd the top 5", async () => {
+    const f = base();
+    f.compare = compareWith(
+      ...[0.99, 0.98, 0.97, 0.96, 0.95].map((sc, i) => tag(`urn:tag:region:qloo:r${i}`, `Region ${i}`, sc)),
+      tag("urn:tag:genre:music:folk", "Folk", 0.5), tag("urn:tag:genre:music:indie", "Indie", 0.4));
+    const { card } = await run(f);
+    expect(card("co_billing").items[0]!.sharedTags).toEqual(["Folk", "Indie"]);
+    expect(card("talent").summary?.sharedTags).toEqual(["Folk", "Indie"]);
+  });
+  it("merch chips are genre-only", async () => {
+    const f = base();
+    const events: GatewayEvent[] = [];
+    const q = fakeQloo(f);
+    const wrapped: QlooCaller = { async call(t, a, s) { const r = await q.call(t, a, s); return t === "qloo_entity_tags" ? { ...r, envelope: { operation: "tags", status: "ok", results: [
+      { id: "urn:tag:genre:music:folk", name: "Folk", affinity: 0.9 }, { id: "urn:tag:subgenre:x", name: "Sub", affinity: 0.8 }, { id: "urn:tag:artist:qloo:y", name: "Q", affinity: 0.7 }] } } : r; } };
+    for await (const e of runCityPlaybook(input, { qloo: wrapped, cities: CITIES })) events.push(e);
+    const merch = (events.find((e) => e.type === "playbook") as any).playbook.cards.find((c: any) => c.kind === "merch");
+    expect(merch.items.map((i: any) => i.name)).toEqual(["Folk"]);
   });
 });
 

@@ -120,7 +120,7 @@ describe("thisWeek", () => {
   it("asks Tavily for music and culture, not generic events", async () => {
     const d = deps();
     await thisWeek(input, d);
-    expect(d.search).toHaveBeenCalledWith("live music concerts festivals in Guadalajara this week");
+    expect(d.search).toHaveBeenCalledWith("live music concerts festivals in Guadalajara, MX this week");
   });
   it("keeps only results about music or culture (en/es/pt) and cites only those", async () => {
     const mixed = [
@@ -137,7 +137,21 @@ describe("thisWeek", () => {
   it("matches whole words only: art does not match party or start", async () => {
     const { isMusicOrCulture } = await import("../src/web/thisWeek.js");
     expect(isMusicOrCulture({ title: "Party at the start", content: "smart cart" })).toBe(false);
-    expect(isMusicOrCulture({ title: "Art walk", content: "" })).toBe(true);
+    expect(isMusicOrCulture({ title: "Art fair", content: "" })).toBe(true);
     expect(isMusicOrCulture({ title: "", content: "A DJ set and two bands" })).toBe(true);
+  });
+  it("the summarising prompt no longer asks for public holidays", async () => {
+    const generate = vi.fn<GenerateFn>(gemini);
+    await thisWeek(input, deps({ generate }));
+    expect(JSON.stringify(generate.mock.calls[0]![1])).not.toContain("public holidays");
+  });
+  it("keyword list: no bare show/art/tour; specific phrases and es/pt terms pass; TV and talk shows are rejected", async () => {
+    const { isMusicOrCulture } = await import("../src/web/thisWeek.js");
+    const yes = (title: string, content = "") => expect(isMusicOrCulture({ title, content }), title).toBe(true);
+    const no = (title: string, content = "") => expect(isMusicOrCulture({ title, content }), title).toBe(false);
+    no("Reality show finale"); no("Season premiere of the show"); no("Martial arts class"); no("Walking tour of the old town"); no("State of the art kitchens");
+    no("The Late Talk Show with a live music segment"); no("TV show tonight, festival of lights"); no("Game show", "festival");
+    yes("Show at the Arena"); yes("Show ao vivo no centro"); yes("Show de rock"); yes("Show en vivo"); yes("En vivo desde el foro"); yes("Música ao vivo");
+    yes("Espectáculo de danza"); yes("Turnê mundial"); yes("Gira 2027"); yes("Band on tour"); yes("World tour dates announced"); yes("Art exhibition opens"); yes("Art fair"); yes("Gallery night");
   });
 });

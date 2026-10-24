@@ -183,6 +183,7 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
   try {
     let artistName = brief.artist;
     let entityId = brief.artistEntityId;
+    let popularity: number | undefined;
     if (!entityId) {
       let d: CallResult;
       try {
@@ -202,9 +203,10 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
       const top = extractEntities(d.envelope)[0];
       if (!top) { yield { type: "error", code: "NOT_FOUND", message: `Qloo has no artist matching "${brief.artist}"` }; return; }
       entityId = top.entityId;
+      if (Number.isFinite(top.popularity)) popularity = top.popularity;
       artistName = top.name;
     }
-    yield { type: "resolve", entity: { entityId, name: artistName } };
+    yield { type: "resolve", entity: { entityId, name: artistName, ...(popularity === undefined ? {} : { popularity }) } };
     yield { type: "scoring", scoring: SCORING, closeCallBand: CLOSE_CALL_BAND };
     const signalArtist = entityId; // harness accepts Qloo UUIDs as entity inputs
 

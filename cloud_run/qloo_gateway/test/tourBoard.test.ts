@@ -265,6 +265,13 @@ describe("runTourBoard", () => {
     expect(seen).toContainEqual(artistTasteArgs("artist", "A1", "Mexico City, MX", 10));
   });
 
+  it("the resolve event carries the artist's popularity, and the board asks for no city baseline (every recommend has signals)", async () => {
+    const recs: Array<Record<string, unknown>> = [];
+    const events = await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => { if (t === "qloo_recommend") recs.push(a); return happy(t, a); }), cities: CITIES }));
+    expect(events.find((e) => e.type === "resolve")).toMatchObject({ entity: { entityId: "A1", name: "Test Artist", popularity: 0.9 } });
+    expect(recs.length).toBeGreaterThan(0);
+    expect(recs.filter((a) => !a.signals)).toEqual([]);
+  });
   it("adds a tv_show recommend to local hooks", async () => {
     const targets: unknown[] = [];
     await collect(runTourBoard(brief, { qloo: fakeQloo((t, a) => { if (t === "qloo_recommend") targets.push(a.target_type); return happy(t, a); }), cities: CITIES }));

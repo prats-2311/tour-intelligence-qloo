@@ -22,9 +22,9 @@ describe("live Qloo shapes", () => {
     expect(st.tags.every((t) => t.name !== "")).toBe(true);
   });
   it("shared taste with no (or unscored) tags is null, never NaN", () => {
-    expect(extractSharedTaste({ operation: "c", status: "ok", results: { a: [], b: [], matchEntities: [], tags: [] } })).toEqual({ value: null, tags: [] });
-    expect(extractSharedTaste({ operation: "c", status: "ok", results: { tags: [{ name: "x", query: { count: "1" } }] } })).toEqual({ value: null, tags: [] });
-    expect(extractSharedTaste({ operation: "c", status: "ok", results: null })).toEqual({ value: null, tags: [] });
+    expect(extractSharedTaste({ operation: "c", status: "ok", results: { a: [], b: [], matchEntities: [], tags: [] } })).toEqual({ value: null, tags: [], genreTags: [] });
+    expect(extractSharedTaste({ operation: "c", status: "ok", results: { tags: [{ name: "x", query: { count: "1" } }] } })).toEqual({ value: null, tags: [], genreTags: [] });
+    expect(extractSharedTaste({ operation: "c", status: "ok", results: null })).toEqual({ value: null, tags: [], genreTags: [] });
   });
   it("an empty trends series is normal and yields no points", () => {
     expect(extractTrendPoints(live("trends-empty"))).toEqual([]);
