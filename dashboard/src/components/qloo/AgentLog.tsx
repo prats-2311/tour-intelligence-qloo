@@ -42,9 +42,11 @@ const statusLabel: Record<LogStep["status"], string> = {
   info: "note",
 };
 
-export function AgentLog({ events }: { events: GatewayEvent[] }) {
+/** `latest` keeps only the newest steps (the inline progress view), so a long run never makes the page grow. */
+export function AgentLog({ events, latest }: { events: GatewayEvent[]; latest?: number }) {
   const reduce = useReducedMotion();
-  const steps = narrate(events);
+  const all = narrate(events);
+  const steps = latest ? all.slice(-latest) : all;
   return (
     <ol className="flex flex-col gap-3" aria-label="Agent reasoning log">
       {steps.map((s) => (
@@ -53,7 +55,7 @@ export function AgentLog({ events }: { events: GatewayEvent[] }) {
           <div className="min-w-0">
             <span className="sr-only">{statusLabel[s.status]}: </span>
             <p className="text-[13px] text-canvas-text">{s.sentence}</p>
-            {(s.tool || s.detail) && (
+            {!latest && (s.tool || s.detail) && (
               <p className="font-mono text-[11px] text-canvas-muted">
                 {s.tool && <span>{toolLabel(s.tool)}</span>}{s.tool && s.detail && " · "}{s.detail}
                 {s.cached && <span className="ml-2">From cache</span>}

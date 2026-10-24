@@ -78,7 +78,7 @@ test("showcase mode replays the recording with zero gateway calls", async ({ pag
   const api: string[] = [];
   page.on("request", (r) => { if (r.url().includes("/api/qloo/")) api.push(r.url()); });
   await page.goto("/");
-  await page.getByRole("link", { name: "Try the showcase tour" }).click();
+  await page.getByRole("link", { name: "See the example tour" }).click();
   await expect(page).toHaveURL(/\/tours\/board\?showcase=1/);
   await expect(page.getByText(SHOWCASE_BANNER).first()).toBeVisible();
   await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 15_000 });

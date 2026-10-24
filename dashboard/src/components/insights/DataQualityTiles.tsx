@@ -17,7 +17,7 @@ export function DataQualityTiles({ log }: { log: GatewayEvent[] }) {
   const q = dataQuality(log);
   const cacheHint = q.calls > 0 ? `${Math.round((q.cached / q.calls) * 100)}% of calls` : undefined;
   return (
-    <section aria-label="Data quality" className="flex gap-2 overflow-x-auto pb-1 lg:grid lg:grid-cols-5 lg:overflow-visible lg:pb-0">
+    <section aria-label="Data quality" tabIndex={0} className="flex gap-2 overflow-x-auto pb-1 focus-visible:outline-2 focus-visible:outline-gold lg:grid lg:grid-cols-5 lg:overflow-visible lg:pb-0">
       <Tile label="Qloo calls" value={q.calls} />
       <Tile label="From cache" value={q.cached} hint={cacheHint} />
       <Tile label="Partial" value={q.partial} tone="warn" />

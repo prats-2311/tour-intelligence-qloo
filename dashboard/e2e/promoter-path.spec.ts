@@ -47,7 +47,7 @@ test("promoter judge path: landing → board → playbook → hold → book → 
   await expect(beats.getByRole("listitem")).toHaveCount(3);
   expect(await noOverflow(page), "landing overflow").toBe(true);
   await expectNoSeriousA11y(page, "landing");
-  await page.getByRole("link", { name: "Try the showcase tour" }).click();
+  await page.getByRole("link", { name: "See the example tour" }).click();
 
   // 2. Board: the hidden-goldmine city, named from the page.
   const rows = page.getByTestId("city-row");
@@ -241,3 +241,155 @@ test("desktop 1024: the Hidden goldmine chip clears the score bars", async ({ pa
   expect(gaps.length).toBeGreaterThan(0);
   for (const g of gaps) expect(g).toBeGreaterThanOrEqual(8);
 });
+
+// ---- Plan 7 Task 2b: one thread, Markets → Decide → Playbook → Tour Book ----
+
+function watch(page: Page) {
+  const errors: string[] = [];
+  const qloo: string[] = [];
+  page.on("console", (m) => { if (m.type() === "error" && !TILE_HOST.test(m.text()) && !TILE_HOST.test(m.location().url)) errors.push(`console: ${m.text()}`); });
+  page.on("pageerror", (e) => { if (!TILE_HOST.test(e.message)) errors.push(`pageerror: ${e.message}`); });
+  page.on("request", (r) => { if (r.url().includes("/api/qloo/") && (!LIVE || r.method() === "POST")) qloo.push(`${r.method()} ${r.url()}`); });
+  return { errors, qloo };
+}
+const stepper = (page: Page) => page.getByRole("navigation", { name: "Primary" });
+const stepState = (page: Page, id: string) => stepper(page).locator(`[data-step=${id}]`).getAttribute("data-state");
+
+test("the four steps walk through the stepper: Markets, Decide, Playbook, Tour Book", async ({ page }, info) => {
+  test.setTimeout(120_000);
+  const { errors, qloo } = watch(page);
+  const nav = stepper(page);
+
+  // Markets
+  await page.goto("/");
+  await expect(nav.getByRole("link")).toHaveText([/Markets/, /Decide/, /Playbook/, /Tour Book/]);
+  expect(await stepState(page, "markets")).toBe("current");
+  expect(await noOverflow(page), "markets overflow").toBe(true);
+  await expectNoSeriousA11y(page, "markets");
+  if (info.project.name === "mobile") {
+    for (const link of await nav.getByRole("link").all()) expect((await link.boundingBox())!.height, "44 px stepper target").toBeGreaterThanOrEqual(44);
+  }
+  await page.getByRole("link", { name: "See the example tour" }).click();
+
+  // Decide
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("button", { name: "Stop" })).toHaveCount(0, { timeout: 30_000 });
+  expect(await stepState(page, "decide")).toBe("current");
+  expect(await stepState(page, "markets")).toBe("done");
+  expect(await noOverflow(page), "decide overflow").toBe(true);
+  await expectNoSeriousA11y(page, "decide");
+
+  // Playbook, through the stepper: the top-ranked recorded city when none was opened.
+  await nav.getByRole("link", { name: /Playbook/ }).click();
+  await expect(page).toHaveURL(/\/tours\/playbook\/[^?]+\?showcase=1/);
+  await expect(page.getByRole("heading", { name: "Sponsors" }).first()).toBeVisible({ timeout: 20_000 });
+  expect(await stepState(page, "playbook")).toBe("current");
+  expect(await stepState(page, "decide")).toBe("done");
+  expect(await noOverflow(page), "playbook overflow").toBe(true);
+  await expectNoSeriousA11y(page, "playbook");
+  const playbookUrl = page.url();
+
+  // Tour Book
+  await nav.getByRole("link", { name: /Tour Book/ }).click();
+  await expect(page).toHaveURL(/\/tours\/book\?showcase=1/);
+  await expect(page.getByText("Advance & sponsor pitch").first()).toBeVisible({ timeout: 30_000 });
+  expect(await stepState(page, "book")).toBe("current");
+  expect(await stepState(page, "playbook")).toBe("done");
+  expect(await noOverflow(page), "book overflow").toBe(true);
+  await expectNoSeriousA11y(page, "book");
+
+  // Back through the stepper: Playbook returns to the city opened last, Decide keeps the run.
+  await nav.getByRole("link", { name: /Playbook/ }).click();
+  expect(page.url()).toBe(playbookUrl);
+  await nav.getByRole("link", { name: /Decide/ }).click();
+  await expect(page.getByTestId("city-row").first()).toBeVisible();
+  await nav.getByRole("link", { name: /Markets/ }).click();
+  await expect(page.getByRole("link", { name: "See the example tour" })).toBeVisible();
+
+  expect(errors, "console/page errors").toEqual([]);
+  expect(qloo, "zero /api/qloo calls on the showcase thread").toEqual([]);
+});
+
+test("opens ready: a bare /tours/board is the example, 'Try your own artist' is one click to the form", async ({ page }) => {
+  const { errors, qloo } = watch(page);
+  await page.goto("/tours/board");
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByLabel("Artist")).toHaveCount(0);
+  await page.goto("/");
+  await page.getByRole("link", { name: "Try your own artist" }).click();
+  await expect(page.getByLabel("Artist")).toBeVisible();
+  expect(await noOverflow(page), "form overflow").toBe(true);
+  expect(errors, "console/page errors").toEqual([]);
+  expect(qloo).toEqual([]);
+});
+
+test("with no run every step opens the example, never an empty page", async ({ page }) => {
+  const { errors, qloo } = watch(page);
+  await page.goto("/proof");
+  await stepper(page).getByRole("link", { name: /Tour Book/ }).click();
+  await expect(page.getByText("Advance & sponsor pitch").first()).toBeVisible({ timeout: 30_000 });
+  await page.goto("/proof");
+  await stepper(page).getByRole("link", { name: /Playbook/ }).click();
+  await expect(page.getByRole("heading", { name: "Sponsors" }).first()).toBeVisible({ timeout: 20_000 });
+  await page.goto("/proof");
+  await stepper(page).getByRole("link", { name: /Decide/ }).click();
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+  expect(errors, "console/page errors").toEqual([]);
+  expect(qloo).toEqual([]);
+});
+
+test("Taste profile is a quiet board link and /insights opened directly shows the example's taste data", async ({ page }) => {
+  const { errors, qloo } = watch(page);
+  await page.goto("/insights");
+  await expect(page.getByTestId("boxscore-row").first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText("Score a Tour Board to see taste by market")).toHaveCount(0);
+  expect(await noOverflow(page), "insights overflow").toBe(true);
+  await expectNoSeriousA11y(page, "insights");
+  await page.goto("/tours/board?showcase=1");
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("link", { name: "Taste profile" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Compare taste" })).toHaveCount(0);
+  expect(errors, "console/page errors").toEqual([]);
+  expect(qloo).toEqual([]);
+});
+
+test("each board tab explains itself in one line", async ({ page }) => {
+  await page.goto("/tours/board?showcase=1");
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+  const note = page.getByTestId("mode-note");
+  await expect(note).toHaveText("Ranked by winnability: fan heat and how winnable the city is, 50/50.");
+  await page.getByRole("tab", { name: "Density-only" }).click();
+  await expect(note).toHaveText("Same scores, sorted by fan heat only — the order a density-only tool would give.");
+  await page.getByRole("tab", { name: "Without Qloo" }).click();
+  await expect(note).toContainText("No taste data. This is the ranking you'd get without Qloo.");
+});
+
+test("preloading the next step loads a chunk and makes zero /api/qloo requests", async ({ page }) => {
+  test.skip(LIVE, "chunk file names are hashed in the deployed build");
+  const { qloo } = watch(page);
+  const boardChunk = page.waitForRequest((r) => /TourBoard/.test(r.url()) && !r.url().includes("/api/"), { timeout: 20_000 });
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: "See the example tour" })).toBeVisible();
+  await boardChunk; // requested by the visible primary control, with no click
+  await page.waitForTimeout(500);
+  expect(qloo, "preload must not call Qloo").toEqual([]);
+});
+
+// Layout shift: the stepper, the tab note and the Suspense fallbacks reserve their height.
+for (const url of ["/tours/board", "/tours/board?showcase=1&mode=density"]) {
+  test(`no layout jumps on the board (${url}): total layout shift < 0.1 after the replay settles`, async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { __cls: number };
+      w.__cls = 0;
+      new PerformanceObserver((list) => { for (const e of list.getEntries() as unknown as Array<{ value: number; hadRecentInput: boolean }>) if (!e.hadRecentInput) w.__cls += e.value; }).observe({ type: "layout-shift", buffered: true });
+    });
+    await page.goto(url);
+    await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole("button", { name: "Stop" })).toHaveCount(0, { timeout: 30_000 });
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
+    await page.waitForTimeout(600);
+    const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+    console.log(`CLS ${url} ${page.viewportSize()!.width}px: ${cls.toFixed(4)}`);
+    expect(cls, "total layout-shift score").toBeLessThan(0.1);
+  });
+}

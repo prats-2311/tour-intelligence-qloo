@@ -320,7 +320,7 @@ export default function TourBoard() {
           <p data-testid="mode-note" className={`min-w-0 text-[12px] leading-[1.4] text-canvas-muted lg:text-[13px] ${withoutMode ? "min-h-[3.5rem] lg:min-h-[2.5rem]" : "min-h-[2.1rem] lg:min-h-[1.1rem]"}`}>
             {withoutMode ? (agrees ? `${WITHOUT_NOTE} ${WITHOUT_AGREES}` : WITHOUT_NOTE) : MODE_NOTE[mode]}
           </p>
-          <p className="min-w-0 text-[12px] text-canvas-muted lg:text-[13px]">
+          <p data-testid="board-summary" className="min-h-[2.1rem] min-w-0 text-[12px] leading-[1.4] text-canvas-muted lg:min-h-[1.1rem] lg:text-[13px]">
             {scored}{!withoutMode && verdictBits.map((b, i) => <span key={i}>{" · "}{b}</span>)}
             {streaming && " · still scoring"}
           </p>
@@ -330,7 +330,7 @@ export default function TourBoard() {
         <p role="status" className="text-[13px] text-canvas-muted">Scoring markets…</p>
       )}
 
-      {showInlineLog && <div className="rounded-[14px] bg-paper p-3"><AgentLog events={state.log} /></div>}
+      {showInlineLog && <div data-testid="inline-log" className="h-[84px] overflow-hidden rounded-[14px] bg-paper p-3"><AgentLog events={state.log} latest={1} /></div>}
 
       {(state.cities.length > 0 || streaming) && (
         <div role="tabpanel" aria-label={PANEL_LABEL[mode]}>
@@ -366,9 +366,7 @@ export default function TourBoard() {
             {sorted.map((c) => (
               <CityRow key={c.id} city={c} selected={c.id === selectedId} dimActivation={mode === "density"} onOpen={openRow} openable={openable(c.id)} />
             ))}
-            {streaming && [0, 1, 2].slice(0, Math.max(1, 3 - Math.floor(sorted.length / 3))).map((i) => (
-              <li key={`sk-${i}`} aria-hidden className="skeleton h-[88px] list-none first:rounded-t-[14px] last:rounded-b-[14px] lg:h-[72px]" />
-            ))}
+            {streaming && <li aria-hidden className="skeleton h-[88px] list-none rounded-[14px] lg:h-[72px]" />}
           </ul>}
           {!withoutMode && someUnopenable && !streaming && <p className="mt-2 px-1 text-[12px] text-canvas-muted">{recordedPlaybooksLine(showcasePlaybookCities().length)}</p>}
         </div>
@@ -476,7 +474,7 @@ export default function TourBoard() {
   return (
     <div className="-mx-4 -mt-6 lg:-mx-8 lg:-my-8">
       {isSample && <SampleBanner source={state.source} />}
-      <div className="grid grid-cols-1 lg:grid-cols-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_1fr]">
         <div className="lg:col-span-6 lg:col-start-7 lg:row-start-1 xl:col-span-5 xl:col-start-8">{header}</div>
         <section aria-label="Routing map" className="relative h-[32dvh] min-h-[168px] bg-canvas-raised lg:sticky lg:top-14 lg:col-span-6 lg:col-start-1 lg:row-span-2 xl:col-span-7 lg:row-start-1 lg:h-[calc(100dvh-56px)] lg:self-start">
           {!withoutMode && <Legend present={new Set(state.cities.map((c) => c.verdict))} />}

@@ -125,7 +125,7 @@ export function WinnabilityMatrix({ cities, thresholds = DEFAULT_SCORING_DISPLAY
         </svg>
         </figure>
       ) : (
-        <div data-testid="matrix-table" className="overflow-x-auto">
+        <div data-testid="matrix-table" tabIndex={0} role="region" aria-label="Market scores table, scrolls horizontally" className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-gold">
           <table className="w-full min-w-[360px] border-collapse text-[13px]">
             <caption className="sr-only">Fan heat and activation by market</caption>
             <thead>
