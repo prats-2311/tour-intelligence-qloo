@@ -50,7 +50,7 @@ export interface PlaybookCard {
   items: Array<Record<string, unknown>>;
   refs: EvidenceRef[];
   warnings: DataWarning[];
-  summary?: Record<string, number | boolean | null | string[]>;
+  summary?: Record<string, number | boolean | null | string | string[]>;
 }
 export interface Claim { text: string; entities: Array<{ name: string; entityId?: string }>; numbers: number[]; evidence_refs: string[] }
 export type RemovalReason = "no_refs" | "dangling_ref" | "unsupported_entity" | "unsupported_number" | "no_checkable_content";

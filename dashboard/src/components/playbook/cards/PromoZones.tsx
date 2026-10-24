@@ -17,8 +17,9 @@ export function PromoZones({ card, city }: { card: PlaybookCard; city: string })
       </div>
     );
   }
-  const rows = card.items.slice(0, 5);
-  const top3 = card.items.slice(0, 3).reduce((s, it) => s + (num(it.share) ?? 0), 0);
+  const sorted = [...card.items].sort((a, b) => (num(b.share) ?? 0) - (num(a.share) ?? 0));
+  const rows = sorted.slice(0, 5);
+  const top3 = sorted.slice(0, 3).reduce((s, it) => s + (num(it.share) ?? 0), 0);
   return (
     <>
       <p className="mb-2 text-[13px] font-medium tabular-nums text-canvas-muted">Top 3 hold {Math.round(top3 * 100)}% of in-city heat</p>

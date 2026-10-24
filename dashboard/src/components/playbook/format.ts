@@ -1,6 +1,8 @@
 import type { CardKind, PlaybookCard, RemovalReason } from "@/lib/qloo/types";
 
 export const fit = (v: unknown): string => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(2) : "—");
+/** Lift over the city baseline as whole points: 0.304 -> "+30 vs city". */
+export const liftVsCity = (lift: number): string => `${lift < 0 ? "-" : "+"}${Math.abs(Math.round(lift * 100))} vs city`;
 export const pct = (share: number): string => `${Math.round(share * 100)}%`;
 export const liftLine = (sharedTaste: number, a: number, lift: number): string => `${sharedTaste.toFixed(2)} × ${a.toFixed(2)} = ${lift.toFixed(2)}`;
 

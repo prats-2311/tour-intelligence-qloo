@@ -14,8 +14,11 @@ export { ThisWeekBody } from "./cards/ThisWeek";
 export function CardBody({ card, merch, city, artist }: { card: PlaybookCard; merch?: MerchDirection | null; city: string; artist?: string }) {
   const empty = card.status === "empty" && card.kind !== "promo_zones";
   let body;
+  const emptyCopy = card.summary?.emptyCopy;
   if (empty) {
-    body = card.kind === "venue_fit"
+    body = typeof emptyCopy === "string" && emptyCopy !== ""
+      ? <p className="text-[13px] text-canvas-muted">{emptyCopy}</p>
+      : card.kind === "venue_fit"
       ? <p className="text-[13px] text-canvas-muted">Qloo lists no music venues in {city} for this artist</p>
       : <p className="text-[13px] text-canvas-muted">Qloo returned no {CARD_TITLE[card.kind].toLowerCase()} for {city}</p>;
   } else {

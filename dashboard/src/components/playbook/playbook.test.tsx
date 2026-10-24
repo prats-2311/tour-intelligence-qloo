@@ -82,6 +82,38 @@ describe("playbook cards", () => {
     expect(screen.queryByText("Lúpulo Tapatío")).toBeNull();
     expect(screen.getByText("+5 more")).toBeTruthy();
   });
+  it("sponsors show +N vs city next to each brand and the ranking note", () => {
+    const base = card("sponsors");
+    const items = [
+      { name: "Brand A", entityId: "b1", affinity: 0.8, lift: 0.304, baselineAffinity: 0.5, baselineMissing: false },
+      { name: "Brand B", entityId: "b2", affinity: 0.7, lift: -0.02, baselineAffinity: 0.72, baselineMissing: false },
+      { name: "Brand C", entityId: "b3", affinity: 0.7, lift: 0.3, baselineAffinity: 0.4, baselineMissing: true },
+    ];
+    render(<CardBody card={{ ...base, items, summary: { note: "Ranked by how much more this artist's fans like the brand than the city overall." } }} city="Guadalajara" />);
+    expect(screen.getByText("-2 vs city")).toBeTruthy();
+    expect(screen.getAllByText("+30 vs city")).toHaveLength(2);
+    expect(screen.getByText("fit 0.70 · not in the city's baseline list")).toBeTruthy();
+    expect(screen.getByText("Ranked by how much more this artist's fans like the brand than the city overall.")).toBeTruthy();
+  });
+  it("sponsors without lift fall back to the affinity and show no note", () => {
+    render(<CardBody card={{ ...card("sponsors"), items: [{ name: "Brand A", entityId: "b1", affinity: 0.8 }], summary: undefined }} city="Guadalajara" />);
+    expect(screen.queryByText(/vs city/)).toBeNull();
+    expect(screen.getByText("0.80")).toBeTruthy();
+  });
+  it("co-billing and local acts show the support-scale copy when empty", () => {
+    const copy = "Every Qloo match is bigger than Lumen Vale, so no support pick here.";
+    const { unmount } = render(<CardBody card={{ ...card("co_billing"), status: "empty", items: [], summary: { biggerThanHeadliner: 3, popularityUnknown: 0, emptyCopy: copy } }} city="Guadalajara" />);
+    expect(screen.getByText(copy)).toBeTruthy();
+    unmount();
+    render(<CardBody card={{ ...card("talent"), status: "empty", items: [], summary: { sharedTaste: null, sharedTags: [], emptyCopy: copy } }} city="Guadalajara" />);
+    expect(screen.getByText(copy)).toBeTruthy();
+  });
+  it("promo zones list the rows by share, strongest first", () => {
+    const items = [{ label: "Small", share: 0.1 }, { label: "Central Guadalajara", share: 0.6 }, { label: "Mid", share: 0.3 }];
+    render(<CardBody card={{ ...card("promo_zones"), items }} city="Guadalajara" />);
+    expect(screen.getAllByRole("row").slice(1).map((r) => r.textContent)).toEqual(["Central Guadalajara60%", "Mid30%", "Small10%"]);
+    expect(screen.getByText("Top 3 hold 100% of in-city heat")).toBeTruthy();
+  });
   it("co-billing shows both lift factors", () => {
     render(<CardBody card={card("co_billing")} city="Guadalajara" />);
     expect(screen.getByText("0.34 × 0.88 = 0.30")).toBeTruthy();
