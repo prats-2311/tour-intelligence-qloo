@@ -145,6 +145,12 @@ describe("thisWeek", () => {
     await thisWeek(input, deps({ generate }));
     expect(JSON.stringify(generate.mock.calls[0]![1])).not.toContain("public holidays");
   });
+  it("rejects the plural TV, talk, game and reality shows too", async () => {
+    const { isMusicOrCulture } = await import("../src/web/thisWeek.js");
+    for (const t of ["Best TV shows tonight, festival of lights", "Late night talk shows with live music", "Game shows", "Reality shows finale"]) {
+      expect(isMusicOrCulture({ title: t, content: "festival concert" }), t).toBe(false);
+    }
+  });
   it("keyword list: no bare show/art/tour; specific phrases and es/pt terms pass; TV and talk shows are rejected", async () => {
     const { isMusicOrCulture } = await import("../src/web/thisWeek.js");
     const yes = (title: string, content = "") => expect(isMusicOrCulture({ title, content }), title).toBe(true);

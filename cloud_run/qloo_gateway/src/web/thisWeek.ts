@@ -28,7 +28,7 @@ const KEYWORDS = [
   "show ao vivo", "música ao vivo", "musica ao vivo", "ao vivo", "exposição", "exposicao", "turnê", "turne",
 ];
 /** TV, talk, game and reality shows are not concerts, whatever else the page says. */
-const NOT_A_GIG_RE = /\b(tv|talk|game|reality) show\b/i;
+const NOT_A_GIG_RE = /\b(tv|talk|game|reality) shows?\b/i;
 const KEYWORD_RE = new RegExp(`(?<![\\p{L}\\p{N}])(?:${KEYWORDS.map((k) => k.replace(/ /g, "\\s+")).join("|")})s?(?![\\p{L}\\p{N}])`, "iu");
 
 /** A result is worth a promoter's attention only if its title or snippet mentions live music or culture. */

@@ -2,6 +2,7 @@ import express, { type NextFunction, type Request, type Response } from "express
 import type { City } from "../geo/cities.js";
 import { PUBLIC_SESSION_PREFIX } from "../budget.js";
 import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
+import { MAX_ROUTING_CITIES } from "../pipeline/routing.js";
 import { runTourBoard } from "../pipeline/tourBoard.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
 import { isSafeContextText, LIMITS, sanitizeMessages, validateContext } from "../strategist/safety.js";
@@ -35,16 +36,33 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
 
   app.post("/v1/tour-board", async (req, res) => {
     const sessionId = req.header("x-session-id");
-    const { artist, artistEntityId, regions, maxStops } = req.body ?? {};
+    const { artist, artistEntityId, regions, maxStops, cities } = req.body ?? {};
     if (!validSession(sessionId)) return void res.status(400).json({ error: "x-session-id header required (1-128 chars)" });
+    const controller = new AbortController();
+    const today = new Date().toISOString().slice(0, 10);
+    const artistFields = { artist: typeof artist === "string" ? artist.trim() : "", ...(typeof artistEntityId === "string" && artistEntityId ? { artistEntityId } : {}) };
+    if (cities !== undefined) {
+      // "Paste your cities": 1-8 {name, country?}; regions (0-6) only disambiguate names. Everything else about the brief is fixed server-side.
+      const entry = (c: unknown) => { const o = c as Record<string, unknown> | null; return !!o && typeof o === "object" && !Array.isArray(o) && isSafeContextText(o.name) && (o.country === undefined || isSafeContextText(o.country)); };
+      if (!artistFields.artist) return void res.status(400).json({ error: "artist required" });
+      if (!Array.isArray(cities) || cities.length < 1 || cities.length > MAX_ROUTING_CITIES || !cities.every(entry)) {
+        return void res.status(400).json({ error: `cities must be 1-${MAX_ROUTING_CITIES} entries of {name, country?} with safe names` });
+      }
+      if (regions !== undefined && (!Array.isArray(regions) || regions.length > 6 || !regions.every(isSafeContextText))) {
+        return void res.status(400).json({ error: "regions must be at most 6 safe names" });
+      }
+      const routing = cities.map((c: { name: string; country?: string }) => ({ name: c.name.trim(), ...(c.country !== undefined ? { country: c.country.trim() } : {}) }));
+      await streamSse(res, runTourBoard({
+        ...artistFields, regions: ((regions ?? []) as string[]).map((r) => r.trim()), maxStops: MAX_ROUTING_CITIES, sessionId, today, routing,
+      }, { qloo: deps.qloo, cities: deps.cities, signal: controller.signal }), controller);
+      return;
+    }
     if (typeof artist !== "string" || !artist.trim() || !Array.isArray(regions) || regions.length === 0 || regions.length > 6
       || !regions.every((r: unknown) => typeof r === "string" && r.trim()) || !Number.isInteger(maxStops) || maxStops < 1 || maxStops > 20) {
       return void res.status(400).json({ error: "artist, regions[1-6], maxStops[1-20] required" });
     }
-    const controller = new AbortController();
     await streamSse(res, runTourBoard({
-      artist: artist.trim(), ...(typeof artistEntityId === "string" && artistEntityId ? { artistEntityId } : {}),
-      regions, maxStops, sessionId, today: new Date().toISOString().slice(0, 10),
+      ...artistFields, regions, maxStops, sessionId, today,
     }, { qloo: deps.qloo, cities: deps.cities, signal: controller.signal }), controller);
   });
 

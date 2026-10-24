@@ -23,7 +23,7 @@ const regionNames = (() => {
   try { return new Intl.DisplayNames(["en"], { type: "region" }); } catch { return undefined; }
 })();
 
-function countryName(code: string): string | undefined {
+export function countryName(code: string): string | undefined {
   try {
     const n = regionNames?.of(code);
     return n && n !== code && !/^unknown region$/i.test(n) ? n : undefined;

@@ -65,6 +65,7 @@ export type GatewayEvent =
   | { type: "tool_call"; tool: string; args: Record<string, unknown>; cached: boolean }
   | { type: "tool_result"; tool: string; status: QlooStatus; resultCount: number; cacheKey: string; stale: boolean }
   | { type: "region_empty"; region: string }
+  | { type: "routing_unmatched"; names: string[] }
   | { type: "city_scored"; city: unknown }
   | { type: "playbook"; playbook: unknown }
   | { type: "narrative"; narrative: Narrative }
