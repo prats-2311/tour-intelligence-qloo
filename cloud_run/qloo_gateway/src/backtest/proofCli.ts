@@ -68,7 +68,7 @@ export function writeJson(path: string, value: unknown): void {
 }
 
 export function assemble(opts: {
-  sections: Pick<ProofV3Results, "cityRank" | "fixedRank" | "catchRate">;
+  sections: Pick<ProofV3Results, "cityRank" | "fixedRank" | "catchRate" | "grounding">;
   monitor?: StopMonitor; stop?: string; running?: boolean; models: string[]; geminiUsed: string[]; now: Date; commit: string;
 }): ProofV3Results {
   const counts = opts.monitor?.counts ?? { qloo: 0, gemini: 0, qlooErrors: 0, geminiErrors: 0 };

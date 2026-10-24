@@ -138,6 +138,35 @@ export interface CatchRateSection {
   falseAlarmNote: string; rows: CatchRow[];
 }
 
+// Test C (grounding) ---------------------------------------------------------------------------------------------------------------
+
+export type GroundCategory = "venue" | "brand" | "local_act";
+export const GROUND_CATEGORIES: readonly GroundCategory[] = ["venue", "brand", "local_act"];
+export const GROUND_CATEGORY_LABEL: Record<GroundCategory, string> = { venue: "Venue", brand: "Brand", local_act: "Local act" };
+export type GroundArm = "qloo" | "llm";
+export const GROUND_ARMS: readonly GroundArm[] = ["qloo", "llm"];
+
+/** Counts of ratings credited to one arm; `share` = inCity / rated, where "can't tell" is outside `rated`. */
+export interface ShareRow { rated: number; inCity: number; otherCity: number; notExist: number; cantTell: number; share: number | null }
+
+export interface GroundingSection {
+  artist: string;
+  /** Cities rated: those with a Qloo playbook (excluded and not-run ones are listed apart). */
+  cities: Array<{ cityId: string; city: string; country: string }>;
+  excluded: Array<{ cityId: string; city: string; reason: string }>;
+  notRun: Array<{ cityId: string; city: string }>;
+  /** Cities with no LLM answer (invalid JSON twice): unpaired. */
+  llmNoAnswer: string[];
+  cityDifference: { missing: string[]; extra: string[] };
+  rows: { total: number; rated: number; unrated: number; cantTell: number };
+  byArm: Record<GroundArm, { overall: ShareRow; byCategory: Record<GroundCategory, ShareRow> }>;
+  /** Per-city in-city share over all three categories, null when the arm has no rated row there. */
+  perCity: Array<{ cityId: string; city: string; qloo: number | null; llm: number | null }>;
+  /** Means over the paired cities only. */
+  meanPerCity: Record<GroundArm, number | null>;
+  signTest: SignRow;
+}
+
 // Whole file -----------------------------------------------------------------------------------------------------------------------
 
 export interface ProofV3Results {
@@ -153,6 +182,7 @@ export interface ProofV3Results {
   cityRank?: CityRankSection;
   fixedRank?: FixedRankSection;
   catchRate?: CatchRateSection;
+  grounding?: GroundingSection;
   summary: string[];
 }
 
@@ -174,20 +204,40 @@ const fmtV = (v: number | null): string => (v === null ? "n/a" : v.toFixed(2));
 const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;
 
 /** A name as it opens a sentence and as it reads mid-sentence ("Winnability" / "winnability", "Gemini" / "Gemini"). */
-interface Name { start: string; inline: string }
-const N = (start: string, inline = start.toLowerCase()): Name => ({ start, inline });
+export interface Name { start: string; inline: string }
+export const N = (start: string, inline = start.toLowerCase()): Name => ({ start, inline });
 
 /**
  * The protocol's claim rule (Amendment 2.3): "X beat Y" only where the mean is higher AND there are more per-artist wins than losses AND the two-sided sign test gives p < 0.05. Otherwise the difference is
  * reported as not significant at this sample size, with its direction. A significant result against us is stated as plainly as one for us.
  */
-function compare(ours: Name, theirs: Name, a: number | null, b: number | null, t: SignRow, metric: string, unit: string): string {
+export function compare(ours: Name, theirs: Name, a: number | null, b: number | null, t: SignRow, metric: string, unit: string): string {
   const detail = `${plural(t.wins, "win")}, ${plural(t.losses, "loss", "losses")}${t.ties ? `, ${plural(t.ties, "tie")}` : ""} over ${plural(t.pairs, unit)}`;
   if (a === null || b === null || t.pairs === 0) return `Not significant at this sample size: ${ours.inline} has no paired ${metric} against ${theirs.inline} yet.`;
   if (t.p < 0.05 && a > b && t.wins > t.losses) return `${ours.start} beat ${theirs.inline} (p=${fmtP(t.p)}): mean ${metric} ${fmtV(a)} vs ${fmtV(b)}, ${detail}.`;
   if (t.p < 0.05 && b > a && t.losses > t.wins) return `${theirs.start} beat ${ours.inline} (p=${fmtP(t.p)}): mean ${metric} ${fmtV(b)} vs ${fmtV(a)}, ${detail}.`;
   const dir = a > b ? "leads" : a < b ? "trails" : "ties";
   return `Not significant at this sample size: ${ours.inline} ${dir} ${theirs.inline} on mean ${metric} (${fmtV(a)} vs ${fmtV(b)}; p=${fmtP(t.p)}; ${detail}).`;
+}
+
+
+/** Pure: Test C's sentences. No venue, brand or act names: only counts, shares and city names. */
+export function groundingSummary(g: GroundingSection, stopNote = ""): string[] {
+  const out: string[] = [];
+  out.push(`Test C (grounding) covers ${plural(g.cities.length, "city", "cities")} for ${g.artist}: ${g.rows.rated} of ${g.rows.total} names rated, ${g.rows.unrated} unrated, ${g.rows.cantTell} marked can't tell.${stopNote}`);
+  const label: Record<GroundCategory, string> = { venue: "venues", brand: "brands", local_act: "local acts" };
+  for (const arm of GROUND_ARMS) {
+    const a = g.byArm[arm];
+    const parts = GROUND_CATEGORIES.map((c) => `${label[c]} ${fmtV(a.byCategory[c].share)} (${a.byCategory[c].inCity} of ${a.byCategory[c].rated})`);
+    out.push(`Share of ${arm === "qloo" ? "Qloo" : "LLM-only"} names rated as existing in the city: ${parts.join(", ")}; overall ${fmtV(a.overall.share)}.`);
+  }
+  out.push(compare(N("Qloo", "Qloo"), N("The LLM-only playbook", "the LLM-only playbook"), g.meanPerCity.qloo, g.meanPerCity.llm, g.signTest, "share in city", "city"));
+  for (const c of g.perCity) if (c.qloo !== null && c.llm !== null && c.llm > c.qloo + 1e-9) out.push(`The LLM-only playbook beat Qloo in ${c.city}.`);
+  for (const e of g.excluded) out.push(`${e.city} was excluded (${e.reason}).`);
+  for (const c of g.llmNoAnswer) out.push(`The LLM-only playbook gave no valid answer for ${c}, so it is unpaired.`);
+  if (g.cityDifference.missing.length || g.cityDifference.extra.length) out.push(`The recorded board differs from the protocol's expected city list (missing: ${g.cityDifference.missing.join(", ") || "none"}; extra: ${g.cityDifference.extra.join(", ") || "none"}); the recorded board was used.`);
+  out.push("Method: one reviewer, blind to which playbook gave each name; 'exists in another city' counts as not in this city; a name both playbooks gave counts for both; ratings are published in aggregate only because the names stay private.");
+  return out;
 }
 
 /** Pure: the sentences the /proof page and README may use, produced by the claim rule. */
@@ -238,5 +288,6 @@ export function summarise(r: ProofV3Results): string[] {
     out.push("Method: one token means one number or one whole entity name (a multi-word name counts as one); plausible numbers exclude every number on the cited items.");
     out.push(`False alarms (${k.falseAlarms} of ${k.trueClaims}) are not a finding: ${k.falseAlarmNote}`);
   }
+  if (r.grounding) out.push(...groundingSummary(r.grounding, r.stop.status === "stopped" ? ` The run stopped early: ${r.stop.reason ?? "stop rule"}.` : ""));
   return out;
 }
