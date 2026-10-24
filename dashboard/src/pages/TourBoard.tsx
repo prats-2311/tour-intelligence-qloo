@@ -6,6 +6,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { BriefForm } from "@/components/qloo/BriefForm";
 import { CityRow, ROW_COLS_LG } from "@/components/qloo/CityRow";
+import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
 import { NextStepButton, NextStepLink } from "@/components/qloo/NextStep";
 import { NeedsInputPicker } from "@/components/qloo/NeedsInputPicker";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
@@ -124,7 +125,6 @@ export default function TourBoard() {
   const wantSample = sampleParam === "1" || wantLong || wantShowcase;
   const wantNew = params.get("new") === "1";
   const started = useRef(false);
-  const autoStarted = useRef(false);
   const modeParam = params.get("mode");
   const mode: Mode = modeParam === "density" || modeParam === "without" ? modeParam : "winnability";
   const setMode = (m: Mode) => setParams((p) => {
@@ -154,12 +154,8 @@ export default function TourBoard() {
 
   // Entering the board with no run and no params opens the recorded example, so the first screen is never an empty form.
   // "Try your own artist" arrives with ?new=1 and gets the brief form instead.
-  const autoExample = state.status === "idle" && !wantSample && !wantNew && showcaseAvailable();
-  useEffect(() => {
-    if (!autoExample || autoStarted.current) return;
-    autoStarted.current = true;
-    run(showcaseBrief(), { sample: true, sampleSet: "showcase" });
-  }, [autoExample, run]);
+  const autoExample = useWantsExample(!wantSample && !wantNew);
+  useOpenExampleRun(autoExample);
 
   // A new run starts clean: no stale selection (the provider's reducer clears the shortlist on start).
   useEffect(() => {
@@ -179,7 +175,9 @@ export default function TourBoard() {
   const counts = useMemo(() => summarize(state.cities), [state.cities]);
   // The shortlist sheet lists every Play or Hidden goldmine market plus every held city (a playbook can hold any verdict),
   // so each count on the page is the number of held cities that are listed.
-  const listed = useMemo(() => sortCities(state.cities, "winnability").filter((c) => SHORTLIST_VERDICTS.has(c.verdict) || shortlist.includes(c.id)), [state.cities, shortlist]);
+  // With no Play or Hidden goldmine market at all, the Consider cities are holdable so the sheet still has a next action.
+  const nonePlay = useMemo(() => !state.cities.some((c) => SHORTLIST_VERDICTS.has(c.verdict)), [state.cities]);
+  const listed = useMemo(() => sortCities(state.cities, "winnability").filter((c) => SHORTLIST_VERDICTS.has(c.verdict) || (nonePlay && c.verdict === "consider") || shortlist.includes(c.id)), [state.cities, shortlist, nonePlay]);
   const heldCount = useMemo(() => listed.filter((c) => shortlist.includes(c.id)).length, [listed, shortlist]);
   const maxStops = state.brief?.maxStops ?? 8;
   const atCap = heldCount >= maxStops;
@@ -239,7 +237,7 @@ export default function TourBoard() {
       <div className="flex flex-col gap-6">
         <BriefForm onSubmit={(b: TourBrief) => { run(b); if (wantNew) setParams((p) => { const n = new URLSearchParams(p); n.delete("new"); return n; }, { replace: true }); }} defaultBrief={lastBrief} />
         <div className="mx-auto flex w-full max-w-xl flex-col gap-2 border-t border-canvas-line pt-4">
-          <p className="text-[13px] text-canvas-muted">Want to see it first? {showcaseAvailable() ? "The showcase tour replays a recorded Qloo run." : "The showcase tour runs on sample data."}</p>
+          <p className="text-[13px] text-canvas-muted">Want to see it first? {showcaseAvailable() ? "The example tour replays a recorded Qloo run." : "The example tour runs on sample data."}</p>
           <button type="button" onClick={showcase} className={secondaryBtn}>See the example tour</button>
         </div>
       </div>
@@ -427,6 +425,7 @@ export default function TourBoard() {
             <p className="text-[14px] text-canvas-muted">No Play or Hidden goldmine markets in this run.</p>
           ) : (
             <>
+              {nonePlay && <p className="text-[13px] text-canvas-muted">None scored Play, so these are the Consider markets.</p>}
               <p className="text-[13px] tabular-nums text-canvas-muted">{heldCount} of max {maxStops} stops</p>
               <ul className="flex flex-col gap-0.5">
                 {listed.map((c) => {
@@ -452,7 +451,7 @@ export default function TourBoard() {
               </ul>
               {listed.some((c) => !shortlist.includes(c.id)) && atCap && <p id="max-stops-hint" className="text-[13px] text-canvas-muted">Max stops reached — raise it in the brief</p>}
               <NextStepLink to={bookHref} className="btn-gold inline-flex h-12 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10">Open Tour Book</NextStepLink>
-              {heldCount === 0 && <p className="text-[13px] text-canvas-muted">Nothing held yet, so the book covers the default shortlist.</p>}
+              {heldCount === 0 && <p className="text-[13px] text-canvas-muted">{nonePlay ? "Tick a market to build the book." : "Nothing held yet, so the book covers the default shortlist."}</p>}
             </>
           )}
         </div>

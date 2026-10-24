@@ -93,7 +93,7 @@ describe("narrate", () => {
     const steps = narrate([
       { type: "tool_result", tool: "qloo_rank", status: "ok", resultCount: 5, cacheKey: "k", stale: false },
     ]);
-    expect(steps[0]).toMatchObject({ sentence: "Received qloo_rank result", status: "info" });
+    expect(steps[0]).toMatchObject({ sentence: "Received Qloo: venue ranking result", status: "info" });
   });
   it("pluralizes chip label correctly", () => {
     // This is tested in AgentLog.test.tsx but verify the count function
@@ -116,5 +116,16 @@ describe("narrate", () => {
       status: "info",
       detail: "needs a choice",
     });
+  });
+});
+
+describe("narrate plain tool names", () => {
+  it("never prints a raw tool id for an unknown tool call or an orphan result", () => {
+    const steps = narrate([
+      { type: "tool_call", tool: "qloo_future_thing", args: {}, cached: false },
+      { type: "tool_result", tool: "qloo_other_thing", status: "ok", resultCount: 1, refs: [] },
+    ] as never);
+    expect(steps.map((s) => s.sentence).join(" ")).not.toMatch(/qloo_/);
+    expect(steps[0]!.sentence).toBe("Calling Qloo: future thing");
   });
 });

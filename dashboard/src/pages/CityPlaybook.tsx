@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
 import { NextStepLink } from "@/components/qloo/NextStep";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
@@ -76,6 +77,9 @@ function CityPlaybookPage() {
   // The URL decides; a run already held on the board is the fallback, so Back never drops the showcase or sample flag.
   const sampleQ = wantShowcase ? "?showcase=1" : wantLong ? "?sample=long" : wantSample ? "?sample=1"
     : state.source === "showcase" ? "?showcase=1" : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
+  // Bare url, no run: open the example (as the stepper does) instead of an empty state.
+  const bareExample = useWantsExample(!wantSample);
+  useOpenExampleRun(bareExample);
   const isDesktop = useIsDesktop();
   const started = useRef<string | null>(null); // the sample set this page already asked the board for
   const [tab, setTab] = useState<Tab>("activate");
@@ -144,7 +148,7 @@ function CityPlaybookPage() {
   }, [idsKey, tab]);
 
   if (!shownCity) {
-    if (state.status === "streaming" || !ready) return <PlaybookSkeleton />;
+    if (state.status === "streaming" || !ready || bareExample) return <PlaybookSkeleton />;
     return (
       <div className="mx-auto flex w-full max-w-md flex-col items-start gap-3 py-10">
         <h1 className="font-title text-[24px] leading-tight text-canvas-text">Open this city from a Tour Board</h1>
@@ -317,7 +321,7 @@ function CityPlaybookPage() {
           {narrative?.status === "unavailable" && <Notice>{narrative.message}</Notice>}
           {budget && (
             <Notice>
-              <span className="min-w-0">Session limit reached — try the showcase tour</span>
+              <span className="min-w-0">Session limit reached — try the example tour</span>
               <Link to="/tours/board?showcase=1" className={smallBtn}>See the example tour</Link>
             </Notice>
           )}

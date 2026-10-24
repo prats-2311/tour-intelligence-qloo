@@ -38,10 +38,12 @@ describe("AgentLog", () => {
     expect(document.body.textContent).not.toMatch(/qloo_[a-z_]+/);
     expect(screen.getAllByText("From cache").length).toBeGreaterThan(0);
   });
-  it("latest=1 keeps only the newest step and no tool line, so a long run never grows the page", () => {
-    const { container } = render(<AgentLog events={LUMEN_VALE_SAMPLE} latest={1} />);
+  it("latest=1 keeps only the newest step, with its tool line on one clamped row", () => {
+    const { container } = render(<AgentLog events={LUMEN_VALE_SAMPLE.filter((e) => e.type === "tool_call" || e.type === "tool_result").slice(0, 6)} latest={1} />);
     expect(container.querySelectorAll("li")).toHaveLength(1);
-    expect(container.textContent).not.toMatch(/Qloo:|From cache/);
+    expect(container.textContent).toMatch(/Qloo: /);
+    expect(container.querySelector("li p.font-mono")?.className).toContain("truncate");
+    expect(container.textContent).not.toMatch(/qloo_[a-z_]+/);
   });
   it("exposes step status via sr-only status text per row (no double announcement)", () => {
     const { container } = render(<AgentLog events={LUMEN_VALE_SAMPLE} />);

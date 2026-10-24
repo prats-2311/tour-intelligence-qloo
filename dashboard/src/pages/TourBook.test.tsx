@@ -8,6 +8,9 @@ import * as client from "@/lib/qloo/client";
 import { SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { resetPlaybooks } from "@/lib/qloo/playbookStore";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
+import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
+import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
+import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
 import TourBook from "./TourBook";
 
 // Four sample playbooks are prepared one after another at the page's 10 ms replay pace.
@@ -17,6 +20,7 @@ beforeEach(() => {
   vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
 });
 afterEach(() => {
+  setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
   cleanup();
   resetPlaybooks();
   vi.restoreAllMocks();
@@ -29,6 +33,12 @@ const readBlob = (b: Blob) => new Promise<string>((resolve) => { const r = new F
 function RunNoWindow() {
   const { run } = useTourBoard();
   useEffect(() => { run({ ...SAMPLE_BRIEF, dateWindow: undefined }, { sample: true }); }, [run]);
+  return null;
+}
+
+function ChooseShortlist() {
+  const { state, setShortlist } = useTourBoard();
+  useEffect(() => { if (state.status === "done") setShortlist(["3530597"]); }, [state.status, setShortlist]);
   return null;
 }
 
@@ -135,14 +145,25 @@ describe("TourBook", () => {
   it("with nothing held the book covers the default shortlist and says so in one line", async () => {
     renderAt("/tours/book", <><RunNoWindow /><EmptyShortlist /></>);
     expect(await screen.findByRole("heading", { name: "Market selection" })).toBeTruthy();
-    expect(screen.getByTestId("default-shortlist-note").textContent).toBe("Nothing held yet, so this book covers the default shortlist: the Play and Hidden goldmine markets.");
+    expect(screen.getByTestId("default-shortlist-note").textContent).toMatch(/^Showing the \d+ markets we'd hold by default/);
     expect(screen.queryByText("No markets shortlisted — hold dates for cities on the Tour Board")).toBeNull();
     expect(screen.getAllByRole("heading", { level: 2 }).length).toBeGreaterThan(2);
   });
-  it("a book of held cities shows no default-shortlist note", async () => {
-    renderAt("/tours/book?sample=1");
+  it("once the user has chosen a shortlist there is no default note", async () => {
+    renderAt("/tours/book?sample=1", <ChooseShortlist />);
     await screen.findByRole("heading", { name: "Market selection" });
     expect(screen.queryByTestId("default-shortlist-note")).toBeNull();
+  });
+  it("a bare /tours/book with no run loads the example", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    renderAt("/tours/book");
+    expect(await screen.findByRole("heading", { name: "Market selection" }, { timeout: 4000 })).toBeTruthy();
+    expect(screen.queryByText("Build a tour from a Tour Board first")).toBeNull();
+  });
+  it("a run whose shortlist was never chosen names the default picks and how many", async () => {
+    renderAt("/tours/book?sample=1");
+    await screen.findByRole("heading", { name: "Market selection" });
+    expect(screen.getByTestId("default-shortlist-note").textContent).toMatch(/^Showing the \d+ markets we'd hold by default: you haven't picked any yet\.$/);
   });
   it("desktop grid tracks never hard-code a sum wider than the lg content width", async () => {
     vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));

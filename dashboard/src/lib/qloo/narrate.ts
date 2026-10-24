@@ -1,4 +1,4 @@
-import { VERDICT_LABEL } from "./labels";
+import { toolLabel, VERDICT_LABEL } from "./labels";
 import type { GatewayEvent } from "./types";
 
 export type LogStep = { id: string; sentence: string; tool?: string; status: "active" | "success" | "error" | "info"; detail?: string; cached?: boolean; stale?: boolean };
@@ -24,7 +24,7 @@ function sentenceFor(tool: string, a: Record<string, unknown>): string {
       if (t === "movie" || t === "tv_show") return `Finding films and shows fans in ${w} also love`;
       return `Finding related tastes in ${w}`;
     }
-    default: return `Calling ${tool}`;
+    default: return `Calling ${toolLabel(tool, a)}`;
   }
 }
 
@@ -60,7 +60,7 @@ export function narrate(events: GatewayEvent[]): LogStep[] {
         const idx = open.findIndex((o) => o.tool === e.tool);
         if (idx === -1) {
           // Orphan tool_result (no matching open call) — create an info step instead of dropping
-          steps.push({ id, sentence: `Received ${e.tool} result`, status: "info" });
+          steps.push({ id, sentence: `Received ${toolLabel(e.tool)} result`, status: "info" });
           return;
         }
         const [{ step, args }] = open.splice(idx, 1) as [{ step: LogStep; tool: string; args: Record<string, unknown> }];

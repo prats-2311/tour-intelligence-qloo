@@ -65,8 +65,8 @@ if (arg("base") || arg("out")) {
     };
     await page.goto("/");
     await page.getByRole("heading", { level: 1 }).waitFor();
-    await shot("landing", "Landing: the story in three beats and the showcase tour");
-    await page.getByRole("link", { name: "Try the showcase tour" }).click();
+    await shot("landing", "Landing: the story in three beats and the example tour");
+    await page.getByRole("link", { name: "See the example tour" }).click();
     const rows = page.getByTestId("city-row");
     await rows.first().waitFor({ timeout: 30000 });
     await replayDone();

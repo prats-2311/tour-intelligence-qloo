@@ -77,6 +77,14 @@ describe("CityPlaybook", () => {
     expect(screen.getByText("Colonia Americana", { selector: "dd" })).toBeTruthy();
     expect(screen.getByText("Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.")).toBeTruthy();
   });
+  it("a bare playbook url with no run loads the example, as the stepper does", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    const id = Object.keys(parseShowcase(syntheticShowcase).playbooks)[0]!;
+    const name = parseShowcase(syntheticShowcase).boardEvents.flatMap((e) => (e.type === "city_scored" ? [e.city] : [])).find((c) => c.id === id)!.name;
+    renderAt(`/tours/playbook/${id}`);
+    expect(await screen.findByRole("heading", { name })).toBeTruthy();
+    expect(screen.queryByText("Open this city from a Tour Board")).toBeNull();
+  });
   it("shows an honest state on a deep link without a run", async () => {
     renderAt("/tours/playbook/4005539");
     expect(await screen.findByText("Open this city from a Tour Board")).toBeTruthy();
@@ -244,7 +252,7 @@ describe("CityPlaybook (shared)", () => {
       yield { type: "error", code: "BUDGET", message: "Session limit reached" };
     });
     renderAt("/tours/playbook/4005539?sample=1");
-    expect(await screen.findByText("Session limit reached — try the showcase tour")).toBeTruthy();
+    expect(await screen.findByText("Session limit reached — try the example tour")).toBeTruthy();
     expect(screen.getAllByText("Cerro Alto Mezcal").length).toBeGreaterThan(0);
   });
   it("an unplaced city shows the plain explanation, no retry, and links back to the board", async () => {
@@ -266,7 +274,7 @@ describe("CityPlaybook (shared)", () => {
     fireEvent.click(retry);
     await waitFor(() => expect(spy.mock.calls.length).toBe(calls + 1));
   });
-  it.each(["BUDGET", "HTTP_502"])("error %s links to the showcase tour", async (code) => {
+  it.each(["BUDGET", "HTTP_502"])("error %s links to the example tour", async (code) => {
     vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () {
       yield { type: "error", code, message: "boom" };
     });

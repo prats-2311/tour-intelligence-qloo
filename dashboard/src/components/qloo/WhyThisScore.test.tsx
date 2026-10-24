@@ -25,6 +25,10 @@ describe("WhyThisScore scoring display", () => {
     expect(screen.getByText(/dropped — cities barely differ on this/i)).toBeTruthy();
     expect(screen.getByText(/rescaled between the lowest score we count and 1/i)).toBeTruthy();
   });
+  it("renders a city with no activation components (unplaced) without throwing", () => {
+    render(<WhyThisScore city={{ ...city, activation: { value: null, reason: "insufficient_data", refs: [] }, verdict: "insufficient_data" }} />);
+    expect(document.body.textContent).not.toMatch(/NaN|undefined/);
+  });
   it("names the actual floors from the config in the floored paragraph", () => {
     const scoring = { ...DEFAULT_SCORING_DISPLAY, affinityFloors: { sponsor_fit: 0.92, local_hooks: 0.95, venue_fit: 0.88 } };
     render(<WhyThisScore city={city} scoring={scoring} />);

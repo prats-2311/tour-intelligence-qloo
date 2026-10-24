@@ -55,10 +55,11 @@ export function AgentLog({ events, latest }: { events: GatewayEvent[]; latest?: 
           <div className="min-w-0">
             <span className="sr-only">{statusLabel[s.status]}: </span>
             <p className="text-[13px] text-canvas-text">{s.sentence}</p>
-            {!latest && (s.tool || s.detail) && (
-              <p className="font-mono text-[11px] text-canvas-muted">
+            {(s.tool || s.detail) && (
+              <p className={`font-mono text-[11px] text-canvas-muted ${latest ? "h-4 truncate leading-4" : ""}`}>
+                {latest && s.cached && <span className="mr-2">From cache</span>}
                 {s.tool && <span>{toolLabel(s.tool)}</span>}{s.tool && s.detail && " · "}{s.detail}
-                {s.cached && <span className="ml-2">From cache</span>}
+                {!latest && s.cached && <span className="ml-2">From cache</span>}
                 {s.stale && <span className="ml-2 text-state-stale">Stale</span>}
               </p>
             )}

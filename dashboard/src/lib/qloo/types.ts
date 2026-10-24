@@ -27,7 +27,7 @@ export interface Zone { label: string; lat: number; lon: number; affinity: numbe
 export interface ScoredCity {
   id: string; name: string; country: string; lat: number; lon: number;
   fanHeat: Score;
-  activation: Score & { components: Partial<Record<ComponentName, number>>; rawComponents?: Partial<Record<ComponentName, number>> };
+  activation: Score & { components?: Partial<Record<ComponentName, number>>; rawComponents?: Partial<Record<ComponentName, number>> };
   winnability: Score;
   verdict: Verdict;
   /** Within 2 points of a verdict line (gateway-computed). */

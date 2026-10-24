@@ -1,5 +1,5 @@
 import { CircleAlert, Download, History } from "lucide-react";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { interruptedText, Notice, regionNoticeText } from "@/components/qloo/Notice";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
@@ -16,7 +16,7 @@ import { dataQuality } from "@/lib/qloo/geometry";
 import { applyFilters, boxscoreCsv, csvFilename, defaultFilters, type InsightsFilters } from "@/lib/qloo/insightsFilters";
 import { INTEGRITY_LINE } from "@/lib/qloo/labels";
 import { TasteInsightsSkeleton } from "@/components/ui/Skeletons";
-import { showcaseAvailable, showcaseBrief } from "@/lib/qloo/showcase";
+import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
 import { sortCities } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { useIsDesktop } from "@/lib/useMediaQuery";
@@ -26,7 +26,7 @@ const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 const secondaryBtn = "inline-flex h-12 items-center justify-center gap-2 rounded-[10px] bg-paper-raised px-5 text-[15px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:h-10";
 
 export default function TasteInsights() {
-  const { state, run } = useTourBoard();
+  const { state } = useTourBoard();
   const isDesktop = useIsDesktop();
   const { cities, log, profile, status, source, brief, artist, regionsEmpty, regionsUnavailable, error, interruptReason } = state;
   const streaming = status === "streaming";
@@ -39,13 +39,8 @@ export default function TasteInsights() {
   useEffect(() => { setSelectedId(null); }, [briefKey]);
 
   // Opened directly with no run, the page shows the example run's taste data instead of an empty state.
-  const autoStarted = useRef(false);
-  const openExample = status === "idle" && cities.length === 0 && showcaseAvailable();
-  useEffect(() => {
-    if (!openExample || autoStarted.current) return;
-    autoStarted.current = true;
-    run(showcaseBrief(), { sample: true, sampleSet: "showcase" });
-  }, [openExample, run]);
+  const openExample = useWantsExample(true);
+  useOpenExampleRun(openExample);
 
   const visible = useMemo(() => applyFilters(cities, filters), [cities, filters]);
   const selected = visible.some((c) => c.id === selectedId) ? selectedId : null;

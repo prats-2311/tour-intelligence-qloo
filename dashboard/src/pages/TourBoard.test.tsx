@@ -543,6 +543,26 @@ describe("TourBoard opens ready", () => {
     expect(screen.queryByLabelText("Artist")).toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+  it("the form's pointer to the example never says 'showcase tour'", async () => {
+    renderPage("/tours/board?new=1");
+    await screen.findByLabelText("Artist");
+    expect(document.body.textContent).toMatch(/The example tour (replays a recorded Qloo run|runs on sample data)/);
+    expect(document.body.textContent).not.toMatch(/showcase tour/i);
+  });
+  it("a live run with no Play or Hidden goldmine market still has a next action: Consider cities are holdable", async () => {
+    const consider = (i: number) => ({ type: "city_scored" as const, city: { ...SAMPLE_CITIES[i]!, verdict: "consider" as const } });
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield consider(0); yield consider(1); yield { type: "done", summary: {} }; });
+    renderPage("/tours/board?new=1");
+    submitArtist("Ada");
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(2));
+    fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Shortlist" });
+    expect(within(dialog).getAllByRole("checkbox")).toHaveLength(2);
+    expect(within(dialog).getByText("None scored Play, so these are the Consider markets.")).toBeTruthy();
+    fireEvent.click(within(dialog).getAllByRole("checkbox")[0]!);
+    expect(within(dialog).getByText(/^1 of max \d+ stops$/)).toBeTruthy();
+    expect(within(dialog).getByRole("link", { name: "Open Tour Book" })).toBeTruthy();
+  });
   it("?new=1 shows the brief form instead of the example", async () => {
     load();
     renderPage("/tours/board?new=1");

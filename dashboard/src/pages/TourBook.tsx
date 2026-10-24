@@ -19,6 +19,7 @@ import { getPlaybook, loadPlaybook, playbookKey, type PlaybookRequest } from "@/
 import { SAMPLE_TEXT } from "@/lib/qloo/labels";
 import { defaultShortlist, sortCities } from "@/lib/qloo/ranking";
 import { buildTourBook, campaignTitle } from "@/lib/qloo/tourBook";
+import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
 import { showcaseAvailable, showcaseBannerText, showcaseBrief } from "@/lib/qloo/showcase";
@@ -54,6 +55,8 @@ function TourBookPage() {
   // The URL decides; the run the board already holds is the fallback, so Close never drops the showcase or sample flag.
   const sampleQ = wantShowcase ? "?showcase=1" : wantLong ? "?sample=long" : wantSample ? "?sample=1"
     : state.source === "showcase" ? "?showcase=1" : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
+  const bareExample = useWantsExample(!wantSample);
+  useOpenExampleRun(bareExample);
   const isDesktop = useIsDesktop();
   const reduce = useReducedMotion();
   const started = useRef(false);
@@ -76,12 +79,12 @@ function TourBookPage() {
   const sample = state.source !== "live";
   const ready = !wantSample || (sample && (state.sampleSet ?? "default") === wantSet);
   const artist = ready ? state.artist : undefined;
-  const streaming = state.status === "streaming" || !ready;
+  const streaming = state.status === "streaming" || !ready || bareExample;
   const boardReady = ready && !streaming && !!artist && !!state.brief && state.cities.length > 0;
   const dateWindow = state.brief?.dateWindow;
 
   // Nothing held: the book covers the default shortlist (Play and Hidden goldmine markets) and says so.
-  const usingDefault = shortlist.length === 0;
+  const usingDefault = state.shortlist == null || state.shortlist.length === 0;
   const picked = useMemo(() => {
     const chosen = new Set(usingDefault ? defaultShortlist(state.cities, state.brief?.maxStops ?? 8) : shortlist);
     return sortCities(state.cities, "winnability").filter((c) => chosen.has(c.id));
@@ -277,7 +280,7 @@ function TourBookPage() {
         />
       </header>
 
-      {usingDefault && <p data-noprint data-testid="default-shortlist-note" className="px-4 pt-3 text-[13px] text-canvas-muted lg:px-6">Nothing held yet, so this book covers the default shortlist: the Play and Hidden goldmine markets.</p>}
+      {usingDefault && <p data-noprint data-testid="default-shortlist-note" className="px-4 pt-3 text-[13px] text-canvas-muted lg:px-6">Showing the {picked.length} {picked.length === 1 ? "market" : "markets"} we'd hold by default: you haven't picked any yet.</p>}
 
       <div className="lg:mt-6 lg:grid lg:grid-cols-[minmax(180px,240px)_minmax(0,720px)] lg:gap-x-8 xl:grid-cols-[minmax(180px,240px)_minmax(0,720px)_minmax(0,1fr)]">
         {isDesktop && (
