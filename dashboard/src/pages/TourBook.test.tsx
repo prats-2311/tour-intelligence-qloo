@@ -132,12 +132,17 @@ describe("TourBook", () => {
     renderAt("/tours/book?sample=1");
     expect(await screen.findByText("Waiting for the board to finish…")).toBeTruthy();
   });
-  it("an empty shortlist gets an honest state, not a progress line", async () => {
+  it("with nothing held the book covers the default shortlist and says so in one line", async () => {
     renderAt("/tours/book", <><RunNoWindow /><EmptyShortlist /></>);
-    expect(await screen.findByText("No markets shortlisted — hold dates for cities on the Tour Board")).toBeTruthy();
-    expect(screen.queryByText(/Preparing playbooks/)).toBeNull();
-    // the board holds a sample run, so the way back keeps the sample flag
-    expect(screen.getByRole("link", { name: "Go to Tour Board" }).getAttribute("href")).toBe("/tours/board?sample=1");
+    expect(await screen.findByRole("heading", { name: "Market selection" })).toBeTruthy();
+    expect(screen.getByTestId("default-shortlist-note").textContent).toBe("Nothing held yet, so this book covers the default shortlist: the Play and Hidden goldmine markets.");
+    expect(screen.queryByText("No markets shortlisted — hold dates for cities on the Tour Board")).toBeNull();
+    expect(screen.getAllByRole("heading", { level: 2 }).length).toBeGreaterThan(2);
+  });
+  it("a book of held cities shows no default-shortlist note", async () => {
+    renderAt("/tours/book?sample=1");
+    await screen.findByRole("heading", { name: "Market selection" });
+    expect(screen.queryByTestId("default-shortlist-note")).toBeNull();
   });
   it("desktop grid tracks never hard-code a sum wider than the lg content width", async () => {
     vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));

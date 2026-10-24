@@ -27,8 +27,8 @@ describe("Landing", () => {
   it("has the headline and both entry points", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
     expect(screen.getByRole("heading", { level: 1, name: "Win their city." })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Try the showcase tour" }).getAttribute("href")).toBe("/tours/board?showcase=1");
-    expect(screen.getByRole("link", { name: "Plan your own" }).getAttribute("href")).toBe("/tours/board");
+    expect(screen.getByRole("link", { name: "See the example tour" }).getAttribute("href")).toBe("/tours/board?showcase=1");
+    expect(screen.getByRole("link", { name: "Try your own artist" }).getAttribute("href")).toBe("/tours/board?new=1");
   });
   it("labels the proof card with the verbatim sample banner and integrity line, and shows no LIVE badge", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
@@ -130,7 +130,7 @@ describe("Landing story beats (spec 1.2b rule 1: every number comes from the rec
     setShowcase(parseShowcase(syntheticShowcase));
     renderBeats();
     const before = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
-    const cta = screen.getByRole("link", { name: "Try the showcase tour" });
+    const cta = screen.getByRole("link", { name: "See the example tour" });
     const list = screen.getByRole("list", { name: "The story in three beats" });
     const proof = screen.getByTestId("proof-winnability");
     expect(before(cta, list)).toBe(true);

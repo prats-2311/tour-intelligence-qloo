@@ -9,7 +9,7 @@ import * as client from "@/lib/qloo/client";
 import { SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { VERDICT_LABEL, VERDICT_SHAPE } from "@/lib/qloo/labels";
 import type { TourBrief } from "@/lib/qloo/types";
-import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
+import { parseShowcase, setShowcase, showcaseCities } from "@/lib/qloo/showcase";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
 import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
 import TourBoard from "./TourBoard";
@@ -112,7 +112,7 @@ describe("TourBoard", () => {
   it("Without Qloo shows the generic list with no bars, verdicts or scores, and the banner", async () => {
     renderPage("/tours/board?sample=1&mode=without");
     expect(await screen.findByText("Generic LLM answer — no taste evidence")).toBeTruthy();
-    expect(screen.getByText("No taste data. This is the ranking you'd get without Qloo.")).toBeTruthy();
+    expect(screen.getByTestId("mode-note").textContent).toMatch(/^No taste data\. This is the ranking you'd get without Qloo\./);
     const list = screen.getByRole("list", { name: "Generic ranking" });
     expect(within(list).getAllByRole("listitem").map((li) => li.textContent)).toEqual(expect.arrayContaining([expect.stringContaining("Mexico City")]));
     expect(within(list).queryByText("Hidden goldmine")).toBeNull();
@@ -254,7 +254,7 @@ describe("TourBoard", () => {
     });
     renderPage("/tours/board");
     submitArtist("X");
-    expect(await screen.findByRole("button", { name: "Try the showcase tour" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "See the example tour" })).toBeTruthy();
     expect(!!screen.queryByRole("button", { name: "Retry" })).toBe(code !== "BUDGET");
     expect(!!screen.queryByText("Check the spelling, or pick from the suggestions.")).toBe(code === "NOT_FOUND");
   });
@@ -262,7 +262,7 @@ describe("TourBoard", () => {
     vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { throw new TypeError("Failed to fetch"); });
     renderPage("/tours/board");
     submitArtist("X");
-    expect(await screen.findByRole("button", { name: "Try the showcase tour" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "See the example tour" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
   });
   it("Belo Horizonte renders as Not enough data and sorts last", async () => {
@@ -309,13 +309,16 @@ describe("TourBoard", () => {
     expect(screen.getAllByTestId("city-row")).toHaveLength(10);
     expect(spy).toHaveBeenCalledTimes(1);
   });
-  it("Hold these dates sheet lists play and goldmine markets and links to Taste only", async () => {
+  it("Hold these dates sheet lists play and goldmine markets, opens the Tour Book, and no longer links to Taste", async () => {
     renderPage();
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
     fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
     const dialog = await screen.findByRole("dialog", { name: "Shortlist" });
     expect(within(dialog).getAllByRole("checkbox")).toHaveLength(4);
-    expect(within(dialog).getByRole("link", { name: "Compare taste" }).getAttribute("href")).toBe("/insights");
+    expect(within(dialog).queryByRole("link", { name: "Compare taste" })).toBeNull();
+    expect(within(dialog).getByRole("link", { name: "Open Tour Book" }).getAttribute("href")).toBe("/tours/book?sample=1");
+    // "Taste profile" is a quiet text link in the board footer, not a button
+    expect(screen.getByRole("link", { name: "Taste profile" }).getAttribute("href")).toBe("/insights");
   });
   it("passes the typed artist unchanged to the stream (Beyoncé)", async () => {
     const spy = vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield { type: "done", summary: {} }; });
@@ -364,7 +367,7 @@ describe("TourBoard", () => {
     expect(screen.getByTestId("search").textContent).toBe("?sample=1");
     fireEvent.click(screen.getByRole("button", { name: "New brief" }));
     expect((await screen.findByLabelText("Artist") as HTMLInputElement).value).toBe("Lumen Vale");
-    expect(screen.getByTestId("search").textContent).toBe("");
+    expect(screen.getByTestId("search").textContent).toBe("?new=1");
   });
   it("a new run clears the shortlist exclusions", async () => {
     renderPage();
@@ -374,7 +377,7 @@ describe("TourBoard", () => {
     fireEvent.click(within(await screen.findByRole("dialog", { name: "Shortlist" })).getAllByRole("checkbox")[0]!);
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     fireEvent.click(screen.getByRole("button", { name: "New brief" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Try the showcase tour" }));
+    fireEvent.click(await screen.findByRole("button", { name: "See the example tour" }));
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
     fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
@@ -527,4 +530,85 @@ describe("TourBoard proof entry point", () => {
     renderPage();
     expect(screen.getByRole("link", { name: /Checked against real tours/ }).getAttribute("href")).toBe("/proof");
   });
+});
+
+describe("TourBoard opens ready", () => {
+  const load = () => setShowcase(parseShowcase(syntheticShowcase));
+  it("a bare /tours/board with no run loads the recorded example, with no network call", async () => {
+    load();
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    renderPage("/tours/board");
+    await waitFor(() => expect(screen.getAllByTestId("city-row").length).toBeGreaterThanOrEqual(8));
+    expect(screen.queryByLabelText("Artist")).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+  it("?new=1 shows the brief form instead of the example", async () => {
+    load();
+    renderPage("/tours/board?new=1");
+    expect(await screen.findByLabelText("Artist")).toBeTruthy();
+    expect(screen.queryAllByTestId("city-row")).toHaveLength(0);
+  });
+  it("New brief on the example run keeps the form (no re-open of the example)", async () => {
+    load();
+    renderPage("/tours/board");
+    await waitFor(() => expect(screen.getAllByTestId("city-row").length).toBeGreaterThanOrEqual(8));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: "New brief" }));
+    expect(await screen.findByLabelText("Artist")).toBeTruthy();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryAllByTestId("city-row")).toHaveLength(0);
+  });
+  it("without a recording a bare /tours/board shows the form", async () => {
+    renderPage("/tours/board");
+    expect(await screen.findByLabelText("Artist")).toBeTruthy();
+  });
+  it("the Open Tour Book link is never a disabled control, even with nothing held", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    fireEvent.click(screen.getByRole("button", { name: /Hold these dates/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Shortlist" });
+    for (const box of within(dialog).getAllByRole("checkbox") as HTMLInputElement[]) if (box.checked) fireEvent.click(box);
+    expect(within(dialog).getByRole("link", { name: "Open Tour Book" }).getAttribute("href")).toBe("/tours/book?sample=1");
+    expect(within(dialog).getByText("Nothing held yet, so the book covers the default shortlist.")).toBeTruthy();
+  });
+});
+
+describe("TourBoard explains each tab", () => {
+  const note = () => screen.getByTestId("mode-note").textContent;
+  it("winnability and density-only each get their line", async () => {
+    renderPage("/tours/board?sample=1");
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    expect(note()).toBe("Ranked by winnability: fan heat and how winnable the city is, 50/50.");
+    fireEvent.click(screen.getByRole("tab", { name: "Density-only" }));
+    expect(note()).toBe("Same scores, sorted by fan heat only — the order a density-only tool would give.");
+  });
+  it("Without Qloo keeps its note and adds the agreement sentence only when the top cities match", async () => {
+    renderPage("/tours/board?sample=1&mode=without");
+    await screen.findByRole("list", { name: "Generic ranking" });
+    const first = screen.getByRole("list", { name: "Generic ranking" }).querySelector("li")!.textContent!;
+    const agrees = first.includes(SAMPLE_CITIES.slice().sort((a, b) => (b.winnability.value ?? 0) - (a.winnability.value ?? 0))[0]!.name);
+    expect(note()).toBe(agrees ? "No taste data. This is the ranking you'd get without Qloo. On the top city, the generic answer agrees." : "No taste data. This is the ranking you'd get without Qloo.");
+  });
+  it("Without Qloo says nothing about agreement when the generic top city differs", async () => {
+    load2();
+    renderPage("/tours/board?showcase=1&mode=without");
+    await screen.findByRole("list", { name: "Generic ranking" });
+    expect(note()).toBe("No taste data. This is the ranking you'd get without Qloo.");
+  });
+  it("Without Qloo adds the agreement sentence when the generic top city is the winnability top city", async () => {
+    const raw = JSON.parse(JSON.stringify(syntheticShowcase));
+    setShowcase(parseShowcase(raw));
+    const top = [...showcaseCities()].sort((a, b) => (b.winnability.value ?? -1) - (a.winnability.value ?? -1))[0]!;
+    raw.withoutQloo = { status: "ok", ranked: [{ name: top.name, country: top.country }, { name: "Other Town", country: "XX" }] };
+    setShowcase(parseShowcase(raw));
+    renderPage("/tours/board?showcase=1&mode=without");
+    await screen.findByRole("list", { name: "Generic ranking" });
+    expect(note()).toBe("No taste data. This is the ranking you'd get without Qloo. On the top city, the generic answer agrees.");
+  });
+  function load2() {
+    const raw = JSON.parse(JSON.stringify(syntheticShowcase));
+    raw.withoutQloo = { status: "ok", ranked: [{ name: "Nowhere Town", country: "XX" }, { name: "El Paso", country: "US" }] };
+    setShowcase(parseShowcase(raw));
+  }
 });

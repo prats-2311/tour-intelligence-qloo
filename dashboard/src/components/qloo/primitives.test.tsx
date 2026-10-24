@@ -102,7 +102,8 @@ describe("primitives", () => {
     const ref = { tool: "qloo_recommend", cacheKey: "abcdef1234567890" };
     const city = { ...gdl, fanHeat: { value: 62, refs: [ref] }, activation: { ...gdl.activation, refs: [ref] }, winnability: { value: 70, refs: [ref, ref] } } as typeof gdl;
     render(<WhyThisScore city={city} />);
-    expect(screen.getAllByText("qloo_recommend · abcdef12")).toHaveLength(1);
+    expect(screen.getAllByText("Qloo: recommendations")).toHaveLength(1);
+    expect(document.body.textContent).not.toMatch(/qloo_recommend|abcdef12/);
   });
   it("Sheet has a Close button that closes", () => {
     const onClose = vi.fn();
@@ -132,12 +133,12 @@ describe("primitives", () => {
     expect(screen.getByRole("meter", { name: "Activation 82 of 100" })).toBeTruthy();
     expect(screen.getByTestId("bar-fanheat")).toBeTruthy();
   });
-  it("WhyThisScore lists the verdict rules and the renormalisation note", () => {
+  it("WhyThisScore lists the verdict rules and the rescaling note", () => {
     render(<WhyThisScore city={gdl} />);
     const rules = screen.getByRole("list", { name: "Verdict rules" });
     const text = rules.textContent ?? "";
     for (const r of ["Play", "fan ≥70 & activation ≥60", "Hidden goldmine", "45≤fan<70 & activation ≥75", "De-risk", "fan ≥70 & activation <45", "Consider", "winnability ≥55", "Skip", "otherwise", "Not enough data", "inputs are missing"]) expect(text).toContain(r);
-    expect(screen.getByText("Weights are renormalised over the components that returned data.")).toBeTruthy();
+    expect(screen.getByText("Weights are rescaled over the components that returned data.")).toBeTruthy();
   });
   it("WhyThisScore with null scores shows Not enough data bars, still no NaN", () => {
     const { container } = render(<WhyThisScore city={bh} />);

@@ -6,6 +6,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { BriefForm } from "@/components/qloo/BriefForm";
 import { CityRow, ROW_COLS_LG } from "@/components/qloo/CityRow";
+import { NextStepButton, NextStepLink } from "@/components/qloo/NextStep";
 import { NeedsInputPicker } from "@/components/qloo/NeedsInputPicker";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
 import { interruptedText, Notice, regionNoticeText } from "@/components/qloo/Notice";
@@ -14,6 +15,7 @@ import { Sheet } from "@/components/qloo/Sheet";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { VerdictGlyph } from "@/components/qloo/VerdictGlyph";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
+import { TourBoardSkeleton } from "@/components/ui/Skeletons";
 import { fetchWithoutQloo } from "@/lib/qloo/client";
 import { LONG_CITY_NAMES, LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_WITHOUT_QLOO } from "@/lib/qloo/fixtures/strategistSample";
@@ -32,6 +34,13 @@ const MODES: Array<{ id: Mode; label: string }> = [
   { id: "density", label: "Density-only" },
   { id: "without", label: "Without Qloo" },
 ];
+const MODE_NOTE: Record<Exclude<Mode, "without">, string> = {
+  winnability: "Ranked by winnability: fan heat and how winnable the city is, 50/50.",
+  density: "Same scores, sorted by fan heat only — the order a density-only tool would give.",
+};
+const WITHOUT_NOTE = "No taste data. This is the ranking you'd get without Qloo.";
+const WITHOUT_AGREES = "On the top city, the generic answer agrees.";
+const sameCity = (a: string, b: string): boolean => a.normalize("NFKD").toLowerCase().trim() === b.normalize("NFKD").toLowerCase().trim();
 const PANEL_LABEL: Record<Mode, string> = { winnability: "Winnability ranking", density: "Density-only ranking", without: "Without Qloo ranking" };
 const SHORTLIST_VERDICTS = new Set(["play", "hidden_goldmine"]);
 
@@ -113,7 +122,9 @@ export default function TourBoard() {
   const wantLong = sampleParam === "long";
   const wantShowcase = params.get("showcase") === "1";
   const wantSample = sampleParam === "1" || wantLong || wantShowcase;
+  const wantNew = params.get("new") === "1";
   const started = useRef(false);
+  const autoStarted = useRef(false);
   const modeParam = params.get("mode");
   const mode: Mode = modeParam === "density" || modeParam === "without" ? modeParam : "winnability";
   const setMode = (m: Mode) => setParams((p) => {
@@ -138,6 +149,18 @@ export default function TourBoard() {
     } else if (state.source !== "sample") run(wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantLong ? "long" : "default" });
   }, [wantSample, wantLong, wantShowcase, state.source, run]);
 
+  // Once the sample params are gone (New brief), a later ?sample/?showcase link may start a run again.
+  useEffect(() => { if (!wantSample) started.current = false; }, [wantSample]);
+
+  // Entering the board with no run and no params opens the recorded example, so the first screen is never an empty form.
+  // "Try your own artist" arrives with ?new=1 and gets the brief form instead.
+  const autoExample = state.status === "idle" && !wantSample && !wantNew && showcaseAvailable();
+  useEffect(() => {
+    if (!autoExample || autoStarted.current) return;
+    autoStarted.current = true;
+    run(showcaseBrief(), { sample: true, sampleSet: "showcase" });
+  }, [autoExample, run]);
+
   // A new run starts clean: no stale selection (the provider's reducer clears the shortlist on start).
   useEffect(() => {
     if (state.status !== "streaming") return;
@@ -148,7 +171,8 @@ export default function TourBoard() {
   const newBrief = () => {
     setLastBrief(state.brief);
     reset();
-    if (params.has("sample") || params.has("showcase") || params.has("mode")) setParams((p) => { const n = new URLSearchParams(p); n.delete("sample"); n.delete("showcase"); n.delete("mode"); return n; }, { replace: true });
+    // ?new=1 keeps the brief form on screen instead of reopening the example.
+    setParams((p) => { const n = new URLSearchParams(p); n.delete("sample"); n.delete("showcase"); n.delete("mode"); n.set("new", "1"); return n; }, { replace: true });
   };
 
   const sorted = useMemo(() => sortCities(state.cities, mode === "density" ? "density" : "winnability"), [state.cities, mode]);
@@ -184,6 +208,8 @@ export default function TourBoard() {
         }) }
       : SAMPLE_WITHOUT_QLOO)
     : withoutLive.data;
+  const topGeneric = withoutResult?.status === "ok" ? withoutResult.ranked[0]?.name : undefined;
+  const agrees = !!topGeneric && !!sorted[0] && sameCity(topGeneric, sorted[0].name);
   const selected = withoutMode ? undefined : state.cities.find((c) => c.id === selectedId);
   const whyCity = state.cities.find((c) => c.id === whyId);
   const summaryCity = selected ?? sorted[0];
@@ -205,13 +231,16 @@ export default function TourBoard() {
 
   if (showcaseMissing) return <ShowcaseUnavailable sampleHref="/tours/board?sample=1" />;
 
+  // The example (or a ?sample/?showcase run) starts in an effect: hold the page's height meanwhile so the form never flashes and nothing jumps.
+  if (state.status === "idle" && (autoExample || wantSample)) return <TourBoardSkeleton />;
+
   if (state.status === "idle") {
     return (
       <div className="flex flex-col gap-6">
-        <BriefForm onSubmit={(b: TourBrief) => run(b)} defaultBrief={lastBrief} />
+        <BriefForm onSubmit={(b: TourBrief) => { run(b); if (wantNew) setParams((p) => { const n = new URLSearchParams(p); n.delete("new"); return n; }, { replace: true }); }} defaultBrief={lastBrief} />
         <div className="mx-auto flex w-full max-w-xl flex-col gap-2 border-t border-canvas-line pt-4">
           <p className="text-[13px] text-canvas-muted">Want to see it first? {showcaseAvailable() ? "The showcase tour replays a recorded Qloo run." : "The showcase tour runs on sample data."}</p>
-          <button type="button" onClick={showcase} className={secondaryBtn}>Try the showcase tour</button>
+          <button type="button" onClick={showcase} className={secondaryBtn}>See the example tour</button>
         </div>
       </div>
     );
@@ -249,7 +278,7 @@ export default function TourBoard() {
           <History size={14} className="text-state-stale" aria-hidden />
           <span className="min-w-0">{interruptedText(state.interruptReason)}</span>
           <button type="button" onClick={retry} className={smallBtn}>Retry</button>
-          <button type="button" onClick={showcase} className={smallBtn}>Try the showcase tour</button>
+          <button type="button" onClick={showcase} className={smallBtn}>See the example tour</button>
         </Notice>
       )}
       {state.status === "error" && state.error && (
@@ -258,7 +287,7 @@ export default function TourBoard() {
           <span className="min-w-0">{state.error.message}</span>
           {state.error.code === "NOT_FOUND" && <span className="min-w-0 text-canvas-muted">Check the spelling, or pick from the suggestions.</span>}
           {state.error.code !== "BUDGET" && <button type="button" onClick={retry} className={smallBtn}>Retry</button>}
-          <button type="button" onClick={showcase} className={smallBtn}>Try the showcase tour</button>
+          <button type="button" onClick={showcase} className={smallBtn}>See the example tour</button>
         </Notice>
       )}
       {!empty && (state.regionsEmpty.length > 0 || state.regionsUnavailable.length > 0) && (
@@ -287,6 +316,10 @@ export default function TourBoard() {
       {state.cities.length > 0 && (
         <>
           <SegmentedControl mode={mode} onChange={setMode} />
+          {/* Reserves two lines (three in Without Qloo) so a mode change or a late answer never moves the list. */}
+          <p data-testid="mode-note" className={`min-w-0 text-[12px] leading-[1.4] text-canvas-muted lg:text-[13px] ${withoutMode ? "min-h-[3.5rem] lg:min-h-[2.5rem]" : "min-h-[2.1rem] lg:min-h-[1.1rem]"}`}>
+            {withoutMode ? (agrees ? `${WITHOUT_NOTE} ${WITHOUT_AGREES}` : WITHOUT_NOTE) : MODE_NOTE[mode]}
+          </p>
           <p className="min-w-0 text-[12px] text-canvas-muted lg:text-[13px]">
             {scored}{!withoutMode && verdictBits.map((b, i) => <span key={i}>{" · "}{b}</span>)}
             {streaming && " · still scoring"}
@@ -307,7 +340,6 @@ export default function TourBoard() {
                 <CircleAlert size={16} className="shrink-0 text-canvas-muted" aria-hidden />
                 <span>Generic LLM answer — no taste evidence</span>
               </div>
-              <p className="text-[13px] text-canvas-muted">No taste data. This is the ranking you'd get without Qloo.</p>
               {streaming ? (
                 <p role="status" className="text-[13px] text-canvas-muted">Waiting for the board to finish…</p>
               ) : withoutResult?.status === "ok" ? (
@@ -344,7 +376,12 @@ export default function TourBoard() {
       {state.cities.length > 0 && (
         <div className="flex flex-col gap-1 pb-2">
           {!withoutMode && <p className="px-1 text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>}
-          {!streaming && <button type="button" onClick={newBrief} className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">New brief</button>}
+          {!streaming && (
+            <div className="flex flex-wrap items-center gap-x-4">
+              <button type="button" onClick={newBrief} className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">New brief</button>
+              <Link to="/insights" className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">Taste profile</Link>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -355,9 +392,9 @@ export default function TourBoard() {
       <span className="hidden min-w-0 text-[13px] text-canvas-muted lg:block">
         {heldCount} {heldCount === 1 ? "market" : "markets"} shortlisted
       </span>
-      <button type="button" disabled={listed.length === 0} onClick={() => setBuildOpen(true)} className="btn-gold inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:flex-none">
+      <NextStepButton leads="/tours/book" onClick={() => setBuildOpen(true)} className="btn-gold inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:flex-none">
         Hold these dates<ArrowRight size={16} className="hidden lg:block" aria-hidden />
-      </button>
+      </NextStepButton>
       <button type="button" onClick={() => summaryCity && setWhyId(summaryCity.id)} className="inline-flex min-h-11 shrink-0 items-center px-1 text-left text-[13px] font-medium leading-tight text-canvas-text underline-offset-[0.18em] hover:underline lg:hidden">
         <span className="line-clamp-2 max-w-[6.5rem]">{whyLabel}</span>
       </button>
@@ -416,12 +453,10 @@ export default function TourBoard() {
                 })}
               </ul>
               {listed.some((c) => !shortlist.includes(c.id)) && atCap && <p id="max-stops-hint" className="text-[13px] text-canvas-muted">Max stops reached — raise it in the brief</p>}
-              {heldCount > 0
-                ? <Link to={bookHref} className="btn-gold inline-flex h-12 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10">Open Tour Book</Link>
-                : <button type="button" disabled className="btn-gold inline-flex h-12 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10">Open Tour Book</button>}
+              <NextStepLink to={bookHref} className="btn-gold inline-flex h-12 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10">Open Tour Book</NextStepLink>
+              {heldCount === 0 && <p className="text-[13px] text-canvas-muted">Nothing held yet, so the book covers the default shortlist.</p>}
             </>
           )}
-          <Link to="/insights" className={secondaryBtn}>Compare taste</Link>
         </div>
       </Sheet>
     </>

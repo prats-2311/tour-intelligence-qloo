@@ -36,7 +36,7 @@ const cell = (v: string | number | null | undefined): string => {
 export function boxscoreCsv(cities: ScoredCity[]): string {
   const header = ["City", "Country", "Sponsor fit", "Local hooks", "Fan concentration", "Venue fit", "Activation", "Verdict"];
   const rows = sortCities(cities, "winnability").sort(byActivation).map((c) => {
-    const k = c.activation.components;
+    const k = c.activation.components ?? {};
     return [c.name, c.country, k.sponsor_fit, k.local_hooks, k.fan_concentration, k.venue_fit, c.activation.value, VERDICT_LABEL[c.verdict]];
   });
   return "\uFEFF" + [header, ...rows].map((r) => r.map(cell).join(",")).join("\r\n");

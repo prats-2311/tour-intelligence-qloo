@@ -47,6 +47,11 @@ describe("boxscore CSV", () => {
     expect(rows).toHaveLength(11);
     expect(rows[10]).toBe("Belo Horizonte,BR,,,0.52,,,Not enough data");
   });
+  it("a city Qloo could not place (no components at all) exports empty cells instead of throwing", () => {
+    const { components: _drop, ...activation } = SAMPLE_CITIES[0]!.activation;
+    const c = { ...SAMPLE_CITIES[0]!, activation } as unknown as (typeof SAMPLE_CITIES)[number];
+    expect(boxscoreCsv([c]).slice(1).split("\r\n")[1]).toMatch(/^Mexico City,MX,,,,,/);
+  });
   it("escapes commas, quotes and newlines", () => {
     const c = { ...SAMPLE_CITIES[0]!, name: 'Foo, "Bar"\nBaz' };
     expect(boxscoreCsv([c]).slice(1).split("\r\n")[1]!.startsWith('"Foo, ""Bar""\nBaz",MX')).toBe(true);

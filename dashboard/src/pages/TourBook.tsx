@@ -17,7 +17,7 @@ import { LONG_NAMES_BRIEF, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { toIcs } from "@/lib/qloo/ics";
 import { getPlaybook, loadPlaybook, playbookKey, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { SAMPLE_TEXT } from "@/lib/qloo/labels";
-import { sortCities } from "@/lib/qloo/ranking";
+import { defaultShortlist, sortCities } from "@/lib/qloo/ranking";
 import { buildTourBook, campaignTitle } from "@/lib/qloo/tourBook";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
@@ -80,10 +80,12 @@ function TourBookPage() {
   const boardReady = ready && !streaming && !!artist && !!state.brief && state.cities.length > 0;
   const dateWindow = state.brief?.dateWindow;
 
+  // Nothing held: the book covers the default shortlist (Play and Hidden goldmine markets) and says so.
+  const usingDefault = shortlist.length === 0;
   const picked = useMemo(() => {
-    const chosen = new Set(shortlist);
+    const chosen = new Set(usingDefault ? defaultShortlist(state.cities, state.brief?.maxStops ?? 8) : shortlist);
     return sortCities(state.cities, "winnability").filter((c) => chosen.has(c.id));
-  }, [state.cities, shortlist]);
+  }, [state.cities, state.brief?.maxStops, shortlist, usingDefault]);
   const prepKey = `${sample}|${state.sampleSet ?? ""}|${artist?.entityId ?? ""}|${picked.map((c) => c.id).join(",")}`;
   const requests = useMemo<PlaybookRequest[]>(
     () => (artist ? picked.map((c) => ({ artist: artist.name, artistEntityId: artist.entityId, city: { id: c.id, name: c.name, country: c.country }, sample, sampleSet: state.sampleSet, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined })) : []),
@@ -274,6 +276,8 @@ function TourBookPage() {
           style={{ transform: "scaleX(0)", transition: reduce ? "none" : "transform 120ms linear" }}
         />
       </header>
+
+      {usingDefault && <p data-noprint data-testid="default-shortlist-note" className="px-4 pt-3 text-[13px] text-canvas-muted lg:px-6">Nothing held yet, so this book covers the default shortlist: the Play and Hidden goldmine markets.</p>}
 
       <div className="lg:mt-6 lg:grid lg:grid-cols-[minmax(180px,240px)_minmax(0,720px)] lg:gap-x-8 xl:grid-cols-[minmax(180px,240px)_minmax(0,720px)_minmax(0,1fr)]">
         {isDesktop && (

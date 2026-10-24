@@ -5,6 +5,7 @@ import { DualBars } from "@/components/qloo/DualBars";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { INTEGRITY_LINE } from "@/lib/qloo/labels";
+import { NextStepLink } from "@/components/qloo/NextStep";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
 import { ordinal, sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
@@ -116,8 +117,8 @@ export default function Landing() {
       </section>
       <div className="lg:col-span-5 lg:col-start-1 lg:row-start-2 lg:mt-8 lg:self-start">
         <div className="flex flex-col gap-2.5 lg:flex-row lg:gap-4">
-          <Link to="/tours/board?showcase=1" className={`${CTA} bg-gold font-semibold text-on-gold hover:bg-gold-soft active:bg-[#efb900]`}>Try the showcase tour</Link>
-          <Link to="/tours/board" className={`${CTA} bg-paper-raised font-medium text-canvas-text hover:bg-[#3a3932]`}>Plan your own</Link>
+          <NextStepLink to="/tours/board?showcase=1" className={`${CTA} bg-gold font-semibold text-on-gold hover:bg-gold-soft active:bg-[#efb900]`}>See the example tour</NextStepLink>
+          <Link to="/tours/board?new=1" className={`${CTA} bg-paper-raised font-medium text-canvas-text hover:bg-[#3a3932]`}>Try your own artist</Link>
         </div>
         <Link to="/proof" className="mt-1 inline-flex min-h-11 items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{PROOF_LINK_TEXT} →</Link>
       </div>

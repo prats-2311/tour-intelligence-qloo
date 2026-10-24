@@ -34,7 +34,8 @@ describe("AgentLog", () => {
   it("renders sentences, tool names and the from-cache tag", () => {
     render(<AgentLog events={LUMEN_VALE_SAMPLE} />);
     expect(screen.getByText("Finding where fans concentrate in Brazil")).toBeTruthy();
-    expect(screen.getAllByText("qloo_where_popular").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Qloo: fan hotspots").length).toBeGreaterThan(0);
+    expect(document.body.textContent).not.toMatch(/qloo_[a-z_]+/);
     expect(screen.getAllByText("From cache").length).toBeGreaterThan(0);
   });
   it("exposes step status via sr-only status text per row (no double announcement)", () => {

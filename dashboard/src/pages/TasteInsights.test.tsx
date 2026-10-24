@@ -7,6 +7,9 @@ import { matrixPoints } from "@/lib/qloo/geometry";
 import { SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { loadPlaybook, resetPlaybooks } from "@/lib/qloo/playbookStore";
 import * as client from "@/lib/qloo/client";
+import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
+import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
+import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
 import TasteInsights from "./TasteInsights";
 
 vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="map" /> }));
@@ -16,6 +19,7 @@ beforeEach(() => {
   vi.stubGlobal("matchMedia", () => ({ matches: desktop, addEventListener() {}, removeEventListener() {} }));
 });
 afterEach(() => {
+  setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
   cleanup();
   resetPlaybooks();
   vi.restoreAllMocks();
@@ -39,12 +43,25 @@ const seeded = async () => {
   await waitFor(() => expect(screen.getAllByTestId("boxscore-row")).toHaveLength(10));
 };
 
+describe("TasteInsights opened directly", () => {
+  it("with no run shows the example run's taste data, not an empty state", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    renderPage();
+    await waitFor(() => expect(screen.getAllByTestId("boxscore-row").length).toBeGreaterThan(0));
+    expect(screen.queryByText("Score a Tour Board to see taste by market")).toBeNull();
+    expect(screen.getByText(/recorded/i)).toBeTruthy();
+    expect(fetchSpy.mock.calls.filter(([u]) => String(u).includes("/api/qloo"))).toHaveLength(0);
+  });
+});
+
 describe("TasteInsights", () => {
   it("empty state before any run (Review Focus 3)", () => {
     renderPage();
     expect(screen.getByText("Score a Tour Board to see taste by market")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Try the showcase tour" }).getAttribute("href")).toBe("/tours/board?showcase=1");
-    expect(screen.getByRole("link", { name: "Plan your own" }).getAttribute("href")).toBe("/tours/board");
+    expect(screen.getByRole("link", { name: "See the example tour" }).getAttribute("href")).toBe("/tours/board?showcase=1");
+    expect(screen.getByRole("link", { name: "Try your own artist" }).getAttribute("href")).toBe("/tours/board?new=1");
   });
   it("renders matrix points, boxscore rows and data-quality tiles from the run", async () => {
     await seeded();

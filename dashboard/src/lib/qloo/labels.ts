@@ -87,6 +87,8 @@ export function toolPlainName(tool: string, args: Record<string, unknown> = {}):
   if (tool === "qloo_recommend") return RECOMMEND_PLAIN[String(args.target_type ?? "")] ?? "Recommendations";
   return TOOL_PLAIN[tool] ?? tool.replace(/^qloo_/, "").replace(/_/g, " ");
 }
+/** Visible form of a Qloo tool id: plain words, never the raw id ("qloo_where_popular"). */
+export const toolLabel = (tool: string, args: Record<string, unknown> = {}): string => `Qloo: ${toolPlainName(tool, args).toLowerCase()}`;
 const STATUS_PLAIN: Record<string, string> = {
   ok: "Done", empty: "No results", partial: "Partial answer", degraded: "Partial answer", error: "Error", needs_input: "Needed more input (skipped)", rejected: "Not sent (failed safety check)",
 };

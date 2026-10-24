@@ -1,4 +1,5 @@
 import { CircleAlert, CircleDashed, History, type LucideIcon } from "lucide-react";
+import { toolLabel } from "@/lib/qloo/labels";
 import type { DataWarning } from "@/lib/qloo/types";
 
 export function warningLabel(warnings: DataWarning[]): string | null {
@@ -14,7 +15,7 @@ function metaFor(warnings: DataWarning[]): { label: string; Icon: LucideIcon; cl
 export function DataWarningBadge({ warnings }: { warnings: DataWarning[] }) {
   if (warnings.length === 0) return null;
   const { label, Icon, cls } = metaFor(warnings);
-  const title = warnings.map((w) => w.message ?? `${w.tool}: ${w.kind}`).join(" · ");
+  const title = warnings.map((w) => w.message ?? `${toolLabel(w.tool)}: ${w.kind}`).join(" · ");
   return (
     <span title={title} className={`inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-[4px] px-2 text-[12px] font-medium ${cls}`}>
       <Icon size={14} aria-hidden />{label}

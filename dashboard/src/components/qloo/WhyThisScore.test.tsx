@@ -22,8 +22,8 @@ describe("WhyThisScore scoring display", () => {
     };
     render(<WhyThisScore city={city} scoring={scoring} />);
     expect(screen.getByText("45≤fan<70 & activation ≥41")).toBeTruthy();
-    expect(screen.getByText(/dropped — no spread in calibration/i)).toBeTruthy();
-    expect(screen.getByText(/rescaled from a calibrated floor/i)).toBeTruthy();
+    expect(screen.getByText(/dropped — cities barely differ on this/i)).toBeTruthy();
+    expect(screen.getByText(/rescaled between the lowest score we count and 1/i)).toBeTruthy();
   });
   it("names the actual floors from the config in the floored paragraph", () => {
     const scoring = { ...DEFAULT_SCORING_DISPLAY, affinityFloors: { sponsor_fit: 0.92, local_hooks: 0.95, venue_fit: 0.88 } };
@@ -33,7 +33,7 @@ describe("WhyThisScore scoring display", () => {
   it("falls back to the default rules without a scoring config (sample, old recordings)", () => {
     render(<WhyThisScore city={city} />);
     expect(screen.getByText("45≤fan<70 & activation ≥75")).toBeTruthy();
-    expect(screen.queryByText(/rescaled from a calibrated floor/i)).toBeNull();
+    expect(screen.queryByText(/lowest score we count/i)).toBeNull();
   });
   it("close call: chip with text plus the borderline line; absent otherwise", () => {
     const { unmount } = render(<WhyThisScore city={{ ...city, closeCall: true }} />);

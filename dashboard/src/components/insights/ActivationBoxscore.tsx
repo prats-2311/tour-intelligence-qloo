@@ -51,7 +51,7 @@ export function ActivationBoxscore({ cities, selectedId, onSelect }: { cities: S
                       <span className="text-[12px] text-canvas-muted">{c.country}</span>
                     </button>
                   </th>
-                  {COLS.map((k) => <td key={k.key} className="px-3 text-right"><Num v={c.activation.components[k.key]} bar="var(--color-bone)" digits={2} /></td>)}
+                  {COLS.map((k) => <td key={k.key} className="px-3 text-right"><Num v={c.activation.components?.[k.key]} bar="var(--color-bone)" digits={2} /></td>)}
                   <td className="px-3 text-right"><Num v={c.activation.value} bar="var(--color-gold)" digits={0} /></td>
                   <td className="px-3 text-right"><VerdictChip verdict={c.verdict} /></td>
                 </tr>

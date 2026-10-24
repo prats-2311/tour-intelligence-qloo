@@ -14,7 +14,7 @@ export function CoBilling({ card }: { card: PlaybookCard }) {
           return <Row key={i} name={str(it.name)} chips={tagsOf(it.sharedTags)} aside={s !== null && a !== null && l !== null ? liftLine(s, a, l) : "—"} />;
         })}
       </Rows>
-      <Caption>lift = shared taste × local affinity</Caption>
+      <Caption>fit = how much fans share taste × how much the city likes them</Caption>
     </>
   );
 }

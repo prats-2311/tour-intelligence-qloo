@@ -85,7 +85,7 @@ describe("playbook cards", () => {
   it("co-billing shows both lift factors", () => {
     render(<CardBody card={card("co_billing")} city="Guadalajara" />);
     expect(screen.getByText("0.34 × 0.88 = 0.30")).toBeTruthy();
-    expect(screen.getByText("lift = shared taste × local affinity")).toBeTruthy();
+    expect(screen.getByText("fit = how much fans share taste × how much the city likes them")).toBeTruthy();
   });
   it("talent shows shared taste, tags and the proxy list", () => {
     render(<CardBody card={card("talent")} city="Guadalajara" />);

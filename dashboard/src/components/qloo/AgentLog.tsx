@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Check, Circle, LoaderCircle, Radio, TriangleAlert } from "lucide-react";
+import { toolLabel } from "@/lib/qloo/labels";
 import { countQlooCalls, narrate, type LogStep } from "@/lib/qloo/narrate";
 import type { GatewayEvent } from "@/lib/qloo/types";
 
@@ -54,7 +55,7 @@ export function AgentLog({ events }: { events: GatewayEvent[] }) {
             <p className="text-[13px] text-canvas-text">{s.sentence}</p>
             {(s.tool || s.detail) && (
               <p className="font-mono text-[11px] text-canvas-muted">
-                {s.tool && <span>{s.tool}</span>}{s.tool && s.detail && " · "}{s.detail}
+                {s.tool && <span>{toolLabel(s.tool)}</span>}{s.tool && s.detail && " · "}{s.detail}
                 {s.cached && <span className="ml-2">From cache</span>}
                 {s.stale && <span className="ml-2 text-state-stale">Stale</span>}
               </p>

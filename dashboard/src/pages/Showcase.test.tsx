@@ -51,7 +51,7 @@ describe("recorded showcase", () => {
     expect(within(card).getByText("Ranked 3rd on fan density alone. 1st on winnability.")).toBeTruthy();
     expect(within(card).getByText("Recorded Qloo run · 2026-10-16 — not live")).toBeTruthy();
     expect(within(card).getByRole("link", { name: "Delta" }).getAttribute("href")).toBe("/tours/playbook/d?showcase=1");
-    expect(screen.getByRole("link", { name: "Try the showcase tour" }).getAttribute("href")).toBe("/tours/board?showcase=1");
+    expect(screen.getByRole("link", { name: "See the example tour" }).getAttribute("href")).toBe("/tours/board?showcase=1");
   });
   it("Landing proof card claims no rank shift when nothing climbs", async () => {
     const { Landing } = await load(NO_CLIMB);
