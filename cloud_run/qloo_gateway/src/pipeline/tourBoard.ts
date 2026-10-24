@@ -13,7 +13,11 @@ import { artistTasteArgs } from "./recArgs.js";
 import { noVenuesCopy, sameCityVenues, venueArgs } from "./venues.js";
 import type { DataWarning, EvidenceRef, GatewayEvent, Score, Verdict } from "../types.js";
 
-export interface TourBrief { artist: string; artistEntityId?: string; regions: string[]; maxStops: number; sessionId: string; today: string }
+export interface TourBrief {
+  artist: string; artistEntityId?: string; regions: string[]; maxStops: number; sessionId: string; today: string;
+  /** Back-test only (Proof v3): cities scored exactly like heat candidates, labelled `backtest_extra`. The live HTTP route never reads or forwards this. */
+  extraCities?: City[];
+}
 export interface ScoredCity {
   id: string; name: string; country: string; lat: number; lon: number;
   fanHeat: Score; activation: Score & { components: Partial<Record<ComponentName, number>>; rawComponents?: Partial<Record<ComponentName, number>> }; winnability: Score; verdict: Verdict; closeCall: boolean;
@@ -21,8 +25,8 @@ export interface ScoredCity {
   warnings: DataWarning[];
   /** Machine-readable reason a city has no activation score (today only "location_unresolved"). */
   insufficientReason?: "location_unresolved";
-  /** Where the city came from: Qloo's regional fan-heat list, or the largest market of a brief region that the list did not contain. */
-  candidateSource: "heat" | "major_market";
+  /** Where the city came from: Qloo's regional fan-heat list, the largest market of a brief region that the list did not contain, or (back-test only, never set by the live route) a caller-supplied extra city. */
+  candidateSource: "heat" | "major_market" | "backtest_extra";
   /** True when fan heat is the board's floor (the minimum among heat candidates) because Qloo's heat list does not include this city: no Qloo evidence. */
   fanHeatFloor?: true;
   /** The query string Qloo resolved this city with, and how many in-city lookups it took (unresolved: all that were tried). */
@@ -261,7 +265,7 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
     // Major markets we always check: the largest city of each country region, at most MAX_MAJOR_MARKETS. One already in the heat pool is
     // a heat candidate (added if the shortlist skipped it); one absent from Qloo's list gets the board's fan-heat floor and no Qloo evidence.
     const seeds = pooled.length > 0 ? majorMarkets(brief.regions, deps.cities) : [];
-    const shortlist: Array<(typeof pooled)[number] & { source: "heat" | "major_market" }> = picked.map((m) => ({ ...m, source: "heat" as const }));
+    const shortlist: Array<(typeof pooled)[number] & { source: "heat" | "major_market" | "backtest_extra"; floored?: true }> = picked.map((m) => ({ ...m, source: "heat" as const }));
     const have = new Set(shortlist.map((m) => m.city.id));
     // Seeds never push the board past max(MAX_BOARD_WITH_SEEDS, the shortlist size): a big board is already near the session budget.
     const cap = Math.max(MAX_BOARD_WITH_SEEDS, picked.length);
@@ -270,14 +274,26 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
       if (inPool && !have.has(seed.id) && shortlist.length < cap) { shortlist.push({ ...inPool, source: "heat" }); have.add(seed.id); }
     }
     const heatValues = shortlist.map((m) => heat.get(m.city.id)?.value).filter((v): v is number => typeof v === "number");
-    if (heatValues.length > 0) {
-      const floor = Math.min(...heatValues);
+    const floor = heatValues.length > 0 ? Math.min(...heatValues) : undefined;
+    if (floor !== undefined) {
       for (const seed of seeds) {
         if (have.has(seed.id) || shortlist.length >= cap) continue;
         heat.set(seed.id, { value: floor, refs: [] });
-        shortlist.push({ city: seed, affinity: Number.NaN, popularity: Number.NaN, refs: [], warnings: [], source: "major_market" });
+        shortlist.push({ city: seed, affinity: Number.NaN, popularity: Number.NaN, refs: [], warnings: [], source: "major_market", floored: true });
         have.add(seed.id);
       }
+    }
+    // Back-test extras (never from the live route): scored like heat candidates, outside the board cap. One in the heat pool keeps its real
+    // fan heat; one absent from it gets the same floor as a seed. No heat pool at all means no floor, so none are scored (as with seeds).
+    for (const extra of brief.extraCities ?? []) {
+      if (have.has(extra.id) || pooled.length === 0) continue;
+      const inPool = byId.get(extra.id);
+      if (inPool) shortlist.push({ ...inPool, source: "backtest_extra" });
+      else if (floor !== undefined) {
+        heat.set(extra.id, { value: floor, refs: [] });
+        shortlist.push({ city: extra, affinity: Number.NaN, popularity: Number.NaN, refs: [], warnings: [], source: "backtest_extra", floored: true });
+      } else continue;
+      have.add(extra.id);
     }
 
     type CityOutcome = { ok: ScoredCity } | { stop: unknown };
@@ -285,7 +301,7 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
     for (let i = 0; i < shortlist.length; i += limit) {
       const batch: CityOutcome[] = await Promise.all(shortlist.slice(i, i + limit).map(async (m): Promise<CityOutcome> => {
         const fan = heat.get(m.city.id)!;
-        const base = { id: m.city.id, name: m.city.name, country: m.city.country, lat: m.city.lat, lon: m.city.lon, candidateSource: m.source, ...(m.source === "major_market" ? { fanHeatFloor: true as const } : {}) };
+        const base = { id: m.city.id, name: m.city.name, country: m.city.country, lat: m.city.lat, lon: m.city.lon, candidateSource: m.source, ...(m.floored ? { fanHeatFloor: true as const } : {}) };
         try {
           const loc = await resolveLocation(signalArtist, m.city, deps, brief.sessionId, events);
           if (loc.status === "unresolved") {
@@ -303,7 +319,7 @@ export async function* runTourBoard(brief: TourBrief, deps: Deps): AsyncGenerato
           const win = winnability(fan, act);
           const v = verdict(fan, act, win, SCORING.thresholds);
           // A floored seed has no Qloo fan-heat evidence, so it can never earn the headline verdicts.
-          const capped = m.source === "major_market" && (v === "play" || v === "hidden_goldmine") ? "consider" : v;
+          const capped = m.floored && (v === "play" || v === "hidden_goldmine") ? "consider" : v;
           return { ok: { ...base, fanHeat: fan, activation: act, winnability: win, verdict: capped, closeCall: closeCall(fan, act, SCORING.thresholds), zones: inputs.zones, warnings: dedupeWarnings([...m.warnings, ...inputs.warnings]), locationQuery: loc.where, locationAttempts: loc.attempts } };
         } catch (err) {
           if (err instanceof Aborted || err instanceof BudgetStop) return { stop: err };

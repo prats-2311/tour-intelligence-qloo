@@ -41,7 +41,8 @@ export function selectCases(all: BacktestCase[], only: string[] | undefined, ski
   return cases;
 }
 
-export function createGatewayCaller(opts: { baseUrl: string; token: string; fetchImpl?: typeof fetch; retries?: number; backoffMs?: number }) {
+/** `noRetryStatuses`: HTTP statuses that fail at once instead of being retried (Proof v3 stops on the first 429). */
+export function createGatewayCaller(opts: { baseUrl: string; token: string; fetchImpl?: typeof fetch; retries?: number; backoffMs?: number; noRetryStatuses?: number[] }) {
   const fetchImpl = opts.fetchImpl ?? fetch;
   const base = opts.baseUrl.replace(/\/+$/, "");
   const retries = opts.retries ?? 2;
@@ -57,6 +58,7 @@ export function createGatewayCaller(opts: { baseUrl: string; token: string; fetc
           signal: AbortSignal.timeout(90_000),
         });
         if (res.status === 401 || res.status === 403) throw new GatewayAuthError(res.status);
+        if (opts.noRetryStatuses?.includes(res.status)) throw new Error(`HTTP ${res.status}`);
         if (res.status >= 500 || res.status === 429) { last = `HTTP ${res.status}`; continue; }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const envelope = ((await res.json()) as { envelope?: unknown } | null)?.envelope;

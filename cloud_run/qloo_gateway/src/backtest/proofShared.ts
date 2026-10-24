@@ -1,0 +1,127 @@
+import { cacheKey } from "../cache.js";
+import { generateJson, type GenerateFn } from "../narrative/gemini.js";
+import type { CallResult, QlooCaller } from "../qlooCall.js";
+import type { QlooEnvelope } from "../types.js";
+import { GatewayAuthError } from "./run.js";
+import { StopMonitor, StopRun } from "./proofStats.js";
+
+/** One Qloo tool call, as the existing gateway HTTP caller makes it. */
+export type CallTool = (name: string, args: Record<string, unknown>, sessionId: string) => Promise<QlooEnvelope>;
+
+/**
+ * Wraps a caller with the protocol's stop rule: no call is sent once the run has stopped, every call's outcome is recorded
+ * (counts, 429, quota/limit text, error rate), and a stop surfaces as `StopRun`. Only error envelopes and non-ok/empty envelopes
+ * are scanned for limit text: a successful result's entity names are data, not a signal.
+ */
+export function monitoredCallTool(inner: CallTool, monitor: StopMonitor): CallTool {
+  return async (name, args, sessionId) => {
+    monitor.assertOk();
+    let envelope: QlooEnvelope;
+    try {
+      envelope = await inner(name, args, sessionId);
+    } catch (err) {
+      if (err instanceof GatewayAuthError) { monitor.record("qloo", { ok: false, text: "auth" }); monitor.halt(err.message); monitor.assertOk(); }
+      monitor.record("qloo", { ok: false, text: String((err as Error)?.message ?? err) });
+      monitor.assertOk();
+      throw err;
+    }
+    const isError = envelope.status === "error";
+    const nonOk = !isError && envelope.status !== "ok" && envelope.status !== "empty";
+    const text = isError ? [envelope.summary, envelope.error?.code, envelope.error?.recovery].filter((x): x is string => typeof x === "string").join(" ")
+      : nonOk ? envelope.summary : undefined;
+    monitor.record("qloo", { ok: !isError, ...(text ? { text } : {}) });
+    monitor.assertOk();
+    return envelope;
+  };
+}
+
+const MEMO_STATUSES = new Set(["ok", "empty", "partial", "degraded"]);
+
+/**
+ * A per-artist in-memory layer over a CallTool that presents the pipeline's QlooCaller. The second board pass (with extra cities) repeats
+ * the first pass's calls; those are served here, so only new cities cost a request. Errors are never memoised.
+ */
+export function memoQloo(callTool: CallTool): QlooCaller & { stats: { hits: number; misses: number } } {
+  const memo = new Map<string, QlooEnvelope>();
+  const inflight = new Map<string, Promise<QlooEnvelope>>();
+  const stats = { hits: 0, misses: 0 };
+  return {
+    stats,
+    async call(tool, args, sessionId): Promise<CallResult> {
+      const key = cacheKey(tool, args);
+      const hit = memo.get(key);
+      if (hit) { stats.hits += 1; return { envelope: hit, cacheKey: key, cached: true, stale: false }; }
+      const pending = inflight.get(key);
+      if (pending) { stats.hits += 1; return { envelope: await pending, cacheKey: key, cached: true, stale: false }; }
+      stats.misses += 1;
+      const p = callTool(tool, args, sessionId);
+      inflight.set(key, p);
+      try {
+        const envelope = await p;
+        if (MEMO_STATUSES.has(envelope.status)) memo.set(key, envelope);
+        return { envelope, cacheKey: key, cached: false, stale: false };
+      } finally { inflight.delete(key); }
+    },
+  };
+}
+
+export const isPermutation = (labels: string[], answer: unknown): answer is string[] =>
+  Array.isArray(answer) && answer.length === labels.length && answer.every((x) => typeof x === "string")
+  && new Set(answer).size === labels.length && labels.every((l) => (answer as string[]).includes(l));
+
+export interface RankAnswer { order: string[] | null; attempts: number; model?: string; reason?: "not_a_permutation" | "gemini_error" }
+export interface PermutationRanker { rank(prompt: string, labels: string[]): Promise<RankAnswer> }
+
+/**
+ * Gemini ranking at temperature 0.2 with a response schema that forces each label to be one of the given strings. A non-permutation is retried
+ * once; a second miss is "no answer". A failed Vertex call (every model) is "no answer" without a retry; the stop rule watches every real call.
+ */
+export function createPermutationRanker(opts: { generate: GenerateFn; models: string[]; monitor: StopMonitor }): PermutationRanker {
+  const { monitor } = opts;
+  const generate: GenerateFn = async (model, body) => {
+    try {
+      const r = await opts.generate(model, body);
+      monitor.record("gemini", { ok: true });
+      return r;
+    } catch (err) {
+      monitor.record("gemini", { ok: false, text: String((err as Error)?.message ?? err) });
+      throw err;
+    }
+  };
+  return {
+    async rank(prompt, labels) {
+      const body = {
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json", temperature: 0.2,
+          responseSchema: { type: "OBJECT", required: ["ranking"], properties: { ranking: { type: "ARRAY", items: { type: "STRING", enum: labels } } } },
+        },
+      };
+      let model: string | undefined;
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        let json: unknown;
+        try {
+          const r = await generateJson(generate, opts.models, body, { beforeAttempt: () => monitor.assertOk() });
+          model = r.model;
+          json = r.json;
+        } catch (err) {
+          if (err instanceof StopRun) throw err;
+          monitor.assertOk();
+          if (!(err instanceof SyntaxError)) return { order: null, attempts: attempt, reason: "gemini_error" };
+        }
+        const answer = (json as { ranking?: unknown } | null | undefined)?.ranking;
+        if (isPermutation(labels, answer)) return { order: answer, attempts: attempt, ...(model ? { model } : {}) };
+      }
+      return { order: null, attempts: 2, ...(model ? { model } : {}), reason: "not_a_permutation" };
+    },
+  };
+}
+
+const regionNames = (() => { try { return new Intl.DisplayNames(["en"], { type: "region" }); } catch { return undefined; } })();
+/** English country name for an ISO-2 code; the code itself when unknown. */
+export function countryLabel(code: string): string {
+  try {
+    const n = regionNames?.of(code);
+    return n && n !== code && !/^unknown region$/i.test(n) ? n : code;
+  } catch { return code; }
+}
