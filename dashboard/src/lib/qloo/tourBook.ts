@@ -1,6 +1,7 @@
 import type { CardKind, GatewayEvent, PlaybookCard, ScoredCity, Source, ThisWeek, TourBrief } from "./types";
 import { accentFor } from "./cityAccent";
 import type { PlaybookState } from "./playbookReducer";
+import { toolPlainName } from "./labels";
 import { sortCities } from "./ranking";
 
 export interface BookCityChapter {
@@ -9,10 +10,10 @@ export interface BookCityChapter {
   advance: Array<{ label: string; value: string }>;
   claims: { verified: number; removed: number } | null;
 }
-export interface ProvenanceRow { n: number; tool: string; inputs: string; status: string; cached: boolean; cacheKey: string; hash: string }
+export interface ProvenanceRow { n: number; tool: string; /** Plain-language tool name. */ name: string; resultCount: number; inputs: string; status: string; cached: boolean; cacheKey: string; hash: string }
 export interface TourBook {
   title: string; subtitle: string; source: Source;
-  market: { rows: ScoredCity[]; shortlisted: Set<string>; slope: Array<{ id: string; name: string; densityRank: number; winRank: number; highlight: boolean }> };
+  market: { rows: ScoredCity[]; shortlisted: Set<string>; slope: Array<{ id: string; name: string; densityRank: number; winRank: number; highlight: boolean }>; /** Cities Qloo could not place: left out of the slope chart and footnoted. */ unplaced: string[] };
   chapters: BookCityChapter[];
   provenance: ProvenanceRow[];
 }
@@ -76,6 +77,8 @@ function summariseArgs(args: Record<string, unknown>): string {
   for (const k of INPUT_KEYS) {
     const v = args[k];
     if (v === undefined || v === null || v === "") continue;
+    if (typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-|^[0-9a-f]{24,}$/i.test(v)) continue; // raw entity ids mean nothing to a promoter
+    if (Array.isArray(v) && v.every((x) => typeof x === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-|^[0-9a-f]{24,}$/i.test(x))) continue;
     parts.push(typeof v === "string" ? v : JSON.stringify(v));
   }
   const s = parts.join(" · ");
@@ -95,7 +98,7 @@ function buildProvenance(logs: GatewayEvent[][]): ProvenanceRow[] {
       if (seen.has(e.cacheKey)) continue;
       seen.add(e.cacheKey);
       rows.push({
-        n: rows.length + 1, tool: e.tool, inputs: call ? summariseArgs(call.args) : "", status: e.status,
+        n: rows.length + 1, tool: e.tool, name: toolPlainName(e.tool, call?.args ?? {}), resultCount: e.resultCount, inputs: call ? summariseArgs(call.args) : "", status: e.status,
         cached: call?.cached ?? false, cacheKey: e.cacheKey, hash: `${e.cacheKey.slice(0, 4)}…${e.cacheKey.slice(-2)}`,
       });
     }
@@ -110,8 +113,11 @@ export function buildTourBook(input: {
   const byWin = sortCities(input.cities, "winnability");
   const byDensity = sortCities(input.cities, "density");
   const rank = (list: ScoredCity[], id: string) => list.findIndex((c) => c.id === id) + 1;
-  const slope = byWin.filter((c) => c.winnability.value !== null).map((c) => {
-    const densityRank = rank(byDensity, c.id), winRank = rank(byWin, c.id);
+  // Both columns rank the same set (cities with both scores), so every rank is 1..n and no line leaves the chart.
+  const plotted = (c: ScoredCity) => c.winnability.value !== null && c.fanHeat.value !== null;
+  const winOrder = byWin.filter(plotted), densityOrder = byDensity.filter(plotted);
+  const slope = winOrder.map((c) => {
+    const densityRank = rank(densityOrder, c.id), winRank = rank(winOrder, c.id);
     return { id: c.id, name: c.name, densityRank, winRank, highlight: c.verdict === "hidden_goldmine" && winRank < densityRank };
   });
   const chosen = new Set(input.shortlist);
@@ -129,7 +135,7 @@ export function buildTourBook(input: {
   return {
     title: `${input.artistName}: ${input.brief.regions.join(", ")}`,
     subtitle: seasonLabel(input.brief.dateWindow), source: input.source,
-    market: { rows: byWin, shortlisted: new Set(input.shortlist), slope },
+    market: { rows: byWin, shortlisted: new Set(input.shortlist), slope, unplaced: byWin.filter((c) => c.insufficientReason === "location_unresolved").map((c) => c.name) },
     chapters, provenance: buildProvenance(logs),
   };
 }

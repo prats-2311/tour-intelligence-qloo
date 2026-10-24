@@ -51,7 +51,9 @@ function TourBookPage() {
   const wantShowcase = params.get("showcase") === "1";
   const wantSample = sampleParam === "1" || wantLong || wantShowcase;
   const wantSet: SampleSet = wantShowcase ? "showcase" : wantLong ? "long" : "default";
-  const sampleQ = wantShowcase ? "?showcase=1" : wantLong ? "?sample=long" : wantSample ? "?sample=1" : "";
+  // The URL decides; the run the board already holds is the fallback, so Close never drops the showcase or sample flag.
+  const sampleQ = wantShowcase ? "?showcase=1" : wantLong ? "?sample=long" : wantSample ? "?sample=1"
+    : state.source === "showcase" ? "?showcase=1" : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
   const isDesktop = useIsDesktop();
   const reduce = useReducedMotion();
   const started = useRef(false);
@@ -61,6 +63,7 @@ function TourBookPage() {
   const [chaptersOpen, setChaptersOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [calendarDone, setCalendarDone] = useState(false);
   const [current, setCurrent] = useState("market");
 
   // ?sample=1 starts the showcase unless the board already holds a sample run (same guard as the playbook page).
@@ -217,6 +220,8 @@ function TourBookPage() {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setCalendarDone(true);
+    setTimeout(() => setCalendarDone(false), 4000);
   };
 
   // Live runs only: the snapshot that "Save as campaign" stores with the new campaign.
@@ -245,6 +250,7 @@ function TourBookPage() {
     <>
       {saveInput && <SaveAsCampaign input={saveInput} />}
       {copied && <p role="status" className="text-[13px] text-canvas-muted">Link copied</p>}
+      <div aria-live="polite" className="empty:hidden">{calendarDone && <p role="status" className="text-[13px] text-canvas-text">Calendar file downloaded</p>}</div>
       {!dateWindow && <p id="ics-hint" className="text-[13px] text-canvas-muted">Add a date window to export holds</p>}
     </>
   );

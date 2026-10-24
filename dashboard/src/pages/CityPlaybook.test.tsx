@@ -7,6 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as client from "@/lib/qloo/client";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { samplePlaybookEvents } from "@/lib/qloo/fixtures/lumenValePlaybooks";
+import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
+import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
+import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
 import { resetPlaybooks } from "@/lib/qloo/playbookStore";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import CityPlaybook from "./CityPlaybook";
@@ -19,6 +22,7 @@ beforeEach(() => {
   vi.stubGlobal("matchMedia", () => ({ matches: desktop, addEventListener() {}, removeEventListener() {} }));
 });
 afterEach(() => {
+  setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
   cleanup();
   resetPlaybooks();
   vi.restoreAllMocks();
@@ -99,19 +103,73 @@ describe("CityPlaybook", () => {
     expect(await screen.findByText("Max stops reached — raise it in the brief")).toBeTruthy();
     expect((screen.getByRole("button", { name: "Add to tour" }) as HTMLButtonElement).disabled).toBe(true);
   });
-  it("tabs switch with arrow keys and Talent shows the talent card", async () => {
+  it("has only the two promoter tabs, How to win and Local acts, and Local acts shows the talent card", async () => {
     renderAt("/tours/playbook/4005539?sample=1");
-    const activate = await screen.findByRole("tab", { name: "Activate" });
-    activate.focus();
-    fireEvent.keyDown(activate, { key: "ArrowLeft" });
-    expect(screen.getByRole("tab", { name: "Talent" }).getAttribute("aria-selected")).toBe("true");
+    const first = await screen.findByRole("tab", { name: "How to win" });
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["How to win", "Local acts"]);
+    expect(screen.queryByRole("tab", { name: /Culture|Delight|Activate|Talent/ })).toBeNull();
+    first.focus();
+    fireEvent.keyDown(first, { key: "ArrowLeft" });
+    expect(screen.getByRole("tab", { name: "Local acts" }).getAttribute("aria-selected")).toBe("true");
     expect(await screen.findByText(/Shared taste with Guadalajara's mainstream/)).toBeTruthy();
   });
-  it("Culture and Delight tabs say the briefs come after saving a campaign", async () => {
+  it("never mentions the campaign flow", async () => {
     renderAt("/tours/playbook/4005539?sample=1");
-    fireEvent.click(await screen.findByRole("tab", { name: "Culture" }));
-    expect(screen.getByText("Culture and Delight briefs are written by the campaign agents after you save this tour as a campaign.")).toBeTruthy();
+    await screen.findByRole("tab", { name: "How to win" });
+    expect(document.body.textContent).not.toMatch(/save this tour as a campaign/i);
   });
+  it("shows the city name once in the header: the poster is decorative and sits after the score block on phones", async () => {
+    renderAt("/tours/playbook/4005539?sample=1");
+    const h1 = await screen.findByRole("heading", { name: "Guadalajara", level: 1 });
+    expect(screen.queryByRole("img", { name: /poster/ })).toBeNull();
+    const header = h1.closest("header")!;
+    expect([...header.querySelectorAll("svg text")].filter((t) => /Guadalajara/.test(t.textContent ?? ""))).toHaveLength(0);
+    const strip = header.querySelector("[data-testid='poster-strip']")!;
+    expect(strip).toBeTruthy();
+    expect(!!(h1.compareDocumentPosition(strip) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+    expect(strip.getAttribute("aria-hidden")).toBe("true");
+  });
+  it("keeps the showcase flag on the back link", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    renderAt("/tours/playbook/3520339?showcase=1");
+    const back = await screen.findByRole("link", { name: "Back to Tour Board" });
+    expect(back.getAttribute("href")).toBe("/tours/board?showcase=1");
+  });
+  it("cards scroll sideways with a visible Swipe for more hint, and the scroller is keyboard reachable", async () => {
+    renderAt("/tours/playbook/4005539?sample=1");
+    await screen.findByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.");
+    expect(screen.getByText("Swipe for more")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Playbook cards" }).getAttribute("tabindex")).toBe("0");
+  });
+  it("when held, Remove from tour is secondary and the primary action moves on to the Tour Book", async () => {
+    renderAt("/tours/playbook/3995465?sample=1");
+    const add = await screen.findByRole("button", { name: "Add to tour" });
+    expect(add.className).toMatch(/btn-gold/);
+    expect(screen.queryByRole("link", { name: /^Next:/ })).toBeNull();
+    fireEvent.click(add);
+    const remove = screen.getByRole("button", { name: "Remove from tour" });
+    expect(remove.className).not.toMatch(/btn-gold/);
+    const next = screen.getByRole("link", { name: /^Next:/ });
+    expect(next.className).toMatch(/btn-gold/);
+  });
+});
+
+describe("CityPlaybook in showcase mode", () => {
+  const recordedIds = () => Object.keys(parseShowcase(syntheticShowcase).playbooks);
+  it("a city with no recorded playbook shows the explanation and a way back, no empty tiles", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    const missing = parseShowcase(syntheticShowcase).boardEvents.flatMap((e) => (e.type === "city_scored" ? [e.city] : [])).find((c) => !recordedIds().includes(c.id))!;
+    renderAt(`/tours/playbook/${missing.id}?showcase=1`);
+    expect(await screen.findByText(`Playbooks are recorded for ${recordedIds().length} cities in this example. Try your own artist to open any city.`)).toBeTruthy();
+    expect(screen.getByRole("heading", { name: missing.name })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Back to the Tour Board" }).getAttribute("href")).toBe("/tours/board?showcase=1");
+    expect(screen.queryByText("—")).toBeNull();
+    expect(screen.queryByText("TOP ZONE")).toBeNull();
+    expect(screen.queryByRole("tab")).toBeNull();
+  });
+});
+
+describe("CityPlaybook (shared)", () => {
   it("shows a page-level notice and evidence-only cards when the narrative is unavailable", async () => {
     vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () {
       for (const e of samplePlaybookEvents("4005539")!) {

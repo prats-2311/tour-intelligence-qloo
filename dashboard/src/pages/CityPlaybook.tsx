@@ -22,18 +22,17 @@ import { fetchThisWeek } from "@/lib/qloo/client";
 import { accentFor } from "@/lib/qloo/cityAccent";
 import { LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks";
-import { INTEGRITY_LINE, LOCATION_UNRESOLVED_NOTE } from "@/lib/qloo/labels";
+import { INTEGRITY_LINE, LOCATION_UNRESOLVED_NOTE, recordedPlaybooksLine } from "@/lib/qloo/labels";
 import { loadPlaybook, usePlaybook, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
-import { showcaseAvailable, showcaseBrief, showcaseCities, showcasePlaybookCities } from "@/lib/qloo/showcase";
+import { showcaseAvailable, showcaseBrief, showcaseCities, showcasePlaybookCities, showcasePlaybookEvents } from "@/lib/qloo/showcase";
 import type { CardKind, PlaybookCard as Card, SampleSet } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
-type Tab = "activate" | "culture" | "delight" | "talent";
-const TABS: Array<{ id: Tab; label: string }> = [
-  { id: "activate", label: "Activate" }, { id: "culture", label: "Culture" }, { id: "delight", label: "Delight" }, { id: "talent", label: "Talent" },
-];
+// The Culture and Delight briefs belong to the legacy campaign flow, which is off the promoter path.
+type Tab = "activate" | "talent";
+const TABS: Array<{ id: Tab; label: string }> = [{ id: "activate", label: "How to win" }, { id: "talent", label: "Local acts" }];
 const ORDER: CardKind[] = ["sponsors", "merch", "promo_zones", "local_moment", "venue_fit", "co_billing"];
 type CardId = CardKind | "this_week";
 // Desktop (lg) grid placement, brief 3b. On phones every card is a snap-scroller item.
@@ -50,6 +49,7 @@ const PLACE: Record<CardId, string> = {
 const FALLBACK_MAX_STOPS = 8;
 // Sample playbooks replay ~25 events; the showcase pacing used on the board (60 ms) would make this page feel slow.
 const SAMPLE_PLAYBOOK_DELAY_MS = 10;
+const btnSecondary = "inline-flex h-12 min-w-0 items-center justify-center rounded-[10px] bg-paper-raised px-3 lg:px-5 text-[15px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:h-10";
 const btnGold = "btn-gold inline-flex h-12 w-full min-w-0 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:w-auto";
 const textBtn = "inline-flex min-h-11 items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 const smallBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
@@ -73,7 +73,9 @@ function CityPlaybookPage() {
   const wantShowcase = params.get("showcase") === "1";
   const wantSample = sampleParam === "1" || wantLong || wantShowcase;
   const wantSet: SampleSet = wantShowcase ? "showcase" : wantLong ? "long" : "default";
-  const sampleQ = wantShowcase ? "?showcase=1" : wantLong ? "?sample=long" : wantSample ? "?sample=1" : "";
+  // The URL decides; a run already held on the board is the fallback, so Back never drops the showcase or sample flag.
+  const sampleQ = wantShowcase ? "?showcase=1" : wantLong ? "?sample=long" : wantSample ? "?sample=1"
+    : state.source === "showcase" ? "?showcase=1" : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
   const isDesktop = useIsDesktop();
   const started = useRef<string | null>(null); // the sample set this page already asked the board for
   const [tab, setTab] = useState<Tab>("activate");
@@ -98,7 +100,9 @@ function CityPlaybookPage() {
   const city = ready ? state.cities.find((c) => c.id === cityId) : undefined;
   const shownCity = city ?? (wantSample ? (wantShowcase ? showcaseCities() : SAMPLE_CITIES).find((c) => c.id === cityId) : undefined);
   const artist = ready ? state.artist : undefined;
-  const req: PlaybookRequest | null = shownCity && artist
+  // A showcase city with no recorded playbook has nothing to open: say so instead of showing empty tiles.
+  const unrecorded = wantShowcase && ready && !!shownCity && showcasePlaybookEvents(cityId) === null;
+  const req: PlaybookRequest | null = shownCity && artist && !unrecorded
     ? { artist: artist.name, artistEntityId: artist.entityId, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country, lat: shownCity.lat, lon: shownCity.lon }, sample, sampleSet: state.sampleSet, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined }
     : null;
   const pb = usePlaybook(req);
@@ -106,7 +110,7 @@ function CityPlaybookPage() {
   const week = useQuery({
     queryKey: ["this-week", sample, state.sampleSet, cityId, window?.start, window?.end],
     queryFn: () => fetchThisWeek({ city: shownCity!.name, country: shownCity!.country, window }, { sample, sampleSet: state.sampleSet, cityId }),
-    enabled: !!shownCity && !!artist,
+    enabled: !!shownCity && !!artist && !unrecorded,
     staleTime: Infinity,
     retry: false,
   });
@@ -147,10 +151,30 @@ function CityPlaybookPage() {
     );
   }
 
+  if (unrecorded) {
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col items-start gap-3 py-6">
+        <SampleBanner source="showcase" />
+        <h1 className="font-title break-words text-[28px] leading-tight text-canvas-text">{shownCity.name}</h1>
+        <p className="text-[13px] text-canvas-muted">{shownCity.country}</p>
+        <div className="flex items-center gap-3">
+          <VerdictChip verdict={shownCity.verdict} size="md" />
+          <span className="font-mono text-[28px] font-bold leading-none text-canvas-text tabular">{shownCity.winnability.value === null ? "" : Math.round(shownCity.winnability.value)}</span>
+        </div>
+        <p className="text-[15px] text-canvas-text">{recordedPlaybooksLine(showcasePlaybookCities().length)}</p>
+        <Link to={`/tours/board${sampleQ}`} className={`${smallBtn} h-12`}>Back to the Tour Board</Link>
+      </div>
+    );
+  }
+
   const accent = accentFor(shownCity.id, accentOrder);
   const code = cityCode(shownCity.name);
   const maxStops = state.brief?.maxStops ?? FALLBACK_MAX_STOPS;
   const inTour = shortlist.includes(shownCity.id);
+  const hasPlaybook = (id: string) => (state.source === "showcase" ? showcasePlaybookEvents(id) !== null : state.source === "sample" ? (SAMPLE_PLAYBOOK_CITY_IDS as readonly string[]).includes(id) : true);
+  const nextHeld = inTour
+    ? shortlist.slice(shortlist.indexOf(shownCity.id) + 1).map((id) => state.cities.find((c) => c.id === id)).find((c) => !!c && hasPlaybook(c.id))
+    : undefined;
   const full = !inTour && shortlist.length >= maxStops;
   const w = shownCity.winnability.value;
   const merch = narrative?.status === "ok" ? narrative.merch : null;
@@ -202,10 +226,17 @@ function CityPlaybookPage() {
   };
 
   const addToTour = (
-    <div className="flex min-w-0 flex-col gap-1 lg:items-start">
-      <button type="button" disabled={full} onClick={() => toggleShortlist(shownCity.id)} className={btnGold}>
-        {inTour ? "Remove from tour" : "Add to tour"}
-      </button>
+    <div className="flex min-w-0 flex-1 flex-col gap-1 lg:flex-none lg:items-start">
+      {inTour ? (
+        <div className="flex min-w-0 flex-1 items-center gap-2 lg:flex-none">
+          <button type="button" onClick={() => toggleShortlist(shownCity.id)} className={`${btnSecondary} shrink-0`}>Remove from tour</button>
+          <Link to={nextHeld ? `/tours/playbook/${nextHeld.id}${sampleQ}` : `/tours/book${sampleQ}`} className="btn-gold inline-flex h-12 min-w-0 flex-1 items-center justify-center rounded-[10px] px-3 text-[15px] font-semibold lg:h-10 lg:flex-none lg:px-5">
+            <span className="truncate">{nextHeld ? `Next: ${nextHeld.name}` : "Next: Tour Book"}</span>
+          </Link>
+        </div>
+      ) : (
+        <button type="button" disabled={full} onClick={() => toggleShortlist(shownCity.id)} className={btnGold}>Add to tour</button>
+      )}
       {full && <p className="text-[13px] text-canvas-muted">Max stops reached — raise it in the brief</p>}
     </div>
   );
@@ -225,13 +256,17 @@ function CityPlaybookPage() {
 
   const activatePanel = noSample ? noSamplePanel : (
     <>
-      <div ref={scrollerRef} tabIndex={0} role="region" aria-label="Playbook cards" className="-mx-4 flex snap-x focus-visible:outline-2 focus-visible:outline-gold snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-12 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0">
-        {activateIds.map((id) => (
-          <div key={id} data-card={id} className={`w-[88%] shrink-0 snap-start lg:w-auto ${PLACE[id]}`}>{cardFor(id)}</div>
-        ))}
+      <div className="relative -mx-4 lg:mx-0">
+        <div ref={scrollerRef} tabIndex={0} role="region" aria-label="Playbook cards" className="flex snap-x focus-visible:outline-2 focus-visible:outline-gold snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 lg:grid lg:grid-cols-12 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0">
+          {activateIds.map((id) => (
+            <div key={id} data-card={id} className={`w-[88%] shrink-0 snap-start lg:w-auto ${PLACE[id]}`}>{cardFor(id)}</div>
+          ))}
+        </div>
+        {shownIdx < activateIds.length - 1 && <span aria-hidden data-testid="swipe-fade" className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-canvas to-transparent lg:hidden" />}
       </div>
-      <p className="mt-1 text-[13px] tabular-nums text-canvas-muted lg:hidden" aria-live="polite">
-        {CARD_TITLE[activateIds[shownIdx]!]} · {shownIdx + 1} of {activateIds.length}
+      <p className="mt-1 flex items-center justify-between gap-3 text-[13px] tabular-nums text-canvas-muted lg:hidden">
+        <span aria-live="polite">{CARD_TITLE[activateIds[shownIdx]!]} · {shownIdx + 1} of {activateIds.length}</span>
+        {shownIdx < activateIds.length - 1 && <span>Swipe for more</span>}
       </p>
       <div className="mt-3 flex flex-col">
         <Link to="/proof" className="inline-flex min-h-11 items-center self-start text-[14px] font-medium text-canvas-text underline decoration-canvas-muted underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{PROOF_LINK_TEXT} →</Link>
@@ -241,24 +276,21 @@ function CityPlaybookPage() {
   );
   const talentCard = cardOf("talent");
   const talentPanel = noSample ? noSamplePanel : loading ? <div className="skeleton h-[280px] max-w-xl rounded-[18px]" aria-hidden /> : talentCard ? <div className="max-w-xl">{playbookCard("talent")}</div> : <p className="text-[13px] text-canvas-muted">Talent brief unavailable for {shownCity.name}</p>;
-  const briefPanel = (
-    <p className="max-w-xl rounded-[18px] bg-paper p-4 text-[15px] leading-[1.45] text-canvas-text">
-      Culture and Delight briefs are written by the campaign agents after you save this tour as a campaign.
-    </p>
-  );
-  const panels: Record<Tab, ReactNode> = { activate: activatePanel, culture: briefPanel, delight: briefPanel, talent: talentPanel };
+  const panels: Record<Tab, ReactNode> = { activate: activatePanel, talent: talentPanel };
 
   return (
     <div className="-mx-4 -mt-6 lg:mx-0 lg:mt-0">
       {(sample || wantSample) && <SampleBanner source={wantShowcase || state.source === "showcase" ? "showcase" : "sample"} />}
       <header className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-x-8 lg:pt-4">
-        <div className="relative lg:order-2 lg:col-span-7 [&_svg]:rounded-none lg:[&_svg]:rounded-[18px]">
-          <KeyArtPoster city={shownCity.name} accent={accent} ratio={isDesktop ? "16:9" : "4:5"} />
-          <Link to={`/tours/board${sampleQ}`} aria-label="Back to Tour Board" className="absolute left-3 top-3 inline-flex size-11 items-center justify-center rounded-[10px] bg-canvas-raised text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:left-4 lg:top-4">
-            <ChevronLeft size={22} aria-hidden />
-          </Link>
-        </div>
+        {isDesktop && (
+          <div aria-hidden className="lg:order-2 lg:col-span-7 [&_svg]:rounded-[18px]">
+            <KeyArtPoster city={shownCity.name} accent={accent} ratio="16:9" decorative />
+          </div>
+        )}
         <div className="flex min-w-0 flex-col gap-3 px-4 lg:order-1 lg:col-span-5 lg:px-0">
+          <Link to={`/tours/board${sampleQ}`} aria-label="Back to Tour Board" className="-mx-2 inline-flex min-h-11 w-fit items-center gap-1 rounded-[10px] px-2 text-[13px] font-medium text-canvas-muted hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
+            <ChevronLeft size={18} aria-hidden />Tour Board
+          </Link>
           <div className="min-w-0">
             <h1 className="font-title break-words text-[24px] leading-tight text-canvas-text lg:text-[40px] lg:leading-[1.1]">{shownCity.name}</h1>
             <p className="text-[13px] text-canvas-muted">{shownCity.country}</p>
@@ -300,6 +332,11 @@ function CityPlaybookPage() {
             </Notice>
           )}
           {isDesktop && <div className="flex flex-wrap items-center gap-3">{addToTour}{whyBtn}</div>}
+          {!isDesktop && (
+            <div data-testid="poster-strip" aria-hidden className="overflow-hidden rounded-[14px] [&_svg]:rounded-[14px]">
+              <KeyArtPoster city={shownCity.name} accent={accent} ratio="strip" decorative />
+            </div>
+          )}
         </div>
       </header>
 
@@ -335,7 +372,7 @@ function CityPlaybookPage() {
       </div>
 
       {!isDesktop && (
-        <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 mt-4 flex bg-canvas-raised px-3 py-2">{addToTour}</div>
+        <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 mt-4 flex bg-canvas-raised py-2 pl-3 pr-[68px]">{addToTour}</div>
       )}
 
       <Sheet open={whyOpen} onClose={() => setWhyOpen(false)} title={`${shownCity.name} — why this score?`}><WhyThisScore city={shownCity} scoring={state.scoring} /></Sheet>

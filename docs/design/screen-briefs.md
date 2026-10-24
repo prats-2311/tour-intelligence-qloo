@@ -133,7 +133,7 @@ Brand, local-artist and coffee/mezcal/vinyl-bar names are **fictional sample dat
 1. **Key-art header** (4:5 poster, full width, 0 radius at top): Guadalajara gig poster, fuchsia `#ff00aa` + bone risograph on canvas, jacaranda-blossom motif, "GUADALAJARA" hand-lettered. Back chevron and Share icon on a canvas-tinted 40 px square in the top corners.
 2. Identity block below the art (not on it): city name `title` 24 px Fraunces "Guadalajara"; "Jalisco, MX" 13 px stone; solid gold **Hidden goldmine** chip (28 px); winnability `kpi` "72" with "/100"; two bars (Fan heat 62, Activation 82); text action "Why this score?".
 3. Advance-sheet strip (2 × 2 key–value grid on #26251f): `TOP ZONE` Colonia Americana · `BEST ROOM` C3 Stage · `SUPPORT` Bruma Nocturna · `CLAIMS` 7 verified · 2 removed.
-4. **Sticky tabs**: Activate (active) · Culture · Delight · Talent.
+4. **Sticky tabs**: How to win (active) · Local acts.
 5. **Swipeable CueCards** (horizontal snap, 88% width, next card peeking 24 px), each with the fuchsia perforated rail and mono meta line:
    - Sponsors `GDL · SPONSORS · 10 BRANDS`: 5 ranked brands with fit right-aligned.
    - Merch `GDL · MERCH`: "Jacaranda season" drop description + 2 colour swatches (lilac, bone).

@@ -26,7 +26,17 @@ describe("book components", () => {
     render(<SlopeChart rows={book.market.slope} />);
     const img = screen.getByRole("img");
     expect(img.getAttribute("aria-label")).toContain("Guadalajara 6th → 3rd");
-    expect(img.getAttribute("aria-label")).toContain("Curitiba 9th → 4th");
+    expect(img.getAttribute("aria-label")).toContain("Curitiba 8th → 4th");
+  });
+  it("slope chart footnotes unplaced cities and only keys what is drawn", () => {
+    const { container, rerender } = render(<SlopeChart rows={book.market.slope} unplaced={["Oaxaca"]} />);
+    expect(screen.getByText("Not scored: Qloo couldn't place Oaxaca")).toBeTruthy();
+    expect(screen.getByText("Hidden goldmine that climbs")).toBeTruthy();
+    rerender(<SlopeChart rows={book.market.slope.map((r) => ({ ...r, highlight: false }))} />);
+    expect(screen.queryByText("Hidden goldmine that climbs")).toBeNull();
+    expect(screen.queryByText(/Not scored/)).toBeNull();
+    expect(screen.getByText("Other markets")).toBeTruthy();
+    expect(container.querySelector("figcaption")).toBeTruthy();
   });
   it("an incomplete chapter shows its reason instead of empty sections", () => {
     render(<CityChapter chapter={{ ...book.chapters[0]!, status: "incomplete", incompleteReason: "Session limit reached", playbook: undefined, claims: null }} />);
@@ -45,6 +55,17 @@ describe("book components", () => {
   it("provenance appendix counts requests in its title", () => {
     render(<ProvenanceAppendix rows={book.provenance} />);
     expect(screen.getByRole("heading", { name: `Provenance · ${book.provenance.length} Qloo requests` })).toBeTruthy();
+  });
+  it("provenance shows plain names, result counts and a readable status, never raw ids or needs_input", () => {
+    const rows = [
+      { n: 1, tool: "qloo_recommend", name: "Sponsor recommendations", resultCount: 10, inputs: "Mexico City", status: "ok", cached: false, cacheKey: "00000000-aaaa-bbbb-cccc-000000000001", hash: "0000…01" },
+      { n: 2, tool: "qloo_describe", name: "Artist lookup", resultCount: 0, inputs: "", status: "needs_input", cached: true, cacheKey: "00000000-aaaa-bbbb-cccc-000000000002", hash: "0000…02" },
+    ];
+    const { container } = render(<ProvenanceAppendix rows={rows} />);
+    expect(screen.getByText("Sponsor recommendations")).toBeTruthy();
+    expect(screen.getByText("10 results")).toBeTruthy();
+    expect(screen.getByText("Needed more input (skipped)")).toBeTruthy();
+    expect(container.textContent).not.toMatch(/needs_input|qloo_|[0-9a-f]{8}-[0-9a-f]{4}/);
   });
   it("market chapter marks shortlisted rows with a gold edge element and keeps the integrity line", () => {
     const { container } = render(<MarketChapter market={book.market} />);

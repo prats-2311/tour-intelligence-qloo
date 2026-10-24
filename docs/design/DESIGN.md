@@ -276,7 +276,7 @@ Rules: a city's slot is assigned once, in shortlist order, and **never follows r
 ### 4.3 Navigation
 - **Mobile bottom tab bar:** height 64 px + safe-area inset, bg `#26251f`, three tabs (spec §7.2): **Discover · Tours · Strategist**. Each target ≥ 44×44 px; icon 22 px (`Compass`, `Route`, `MessagesSquare`), label `label-mono` 11 px. Active: label and icon `#f2f0ea` plus a 3 px × 20 px gold bar above the icon; inactive `#a4a094`. No blur, no floating pill.
 - **Desktop top bar:** 56 px, bg `#26251f`, wordmark left ("Tour Intelligence" in Fraunces 18/600 + "× Qloo" Inter 13 Warm Stone), links Inter 14/500 (Discover, Tours, Insights, Proof), the Strategist toggle right. Active link: `#f2f0ea` + 2 px gold underline 6 px below baseline. **[evolved]** the 240 px left sidebar and the "Agentic Cinema OS" tagline are retired: the spec moves desktop navigation to a top bar.
-- **Sticky sub-tabs (Playbook):** 44 px tall, Inter 14/500, active tab gold 2 px underline, horizontally scrollable with scroll-snap and a 24 px right fade into canvas. Order: Activate · Culture · Delight · Talent.
+- **Sticky sub-tabs (Playbook):** 44 px tall, Inter 14/500, active tab gold 2 px underline, horizontally scrollable with scroll-snap and a 24 px right fade into canvas. Order: How to win · Local acts (the Culture and Delight tabs were removed: they depended on the legacy campaign flow).
 - **Segmented control (Winnability / Density-only / Without Qloo):** track `#26251f`, thumb `#32312a`, radius 10 px, 40 px tall, labels Inter 13/600. Thumb slides with a spring.
 
 ### 4.4 Inputs and forms

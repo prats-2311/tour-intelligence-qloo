@@ -8,11 +8,13 @@ export const ordinal = (n: number): string => {
   return `${n}${({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th"}`;
 };
 
+const joinNames = (xs: string[]): string => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+
 const W = 340, PAD_Y = 28, STEP = 26, LEFT = 118, RIGHT = W - 118;
 const GOLD = "#ffcc00";
 
 // Two columns of ranks (density-only, winnability). Highlighted climbers are gold 2 px; context lines are 1 px Stone.
-export function SlopeChart({ rows }: { rows: Row[] }) {
+export function SlopeChart({ rows, unplaced = [] }: { rows: Row[]; unplaced?: string[] }) {
   const n = Math.max(rows.length, 1);
   const h = PAD_Y + n * STEP + 8;
   const y = (rank: number) => PAD_Y + (rank - 1) * STEP + STEP / 2;
@@ -42,8 +44,9 @@ export function SlopeChart({ rows }: { rows: Row[] }) {
         ))}
       </svg>
       <figcaption className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-canvas-muted">
-        <span className="inline-flex items-center gap-1.5"><span aria-hidden data-print-keep className="inline-block h-0.5 w-5" style={{ backgroundColor: GOLD }} />Hidden goldmine that climbs</span>
-        <span className="inline-flex items-center gap-1.5"><span aria-hidden data-print-keep className="inline-block h-px w-5 bg-[#736e60]" />Other markets</span>
+        {rows.some((r) => r.highlight) && <span className="inline-flex items-center gap-1.5"><span aria-hidden data-print-keep className="inline-block h-0.5 w-5" style={{ backgroundColor: GOLD }} />Hidden goldmine that climbs</span>}
+        {rows.some((r) => !r.highlight) && <span className="inline-flex items-center gap-1.5"><span aria-hidden data-print-keep className="inline-block h-px w-5 bg-[#736e60]" />Other markets</span>}
+        {unplaced.length > 0 && <span className="basis-full">{`Not scored: Qloo couldn't place ${joinNames(unplaced)}`}</span>}
       </figcaption>
     </figure>
   );

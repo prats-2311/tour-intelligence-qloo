@@ -1,4 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { useSyntheticRecordings } from "./fixtures";
 
@@ -95,4 +97,100 @@ test("promoter judge path: landing → board → playbook → hold → book → 
   expect(errors, "console/page errors on the promoter path").toEqual([]);
   expect(qloo, LIVE ? "showcase must make zero POSTs to /api/qloo/" : "showcase must make zero /api/qloo/ calls").toEqual([]);
   expect(Date.now() - t0).toBeLessThan(120_000);
+});
+
+// ---- Plan 7 Task 2a: main-path correctness (synthetic showcase: a major-market row, close calls, an unplaced city, cities with no playbook) ----
+
+const showcaseFixture = JSON.parse(readFileSync(path.resolve("src/test/fixtures/showcase.synthetic.json"), "utf8")) as { playbooks: Record<string, unknown>; boardEvents: Array<{ type: string; city?: { id: string; name: string } }> };
+const unrecordedCity = () => showcaseFixture.boardEvents.flatMap((e) => (e.type === "city_scored" ? [e.city!] : [])).find((c) => !(c.id in showcaseFixture.playbooks))!;
+
+async function openShowcaseBoard(page: Page) {
+  await page.goto("/tours/board?showcase=1");
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("button", { name: "Stop" })).toHaveCount(0, { timeout: 30_000 });
+  await expect(page.getByTestId("city-row")).toHaveCount(showcaseFixture.boardEvents.filter((e) => e.type === "city_scored").length);
+}
+
+for (const width of [1280, 1024]) {
+  test(`desktop board rows keep every city name readable at ${width}px, with chips on their own line`, async ({ page }, info) => {
+    test.skip(info.project.name !== "desktop");
+    await page.setViewportSize({ width, height: 800 });
+    await openShowcaseBoard(page);
+    // The fixture must exercise the rows that used to squeeze the name: a major-market seed and a close call.
+    await expect(page.getByText("Major market").first()).toBeVisible();
+    await expect(page.getByText("Close call").first()).toBeVisible();
+    const rows = await page.getByTestId("city-row").evaluateAll((els) => els.map((el) => {
+      const name = el.querySelector<HTMLElement>("[data-testid=city-name]")!;
+      const text = el.querySelector<HTMLElement>("[data-testid=city-name-text]")!;
+      const notes = el.querySelector<HTMLElement>("[data-testid=row-notes]");
+      const bars = el.querySelector<HTMLElement>("[data-testid=bar-fanheat]")?.parentElement?.getBoundingClientRect();
+      const nb = name.getBoundingClientRect();
+      return {
+        label: el.getAttribute("data-city-name"), text: text.textContent, width: Math.round(nb.width), truncated: text.scrollWidth > text.clientWidth + 1,
+        notesBelow: notes ? notes.getBoundingClientRect().top >= nb.bottom - 1 : true,
+        notesOverBars: notes && bars ? notes.getBoundingClientRect().right > bars.left && notes.getBoundingClientRect().left < bars.right && notes.getBoundingClientRect().top < bars.bottom && notes.getBoundingClientRect().bottom > bars.top : false,
+      };
+    }));
+    for (const r of rows) {
+      expect(r.text, `${r.label} name text`).toBe(r.label);
+      expect(r.width, `${r.label} name width at ${width}`).toBeGreaterThanOrEqual(80);
+      expect(r.truncated, `${r.label} name truncated at ${width}`).toBe(false);
+      expect(r.notesBelow, `${r.label} notes under the name`).toBe(true);
+      expect(r.notesOverBars, `${r.label} notes over the bars`).toBe(false);
+    }
+  });
+}
+
+test("mobile: the strategist button never covers a visible score, verdict pill or fan heat value on the board", async ({ page }, info) => {
+  test.skip(info.project.name !== "mobile");
+  await openShowcaseBoard(page);
+  const fab = page.getByRole("button", { name: "Ask the strategist" });
+  await expect(fab).toBeVisible();
+  const stops = await page.evaluate(() => Math.ceil(document.documentElement.scrollHeight / 200));
+  for (let i = 0; i <= stops; i++) {
+    await page.evaluate((y) => window.scrollTo(0, y), i * 200);
+    const hits = await page.evaluate(() => {
+      const f = document.querySelector<HTMLElement>("[aria-label='Ask the strategist']")!.getBoundingClientRect();
+      const out: string[] = [];
+      for (const el of document.querySelectorAll<HTMLElement>("[data-testid=row-score], [data-testid=row-chip], [data-testid=row-bar-value]")) {
+        const r = el.getBoundingClientRect();
+        if (r.width < 1 || r.bottom < 0 || r.top > window.innerHeight) continue;
+        const top = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((e) => !e.closest("[aria-label='Ask the strategist']"));
+        if (!top || !el.contains(top) && !top.contains(el)) continue; // hidden under the sticky footer, not covered by the button
+        const overlap = r.left < f.right && r.right > f.left && r.top < f.bottom && r.bottom > f.top;
+        if (overlap) out.push(`${el.getAttribute("data-testid")} "${(el.textContent ?? "").trim()}" under the button`);
+      }
+      return out;
+    });
+    expect(hits, `scrollY ${i * 200}`).toEqual([]);
+  }
+});
+
+test("showcase rows with no recorded playbook are not links; a direct URL explains instead of showing empty tiles", async ({ page }) => {
+  await openShowcaseBoard(page);
+  const missing = unrecordedCity();
+  const row = page.locator(`[data-city-id="${missing.id}"]`);
+  await expect(row.getByRole("button")).toHaveCount(0);
+  const n = Object.keys(showcaseFixture.playbooks).length;
+  await expect(page.getByText(`Playbooks are recorded for ${n} cities in this example. Try your own artist to open any city.`)).toBeVisible();
+  await page.goto(`/tours/playbook/${missing.id}?showcase=1`);
+  await expect(page.getByRole("heading", { name: missing.name })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(`Playbooks are recorded for ${n} cities in this example.`)).toBeVisible();
+  await expect(page.getByText("—", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Back to the Tour Board" })).toHaveAttribute("href", "/tours/board?showcase=1");
+  await expectNoSeriousA11y(page, "unrecorded playbook");
+});
+
+test("a playbook has only How to win and Local acts, and Back keeps ?showcase=1", async ({ page }) => {
+  await openShowcaseBoard(page);
+  const recorded = Object.keys(showcaseFixture.playbooks)[0]!;
+  await page.locator(`[data-city-id="${recorded}"]`).getByRole("button").first().click();
+  await expect(page).toHaveURL(/\/tours\/playbook\/.*showcase=1/);
+  await expect(page.getByRole("tab", { name: "How to win" })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("tab")).toHaveText(["How to win", "Local acts"]);
+  expect(await noOverflow(page), "playbook overflow").toBe(true);
+  await expectNoSeriousA11y(page, "playbook tabs");
+  await page.getByRole("link", { name: "Back to Tour Board" }).click();
+  await expect(page).toHaveURL(/\/tours\/board\?showcase=1/);
+  await expect(page.getByTestId("city-row").first()).toBeVisible();
 });

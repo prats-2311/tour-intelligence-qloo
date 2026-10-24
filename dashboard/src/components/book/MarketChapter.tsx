@@ -61,7 +61,7 @@ export function MarketChapter({ market }: { market: TourBook["market"] }) {
       </div>
       <div className="flex flex-col gap-3">
         <h3 className="text-[17px] font-semibold text-canvas-text">Density-only vs winnability</h3>
-        <SlopeChart rows={market.slope} />
+        <SlopeChart rows={market.slope} unplaced={market.unplaced} />
       </div>
       <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
     </section>

@@ -80,6 +80,8 @@ describe("TourBook", () => {
     fireEvent.click(screen.getByRole("button", { name: "Calendar" }));
     expect(click).toHaveBeenCalled();
     expect(await readBlob(created[0]!)).toContain("SUMMARY:Hold — Guadalajara\\, MX");
+    const toast = await screen.findByText("Calendar file downloaded");
+    expect(toast.closest("[aria-live]")?.getAttribute("aria-live")).toBe("polite");
   });
   it("Share uses the Web Share API when available, else copies the link", async () => {
     const share = vi.fn().mockResolvedValue(undefined);
@@ -134,7 +136,8 @@ describe("TourBook", () => {
     renderAt("/tours/book", <><RunNoWindow /><EmptyShortlist /></>);
     expect(await screen.findByText("No markets shortlisted — hold dates for cities on the Tour Board")).toBeTruthy();
     expect(screen.queryByText(/Preparing playbooks/)).toBeNull();
-    expect(screen.getByRole("link", { name: "Go to Tour Board" }).getAttribute("href")).toBe("/tours/board");
+    // the board holds a sample run, so the way back keeps the sample flag
+    expect(screen.getByRole("link", { name: "Go to Tour Board" }).getAttribute("href")).toBe("/tours/board?sample=1");
   });
   it("desktop grid tracks never hard-code a sum wider than the lg content width", async () => {
     vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
