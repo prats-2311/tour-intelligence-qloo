@@ -3,6 +3,7 @@ import path from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { injectOriginTrial } from './src/lib/originTrial.js'
 
 export default defineConfig({
   plugins: [
@@ -12,8 +13,7 @@ export default defineConfig({
       // WebMCP origin-trial tokens are per-origin; inject only when a build-time token is provided.
       name: "webmcp-origin-trial",
       transformIndexHtml(html: string) {
-        const token = process.env.VITE_WEBMCP_OT_TOKEN;
-        return token ? html.replace("</head>", `  <meta http-equiv="origin-trial" content="${token.replace(/"/g, "")}">\n</head>`) : html;
+        return injectOriginTrial(html, process.env.VITE_WEBMCP_OT_TOKEN);
       },
     },
   ],

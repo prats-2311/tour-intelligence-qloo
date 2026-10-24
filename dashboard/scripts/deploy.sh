@@ -12,6 +12,8 @@ DELIGHT_RENDERER_URL=https://delight-card-renderer-602700957663.us-central1.run.
 ORCHESTRATOR_JOB_URL=https://run.googleapis.com/v2/projects/${PROJECT}/locations/${REGION}/jobs/tour-campaign-orchestrator:run
 
 BUILD_ENV="PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1"
+# VITE_WEBMCP_OT_TOKEN may hold several origin-trial tokens separated by SPACES (never commas: gcloud --set-build-env-vars splits on commas).
+# vite.config.ts writes one <meta http-equiv="origin-trial"> per token. Example: VITE_WEBMCP_OT_TOKEN="tokenForOriginA tokenForOriginB" ./deploy.sh
 [[ -n "${VITE_WEBMCP_OT_TOKEN:-}" ]] && BUILD_ENV="${BUILD_ENV},VITE_WEBMCP_OT_TOKEN=${VITE_WEBMCP_OT_TOKEN}"
 
 gcloud run deploy "$SERVICE" --source="$(dirname "$0")/.." --region="$REGION" --project="$PROJECT" \
