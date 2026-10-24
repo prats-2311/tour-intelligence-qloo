@@ -3,7 +3,7 @@ import { streamCityPlaybook } from "./client";
 import type { SampleSet } from "./types";
 import { initialPlaybook, playbookReducer, type PlaybookState } from "./playbookReducer";
 
-export interface PlaybookRequest { artist: string; artistEntityId: string; artistPopularity?: number; city: { id: string; name: string; country: string; lat?: number; lon?: number }; sample: boolean; sampleSet?: SampleSet; delayMs?: number }
+export interface PlaybookRequest { artist: string; artistEntityId: string; artistPopularity?: number; city: { id: string; name: string; country: string; lat?: number; lon?: number }; sample: boolean; sampleSet?: SampleSet; /** "routing": the recorded routing example (its own recorded playbooks, never shared with the main example). */ variant?: "routing"; delayMs?: number }
 
 const states = new Map<string, PlaybookState>();
 const inflight = new Map<string, Promise<PlaybookState>>();
@@ -12,8 +12,8 @@ const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 
-export const playbookKey = (artistEntityId: string, cityId: string, sampleSet?: SampleSet): string => `${artistEntityId}|${cityId}|${sampleSet ?? "default"}`;
-const keyOf = (r: PlaybookRequest) => playbookKey(r.artistEntityId, r.city.id, r.sampleSet);
+export const playbookKey = (artistEntityId: string, cityId: string, sampleSet?: SampleSet, variant?: "routing"): string => `${artistEntityId}|${cityId}|${sampleSet ?? "default"}${variant ? `|${variant}` : ""}`;
+const keyOf = (r: PlaybookRequest) => playbookKey(r.artistEntityId, r.city.id, r.sampleSet, r.variant);
 
 export function getPlaybook(key: string): PlaybookState | undefined { return states.get(key); }
 
@@ -35,7 +35,7 @@ export function loadPlaybook(req: PlaybookRequest): Promise<PlaybookState> {
     try {
       const events = streamCityPlaybook(
         { artist: req.artist, artistEntityId: req.artistEntityId, ...(req.artistPopularity === undefined ? {} : { artistPopularity: req.artistPopularity }), city: req.city.name, country: req.city.country },
-        { sample: req.sample, sampleSet: req.sampleSet, cityId: req.city.id, lat: req.city.lat, lon: req.city.lon, delayMs: req.delayMs },
+        { sample: req.sample, sampleSet: req.sampleSet, variant: req.variant, cityId: req.city.id, lat: req.city.lat, lon: req.city.lon, delayMs: req.delayMs },
       );
       for await (const event of events) {
         s = put(key, playbookReducer(s, { type: "event", event }));

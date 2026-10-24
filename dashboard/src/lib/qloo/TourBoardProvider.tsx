@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 import { SAMPLE_ACCENT_ORDER } from "./cityAccent";
 import { isSampleMode, streamTourBoard } from "./client";
 import { runKey } from "./journey";
+import { effectiveRegions } from "./routing";
+import { variantOfBrief } from "./showcase";
 import { defaultShortlist } from "./ranking";
 import { boardReducer, initialBoard, type BoardState } from "./tourBoardReducer";
 import type { SampleSet, StrategistContext, TourBrief } from "./types";
@@ -14,7 +16,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
   const controllerRef = useRef<AbortController | null>(null);
   // The last-opened playbook city, keyed by run so a choice never leaks into another run.
   const [opened, setOpened] = useState<Record<string, string>>({});
-  const key = runKey(state.source, state.sampleSet, state.brief?.artist);
+  const key = runKey(state.source, state.sampleSet, state.brief?.artist, state.source === "showcase" && variantOfBrief(state.brief) === "routing");
   const lastOpenedId = opened[key] ?? null;
   const setLastOpened = useCallback((id: string) => setOpened((o) => (o[key] === id ? o : { ...o, [key]: id })), [key]);
 
@@ -64,7 +66,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
   const strategistContext = useMemo<StrategistContext>(() => {
     const ctx: StrategistContext = {};
     if (state.artist) ctx.artist = { name: state.artist.name, entityId: state.artist.entityId };
-    if (state.brief?.regions) ctx.regions = state.brief.regions;
+    if (state.brief) ctx.regions = effectiveRegions(state.brief, state.cities);
     if (state.cities.length > 0) {
       ctx.cities = state.cities.slice(0, 20).map((c) => ({
         id: c.id, name: c.name, country: c.country, verdict: c.verdict,
@@ -72,7 +74,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
       }));
     }
     return ctx;
-  }, [state.artist, state.brief?.regions, state.cities]);
+  }, [state.artist, state.brief, state.cities]);
 
   const value = useMemo(() => ({ state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, abort, reset }), [state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, abort, reset]);
   return <TourBoardContext.Provider value={value}>{children}</TourBoardContext.Provider>;

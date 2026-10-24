@@ -79,3 +79,20 @@ describe("BriefForm Paste your cities", () => {
     expect(onSubmit.mock.calls[0]![0]).toMatchObject({ regions: [], cities: [{ name: "Portland", country: "US" }] });
   });
 });
+
+describe("BriefForm pasted mode regions and hint", () => {
+  it("sends no default regions when cities are pasted, so a bare name can match uniquely", () => {
+    const onSubmit = vi.fn();
+    render(<BriefForm onSubmit={onSubmit} />);
+    fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "X" } });
+    fireEvent.change(screen.getByLabelText("Paste your cities"), { target: { value: "Tokyo\nMadrid" } });
+    fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
+    expect(onSubmit.mock.calls[0]![0]).toMatchObject({ regions: [], cities: [{ name: "Tokyo" }, { name: "Madrid" }] });
+  });
+  it("says exactly what a country does", () => {
+    render(<BriefForm onSubmit={() => {}} />);
+    expect(screen.getByText(/Add a country if a city name exists in more than one country\./)).toBeTruthy();
+    expect(screen.queryByText(/regions above just help/i)).toBeNull();
+  });
+});
+

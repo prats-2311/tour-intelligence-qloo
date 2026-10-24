@@ -23,7 +23,8 @@ import { buildTourBook, campaignTitle } from "@/lib/qloo/tourBook";
 import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
-import { isRoutingBrief, setShowcaseVariant, showcaseAvailable, showcaseBannerText, showcaseBrief, showcaseParam, showcaseQuery, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
+import { effectiveRegions } from "@/lib/qloo/routing";
+import { isRoutingBrief, setShowcaseVariant, variantOfBrief, type ShowcaseVariant, showcaseAvailable, showcaseBannerText, showcaseBrief, showcaseParam, showcaseQuery, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
 import type { SampleSet, ThisWeek } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
@@ -59,11 +60,15 @@ function TourBookPage() {
   // The URL decides; the run the board already holds is the fallback, so Close never drops the showcase or sample flag.
   const sampleQ = wantShowcase ? showcaseQuery(wantRouting) : wantLong ? "?sample=long" : wantSample ? "?sample=1"
     : state.source === "showcase" ? showcaseQuery(isRoutingBrief(state.brief)) : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
+  const setKey = `${wantSet}|${wantRouting ? "routing" : ""}`;
+  // What the book reads follows the recording it asks for (URL) or, once a showcase run is held, the one that run belongs to.
+  const variant: ShowcaseVariant = wantShowcase ? (wantRouting ? "routing" : "main") : state.source === "showcase" ? variantOfBrief(state.brief) : "main";
+  const routingVariant = variant === "routing" ? ({ variant } as const) : {};
   const bareExample = useWantsExample(!wantSample);
   useOpenExampleRun(bareExample);
   const isDesktop = useIsDesktop();
   const reduce = useReducedMotion();
-  const started = useRef(false);
+  const started = useRef<string | null>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
   const [preparedKey, setPreparedKey] = useState<string | null>(null);
@@ -75,8 +80,8 @@ function TourBookPage() {
 
   // ?sample=1 starts the showcase unless the board already holds a sample run (same guard as the playbook page).
   useEffect(() => {
-    if (!wantSample || started.current) return;
-    started.current = true;
+    if (!wantSample || started.current === setKey) return;
+    started.current = setKey;
     if (state.source === "live" || (state.sampleSet ?? "default") !== wantSet || (wantShowcase && isRoutingBrief(state.brief) !== wantRouting)) run(wantShowcase ? showcaseBrief() : wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
   }, [wantSample, wantLong, wantSet, wantRouting, state.source, state.sampleSet, state.brief, run]);
 
@@ -93,9 +98,9 @@ function TourBookPage() {
     const chosen = new Set(usingDefault ? defaultShortlist(state.cities, state.brief?.maxStops ?? 8) : shortlist);
     return sortCities(state.cities, "winnability").filter((c) => chosen.has(c.id));
   }, [state.cities, state.brief?.maxStops, shortlist, usingDefault]);
-  const prepKey = `${sample}|${state.sampleSet ?? ""}|${artist?.entityId ?? ""}|${picked.map((c) => c.id).join(",")}`;
+  const prepKey = `${sample}|${state.sampleSet ?? ""}|${variant}|${artist?.entityId ?? ""}|${picked.map((c) => c.id).join(",")}`;
   const requests = useMemo<PlaybookRequest[]>(
-    () => (artist ? picked.map((c) => ({ artist: artist.name, artistEntityId: artist.entityId, artistPopularity: artist.popularity, city: { id: c.id, name: c.name, country: c.country }, sample, sampleSet: state.sampleSet, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined })) : []),
+    () => (artist ? picked.map((c) => ({ artist: artist.name, artistEntityId: artist.entityId, artistPopularity: artist.popularity, city: { id: c.id, name: c.name, country: c.country }, sample, sampleSet: state.sampleSet, ...routingVariant, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined })) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [prepKey],
   );
@@ -109,7 +114,7 @@ function TourBookPage() {
         if (cancelled) return;
         setStep(i + 1);
         const req = requests[i]!;
-        if (getPlaybook(playbookKey(req.artistEntityId, req.city.id, req.sampleSet))?.status !== "done") await loadPlaybook(req);
+        if (getPlaybook(playbookKey(req.artistEntityId, req.city.id, req.sampleSet, req.variant))?.status !== "done") await loadPlaybook(req);
       }
       if (!cancelled) setPreparedKey(prepKey);
     })();
@@ -118,9 +123,9 @@ function TourBookPage() {
 
   const weekQueries = useQueries({
     queries: picked.map((c) => ({
-      queryKey: ["this-week", sample, state.sampleSet, c.id, dateWindow?.start, dateWindow?.end],
+      queryKey: ["this-week", sample, state.sampleSet, variant, c.id, dateWindow?.start, dateWindow?.end],
       queryFn: async (): Promise<ThisWeek> => {
-        try { return await fetchThisWeek({ city: c.name, country: c.country, window: dateWindow }, { sample, sampleSet: state.sampleSet, cityId: c.id }); }
+        try { return await fetchThisWeek({ city: c.name, country: c.country, window: dateWindow }, { sample, sampleSet: state.sampleSet, ...routingVariant, cityId: c.id }); }
         catch { return { status: "unavailable", reason: "error", message: "Live web context unavailable — search failed" }; }
       },
       enabled: boardReady,
@@ -134,9 +139,9 @@ function TourBookPage() {
   const book = useMemo(() => {
     if (!prepared || !artist || !state.brief) return null;
     return buildTourBook({
-      brief: state.brief, artistName: artist.name, source: state.source, cities: state.cities, shortlist: picked.map((c) => c.id), accentOrder,
+      brief: { ...state.brief, regions: effectiveRegions(state.brief, state.cities) }, artistName: artist.name, source: state.source, cities: state.cities, shortlist: picked.map((c) => c.id), accentOrder,
       boardLog: state.log,
-      playbooks: Object.fromEntries(picked.map((c) => [c.id, getPlaybook(playbookKey(artist.entityId, c.id, state.sampleSet))])),
+      playbooks: Object.fromEntries(picked.map((c) => [c.id, getPlaybook(playbookKey(artist.entityId, c.id, state.sampleSet, variant === "routing" ? variant : undefined))])),
       weeks: Object.fromEntries(picked.map((c, i) => [c.id, weekQueries[i]?.data])),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -235,10 +240,10 @@ function TourBookPage() {
 
   // Live runs only: the snapshot that "Save as campaign" stores with the new campaign.
   const saveInput: SaveTourInput | null = sample ? null : {
-    title: campaignTitle(artist!.name, state.brief!.regions),
+    title: campaignTitle(artist!.name, effectiveRegions(state.brief!, state.cities)),
     artist: artist!.name,
     artist_entity_id: artist!.entityId,
-    regions: state.brief!.regions,
+    regions: effectiveRegions(state.brief!, state.cities),
     date_window: dateWindow ?? null,
     cities: book.chapters.map(({ city }) => ({ id: city.id, name: city.name, country: city.country, verdict: city.verdict, winnability: city.winnability.value })),
     board_json: JSON.stringify({
@@ -294,7 +299,7 @@ function TourBookPage() {
           </aside>
         )}
         <div className="book-page flex min-w-0 flex-col gap-12 pb-24 lg:col-start-2 lg:bg-paper lg:p-14 lg:pb-14">
-          <BookCover artist={artist!.name} regions={state.brief!.regions} season={book.subtitle} chapters={book.chapters} sample={book.source !== "live"} showcase={book.source === "showcase"} clocks={!!dateWindow} />
+          <BookCover artist={artist!.name} regions={effectiveRegions(state.brief!, state.cities)} season={book.subtitle} chapters={book.chapters} sample={book.source !== "live"} showcase={book.source === "showcase"} clocks={!!dateWindow} />
           <MarketChapter market={book.market} />
           {book.chapters.map((c) => <CityChapter key={c.city.id} chapter={c} sample={book.source !== "live"} showcase={book.source === "showcase"} artist={artist?.name} window={dateWindow} />)}
           <ProvenanceAppendix rows={book.provenance} calls={book.calls} sample={book.source !== "live"} showcase={book.source === "showcase"} />

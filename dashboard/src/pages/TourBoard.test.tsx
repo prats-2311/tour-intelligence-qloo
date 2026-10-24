@@ -674,7 +674,7 @@ describe("TourBoard paste your cities", () => {
     const banner = screen.getByText("Not in our city list: Atlantis, Nowhere, MX. Check the spelling or add the country.");
     const list = screen.getAllByTestId("city-row")[0]!;
     expect(banner.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByText(/Your routing · 3 cities/)).toBeTruthy();
+    expect(screen.getByText(/Your routing · 2 cities/)).toBeTruthy();
   });
   it("no banner and no tag on a normal run", async () => {
     vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield cityEvent(0); yield { type: "done", summary: {} }; });

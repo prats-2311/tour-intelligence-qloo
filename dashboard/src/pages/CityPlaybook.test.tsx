@@ -11,7 +11,7 @@ import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
 import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
 import { showcaseBrief } from "@/lib/qloo/showcase";
-import { resetPlaybooks } from "@/lib/qloo/playbookStore";
+import { getPlaybook, playbookKey, resetPlaybooks } from "@/lib/qloo/playbookStore";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import CityPlaybook from "./CityPlaybook";
 
@@ -305,5 +305,25 @@ describe("CityPlaybook proof entry point", () => {
     const link = await screen.findByRole("link", { name: /How we tested it/ });
     expect(link.getAttribute("href")).toBe("/proof");
     expect(screen.getByText("How often this playbook surfaced the sponsor, merch partner or local act real tours used.")).toBeTruthy();
+  });
+});
+
+describe("CityPlaybook: main and routing examples stay separate", () => {
+  it("opening the same city in the main example and then the routing example loads each recording's own playbook", async () => {
+    const base = parseShowcase(syntheticShowcase);
+    const id = Object.keys(base.routing!.playbooks).find((c) => base.playbooks[c])!;
+    const mark = (m: string) => [{ type: "error" as const, code: "MARK", message: m }];
+    setShowcase(parseShowcase({ ...(syntheticShowcase as object), playbooks: { ...base.playbooks, [id]: mark("main") }, routing: { ...base.routing!, playbooks: { ...base.routing!.playbooks, [id]: mark("routing") } } }));
+    const spy = vi.spyOn(client, "streamCityPlaybook");
+    renderAt(`/tours/playbook/${id}?showcase=1`, <Switch to={`/tours/playbook/${id}?showcase=routing`} />);
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole("button", { name: "switch" }));
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
+    expect(spy.mock.calls[0]![1]).toMatchObject({ sampleSet: "showcase" });
+    expect(spy.mock.calls[0]![1]!.variant).toBeUndefined();
+    expect(spy.mock.calls[1]![1]).toMatchObject({ variant: "routing" });
+    const entity = (base.boardEvents.find((e) => e.type === "resolve") as { entity: { entityId: string } }).entity.entityId;
+    await waitFor(() => expect(getPlaybook(playbookKey(entity, id, "showcase", "routing"))?.error?.message).toBe("routing"));
+    expect(getPlaybook(playbookKey(entity, id, "showcase"))?.error?.message).toBe("main");
   });
 });

@@ -21,7 +21,8 @@ import { TourBoardSkeleton } from "@/components/ui/Skeletons";
 import { fetchWithoutQloo } from "@/lib/qloo/client";
 import { LONG_CITY_NAMES, LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_WITHOUT_QLOO } from "@/lib/qloo/fixtures/strategistSample";
-import { isRoutingBrief, setShowcaseVariant, showcaseAvailable, showcaseBrief, showcaseParam, showcasePlaybookCities, showcasePlaybookEvents, showcaseQuery, showcaseRoutingAvailable, showcaseWithoutQloo } from "@/lib/qloo/showcase";
+import { effectiveRegions } from "@/lib/qloo/routing";
+import { isRoutingBrief, setShowcaseVariant, variantOfBrief, type ShowcaseVariant, showcaseAvailable, showcaseBrief, showcaseParam, showcasePlaybookCities, showcasePlaybookEvents, showcaseQuery, showcaseRoutingAvailable, showcaseWithoutQloo } from "@/lib/qloo/showcase";
 import { routingUnmatchedText } from "@/lib/qloo/routing";
 import { sortCities, summarize } from "@/lib/qloo/ranking";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
@@ -129,7 +130,8 @@ export default function TourBoard() {
   setShowcaseVariant(wantRouting ? "routing" : "main"); // before any accessor below reads the recording (see useShowcaseVariant)
   const wantSample = sampleParam === "1" || wantLong || wantShowcase;
   const wantNew = params.get("new") === "1";
-  const started = useRef(false);
+  const sampleKey = `${sampleParam ?? ""}|${showParam ?? ""}`; // switching between examples on the same page starts the new one
+  const started = useRef<string | null>(null);
   const modeParam = params.get("mode");
   const mode: Mode = modeParam === "density" || modeParam === "without" ? modeParam : "winnability";
   const setMode = (m: Mode) => setParams((p) => {
@@ -146,8 +148,8 @@ export default function TourBoard() {
   // ?sample=1 starts the showcase unless the provider already holds a sample run
   // (back-navigation). The ref only guards the StrictMode double effect.
   useEffect(() => {
-    if (!wantSample || started.current) return;
-    started.current = true;
+    if (!wantSample || started.current === sampleKey) return;
+    started.current = sampleKey;
     if (wantShowcase) {
       if (!showcaseAvailable()) return; // the private recording did not load: show the notice, never replay the placeholder as the showcase
       if (state.source !== "showcase" || isRoutingBrief(state.brief) !== wantRouting) run(showcaseBrief(), { sample: true, sampleSet: "showcase" });
@@ -155,7 +157,7 @@ export default function TourBoard() {
   }, [wantSample, wantLong, wantShowcase, wantRouting, state.source, state.brief, run]);
 
   // Once the sample params are gone (New brief), a later ?sample/?showcase link may start a run again.
-  useEffect(() => { if (!wantSample) started.current = false; }, [wantSample]);
+  useEffect(() => { if (!wantSample) started.current = null; }, [wantSample]);
 
   // Entering the board with no run and no params opens the recorded example, so the first screen is never an empty form.
   // "Try your own artist" arrives with ?new=1 and gets the brief form instead.
@@ -186,6 +188,8 @@ export default function TourBoard() {
   const heldCount = useMemo(() => listed.filter((c) => shortlist.includes(c.id)).length, [listed, shortlist]);
   const maxStops = state.brief?.maxStops ?? 8;
   const atCap = heldCount >= maxStops;
+  // The recording the board holds decides what is openable, never the URL alone (the URL can lag a run switch).
+  const variant: ShowcaseVariant = state.source === "showcase" ? variantOfBrief(state.brief) : wantRouting ? "routing" : "main";
   const sampleQ = state.source === "showcase" ? showcaseQuery(isRoutingBrief(state.brief)) : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
   const bookHref = `/tours/book${sampleQ}`;
   const withoutMode = mode === "without";
@@ -194,8 +198,8 @@ export default function TourBoard() {
     queryKey: ["without-qloo", state.artist?.entityId ?? state.brief?.artistEntityId ?? state.brief?.artist, state.cities.map((c) => c.id).join("|")],
     queryFn: ({ signal }) => fetchWithoutQloo({
       artist: state.artist?.name ?? state.brief?.artist ?? "",
-      // A pasted run may have no regions; the cities' countries stand in (the endpoint needs at least one).
-      regions: state.brief?.regions.length ? state.brief.regions : [...new Set(state.cities.map((c) => c.country))].slice(0, 6),
+      // A pasted run has no regions of its own; the scored cities' countries stand in.
+      regions: (state.brief ? effectiveRegions(state.brief, state.cities) : []).slice(0, 6),
       cities: state.cities.map((c) => ({ name: c.name, country: c.country })),
     }, { signal }),
     enabled: withoutMode && !isSample && state.status !== "streaming" && state.cities.length > 0,
@@ -203,7 +207,7 @@ export default function TourBoard() {
     retry: false,
   });
   const withoutResult = state.source === "showcase"
-    ? showcaseWithoutQloo()
+    ? showcaseWithoutQloo(variant)
     : isSample
     ? (state.sampleSet === "long" && SAMPLE_WITHOUT_QLOO.status === "ok"
       ? { ...SAMPLE_WITHOUT_QLOO, ranked: SAMPLE_WITHOUT_QLOO.ranked.map((r) => {
@@ -229,7 +233,7 @@ export default function TourBoard() {
   };
   const showcaseMissing = !showcaseAvailable() && (wantShowcase || state.source === "showcase");
   // A recorded run replays a few playbooks only: a row without one is not a link (live mode opens every city).
-  const openable = (id: string) => state.source !== "showcase" || showcasePlaybookEvents(id) !== null;
+  const openable = (id: string) => state.source !== "showcase" || showcasePlaybookEvents(id, variant) !== null;
   const someUnopenable = state.source === "showcase" && state.cities.some((c) => !openable(c.id));
   const openRow = (id: string) => navigate(`/tours/playbook/${id}${sampleQ}`);
   const selectFromMap = (id: string) => {
@@ -268,7 +272,9 @@ export default function TourBoard() {
   const streaming = state.status === "streaming";
   const hasMap = state.cities.length > 0 || streaming;
   const artistName = state.artist?.name ?? state.brief?.artist ?? "Tour Board";
-  const regionsLine = isRoutingBrief(state.brief) ? `Your routing · ${state.brief!.cities!.length} ${state.brief!.cities!.length === 1 ? "city" : "cities"}` : state.brief?.regions.join(" · ");
+  // Pasted run: the cities that matched (the scored ones once done), never the pasted lines that matched nothing.
+  const matchedCount = state.status === "done" ? state.cities.length : Math.max(0, (state.brief?.cities?.length ?? 0) - state.routingUnmatched.length);
+  const regionsLine = isRoutingBrief(state.brief) ? `Your routing · ${matchedCount} ${matchedCount === 1 ? "city" : "cities"}` : state.brief?.regions.join(" · ");
   const showInlineLog = streaming && state.cities.length === 0;
   const empty = state.status === "done" && state.cities.length === 0;
   const scored = `${state.cities.length} ${state.cities.length === 1 ? "market" : "markets"} scored`;
@@ -386,7 +392,7 @@ export default function TourBoard() {
             ))}
             {streaming && <li aria-hidden className="skeleton h-[88px] list-none rounded-[14px] lg:h-[72px]" />}
           </ul>}
-          {!withoutMode && someUnopenable && !streaming && <p className="mt-2 px-1 text-[12px] text-canvas-muted">{recordedPlaybooksLine(showcasePlaybookCities().length)}</p>}
+          {!withoutMode && someUnopenable && !streaming && <p className="mt-2 px-1 text-[12px] text-canvas-muted">{recordedPlaybooksLine(showcasePlaybookCities(variant).length)}</p>}
         </div>
       )}
       {state.cities.length > 0 && (

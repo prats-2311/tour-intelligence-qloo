@@ -1,3 +1,4 @@
+import { variantOfBrief } from "@/lib/qloo/showcase";
 import { CircleAlert, Download, History } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -31,7 +32,7 @@ export default function TasteInsights() {
   const { cities, log, profile, status, source, brief, artist, regionsEmpty, regionsUnavailable, error, interruptReason } = state;
   const streaming = status === "streaming";
   // Filters belong to a run's brief: changing them mid-stream sticks, a new brief resets them.
-  const briefKey = `${source}|${brief?.artist ?? ""}|${brief?.regions.join(",") ?? ""}`;
+  const briefKey = `${source}|${brief?.artist ?? ""}|${brief?.regions.join(",") ?? ""}|${variantOfBrief(brief)}`;
   const [tagged, setTagged] = useState<{ key: string; f: InsightsFilters }>({ key: briefKey, f: defaultFilters() });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const filters = tagged.key === briefKey ? tagged.f : defaultFilters();
@@ -176,7 +177,7 @@ export default function TasteInsights() {
           {focusCity && (
             <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
               <PromoZones city={focusCity} />
-              {artist ? <CrossDomainTaste artist={artist} city={focusCity} source={source} /> : null}
+              {artist ? <CrossDomainTaste artist={artist} city={focusCity} source={source} variant={variantOfBrief(brief)} /> : null}
             </div>
           )}
           {artist && <ArtistCompare artist={artist} source={source} />}

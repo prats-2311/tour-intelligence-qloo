@@ -56,7 +56,7 @@ export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBr
     if (winStart && winEnd && (Date.parse(winEnd) - Date.parse(winStart)) / 86_400_000 > MAX_WINDOW_DAYS) return setWinError(`Date window can be at most ${MAX_WINDOW_DAYS} days`);
     setError(null);
     setWinError(null);
-    onSubmit({ ...(defaultBrief?.artistEntityId && name === defaultBrief.artist ? { artistEntityId: defaultBrief.artistEntityId } : {}), artist: name, regions, maxStops: n, ...(routing.cities.length > 0 ? { cities: routing.cities } : {}), ...(winStart && winEnd ? { dateWindow: { start: winStart, end: winEnd } } : {}) });
+    onSubmit({ ...(defaultBrief?.artistEntityId && name === defaultBrief.artist ? { artistEntityId: defaultBrief.artistEntityId } : {}), artist: name, regions: routing.cities.length > 0 ? [] : regions, maxStops: n, ...(routing.cities.length > 0 ? { cities: routing.cities } : {}), ...(winStart && winEnd ? { dateWindow: { start: winStart, end: winEnd } } : {}) });
   };
 
   return (
@@ -66,7 +66,7 @@ export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBr
         <label htmlFor={ids.artist} className="text-[13px] font-medium text-canvas-muted">Artist</label>
         <input id={ids.artist} value={artist} onChange={(e) => setArtist(e.target.value)} autoComplete="off" placeholder="Artist name" className={field} />
       </div>
-      <fieldset className="flex min-w-0 flex-col gap-2">
+      <fieldset disabled={routing.cities.length > 0} className="flex min-w-0 flex-col gap-2 disabled:opacity-50">
         <legend className="mb-1.5 text-[13px] font-medium text-canvas-muted">Regions ({regions.length} of {MAX_REGIONS})</legend>
         <div className="flex flex-wrap gap-2">
           {chips.map((r) => {
@@ -113,7 +113,7 @@ export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBr
           className="min-h-24 w-full min-w-0 rounded-[10px] bg-paper-raised px-3 py-3 text-[15px] text-canvas-text placeholder:text-canvas-muted"
         />
         <p id={ids.pasteHint} className="text-[12px] text-canvas-muted">
-          Optional. One city per line: &ldquo;City&rdquo; or &ldquo;City, Country&rdquo;. Only these cities are scored; regions above just help match names without a country.
+          Optional. One city per line: &ldquo;City&rdquo; or &ldquo;City, Country&rdquo;. Only these cities are scored, and the regions above are not used. Add a country if a city name exists in more than one country.
         </p>
         {routing.capped && <p role="status" className="text-[13px] text-canvas-text">{ROUTING_CAP_NOTE}</p>}
       </div>

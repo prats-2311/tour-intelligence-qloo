@@ -1,4 +1,5 @@
 import { recordedText } from "./labels";
+import { distinctCountries } from "./routing";
 import { PLACEHOLDER_SHOWCASE } from "./placeholderShowcase";
 import { ordinal } from "./ranking";
 import type { GatewayEvent, RoutingCity, ScoredCity, ThisWeek, TourBrief, WithoutQloo } from "./types";
@@ -120,26 +121,35 @@ export const recordedQuestion = (text: string): StrategistRecording | null => {
   return n ? showcaseStrategist().find((r) => normaliseQuestion(r.question) === n) ?? null : null;
 };
 export const showcaseRoutingAvailable = (): boolean => SHOWCASE.routing !== null;
-const routing = (): RoutingShowcase | null => (variant === "routing" ? SHOWCASE.routing : null);
-const routingBrief = (r: RoutingShowcase): TourBrief => ({ ...SHOWCASE.brief, artist: SHOWCASE.artist, maxStops: r.cities.length, cities: r.cities });
+export type ShowcaseVariant = "main" | "routing";
+/** The routing recording when `v` (default: the URL-driven variant) asks for it and one exists. Pages holding a run pass the run's own variant. */
+const routing = (v: ShowcaseVariant = variant): RoutingShowcase | null => (v === "routing" ? SHOWCASE.routing : null);
+/** Regions of a pasted run are the countries of its cities (the recorded routing carries no regions of its own). */
+const routingBrief = (r: RoutingShowcase): TourBrief => {
+  const cs = r.boardEvents.flatMap((e) => (e.type === "city_scored" ? [e.city] : []));
+  return { artist: SHOWCASE.artist, regions: distinctCountries(cs), maxStops: r.cities.length, cities: r.cities };
+};
 const routingBriefMemo = new WeakMap<RoutingShowcase, TourBrief>();
 
-export const showcaseBrief = (): TourBrief => {
-  const r = routing();
+export const showcaseBrief = (v?: ShowcaseVariant): TourBrief => {
+  const r = routing(v);
   if (!r) return SHOWCASE.brief;
   if (!routingBriefMemo.has(r)) routingBriefMemo.set(r, routingBrief(r));
   return routingBriefMemo.get(r)!;
 };
-export const showcaseBoardEvents = (): GatewayEvent[] => routing()?.boardEvents ?? SHOWCASE.boardEvents;
-export const showcasePlaybookEvents = (cityId: string): GatewayEvent[] | null => (routing()?.playbooks ?? SHOWCASE.playbooks)[cityId] ?? null;
-export const showcaseThisWeek = (cityId: string): ThisWeek | null => (routing() ? null : SHOWCASE.thisWeek[cityId] ?? null);
-export const showcaseWithoutQloo = (): WithoutQloo => (routing() ? WITHOUT_SHOWCASE_MISSING : SHOWCASE.withoutQloo ?? WITHOUT_SHOWCASE_MISSING);
+export const showcaseBoardEvents = (v?: ShowcaseVariant): GatewayEvent[] => routing(v)?.boardEvents ?? SHOWCASE.boardEvents;
+export const showcasePlaybookEvents = (cityId: string, v?: ShowcaseVariant): GatewayEvent[] | null => (routing(v)?.playbooks ?? SHOWCASE.playbooks)[cityId] ?? null;
+export const showcaseThisWeek = (cityId: string, v?: ShowcaseVariant): ThisWeek | null => (routing(v) ? null : SHOWCASE.thisWeek[cityId] ?? null);
+export const showcaseWithoutQloo = (v?: ShowcaseVariant): WithoutQloo => (routing(v) ? WITHOUT_SHOWCASE_MISSING : SHOWCASE.withoutQloo ?? WITHOUT_SHOWCASE_MISSING);
+/** The variant a held run belongs to: a recorded routing run carries pasted cities in its brief. */
+export const variantOfBrief = (b: { cities?: unknown[] } | undefined): ShowcaseVariant => (b?.cities?.length ? "routing" : "main");
+
 export const showcaseBannerText = (): string => recordedText(SHOWCASE.recordedAt);
 
-export function showcaseCities(show?: Showcase): ScoredCity[] {
-  return (show ? show.boardEvents : showcaseBoardEvents()).flatMap((e) => (e.type === "city_scored" ? [e.city] : []));
+export function showcaseCities(show?: Showcase, v?: ShowcaseVariant): ScoredCity[] {
+  return (show ? show.boardEvents : showcaseBoardEvents(v)).flatMap((e) => (e.type === "city_scored" ? [e.city] : []));
 }
-export const showcasePlaybookCities = (): ScoredCity[] => showcaseCities().filter((c) => showcasePlaybookEvents(c.id));
+export const showcasePlaybookCities = (v?: ShowcaseVariant): ScoredCity[] => showcaseCities(undefined, v).filter((c) => showcasePlaybookEvents(c.id, v));
 
 /** "Fan density ranks it 4th of 8. Adding winnability puts it 2nd." Descriptive only: it says nothing about which ranking is better. */
 export const rankShiftLine = (fanRank: number, winRank: number, n: number): string =>

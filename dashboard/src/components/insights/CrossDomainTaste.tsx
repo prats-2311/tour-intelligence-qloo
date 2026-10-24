@@ -3,21 +3,22 @@ import { fit } from "@/components/playbook/format";
 import { CROSS_CATEGORIES, playbookCrossDomain, type CrossCategory } from "@/lib/qloo/adapters";
 import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks";
 import { loadPlaybook, playbookKey, usePlaybook, usePlaybookSnapshot, type PlaybookRequest } from "@/lib/qloo/playbookStore";
-import { showcasePlaybookEvents } from "@/lib/qloo/showcase";
+import { showcasePlaybookEvents, type ShowcaseVariant } from "@/lib/qloo/showcase";
 import type { ScoredCity } from "@/lib/qloo/types";
 
 const LABELS: Record<CrossCategory, string> = { artist: "Artists", movie: "Movies", tv_show: "TV shows", place: "Places", brand: "Brands" };
 const SAMPLE_COVERAGE = "Sample playbooks cover Mexico City, São Paulo, Guadalajara and Curitiba";
 
-export function CrossDomainTaste({ artist, city, source }: { artist: { entityId: string; name: string }; city: ScoredCity; source: "live" | "sample" | string }) {
+export function CrossDomainTaste({ artist, city, source, variant = "main" }: { artist: { entityId: string; name: string }; city: ScoredCity; source: "live" | "sample" | string; /** The recording the held run belongs to. */ variant?: ShowcaseVariant }) {
   const sample = source !== "live";
   const showcase = source === "showcase";
   const sampleSet = showcase ? "showcase" : undefined;
-  const covered = showcase ? showcasePlaybookEvents(city.id) !== null : (SAMPLE_PLAYBOOK_CITY_IDS as readonly string[]).includes(city.id);
-  const key = playbookKey(artist.entityId, city.id, sampleSet);
+  const covered = showcase ? showcasePlaybookEvents(city.id, variant) !== null : (SAMPLE_PLAYBOOK_CITY_IDS as readonly string[]).includes(city.id);
+  const routing = showcase && variant === "routing" ? ({ variant } as const) : {};
+  const key = playbookKey(artist.entityId, city.id, sampleSet, routing.variant);
   // Live lookups cost Qloo calls, so they wait for a click, unless the Playbook page already loaded this one.
   const [clicked, setClicked] = useState<string | null>(null);
-  const request: PlaybookRequest = { artist: artist.name, artistEntityId: artist.entityId, city: { id: city.id, name: city.name, country: city.country }, sample, sampleSet, delayMs: sample ? 10 : undefined };
+  const request: PlaybookRequest = { artist: artist.name, artistEntityId: artist.entityId, city: { id: city.id, name: city.name, country: city.country }, sample, sampleSet, ...routing, delayMs: sample ? 10 : undefined };
   const existing = usePlaybookSnapshot(key)?.status;
   // Failed or interrupted entries never restart on their own: that would be an unasked live call.
   const enabled = sample ? covered : clicked === key || existing === "done" || existing === "streaming";

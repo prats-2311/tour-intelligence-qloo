@@ -134,7 +134,7 @@ export function buildTourBook(input: {
   });
   const logs = [input.boardLog, ...chapters.map((c) => c.playbook?.log ?? [])];
   return {
-    title: `${input.artistName}: ${input.brief.regions.join(", ")}`,
+    title: input.brief.regions.length ? `${input.artistName}: ${input.brief.regions.join(", ")}` : input.artistName,
     subtitle: seasonLabel(input.brief.dateWindow), source: input.source,
     market: { rows: byWin, shortlisted: new Set(input.shortlist), slope, unplaced: byWin.filter((c) => c.insufficientReason === "location_unresolved").map((c) => c.name) },
     chapters, provenance: buildProvenance(logs),
@@ -145,6 +145,6 @@ export function buildTourBook(input: {
 const CAMPAIGN_TITLE_MAX = 200;
 
 export function campaignTitle(artist: string, regions: string[]): string {
-  const t = `${artist} — ${regions.join(", ")}`;
+  const t = regions.length ? `${artist} — ${regions.join(", ")}` : artist;
   return t.length <= CAMPAIGN_TITLE_MAX ? t : `${t.slice(0, CAMPAIGN_TITLE_MAX - 1)}…`;
 }

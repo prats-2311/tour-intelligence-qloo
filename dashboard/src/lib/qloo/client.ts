@@ -3,14 +3,14 @@ import { getSessionId } from "./session";
 import { SseParser } from "./sse";
 import { samplePlaybookEvents, sampleThisWeek } from "./fixtures/lumenValePlaybooks";
 import { SAMPLE_WITHOUT_QLOO, sampleStrategistEvents } from "./fixtures/strategistSample";
-import { recordedQuestion, showcaseBoardEvents, showcaseStrategist, showcasePlaybookEvents, showcaseThisWeek, showcaseWithoutQloo } from "./showcase";
+import { recordedQuestion, showcaseBoardEvents, showcaseStrategist, showcasePlaybookEvents, showcaseThisWeek, showcaseWithoutQloo, variantOfBrief } from "./showcase";
 import { parseWithoutQloo } from "./withoutQloo";
 import type { ChatMessage, DateWindow, GatewayEvent, SampleSet, StrategistContext, ThisWeek, TourBrief, WithoutQloo } from "./types";
 
 export const SHOWCASE_STRATEGIST_NOTE = "The live strategist needs a live run";
 export const SHOWCASE_ASK_NOTE = "This example can replay the two recorded questions. Try your own artist to ask anything.";
 
-type StreamOpts = { signal?: AbortSignal; fetchImpl?: typeof fetch; sample?: boolean; sampleSet?: SampleSet; delayMs?: number };
+type StreamOpts = { signal?: AbortSignal; fetchImpl?: typeof fetch; sample?: boolean; sampleSet?: SampleSet; /** Which recording a showcase replay reads: "routing" for the recorded routing example. */ variant?: "routing"; delayMs?: number };
 
 export const isSampleMode = (): boolean => import.meta.env.VITE_QLOO_FIXTURES === "1";
 
@@ -46,7 +46,7 @@ async function* stream(url: string, init: RequestInit, opts: StreamOpts): AsyncG
 }
 
 export function streamTourBoard(brief: TourBrief, opts: StreamOpts = {}): AsyncGenerator<GatewayEvent> {
-  if (opts.sample && opts.sampleSet === "showcase") return sample(showcaseBoardEvents(), opts);
+  if (opts.sample && opts.sampleSet === "showcase") return sample(showcaseBoardEvents(variantOfBrief(brief)), opts);
   if (opts.sample) return sample(opts.sampleSet === "long" ? LONG_NAMES_SAMPLE : LUMEN_VALE_SAMPLE, opts);
   return stream("/api/qloo/tour-board", {
     method: "POST",
@@ -58,7 +58,7 @@ export function streamTourBoard(brief: TourBrief, opts: StreamOpts = {}): AsyncG
 export function streamCityPlaybook(q: { artist: string; artistEntityId: string; artistPopularity?: number; city: string; country: string }, opts: StreamOpts & { cityId?: string; lat?: number; lon?: number } = {}): AsyncGenerator<GatewayEvent> {
   if (opts.sample) {
     if (opts.sampleSet === "showcase") {
-      const rec = opts.cityId ? showcasePlaybookEvents(opts.cityId) : null;
+      const rec = opts.cityId ? showcasePlaybookEvents(opts.cityId, opts.variant ?? "main") : null;
       return sample(rec ?? [{ type: "error", code: "NO_SAMPLE", message: `No recorded playbook for ${q.city}` }], opts);
     }
     const events = opts.cityId ? samplePlaybookEvents(opts.cityId, { long: opts.sampleSet === "long" }) : null;
@@ -105,8 +105,8 @@ async function* friendlyStrategistErrors(events: AsyncGenerator<GatewayEvent>): 
 
 const WITHOUT_QLOO_ERROR: WithoutQloo = { status: "unavailable", reason: "error", message: "Generic ranking unavailable" };
 
-export async function fetchWithoutQloo(body: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }> }, opts: { sample?: boolean; sampleSet?: SampleSet; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<WithoutQloo> {
-  if (opts.sample && opts.sampleSet === "showcase") return showcaseWithoutQloo();
+export async function fetchWithoutQloo(body: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }> }, opts: { sample?: boolean; sampleSet?: SampleSet; variant?: "routing"; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<WithoutQloo> {
+  if (opts.sample && opts.sampleSet === "showcase") return showcaseWithoutQloo(opts.variant ?? "main");
   if (opts.sample) return SAMPLE_WITHOUT_QLOO;
   try {
     const res = await (opts.fetchImpl ?? fetch)("/api/qloo/without-qloo", {
@@ -124,8 +124,8 @@ export async function fetchWithoutQloo(body: { artist: string; regions: string[]
 
 const WEB_ERROR: ThisWeek = { status: "unavailable", reason: "error", message: "Live web context unavailable — search failed" };
 
-export async function fetchThisWeek(q: { city: string; country: string; window?: DateWindow }, opts: { sample?: boolean; sampleSet?: SampleSet; cityId?: string; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<ThisWeek> {
-  if (opts.sample && opts.sampleSet === "showcase") return (opts.cityId ? showcaseThisWeek(opts.cityId) : null) ?? { status: "unavailable", reason: "no_window", message: "No recorded web context for this city" };
+export async function fetchThisWeek(q: { city: string; country: string; window?: DateWindow }, opts: { sample?: boolean; sampleSet?: SampleSet; variant?: "routing"; cityId?: string; fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<ThisWeek> {
+  if (opts.sample && opts.sampleSet === "showcase") return (opts.cityId ? showcaseThisWeek(opts.cityId, opts.variant ?? "main") : null) ?? { status: "unavailable", reason: "no_window", message: "No recorded web context for this city" };
   if (opts.sample) return (opts.cityId ? sampleThisWeek(opts.cityId) : null) ?? { status: "unavailable", reason: "no_key", message: "No sample web context for this city" };
   if (!q.window) return { status: "unavailable", reason: "no_window", message: "Add a date window to the brief to check this week in the city" };
   const qs = new URLSearchParams({ city: q.city, country: q.country, start: q.window.start, end: q.window.end }).toString();

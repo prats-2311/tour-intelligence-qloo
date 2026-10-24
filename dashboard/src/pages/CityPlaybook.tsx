@@ -31,7 +31,7 @@ import { firstOkName } from "@/lib/qloo/playbookFacts";
 import { loadPlaybook, usePlaybook, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
-import { isRoutingBrief, setShowcaseVariant, showcaseAvailable, showcaseBrief, showcaseCities, showcaseParam, showcasePlaybookCities, showcasePlaybookEvents, showcaseQuery, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
+import { isRoutingBrief, setShowcaseVariant, variantOfBrief, type ShowcaseVariant, showcaseAvailable, showcaseBrief, showcaseCities, showcaseParam, showcasePlaybookCities, showcasePlaybookEvents, showcaseQuery, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
 import type { CardKind, PlaybookCard as Card, SampleSet } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
@@ -82,10 +82,13 @@ function CityPlaybookPage() {
   // The URL decides; a run already held on the board is the fallback, so Back never drops the showcase or sample flag.
   const sampleQ = wantShowcase ? showcaseQuery(wantRouting) : wantLong ? "?sample=long" : wantSample ? "?sample=1"
     : state.source === "showcase" ? showcaseQuery(isRoutingBrief(state.brief)) : state.source === "sample" ? (state.sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
+  // What the page shows follows the recording it asks for (URL) or, once a showcase run is held, the one that run belongs to.
+  const variant: ShowcaseVariant = wantShowcase ? (wantRouting ? "routing" : "main") : state.source === "showcase" ? variantOfBrief(state.brief) : "main";
   // Bare url, no run: open the example (as the stepper does) instead of an empty state.
   const bareExample = useWantsExample(!wantSample);
   useOpenExampleRun(bareExample);
   const isDesktop = useIsDesktop();
+  const setKey = `${wantSet}|${wantRouting ? "routing" : ""}`;
   const started = useRef<string | null>(null); // the sample set this page already asked the board for
   const [tab, setTab] = useState<Tab>("activate");
   const [whyOpen, setWhyOpen] = useState(false);
@@ -98,8 +101,8 @@ function CityPlaybookPage() {
   // ?sample=1 starts the showcase unless the board already holds a sample run. The ref only
   // guards the StrictMode double effect; it remembers the requested set so switching sets re-runs.
   useEffect(() => {
-    if (!wantSample || started.current === wantSet) return;
-    started.current = wantSet;
+    if (!wantSample || started.current === setKey) return;
+    started.current = setKey;
     if (state.source === "live" || (state.sampleSet ?? "default") !== wantSet || (wantShowcase && isRoutingBrief(state.brief) !== wantRouting)) run(wantShowcase ? showcaseBrief() : wantLong ? LONG_NAMES_BRIEF : SAMPLE_BRIEF, { sample: true, sampleSet: wantSet });
   }, [wantSample, wantLong, wantSet, wantRouting, state.source, state.sampleSet, state.brief, run]);
 
@@ -107,21 +110,21 @@ function CityPlaybookPage() {
   // While a requested sample run has not started, nothing from an earlier live run is shown.
   const ready = !wantSample || (sample && (state.sampleSet ?? "default") === wantSet && (!wantShowcase || isRoutingBrief(state.brief) === wantRouting));
   const city = ready ? state.cities.find((c) => c.id === cityId) : undefined;
-  const shownCity = city ?? (wantSample ? (wantShowcase ? showcaseCities() : SAMPLE_CITIES).find((c) => c.id === cityId) : undefined);
+  const shownCity = city ?? (wantSample ? (wantShowcase ? showcaseCities(undefined, variant) : SAMPLE_CITIES).find((c) => c.id === cityId) : undefined);
   const artist = ready ? state.artist : undefined;
   // The Playbook step of the journey returns to the city opened last in this run.
   const openedHere = ready && !!state.brief && state.cities.some((c) => c.id === cityId);
   useEffect(() => { if (openedHere) setLastOpened(cityId); }, [openedHere, cityId, setLastOpened]);
   // A showcase city with no recorded playbook has nothing to open: say so instead of showing empty tiles.
-  const unrecorded = (wantShowcase || state.source === "showcase") && ready && !!shownCity && showcasePlaybookEvents(cityId) === null;
+  const unrecorded = (wantShowcase || state.source === "showcase") && ready && !!shownCity && showcasePlaybookEvents(cityId, variant) === null;
   const req: PlaybookRequest | null = shownCity && artist && !unrecorded
-    ? { artist: artist.name, artistEntityId: artist.entityId, artistPopularity: artist.popularity, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country, lat: shownCity.lat, lon: shownCity.lon }, sample, sampleSet: state.sampleSet, delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined }
+    ? { artist: artist.name, artistEntityId: artist.entityId, artistPopularity: artist.popularity, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country, lat: shownCity.lat, lon: shownCity.lon }, sample, sampleSet: state.sampleSet, ...(variant === "routing" ? { variant } : {}), delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined }
     : null;
   const pb = usePlaybook(req);
   const window = state.brief?.dateWindow;
   const week = useQuery({
-    queryKey: ["this-week", sample, state.sampleSet, cityId, window?.start, window?.end],
-    queryFn: () => fetchThisWeek({ city: shownCity!.name, country: shownCity!.country, window }, { sample, sampleSet: state.sampleSet, cityId }),
+    queryKey: ["this-week", sample, state.sampleSet, variant, cityId, window?.start, window?.end],
+    queryFn: () => fetchThisWeek({ city: shownCity!.name, country: shownCity!.country, window }, { sample, sampleSet: state.sampleSet, ...(variant === "routing" ? { variant } : {}), cityId }),
     enabled: !!shownCity && !!artist && !unrecorded,
     staleTime: Infinity,
     retry: false,
@@ -173,7 +176,7 @@ function CityPlaybookPage() {
           <VerdictChip verdict={shownCity.verdict} size="md" />
           <span className="font-mono text-[28px] font-bold leading-none text-canvas-text tabular">{shownCity.winnability.value === null ? "" : Math.round(shownCity.winnability.value)}</span>
         </div>
-        <p className="text-[15px] text-canvas-text">{recordedPlaybooksLine(showcasePlaybookCities().length)}</p>
+        <p className="text-[15px] text-canvas-text">{recordedPlaybooksLine(showcasePlaybookCities(variant).length)}</p>
         <Link to={`/tours/board${sampleQ}`} className={`${smallBtn} h-12`}>Back to the Tour Board</Link>
       </div>
     );
@@ -183,7 +186,7 @@ function CityPlaybookPage() {
   const code = cityCode(shownCity.name);
   const maxStops = state.brief?.maxStops ?? FALLBACK_MAX_STOPS;
   const inTour = shortlist.includes(shownCity.id);
-  const hasPlaybook = (id: string) => (state.source === "showcase" ? showcasePlaybookEvents(id) !== null : state.source === "sample" ? (SAMPLE_PLAYBOOK_CITY_IDS as readonly string[]).includes(id) : true);
+  const hasPlaybook = (id: string) => (state.source === "showcase" ? showcasePlaybookEvents(id, variant) !== null : state.source === "sample" ? (SAMPLE_PLAYBOOK_CITY_IDS as readonly string[]).includes(id) : true);
   const nextHeld = inTour
     ? shortlist.slice(shortlist.indexOf(shownCity.id) + 1).map((id) => state.cities.find((c) => c.id === id)).find((c) => !!c && hasPlaybook(c.id))
     : undefined;
@@ -258,8 +261,8 @@ function CityPlaybookPage() {
     <section aria-label="No sample playbook" className="flex flex-col items-start gap-3 rounded-[18px] bg-paper p-4">
       <p className="text-[15px] text-canvas-text">{pb.error?.message ?? `No ${wantShowcase ? "recorded" : "sample"} playbook for ${shownCity.name}`}</p>
       <ul className="flex flex-col">
-        {(wantShowcase ? showcasePlaybookCities().map((x) => x.id) : [...SAMPLE_PLAYBOOK_CITY_IDS]).map((id) => {
-          const c = (wantShowcase ? showcaseCities() : SAMPLE_CITIES).find((x) => x.id === id);
+        {(wantShowcase ? showcasePlaybookCities(variant).map((x) => x.id) : [...SAMPLE_PLAYBOOK_CITY_IDS]).map((id) => {
+          const c = (wantShowcase ? showcaseCities(undefined, variant) : SAMPLE_CITIES).find((x) => x.id === id);
           return c ? <li key={id}><Link to={`/tours/playbook/${id}${sampleQ || "?sample=1"}`} className="inline-flex min-h-11 items-center text-[15px] text-canvas-text underline decoration-canvas-muted underline-offset-4">{c.name}</Link></li> : null;
         })}
       </ul>

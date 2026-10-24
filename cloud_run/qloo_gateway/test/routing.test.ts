@@ -25,11 +25,10 @@ const FULL: Record<string, string> = { MX: "Mexico", US: "United States" };
 
 const heatOf = (cs: City[]): QlooEnvelope => ({ operation: "where_popular", status: "ok", results: cs.map((c, i) => ({ location: { latitude: c.lat, longitude: c.lon }, query: { affinity: 0.9 - i * 0.15, popularity: 0.5 } })) });
 const around = (c: City): QlooEnvelope => ({ operation: "where_popular", status: "ok", results: [[0, 0, 0.8], [0.01, 0.01, 0.5], [-0.01, 0, 0.3]].map(([a, b, aff]) => ({ location: { latitude: c.lat + a!, longitude: c.lon + b! }, query: { affinity: aff, popularity: 0.3 } })) });
-const WORLD: City[] = [...ALL];
-const placeOf = (where: string) => WORLD.find((c) => where.startsWith(`${c.name},`));
+const placeOf = (where: string, world: City[] = ALL) => world.find((c) => where.startsWith(`${c.name},`));
 
 type Call = { tool: string; args: Record<string, unknown> };
-function fake(heat: Record<string, City[]>, calls: Call[] = [], opts: { misplaced?: Set<string> } = {}): QlooCaller {
+function fake(heat: Record<string, City[]>, calls: Call[] = [], opts: { misplaced?: Set<string>; world?: City[] } = {}): QlooCaller {
   return {
     async call(tool, args) {
       calls.push({ tool, args });
@@ -39,7 +38,7 @@ function fake(heat: Record<string, City[]>, calls: Call[] = [], opts: { misplace
           const within = String(args.within);
           if (heat[within]) return heatOf(heat[within]!);
           if (opts.misplaced?.has(within)) return around({ ...A, lat: 0, lon: 0 });
-          const c = placeOf(within);
+          const c = placeOf(within, opts.world);
           return c ? around(c) : { operation: "where_popular", status: "empty", results: [] };
         }
         if (tool === "qloo_recommend") return recs(["One", "Two", "Three"], [0.99, 0.98, 0.97]);
@@ -119,12 +118,24 @@ describe("pasted-mode board", () => {
     expect(["play", "hidden_goldmine"]).not.toContain(cumbre.verdict);
   });
 
-  it("the floored cap applies exactly as for seeds: play and hidden_goldmine become consider", async () => {
-    // Every city has strong activation (recs 0.99): a floored city at fan heat 0 cannot be play, and must never be capped upward either.
-    const events = await collect(runTourBoard(brief([{ name: "Cumbre", country: "MX" }]), { qloo: fake({ Mexico: [A, B] }), cities: ALL }));
-    const c = citiesOf(events)[0]!;
-    expect(c.fanHeatFloor).toBe(true);
-    expect(["play", "hidden_goldmine"]).not.toContain(c.verdict);
+  it("the floored cap fires: the same activation is hidden_goldmine for a city in the heat list and consider for a floored one", async () => {
+    // One city in the regional heat: its fan heat is mid-band (0.7 x 0.6 + 0.3 x 0.5 = 57). A pasted city outside the list gets that same
+    // value as its floor, and every city shares the same activation, so only the cap can tell them apart.
+    const inner = fake({});
+    const midBand: QlooCaller = { async call(tool, args, sid) {
+      if (tool === "qloo_where_popular" && args.within === "Mexico") {
+        return { envelope: { operation: "where_popular", status: "ok", results: [{ location: { latitude: B.lat, longitude: B.lon }, query: { affinity: 0.6, popularity: 0.5 } }] }, cacheKey: "k", cached: false, stale: false };
+      }
+      return inner.call(tool, args, sid);
+    } };
+    const events = await collect(runTourBoard(brief([{ name: "Bosque", country: "MX" }, { name: "Cumbre", country: "MX" }]), { qloo: midBand, cities: ALL }));
+    const cs = citiesOf(events);
+    const inList = cs.find((c) => c.id === "m2")!, floored = cs.find((c) => c.id === "m3")!;
+    expect(inList.fanHeat.value).toBeCloseTo(floored.fanHeat.value!, 6);
+    expect(inList.fanHeatFloor).toBeUndefined();
+    expect(floored.fanHeatFloor).toBe(true);
+    expect(inList.verdict).toBe("hidden_goldmine");
+    expect(floored.verdict).toBe("consider");
   });
 
   it("emits routing_unmatched with the names before any city is scored", async () => {
@@ -207,9 +218,8 @@ describe("budget: 8 pasted cities plus 4 playbooks in one session", () => {
   it("stays within SESSION_QLOO_BUDGET even when every city needs its second location string", async () => {
     const eight: City[] = Array.from({ length: 8 }, (_, i) => ({ id: `p${i}`, name: `Villa${i}`, country: i % 2 ? "US" : "MX", lat: 10 + i * 4, lon: -100 + i * 3, population: 200_000 }));
     const cities = [...ALL, ...eight];
-    WORLD.push(...eight);
     const misplaced = new Set(eight.map((c) => `${c.name}, ${c.country}`)); // first string always misses
-    const inner = fake({ Mexico: eight.filter((c) => c.country === "MX"), "United States": eight.filter((c) => c.country === "US") }, [], { misplaced });
+    const inner = fake({ Mexico: eight.filter((c) => c.country === "MX"), "United States": eight.filter((c) => c.country === "US") }, [], { misplaced, world: cities });
     let qlooCalls = 0;
     const budget = new BudgetGuard({ perSession: SESSION_QLOO_BUDGET, perDay: 2000 });
     const route = async (tool: string, args: Record<string, unknown>): Promise<QlooEnvelope> => {
@@ -234,11 +244,10 @@ describe("budget: 8 pasted cities plus 4 playbooks in one session", () => {
       const ev = await collect(runCityPlaybook({ artist: "Test Artist", artistEntityId: "A1", city: { name: c.name, country: eight.find((e) => e.id === c.id)!.country, id: c.id }, sessionId }, { qloo, cities }));
       expect(ev.filter((e) => e.type === "error")).toEqual([]);
     }
-    console.log(`routing budget: board ${boardCalls}, board + 4 playbooks ${qlooCalls} of ${SESSION_QLOO_BUDGET}`);
-    expect(boardCalls).toBeLessThanOrEqual(7 + 8 * 8);
+    // Worst case by construction: 7 profile and heat calls + 8 cities x (2 lookups + 6 activation calls) + 4 playbooks x 14 + 1 headliner describe = 128.
+    expect(boardCalls).toBe(70);
+    expect(qlooCalls).toBe(107);
     expect(qlooCalls).toBeLessThanOrEqual(SESSION_QLOO_BUDGET);
-    // Ceiling by construction: 7 profile and heat calls + 8 cities x (2 lookups + 6 activation calls) + 4 playbooks x 14 + 1 headliner describe.
-    expect(7 + 8 * 8 + 4 * 14 + 1).toBeLessThanOrEqual(SESSION_QLOO_BUDGET);
     expect(budget.remaining(sessionId).session).toBe(SESSION_QLOO_BUDGET - qlooCalls);
   });
 });

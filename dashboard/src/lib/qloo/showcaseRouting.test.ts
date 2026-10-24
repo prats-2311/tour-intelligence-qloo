@@ -32,6 +32,22 @@ describe("parseShowcase routing", () => {
     expect(parseShowcase({ ...base, routing: { cities: routing.cities, boardEvents: [] } }).routing).toBeNull();
     expect(parseShowcase({ ...base, routing: { cities: [{ name: 3 }], boardEvents: routing.boardEvents } }).routing).toBeNull();
   });
+  it("the synthetic routing has its own coherent tool-call log and one floor value", () => {
+    const r = parseShowcase(syntheticShowcase).routing!;
+    const names = new Set(r.cities.map((c) => `${c.name}, ${c.country}`));
+    const countries = new Set(["United States", "Brazil"]);
+    const places = r.boardEvents.flatMap((e) => (e.type === "tool_call" ? [String(e.args.signal_location ?? e.args.filter_location ?? e.args.within ?? "")] : [])).filter(Boolean);
+    expect(places.length).toBeGreaterThan(0);
+    expect(places.every((p) => names.has(p) || countries.has(p))).toBe(true);
+    expect(places).not.toContain("Mexico");
+    expect(r.boardEvents.filter((e) => e.type === "tool_call").length).toBe(r.boardEvents.filter((e) => e.type === "tool_result").length);
+    const floored = r.boardEvents.flatMap((e) => (e.type === "city_scored" && e.city.fanHeatFloor ? [e.city] : []));
+    expect(floored.length).toBe(2);
+    expect(new Set(floored.map((c) => c.fanHeat.value)).size).toBe(1);
+    expect(floored[0]!.fanHeat.refs).toEqual([]);
+    const others = r.boardEvents.flatMap((e) => (e.type === "city_scored" && !e.city.fanHeatFloor && typeof e.city.fanHeat.value === "number" ? [e.city.fanHeat.value] : []));
+    expect(floored[0]!.fanHeat.value).toBe(Math.min(...others));
+  });
   it("routing_unmatched is a known event", () => {
     expect(cleanEvents([{ type: "routing_unmatched", names: ["A"] }])).toHaveLength(1);
   });

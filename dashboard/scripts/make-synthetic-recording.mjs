@@ -247,7 +247,7 @@ export function addSyntheticBoardCases(rec) {
 /**
  * The synthetic fixture must also exercise the recorded "paste your cities" example (`routing`), which older source recordings lack.
  * Built only from the (already synthetic) main recording: up to 6 of its cities (the ones with playbooks first, then the rest in board
- * order) become the pasted routing, labelled `your_routing`; the last two placed ones are shown as floored (absent from the regional heat), one name
+ * order) become the pasted routing, labelled `your_routing`; the last two placed ones are shown as floored (one shared floor value), the tool-call log keeps only the routing's own calls, one name
  * is "not in our city list", and the playbooks of the first two are reused. Idempotent: does nothing when `routing` already exists.
  * Mutates and returns `rec`.
  */
@@ -259,16 +259,42 @@ export function addSyntheticRouting(rec) {
   const rest = cities.filter((c) => !withBook.includes(c));
   const chosen = [...withBook.slice(0, 2), ...rest, ...withBook.slice(2)].slice(0, 6);
   if (chosen.length < 3) return rec;
-  const lastTwo = new Set(chosen.filter((c) => !c.insufficientReason).slice(-2).map((c) => c.id));
-  const asRouting = (c) => ({ ...structuredClone(c), candidateSource: "your_routing", ...(lastTwo.has(c.id) ? { fanHeatFloor: true } : {}) });
+  // The two floored cities (absent from the regional heat) share one floor: the lowest fan heat among the others.
+  const floored = new Set(chosen.filter((c) => !c.insufficientReason).slice(-2).map((c) => c.id));
+  const others = chosen.filter((c) => !floored.has(c.id) && typeof c.fanHeat?.value === "number").map((c) => c.fanHeat.value);
+  const floor = others.length ? Math.min(...others) : 0;
+  const asRouting = (c) => {
+    const out = { ...structuredClone(c), candidateSource: "your_routing" };
+    if (floored.has(c.id)) {
+      out.fanHeatFloor = true;
+      out.fanHeat = { value: floor, refs: [] };
+      const act = out.activation?.value;
+      if (typeof act === "number") {
+        out.winnability = { value: 0.5 * floor + 0.5 * act, refs: [] };
+        if (out.verdict === "consider" && out.winnability.value < 36) out.verdict = "skip"; // the synthetic Consider line (considerWin) no longer holds at the floor
+      }
+    }
+    return out;
+  };
   const unmatched = "Atlantis";
+  // The tool-call log is the routing's own: the artist-level calls, the heat lookup of the chosen cities' countries, and the calls for
+  // the chosen cities only (a call names its place in signal_location, filter_location or within).
+  const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+  const keepPlaces = new Set([...chosen.map((c) => `${c.name}, ${c.country}`), ...chosen.map((c) => regionNames.of(c.country))]);
+  const place = (e) => e.args?.signal_location ?? e.args?.filter_location ?? e.args?.within;
+  const keep = new Set();
+  events.forEach((e, i) => {
+    if (e.type !== "tool_call") return;
+    const where = place(e);
+    if (where === undefined || keepPlaces.has(where)) { keep.add(i); keep.add(i + 1); }
+  });
   const boardEvents = [];
-  for (const e of events) {
-    if (e.type === "city_scored") continue;
-    if (e.type === "done") continue;
+  events.forEach((e, i) => {
+    if (e.type === "city_scored" || e.type === "done") return;
+    if ((e.type === "tool_call" || e.type === "tool_result") && !keep.has(i)) return;
     boardEvents.push(structuredClone(e));
     if (e.type === "scoring") boardEvents.push({ type: "routing_unmatched", names: [unmatched] });
-  }
+  });
   for (const c of chosen) boardEvents.push({ type: "city_scored", city: asRouting(c) });
   boardEvents.push({ type: "done", summary: { artist: events.find((e) => e.type === "done")?.summary?.artist, cities: chosen.length } });
   const playbooks = {};
