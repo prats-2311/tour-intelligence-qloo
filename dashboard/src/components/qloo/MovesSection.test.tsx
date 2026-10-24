@@ -35,11 +35,11 @@ describe("MovesSection", () => {
     const rows = screen.getAllByTestId("move-row");
     expect(rows).toHaveLength(3);
     expect(rows[0]!.textContent).toContain("Alpha");
-    expect(rows[0]!.textContent).toContain("#1 on fan heat → #5 on winnability");
+    expect(rows[0]!.textContent).toMatch(/#1 on fan heat →to #5 on winnability/);
     expect(rows[0]!.textContent).toContain("Drops on sponsor fit: 10 vs board median 50");
     expect(within(rows[0]!).getByText("down 4")).toBeTruthy();
     expect(rows[1]!.textContent).toContain("Delta");
-    expect(rows[1]!.textContent).toContain("#4 on fan heat → #1 on winnability");
+    expect(rows[1]!.textContent).toMatch(/#4 on fan heat →to #1 on winnability/);
     expect(rows[1]!.textContent).toContain("Climbs on sponsor fit: 95 vs board median 50");
     expect(within(rows[1]!).getByText("up 3")).toBeTruthy();
   });
@@ -60,9 +60,48 @@ describe("MovesSection", () => {
   it("footnotes unplaced cities and never ranks them", () => {
     const ghost = mk("Ghost", null, null, undefined, { insufficientReason: "location_unresolved" });
     render(<MovesSection cities={[...board, ghost]} done onSelect={() => {}} />);
-    expect(screen.getByText("Not ranked: Ghost (Qloo couldn't place them precisely).")).toBeTruthy();
+    expect(screen.getByText("Not ranked: Ghost (Qloo couldn't place it precisely).")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Show all moves" }));
     expect(screen.getAllByTestId("move-row")).toHaveLength(5);
+  });
+  it("uses the plural footnote for two or more unplaced cities", () => {
+    const g = (id: string) => mk(id, null, null, undefined, { insufficientReason: "location_unresolved" });
+    render(<MovesSection cities={[...board, g("Ghost"), g("Shade")]} done onSelect={() => {}} />);
+    expect(screen.getByText("Not ranked: Ghost, Shade (Qloo couldn't place them precisely).")).toBeTruthy();
+  });
+  it("reserves the footnote line before the board finishes", () => {
+    const ghost = mk("Ghost", null, null, undefined, { insufficientReason: "location_unresolved" });
+    render(<MovesSection cities={[...board, ghost]} done={false} onSelect={() => {}} />);
+    expect(screen.getByTestId("moves-footnote").textContent).toBe("");
+  });
+  it("does not say the rankings agree when no city has both scores", () => {
+    render(<MovesSection cities={[mk("A", null, null)]} done onSelect={() => {}} />);
+    expect(screen.queryByText("Fan heat and winnability agree on this board.")).toBeNull();
+  });
+  it("reads the arrow as 'to' and renders no empty reason span for holds", () => {
+    const c = { sponsor_fit: 0.5 };
+    const five = [mk("A", 90, 10, c), mk("B", 70, 30, c), mk("C", 50, 50, c), mk("D", 30, 70, c), mk("E", 10, 90, c)];
+    render(<MovesSection cities={five} done onSelect={() => {}} />);
+    const row = screen.getAllByTestId("move-row")[0]!;
+    expect(Array.from(row.querySelectorAll("span")).find((e) => e.textContent === "→")?.getAttribute("aria-hidden")).toBe("true");
+    expect(within(row).getByText("to")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Show all moves" }));
+    const hold = screen.getAllByTestId("move-row").find((r) => r.textContent!.includes("holds #3"))!;
+    expect(hold.querySelectorAll("[data-testid=move-reason]")).toHaveLength(0);
+  });
+  it("collapses to two rows on phones (the third is hidden below lg) and expands to all", () => {
+    render(<MovesSection cities={board} done onSelect={() => {}} />);
+    const rows = screen.getAllByTestId("move-row");
+    expect(rows[1]!.className).not.toContain("max-lg:hidden");
+    expect(rows[2]!.className).toContain("max-lg:hidden");
+    fireEvent.click(screen.getByRole("button", { name: "Show all moves" }));
+    expect(screen.getAllByTestId("move-row")[2]!.className).not.toContain("max-lg:hidden");
+  });
+  it("in the Without Qloo tab hides the rows, keeps the height and points back to Winnability", () => {
+    render(<MovesSection cities={board} done paused onSelect={() => {}} />);
+    expect(screen.queryAllByTestId("move-row")).toHaveLength(0);
+    expect(screen.getByText("Switch to Winnability to see where fan heat and winnability disagree.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Show all moves" })).toBeNull();
   });
   it("selects the tapped city", () => {
     const onSelect = vi.fn();

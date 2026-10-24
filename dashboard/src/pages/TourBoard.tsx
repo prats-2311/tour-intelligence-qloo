@@ -313,7 +313,7 @@ export default function TourBoard() {
       )}
 
       {(state.cities.length > 0 || streaming) && !empty && (
-        <MovesSection cities={state.cities} scoring={state.scoring} done={state.status === "done"} selectedId={selectedId} onSelect={selectFromMap} />
+        <MovesSection cities={state.cities} scoring={state.scoring} done={state.status === "done"} paused={withoutMode} selectedId={selectedId} onSelect={selectFromMap} />
       )}
 
       {state.cities.length > 0 && (
@@ -480,7 +480,7 @@ export default function TourBoard() {
       {isSample && <SampleBanner source={state.source} />}
       <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_1fr]">
         <div className="lg:col-span-6 lg:col-start-7 lg:row-start-1 xl:col-span-5 xl:col-start-8">{header}</div>
-        <section aria-label="Routing map" className="relative h-[32dvh] min-h-[168px] bg-canvas-raised lg:sticky lg:top-14 lg:col-span-6 lg:col-start-1 lg:row-span-2 xl:col-span-7 lg:row-start-1 lg:h-[calc(100dvh-56px)] lg:self-start">
+        <section aria-label="Routing map" className="relative h-[28dvh] min-h-[168px] bg-canvas-raised lg:sticky lg:top-14 lg:col-span-6 lg:col-start-1 lg:row-span-2 xl:col-span-7 lg:row-start-1 lg:h-[calc(100dvh-56px)] lg:self-start">
           {!withoutMode && <Legend present={new Set(state.cities.map((c) => c.verdict))} />}
           <Suspense fallback={<div className="size-full bg-canvas-raised" />}>
             <TourMap cities={state.cities} selectedId={withoutMode ? null : selectedId} onSelect={selectFromMap} zones={selected?.zones} neutral={withoutMode} />

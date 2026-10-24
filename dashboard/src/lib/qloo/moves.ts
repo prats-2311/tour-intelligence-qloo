@@ -16,6 +16,7 @@ export const COMPONENT_WORDS: Record<ComponentName, string> = {
   fan_concentration: "fans packed into a few neighbourhoods",
   venue_fit: "venue fit",
 };
+export const NO_CLEAR_DRIVER_LINE = "No clear driver: components sit near the board median.";
 export const NO_DETAIL_LINE = "No activation detail recorded.";
 export const MAJOR_MARKET_SUFFIX = " · major market, fan heat at the board's floor";
 const COMPONENTS = Object.keys(COMPONENT_WORDS) as ComponentName[];
@@ -73,5 +74,6 @@ export function reasonFor(move: Move, cities: ScoredCity[], scoring?: Pick<Scori
   const up = delta > 0;
   const aligned = gaps.filter((g) => (up ? g.diff > 0 : g.diff < 0));
   const best = (aligned.length > 0 ? aligned : gaps).reduce((a, b) => (b.weighted > a.weighted ? b : a));
+  if (pct(best.value) === pct(best.med)) return NO_CLEAR_DRIVER_LINE + suffix;
   return `${up ? "Climbs" : "Drops"} on ${COMPONENT_WORDS[best.name]}: ${pct(best.value)} vs board median ${pct(best.med)}${suffix}`;
 }

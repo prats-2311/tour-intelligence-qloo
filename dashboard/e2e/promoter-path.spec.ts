@@ -382,7 +382,12 @@ test("the board leads with where fan heat and winnability disagree", async ({ pa
   await expect(section.getByRole("heading", { name: "Where fan heat and winnability disagree" })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole("button", { name: "Stop" })).toHaveCount(0, { timeout: 30_000 });
   await expect(section.getByTestId("move-row").first().or(section.getByText("Fan heat and winnability agree on this board."))).toBeVisible();
-  expect(await section.getByTestId("move-row").count()).toBeLessThanOrEqual(3);
+  const visibleRows = await section.getByTestId("move-row").evaluateAll((els) => els.filter((e) => (e as HTMLElement).offsetParent !== null).length);
+  expect(visibleRows, "phones show two moves, desktop three").toBeLessThanOrEqual(info.project.name === "mobile" ? 2 : 3);
+  // The ranked list must not be pushed below the first screen.
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
+  const firstRowTop = await page.getByTestId("city-row").first().evaluate((e) => e.getBoundingClientRect().top + window.scrollY);
+  expect(firstRowTop, "first city row starts within the first viewport").toBeLessThan(page.viewportSize()!.height);
   const above = await page.evaluate(() => document.querySelector('[data-testid="moves-section"]')!.getBoundingClientRect().top < document.querySelector('[role="tablist"][aria-label="Ranking"]')!.getBoundingClientRect().top);
   expect(above, "the section sits above the tabs").toBe(true);
   expect(await noOverflow(page)).toBe(true);

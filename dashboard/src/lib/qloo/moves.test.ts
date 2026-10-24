@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeMoves, reasonFor, unplacedCities, MAJOR_MARKET_SUFFIX, NO_DETAIL_LINE } from "./moves";
+import { computeMoves, reasonFor, unplacedCities, MAJOR_MARKET_SUFFIX, NO_CLEAR_DRIVER_LINE, NO_DETAIL_LINE } from "./moves";
 import type { ComponentName, ScoredCity } from "./types";
 
 const city = (id: string, fan: number | null, win: number | null, components?: Partial<Record<ComponentName, number>>, extra: Partial<ScoredCity> = {}): ScoredCity => ({
@@ -59,7 +59,20 @@ describe("reasonFor", () => {
   it("names fan concentration and local hooks in promoter words", () => {
     const cs = [mk("a", 10, 90, { fan_concentration: 0.8 }), mk("b", 50, 50, { fan_concentration: 0.4 }), mk("c", 90, 10, { local_hooks: 0.2 })];
     expect(reasonFor(computeMoves(cs).find((m) => m.city.id === "a")!, cs)).toBe("Climbs on fans packed into a few neighbourhoods: 80 vs board median 60");
-    expect(reasonFor(computeMoves(cs).find((m) => m.city.id === "c")!, cs)).toBe("Drops on local culture fit: 20 vs board median 20");
+    expect(reasonFor(computeMoves(cs).find((m) => m.city.id === "c")!, cs)).toBe(NO_CLEAR_DRIVER_LINE);
+  });
+  it("prefers a smaller gap on the move's side over a larger gap on the wrong side", () => {
+    const cs = [mk("up", 10, 90, { sponsor_fit: 0.2, venue_fit: 0.6 }), mk("m", 50, 50, { sponsor_fit: 0.5, venue_fit: 0.5 }), mk("dn", 90, 10, { sponsor_fit: 0.8, venue_fit: 0.4 })];
+    // sponsor_fit is 30 below the median (wrong side for a climb); venue_fit is 10 above it
+    expect(reasonFor(computeMoves(cs).find((m) => m.city.id === "up")!, cs)).toBe("Climbs on venue fit: 60 vs board median 50");
+  });
+  it("falls back to the largest gap when nothing sits on the move's side", () => {
+    const cs = [mk("up", 10, 90, { sponsor_fit: 0.2, venue_fit: 0.4 }), mk("m", 50, 50, { sponsor_fit: 0.5, venue_fit: 0.5 }), mk("dn", 90, 10, { sponsor_fit: 0.8, venue_fit: 0.6 })];
+    expect(reasonFor(computeMoves(cs).find((m) => m.city.id === "up")!, cs)).toBe("Climbs on sponsor fit: 20 vs board median 50");
+  });
+  it("says there is no clear driver when the gap is zero", () => {
+    const cs = [mk("up", 10, 90, { sponsor_fit: 0.5 }), mk("m", 50, 50, { sponsor_fit: 0.5 }), mk("dn", 90, 10, { sponsor_fit: 0.5 })];
+    expect(reasonFor(computeMoves(cs).find((m) => m.city.id === "up")!, cs)).toBe("No clear driver: components sit near the board median.");
   });
   it("says so when no components were recorded", () => {
     const cs = [city("a", 10, 90), city("b", 90, 10)];
