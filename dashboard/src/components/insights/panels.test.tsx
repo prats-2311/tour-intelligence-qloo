@@ -56,6 +56,17 @@ describe("insight panels", () => {
     expect(screen.getAllByTestId("zone-row")).toHaveLength(3);
     expect(screen.getByText("38%")).toBeTruthy();
   });
+  it("lists each zone name once, summing shares of per-point rows, with no duplicate keys", () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const z = (label: string, share: number, affinity: number, index: number) => ({ label, lat: 0, lon: 0, affinity, index, share });
+    const city = { ...SAMPLE_CITIES[2]!, zones: [z("Coyoacan", 0.3, 0.9, 0), z("Centro", 0.25, 0.8, 1), z("Coyoacan", 0.25, 0.7, 2), z("Centro", 0.2, 0.6, 3)] };
+    render(<PromoZones city={city} />);
+    expect(screen.getAllByTestId("zone-row")).toHaveLength(2);
+    expect(screen.getByText("55%")).toBeTruthy();
+    expect(screen.getByText("45%")).toBeTruthy();
+    expect(err.mock.calls.flat().join(" ")).not.toMatch(/same key/);
+    err.mockRestore();
+  });
   it("artist compare disabled in sample mode and makes no calls", () => {
     const spy = vi.spyOn(client, "callQlooTool");
     render(<ArtistCompare artist={{ entityId: "sample-lumen-vale", name: "Lumen Vale" }} source="sample" />);

@@ -147,7 +147,9 @@ describe("City Playbook location resolution", () => {
   it("matches an accented name and an English country name (the strategist path)", async () => {
     const calls: Call[] = [];
     const events = await collect(runCityPlaybook({ ...input, city: { name: "ciudad JUÁREZ", country: "Mexico" } }, { qloo: fake((w) => (w === "Ciudad Juarez, MX" ? RIGHT : WRONG), calls), cities: CITIES }));
-    expect(events.find((e) => e.type === "playbook")).toBeDefined();
+    // looked up under the list's canonical name and ISO-2 country (the board's cache key), not the caller's spelling
+    expect(inCityCalls(calls).map((c) => c.args.within)).toEqual(["Ciudad Juarez, MX"]);
+    expect(events.at(-1)?.type).toBe("done");
   });
 
   it("passes the board's city id through to the match", async () => {

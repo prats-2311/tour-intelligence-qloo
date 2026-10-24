@@ -1,7 +1,8 @@
+import { mergeZonesByLabel } from "@/lib/qloo/zones";
 import type { ScoredCity } from "@/lib/qloo/types";
 
 export function PromoZones({ city }: { city: ScoredCity }) {
-  const zones = city.zones.filter((z) => Number.isFinite(z.share));
+  const zones = mergeZonesByLabel(city.zones.filter((z) => Number.isFinite(z.share)));
   return (
     <section aria-label={`Promo zones in ${city.name}`} className="flex min-w-0 flex-col gap-3 rounded-[14px] bg-paper p-3 lg:p-4">
       <h2 className="font-title text-[20px] leading-tight text-canvas-text">Promo zones · {city.name}</h2>
