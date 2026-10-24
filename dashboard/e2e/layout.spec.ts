@@ -159,3 +159,22 @@ test.describe("touch targets are at least 44x44 on mobile", () => {
     });
   }
 });
+
+// Desktop board header: the artist name shares a 5-column rail with the proof link, Stop and the agent chip. It once got flex-basis 0 and
+// collapsed to a sliver while those three kept their width, so the name must stay fully readable (not truncated) with Stop showing.
+test.describe("desktop board header", () => {
+  test.beforeEach(({}, info) => test.skip(info.project.name !== "desktop"));
+  for (const path of ["/tours/board?sample=1", "/tours/board?showcase=1"]) {
+    test(`artist name is not clipped while scoring: ${path}`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.getByRole("button", { name: "Stop" })).toBeVisible({ timeout: 15_000 });
+      const h1 = page.getByRole("heading", { level: 1 });
+      const m = await h1.evaluate((el) => ({ w: el.clientWidth, sw: el.scrollWidth, text: el.textContent }));
+      expect(m.w, `h1 "${m.text}" collapsed`).toBeGreaterThan(200);
+      expect(m.sw, `h1 "${m.text}" truncated`).toBeLessThanOrEqual(m.w);
+      await expect(page.getByRole("button", { name: "Stop" })).toHaveCount(0, { timeout: 30_000 });
+      const after = await h1.evaluate((el) => ({ w: el.clientWidth, sw: el.scrollWidth }));
+      expect(after.sw).toBeLessThanOrEqual(after.w);
+    });
+  }
+});

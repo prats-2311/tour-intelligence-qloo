@@ -26,9 +26,40 @@ if (arg("base") || arg("out")) {
       await page.route(/\/api\/campaigns$/, (r) => r.fulfill({ json: { campaigns: [] } }));
     }
     let n = 0;
+    // Bounded waits: a missing signal costs at most the timeout and logs a warning; it never hangs the run.
+    const settle = async () => {
+      await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"), null, { timeout: 5000 }).catch(() => console.warn("  warn: animations still running"));
+      await page.waitForTimeout(400); // layout-animated tab pill and number tickers finish just after getAnimations() goes idle
+    };
+    const mapReady = async () => { // TourMap sets data-map-ready="true" on its root once MapLibre is idle (tiles drawn). Older builds lack it.
+      if (!(await page.locator("[data-map-ready]").count())) { console.warn("  warn: no data-map-ready on this build; waiting a fixed 6s for tiles"); return page.waitForTimeout(6000); }
+      await page.waitForSelector('[data-map-ready="true"]', { timeout: 20000 }).catch(() => console.warn("  warn: map not idle after 20s"));
+    };
+    // The showcase replay has finished: no Stop button, no "still scoring", and the scored-markets summary is showing.
+    const replayDone = async () => {
+      await page.getByRole("button", { name: "Stop" }).waitFor({ state: "detached", timeout: 60000 });
+      await page.getByText(/\d+ markets? scored/).first().waitFor({ timeout: 30000 });
+      await page.getByText("still scoring").waitFor({ state: "detached", timeout: 30000 });
+    };
+    // Full-page captures lay fixed bottom chrome (nav bar, floating Strategist button) over the middle of the image: hide it for the capture only.
+    const withoutFixedChrome = async (fn) => {
+      const hidden = await page.evaluate(() => {
+        const els = [...document.querySelectorAll("body *")].filter((el) => {
+          const cs = getComputedStyle(el);
+          // fixed chrome anywhere along the bottom (nav bar, lifted FAB) and sticky bottom footers (they also sit mid-image in a full-page shot)
+          return cs.visibility !== "hidden" && ((cs.position === "fixed" && el.getBoundingClientRect().bottom > window.innerHeight / 2) || (cs.position === "sticky" && cs.bottom !== "auto"));
+        });
+        els.forEach((el) => { el.dataset.snapHidden = el.style.visibility || "-"; el.style.visibility = "hidden"; });
+        return els.length;
+      });
+      try { return await fn(); } finally {
+        if (hidden) await page.evaluate(() => document.querySelectorAll("[data-snap-hidden]").forEach((el) => { el.style.visibility = el.dataset.snapHidden === "-" ? "" : el.dataset.snapHidden; delete el.dataset.snapHidden; }));
+      }
+    };
     const shot = async (name, caption, fullPage = true) => {
+      await settle();
       const file = `${String(++n).padStart(2, "0")}-${name}-${vp}.png`;
-      await page.screenshot({ path: path.join(out, file), fullPage });
+      await (fullPage ? withoutFixedChrome : (f) => f())(() => page.screenshot({ path: path.join(out, file), fullPage }));
       captions[file] = caption;
       console.log("wrote", path.join(out, file));
     };
@@ -38,12 +69,18 @@ if (arg("base") || arg("out")) {
     await page.getByRole("link", { name: "Try the showcase tour" }).click();
     const rows = page.getByTestId("city-row");
     await rows.first().waitFor({ timeout: 30000 });
+    await replayDone();
+    await mapReady();
     await shot("board-winnability", "Tour Board ranked by winnability, with the hidden goldmine marked");
     await page.getByRole("tab", { name: "Without Qloo" }).click();
     await page.getByText("Generic LLM answer — no taste evidence").waitFor({ timeout: 15000 });
+    await page.getByRole("list", { name: "Generic ranking" }).waitFor({ timeout: 30000 });
+    await page.getByText("Waiting for the board to finish").waitFor({ state: "detached", timeout: 30000 });
+    await mapReady();
     await shot("board-without-qloo", "The same cities ranked without Qloo: a generic list, no verdicts");
     await page.getByRole("tab", { name: "Winnability" }).click();
     await rows.first().waitFor();
+    await replayDone();
     await rows.filter({ hasText: "Hidden goldmine" }).first().getByRole("button").first().click();
     await page.getByRole("heading", { name: "Sponsors" }).first().waitFor({ timeout: 30000 });
     await page.getByText(/\d+ verified · \d+ removed/).first().waitFor({ timeout: 30000 });

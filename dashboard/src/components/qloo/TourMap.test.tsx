@@ -48,6 +48,18 @@ describe("TourMap", () => {
     }
     expect(onSelect).not.toHaveBeenCalled();
   });
+  it("exposes data-map-ready only while the map is idle, for screenshot tooling", async () => {
+    const { default: TourMap } = await import("./TourMap");
+    const { container } = render(<TourMap cities={SAMPLE_CITIES.slice(0, 2)} onSelect={() => {}} />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.dataset.mapReady).toBe("false");
+    act(() => { maps[0]!.emit("style.load"); maps[0]!.emit("load"); maps[0]!.emit("idle"); });
+    expect(root.dataset.mapReady).toBe("true");
+    act(() => { maps[0]!.emit("movestart"); });
+    expect(root.dataset.mapReady).toBe("false");
+    act(() => { maps[0]!.emit("idle"); });
+    expect(root.dataset.mapReady).toBe("true");
+  });
   it("shows an honest overlay when the style fails to load and keeps the markers usable", async () => {
     const { default: TourMap } = await import("./TourMap");
     const onSelect = vi.fn();

@@ -35,6 +35,7 @@ export default function TourMap({ cities, selectedId, onSelect, zones, neutral =
   const [tilesFailed, setTilesFailed] = useState(false);
   const reduce = useMediaQuery("(prefers-reduced-motion: reduce)");
   const container = useRef<HTMLDivElement>(null);
+  const root = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markers = useRef<Map<string, { marker: maplibregl.Marker; element: HTMLButtonElement; sig: string }>>(new Map());
   const styleReady = useRef(false);
@@ -97,7 +98,11 @@ export default function TourMap({ cities, selectedId, onSelect, zones, neutral =
     map.on("style.load", () => { styleSeen = true; });
     map.on("error", () => { if (!styleSeen) setTilesFailed(true); });
     const watchdog = setTimeout(() => { if (!styleSeen) setTilesFailed(true); }, 8000);
-    map.on("idle", () => setTilesFailed(false));
+    // data-map-ready is set directly on the DOM (no re-render): true while idle with tiles loaded, false while moving or loading. Screenshot tooling waits on it.
+    const setReady = (v: boolean) => root.current?.setAttribute("data-map-ready", String(v));
+    map.on("idle", () => { setTilesFailed(false); setReady(true); });
+    map.on("movestart", () => setReady(false));
+    map.on("dataloading", () => setReady(false));
     const refit = () => {
       const b = boundsFor(citiesRef.current);
       if (b) map.fitBounds(b, { padding: 48, animate: false, maxZoom: 6 });
@@ -192,7 +197,7 @@ export default function TourMap({ cities, selectedId, onSelect, zones, neutral =
   }, [selectedId, sigKey, isDesktop]);
 
   return (
-    <div className="relative size-full">
+    <div ref={root} data-map-ready="false" className="relative size-full">
       <div ref={container} className="size-full overflow-hidden rounded-[18px] bg-[#151410]" />
       {tilesFailed && (
         <p role="status" className="pointer-events-none absolute bottom-2 left-2 z-10 rounded-[6px] bg-canvas-raised px-2 py-1 text-[12px] text-canvas-muted">Map tiles unavailable</p>
