@@ -237,10 +237,10 @@ describe("evidence for lift and merch brands", () => {
   it("labels lift items and adds the top-lift brands as merch evidence", async () => {
     const { buildEvidence } = await import("../src/narrative/evidence.js");
     const ev = buildEvidence([
-      { kind: "sponsors", status: "ok", items: [{ name: "Brand A", entityId: "B1", affinity: 0.8, lift: 0.3, baselineAffinity: 0.5 }], refs: [], warnings: [] },
+      { kind: "sponsors", status: "ok", items: [{ name: "Brand A", entityId: "B1", affinity: 0.8, artistRank: 2, cityRank: null, rankLift: 19 }], refs: [], warnings: [] },
       { kind: "merch", status: "ok", items: [], refs: [], warnings: [], summary: { brands: ["Brand A"] } },
     ]);
-    expect(ev[0]).toMatchObject({ id: "sponsors:0", numbers: [0.8, 0.3, 0.5], label: expect.stringContaining("city overall") });
+    expect(ev[0]).toMatchObject({ id: "sponsors:0", numbers: [0.8, 2, 19], label: expect.stringContaining("rankLift") });
     expect(ev.find((e) => e.id === "merch:brands")).toMatchObject({ names: ["Brand A"] });
   });
   it("co-bill evidence labels and the narrative prompt use plain words, not 'local affinity'", async () => {

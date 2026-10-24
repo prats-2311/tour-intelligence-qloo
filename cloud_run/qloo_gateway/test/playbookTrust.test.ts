@@ -20,11 +20,11 @@ const compareWith = (...tags: ReturnType<typeof tag>[]): QlooEnvelope => ({ oper
 interface Fake { brands: Row[]; brandBase: Row[]; movies: Row[]; movieBase: Row[]; tvs: Row[]; tvBase: Row[]; artists: Row[]; pool: Row[]; heat: QlooEnvelope; compare: QlooEnvelope; describePop: number | undefined; describeById?: boolean }
 const base = (): Fake => ({
   brands: [{ id: "B1", name: "Brand One", aff: 0.9 }, { id: "B2", name: "Brand Two", aff: 0.75 }, { id: "B3", name: "Brand Three", aff: 0.7 }],
-  brandBase: [{ id: "B1", name: "Brand One", aff: 0.85 }, { id: "B2", name: "Brand Two", aff: 0.5 }, { id: "B9", name: "Brand Nine", aff: 0.4 }],
+  brandBase: [{ id: "B2", name: "Brand Two", aff: 0.9 }, { id: "B1", name: "Brand One", aff: 0.8 }, { id: "B9", name: "Brand Nine", aff: 0.7 }],
   movies: [{ id: "M1", name: "Film One", aff: 0.8 }, { id: "M2", name: "Film Two", aff: 0.6 }],
-  movieBase: [{ id: "M1", name: "Film One", aff: 0.78 }, { id: "M2", name: "Film Two", aff: 0.2 }],
+  movieBase: [{ id: "M1", name: "Film One", aff: 0.9 }, { id: "M7", name: "Film Seven", aff: 0.8 }],
   tvs: [{ id: "T1", name: "Show One", aff: 0.7 }, { id: "T2", name: "Show Two", aff: 0.65 }],
-  tvBase: [{ id: "T1", name: "Show One", aff: 0.69 }, { id: "T2", name: "Show Two", aff: 0.3 }],
+  tvBase: [{ id: "T1", name: "Show One", aff: 0.9 }, { id: "T7", name: "Show Seven", aff: 0.8 }],
   artists: [{ id: "C1", name: "Small Act", aff: 0.9, pop: 0.3 }],
   pool: [{ id: "P0", name: "Pool Small", aff: 0.7, pop: 0.2 }],
   heat: cityHeat,
@@ -73,37 +73,42 @@ async function run(f: Fake, over: Partial<typeof input> = {}, calls?: Calls) {
   return { cards, card: (k: string) => cards.find((c) => c.kind === k)! };
 }
 
-describe("sponsor lift against the city baseline", () => {
-  it("asks for one city-baseline brand list and sorts brands by lift", async () => {
+describe("sponsor lift against the city baseline (rank based)", () => {
+  it("asks for one city-baseline brand list and sorts brands by rank lift", async () => {
     const calls: Calls = { recommend: [], all: [] };
     const { card } = await run(base(), {}, calls);
     expect(calls.recommend.filter((a) => a.target_type === "brand" && !a.signals)).toEqual([cityPopularityArgs("brand", WHERE, 20)]);
     const items = card("sponsors").items;
-    expect(items.map((i) => i.name)).toEqual(["Brand Three", "Brand Two", "Brand One"]);
-    expect(items[0]).toMatchObject({ baselineAffinity: 0.4, baselineMissing: true });
-    expect(items[0]!.lift).toBeCloseTo(0.3, 10);
-    expect(items[1]).toMatchObject({ baselineAffinity: 0.5, baselineMissing: false });
-    expect(items[1]!.lift).toBeCloseTo(0.25, 10);
-    expect(items[2]!.lift).toBeCloseTo(0.05, 10);
-    expect(card("sponsors").summary?.note).toBe("Ranked by how much more this artist's fans like the brand than the city overall.");
+    // fans: B1 #1, B2 #2, B3 #3; city: B2 #1, B1 #2, B3 absent (21)
+    expect(items.map((i) => i.name)).toEqual(["Brand Three", "Brand One", "Brand Two"]);
+    expect(items[0]).toMatchObject({ artistRank: 3, cityRank: null, rankLift: 18 });
+    expect(items[1]).toMatchObject({ artistRank: 1, cityRank: 2, rankLift: 1 });
+    expect(items[2]).toMatchObject({ artistRank: 2, cityRank: 1, rankLift: -1 });
+    for (const old of ["lift", "baselineAffinity", "baselineMissing"]) expect(items[0]).not.toHaveProperty(old);
+    expect(card("sponsors").summary?.note).toBe("Ranked by how much higher this artist's fans rank the brand than the city overall does.");
   });
-  it("breaks lift ties by affinity", async () => {
+  it("breaks rank-lift ties by the artist's own rank", async () => {
     const f = base();
-    f.brands = [{ id: "B5", name: "Low", aff: 0.5 }, { id: "B4", name: "High", aff: 0.75 }];
-    f.brandBase = [{ id: "B5", name: "Low", aff: 0.25 }, { id: "B4", name: "High", aff: 0.5 }];
-    expect((await run(f)).card("sponsors").items.map((i) => i.name)).toEqual(["High", "Low"]);
+    f.brands = [{ id: "B4", name: "First", aff: 0.9 }, { id: "B5", name: "Second", aff: 0.8 }];
+    f.brandBase = [{ id: "B4", name: "First", aff: 0.9 }, { id: "B5", name: "Second", aff: 0.8 }]; // both lift 0
+    expect((await run(f)).card("sponsors").items.map((i) => i.name)).toEqual(["First", "Second"]);
   });
-  it("keeps Qloo order and omits lift when the baseline is unavailable", async () => {
+  it("only counts the baseline's top 20; a brand beyond it is absent (21)", async () => {
+    const f = base();
+    f.brandBase = [...Array.from({ length: 20 }, (_, i) => ({ id: `Z${i}`, name: `Z${i}`, aff: 0.5 })), { id: "B1", name: "Brand One", aff: 0.1 }];
+    const items = (await run(f)).card("sponsors").items;
+    expect(items.find((i) => i.name === "Brand One")).toMatchObject({ cityRank: null, rankLift: 20 });
+  });
+  it("keeps Qloo order and omits rank fields when the baseline is unavailable", async () => {
     const f = base();
     f.brandBase = [];
     const s = (await run(f)).card("sponsors");
     expect(s.items.map((i) => i.name)).toEqual(["Brand One", "Brand Two", "Brand Three"]);
-    expect(s.items[0]).not.toHaveProperty("lift");
+    expect(s.items[0]).not.toHaveProperty("rankLift");
     expect(s.summary?.note).toBeUndefined();
   });
-  it("merch cites the top-lift brands", async () => {
-    const f = base();
-    expect((await run(f)).card("merch").summary?.brands).toEqual(["Brand Three", "Brand Two", "Brand One"]);
+  it("merch cites the top rank-lift brands", async () => {
+    expect((await run(base())).card("merch").summary?.brands).toEqual(["Brand Three", "Brand One", "Brand Two"]);
   });
   it("leaves the board activation (sponsor_fit = raw affinity) byte-identical whatever the baseline says", async () => {
     const drive = async (f: Fake) => {
@@ -111,7 +116,7 @@ describe("sponsor lift against the city baseline", () => {
       return JSON.stringify({ c: a.components, r: a.rawComponents, z: a.zones });
     };
     const other = base();
-    other.brandBase = [{ id: "B1", name: "Brand One", aff: 0.1 }];
+    other.brandBase = [{ id: "B3", name: "Brand Three", aff: 0.1 }];
     other.movieBase = []; other.tvBase = [];
     expect(await drive(base())).toBe(await drive(other));
     const sponsorFit = (JSON.parse(await drive(base())) as { r: { sponsor_fit: number } }).r.sponsor_fit;
@@ -119,28 +124,40 @@ describe("sponsor lift against the city baseline", () => {
   });
 });
 
-describe("local moment lift", () => {
-  it("lifts movies and tv against one baseline call each; places and artists keep their order", async () => {
+describe("local moment rank lift and mainstream drop", () => {
+  it("one baseline call each; mainstream (city top 10) titles are dropped and counted; the rest sort by rank lift; places and artists keep order", async () => {
     const calls: Calls = { recommend: [], all: [] };
     const f = base();
     f.artists = [{ id: "C1", name: "Art A", aff: 0.9, pop: 0.3 }, { id: "C2", name: "Art B", aff: 0.8, pop: 0.3 }];
+    f.movies = [{ id: "M1", name: "Film One", aff: 0.9 }, { id: "M2", name: "Film Two", aff: 0.8 }, { id: "M3", name: "Film Three", aff: 0.7 }];
+    f.tvs = [{ id: "T1", name: "Show One", aff: 0.9 }, { id: "T2", name: "Show Two", aff: 0.8 }];
     const { card } = await run(f, {}, calls);
     expect(calls.recommend.filter((a) => a.target_type === "movie" && !a.signals)).toEqual([cityPopularityArgs("movie", WHERE, 20)]);
     expect(calls.recommend.filter((a) => a.target_type === "tv_show" && !a.signals)).toEqual([cityPopularityArgs("tv_show", WHERE, 20)]);
-    const items = card("local_moment").items;
+    const lm = card("local_moment");
+    const items = lm.items;
     expect(items.filter((i) => ["Art A", "Art B"].includes(i.name)).map((i) => i.name)).toEqual(["Art A", "Art B"]);
-    expect(items.filter((i) => i.name.startsWith("Film")).map((i) => i.name)).toEqual(["Film Two", "Film One"]);
-    expect(items.filter((i) => i.name.startsWith("Show")).map((i) => i.name)).toEqual(["Show Two", "Show One"]);
-    expect(items.find((i) => i.name === "Film Two")).toMatchObject({ baselineAffinity: 0.2, baselineMissing: false });
-    expect(items.find((i) => i.name === "Art A")).not.toHaveProperty("lift");
+    expect(items.filter((i) => i.name.startsWith("Film")).map((i) => i.name)).toEqual(["Film Two", "Film Three"]); // Film One is city top 10
+    expect(items.filter((i) => i.name.startsWith("Show")).map((i) => i.name)).toEqual(["Show Two"]);
+    expect(items.find((i) => i.name === "Film Two")).toMatchObject({ artistRank: 2, cityRank: null, rankLift: 19 });
+    expect(items.find((i) => i.name === "Film Three")).toMatchObject({ artistRank: 3, rankLift: 18 });
+    expect(items.find((i) => i.name === "Art A")).not.toHaveProperty("rankLift");
+    expect(lm.summary?.mainstreamDropped).toBe(2);
   });
-  it("a title that is equally liked everywhere gets no lift", async () => {
+  it("a title at city rank 10 is dropped, one at rank 15 is kept", async () => {
     const f = base();
-    f.movies = [{ id: "M1", name: "Everywhere", aff: 0.8 }, { id: "M2", name: "Local", aff: 0.6 }];
-    f.movieBase = [{ id: "M1", name: "Everywhere", aff: 0.8 }, { id: "M2", name: "Local", aff: 0.2 }];
-    const films = (await run(f)).card("local_moment").items.filter((i) => ["Everywhere", "Local"].includes(i.name));
-    expect(films.map((i) => i.name)).toEqual(["Local", "Everywhere"]);
-    expect(films[1]!.lift).toBeCloseTo(0, 10);
+    f.movies = [{ id: "M10", name: "Ten", aff: 0.9 }, { id: "M15", name: "Fifteen", aff: 0.8 }];
+    f.movieBase = Array.from({ length: 20 }, (_, i) => ({ id: i === 9 ? "M10" : i === 14 ? "M15" : `X${i}`, name: `X${i}`, aff: 0.5 }));
+    const films = (await run(f)).card("local_moment").items.filter((i) => ["Ten", "Fifteen"].includes(i.name));
+    expect(films.map((i) => i.name)).toEqual(["Fifteen"]);
+    expect(films[0]).toMatchObject({ cityRank: 15, rankLift: 13 });
+  });
+  it("without a baseline nothing is dropped and the order is Qloo's", async () => {
+    const f = base();
+    f.movieBase = []; f.tvBase = [];
+    const lm = (await run(f)).card("local_moment");
+    expect(lm.items.filter((i) => i.name.startsWith("Film")).map((i) => i.name)).toEqual(["Film One", "Film Two"]);
+    expect(lm.summary?.mainstreamDropped).toBeUndefined();
   });
 });
 

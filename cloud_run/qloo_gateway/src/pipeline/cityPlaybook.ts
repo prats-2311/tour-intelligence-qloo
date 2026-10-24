@@ -8,7 +8,7 @@ import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narra
 import { activationInputs, Aborted, BudgetStop, resolveLocation, trackedCall } from "./tourBoard.js";
 import { LOCAL_DESCRIBE_CAP, LOCAL_SUGGESTIONS, matchPool, matchSuggestion } from "./localActs.js";
 import { cityPopularityArgs, LOCAL_ACT_POOL, localActRankArgs } from "./recArgs.js";
-import { emptySupportCopy, genreTagNames, HEADLINER_SIZE_UNKNOWN, liftRanked, SIZE_UNCHECKED_COPY, smallerThanHeadliner, SPONSOR_LIFT_NOTE } from "./playbookTrust.js";
+import { emptySupportCopy, genreTagNames, HEADLINER_SIZE_UNKNOWN, rankLifted, SIZE_UNCHECKED_COPY, smallerThanHeadliner, SPONSOR_LIFT_NOTE } from "./playbookTrust.js";
 
 /** Size of the baseline lists (the city's own favourites) that lift is measured against. */
 const BASELINE_LIMIT = 20;
@@ -188,11 +188,12 @@ export async function* runCityPlaybook(
     while (events.length) yield events.shift()!;
 
     const { raw } = a;
-    const sponsorLift = liftRanked(extractEntities(raw.brands.envelope), brandBase ? extractEntities(brandBase.envelope) : null);
+    const sponsorLift = rankLifted(extractEntities(raw.brands.envelope), brandBase ? extractEntities(brandBase.envelope) : null);
     const sponsors = sponsorLift.items;
     const baselineRefs = (r: CallResult | null) => (r ? [ref("qloo_recommend", r)] : []);
-    const filmLift = liftRanked(extractEntities(raw.films.envelope), movieBase ? extractEntities(movieBase.envelope) : null);
-    const tvLift = liftRanked(extractEntities(raw.tv.envelope), tvBase ? extractEntities(tvBase.envelope) : null);
+    const filmLift = rankLifted(extractEntities(raw.films.envelope), movieBase ? extractEntities(movieBase.envelope) : null, { dropMainstream: true });
+    const tvLift = rankLifted(extractEntities(raw.tv.envelope), tvBase ? extractEntities(tvBase.envelope) : null, { dropMainstream: true });
+    const mainstreamDropped = filmLift.mainstreamDropped + tvLift.mainstreamDropped;
     const sizeKnown = headliner !== undefined;
     const sizeNote: Record<string, string> = sizeKnown ? {} : { sizeNote: SIZE_UNCHECKED_COPY };
     const coSummary: Record<string, number | string> = sizeKnown
@@ -208,10 +209,11 @@ export async function* runCityPlaybook(
         [...warningsFor("qloo_entity_tags", tags), ...warningsFor("qloo_recommend", raw.brands)], artistTags.length > 0 || sponsors.length > 0),
         ...(sponsors.length > 0 ? { summary: { brands: sponsors.slice(0, 5).map((b) => b.name) } } : {}) },
       card("promo_zones", displayZones(a.zones, known!.name).slice(0, 5), [ref("qloo_where_popular", raw.inCity)], warningsFor("qloo_where_popular", raw.inCity)),
-      card("local_moment",
+      { ...card("local_moment",
         interleave([extractEntities(raw.artists.envelope), filmLift.items, tvLift.items, a.placeEntities], 9),
         [ref("qloo_recommend", raw.artists), ref("qloo_recommend", raw.films), ref("qloo_recommend", raw.tv), ...(a.placeEntities.length > 0 ? [ref("qloo_recommend", raw.places)] : []), ...(filmLift.lifted ? baselineRefs(movieBase) : []), ...(tvLift.lifted ? baselineRefs(tvBase) : [])],
         [raw.artists, raw.films, raw.tv, raw.places].flatMap((r) => warningsFor("qloo_recommend", r))),
+        ...(filmLift.lifted || tvLift.lifted ? { summary: { mainstreamDropped } } : {}) },
       card("venue_fit", a.venues.items, a.venues.refs, [...(raw.ranked ? warningsFor("qloo_rank", raw.ranked) : []), ...a.venues.warnings]),
       { ...card("co_billing", coBill, coBill.map((c) => c.ref), [...compared.flatMap((c) => c.warnings), ...sizeWarnings]),
         summary: { ...coSummary, ...coCopy } },

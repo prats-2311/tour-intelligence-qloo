@@ -234,6 +234,7 @@ describe("runCityPlaybook", () => {
     const events = await collect(runCityPlaybook(input, {
       qloo: qloo((t, a) => {
         if (t !== "qloo_recommend") return happy(t, a);
+        if (!a.signals && (a.target_type === "movie" || a.target_type === "tv_show" || a.target_type === "brand")) return { operation: "recommend", status: "empty", results: [] } as QlooEnvelope; // no city baseline: nothing is mainstream
         const m: Record<string, [string, number]> = { artist: ["Art", 10], movie: ["Film", 2], tv_show: ["Tv", 1], place: ["Place", 2] };
         const [p, n] = m[String(a.target_type)] ?? ["Brand", 2];
         return a.target_type === "place" ? placesIn(a.filter_location, names(p, n), names(p, n).map(() => 0.5)) : recs(names(p, n), names(p, n).map(() => 0.5));
@@ -248,7 +249,7 @@ describe("runCityPlaybook", () => {
   it("local_moment includes tv items when only tv returns results", async () => {
     const empty = (t: string): QlooEnvelope => ({ operation: t, status: "empty", results: [] });
     const events = await collect(runCityPlaybook(input, {
-      qloo: qloo((t, a) => (t === "qloo_where_popular" ? cityHeat : t === "qloo_recommend" && a.target_type === "tv_show" ? recs(["Show 1"], [0.6]) : empty(t))),
+      qloo: qloo((t, a) => (t === "qloo_where_popular" ? cityHeat : t === "qloo_recommend" && a.target_type === "tv_show" && a.signals ? recs(["Show 1"], [0.6]) : empty(t))),
       cities: CITIES,
     }));
     const lm = cardsOf(events).find((c) => c.kind === "local_moment")!;

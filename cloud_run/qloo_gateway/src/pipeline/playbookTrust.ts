@@ -1,36 +1,40 @@
 /** Pure helpers that keep the City Playbook's data trustworthy to a promoter: lift against the city, support-act scale, genre-only chips. */
 
-export const SPONSOR_LIFT_NOTE = "Ranked by how much more this artist's fans like the brand than the city overall.";
+export const SPONSOR_LIFT_NOTE = "Ranked by how much higher this artist's fans rank the brand than the city overall does.";
 export const NO_SUPPORT_COPY = (artist: string) => `Every Qloo match is bigger than ${artist}, so no support pick here.`;
 export const SIZE_UNCHECKED_COPY = "Couldn't check act size for this artist.";
 export const NO_SIZE_DATA_COPY = "No support pick: Qloo had no size data for these acts.";
 export const COMPARE_FAILED_COPY = (n: number) => `No support pick: the shared-taste comparison failed for ${n} ${n === 1 ? "act" : "acts"}.`;
 export const HEADLINER_SIZE_UNKNOWN = "headliner popularity unavailable, support acts not size-checked";
 
-interface Scored { entityId: string; affinity: number }
-export type WithLift<T> = T & { lift?: number; baselineAffinity?: number; baselineMissing?: boolean };
-
 const finite = (n: number) => Number.isFinite(n);
+interface Scored { entityId: string }
+export type WithRank<T> = T & { artistRank?: number; cityRank?: number | null; rankLift?: number };
+
+/** Qloo rescales `affinity` within each response, so affinities from two responses are not comparable: lift is measured in ranks. */
+export const CITY_BASELINE_TOP = 20;
+export const MAINSTREAM_TOP = 10;
 
 /**
- * Lift = the artist's affinity minus the city baseline's affinity for the same entity. An entity missing from the baseline list takes
- * the baseline list's minimum affinity (and is flagged). Sorted by lift descending, ties by affinity; entities with no affinity go last.
- * Without a usable baseline the list is returned in Qloo's order with no lift fields.
+ * Rank lift = (rank in the city baseline, or 21 when absent from its top 20) minus the rank in the artist's list (both 1-based);
+ * higher means this artist's fans favour it more than the city does. Sorted by rank lift descending, ties by the artist's own rank.
+ * `dropMainstream` removes titles in the city's top 10 and counts them. Without a baseline (null or empty) the list keeps Qloo's order
+ * with no rank fields.
  */
-export function liftRanked<T extends Scored>(items: T[], baseline: Scored[] | null): { items: WithLift<T>[]; lifted: boolean } {
-  const known = (baseline ?? []).filter((b) => finite(b.affinity));
-  if (known.length === 0) return { items, lifted: false };
-  const byId = new Map(known.map((b) => [b.entityId, b.affinity]));
-  const floor = Math.min(...known.map((b) => b.affinity));
-  const out = items.map((it): WithLift<T> => {
-    if (!finite(it.affinity)) return it;
-    const own = byId.get(it.entityId);
-    const baselineAffinity = own ?? floor;
-    return { ...it, lift: it.affinity - baselineAffinity, baselineAffinity, baselineMissing: own === undefined };
+export function rankLifted<T extends Scored>(items: T[], baseline: Scored[] | null, opts: { dropMainstream?: boolean } = {}): { items: WithRank<T>[]; lifted: boolean; mainstreamDropped: number } {
+  const top = (baseline ?? []).slice(0, CITY_BASELINE_TOP);
+  if (top.length === 0) return { items, lifted: false, mainstreamDropped: 0 };
+  const cityRankOf = new Map<string, number>();
+  top.forEach((b, i) => { if (!cityRankOf.has(b.entityId)) cityRankOf.set(b.entityId, i + 1); });
+  let mainstreamDropped = 0;
+  const out: WithRank<T>[] = [];
+  items.forEach((it, i) => {
+    const c = cityRankOf.get(it.entityId) ?? null;
+    if (opts.dropMainstream && c !== null && c <= MAINSTREAM_TOP) { mainstreamDropped += 1; return; }
+    out.push({ ...it, artistRank: i + 1, cityRank: c, rankLift: (c ?? CITY_BASELINE_TOP + 1) - (i + 1) });
   });
-  const lift = (x: WithLift<T>) => x.lift ?? Number.NEGATIVE_INFINITY;
-  const aff = (x: WithLift<T>) => (finite(x.affinity) ? x.affinity : Number.NEGATIVE_INFINITY);
-  return { items: out.map((x, i) => ({ x, i })).sort((a, b) => lift(b.x) - lift(a.x) || aff(b.x) - aff(a.x) || a.i - b.i).map((e) => e.x), lifted: true };
+  out.sort((x, y) => y.rankLift! - x.rankLift! || x.artistRank! - y.artistRank!);
+  return { items: out, lifted: true, mainstreamDropped };
 }
 
 /** Support acts must be strictly smaller (Qloo popularity) than the headliner. No popularity on a candidate means it cannot be shown. */
