@@ -150,3 +150,18 @@ describe("catch rate summary", () => {
     expect(text).toMatch(/False alarms \(1 of 20\) are not a finding: drawn from claims/);
   });
 });
+
+describe("summarise: names and p-values read correctly", () => {
+  it("keeps proper nouns capitalised in the mean lines and never renders p=<", () => {
+    const as = Array.from({ length: 12 }, (_, i) => artist(i + 1, `A${i}`, { winnability: 0.25, fan_heat: 0.5, llm: 1, population: 0.5 }));
+    const text = summarise(withA(as)).join("\n");
+    expect(text).toMatch(/winnability 0\.25, fan heat 0\.50, the generic LLM 1\.00, population 0\.50/);
+    expect(text).not.toMatch(/generic llm/);
+    expect(text).toMatch(/\(p<0\.001\)/);
+    expect(text).not.toMatch(/p=</);
+    const cases = Array.from({ length: 12 }, (_, i) => ({ id: `c${i}`, artist: "X", city: "Y", country: "Z", activationType: "sponsor", status: "scored", realPick: { name: "R", entityId: "00000000-0" }, candidates: [], arms: { qloo_rank: { status: "ok", ranking: [], rank: 1, rr: 1 }, gemini: { status: "ok", ranking: [], rank: 2, rr: 0.5 }, popularity: { status: "ok", ranking: [], rank: 9, rr: 0.11 } } })) as FixedCaseResult[];
+    const b = summarise({ ...base(), fixedRank: { plannedCases: 12, cases, excluded: [], notRun: [], stats: computeFixedStats(cases) } }).join("\n");
+    expect(b).toMatch(/Qloo rank 1\.00, Gemini 0\.50, popularity 0\.11/);
+    expect(b).toMatch(/Qloo rank beat Gemini \(p<0\.001\)/);
+  });
+});

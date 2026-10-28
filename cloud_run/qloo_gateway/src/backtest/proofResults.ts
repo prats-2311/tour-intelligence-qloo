@@ -202,7 +202,8 @@ export const DISCLOSURES: readonly string[] = [
 
 // Claim rule -----------------------------------------------------------------------------------------------------------------------
 
-const fmtP = (p: number): string => (p < 0.001 ? "<0.001" : p.toFixed(3));
+/** "p<0.001" or "p=0.031": the operator is part of the string. */
+const fmtP = (p: number): string => (p < 0.001 ? "p<0.001" : `p=${p.toFixed(3)}`);
 const fmtV = (v: number | null): string => (v === null ? "n/a" : v.toFixed(2));
 const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;
 
@@ -217,10 +218,10 @@ export const N = (start: string, inline = start.toLowerCase()): Name => ({ start
 export function compare(ours: Name, theirs: Name, a: number | null, b: number | null, t: SignRow, metric: string, unit: string): string {
   const detail = `${plural(t.wins, "win")}, ${plural(t.losses, "loss", "losses")}${t.ties ? `, ${plural(t.ties, "tie")}` : ""} over ${plural(t.pairs, unit)}`;
   if (a === null || b === null || t.pairs === 0) return `Not significant at this sample size: ${ours.inline} has no paired ${metric} against ${theirs.inline} yet.`;
-  if (t.p < 0.05 && a > b && t.wins > t.losses) return `${ours.start} beat ${theirs.inline} (p=${fmtP(t.p)}): mean ${metric} ${fmtV(a)} vs ${fmtV(b)}, ${detail}.`;
-  if (t.p < 0.05 && b > a && t.losses > t.wins) return `${theirs.start} beat ${ours.inline} (p=${fmtP(t.p)}): mean ${metric} ${fmtV(b)} vs ${fmtV(a)}, ${detail}.`;
+  if (t.p < 0.05 && a > b && t.wins > t.losses) return `${ours.start} beat ${theirs.inline} (${fmtP(t.p)}): mean ${metric} ${fmtV(a)} vs ${fmtV(b)}, ${detail}.`;
+  if (t.p < 0.05 && b > a && t.losses > t.wins) return `${theirs.start} beat ${ours.inline} (${fmtP(t.p)}): mean ${metric} ${fmtV(b)} vs ${fmtV(a)}, ${detail}.`;
   const dir = a > b ? "leads" : a < b ? "trails" : "ties";
-  return `Not significant at this sample size: ${ours.inline} ${dir} ${theirs.inline} on mean ${metric} (${fmtV(a)} vs ${fmtV(b)}; p=${fmtP(t.p)}; ${detail}).`;
+  return `Not significant at this sample size: ${ours.inline} ${dir} ${theirs.inline} on mean ${metric} (${fmtV(a)} vs ${fmtV(b)}; ${fmtP(t.p)}; ${detail}).`;
 }
 
 
@@ -266,7 +267,7 @@ export function summarise(r: ProofV3Results): string[] {
   if (r.cityRank) {
     const c = r.cityRank, s = c.stats;
     out.push(`Test A (city ranking) covers ${c.artists.length} of a planned ${c.plannedTotal} artists.${stopNote}`);
-    out.push(`Mean R-precision: ${ARMS.map((a) => `${ARM_LABEL[a].toLowerCase()} ${fmtV(s.arms[a].mean)}`).join(", ")}; mean chance level ${fmtV(s.meanChance)}.`);
+    out.push(`Mean R-precision: ${ARMS.map((a) => `${a === "llm" ? "the generic LLM" : ARM_LABEL[a].toLowerCase()} ${fmtV(s.arms[a].mean)}`).join(", ")}; mean chance level ${fmtV(s.meanChance)}.`);
     out.push(compare(N("Winnability"), N("Fan heat", "fan heat"), s.arms.winnability.mean, s.arms.fan_heat.mean, s.signTests.vs_fan_heat, "R-precision", "artist"));
     out.push(compare(N("Winnability"), N("The generic LLM", "the generic LLM"), s.arms.winnability.mean, s.arms.llm.mean, s.signTests.vs_llm, "R-precision", "artist"));
     out.push(`Secondary: ${compare(N("Winnability"), N("Population", "population"), s.arms.winnability.mean, s.arms.population.mean, s.signTests.vs_population, "R-precision", "artist")}`);
@@ -288,7 +289,7 @@ export function summarise(r: ProofV3Results): string[] {
   if (r.fixedRank) {
     const f = r.fixedRank, s = f.stats;
     out.push(`Test B (fixed candidates) covers ${f.cases.length} of ${f.plannedCases} cases.${r.cityRank ? "" : stopNote}`);
-    out.push(`Mean reciprocal rank: ${FIXED_ARMS.map((a) => `${FIXED_LABEL[a].toLowerCase()} ${fmtV(s.arms[a].mrr)}`).join(", ")}; chance level ${fmtV(s.chanceMrr)}.`);
+    out.push(`Mean reciprocal rank: ${FIXED_ARMS.map((a) => `${a === "popularity" ? "popularity" : FIXED_LABEL[a]} ${fmtV(s.arms[a].mrr)}`).join(", ")}; chance level ${fmtV(s.chanceMrr)}.`);
     out.push(compare(N("Qloo rank", "Qloo rank"), N("Gemini", "Gemini"), s.arms.qloo_rank.mrr, s.arms.gemini.mrr, s.signTests.qloo_vs_gemini, "reciprocal rank", "case"));
     out.push(compare(N("Qloo rank", "Qloo rank"), N("Popularity", "popularity"), s.arms.qloo_rank.mrr, s.arms.popularity.mrr, s.signTests.qloo_vs_popularity, "reciprocal rank", "case"));
     for (const c of f.cases) {
