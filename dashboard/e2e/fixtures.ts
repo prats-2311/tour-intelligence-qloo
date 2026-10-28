@@ -9,5 +9,5 @@ const dir = path.resolve("src/test/fixtures");
  */
 export async function useSyntheticRecordings(page: Page): Promise<void> {
   await page.route("**/api/recordings/showcase", (r) => r.fulfill({ path: path.join(dir, "showcase.synthetic.json"), contentType: "application/json" }));
-  await page.route("**/api/recordings/backtest", (r) => r.fulfill({ path: path.join(dir, "backtest.synthetic.json"), contentType: "application/json" }));
+  await page.route("**/api/recordings/backtest", (r) => r.fulfill({ path: path.join(dir, "backtest.v3.synthetic.json"), contentType: "application/json" }));
 }

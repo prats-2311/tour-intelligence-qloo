@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import ProofRoute, { ProofView } from "./Proof";
 import syntheticBacktest from "@/test/fixtures/backtest.synthetic.json";
+import v3Backtest from "@/test/fixtures/backtest.v3.synthetic.json";
 import { getBacktest, parseBacktest, setBacktest } from "@/lib/qloo/backtest";
 import { oneRunFixture, run1Fixture, run2Fixture, twoRunsFixture } from "@/lib/qloo/fixtures/backtestTestFixture";
 
@@ -179,6 +180,80 @@ describe("Proof", () => {
     await waitFor(() => expect(screen.getByText("What this shows")).toBeTruthy());
     expect(getBacktest()).not.toBeNull();
     setBacktest(null);
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("Proof v3", () => {
+  const INTRO = "We pre-registered every test before running it and publish all of it, including where Qloo-backed ranking lost.";
+  const sections = () => screen.getAllByRole("region").filter((r) => r.getAttribute("data-testid") === "proof-v3-test");
+  it("opens with the verbatim intro and a link to the protocol on GitHub", () => {
+    view(v3Backtest);
+    expect(screen.getByText(INTRO)).toBeTruthy();
+    const link = screen.getByRole("link", { name: /protocol and its amendments/i });
+    expect(link.getAttribute("href")).toBe("https://github.com/prats-2311/tour-intelligence-qloo/blob/master/docs/qloo/proof-v3-protocol.md");
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+  it("renders tests in the order catch, B, C, A", () => {
+    view(v3Backtest);
+    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["catch", "B", "C", "A"]);
+  });
+  it("each test shows title, question, status, an arm table, verbatim claims and limits", () => {
+    view(v3Backtest);
+    const a = screen.getByRole("region", { name: "Test A: choosing the cities a tour played" });
+    expect(within(a).getByText("Does winnability pick the cities a tour actually played better than fan heat alone, a generic LLM, or population?")).toBeTruthy();
+    expect(within(a).getByText("Complete: 3 of a planned 4 artists scored")).toBeTruthy();
+    const arms = within(a).getByRole("table", { name: /Mean R-precision/ });
+    expect(within(arms).getByText("Chance level")).toBeTruthy();
+    expect(within(a).getByText("The generic LLM beat winnability for Synthetic Quartet.")).toBeTruthy();
+    expect(within(a).getByText(/Sample size: a few artists is a small sample/)).toBeTruthy();
+    expect(within(a).getByText(/Batch 2/)).toBeTruthy();
+  });
+  it("per artist/case disclosure lists every unit, closed by default", () => {
+    view(v3Backtest);
+    const a = screen.getByRole("region", { name: "Test A: choosing the cities a tour played" });
+    const d = within(a).getByText("Per artist").closest("details")!;
+    expect(d.open).toBe(false);
+    expect(within(d).getAllByRole("row")).toHaveLength(1 + 3);
+    expect(within(d).getByText("no answer")).toBeTruthy();
+    const b = screen.getByRole("region", { name: "Test B: picking the real activation among 10 candidates" });
+    expect(within(within(b).getByText("Per case").closest("details")!).getByText("synth-a")).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: /Claim checker/ })).queryByText(/^Per /)).toBeNull();
+  });
+  it("tables scroll inside their own focusable container", () => {
+    view(v3Backtest);
+    const c = screen.getByRole("region", { name: "Test C: do the names exist in the city?" });
+    const scroller = within(c).getByRole("table", { name: /Venues|Playbook/ }).parentElement!;
+    expect(scroller.className).toContain("overflow-x-auto");
+    expect(scroller.getAttribute("tabindex")).toBe("0");
+  });
+  it("keeps the earlier runs below, under Earlier runs, and the amendments listed", () => {
+    view(v3Backtest);
+    const earlier = screen.getByRole("region", { name: "Earlier runs" });
+    expect(within(earlier).getByText("What this shows")).toBeTruthy();
+    expect(within(earlier).getByText("Run 2026-10-17 · model gemini-3.8-flash · reproduce with the steps in backtest/README.md")).toBeTruthy();
+    const order = (a: Node, b: Node) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(order(sections().at(-1)!, earlier)).toBe(true);
+    expect(screen.getByText(/The first eligible list had two design flaws/)).toBeTruthy();
+  });
+  it("Test C absent from the data means no Test C section; present means a section with no extra code", () => {
+    const v3 = (v3Backtest as { proofV3: { tests: Array<{ id: string }> } }).proofV3;
+    view({ ...v3Backtest, proofV3: { ...v3, tests: v3.tests.filter((t) => t.id !== "C") } });
+    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["catch", "B", "A"]);
+  });
+  it("works with v3 alone (no earlier runs) and never says winnability is better", () => {
+    const { container } = view({ proofV3: (v3Backtest as { proofV3: unknown }).proofV3 });
+    expect(screen.queryByText("Earlier runs")).toBeNull();
+    const text = (container.textContent ?? "").toLowerCase();
+    for (const w of ["winnability beats", "better ranking", "outperform", "superior"]) expect(text).not.toContain(w);
+  });
+  it("headings never skip a level and no network is used", () => {
+    const spy = vi.fn(); vi.stubGlobal("fetch", spy);
+    view(v3Backtest);
+    const levels = screen.getAllByRole("heading").map((h) => Number(h.tagName[1]));
+    expect(levels[0]).toBe(1);
+    levels.forEach((l, i) => { if (i > 0) expect(l).toBeLessThanOrEqual(levels[i - 1]! + 1); });
+    expect(spy).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 });

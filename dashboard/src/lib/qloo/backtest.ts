@@ -19,7 +19,19 @@ export interface BacktestRun {
   cutoff: 10; wideCutoff: 20; methods: Method[]; n: number;
   cases: CaseResult[]; summary: Record<Method, MethodSummary>; lost: string[];
 }
-export type Backtest = { status: "pending" } | { status: "complete"; runs: BacktestRun[] };
+/**
+ * Proof v3 (docs/qloo/proof-v3-protocol.md), mirrored from cloud_run/qloo_gateway/src/backtest/proofPublish.ts. Tables hold pre-formatted strings,
+ * so the page renders any test generically and a new one (Test C) arrives as data only.
+ */
+export interface ProofTable { columns: string[]; rows: string[][] }
+export interface ProofSignLine { label: string; wins: number; losses: number; ties: number; pairs: number; p: number }
+export interface ProofRunLine { label: string; commit: string; status: "complete" | "stopped"; note: string }
+export interface ProofV3Test {
+  id: string; title: string; question: string; status: string; n: number;
+  tables: ProofTable[]; signTests: ProofSignLine[]; claims: string[]; limits: string[]; runs: ProofRunLine[]; perUnit: ProofTable | null;
+}
+export interface ProofV3 { protocolCommit: string; generatedAt: string; amendments: Array<{ n: number; commit: string; summary: string }>; tests: ProofV3Test[] }
+export type Backtest = { status: "pending" } | { status: "complete"; runs: BacktestRun[]; proofV3?: ProofV3 };
 export type BacktestRuns = Extract<Backtest, { status: "complete" }>;
 
 export const METHOD_LABEL: Record<Method, string> = {
@@ -52,11 +64,47 @@ function parseRun(input: unknown): BacktestRun | null {
   return { ...(d as BacktestRun), method: d.method === "v2" ? "v2" : "v1" };
 }
 
+const isStr = (x: unknown): x is string => typeof x === "string";
+const strs = (x: unknown): x is string[] => Array.isArray(x) && x.every(isStr);
+const num = (x: unknown): x is number => typeof x === "number" && Number.isFinite(x);
+const validTable = (t: unknown): t is ProofTable => {
+  const x = t as Partial<ProofTable> | null;
+  return !!x && strs(x.columns) && Array.isArray(x.rows) && x.rows.every(strs);
+};
+const validSign = (s: unknown): s is ProofSignLine => {
+  const x = s as Partial<ProofSignLine> | null;
+  return !!x && isStr(x.label) && num(x.wins) && num(x.losses) && num(x.ties) && num(x.pairs) && num(x.p);
+};
+const validRunLine = (r: unknown): r is ProofRunLine => {
+  const x = r as Partial<ProofRunLine> | null;
+  return !!x && isStr(x.label) && isStr(x.commit) && isStr(x.note) && (x.status === "complete" || x.status === "stopped");
+};
+function parseTest(t: unknown): ProofV3Test | null {
+  const x = t as Partial<ProofV3Test> | null;
+  if (!x || !isStr(x.id) || !isStr(x.title) || !isStr(x.question) || !isStr(x.status) || !num(x.n)) return null;
+  if (!Array.isArray(x.tables) || !x.tables.every(validTable) || !strs(x.claims) || !strs(x.limits)) return null;
+  if (!Array.isArray(x.signTests) || !x.signTests.every(validSign)) return null;
+  if (x.runs !== undefined && !(Array.isArray(x.runs) && x.runs.every(validRunLine))) return null;
+  if (x.perUnit !== null && x.perUnit !== undefined && !validTable(x.perUnit)) return null;
+  return { ...(x as ProofV3Test), runs: x.runs ?? [], perUnit: x.perUnit ?? null };
+}
+/** Optional and back-compatible: a malformed test is dropped, the rest still show. */
+function parseProofV3(input: unknown): ProofV3 | undefined {
+  const d = input as Partial<ProofV3> | null;
+  if (!d || typeof d !== "object" || !Array.isArray(d.tests)) return undefined;
+  const tests = d.tests.map(parseTest).filter((t): t is ProofV3Test => t !== null);
+  if (tests.length === 0) return undefined;
+  const amendments = Array.isArray(d.amendments) ? d.amendments.filter((a) => !!a && num(a.n) && isStr(a.commit) && isStr(a.summary)) : [];
+  return { protocolCommit: isStr(d.protocolCommit) ? d.protocolCommit : "", generatedAt: isStr(d.generatedAt) ? d.generatedAt : "", amendments, tests };
+}
+
 export function parseBacktest(input: unknown): Backtest {
-  const list = (input as { runs?: unknown } | null)?.runs;
-  if (!Array.isArray(list)) return { status: "pending" };
+  const raw = input as { runs?: unknown; proofV3?: unknown } | null;
+  const list = Array.isArray(raw?.runs) ? raw!.runs : [];
   const runs = list.map(parseRun).filter((r): r is BacktestRun => r !== null);
-  return runs.length === 0 ? { status: "pending" } : { status: "complete", runs };
+  const proofV3 = parseProofV3(raw?.proofV3);
+  if (runs.length === 0 && !proofV3) return { status: "pending" };
+  return { status: "complete", runs, ...(proofV3 ? { proofV3 } : {}) };
 }
 
 export function hitLine(s: MethodSummary, cut: 10 | 20): string {

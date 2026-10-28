@@ -22,7 +22,7 @@ if (arg("base") || arg("out")) {
     if (local) {
       await page.route(/tiles\.openfreemap\.org/, (r) => r.abort());
       await page.route("**/api/recordings/showcase", (r) => r.fulfill({ path: path.join(fixtures, "showcase.synthetic.json"), contentType: "application/json" }));
-      await page.route("**/api/recordings/backtest", (r) => r.fulfill({ path: path.join(fixtures, "backtest.synthetic.json"), contentType: "application/json" }));
+      await page.route("**/api/recordings/backtest", (r) => r.fulfill({ path: path.join(fixtures, "backtest.v3.synthetic.json"), contentType: "application/json" }));
       await page.route(/\/api\/campaigns$/, (r) => r.fulfill({ json: { campaigns: [] } }));
     }
     let n = 0;

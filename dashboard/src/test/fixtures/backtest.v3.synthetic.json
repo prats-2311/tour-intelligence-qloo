@@ -1,0 +1,4374 @@
+{
+  "runs": [
+    {
+      "schemaVersion": 1,
+      "status": "complete",
+      "runAt": "2026-10-17T00:41:40.163Z",
+      "model": "gemini-3.8-flash",
+      "cutoff": 10,
+      "wideCutoff": 20,
+      "methods": [
+        "qloo_playbook",
+        "city_popularity",
+        "llm_only"
+      ],
+      "n": 14,
+      "cases": [
+        {
+          "id": "fatboy-slim-mexico-city-vavava-shop",
+          "artist": "Fatboy Slim",
+          "city": "Mexico City",
+          "country": "Mexico",
+          "activationType": "merch_collab",
+          "decision": "The merch angle",
+          "realEntity": {
+            "name": "VAVAVA Shop",
+            "entityId": null,
+            "resolved": false
+          },
+          "date": "2024-10",
+          "sources": [
+            "https://www.chilango.com/que-hacer/compras/fatboy-slim-pop-up-store-cdmx/"
+          ],
+          "summary": "VAVAVA Shop collaborated with Fatboy Slim on a Mexico City pop-up (29-31 Oct 2024) selling tees, hoodies and patches designed for Mexican fans ahead of his 1 Nov show at Pepsi Center.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Brand 01",
+                  "entityId": "00000000-5DFA-ED5E-5092-D5FC501DE579"
+                },
+                {
+                  "name": "Synthetic Brand 02",
+                  "entityId": "00000000-DD9F-C4BD-4D03-76DEE0E71F25"
+                },
+                {
+                  "name": "Synthetic Brand 03",
+                  "entityId": "00000000-EAE0-A7BB-7974-4035D5F3764F"
+                },
+                {
+                  "name": "Synthetic Brand 04",
+                  "entityId": "00000000-4C7E-B8C1-B7E1-8E3360A83D96"
+                },
+                {
+                  "name": "Synthetic Brand 05",
+                  "entityId": "00000000-2CC8-24D0-09D2-81D605ACE539"
+                },
+                {
+                  "name": "Synthetic Brand 06",
+                  "entityId": "00000000-14CA-5E8D-4955-07C0E2E303BC"
+                },
+                {
+                  "name": "Synthetic Brand 07",
+                  "entityId": "00000000-ACC7-E063-B6B9-53395CCB48D5"
+                },
+                {
+                  "name": "Synthetic Brand 08",
+                  "entityId": "00000000-94EF-BF08-9247-123D6BD88940"
+                },
+                {
+                  "name": "Synthetic Brand 09",
+                  "entityId": "00000000-959F-5413-7122-C1771C548EC4"
+                },
+                {
+                  "name": "Synthetic Brand 10",
+                  "entityId": "00000000-EDFC-F953-EF95-291C3FDA742C"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Brand 11",
+                  "entityId": "00000000-1976-6BCA-B470-63AB03738465"
+                },
+                {
+                  "name": "Synthetic Brand 12",
+                  "entityId": "00000000-636D-237C-6FB2-DB747D8FD99D"
+                },
+                {
+                  "name": "Synthetic Brand 13",
+                  "entityId": "00000000-A116-3DB7-02EF-7CBAA9874574"
+                },
+                {
+                  "name": "Synthetic Brand 14",
+                  "entityId": "00000000-B241-6326-AA67-EB1865244563"
+                },
+                {
+                  "name": "Synthetic Brand 15",
+                  "entityId": "00000000-66A4-644B-D522-5A137BC2C190"
+                },
+                {
+                  "name": "Synthetic Brand 16",
+                  "entityId": "00000000-970A-B96F-7E61-119C32EC17E3"
+                },
+                {
+                  "name": "Synthetic Brand 17",
+                  "entityId": "00000000-9486-A897-B4C7-60D30A6D4213"
+                },
+                {
+                  "name": "Synthetic Brand 18",
+                  "entityId": "00000000-F533-0A5F-0ADA-5DF7F3E352D2"
+                },
+                {
+                  "name": "Synthetic Brand 19",
+                  "entityId": "00000000-102D-EF5B-A3F9-F4CEA55E69A0"
+                },
+                {
+                  "name": "Synthetic Brand 20",
+                  "entityId": "00000000-63BA-8181-832D-FAE9DD39A193"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Brand 21"
+                },
+                {
+                  "name": "Synthetic Brand 22"
+                },
+                {
+                  "name": "Synthetic Brand 23"
+                },
+                {
+                  "name": "Synthetic Brand 24"
+                },
+                {
+                  "name": "Synthetic Brand 25"
+                },
+                {
+                  "name": "Synthetic Brand 26"
+                },
+                {
+                  "name": "Synthetic Brand 27"
+                },
+                {
+                  "name": "Synthetic Brand 28"
+                },
+                {
+                  "name": "Synthetic Brand 29"
+                },
+                {
+                  "name": "Synthetic Brand 30"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "interpol-mexico-city-faramalla-club-de-vinilos",
+          "artist": "Interpol",
+          "city": "Mexico City",
+          "country": "Mexico",
+          "activationType": "merch_collab",
+          "decision": "The merch angle",
+          "realEntity": {
+            "name": "Faramalla Club de Vinilos",
+            "entityId": null,
+            "resolved": false
+          },
+          "date": "2024-04",
+          "sources": [
+            "https://www.chilango.com/agenda/musica-agenda/pop-store-interpol-cdmx-2024/"
+          ],
+          "summary": "Mercadorama and Faramalla Club de Vinilos partnered with Interpol on a 18-20 April 2024 pop-up at Vavava Shop with exclusive merch, posters and vinyl commemorating the band's Zocalo show.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Brand 31",
+                  "entityId": "00000000-4A2B-8E42-F10C-82C257A43705"
+                },
+                {
+                  "name": "Synthetic Brand 32",
+                  "entityId": "00000000-8A02-6A14-877B-9F9213B87BC6"
+                },
+                {
+                  "name": "Synthetic Brand 33",
+                  "entityId": "00000000-BD82-6F12-1CAF-98867431563C"
+                },
+                {
+                  "name": "Synthetic Brand 34",
+                  "entityId": "00000000-A66E-41B9-47F5-41108D224B49"
+                },
+                {
+                  "name": "Synthetic Brand 35",
+                  "entityId": "00000000-A062-046C-5AC3-5698291FAFE0"
+                },
+                {
+                  "name": "Synthetic Brand 36",
+                  "entityId": "00000000-6F29-903A-965C-68853E4B711D"
+                },
+                {
+                  "name": "Synthetic Brand 37",
+                  "entityId": "00000000-D967-F2D1-EA72-1CE86FC66911"
+                },
+                {
+                  "name": "Synthetic Brand 38",
+                  "entityId": "00000000-0BA0-8A66-EA23-5CA5731EC313"
+                },
+                {
+                  "name": "Synthetic Brand 39",
+                  "entityId": "00000000-D3DC-54C8-B3D7-6CD34D547BA9"
+                },
+                {
+                  "name": "Synthetic Brand 40",
+                  "entityId": "00000000-E3A5-3F5B-438C-6EFDF89A5F68"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Brand 41",
+                  "entityId": "00000000-1976-6BCA-B470-63AB03738465"
+                },
+                {
+                  "name": "Synthetic Brand 42",
+                  "entityId": "00000000-636D-237C-6FB2-DB747D8FD99D"
+                },
+                {
+                  "name": "Synthetic Brand 43",
+                  "entityId": "00000000-A116-3DB7-02EF-7CBAA9874574"
+                },
+                {
+                  "name": "Synthetic Brand 44",
+                  "entityId": "00000000-B241-6326-AA67-EB1865244563"
+                },
+                {
+                  "name": "Synthetic Brand 45",
+                  "entityId": "00000000-66A4-644B-D522-5A137BC2C190"
+                },
+                {
+                  "name": "Synthetic Brand 46",
+                  "entityId": "00000000-970A-B96F-7E61-119C32EC17E3"
+                },
+                {
+                  "name": "Synthetic Brand 47",
+                  "entityId": "00000000-9486-A897-B4C7-60D30A6D4213"
+                },
+                {
+                  "name": "Synthetic Brand 48",
+                  "entityId": "00000000-F533-0A5F-0ADA-5DF7F3E352D2"
+                },
+                {
+                  "name": "Synthetic Brand 49",
+                  "entityId": "00000000-102D-EF5B-A3F9-F4CEA55E69A0"
+                },
+                {
+                  "name": "Synthetic Brand 50",
+                  "entityId": "00000000-63BA-8181-832D-FAE9DD39A193"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": 1,
+              "top": [
+                {
+                  "name": "Faramalla Club de Vinilos"
+                },
+                {
+                  "name": "Synthetic Brand 51"
+                },
+                {
+                  "name": "Synthetic Brand 52"
+                },
+                {
+                  "name": "Synthetic Brand 53"
+                },
+                {
+                  "name": "Synthetic Brand 54"
+                },
+                {
+                  "name": "Synthetic Brand 55"
+                },
+                {
+                  "name": "Synthetic Brand 56"
+                },
+                {
+                  "name": "Synthetic Brand 57"
+                },
+                {
+                  "name": "Synthetic Brand 58"
+                },
+                {
+                  "name": "Synthetic Brand 59"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "water-from-your-eyes-mexico-city-matador-records",
+          "artist": "Water from Your Eyes",
+          "city": "Mexico City",
+          "country": "Mexico",
+          "activationType": "merch_collab",
+          "decision": "The merch angle",
+          "realEntity": {
+            "name": "Matador Records",
+            "entityId": "00000000-1A1B-F949-65C3-F70A14311709",
+            "resolved": true
+          },
+          "date": "2024-11",
+          "sources": [
+            "https://matadorrecords.com/blogs/news/matador-records-mexico-city-pop-up",
+            "https://www.chilango.com/que-hacer/musica/water-from-your-eyes-meet-greet-pop-up-matador-records-cdmx/"
+          ],
+          "summary": "Matador Records ran a 9-14 November 2024 pop-up at Vavava Shop in Mexico City with label merch and vinyl from Water From Your Eyes and others ahead of Corona Capital, plus a band meet and greet.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Brand 60",
+                  "entityId": "00000000-5649-03C2-383B-F4BAB1098302"
+                },
+                {
+                  "name": "Synthetic Brand 61",
+                  "entityId": "00000000-A098-60D5-24CA-BF2AB78B6DFE"
+                },
+                {
+                  "name": "Synthetic Brand 62",
+                  "entityId": "00000000-1385-9809-12D8-F6B1DCC2198D"
+                },
+                {
+                  "name": "Synthetic Brand 63",
+                  "entityId": "00000000-92C9-9648-0658-2101C65E9200"
+                },
+                {
+                  "name": "Synthetic Brand 64",
+                  "entityId": "00000000-6807-1B62-77C1-C93BF7460B2A"
+                },
+                {
+                  "name": "Synthetic Brand 65",
+                  "entityId": "00000000-4545-68EB-3C9A-FE28234BC24B"
+                },
+                {
+                  "name": "Synthetic Brand 66",
+                  "entityId": "00000000-5FB0-E186-F9BE-D99B6F20D78B"
+                },
+                {
+                  "name": "Synthetic Brand 67",
+                  "entityId": "00000000-859B-F0BA-F943-229BC9399CA5"
+                },
+                {
+                  "name": "Synthetic Brand 68",
+                  "entityId": "00000000-9865-2BB2-F2B9-A5ADA48E8D28"
+                },
+                {
+                  "name": "Synthetic Brand 69",
+                  "entityId": "00000000-258E-414F-17BD-0151B6D37255"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Brand 70",
+                  "entityId": "00000000-1976-6BCA-B470-63AB03738465"
+                },
+                {
+                  "name": "Synthetic Brand 71",
+                  "entityId": "00000000-636D-237C-6FB2-DB747D8FD99D"
+                },
+                {
+                  "name": "Synthetic Brand 72",
+                  "entityId": "00000000-A116-3DB7-02EF-7CBAA9874574"
+                },
+                {
+                  "name": "Synthetic Brand 73",
+                  "entityId": "00000000-B241-6326-AA67-EB1865244563"
+                },
+                {
+                  "name": "Synthetic Brand 74",
+                  "entityId": "00000000-66A4-644B-D522-5A137BC2C190"
+                },
+                {
+                  "name": "Synthetic Brand 75",
+                  "entityId": "00000000-970A-B96F-7E61-119C32EC17E3"
+                },
+                {
+                  "name": "Synthetic Brand 76",
+                  "entityId": "00000000-9486-A897-B4C7-60D30A6D4213"
+                },
+                {
+                  "name": "Synthetic Brand 77",
+                  "entityId": "00000000-F533-0A5F-0ADA-5DF7F3E352D2"
+                },
+                {
+                  "name": "Synthetic Brand 78",
+                  "entityId": "00000000-102D-EF5B-A3F9-F4CEA55E69A0"
+                },
+                {
+                  "name": "Synthetic Brand 79",
+                  "entityId": "00000000-63BA-8181-832D-FAE9DD39A193"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Brand 80"
+                },
+                {
+                  "name": "Synthetic Brand 81"
+                },
+                {
+                  "name": "Synthetic Brand 82"
+                },
+                {
+                  "name": "Synthetic Brand 83"
+                },
+                {
+                  "name": "Synthetic Brand 84"
+                },
+                {
+                  "name": "Synthetic Brand 85"
+                },
+                {
+                  "name": "Synthetic Brand 86"
+                },
+                {
+                  "name": "Synthetic Brand 87"
+                },
+                {
+                  "name": "Synthetic Brand 88"
+                },
+                {
+                  "name": "Synthetic Brand 89"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "turnstile-toronto-saya-gray",
+          "artist": "Turnstile",
+          "city": "Toronto",
+          "country": "Canada",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Saya Gray",
+            "entityId": "00000000-087E-EF50-4835-BDEADCBF89A5",
+            "resolved": true
+          },
+          "date": "2026-09-12",
+          "sources": [
+            "https://exclaim.ca/music/article/turnstile-announce-2026-north-american-tour-with-guests"
+          ],
+          "summary": "Turnstile's 12 September 2026 show at Woodbine Park in Toronto was announced with Yves Tumor, Saya Gray and Pluto's Kiss as guests, part of a tour with a curated guest lineup per city.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 01",
+                  "entityId": "00000000-1BA7-FE06-547D-95B0D3F2F5C1"
+                },
+                {
+                  "name": "Synthetic Artist 02",
+                  "entityId": "00000000-3F87-935A-F269-C2114A01AAC7"
+                },
+                {
+                  "name": "Synthetic Artist 03",
+                  "entityId": "00000000-6303-45B5-C3DC-6326E9C2C75C"
+                },
+                {
+                  "name": "Synthetic Artist 04",
+                  "entityId": "00000000-97C2-E58C-A17D-3BCB6F729AF2"
+                },
+                {
+                  "name": "Synthetic Artist 05",
+                  "entityId": "00000000-539D-2C59-713C-6E9C97982FB6"
+                },
+                {
+                  "name": "Synthetic Artist 06",
+                  "entityId": "00000000-3865-2116-3ACB-397984EE00EA"
+                },
+                {
+                  "name": "Synthetic Artist 07",
+                  "entityId": "00000000-2581-024B-FE12-A76A6ACE2C66"
+                },
+                {
+                  "name": "Synthetic Artist 08",
+                  "entityId": "00000000-2A5E-B15A-ED4C-D8F0B3991703"
+                },
+                {
+                  "name": "Synthetic Artist 09",
+                  "entityId": "00000000-B3B6-E29A-827E-5D59D1C27775"
+                },
+                {
+                  "name": "Synthetic Artist 10",
+                  "entityId": "00000000-9CB3-C9C2-2351-A4FDAD6DFFC8"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 11",
+                  "entityId": "00000000-F7F0-7B5C-28B5-7C11CAB1B5DA"
+                },
+                {
+                  "name": "Synthetic Artist 12",
+                  "entityId": "00000000-4649-BDE6-5DC7-4A25174408A2"
+                },
+                {
+                  "name": "Synthetic Artist 13",
+                  "entityId": "00000000-BCAD-3C1B-E520-47D488673932"
+                },
+                {
+                  "name": "Synthetic Artist 14",
+                  "entityId": "00000000-C8BF-DB4F-AB0D-9D573246CDB6"
+                },
+                {
+                  "name": "Synthetic Artist 15",
+                  "entityId": "00000000-4F7C-8784-7DC5-06CC709C944D"
+                },
+                {
+                  "name": "Synthetic Artist 16",
+                  "entityId": "00000000-6A2A-1ADD-78FC-672DEA664B72"
+                },
+                {
+                  "name": "Synthetic Artist 17",
+                  "entityId": "00000000-15BF-C3B6-E8C7-40BCA4DC70B0"
+                },
+                {
+                  "name": "Synthetic Artist 18",
+                  "entityId": "00000000-109A-2A0A-7019-4B4C2A92B381"
+                },
+                {
+                  "name": "Synthetic Artist 19",
+                  "entityId": "00000000-EACC-1E5B-95E1-52048D08344F"
+                },
+                {
+                  "name": "Synthetic Artist 20",
+                  "entityId": "00000000-B7C1-FACB-FAB8-75DEC62FF56F"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 21"
+                },
+                {
+                  "name": "Synthetic Artist 22"
+                },
+                {
+                  "name": "Synthetic Artist 23"
+                },
+                {
+                  "name": "Synthetic Artist 24"
+                },
+                {
+                  "name": "Synthetic Artist 25"
+                },
+                {
+                  "name": "Synthetic Artist 26"
+                },
+                {
+                  "name": "Synthetic Artist 27"
+                },
+                {
+                  "name": "Synthetic Artist 28"
+                },
+                {
+                  "name": "Synthetic Artist 29"
+                },
+                {
+                  "name": "Synthetic Artist 30"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "ca7riel-paco-amoroso-mexico-city-erik-rubin",
+          "artist": "Ca7riel & Paco Amoroso",
+          "city": "Mexico City",
+          "country": "Mexico",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Erik Rubin",
+            "entityId": "00000000-88B2-FF18-C7FA-B686C81E4D0F",
+            "resolved": true
+          },
+          "date": "2026-08",
+          "sources": [
+            "https://www.cronica.com.mx/escenario/2026/08/08/ca7riel-paco-amoroso-el-ritual-de-sanacion-de-free-spirits-que-hizo-bailar-al-palacio-de-los-deportes/",
+            "https://los40.com.mx/2026/08/07/loreto-peralta-se-roba-las-miradas-en-el-concierto-de-ca7riel-y-paco-amoroso-en-la-cdmx/"
+          ],
+          "summary": "Mexican musician Erik Rubin was among the guests who joined Ca7riel & Paco Amoroso on stage at their Palacio de los Deportes show in Mexico City on the Free Spirits World Tour.",
+          "results": {
+            "qloo_playbook": {
+              "status": "unavailable",
+              "reason": "artist_unresolved"
+            },
+            "city_popularity": {
+              "status": "unavailable",
+              "reason": "artist_unresolved"
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 31"
+                },
+                {
+                  "name": "Synthetic Artist 32"
+                },
+                {
+                  "name": "Synthetic Artist 33"
+                },
+                {
+                  "name": "Synthetic Artist 34"
+                },
+                {
+                  "name": "Synthetic Artist 35"
+                },
+                {
+                  "name": "Synthetic Artist 36"
+                },
+                {
+                  "name": "Synthetic Artist 37"
+                },
+                {
+                  "name": "Synthetic Artist 38"
+                },
+                {
+                  "name": "Synthetic Artist 39"
+                },
+                {
+                  "name": "Synthetic Artist 40"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "shed-seven-york-brew-york",
+          "artist": "Shed Seven",
+          "city": "York",
+          "country": "United Kingdom",
+          "activationType": "sponsor",
+          "decision": "Which sponsor to pitch",
+          "realEntity": {
+            "name": "Brew York",
+            "entityId": null,
+            "resolved": false
+          },
+          "date": "2024-07-19",
+          "sources": [
+            "https://wb.camra.org.uk/2024/07/17/brew-york-hits-right-note",
+            "https://brewersjournal.info/?p=20573"
+          ],
+          "summary": "Brew York launched a limited-edition pale ale, Homecoming, with York band Shed Seven tied to their 19-20 July 2024 shows at York Museum Gardens.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Brand 90",
+                  "entityId": "00000000-BBD3-CD53-BC00-92DF13A6BD89"
+                },
+                {
+                  "name": "Synthetic Brand 91",
+                  "entityId": "00000000-E4F9-EBA5-BFF9-BB8F3AA439E4"
+                },
+                {
+                  "name": "Synthetic Brand 92",
+                  "entityId": "00000000-9461-C873-4D94-21CE73744BDB"
+                },
+                {
+                  "name": "Synthetic Brand 93",
+                  "entityId": "00000000-EC78-20CB-B88C-00251E56CCF3"
+                },
+                {
+                  "name": "Synthetic Brand 94",
+                  "entityId": "00000000-D3DC-54C8-B3D7-6CD34D547BA9"
+                },
+                {
+                  "name": "Synthetic Brand 95",
+                  "entityId": "00000000-E6FB-5C0B-95F7-83919AB8F6DF"
+                },
+                {
+                  "name": "Synthetic Brand 96",
+                  "entityId": "00000000-6C94-BEA2-70FA-80A963871B60"
+                },
+                {
+                  "name": "Synthetic Brand 97",
+                  "entityId": "00000000-01B8-7536-935A-A69E82404713"
+                },
+                {
+                  "name": "Synthetic Brand 98",
+                  "entityId": "00000000-9C13-6999-D54A-66FBFC8993F2"
+                },
+                {
+                  "name": "Synthetic Brand 99",
+                  "entityId": "00000000-E7D3-A45B-E4BD-2453E7D49DDC"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Brand 100",
+                  "entityId": "00000000-E072-2E7D-3152-9FBA3C4C082B"
+                },
+                {
+                  "name": "Synthetic Brand 101",
+                  "entityId": "00000000-71C0-6BA5-EBDC-9931904301ED"
+                },
+                {
+                  "name": "Synthetic Brand 102",
+                  "entityId": "00000000-2A5F-624C-ABF3-68F771628C73"
+                },
+                {
+                  "name": "Synthetic Brand 103",
+                  "entityId": "00000000-9D3C-F910-C33E-53B474335AF3"
+                },
+                {
+                  "name": "Synthetic Brand 104",
+                  "entityId": "00000000-65F8-CAEF-40E9-4B1BCA48897E"
+                },
+                {
+                  "name": "Synthetic Brand 105",
+                  "entityId": "00000000-EFC3-012F-F5F7-27B132069808"
+                },
+                {
+                  "name": "Synthetic Brand 106",
+                  "entityId": "00000000-520E-D06B-B733-D6260396BE2C"
+                },
+                {
+                  "name": "Synthetic Brand 107",
+                  "entityId": "00000000-9031-C5BE-C17B-5B2F20979BDD"
+                },
+                {
+                  "name": "Synthetic Brand 108",
+                  "entityId": "00000000-D34D-7642-FF01-62ED2B8342F6"
+                },
+                {
+                  "name": "Synthetic Brand 109",
+                  "entityId": "00000000-9F08-1C39-A1A8-5013CEBFFDC9"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": 1,
+              "top": [
+                {
+                  "name": "Brew York"
+                },
+                {
+                  "name": "Synthetic Brand 110"
+                },
+                {
+                  "name": "Synthetic Brand 111"
+                },
+                {
+                  "name": "Synthetic Brand 112"
+                },
+                {
+                  "name": "Synthetic Brand 113"
+                },
+                {
+                  "name": "Synthetic Brand 114"
+                },
+                {
+                  "name": "Synthetic Brand 115"
+                },
+                {
+                  "name": "Synthetic Brand 116"
+                },
+                {
+                  "name": "Synthetic Brand 117"
+                },
+                {
+                  "name": "Synthetic Brand 118"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "dua-lipa-buenos-aires-soda-stereo",
+          "artist": "Dua Lipa",
+          "city": "Buenos Aires",
+          "country": "Argentina",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Soda Stereo",
+            "entityId": "00000000-B9ED-D4FD-0F22-C89285E8D497",
+            "resolved": true
+          },
+          "date": "2025-11-07",
+          "sources": [
+            "https://www.yahoo.com/entertainment/music/articles/guide-dua-lipas-latin-american-183705748.html"
+          ],
+          "summary": "At her 7 November 2025 Buenos Aires show Dua Lipa covered Argentine rock band Soda Stereo's De Musica Ligera as that stop's local-artist tribute.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 41",
+                  "entityId": "00000000-55EA-FE43-A9FB-32FB29C060AD"
+                },
+                {
+                  "name": "Synthetic Artist 42",
+                  "entityId": "00000000-C001-BC96-D705-C6E17DEA142F"
+                },
+                {
+                  "name": "Synthetic Artist 43",
+                  "entityId": "00000000-D794-0F88-7EEE-FC7669F053A5"
+                },
+                {
+                  "name": "Synthetic Artist 44",
+                  "entityId": "00000000-DA77-8E65-819D-2032546A8C03"
+                },
+                {
+                  "name": "Synthetic Artist 45",
+                  "entityId": "00000000-7C06-CD8E-B11F-68E8F7B5F2EE"
+                },
+                {
+                  "name": "Synthetic Artist 46",
+                  "entityId": "00000000-95A3-D3F1-0DD6-EC7EE0438D65"
+                },
+                {
+                  "name": "Synthetic Artist 47",
+                  "entityId": "00000000-04C8-8EFD-E8C8-01C77442D685"
+                },
+                {
+                  "name": "Synthetic Artist 48",
+                  "entityId": "00000000-283D-3941-322C-D5AD0EE670D9"
+                },
+                {
+                  "name": "Synthetic Artist 49",
+                  "entityId": "00000000-CA01-429D-6762-6240007428F8"
+                },
+                {
+                  "name": "Synthetic Artist 50",
+                  "entityId": "00000000-5498-7845-A631-93D590C82955"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 51",
+                  "entityId": "00000000-794F-AD91-FB27-0E4D1143EF57"
+                },
+                {
+                  "name": "Synthetic Artist 52",
+                  "entityId": "00000000-8E84-45FD-06DA-0BB607097DED"
+                },
+                {
+                  "name": "Synthetic Artist 53",
+                  "entityId": "00000000-CFEE-380F-702F-51CBD19270CB"
+                },
+                {
+                  "name": "Synthetic Artist 54",
+                  "entityId": "00000000-59A0-8DA0-FEA2-A4B40019F582"
+                },
+                {
+                  "name": "Synthetic Artist 55",
+                  "entityId": "00000000-C4D7-045F-0B94-209635CB892A"
+                },
+                {
+                  "name": "Synthetic Artist 56",
+                  "entityId": "00000000-6A47-1414-0BF5-3B688CAD9D4C"
+                },
+                {
+                  "name": "Synthetic Artist 57",
+                  "entityId": "00000000-A98E-D1D2-19C8-69075E3B71C5"
+                },
+                {
+                  "name": "Synthetic Artist 58",
+                  "entityId": "00000000-667E-95D8-A196-A374D0AD887B"
+                },
+                {
+                  "name": "Synthetic Artist 59",
+                  "entityId": "00000000-2859-7C7E-DF80-00CDAAD105F5"
+                },
+                {
+                  "name": "Synthetic Artist 60",
+                  "entityId": "00000000-4CCB-F92A-6D8A-C801453BF855"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 61"
+                },
+                {
+                  "name": "Synthetic Artist 62"
+                },
+                {
+                  "name": "Synthetic Artist 63"
+                },
+                {
+                  "name": "Synthetic Artist 64"
+                },
+                {
+                  "name": "Synthetic Artist 65"
+                },
+                {
+                  "name": "Synthetic Artist 66"
+                },
+                {
+                  "name": "Synthetic Artist 67"
+                },
+                {
+                  "name": "Synthetic Artist 68"
+                },
+                {
+                  "name": "Synthetic Artist 69"
+                },
+                {
+                  "name": "Synthetic Artist 70"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "dua-lipa-santiago-mon-laferte",
+          "artist": "Dua Lipa",
+          "city": "Santiago",
+          "country": "Chile",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Mon Laferte",
+            "entityId": "00000000-BEDD-951F-6345-FEC11D21C466",
+            "resolved": true
+          },
+          "date": "2025-11-11",
+          "sources": [
+            "https://www.yahoo.com/entertainment/music/articles/guide-dua-lipas-latin-american-183705748.html"
+          ],
+          "summary": "At her 11 November 2025 Santiago show Dua Lipa covered Chilean singer Mon Laferte's Tu Falta de Querer.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 71",
+                  "entityId": "00000000-F051-CD85-48F7-1FE8670BF68B"
+                },
+                {
+                  "name": "Synthetic Artist 72",
+                  "entityId": "00000000-F33B-5459-FE3E-AB63E1BB97E8"
+                },
+                {
+                  "name": "Synthetic Artist 73",
+                  "entityId": "00000000-4F7C-8784-7DC5-06CC709C944D"
+                },
+                {
+                  "name": "Synthetic Artist 74",
+                  "entityId": "00000000-FB3A-5BA4-4836-0A378D079CDF"
+                },
+                {
+                  "name": "Synthetic Artist 75",
+                  "entityId": "00000000-C339-7AE3-995F-1338F5597D82"
+                },
+                {
+                  "name": "Synthetic Artist 76",
+                  "entityId": "00000000-AEFF-E875-7520-A9DA569A2DE9"
+                },
+                {
+                  "name": "Synthetic Artist 77",
+                  "entityId": "00000000-283D-3941-322C-D5AD0EE670D9"
+                },
+                {
+                  "name": "Synthetic Artist 78",
+                  "entityId": "00000000-EA70-93EF-77AA-9281EC7966A1"
+                },
+                {
+                  "name": "Synthetic Artist 79",
+                  "entityId": "00000000-6A30-45C0-F24D-617B096471B0"
+                },
+                {
+                  "name": "Synthetic Artist 80",
+                  "entityId": "00000000-8824-DAD9-252A-5A61A3103994"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": 6,
+              "top": [
+                {
+                  "name": "Synthetic Artist 81",
+                  "entityId": "00000000-A1CB-930C-A8EC-FA3354CD5D6B"
+                },
+                {
+                  "name": "Synthetic Artist 82",
+                  "entityId": "00000000-C3E0-6B5A-231A-E2E705FBBD82"
+                },
+                {
+                  "name": "Synthetic Artist 83",
+                  "entityId": "00000000-407D-9BAC-AEDE-BF63523F3BF8"
+                },
+                {
+                  "name": "Synthetic Artist 84",
+                  "entityId": "00000000-C9AC-FF14-9052-1EDC6F642C4F"
+                },
+                {
+                  "name": "Synthetic Artist 85",
+                  "entityId": "00000000-90BB-BE28-F37C-CC09E9C46566"
+                },
+                {
+                  "name": "Mon Laferte",
+                  "entityId": "00000000-BEDD-951F-6345-FEC11D21C466"
+                },
+                {
+                  "name": "Synthetic Artist 86",
+                  "entityId": "00000000-21C2-F900-2A9C-4E5F32F213A4"
+                },
+                {
+                  "name": "Synthetic Artist 87",
+                  "entityId": "00000000-A206-9C01-5BF2-1754773AF03B"
+                },
+                {
+                  "name": "Synthetic Artist 88",
+                  "entityId": "00000000-809F-190D-E880-290794485ADD"
+                },
+                {
+                  "name": "Synthetic Artist 89",
+                  "entityId": "00000000-C03F-BF6C-D468-CF4122989FAA"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": 10,
+              "top": [
+                {
+                  "name": "Synthetic Artist 90"
+                },
+                {
+                  "name": "Synthetic Artist 91"
+                },
+                {
+                  "name": "Synthetic Artist 92"
+                },
+                {
+                  "name": "Synthetic Artist 93"
+                },
+                {
+                  "name": "Synthetic Artist 94"
+                },
+                {
+                  "name": "Synthetic Artist 95"
+                },
+                {
+                  "name": "Synthetic Artist 96"
+                },
+                {
+                  "name": "Synthetic Artist 97"
+                },
+                {
+                  "name": "Synthetic Artist 98"
+                },
+                {
+                  "name": "Mon Laferte"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "dua-lipa-bogota-shakira",
+          "artist": "Dua Lipa",
+          "city": "Bogota",
+          "country": "Colombia",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Shakira",
+            "entityId": "00000000-0F2B-E557-35BC-1376A0797547",
+            "resolved": true
+          },
+          "date": "2025-11-28",
+          "sources": [
+            "https://www.yahoo.com/entertainment/music/articles/guide-dua-lipas-latin-american-183705748.html",
+            "https://www.tvazteca.com/azteca7/latinoamericanos-en-usa/dua-lipa-homenajea-a-shakira-concierto-bogota/"
+          ],
+          "summary": "At her 28 November 2025 Bogota show Dua Lipa covered Colombian singer Shakira's Antologia.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 99",
+                  "entityId": "00000000-F051-CD85-48F7-1FE8670BF68B"
+                },
+                {
+                  "name": "Synthetic Artist 100",
+                  "entityId": "00000000-283D-3941-322C-D5AD0EE670D9"
+                },
+                {
+                  "name": "Synthetic Artist 101",
+                  "entityId": "00000000-AEFF-E875-7520-A9DA569A2DE9"
+                },
+                {
+                  "name": "Synthetic Artist 102",
+                  "entityId": "00000000-4537-539F-8AFB-CD6B31658452"
+                },
+                {
+                  "name": "Synthetic Artist 103",
+                  "entityId": "00000000-6A30-45C0-F24D-617B096471B0"
+                },
+                {
+                  "name": "Synthetic Artist 104",
+                  "entityId": "00000000-AB55-FAE9-F174-29DAAC1AFA87"
+                },
+                {
+                  "name": "Synthetic Artist 105",
+                  "entityId": "00000000-8824-DAD9-252A-5A61A3103994"
+                },
+                {
+                  "name": "Synthetic Artist 106",
+                  "entityId": "00000000-3B09-EE77-C03D-DFC0A21A5874"
+                },
+                {
+                  "name": "Synthetic Artist 107",
+                  "entityId": "00000000-49E6-99F4-C06E-3787FE789BFC"
+                },
+                {
+                  "name": "Synthetic Artist 108",
+                  "entityId": "00000000-7FCD-2D27-863B-76760BD97598"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 109",
+                  "entityId": "00000000-CA1C-ABBF-1338-8AE21469F766"
+                },
+                {
+                  "name": "Synthetic Artist 110",
+                  "entityId": "00000000-FEE6-9EE3-E41F-BE9A88EEA2FB"
+                },
+                {
+                  "name": "Synthetic Artist 111",
+                  "entityId": "00000000-1EF0-0914-9C78-CA3A3DFD8569"
+                },
+                {
+                  "name": "Synthetic Artist 112",
+                  "entityId": "00000000-42D1-66E1-74F2-2433A3A84840"
+                },
+                {
+                  "name": "Synthetic Artist 113",
+                  "entityId": "00000000-13F8-0F07-502E-B065F86EC745"
+                },
+                {
+                  "name": "Synthetic Artist 114",
+                  "entityId": "00000000-5CA8-AC85-41DF-2892B71EC9D5"
+                },
+                {
+                  "name": "Synthetic Artist 115",
+                  "entityId": "00000000-3B91-D245-7FB8-0A115D3B184A"
+                },
+                {
+                  "name": "Synthetic Artist 116",
+                  "entityId": "00000000-7900-A25E-4006-03C2E99FB38E"
+                },
+                {
+                  "name": "Synthetic Artist 117",
+                  "entityId": "00000000-F3C2-05F1-09F2-C0317D7F045C"
+                },
+                {
+                  "name": "Synthetic Artist 118",
+                  "entityId": "00000000-276E-1CF8-D127-AC136D34D00D"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 119"
+                },
+                {
+                  "name": "Synthetic Artist 120"
+                },
+                {
+                  "name": "Synthetic Artist 121"
+                },
+                {
+                  "name": "Synthetic Artist 122"
+                },
+                {
+                  "name": "Synthetic Artist 123"
+                },
+                {
+                  "name": "Synthetic Artist 124"
+                },
+                {
+                  "name": "Synthetic Artist 125"
+                },
+                {
+                  "name": "Synthetic Artist 126"
+                },
+                {
+                  "name": "Synthetic Artist 127"
+                },
+                {
+                  "name": "Synthetic Artist 128"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "dua-lipa-mexico-city-mana",
+          "artist": "Dua Lipa",
+          "city": "Mexico City",
+          "country": "Mexico",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Mana",
+            "entityId": null,
+            "resolved": false
+          },
+          "date": "2025-12",
+          "sources": [
+            "https://ca.billboard.com/music/latin/dua-lipa-selena-tribute-mexico-city-tour-finale-1236130017",
+            "https://www.yahoo.com/entertainment/music/articles/guide-dua-lipas-latin-american-183705748.html"
+          ],
+          "summary": "During her December 2025 Estadio GNP Seguros run in Mexico City Dua Lipa performed Oye Mi Amor with Fher Olvera of Mexican rock band Mana.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 129",
+                  "entityId": "00000000-F051-CD85-48F7-1FE8670BF68B"
+                },
+                {
+                  "name": "Synthetic Artist 130",
+                  "entityId": "00000000-DF16-D91A-A335-77315CBB6164"
+                },
+                {
+                  "name": "Synthetic Artist 131",
+                  "entityId": "00000000-F33B-5459-FE3E-AB63E1BB97E8"
+                },
+                {
+                  "name": "Synthetic Artist 132",
+                  "entityId": "00000000-2573-C852-8DD0-40698008F32F"
+                },
+                {
+                  "name": "Synthetic Artist 133",
+                  "entityId": "00000000-D794-0F88-7EEE-FC7669F053A5"
+                },
+                {
+                  "name": "Synthetic Artist 134",
+                  "entityId": "00000000-DA77-8E65-819D-2032546A8C03"
+                },
+                {
+                  "name": "Synthetic Artist 135",
+                  "entityId": "00000000-EBCF-BA62-BA77-8D7A0EE010DC"
+                },
+                {
+                  "name": "Synthetic Artist 136",
+                  "entityId": "00000000-C339-7AE3-995F-1338F5597D82"
+                },
+                {
+                  "name": "Synthetic Artist 137",
+                  "entityId": "00000000-283D-3941-322C-D5AD0EE670D9"
+                },
+                {
+                  "name": "Synthetic Artist 138",
+                  "entityId": "00000000-AEFF-E875-7520-A9DA569A2DE9"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 139",
+                  "entityId": "00000000-2D59-26CF-6425-CA2B3C752437"
+                },
+                {
+                  "name": "Synthetic Artist 140",
+                  "entityId": "00000000-320F-7A09-1EF3-4DFCBEA316B9"
+                },
+                {
+                  "name": "Synthetic Artist 141",
+                  "entityId": "00000000-EFB6-3B21-09F4-E116043EC836"
+                },
+                {
+                  "name": "Synthetic Artist 142",
+                  "entityId": "00000000-6811-4EF9-6746-6D64817C9D68"
+                },
+                {
+                  "name": "Synthetic Artist 143",
+                  "entityId": "00000000-D0D1-01D8-4D22-234AF14A0C60"
+                },
+                {
+                  "name": "Synthetic Artist 144",
+                  "entityId": "00000000-A51C-8AEE-2DAC-5B943F8AC541"
+                },
+                {
+                  "name": "Synthetic Artist 145",
+                  "entityId": "00000000-5795-BB1B-D0D4-86E00E582416"
+                },
+                {
+                  "name": "Synthetic Artist 146",
+                  "entityId": "00000000-9D7B-348A-8D36-DB36139FA411"
+                },
+                {
+                  "name": "Synthetic Artist 147",
+                  "entityId": "00000000-9B45-9CCC-413F-B2CD9D2D6A8C"
+                },
+                {
+                  "name": "Synthetic Artist 148",
+                  "entityId": "00000000-BEDD-951F-6345-FEC11D21C466"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 149"
+                },
+                {
+                  "name": "Synthetic Artist 150"
+                },
+                {
+                  "name": "Synthetic Artist 151"
+                },
+                {
+                  "name": "Synthetic Artist 152"
+                },
+                {
+                  "name": "Synthetic Artist 153"
+                },
+                {
+                  "name": "Synthetic Artist 154"
+                },
+                {
+                  "name": "Synthetic Artist 155"
+                },
+                {
+                  "name": "Synthetic Artist 156"
+                },
+                {
+                  "name": "Synthetic Artist 157"
+                },
+                {
+                  "name": "Synthetic Artist 158"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "metallica-mexico-city-el-tri",
+          "artist": "Metallica",
+          "city": "Mexico City",
+          "country": "Mexico",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "El Tri",
+            "entityId": "00000000-92BC-5232-C766-5862A433E1C9",
+            "resolved": true
+          },
+          "date": "2024-09-27",
+          "sources": [
+            "https://remezcla.com/?p=378078"
+          ],
+          "summary": "Metallica covered Mexican band El Tri's A.D.O. at Estadio GNP Seguros in Mexico City on 27 September 2024.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 159",
+                  "entityId": "00000000-76A3-954B-6C47-13F49258266D"
+                },
+                {
+                  "name": "Synthetic Artist 160",
+                  "entityId": "00000000-BDAE-2D2A-734F-624F7F203CFF"
+                },
+                {
+                  "name": "Synthetic Artist 161",
+                  "entityId": "00000000-DA28-5A90-86D3-B6AA5BBA9F2B"
+                },
+                {
+                  "name": "Synthetic Artist 162",
+                  "entityId": "00000000-82B7-62AA-3663-082889E40840"
+                },
+                {
+                  "name": "Synthetic Artist 163",
+                  "entityId": "00000000-210E-2B4A-CA89-735946934CFF"
+                },
+                {
+                  "name": "Synthetic Artist 164",
+                  "entityId": "00000000-D1F1-A788-FFDF-82566C4B2689"
+                },
+                {
+                  "name": "Synthetic Artist 165",
+                  "entityId": "00000000-E31E-6178-C21B-1B2078FC05CE"
+                },
+                {
+                  "name": "Synthetic Artist 166",
+                  "entityId": "00000000-383B-16EB-8FD6-17E42FF744EA"
+                },
+                {
+                  "name": "Synthetic Artist 167",
+                  "entityId": "00000000-0175-1687-1A16-BF3331E75855"
+                },
+                {
+                  "name": "Synthetic Artist 168",
+                  "entityId": "00000000-10EA-84EE-094E-A33970EA497A"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 169",
+                  "entityId": "00000000-2D59-26CF-6425-CA2B3C752437"
+                },
+                {
+                  "name": "Synthetic Artist 170",
+                  "entityId": "00000000-320F-7A09-1EF3-4DFCBEA316B9"
+                },
+                {
+                  "name": "Synthetic Artist 171",
+                  "entityId": "00000000-EFB6-3B21-09F4-E116043EC836"
+                },
+                {
+                  "name": "Synthetic Artist 172",
+                  "entityId": "00000000-6811-4EF9-6746-6D64817C9D68"
+                },
+                {
+                  "name": "Synthetic Artist 173",
+                  "entityId": "00000000-D0D1-01D8-4D22-234AF14A0C60"
+                },
+                {
+                  "name": "Synthetic Artist 174",
+                  "entityId": "00000000-A51C-8AEE-2DAC-5B943F8AC541"
+                },
+                {
+                  "name": "Synthetic Artist 175",
+                  "entityId": "00000000-5795-BB1B-D0D4-86E00E582416"
+                },
+                {
+                  "name": "Synthetic Artist 176",
+                  "entityId": "00000000-9D7B-348A-8D36-DB36139FA411"
+                },
+                {
+                  "name": "Synthetic Artist 177",
+                  "entityId": "00000000-9B45-9CCC-413F-B2CD9D2D6A8C"
+                },
+                {
+                  "name": "Synthetic Artist 178",
+                  "entityId": "00000000-BEDD-951F-6345-FEC11D21C466"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": 18,
+              "top": [
+                {
+                  "name": "Synthetic Artist 179"
+                },
+                {
+                  "name": "Synthetic Artist 180"
+                },
+                {
+                  "name": "Synthetic Artist 181"
+                },
+                {
+                  "name": "Synthetic Artist 182"
+                },
+                {
+                  "name": "Synthetic Artist 183"
+                },
+                {
+                  "name": "Synthetic Artist 184"
+                },
+                {
+                  "name": "Synthetic Artist 185"
+                },
+                {
+                  "name": "Synthetic Artist 186"
+                },
+                {
+                  "name": "Synthetic Artist 187"
+                },
+                {
+                  "name": "Synthetic Artist 188"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "metallica-mexico-city-la-sonora-santanera",
+          "artist": "Metallica",
+          "city": "Mexico City",
+          "country": "Mexico",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "La Sonora Santanera",
+            "entityId": "00000000-BE6D-772E-C9E5-DCD17D88BBA5",
+            "resolved": true
+          },
+          "date": "2024-09-29",
+          "sources": [
+            "https://remezcla.com/?p=378078"
+          ],
+          "summary": "Metallica covered La Sonora Santanera's Los Luchadores, with luchadores on stage, at Estadio GNP Seguros in Mexico City on 29 September 2024.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 189",
+                  "entityId": "00000000-76A3-954B-6C47-13F49258266D"
+                },
+                {
+                  "name": "Synthetic Artist 190",
+                  "entityId": "00000000-BDAE-2D2A-734F-624F7F203CFF"
+                },
+                {
+                  "name": "Synthetic Artist 191",
+                  "entityId": "00000000-DA28-5A90-86D3-B6AA5BBA9F2B"
+                },
+                {
+                  "name": "Synthetic Artist 192",
+                  "entityId": "00000000-82B7-62AA-3663-082889E40840"
+                },
+                {
+                  "name": "Synthetic Artist 193",
+                  "entityId": "00000000-210E-2B4A-CA89-735946934CFF"
+                },
+                {
+                  "name": "Synthetic Artist 194",
+                  "entityId": "00000000-D1F1-A788-FFDF-82566C4B2689"
+                },
+                {
+                  "name": "Synthetic Artist 195",
+                  "entityId": "00000000-E31E-6178-C21B-1B2078FC05CE"
+                },
+                {
+                  "name": "Synthetic Artist 196",
+                  "entityId": "00000000-383B-16EB-8FD6-17E42FF744EA"
+                },
+                {
+                  "name": "Synthetic Artist 197",
+                  "entityId": "00000000-0175-1687-1A16-BF3331E75855"
+                },
+                {
+                  "name": "Synthetic Artist 198",
+                  "entityId": "00000000-10EA-84EE-094E-A33970EA497A"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 199",
+                  "entityId": "00000000-2D59-26CF-6425-CA2B3C752437"
+                },
+                {
+                  "name": "Synthetic Artist 200",
+                  "entityId": "00000000-320F-7A09-1EF3-4DFCBEA316B9"
+                },
+                {
+                  "name": "Synthetic Artist 201",
+                  "entityId": "00000000-EFB6-3B21-09F4-E116043EC836"
+                },
+                {
+                  "name": "Synthetic Artist 202",
+                  "entityId": "00000000-6811-4EF9-6746-6D64817C9D68"
+                },
+                {
+                  "name": "Synthetic Artist 203",
+                  "entityId": "00000000-D0D1-01D8-4D22-234AF14A0C60"
+                },
+                {
+                  "name": "Synthetic Artist 204",
+                  "entityId": "00000000-A51C-8AEE-2DAC-5B943F8AC541"
+                },
+                {
+                  "name": "Synthetic Artist 205",
+                  "entityId": "00000000-5795-BB1B-D0D4-86E00E582416"
+                },
+                {
+                  "name": "Synthetic Artist 206",
+                  "entityId": "00000000-9D7B-348A-8D36-DB36139FA411"
+                },
+                {
+                  "name": "Synthetic Artist 207",
+                  "entityId": "00000000-9B45-9CCC-413F-B2CD9D2D6A8C"
+                },
+                {
+                  "name": "Synthetic Artist 208",
+                  "entityId": "00000000-BEDD-951F-6345-FEC11D21C466"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 209"
+                },
+                {
+                  "name": "Synthetic Artist 210"
+                },
+                {
+                  "name": "Synthetic Artist 211"
+                },
+                {
+                  "name": "Synthetic Artist 212"
+                },
+                {
+                  "name": "Synthetic Artist 213"
+                },
+                {
+                  "name": "Synthetic Artist 214"
+                },
+                {
+                  "name": "Synthetic Artist 215"
+                },
+                {
+                  "name": "Synthetic Artist 216"
+                },
+                {
+                  "name": "Synthetic Artist 217"
+                },
+                {
+                  "name": "Synthetic Artist 218"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "bad-bunny-mexico-city-julieta-venegas",
+          "artist": "Bad Bunny",
+          "city": "Mexico City",
+          "country": "Mexico",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Julieta Venegas",
+            "entityId": "00000000-7AD7-D2E1-7E3B-49C476F14DA6",
+            "resolved": true
+          },
+          "date": "2025-12-19",
+          "sources": [
+            "https://www.elfinanciero.com.mx/entretenimiento/2025/12/20/videos-julieta-venegas-canta-junto-a-bad-bunny-en-el-estadio-gnp-seguros-cdmx/",
+            "https://www.unotv.com/entretenimiento/gano-la-sexta-fecha-bad-bunny-sorprende-con-julieta-venegas-en-cdmx/"
+          ],
+          "summary": "Tijuana-born singer Julieta Venegas joined Bad Bunny on stage at Estadio GNP Seguros in Mexico City on 19 December 2025 for three songs.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 219",
+                  "entityId": "00000000-B096-FA46-2E23-B53C276906B9"
+                },
+                {
+                  "name": "Synthetic Artist 220",
+                  "entityId": "00000000-F8D4-89D6-FE39-BD536F812D81"
+                },
+                {
+                  "name": "Synthetic Artist 221",
+                  "entityId": "00000000-7C6A-2374-9037-25C841B61DAE"
+                },
+                {
+                  "name": "Synthetic Artist 222",
+                  "entityId": "00000000-D794-0F88-7EEE-FC7669F053A5"
+                },
+                {
+                  "name": "Synthetic Artist 223",
+                  "entityId": "00000000-E974-E57A-E1F5-F75E246116DD"
+                },
+                {
+                  "name": "Synthetic Artist 224",
+                  "entityId": "00000000-7A3F-0579-2874-7C9FF6DDFB53"
+                },
+                {
+                  "name": "Synthetic Artist 225",
+                  "entityId": "00000000-233A-AF63-F7E9-6780D3D95363"
+                },
+                {
+                  "name": "Synthetic Artist 226",
+                  "entityId": "00000000-1D1D-B755-003E-6D5E21B36746"
+                },
+                {
+                  "name": "Synthetic Artist 227",
+                  "entityId": "00000000-8BEE-FD3E-B287-B9D66564DC2F"
+                },
+                {
+                  "name": "Synthetic Artist 228",
+                  "entityId": "00000000-D874-A55B-8B23-E525004EAB8D"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": 15,
+              "top": [
+                {
+                  "name": "Synthetic Artist 229",
+                  "entityId": "00000000-2D59-26CF-6425-CA2B3C752437"
+                },
+                {
+                  "name": "Synthetic Artist 230",
+                  "entityId": "00000000-320F-7A09-1EF3-4DFCBEA316B9"
+                },
+                {
+                  "name": "Synthetic Artist 231",
+                  "entityId": "00000000-EFB6-3B21-09F4-E116043EC836"
+                },
+                {
+                  "name": "Synthetic Artist 232",
+                  "entityId": "00000000-6811-4EF9-6746-6D64817C9D68"
+                },
+                {
+                  "name": "Synthetic Artist 233",
+                  "entityId": "00000000-D0D1-01D8-4D22-234AF14A0C60"
+                },
+                {
+                  "name": "Synthetic Artist 234",
+                  "entityId": "00000000-A51C-8AEE-2DAC-5B943F8AC541"
+                },
+                {
+                  "name": "Synthetic Artist 235",
+                  "entityId": "00000000-5795-BB1B-D0D4-86E00E582416"
+                },
+                {
+                  "name": "Synthetic Artist 236",
+                  "entityId": "00000000-9D7B-348A-8D36-DB36139FA411"
+                },
+                {
+                  "name": "Synthetic Artist 237",
+                  "entityId": "00000000-9B45-9CCC-413F-B2CD9D2D6A8C"
+                },
+                {
+                  "name": "Synthetic Artist 238",
+                  "entityId": "00000000-BEDD-951F-6345-FEC11D21C466"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 239"
+                },
+                {
+                  "name": "Synthetic Artist 240"
+                },
+                {
+                  "name": "Synthetic Artist 241"
+                },
+                {
+                  "name": "Synthetic Artist 242"
+                },
+                {
+                  "name": "Synthetic Artist 243"
+                },
+                {
+                  "name": "Synthetic Artist 244"
+                },
+                {
+                  "name": "Synthetic Artist 245"
+                },
+                {
+                  "name": "Synthetic Artist 246"
+                },
+                {
+                  "name": "Synthetic Artist 247"
+                },
+                {
+                  "name": "Synthetic Artist 248"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "bad-bunny-mexico-city-adidas",
+          "artist": "Bad Bunny",
+          "city": "Mexico City",
+          "country": "Mexico",
+          "activationType": "merch_collab",
+          "decision": "The merch angle",
+          "realEntity": {
+            "name": "Adidas",
+            "entityId": "00000000-959F-5413-7122-C1771C548EC4",
+            "resolved": true
+          },
+          "date": "2025-12",
+          "sources": [
+            "https://los40.com.mx/2025/12/08/bad-bunny-x-adidas-asi-se-ve-la-nueva-colaboracion-especial-por-dtmf-llegara-a-mexico-precios-y-todos-los-detalles/"
+          ],
+          "summary": "Adidas released a Mexico-exclusive Bad Bunny tee carrying the tour seal and the city name for his December 2025 Mexico City stadium run.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": 1,
+              "top": [
+                {
+                  "name": "Adidas",
+                  "entityId": "00000000-959F-5413-7122-C1771C548EC4"
+                },
+                {
+                  "name": "Synthetic Brand 119",
+                  "entityId": "00000000-EA93-DA04-6CF5-63CA467080C2"
+                },
+                {
+                  "name": "Synthetic Brand 120",
+                  "entityId": "00000000-A31B-FF63-2A33-73B46D5EA589"
+                },
+                {
+                  "name": "Synthetic Brand 121",
+                  "entityId": "00000000-0629-F182-6B6F-7F919DDACEB4"
+                },
+                {
+                  "name": "Synthetic Brand 122",
+                  "entityId": "00000000-3931-514D-0BB4-CB520C3153EE"
+                },
+                {
+                  "name": "Synthetic Brand 123",
+                  "entityId": "00000000-A5A8-C9B6-8AC0-226D583EBF61"
+                },
+                {
+                  "name": "Synthetic Brand 124",
+                  "entityId": "00000000-C917-0360-FD09-F8F9FDF15C21"
+                },
+                {
+                  "name": "Synthetic Brand 125",
+                  "entityId": "00000000-2CC8-24D0-09D2-81D605ACE539"
+                },
+                {
+                  "name": "Synthetic Brand 126",
+                  "entityId": "00000000-5DF2-79B1-A90F-8663781677FC"
+                },
+                {
+                  "name": "Synthetic Brand 127",
+                  "entityId": "00000000-1716-7B09-CCD8-1D37DC1CDB38"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Brand 128",
+                  "entityId": "00000000-1976-6BCA-B470-63AB03738465"
+                },
+                {
+                  "name": "Synthetic Brand 129",
+                  "entityId": "00000000-636D-237C-6FB2-DB747D8FD99D"
+                },
+                {
+                  "name": "Synthetic Brand 130",
+                  "entityId": "00000000-A116-3DB7-02EF-7CBAA9874574"
+                },
+                {
+                  "name": "Synthetic Brand 131",
+                  "entityId": "00000000-B241-6326-AA67-EB1865244563"
+                },
+                {
+                  "name": "Synthetic Brand 132",
+                  "entityId": "00000000-66A4-644B-D522-5A137BC2C190"
+                },
+                {
+                  "name": "Synthetic Brand 133",
+                  "entityId": "00000000-970A-B96F-7E61-119C32EC17E3"
+                },
+                {
+                  "name": "Synthetic Brand 134",
+                  "entityId": "00000000-9486-A897-B4C7-60D30A6D4213"
+                },
+                {
+                  "name": "Synthetic Brand 135",
+                  "entityId": "00000000-F533-0A5F-0ADA-5DF7F3E352D2"
+                },
+                {
+                  "name": "Synthetic Brand 136",
+                  "entityId": "00000000-102D-EF5B-A3F9-F4CEA55E69A0"
+                },
+                {
+                  "name": "Synthetic Brand 137",
+                  "entityId": "00000000-63BA-8181-832D-FAE9DD39A193"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Brand 138"
+                },
+                {
+                  "name": "Synthetic Brand 139"
+                },
+                {
+                  "name": "Synthetic Brand 140"
+                },
+                {
+                  "name": "Synthetic Brand 141"
+                },
+                {
+                  "name": "Synthetic Brand 142"
+                },
+                {
+                  "name": "Synthetic Brand 143"
+                },
+                {
+                  "name": "Synthetic Brand 144"
+                },
+                {
+                  "name": "Synthetic Brand 145"
+                },
+                {
+                  "name": "Synthetic Brand 146"
+                },
+                {
+                  "name": "Synthetic Brand 147"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "summary": {
+        "qloo_playbook": {
+          "scored": 13,
+          "hit10": 1,
+          "hit20": 1
+        },
+        "city_popularity": {
+          "scored": 13,
+          "hit10": 1,
+          "hit20": 2
+        },
+        "llm_only": {
+          "scored": 14,
+          "hit10": 3,
+          "hit20": 4
+        }
+      },
+      "lost": [
+        "interpol-mexico-city-faramalla-club-de-vinilos",
+        "shed-seven-york-brew-york",
+        "dua-lipa-santiago-mon-laferte",
+        "metallica-mexico-city-el-tri",
+        "bad-bunny-mexico-city-julieta-venegas"
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "status": "complete",
+      "runAt": "2026-10-17T01:33:13.329Z",
+      "model": "gemini-3.8-flash",
+      "method": "v2",
+      "methodNote": "Local acts: city-popular artists re-ranked by taste fit (qloo_rank). Judged on fresh cases reviewed after the method was fixed.",
+      "cutoff": 10,
+      "wideCutoff": 20,
+      "methods": [
+        "qloo_playbook",
+        "city_popularity",
+        "llm_only"
+      ],
+      "n": 13,
+      "cases": [
+        {
+          "id": "coldplay-rio-de-janeiro-milton-nascimento",
+          "artist": "Coldplay",
+          "city": "Rio de Janeiro",
+          "country": "Brazil",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Milton Nascimento",
+            "entityId": "00000000-79BC-DA3C-F1CF-B137AC2EE054",
+            "resolved": true
+          },
+          "date": "2023-03",
+          "sources": [
+            "https://rollingstone.com.br/musica/coldplay-convida-milton-nascimento-no-ultimo-show-no-brasil/"
+          ],
+          "summary": "Brazilian singer Milton Nascimento joined Coldplay at their Rio de Janeiro stadium show to sing Maria, Maria.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 249",
+                  "entityId": "00000000-C918-5CAC-47CB-D2A7693DB007"
+                },
+                {
+                  "name": "Synthetic Artist 250",
+                  "entityId": "00000000-A317-3B4F-D035-B48FC828E9C6"
+                },
+                {
+                  "name": "Synthetic Artist 251",
+                  "entityId": "00000000-A06E-8078-A888-ACD0FCE8E49C"
+                },
+                {
+                  "name": "Synthetic Artist 252",
+                  "entityId": "00000000-52A3-0AE1-6767-43C8429A91E2"
+                },
+                {
+                  "name": "Synthetic Artist 253",
+                  "entityId": "00000000-12D4-D64D-0C41-D21A3288C48C"
+                },
+                {
+                  "name": "Synthetic Artist 254",
+                  "entityId": "00000000-00EF-E9A0-EDB8-1C851C3783D9"
+                },
+                {
+                  "name": "Synthetic Artist 255",
+                  "entityId": "00000000-3317-C3AB-87A8-810981B1E6C6"
+                },
+                {
+                  "name": "Synthetic Artist 256",
+                  "entityId": "00000000-BA57-C4B2-A4F5-240CA6CCD4B9"
+                },
+                {
+                  "name": "Synthetic Artist 257",
+                  "entityId": "00000000-671E-445D-A121-02ED15DADB3D"
+                },
+                {
+                  "name": "Synthetic Artist 258",
+                  "entityId": "00000000-381D-A3A7-59BF-E8936692A82F"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 259",
+                  "entityId": "00000000-BA57-C4B2-A4F5-240CA6CCD4B9"
+                },
+                {
+                  "name": "Synthetic Artist 260",
+                  "entityId": "00000000-52A3-0AE1-6767-43C8429A91E2"
+                },
+                {
+                  "name": "Synthetic Artist 261",
+                  "entityId": "00000000-A317-3B4F-D035-B48FC828E9C6"
+                },
+                {
+                  "name": "Synthetic Artist 262",
+                  "entityId": "00000000-671E-445D-A121-02ED15DADB3D"
+                },
+                {
+                  "name": "Synthetic Artist 263",
+                  "entityId": "00000000-A06E-8078-A888-ACD0FCE8E49C"
+                },
+                {
+                  "name": "Synthetic Artist 264",
+                  "entityId": "00000000-C918-5CAC-47CB-D2A7693DB007"
+                },
+                {
+                  "name": "Synthetic Artist 265",
+                  "entityId": "00000000-00EF-E9A0-EDB8-1C851C3783D9"
+                },
+                {
+                  "name": "Synthetic Artist 266",
+                  "entityId": "00000000-12D4-D64D-0C41-D21A3288C48C"
+                },
+                {
+                  "name": "Synthetic Artist 267",
+                  "entityId": "00000000-3317-C3AB-87A8-810981B1E6C6"
+                },
+                {
+                  "name": "Synthetic Artist 268",
+                  "entityId": "00000000-381D-A3A7-59BF-E8936692A82F"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": 2,
+              "top": [
+                {
+                  "name": "Synthetic Artist 269"
+                },
+                {
+                  "name": "Milton Nascimento"
+                },
+                {
+                  "name": "Synthetic Artist 270"
+                },
+                {
+                  "name": "Synthetic Artist 271"
+                },
+                {
+                  "name": "Synthetic Artist 272"
+                },
+                {
+                  "name": "Synthetic Artist 273"
+                },
+                {
+                  "name": "Synthetic Artist 274"
+                },
+                {
+                  "name": "Synthetic Artist 275"
+                },
+                {
+                  "name": "Synthetic Artist 276"
+                },
+                {
+                  "name": "Synthetic Artist 277"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "dua-lipa-sao-paulo-caetano-veloso",
+          "artist": "Dua Lipa",
+          "city": "São Paulo",
+          "country": "Brazil",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Caetano Veloso",
+            "entityId": "00000000-A317-3B4F-D035-B48FC828E9C6",
+            "resolved": true
+          },
+          "date": "2025-11-15",
+          "sources": [
+            "https://rollingstone.com.br/guia-show/dua-lipa-da-atencao-que-o-fa-brasileiro-merece-em-show-em-sao-paulo/",
+            "https://www.metropoles.com/sao-paulo/dua-lipa-caetano-veloso-brown-sp"
+          ],
+          "summary": "Caetano Veloso joined Dua Lipa on stage at MorumBIS in São Paulo to perform Margarida Perfumada.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": 5,
+              "top": [
+                {
+                  "name": "Synthetic Artist 278",
+                  "entityId": "00000000-DEF5-48E0-60FB-2C41D65069C1"
+                },
+                {
+                  "name": "Synthetic Artist 279",
+                  "entityId": "00000000-9478-CEAB-B57D-7825AA7BD055"
+                },
+                {
+                  "name": "Synthetic Artist 280",
+                  "entityId": "00000000-C043-0DF3-9382-B91BFD96DB26"
+                },
+                {
+                  "name": "Synthetic Artist 281",
+                  "entityId": "00000000-EEDB-CE72-5E07-4CD213D98B3F"
+                },
+                {
+                  "name": "Caetano Veloso",
+                  "entityId": "00000000-A317-3B4F-D035-B48FC828E9C6"
+                },
+                {
+                  "name": "Synthetic Artist 282",
+                  "entityId": "00000000-8032-5B77-818B-5D346F511A6E"
+                },
+                {
+                  "name": "Synthetic Artist 283",
+                  "entityId": "00000000-671E-445D-A121-02ED15DADB3D"
+                },
+                {
+                  "name": "Synthetic Artist 284",
+                  "entityId": "00000000-5AD0-3F28-7D73-306B3AEDDB66"
+                },
+                {
+                  "name": "Synthetic Artist 285",
+                  "entityId": "00000000-AF60-3E65-4B70-7913365F1F6C"
+                },
+                {
+                  "name": "Synthetic Artist 286",
+                  "entityId": "00000000-3FC9-5680-54E4-1B3C55355DDD"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": 3,
+              "top": [
+                {
+                  "name": "Synthetic Artist 287",
+                  "entityId": "00000000-8032-5B77-818B-5D346F511A6E"
+                },
+                {
+                  "name": "Synthetic Artist 288",
+                  "entityId": "00000000-671E-445D-A121-02ED15DADB3D"
+                },
+                {
+                  "name": "Caetano Veloso",
+                  "entityId": "00000000-A317-3B4F-D035-B48FC828E9C6"
+                },
+                {
+                  "name": "Synthetic Artist 289",
+                  "entityId": "00000000-9478-CEAB-B57D-7825AA7BD055"
+                },
+                {
+                  "name": "Synthetic Artist 290",
+                  "entityId": "00000000-C043-0DF3-9382-B91BFD96DB26"
+                },
+                {
+                  "name": "Synthetic Artist 291",
+                  "entityId": "00000000-DEF5-48E0-60FB-2C41D65069C1"
+                },
+                {
+                  "name": "Synthetic Artist 292",
+                  "entityId": "00000000-EEDB-CE72-5E07-4CD213D98B3F"
+                },
+                {
+                  "name": "Synthetic Artist 293",
+                  "entityId": "00000000-5AD0-3F28-7D73-306B3AEDDB66"
+                },
+                {
+                  "name": "Synthetic Artist 294",
+                  "entityId": "00000000-AF60-3E65-4B70-7913365F1F6C"
+                },
+                {
+                  "name": "Synthetic Artist 295",
+                  "entityId": "00000000-3FC9-5680-54E4-1B3C55355DDD"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 296"
+                },
+                {
+                  "name": "Synthetic Artist 297"
+                },
+                {
+                  "name": "Synthetic Artist 298"
+                },
+                {
+                  "name": "Synthetic Artist 299"
+                },
+                {
+                  "name": "Synthetic Artist 300"
+                },
+                {
+                  "name": "Synthetic Artist 301"
+                },
+                {
+                  "name": "Synthetic Artist 302"
+                },
+                {
+                  "name": "Synthetic Artist 303"
+                },
+                {
+                  "name": "Synthetic Artist 304"
+                },
+                {
+                  "name": "Synthetic Artist 305"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "dua-lipa-sao-paulo-carlinhos-brown",
+          "artist": "Dua Lipa",
+          "city": "São Paulo",
+          "country": "Brazil",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Carlinhos Brown",
+            "entityId": "00000000-750B-D912-5A8A-079162900CE8",
+            "resolved": true
+          },
+          "date": "2025-11-15",
+          "sources": [
+            "https://rollingstone.com.br/guia-show/dua-lipa-da-atencao-que-o-fa-brasileiro-merece-em-show-em-sao-paulo/",
+            "https://www.metropoles.com/sao-paulo/dua-lipa-caetano-veloso-brown-sp"
+          ],
+          "summary": "Brazilian percussionist Carlinhos Brown joined Dua Lipa at her São Paulo show and sang Magalenha, a Sérgio Mendes song.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 306",
+                  "entityId": "00000000-DEF5-48E0-60FB-2C41D65069C1"
+                },
+                {
+                  "name": "Synthetic Artist 307",
+                  "entityId": "00000000-9478-CEAB-B57D-7825AA7BD055"
+                },
+                {
+                  "name": "Synthetic Artist 308",
+                  "entityId": "00000000-C043-0DF3-9382-B91BFD96DB26"
+                },
+                {
+                  "name": "Synthetic Artist 309",
+                  "entityId": "00000000-EEDB-CE72-5E07-4CD213D98B3F"
+                },
+                {
+                  "name": "Synthetic Artist 310",
+                  "entityId": "00000000-A317-3B4F-D035-B48FC828E9C6"
+                },
+                {
+                  "name": "Synthetic Artist 311",
+                  "entityId": "00000000-8032-5B77-818B-5D346F511A6E"
+                },
+                {
+                  "name": "Synthetic Artist 312",
+                  "entityId": "00000000-671E-445D-A121-02ED15DADB3D"
+                },
+                {
+                  "name": "Synthetic Artist 313",
+                  "entityId": "00000000-5AD0-3F28-7D73-306B3AEDDB66"
+                },
+                {
+                  "name": "Synthetic Artist 314",
+                  "entityId": "00000000-AF60-3E65-4B70-7913365F1F6C"
+                },
+                {
+                  "name": "Synthetic Artist 315",
+                  "entityId": "00000000-3FC9-5680-54E4-1B3C55355DDD"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 316",
+                  "entityId": "00000000-8032-5B77-818B-5D346F511A6E"
+                },
+                {
+                  "name": "Synthetic Artist 317",
+                  "entityId": "00000000-671E-445D-A121-02ED15DADB3D"
+                },
+                {
+                  "name": "Synthetic Artist 318",
+                  "entityId": "00000000-A317-3B4F-D035-B48FC828E9C6"
+                },
+                {
+                  "name": "Synthetic Artist 319",
+                  "entityId": "00000000-9478-CEAB-B57D-7825AA7BD055"
+                },
+                {
+                  "name": "Synthetic Artist 320",
+                  "entityId": "00000000-C043-0DF3-9382-B91BFD96DB26"
+                },
+                {
+                  "name": "Synthetic Artist 321",
+                  "entityId": "00000000-DEF5-48E0-60FB-2C41D65069C1"
+                },
+                {
+                  "name": "Synthetic Artist 322",
+                  "entityId": "00000000-EEDB-CE72-5E07-4CD213D98B3F"
+                },
+                {
+                  "name": "Synthetic Artist 323",
+                  "entityId": "00000000-5AD0-3F28-7D73-306B3AEDDB66"
+                },
+                {
+                  "name": "Synthetic Artist 324",
+                  "entityId": "00000000-AF60-3E65-4B70-7913365F1F6C"
+                },
+                {
+                  "name": "Synthetic Artist 325",
+                  "entityId": "00000000-3FC9-5680-54E4-1B3C55355DDD"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 326"
+                },
+                {
+                  "name": "Synthetic Artist 327"
+                },
+                {
+                  "name": "Synthetic Artist 328"
+                },
+                {
+                  "name": "Synthetic Artist 329"
+                },
+                {
+                  "name": "Synthetic Artist 330"
+                },
+                {
+                  "name": "Synthetic Artist 331"
+                },
+                {
+                  "name": "Synthetic Artist 332"
+                },
+                {
+                  "name": "Synthetic Artist 333"
+                },
+                {
+                  "name": "Synthetic Artist 334"
+                },
+                {
+                  "name": "Synthetic Artist 335"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "g-flip-melbourne-vanessa-amorosi",
+          "artist": "G Flip",
+          "city": "Melbourne",
+          "country": "Australia",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Vanessa Amorosi",
+            "entityId": "00000000-F135-C940-F63B-603274DB4CC0",
+            "resolved": true
+          },
+          "date": "2026-03-08",
+          "sources": [
+            "https://au.rollingstone.com/music/music-news/vanessa-amorosi-g-flip-melbourne-92097/"
+          ],
+          "summary": "Australian singer Vanessa Amorosi made a surprise appearance at G Flip's Melbourne show at Margaret Court Arena, performing Absolutely Everybody.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 336",
+                  "entityId": "00000000-55AB-0FCF-C7FF-E12B154A1A38"
+                },
+                {
+                  "name": "Synthetic Artist 337",
+                  "entityId": "00000000-A6D2-3EFD-F8B1-A30469A4289C"
+                },
+                {
+                  "name": "Synthetic Artist 338",
+                  "entityId": "00000000-D31F-F04A-F846-CC45BAC5E051"
+                },
+                {
+                  "name": "Synthetic Artist 339",
+                  "entityId": "00000000-DFC5-875F-2446-6EB30D6E5751"
+                },
+                {
+                  "name": "Synthetic Artist 340",
+                  "entityId": "00000000-FDEA-67C1-F50F-171981C8E3A3"
+                },
+                {
+                  "name": "Synthetic Artist 341",
+                  "entityId": "00000000-4160-3C5D-D9DD-D93ACC6C99AA"
+                },
+                {
+                  "name": "Synthetic Artist 342",
+                  "entityId": "00000000-9D48-025F-CAC1-7A99447D41EF"
+                },
+                {
+                  "name": "Synthetic Artist 343",
+                  "entityId": "00000000-305A-3150-AF65-21F26C2BEB0B"
+                },
+                {
+                  "name": "Synthetic Artist 344",
+                  "entityId": "00000000-D8D0-1C38-B1D7-85F9D60417E1"
+                },
+                {
+                  "name": "Synthetic Artist 345",
+                  "entityId": "00000000-0FDF-42E3-3F70-C1B21145793D"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 346",
+                  "entityId": "00000000-9D48-025F-CAC1-7A99447D41EF"
+                },
+                {
+                  "name": "Synthetic Artist 347",
+                  "entityId": "00000000-305A-3150-AF65-21F26C2BEB0B"
+                },
+                {
+                  "name": "Synthetic Artist 348",
+                  "entityId": "00000000-D8D0-1C38-B1D7-85F9D60417E1"
+                },
+                {
+                  "name": "Synthetic Artist 349",
+                  "entityId": "00000000-0FDF-42E3-3F70-C1B21145793D"
+                },
+                {
+                  "name": "Synthetic Artist 350",
+                  "entityId": "00000000-4160-3C5D-D9DD-D93ACC6C99AA"
+                },
+                {
+                  "name": "Synthetic Artist 351",
+                  "entityId": "00000000-55AB-0FCF-C7FF-E12B154A1A38"
+                },
+                {
+                  "name": "Synthetic Artist 352",
+                  "entityId": "00000000-DFC5-875F-2446-6EB30D6E5751"
+                },
+                {
+                  "name": "Synthetic Artist 353",
+                  "entityId": "00000000-FDEA-67C1-F50F-171981C8E3A3"
+                },
+                {
+                  "name": "Synthetic Artist 354",
+                  "entityId": "00000000-D31F-F04A-F846-CC45BAC5E051"
+                },
+                {
+                  "name": "Synthetic Artist 355",
+                  "entityId": "00000000-A6D2-3EFD-F8B1-A30469A4289C"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 356"
+                },
+                {
+                  "name": "Synthetic Artist 357"
+                },
+                {
+                  "name": "Synthetic Artist 358"
+                },
+                {
+                  "name": "Synthetic Artist 359"
+                },
+                {
+                  "name": "Synthetic Artist 360"
+                },
+                {
+                  "name": "Synthetic Artist 361"
+                },
+                {
+                  "name": "Synthetic Artist 362"
+                },
+                {
+                  "name": "Synthetic Artist 363"
+                },
+                {
+                  "name": "Synthetic Artist 364"
+                },
+                {
+                  "name": "Synthetic Artist 365"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "olivia-rodrigo-dublin-fontaines-dc",
+          "artist": "Olivia Rodrigo",
+          "city": "Dublin",
+          "country": "Ireland",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Fontaines D.C.",
+            "entityId": "00000000-426B-757F-1057-1D59FB4D83C0",
+            "resolved": true
+          },
+          "date": "2025-06-24",
+          "sources": [
+            "https://www.rollingstone.co.uk/music/watch-olivia-rodrigo-cover-fontaines-d-c-s-i-love-you-in-dublin-51304/",
+            "https://www.roscommonherald.ie/olivia-rodrigo-surprises-fans-with-fontaines-dc-cover-at-marlay-park-gig_arid-62334.html"
+          ],
+          "summary": "Olivia Rodrigo covered Irish band Fontaines D.C.'s I Love You at her Marlay Park show in Dublin.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 366",
+                  "entityId": "00000000-E897-F4ED-ADA4-8841B96B2DAD"
+                },
+                {
+                  "name": "Synthetic Artist 367",
+                  "entityId": "00000000-5C05-85CA-AF08-E2E7352E6B97"
+                },
+                {
+                  "name": "Synthetic Artist 368",
+                  "entityId": "00000000-4C79-1D35-E6DB-06D5D0DE61D7"
+                },
+                {
+                  "name": "Synthetic Artist 369",
+                  "entityId": "00000000-DA1F-D4C5-837E-24A7FF7B7D67"
+                },
+                {
+                  "name": "Synthetic Artist 370",
+                  "entityId": "00000000-45A0-780C-E299-ECDEC39BC1F9"
+                },
+                {
+                  "name": "Synthetic Artist 371",
+                  "entityId": "00000000-8D60-E73E-A210-8D27D6800EA1"
+                },
+                {
+                  "name": "Synthetic Artist 372",
+                  "entityId": "00000000-FC7D-F486-71AD-511EFE6350AD"
+                },
+                {
+                  "name": "Synthetic Artist 373",
+                  "entityId": "00000000-2B63-A485-9F0E-AEC221A431DF"
+                },
+                {
+                  "name": "Synthetic Artist 374",
+                  "entityId": "00000000-000E-E3D5-2FB2-844B666656A2"
+                },
+                {
+                  "name": "Synthetic Artist 375",
+                  "entityId": "00000000-437F-F0B3-B143-04D2AB5AF6F9"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 376",
+                  "entityId": "00000000-000E-E3D5-2FB2-844B666656A2"
+                },
+                {
+                  "name": "Synthetic Artist 377",
+                  "entityId": "00000000-4C79-1D35-E6DB-06D5D0DE61D7"
+                },
+                {
+                  "name": "Synthetic Artist 378",
+                  "entityId": "00000000-2B63-A485-9F0E-AEC221A431DF"
+                },
+                {
+                  "name": "Synthetic Artist 379",
+                  "entityId": "00000000-45A0-780C-E299-ECDEC39BC1F9"
+                },
+                {
+                  "name": "Synthetic Artist 380",
+                  "entityId": "00000000-DA1F-D4C5-837E-24A7FF7B7D67"
+                },
+                {
+                  "name": "Synthetic Artist 381",
+                  "entityId": "00000000-FC7D-F486-71AD-511EFE6350AD"
+                },
+                {
+                  "name": "Synthetic Artist 382",
+                  "entityId": "00000000-437F-F0B3-B143-04D2AB5AF6F9"
+                },
+                {
+                  "name": "Synthetic Artist 383",
+                  "entityId": "00000000-8D60-E73E-A210-8D27D6800EA1"
+                },
+                {
+                  "name": "Synthetic Artist 384",
+                  "entityId": "00000000-5C05-85CA-AF08-E2E7352E6B97"
+                },
+                {
+                  "name": "Synthetic Artist 385",
+                  "entityId": "00000000-E897-F4ED-ADA4-8841B96B2DAD"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 386"
+                },
+                {
+                  "name": "Synthetic Artist 387"
+                },
+                {
+                  "name": "Synthetic Artist 388"
+                },
+                {
+                  "name": "Synthetic Artist 389"
+                },
+                {
+                  "name": "Synthetic Artist 390"
+                },
+                {
+                  "name": "Synthetic Artist 391"
+                },
+                {
+                  "name": "Synthetic Artist 392"
+                },
+                {
+                  "name": "Synthetic Artist 393"
+                },
+                {
+                  "name": "Synthetic Artist 394"
+                },
+                {
+                  "name": "Synthetic Artist 395"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "hayley-williams-dublin-sinead-oconnor",
+          "artist": "Hayley Williams",
+          "city": "Dublin",
+          "country": "Ireland",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Sinéad O'Connor",
+            "entityId": "00000000-8082-5616-0711-296E6B14E5B8",
+            "resolved": true
+          },
+          "date": "2026-06-30",
+          "sources": [
+            "https://stereogum.com/2504041/hayley-williams-covers-sinead-oconnor-at-dublin-tour-closer/news",
+            "https://www.hotpress.com/music/watch-hayley-williams-cover-sinead-oconnors-mandinka-in-dublin-23148831"
+          ],
+          "summary": "Hayley Williams covered Irish artist Sinéad O'Connor's Mandinka at the second of two Dublin National Stadium shows, dedicating it to Irish artists.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 396",
+                  "entityId": "00000000-E897-F4ED-ADA4-8841B96B2DAD"
+                },
+                {
+                  "name": "Synthetic Artist 397",
+                  "entityId": "00000000-4C79-1D35-E6DB-06D5D0DE61D7"
+                },
+                {
+                  "name": "Synthetic Artist 398",
+                  "entityId": "00000000-45A0-780C-E299-ECDEC39BC1F9"
+                },
+                {
+                  "name": "Synthetic Artist 399",
+                  "entityId": "00000000-5C05-85CA-AF08-E2E7352E6B97"
+                },
+                {
+                  "name": "Synthetic Artist 400",
+                  "entityId": "00000000-000E-E3D5-2FB2-844B666656A2"
+                },
+                {
+                  "name": "Synthetic Artist 401",
+                  "entityId": "00000000-8D60-E73E-A210-8D27D6800EA1"
+                },
+                {
+                  "name": "Synthetic Artist 402",
+                  "entityId": "00000000-DA1F-D4C5-837E-24A7FF7B7D67"
+                },
+                {
+                  "name": "Synthetic Artist 403",
+                  "entityId": "00000000-2B63-A485-9F0E-AEC221A431DF"
+                },
+                {
+                  "name": "Synthetic Artist 404",
+                  "entityId": "00000000-FC7D-F486-71AD-511EFE6350AD"
+                },
+                {
+                  "name": "Synthetic Artist 405",
+                  "entityId": "00000000-437F-F0B3-B143-04D2AB5AF6F9"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 406",
+                  "entityId": "00000000-000E-E3D5-2FB2-844B666656A2"
+                },
+                {
+                  "name": "Synthetic Artist 407",
+                  "entityId": "00000000-4C79-1D35-E6DB-06D5D0DE61D7"
+                },
+                {
+                  "name": "Synthetic Artist 408",
+                  "entityId": "00000000-2B63-A485-9F0E-AEC221A431DF"
+                },
+                {
+                  "name": "Synthetic Artist 409",
+                  "entityId": "00000000-45A0-780C-E299-ECDEC39BC1F9"
+                },
+                {
+                  "name": "Synthetic Artist 410",
+                  "entityId": "00000000-DA1F-D4C5-837E-24A7FF7B7D67"
+                },
+                {
+                  "name": "Synthetic Artist 411",
+                  "entityId": "00000000-FC7D-F486-71AD-511EFE6350AD"
+                },
+                {
+                  "name": "Synthetic Artist 412",
+                  "entityId": "00000000-437F-F0B3-B143-04D2AB5AF6F9"
+                },
+                {
+                  "name": "Synthetic Artist 413",
+                  "entityId": "00000000-8D60-E73E-A210-8D27D6800EA1"
+                },
+                {
+                  "name": "Synthetic Artist 414",
+                  "entityId": "00000000-5C05-85CA-AF08-E2E7352E6B97"
+                },
+                {
+                  "name": "Synthetic Artist 415",
+                  "entityId": "00000000-E897-F4ED-ADA4-8841B96B2DAD"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": 7,
+              "top": [
+                {
+                  "name": "Synthetic Artist 416"
+                },
+                {
+                  "name": "Synthetic Artist 417"
+                },
+                {
+                  "name": "Synthetic Artist 418"
+                },
+                {
+                  "name": "Synthetic Artist 419"
+                },
+                {
+                  "name": "Synthetic Artist 420"
+                },
+                {
+                  "name": "Synthetic Artist 421"
+                },
+                {
+                  "name": "Sinéad O'Connor"
+                },
+                {
+                  "name": "Synthetic Artist 422"
+                },
+                {
+                  "name": "Synthetic Artist 423"
+                },
+                {
+                  "name": "Synthetic Artist 424"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "coldplay-guadalajara-mana",
+          "artist": "Coldplay",
+          "city": "Guadalajara",
+          "country": "Mexico",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Maná",
+            "entityId": "00000000-DBF7-5FF8-65DA-DF5A4070F358",
+            "resolved": true
+          },
+          "date": "2022-03-29",
+          "sources": [
+            "https://www.sopitas.com/musica/coldplay-toco-rayando-el-sol-fher-mana-conciertos-guadalajara-2022-estadio-akron/"
+          ],
+          "summary": "Fher Olvera of Guadalajara band Maná joined Coldplay in the final encore at Estadio Akron to perform Rayando el Sol.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 425",
+                  "entityId": "00000000-0282-BCA2-B243-71CE145939A5"
+                },
+                {
+                  "name": "Synthetic Artist 426",
+                  "entityId": "00000000-2D59-26CF-6425-CA2B3C752437"
+                },
+                {
+                  "name": "Synthetic Artist 427",
+                  "entityId": "00000000-320F-7A09-1EF3-4DFCBEA316B9"
+                },
+                {
+                  "name": "Synthetic Artist 428",
+                  "entityId": "00000000-5795-BB1B-D0D4-86E00E582416"
+                },
+                {
+                  "name": "Synthetic Artist 429",
+                  "entityId": "00000000-6811-4EF9-6746-6D64817C9D68"
+                },
+                {
+                  "name": "Synthetic Artist 430",
+                  "entityId": "00000000-A51C-8AEE-2DAC-5B943F8AC541"
+                },
+                {
+                  "name": "Synthetic Artist 431",
+                  "entityId": "00000000-7D27-D5D5-29EF-8DD78CD59D82"
+                },
+                {
+                  "name": "Synthetic Artist 432",
+                  "entityId": "00000000-57E0-F19D-508E-1018AE8B3C23"
+                },
+                {
+                  "name": "Synthetic Artist 433",
+                  "entityId": "00000000-0849-0ADB-3F1D-8D422CB84E78"
+                },
+                {
+                  "name": "Synthetic Artist 434",
+                  "entityId": "00000000-EFB6-3B21-09F4-E116043EC836"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 435",
+                  "entityId": "00000000-320F-7A09-1EF3-4DFCBEA316B9"
+                },
+                {
+                  "name": "Synthetic Artist 436",
+                  "entityId": "00000000-7D27-D5D5-29EF-8DD78CD59D82"
+                },
+                {
+                  "name": "Synthetic Artist 437",
+                  "entityId": "00000000-57E0-F19D-508E-1018AE8B3C23"
+                },
+                {
+                  "name": "Synthetic Artist 438",
+                  "entityId": "00000000-2D59-26CF-6425-CA2B3C752437"
+                },
+                {
+                  "name": "Synthetic Artist 439",
+                  "entityId": "00000000-EFB6-3B21-09F4-E116043EC836"
+                },
+                {
+                  "name": "Synthetic Artist 440",
+                  "entityId": "00000000-6811-4EF9-6746-6D64817C9D68"
+                },
+                {
+                  "name": "Synthetic Artist 441",
+                  "entityId": "00000000-A51C-8AEE-2DAC-5B943F8AC541"
+                },
+                {
+                  "name": "Synthetic Artist 442",
+                  "entityId": "00000000-5795-BB1B-D0D4-86E00E582416"
+                },
+                {
+                  "name": "Synthetic Artist 443",
+                  "entityId": "00000000-0849-0ADB-3F1D-8D422CB84E78"
+                },
+                {
+                  "name": "Synthetic Artist 444",
+                  "entityId": "00000000-0282-BCA2-B243-71CE145939A5"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": 1,
+              "top": [
+                {
+                  "name": "Maná"
+                },
+                {
+                  "name": "Synthetic Artist 445"
+                },
+                {
+                  "name": "Synthetic Artist 446"
+                },
+                {
+                  "name": "Synthetic Artist 447"
+                },
+                {
+                  "name": "Synthetic Artist 448"
+                },
+                {
+                  "name": "Synthetic Artist 449"
+                },
+                {
+                  "name": "Synthetic Artist 450"
+                },
+                {
+                  "name": "Synthetic Artist 451"
+                },
+                {
+                  "name": "Synthetic Artist 452"
+                },
+                {
+                  "name": "Synthetic Artist 453"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "21-savage-toronto-drake",
+          "artist": "21 Savage",
+          "city": "Toronto",
+          "country": "Canada",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Drake",
+            "entityId": "00000000-D66A-BAAB-9F32-CBB1DA9EC6BC",
+            "resolved": true
+          },
+          "date": "2024-05-27",
+          "sources": [
+            "https://www.blogto.com/music/2024/05/21-savage-drake-concert-toronto/"
+          ],
+          "summary": "Toronto's Drake made a surprise appearance at 21 Savage's Budweiser Stage show, performing On BS and Rich Flex.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 454",
+                  "entityId": "00000000-4F7C-8784-7DC5-06CC709C944D"
+                },
+                {
+                  "name": "Synthetic Artist 455",
+                  "entityId": "00000000-B7C1-FACB-FAB8-75DEC62FF56F"
+                },
+                {
+                  "name": "Synthetic Artist 456",
+                  "entityId": "00000000-15BF-C3B6-E8C7-40BCA4DC70B0"
+                },
+                {
+                  "name": "Synthetic Artist 457",
+                  "entityId": "00000000-C8BF-DB4F-AB0D-9D573246CDB6"
+                },
+                {
+                  "name": "Synthetic Artist 458",
+                  "entityId": "00000000-4649-BDE6-5DC7-4A25174408A2"
+                },
+                {
+                  "name": "Synthetic Artist 459",
+                  "entityId": "00000000-6A2A-1ADD-78FC-672DEA664B72"
+                },
+                {
+                  "name": "Synthetic Artist 460",
+                  "entityId": "00000000-109A-2A0A-7019-4B4C2A92B381"
+                },
+                {
+                  "name": "Synthetic Artist 461",
+                  "entityId": "00000000-BCAD-3C1B-E520-47D488673932"
+                },
+                {
+                  "name": "Synthetic Artist 462",
+                  "entityId": "00000000-F7F0-7B5C-28B5-7C11CAB1B5DA"
+                },
+                {
+                  "name": "Synthetic Artist 463",
+                  "entityId": "00000000-EACC-1E5B-95E1-52048D08344F"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 464",
+                  "entityId": "00000000-F7F0-7B5C-28B5-7C11CAB1B5DA"
+                },
+                {
+                  "name": "Synthetic Artist 465",
+                  "entityId": "00000000-4649-BDE6-5DC7-4A25174408A2"
+                },
+                {
+                  "name": "Synthetic Artist 466",
+                  "entityId": "00000000-BCAD-3C1B-E520-47D488673932"
+                },
+                {
+                  "name": "Synthetic Artist 467",
+                  "entityId": "00000000-C8BF-DB4F-AB0D-9D573246CDB6"
+                },
+                {
+                  "name": "Synthetic Artist 468",
+                  "entityId": "00000000-4F7C-8784-7DC5-06CC709C944D"
+                },
+                {
+                  "name": "Synthetic Artist 469",
+                  "entityId": "00000000-6A2A-1ADD-78FC-672DEA664B72"
+                },
+                {
+                  "name": "Synthetic Artist 470",
+                  "entityId": "00000000-15BF-C3B6-E8C7-40BCA4DC70B0"
+                },
+                {
+                  "name": "Synthetic Artist 471",
+                  "entityId": "00000000-109A-2A0A-7019-4B4C2A92B381"
+                },
+                {
+                  "name": "Synthetic Artist 472",
+                  "entityId": "00000000-EACC-1E5B-95E1-52048D08344F"
+                },
+                {
+                  "name": "Synthetic Artist 473",
+                  "entityId": "00000000-B7C1-FACB-FAB8-75DEC62FF56F"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": 1,
+              "top": [
+                {
+                  "name": "Drake"
+                },
+                {
+                  "name": "Synthetic Artist 474"
+                },
+                {
+                  "name": "Synthetic Artist 475"
+                },
+                {
+                  "name": "Synthetic Artist 476"
+                },
+                {
+                  "name": "Synthetic Artist 477"
+                },
+                {
+                  "name": "Synthetic Artist 478"
+                },
+                {
+                  "name": "Synthetic Artist 479"
+                },
+                {
+                  "name": "Synthetic Artist 480"
+                },
+                {
+                  "name": "Synthetic Artist 481"
+                },
+                {
+                  "name": "Synthetic Artist 482"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "madonna-rio-de-janeiro-anitta",
+          "artist": "Madonna",
+          "city": "Rio de Janeiro",
+          "country": "Brazil",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Anitta",
+            "entityId": "00000000-67D5-64D5-51A8-C6F88B3A659F",
+            "resolved": true
+          },
+          "date": "2024-05",
+          "sources": [
+            "https://www.cnnbrasil.com.br/pop/shakira-em-copacabana-como-foram-os-ultimos-shows-do-todo-mundo-no-rio/",
+            "https://www.npr.org/2024/05/06/1249368204/madonna-rio-brazil-concert-celebration"
+          ],
+          "summary": "Brazilian singer Anitta appeared during Vogue at Madonna's free Copacabana show in Rio de Janeiro.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 483",
+                  "entityId": "00000000-A06E-8078-A888-ACD0FCE8E49C"
+                },
+                {
+                  "name": "Synthetic Artist 484",
+                  "entityId": "00000000-12D4-D64D-0C41-D21A3288C48C"
+                },
+                {
+                  "name": "Synthetic Artist 485",
+                  "entityId": "00000000-A317-3B4F-D035-B48FC828E9C6"
+                },
+                {
+                  "name": "Synthetic Artist 486",
+                  "entityId": "00000000-C918-5CAC-47CB-D2A7693DB007"
+                },
+                {
+                  "name": "Synthetic Artist 487",
+                  "entityId": "00000000-52A3-0AE1-6767-43C8429A91E2"
+                },
+                {
+                  "name": "Synthetic Artist 488",
+                  "entityId": "00000000-3317-C3AB-87A8-810981B1E6C6"
+                },
+                {
+                  "name": "Synthetic Artist 489",
+                  "entityId": "00000000-00EF-E9A0-EDB8-1C851C3783D9"
+                },
+                {
+                  "name": "Synthetic Artist 490",
+                  "entityId": "00000000-671E-445D-A121-02ED15DADB3D"
+                },
+                {
+                  "name": "Synthetic Artist 491",
+                  "entityId": "00000000-381D-A3A7-59BF-E8936692A82F"
+                },
+                {
+                  "name": "Synthetic Artist 492",
+                  "entityId": "00000000-BA57-C4B2-A4F5-240CA6CCD4B9"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 493",
+                  "entityId": "00000000-BA57-C4B2-A4F5-240CA6CCD4B9"
+                },
+                {
+                  "name": "Synthetic Artist 494",
+                  "entityId": "00000000-52A3-0AE1-6767-43C8429A91E2"
+                },
+                {
+                  "name": "Synthetic Artist 495",
+                  "entityId": "00000000-A317-3B4F-D035-B48FC828E9C6"
+                },
+                {
+                  "name": "Synthetic Artist 496",
+                  "entityId": "00000000-671E-445D-A121-02ED15DADB3D"
+                },
+                {
+                  "name": "Synthetic Artist 497",
+                  "entityId": "00000000-A06E-8078-A888-ACD0FCE8E49C"
+                },
+                {
+                  "name": "Synthetic Artist 498",
+                  "entityId": "00000000-C918-5CAC-47CB-D2A7693DB007"
+                },
+                {
+                  "name": "Synthetic Artist 499",
+                  "entityId": "00000000-00EF-E9A0-EDB8-1C851C3783D9"
+                },
+                {
+                  "name": "Synthetic Artist 500",
+                  "entityId": "00000000-12D4-D64D-0C41-D21A3288C48C"
+                },
+                {
+                  "name": "Synthetic Artist 501",
+                  "entityId": "00000000-3317-C3AB-87A8-810981B1E6C6"
+                },
+                {
+                  "name": "Synthetic Artist 502",
+                  "entityId": "00000000-381D-A3A7-59BF-E8936692A82F"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": 1,
+              "top": [
+                {
+                  "name": "Anitta"
+                },
+                {
+                  "name": "Synthetic Artist 503"
+                },
+                {
+                  "name": "Synthetic Artist 504"
+                },
+                {
+                  "name": "Synthetic Artist 505"
+                },
+                {
+                  "name": "Synthetic Artist 506"
+                },
+                {
+                  "name": "Synthetic Artist 507"
+                },
+                {
+                  "name": "Synthetic Artist 508"
+                },
+                {
+                  "name": "Synthetic Artist 509"
+                },
+                {
+                  "name": "Synthetic Artist 510"
+                },
+                {
+                  "name": "Synthetic Artist 511"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "madonna-rio-de-janeiro-pabllo-vittar",
+          "artist": "Madonna",
+          "city": "Rio de Janeiro",
+          "country": "Brazil",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Pabllo Vittar",
+            "entityId": "00000000-01CB-B293-161D-523C7D561D14",
+            "resolved": true
+          },
+          "date": "2024-05",
+          "sources": [
+            "https://www.cnnbrasil.com.br/pop/shakira-em-copacabana-como-foram-os-ultimos-shows-do-todo-mundo-no-rio/",
+            "https://www.npr.org/2024/05/06/1249368204/madonna-rio-brazil-concert-celebration"
+          ],
+          "summary": "Brazilian artist Pabllo Vittar joined Madonna for Music with samba school percussionists at the Copacabana show in Rio de Janeiro.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": 16,
+              "top": [
+                {
+                  "name": "Synthetic Artist 512",
+                  "entityId": "00000000-A06E-8078-A888-ACD0FCE8E49C"
+                },
+                {
+                  "name": "Synthetic Artist 513",
+                  "entityId": "00000000-12D4-D64D-0C41-D21A3288C48C"
+                },
+                {
+                  "name": "Synthetic Artist 514",
+                  "entityId": "00000000-A317-3B4F-D035-B48FC828E9C6"
+                },
+                {
+                  "name": "Synthetic Artist 515",
+                  "entityId": "00000000-C918-5CAC-47CB-D2A7693DB007"
+                },
+                {
+                  "name": "Synthetic Artist 516",
+                  "entityId": "00000000-52A3-0AE1-6767-43C8429A91E2"
+                },
+                {
+                  "name": "Synthetic Artist 517",
+                  "entityId": "00000000-3317-C3AB-87A8-810981B1E6C6"
+                },
+                {
+                  "name": "Synthetic Artist 518",
+                  "entityId": "00000000-00EF-E9A0-EDB8-1C851C3783D9"
+                },
+                {
+                  "name": "Synthetic Artist 519",
+                  "entityId": "00000000-671E-445D-A121-02ED15DADB3D"
+                },
+                {
+                  "name": "Synthetic Artist 520",
+                  "entityId": "00000000-381D-A3A7-59BF-E8936692A82F"
+                },
+                {
+                  "name": "Synthetic Artist 521",
+                  "entityId": "00000000-BA57-C4B2-A4F5-240CA6CCD4B9"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": 16,
+              "top": [
+                {
+                  "name": "Synthetic Artist 522",
+                  "entityId": "00000000-BA57-C4B2-A4F5-240CA6CCD4B9"
+                },
+                {
+                  "name": "Synthetic Artist 523",
+                  "entityId": "00000000-52A3-0AE1-6767-43C8429A91E2"
+                },
+                {
+                  "name": "Synthetic Artist 524",
+                  "entityId": "00000000-A317-3B4F-D035-B48FC828E9C6"
+                },
+                {
+                  "name": "Synthetic Artist 525",
+                  "entityId": "00000000-671E-445D-A121-02ED15DADB3D"
+                },
+                {
+                  "name": "Synthetic Artist 526",
+                  "entityId": "00000000-A06E-8078-A888-ACD0FCE8E49C"
+                },
+                {
+                  "name": "Synthetic Artist 527",
+                  "entityId": "00000000-C918-5CAC-47CB-D2A7693DB007"
+                },
+                {
+                  "name": "Synthetic Artist 528",
+                  "entityId": "00000000-00EF-E9A0-EDB8-1C851C3783D9"
+                },
+                {
+                  "name": "Synthetic Artist 529",
+                  "entityId": "00000000-12D4-D64D-0C41-D21A3288C48C"
+                },
+                {
+                  "name": "Synthetic Artist 530",
+                  "entityId": "00000000-3317-C3AB-87A8-810981B1E6C6"
+                },
+                {
+                  "name": "Synthetic Artist 531",
+                  "entityId": "00000000-381D-A3A7-59BF-E8936692A82F"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": 2,
+              "top": [
+                {
+                  "name": "Synthetic Artist 532"
+                },
+                {
+                  "name": "Pabllo Vittar"
+                },
+                {
+                  "name": "Synthetic Artist 533"
+                },
+                {
+                  "name": "Synthetic Artist 534"
+                },
+                {
+                  "name": "Synthetic Artist 535"
+                },
+                {
+                  "name": "Synthetic Artist 536"
+                },
+                {
+                  "name": "Synthetic Artist 537"
+                },
+                {
+                  "name": "Synthetic Artist 538"
+                },
+                {
+                  "name": "Synthetic Artist 539"
+                },
+                {
+                  "name": "Synthetic Artist 540"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "coldplay-bogota-manuel-turizo",
+          "artist": "Coldplay",
+          "city": "Bogotá",
+          "country": "Colombia",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Manuel Turizo",
+            "entityId": "00000000-3E4D-EEF3-E257-3C28DBD86E42",
+            "resolved": true
+          },
+          "date": "2022-09-17",
+          "sources": [
+            "https://remezcla.com/music/coldplay-covers-j-balvin-bad-bunny-shares-stage-with-manuel-turizo-in-bogota/"
+          ],
+          "summary": "Colombian artist Manuel Turizo joined Coldplay at El Campín in Bogotá to perform La Bachata with Chris Martin on piano.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 541",
+                  "entityId": "00000000-276E-1CF8-D127-AC136D34D00D"
+                },
+                {
+                  "name": "Synthetic Artist 542",
+                  "entityId": "00000000-FEE6-9EE3-E41F-BE9A88EEA2FB"
+                },
+                {
+                  "name": "Synthetic Artist 543",
+                  "entityId": "00000000-13F8-0F07-502E-B065F86EC745"
+                },
+                {
+                  "name": "Synthetic Artist 544",
+                  "entityId": "00000000-3B91-D245-7FB8-0A115D3B184A"
+                },
+                {
+                  "name": "Synthetic Artist 545",
+                  "entityId": "00000000-1EF0-0914-9C78-CA3A3DFD8569"
+                },
+                {
+                  "name": "Synthetic Artist 546",
+                  "entityId": "00000000-5CA8-AC85-41DF-2892B71EC9D5"
+                },
+                {
+                  "name": "Synthetic Artist 547",
+                  "entityId": "00000000-F3C2-05F1-09F2-C0317D7F045C"
+                },
+                {
+                  "name": "Synthetic Artist 548",
+                  "entityId": "00000000-CA1C-ABBF-1338-8AE21469F766"
+                },
+                {
+                  "name": "Synthetic Artist 549",
+                  "entityId": "00000000-7900-A25E-4006-03C2E99FB38E"
+                },
+                {
+                  "name": "Synthetic Artist 550",
+                  "entityId": "00000000-42D1-66E1-74F2-2433A3A84840"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 551",
+                  "entityId": "00000000-CA1C-ABBF-1338-8AE21469F766"
+                },
+                {
+                  "name": "Synthetic Artist 552",
+                  "entityId": "00000000-FEE6-9EE3-E41F-BE9A88EEA2FB"
+                },
+                {
+                  "name": "Synthetic Artist 553",
+                  "entityId": "00000000-1EF0-0914-9C78-CA3A3DFD8569"
+                },
+                {
+                  "name": "Synthetic Artist 554",
+                  "entityId": "00000000-42D1-66E1-74F2-2433A3A84840"
+                },
+                {
+                  "name": "Synthetic Artist 555",
+                  "entityId": "00000000-13F8-0F07-502E-B065F86EC745"
+                },
+                {
+                  "name": "Synthetic Artist 556",
+                  "entityId": "00000000-5CA8-AC85-41DF-2892B71EC9D5"
+                },
+                {
+                  "name": "Synthetic Artist 557",
+                  "entityId": "00000000-3B91-D245-7FB8-0A115D3B184A"
+                },
+                {
+                  "name": "Synthetic Artist 558",
+                  "entityId": "00000000-7900-A25E-4006-03C2E99FB38E"
+                },
+                {
+                  "name": "Synthetic Artist 559",
+                  "entityId": "00000000-F3C2-05F1-09F2-C0317D7F045C"
+                },
+                {
+                  "name": "Synthetic Artist 560",
+                  "entityId": "00000000-276E-1CF8-D127-AC136D34D00D"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 561"
+                },
+                {
+                  "name": "Synthetic Artist 562"
+                },
+                {
+                  "name": "Synthetic Artist 563"
+                },
+                {
+                  "name": "Synthetic Artist 564"
+                },
+                {
+                  "name": "Synthetic Artist 565"
+                },
+                {
+                  "name": "Synthetic Artist 566"
+                },
+                {
+                  "name": "Synthetic Artist 567"
+                },
+                {
+                  "name": "Synthetic Artist 568"
+                },
+                {
+                  "name": "Synthetic Artist 569"
+                },
+                {
+                  "name": "Synthetic Artist 570"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "coldplay-bogota-j-balvin",
+          "artist": "Coldplay",
+          "city": "Bogotá",
+          "country": "Colombia",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "J Balvin",
+            "entityId": "00000000-F8D4-89D6-FE39-BD536F812D81",
+            "resolved": true
+          },
+          "date": "2022-09-16",
+          "sources": [
+            "https://remezcla.com/music/coldplay-covers-j-balvin-bad-bunny-shares-stage-with-manuel-turizo-in-bogota/"
+          ],
+          "summary": "Coldplay performed a reimagined cover of La Canción, by Colombian artist J Balvin and Bad Bunny, at their Bogotá show.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 571",
+                  "entityId": "00000000-276E-1CF8-D127-AC136D34D00D"
+                },
+                {
+                  "name": "Synthetic Artist 572",
+                  "entityId": "00000000-FEE6-9EE3-E41F-BE9A88EEA2FB"
+                },
+                {
+                  "name": "Synthetic Artist 573",
+                  "entityId": "00000000-13F8-0F07-502E-B065F86EC745"
+                },
+                {
+                  "name": "Synthetic Artist 574",
+                  "entityId": "00000000-3B91-D245-7FB8-0A115D3B184A"
+                },
+                {
+                  "name": "Synthetic Artist 575",
+                  "entityId": "00000000-1EF0-0914-9C78-CA3A3DFD8569"
+                },
+                {
+                  "name": "Synthetic Artist 576",
+                  "entityId": "00000000-5CA8-AC85-41DF-2892B71EC9D5"
+                },
+                {
+                  "name": "Synthetic Artist 577",
+                  "entityId": "00000000-F3C2-05F1-09F2-C0317D7F045C"
+                },
+                {
+                  "name": "Synthetic Artist 578",
+                  "entityId": "00000000-CA1C-ABBF-1338-8AE21469F766"
+                },
+                {
+                  "name": "Synthetic Artist 579",
+                  "entityId": "00000000-7900-A25E-4006-03C2E99FB38E"
+                },
+                {
+                  "name": "Synthetic Artist 580",
+                  "entityId": "00000000-42D1-66E1-74F2-2433A3A84840"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 581",
+                  "entityId": "00000000-CA1C-ABBF-1338-8AE21469F766"
+                },
+                {
+                  "name": "Synthetic Artist 582",
+                  "entityId": "00000000-FEE6-9EE3-E41F-BE9A88EEA2FB"
+                },
+                {
+                  "name": "Synthetic Artist 583",
+                  "entityId": "00000000-1EF0-0914-9C78-CA3A3DFD8569"
+                },
+                {
+                  "name": "Synthetic Artist 584",
+                  "entityId": "00000000-42D1-66E1-74F2-2433A3A84840"
+                },
+                {
+                  "name": "Synthetic Artist 585",
+                  "entityId": "00000000-13F8-0F07-502E-B065F86EC745"
+                },
+                {
+                  "name": "Synthetic Artist 586",
+                  "entityId": "00000000-5CA8-AC85-41DF-2892B71EC9D5"
+                },
+                {
+                  "name": "Synthetic Artist 587",
+                  "entityId": "00000000-3B91-D245-7FB8-0A115D3B184A"
+                },
+                {
+                  "name": "Synthetic Artist 588",
+                  "entityId": "00000000-7900-A25E-4006-03C2E99FB38E"
+                },
+                {
+                  "name": "Synthetic Artist 589",
+                  "entityId": "00000000-F3C2-05F1-09F2-C0317D7F045C"
+                },
+                {
+                  "name": "Synthetic Artist 590",
+                  "entityId": "00000000-276E-1CF8-D127-AC136D34D00D"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 591"
+                },
+                {
+                  "name": "Synthetic Artist 592"
+                },
+                {
+                  "name": "Synthetic Artist 593"
+                },
+                {
+                  "name": "Synthetic Artist 594"
+                },
+                {
+                  "name": "Synthetic Artist 595"
+                },
+                {
+                  "name": "Synthetic Artist 596"
+                },
+                {
+                  "name": "Synthetic Artist 597"
+                },
+                {
+                  "name": "Synthetic Artist 598"
+                },
+                {
+                  "name": "Synthetic Artist 599"
+                },
+                {
+                  "name": "Synthetic Artist 600"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "coldplay-vancouver-bryan-adams",
+          "artist": "Coldplay",
+          "city": "Vancouver",
+          "country": "Canada",
+          "activationType": "local_artist",
+          "decision": "Who goes on the bill",
+          "realEntity": {
+            "name": "Bryan Adams",
+            "entityId": "00000000-C99F-2D78-C989-AFB877EF75F5",
+            "resolved": true
+          },
+          "date": "2023-09-24",
+          "sources": [
+            "https://stereogum.com/2237123/bryan-adams-her-coldplay-vancouver/news"
+          ],
+          "summary": "Canadian singer Bryan Adams joined Coldplay in Vancouver as a surprise guest to perform (Everything I Do) I Do It For You.",
+          "results": {
+            "qloo_playbook": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 601",
+                  "entityId": "00000000-42C8-8636-A88D-3FCAF08BA802"
+                },
+                {
+                  "name": "Synthetic Artist 602",
+                  "entityId": "00000000-DCF9-845B-98ED-DC65E125D134"
+                },
+                {
+                  "name": "Synthetic Artist 603",
+                  "entityId": "00000000-924F-62BA-C54E-6B9C90D959CE"
+                },
+                {
+                  "name": "Synthetic Artist 604",
+                  "entityId": "00000000-0E31-E847-2B7A-5560A66E1B4B"
+                },
+                {
+                  "name": "Synthetic Artist 605",
+                  "entityId": "00000000-4DD8-2AF6-2966-90F9C5A13E16"
+                },
+                {
+                  "name": "Synthetic Artist 606",
+                  "entityId": "00000000-5193-043B-AD73-CDE58DE597C6"
+                },
+                {
+                  "name": "Synthetic Artist 607",
+                  "entityId": "00000000-F7F0-7B5C-28B5-7C11CAB1B5DA"
+                },
+                {
+                  "name": "Synthetic Artist 608",
+                  "entityId": "00000000-A957-FADE-3CD2-198AE83B2508"
+                },
+                {
+                  "name": "Synthetic Artist 609",
+                  "entityId": "00000000-3A7E-B52C-C6BB-F2D6102187E4"
+                },
+                {
+                  "name": "Synthetic Artist 610",
+                  "entityId": "00000000-CDE6-E18F-9C23-C41A1E32EBFA"
+                }
+              ]
+            },
+            "city_popularity": {
+              "status": "ok",
+              "rank": null,
+              "top": [
+                {
+                  "name": "Synthetic Artist 611",
+                  "entityId": "00000000-A957-FADE-3CD2-198AE83B2508"
+                },
+                {
+                  "name": "Synthetic Artist 612",
+                  "entityId": "00000000-DCF9-845B-98ED-DC65E125D134"
+                },
+                {
+                  "name": "Synthetic Artist 613",
+                  "entityId": "00000000-F7F0-7B5C-28B5-7C11CAB1B5DA"
+                },
+                {
+                  "name": "Synthetic Artist 614",
+                  "entityId": "00000000-42C8-8636-A88D-3FCAF08BA802"
+                },
+                {
+                  "name": "Synthetic Artist 615",
+                  "entityId": "00000000-924F-62BA-C54E-6B9C90D959CE"
+                },
+                {
+                  "name": "Synthetic Artist 616",
+                  "entityId": "00000000-3A7E-B52C-C6BB-F2D6102187E4"
+                },
+                {
+                  "name": "Synthetic Artist 617",
+                  "entityId": "00000000-0E31-E847-2B7A-5560A66E1B4B"
+                },
+                {
+                  "name": "Synthetic Artist 618",
+                  "entityId": "00000000-CDE6-E18F-9C23-C41A1E32EBFA"
+                },
+                {
+                  "name": "Synthetic Artist 619",
+                  "entityId": "00000000-5193-043B-AD73-CDE58DE597C6"
+                },
+                {
+                  "name": "Synthetic Artist 620",
+                  "entityId": "00000000-4DD8-2AF6-2966-90F9C5A13E16"
+                }
+              ]
+            },
+            "llm_only": {
+              "status": "ok",
+              "rank": 1,
+              "top": [
+                {
+                  "name": "Bryan Adams"
+                },
+                {
+                  "name": "Synthetic Artist 621"
+                },
+                {
+                  "name": "Synthetic Artist 622"
+                },
+                {
+                  "name": "Synthetic Artist 623"
+                },
+                {
+                  "name": "Synthetic Artist 624"
+                },
+                {
+                  "name": "Synthetic Artist 625"
+                },
+                {
+                  "name": "Synthetic Artist 626"
+                },
+                {
+                  "name": "Synthetic Artist 627"
+                },
+                {
+                  "name": "Synthetic Artist 628"
+                },
+                {
+                  "name": "Synthetic Artist 629"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "summary": {
+        "qloo_playbook": {
+          "scored": 13,
+          "hit10": 1,
+          "hit20": 2
+        },
+        "city_popularity": {
+          "scored": 13,
+          "hit10": 1,
+          "hit20": 2
+        },
+        "llm_only": {
+          "scored": 13,
+          "hit10": 7,
+          "hit20": 7
+        }
+      },
+      "lost": [
+        "coldplay-rio-de-janeiro-milton-nascimento",
+        "dua-lipa-sao-paulo-caetano-veloso",
+        "hayley-williams-dublin-sinead-oconnor",
+        "coldplay-guadalajara-mana",
+        "21-savage-toronto-drake",
+        "madonna-rio-de-janeiro-anitta",
+        "madonna-rio-de-janeiro-pabllo-vittar",
+        "coldplay-vancouver-bryan-adams"
+      ]
+    }
+  ],
+  "proofV3": {
+    "protocolCommit": "cccccccccccccccccccccccccccccccccccccccc",
+    "generatedAt": "2026-10-28T00:00:00.000Z",
+    "amendments": [
+      {
+        "n": 1,
+        "commit": "1111111",
+        "summary": "The first eligible list had two design flaws."
+      },
+      {
+        "n": 2,
+        "commit": "2222222",
+        "summary": "The candidate rule leaked who played into who was added."
+      }
+    ],
+    "tests": [
+      {
+        "id": "A",
+        "title": "Test A: choosing the cities a tour played",
+        "question": "Does winnability pick the cities a tour actually played better than fan heat alone, a generic LLM, or population?",
+        "status": "Complete: 3 of a planned 4 artists scored",
+        "n": 3,
+        "tables": [
+          {
+            "columns": [
+              "Arm",
+              "Mean R-precision",
+              "Artists answered"
+            ],
+            "rows": [
+              [
+                "Winnability",
+                "0.50",
+                "3"
+              ],
+              [
+                "Fan heat",
+                "0.58",
+                "3"
+              ],
+              [
+                "The generic LLM",
+                "0.75",
+                "3"
+              ],
+              [
+                "Population",
+                "0.67",
+                "3"
+              ],
+              [
+                "Chance level",
+                "0.40",
+                "-"
+              ]
+            ]
+          }
+        ],
+        "signTests": [
+          {
+            "label": "Winnability vs fan heat",
+            "wins": 0,
+            "losses": 2,
+            "ties": 1,
+            "pairs": 3,
+            "p": 0.5
+          },
+          {
+            "label": "Winnability vs the generic LLM",
+            "wins": 0,
+            "losses": 3,
+            "ties": 0,
+            "pairs": 3,
+            "p": 0.25
+          }
+        ],
+        "claims": [
+          "Test A (city ranking) covers 3 of a planned 4 artists.",
+          "Mean R-precision: winnability 0.50, fan heat 0.58, the generic LLM 0.75, population 0.67; mean chance level 0.40.",
+          "Not significant at this sample size: winnability trails fan heat on mean R-precision (0.50 vs 0.58; p=0.500; 0 wins, 2 losses, 1 tie over 3 artists).",
+          "Not significant at this sample size: winnability trails the generic LLM on mean R-precision (0.50 vs 0.75; p=0.250; 0 wins, 3 losses over 3 artists).",
+          "The generic LLM beat winnability for Synthetic Quartet."
+        ],
+        "limits": [
+          "Data timing: the taste data is current, not as of the tour date.",
+          "Sample size: a few artists is a small sample, so the sign test has low power."
+        ],
+        "runs": [
+          {
+            "label": "Batch 1",
+            "commit": "aaaaaaa",
+            "status": "complete",
+            "note": "2 artists scored"
+          },
+          {
+            "label": "Batch 2",
+            "commit": "bbbbbbb",
+            "status": "stopped",
+            "note": "1 artist scored; stopped: HTTP 429"
+          }
+        ],
+        "perUnit": {
+          "columns": [
+            "Artist",
+            "Winnability",
+            "Fan heat",
+            "The generic LLM",
+            "Population",
+            "Chance"
+          ],
+          "rows": [
+            [
+              "Synthetic Quartet",
+              "0.50",
+              "0.75",
+              "1.00",
+              "0.75",
+              "0.40"
+            ],
+            [
+              "The Extraordinarily Long Invented Ensemble Name Featuring Many Words",
+              "0.50",
+              "0.50",
+              "0.50",
+              "0.50",
+              "0.40"
+            ],
+            [
+              "Placeholder Pop",
+              "0.50",
+              "0.50",
+              "no answer",
+              "0.75",
+              "0.40"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "B",
+        "title": "Test B: picking the real activation among 10 candidates",
+        "question": "For the reviewed activation cases, does Qloo rank place the real pick higher among 10 candidates than Gemini or popularity?",
+        "status": "Complete: 3 of 4 cases scored. An earlier run stopped on an infrastructure failure and is kept below.",
+        "n": 3,
+        "tables": [
+          {
+            "columns": [
+              "Arm",
+              "Mean reciprocal rank",
+              "Cases answered"
+            ],
+            "rows": [
+              [
+                "Qloo rank",
+                "0.61",
+                "3"
+              ],
+              [
+                "Gemini",
+                "0.67",
+                "3"
+              ],
+              [
+                "Popularity",
+                "0.14",
+                "3"
+              ],
+              [
+                "Chance level",
+                "0.29",
+                "-"
+              ]
+            ]
+          }
+        ],
+        "signTests": [
+          {
+            "label": "Qloo rank vs Gemini",
+            "wins": 0,
+            "losses": 1,
+            "ties": 2,
+            "pairs": 3,
+            "p": 1
+          },
+          {
+            "label": "Qloo rank vs popularity",
+            "wins": 3,
+            "losses": 0,
+            "ties": 0,
+            "pairs": 3,
+            "p": 0.25
+          }
+        ],
+        "claims": [
+          "Test B (fixed candidates) covers 3 of 4 cases.",
+          "Not significant at this sample size: Qloo rank trails Gemini on mean reciprocal rank (0.61 vs 0.67; p=1.000; 0 wins, 1 loss, 2 ties over 3 cases).",
+          "Not significant at this sample size: Qloo rank leads popularity on mean reciprocal rank (0.61 vs 0.14; p=0.250; 3 wins, 0 losses over 3 cases).",
+          "Gemini beat Qloo rank for synth-b."
+        ],
+        "limits": [
+          "Each case has the real pick plus 9 decoys from the city's popularity list."
+        ],
+        "runs": [
+          {
+            "label": "Run 1 (stopped, infrastructure)",
+            "commit": "aaaaaaa",
+            "status": "stopped",
+            "note": "1 case scored of 4; stop rule"
+          },
+          {
+            "label": "Run 2",
+            "commit": "bbbbbbb",
+            "status": "complete",
+            "note": "3 cases scored of 4"
+          }
+        ],
+        "perUnit": {
+          "columns": [
+            "Case",
+            "Qloo rank",
+            "Gemini",
+            "Popularity"
+          ],
+          "rows": [
+            [
+              "synth-a",
+              "#1",
+              "#2",
+              "#9"
+            ],
+            [
+              "synth-b",
+              "#2",
+              "#1",
+              "#8"
+            ],
+            [
+              "synth-c",
+              "#1",
+              "#1",
+              "#10"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "catch",
+        "title": "Claim checker: does it remove planted false claims?",
+        "question": "When a number or a name in a playbook claim is changed to a wrong one, does the claim checker remove the claim?",
+        "status": "Complete: 10 false claims planted among 30",
+        "n": 10,
+        "tables": [
+          {
+            "columns": [
+              "Planted as",
+              "Caught"
+            ],
+            "rows": [
+              [
+                "A plausible wrong number",
+                "5 of 5"
+              ],
+              [
+                "A number found nowhere in the evidence",
+                "4 of 4"
+              ],
+              [
+                "A name swapped in from another card",
+                "1 of 1"
+              ],
+              [
+                "All planted claims",
+                "10 of 10"
+              ]
+            ]
+          }
+        ],
+        "signTests": [],
+        "claims": [
+          "The claim checker removed 10 of 10 planted false claims (catch rate 1.00)."
+        ],
+        "limits": [
+          "False alarms (0 of 20) are not a finding: true claims were drawn from claims the verifier already accepted."
+        ],
+        "perUnit": null
+      },
+      {
+        "id": "C",
+        "title": "Test C: do the names exist in the city?",
+        "question": "Do the venues, sponsor brands and local acts a playbook names really exist in the city? Qloo's playbook as shipped against an LLM-only playbook, for Synthetic Quartet.",
+        "status": "Complete: 2 cities rated",
+        "n": 2,
+        "tables": [
+          {
+            "columns": [
+              "Playbook",
+              "Venues",
+              "Brands",
+              "Local acts",
+              "Overall",
+              "Can't tell"
+            ],
+            "rows": [
+              [
+                "Qloo playbook",
+                "5 of 6 (0.83)",
+                "5 of 6 (0.83)",
+                "5 of 6 (0.83)",
+                "15 of 18 (0.83)",
+                "1"
+              ],
+              [
+                "LLM-only",
+                "4 of 6 (0.67)",
+                "4 of 6 (0.67)",
+                "4 of 6 (0.67)",
+                "12 of 18 (0.67)",
+                "1"
+              ]
+            ]
+          }
+        ],
+        "signTests": [
+          {
+            "label": "Qloo vs LLM-only (per city)",
+            "wins": 2,
+            "losses": 0,
+            "ties": 0,
+            "pairs": 2,
+            "p": 0.5
+          }
+        ],
+        "claims": [
+          "Test C (grounding) covers 2 cities for Synthetic Quartet: 36 of 40 names rated, 0 unrated, 4 marked can't tell.",
+          "Not significant at this sample size: Qloo leads the LLM-only playbook on mean share in city (0.85 vs 0.65; p=0.500; 2 wins, 0 losses over 2 cities)."
+        ],
+        "limits": [
+          "Disclosure: the reviewer had seen the shipped showcase playbooks for these cities."
+        ],
+        "perUnit": {
+          "columns": [
+            "City",
+            "Qloo",
+            "LLM-only"
+          ],
+          "rows": [
+            [
+              "Testville",
+              "0.80",
+              "0.60"
+            ],
+            [
+              "Mocktown",
+              "0.90",
+              "0.70"
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}
