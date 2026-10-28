@@ -30,7 +30,7 @@ The product is judged as a product, not a SaaS business (Devpost "Design": "a co
 - **Why it's credible:** `/proof` checks the approach against activations real tours actually ran and publishes what it found, including where Qloo lost to a general-purpose LLM (see §3 ⑤).
 
 **Story rules (acceptance criteria):**
-1. Every example in the story comes from data the product actually shows: the committed showcase (`dashboard/src/lib/qloo/fixtures/showcase.json`, currently Natalia Lafourcade across Mexico, Brazil and the United States: Ciudad Juarez is the Hidden goldmine; El Paso, San Diego and Reynosa are Play) or the committed backtest results JSON. If the showcase is re-recorded, the copy is regenerated from it, never hand-edited to stale numbers.
+1. Every example in the story comes from data the product actually shows: the loaded showcase recording (private storage, served by the BFF; a synthetic fixture in tests) or the published backtest results (`private-data/backtest.json`, key `proofV3` for Proof v3). If the showcase is re-recorded, the copy is regenerated from it, never hand-edited to stale numbers.
 2. No invented customers, testimonials, quotes, revenue or dollar figures, and no "trusted by" claims. Money is described by the decision it informs ("which sponsor to pitch"), not by made-up amounts.
 3. Promoter language, not product language: holds, avails, market heat, routing, the bill, advance. Never "AI-powered insights".
 4. Shared taste is never called "audience overlap" or shown as a percent (see §5.4).
@@ -134,6 +134,7 @@ Competitors "prove" Qloo by scoring tours against Qloo's own heatmap (circular).
   Run 1 asked Qloo for artists the headliner's fans like in that city, which returns global taste neighbours. Run 2 ranked the city's own popular artists with `qloo_rank` by taste fit and was judged on fresh cases reviewed after the method was fixed (never tuned on the cases it is scored against, §12 #9). **The playbook did not beat either baseline, and the generic LLM did better for local acts.** Naming the specific famous local guest or sponsor a real tour used is a world-knowledge question; Qloo's city recommendations reflect what over-indexes with an audience in a city, not who is most famous there. Both runs are published on `/proof`.
 - **Product change (untested):** the City Playbook's local-act card is now a hybrid. Gemini proposes up to 10 local candidates, Qloo verifies each name (`qloo_describe` plus an exact normalised-name match; unresolved names are dropped and counted, so Gemini output is shown only if it resolved to a Qloo entity) and ranks them by taste fit (`qloo_rank`). This hybrid has not been tested on new cases and no claim is made about it. Brand and merch cards are unchanged.
 - **Implemented in Plan 5 (2026-10-17).**
+- **Superseded in framing by Proof v3 (Plan 7, 2026-10-24 to 28):** `docs/qloo/proof-v3-protocol.md` (6 amendments) pre-registers a city-ranking test (Test A), a fixed-candidate rank test (Test B), a claim-checker catch rate and a grounding test (Test C). Published results: the claim checker removed 10 of 10 planted false claims; Test B, Qloo rank beat popularity (p<0.001, MRR 0.47 vs 0.13) and trails Gemini without significance (0.47 vs 0.57, p=0.118); Test A, the generic LLM beat winnability (p=0.031, R-precision 0.82 vs 0.66), so the product no longer claims winnability picks better cities (ADR 0002).
 
 ---
 
@@ -273,6 +274,7 @@ agent_mcp_server (existing; + taste tools, + public demo endpoint)
 All payloads carry `provenance` (Qloo requests), `status`, and `warnings`.
 
 ### 6.3 Decisions
+- Decisions are recorded as ADRs in `docs/adr/` (0001 Qloo through the harness gateway, 0002 winning a city not choosing it, 0003 recordings private and synthetic tests). The README is in Devpost kit order.
 - New private repo `prats-2311/tour-intelligence-qloo` (history preserved from `google_promotions`); **made public with MIT licence before submission**.
 - New BigQuery dataset `tour_intelligence_qloo` seeded from the same seed files; new Cloud Run service names; the original Google submission's services, data and URLs are untouched.
 - Node for the gateway (harness + MCP SDK are Node). Gemini (Vertex) for the strategist (already provisioned).
@@ -415,6 +417,7 @@ Raw Qloo tools are never exposed publicly (key-sharing and quota rules in the Ql
 | Claim verification (§5.6) | Fabricated entity, altered number, dangling ref, valid claim; all-removed card fallback; audit list contents |
 | Backtest (§3 ⑤) | Hit@10/hit@20 logic on fixtures; unresolved-artist and unavailable-method handling ("no answer", excluded from denominators); baselines use identical cases and cut-off; results JSON schema; `/proof` renders from JSON with no live calls |
 | Calibration (§5.2–5.3) | Floors, vs-uniform concentration, quantile thresholds, thin data, close-call flag; `scoreCity` reproduces recorded scores under the default config (trimmed fixture recordings in `test/fixtures/calibration/`); `deriveCalibration` over those 4 recordings reproduces the committed `SCORING` exactly |
+| Data hygiene | No Qloo response data tracked (`scripts/check-public-data.sh` in CI and in the public-clone gate); recordings served from private storage and tests on synthetic fixtures (`00000000-` ids) (ADR 0003); the README's proof numbers equal the published `proofV3` claims (`scripts/readme-numbers.mjs`) |
 | UI | vitest for logic (geo conversion, score formatting, state); **Playwright judge path at 375 px and 1280 px**; no horizontal scroll at 360 px |
 
 `./run_tests.sh` (existing 413 + new) must be green for every merge. `graft check` runs inside it.
@@ -496,3 +499,8 @@ Not used: `gpt-tasteskill` (scroll-GSAP marketing pages), `minimalist-skill` (co
 - README: problem, Qloo tools and why, request→result walkthrough with entity/tag choices, setup from clean env, limitations, provenance, data handling.
 - MCP demo endpoint documented; showcase pre-warmed; no credentials in repo or screenshots.
 - Promoter story (§1.2b) consistent across Landing, judge path, Tour Book, `/proof`, README and Devpost text; every story number traceable to the committed showcase or backtest JSON.
+
+---
+
+## Plan 7 note (judge round, 2026-10-24)
+The story changed after Proof v3 Test A (ADR 0002): the product leads with winning each city, not choosing cities; the tagline is "Route with anything. Win every city with this."; "where fan heat and winnability disagree" is "worth a second look", never a ranking claim; no "Hidden goldmine" promise. A "who pays and why" line (promoters and agencies pay per tour; the return comes from sponsor deals and a better-sold room) carries no invented numbers. The problem section of the README uses only confirmed, linked industry facts. Plan 7 features: the four-step journey, "Try a routing", "Ask about this tour", Proof v3 on `/proof`. Where this note differs from §1.2b or §3 ⑤, this note wins.

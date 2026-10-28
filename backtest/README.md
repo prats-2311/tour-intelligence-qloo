@@ -26,4 +26,22 @@ Limitations: Qloo's graph (and the LLM's training data) may already reflect thes
 
 Case selection: run 1 had 26 candidates and 14 were accepted, after a controller pre-filter (weak source, future date, not city-specific, not local) and Prateek's review; run 2 had 16 candidates and 13 were accepted. `candidates.json` and `candidates-run2.json` keep the rejected candidates with their rejection notes.
 
-Re-run: see "Run the backtest" in the root README.
+## Results are private
+
+Every results file (`results*.json`, Proof v3 outputs) holds Qloo response data and is kept under `private-data/` (git-ignored; Qloo's terms forbid storing responses in a public repo). The `results*.json` files named above are the originals from the private location; the public clone drops them. The app serves the published aggregate at `/proof` through the recordings endpoint (`GET /api/recordings/backtest`). Inputs that are public Wikipedia data stay here: `candidates*.json`, `cases*.json`, and `city/` (Test A artists and ground truth).
+
+## Proof v3 (current)
+
+The binding protocol is [`docs/qloo/proof-v3-protocol.md`](../docs/qloo/proof-v3-protocol.md), with 6 amendments, each committed before the call it affected. Tests: A (city ranking over `city/artists.json` and `city/cases.json`), B (fixed candidates over the 27 reviewed cases in `cases.json` and `cases-run2.json`), the claim-checker catch rate, and C (grounding). Published numbers are in the root [README](../README.md) and at `/proof`; `node scripts/readme-numbers.mjs` prints them from `private-data/backtest.json` (key `proofV3`). The earlier run 1 and run 2 above remain published under "Earlier runs" on `/proof`.
+
+Regenerate (spends real Qloo and Gemini quota; needs `QLOO_GATEWAY_URL` and a `gcloud` login; every run writes only under `private-data/backtest/`). From `cloud_run/qloo_gateway` after `npm run build`:
+
+```bash
+node dist/backtest/cityRankCli.js --batch 1        # Test A, then --batch 2 (add --dry-run to print the budget and make no calls)
+node dist/backtest/fixedRankCli.js                 # Test B
+node dist/backtest/catchRateCli.js ../../private-data/showcase.json   # claim-checker catch rate (no network)
+node dist/backtest/groundingCli.js --dry-run       # Test C
+node dist/backtest/proofPublishCli.js              # merge into private-data/backtest.json (key proofV3)
+```
+
+Runs stop at once on any rate-limit signal (the stop rule in the protocol); a stopped run is published as stopped, never re-run to improve a number. The earlier runs: `node dist/backtest/cli.js --cases ../../backtest/cases.json --run run1` (and `cases-run2.json` with `--run run2`).
