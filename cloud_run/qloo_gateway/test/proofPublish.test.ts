@@ -176,6 +176,9 @@ describe("proofPublishCli main", () => {
     const out = JSON.parse(readFileSync(join(dir, "backtest.json"), "utf8"));
     expect(out.proofV3.tests.map((t: { id: string }) => t.id)).toContain("C");
   });
+  it("the default arguments (the real private-data/) are accepted", () => {
+    expect(publishCli.parseArgs([]).dir).toBe(join(REPO_ROOT, "private-data"));
+  });
   it("refuses an output path inside the repo but outside private-data/", async () => {
     const { dir } = mk();
     expect(() => publishCli.parseArgs(["--dir", dir, "--out", join(REPO_ROOT, "dashboard/backtest.json")])).toThrow(/private-data/);

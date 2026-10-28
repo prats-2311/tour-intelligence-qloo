@@ -13,7 +13,8 @@ import type { ProofV3Results } from "./proofResults.js";
  */
 export function parseArgs(argv: string[]): { dir: string; out: string } {
   const get = (f: string) => { const i = argv.indexOf(f); return i === -1 ? undefined : argv[i + 1]; };
-  const dir = privateOut(get("--dir") ?? resolve(REPO_ROOT, "private-data"));
+  const dir = resolve(get("--dir") ?? resolve(REPO_ROOT, "private-data"));
+  privateOut(resolve(dir, "backtest.json")); // the directory itself must be private-data/ or below (or outside the repo)
   return { dir, out: privateOut(get("--out") ?? resolve(dir, "backtest.json")) };
 }
 
