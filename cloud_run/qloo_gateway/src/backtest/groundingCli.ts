@@ -72,7 +72,7 @@ export async function mainWith(args: GroundingArgs, io: CliIo): Promise<number> 
       ? `The recorded board differs from the protocol's expected ${EXPECTED_CITIES.length} cities. Missing from the recording: ${sel.difference.missing.join(", ") || "none"}. Extra in the recording: ${sel.difference.extra.join(", ") || "none"}. The recorded board wins.`
       : `The recorded board matches the protocol's expected ${EXPECTED_CITIES.length} cities.`);
     io.log("Stop at once on: a Qloo 429, any quota/rate-limit/limit text, a stale answer, or a Qloo error rate above 10% over the last 20 Qloo calls (evaluated once 10 are seen; Gemini errors are not in that rate). A city whose playbook is LOCATION_UNRESOLVED or errors is excluded and listed.");
-    io.log(`Expected: ~${sel.cities.length * QLOO_PER_CITY_TYPICAL} Qloo calls (the run stops at ${QLOO_CEILING} real Qloo calls; protocol estimate 60-110), ~${sel.cities.length * 2} Gemini calls (protocol estimate 10-30).`);
+    io.log(`Expected: ~${sel.cities.length * QLOO_PER_CITY_TYPICAL} Qloo calls (the run stops at ${QLOO_CEILING} gateway calls, cached included; protocol estimate 60-110 real calls; real playbooks cost about 25 gateway calls each), ~${sel.cities.length * 2} Gemini calls (protocol estimate 10-30).`);
     io.log(`Would write: ${paths.items}, ${paths.key}, ${paths.sheet}, ${paths.csv}`);
     return 0;
   }

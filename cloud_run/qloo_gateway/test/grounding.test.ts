@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  askLlm, buildRows, CAPS, EXPECTED_CITIES, extractQlooItems, llmPrompt, runGrounding, selectCities, LLM_SCHEMA,
+  askLlm, buildRows, CAPS, QLOO_CEILING, EXPECTED_CITIES, extractQlooItems, llmPrompt, runGrounding, selectCities, LLM_SCHEMA,
   type GroundCity, type GroundDeps,
 } from "../src/backtest/grounding.js";
 import * as cli from "../src/backtest/groundingCli.js";
@@ -238,6 +238,8 @@ describe("Test C CLI", () => {
     expect(text).toMatch(/proof-v3-ground-100|proof-v3-ground-1\d\d/);
     expect(text).toMatch(/differ/i);
     expect(text).toMatch(/Qloo calls/);
+    expect(QLOO_CEILING).toBe(260);
+    expect(text).toMatch(/stops at 260 gateway calls/);
   });
   it("the recorded showcase yields the expected nine when present (skipped when absent)", () => {
     const p = resolve(REPO_ROOT, "private-data/showcase.json");

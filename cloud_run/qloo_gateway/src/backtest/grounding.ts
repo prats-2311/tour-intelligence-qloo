@@ -192,11 +192,12 @@ export interface GroundDeps {
   sleep?: (ms: number) => Promise<void>;
   /** The playbook pipeline; real by default, replaceable in tests. */
   playbook?: typeof runCityPlaybook;
-  /** Real Qloo calls allowed for the whole run (default 198, the protocol budget ceiling); reaching it stops the run. */
+  /** Gateway calls allowed for the whole run (default QLOO_CEILING); reaching it stops the run. */
   qlooCeiling?: number;
 }
 
-export const QLOO_CEILING = 198;
+/** Amendment 6: a run budget of 260 gateway calls. It counts every call, cached answers included; it is not the protocol's estimate (about 60-110 real calls). */
+export const QLOO_CEILING = 260;
 export interface GroundRun {
   items: GroundItem[]; cityStatus: CityStatus[];
   excluded: Array<{ cityId: string; city: string; reason: string; code: string }>;
