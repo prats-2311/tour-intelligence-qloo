@@ -219,3 +219,12 @@ Test B is re-run from the start under this amendment. Test A batch 1 had no stop
 **Secondary analysis (pre-registered, same ratings, no new rows):** truncate each arm per city and category to the smaller of the two arms' counts, using the recorded ranks, then recompute the shares and the paired sign test. The primary result stays as defined in Amendment 4.
 
 **Method note** (published with the results): the Qloo arm runs the City Playbook with narrative off. This matches the shipped hybrid local-acts path but not the narrative text, which plays no part in Test C.
+
+## Amendment 6: Test C run ceiling (2026-10-28, budget only, before any rating)
+**What happened:** Test C's first run stopped at the runner's 198-call ceiling after 8 of 9 cities, with 0 Qloo errors and 0 Gemini errors. That ceiling was added in a code review as 9 × 22. It counts every gateway call, cached answers included. The pre-registered budget was an estimate (Amendment 4: about 60–110 real calls), not a stop rule. Real playbooks cost about 25 gateway calls each.
+
+**Change:**
+- The run ceiling becomes 260 gateway calls.
+- Test C is re-run from the start. The stopped run is kept (`proof-v3-ground-items.stopped-*.json`) and reported.
+- The re-run regenerates the LLM-only lists, at temperature 0.2. No rating existed when this was decided, so no outcome was known.
+- All other rules are unchanged.
