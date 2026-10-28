@@ -78,8 +78,9 @@ describe("buildProofV3: Test A combined over both batches", () => {
     expect(a.claims.join("\n")).not.toMatch(/Winnability beat (fan heat|the generic LLM)/);
     expect(a.claims[0]).toMatch(/covers 10 of a planned 12 artists/);
   });
-  it("limits hold the fixed disclosures, not the claims", () => {
-    expect(a.limits.join("\n")).toMatch(/Sample size/);
+  it("limits hold the fixed disclosures, not the claims; the sample-size line states the actual coverage", () => {
+    expect(a.limits).toContain("Sample size: 10 of a planned 12 artists completed (1 dropped by rule), a small sample, so the sign test has low power.");
+    expect(a.limits.join("\n")).not.toMatch(/12 artists \(or 6\)/);
     expect(a.claims.join("\n")).not.toMatch(/Sample size/);
   });
   it("lists every artist with all four R-precisions and the chance level, and keeps drops", () => {
@@ -114,6 +115,9 @@ describe("buildProofV3: the other tests", () => {
     expect(b.runs![0]).toMatchObject({ status: "stopped" });
     expect(b.signTests.map((s) => s.label)).toEqual(["Qloo rank vs Gemini", "Qloo rank vs popularity"]);
   });
+  it("Test B's sample-size line states the actual count", () => {
+    expect(test(p, "B").limits).toContain("Sample size: 3 of 4 cases scored, a small sample.");
+  });
   it("catch rate: counts per plant type", () => {
     const c = test(p, "catch");
     expect(c.tables[0]!.rows.map((r) => r.join("|"))).toContain("A plausible wrong number|5 of 5");
@@ -129,6 +133,13 @@ describe("buildProofV3: the other tests", () => {
     expect(c.perUnit!.columns).toEqual(["City", "Qloo", "LLM-only"]);
     expect(c.claims.join("\n")).toMatch(/Share of Qloo names rated as existing in the city/);
     expect(c.limits.join("\n")).toMatch(/Disclosure/);
+  });
+  it("Test C's limits carry the stopped-run disclosure (from the stopped items file) and the reviewer's prior exposure", () => {
+    const stopped = { callCounts: { qloo: 198, gemini: 16, qlooErrors: 0, geminiErrors: 0 }, stop: { status: "stopped" as const, reason: "Qloo call ceiling of 198 reached" }, cities: new Array(9).fill({}), notRun: [{}] };
+    const c = test(buildProofV3(inputs({ grounding: groundRun, groundingStopped: [stopped] })), "C");
+    expect(c.limits).toContain("Run 1 stopped at the runner's 198-call ceiling after 8 of 9 cities (0 errors); per Amendment 6 the ceiling was raised and Test C re-run from the start before any rating.");
+    expect(c.limits).toContain("The reviewer had seen the shipped showcase playbooks (Amendment 5).");
+    expect(test(buildProofV3(inputs({ grounding: groundRun })), "C").limits.join("\n")).not.toMatch(/Run 1 stopped/);
   });
   it("adds amendments and the protocol commit", () => {
     expect(p.protocolCommit).toBe("ccccccc");

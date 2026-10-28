@@ -25,7 +25,12 @@ export interface PublishInputs {
   /** Test A batches, in order. */
   batches: ProofV3Results[];
   fixed?: ProofV3Results; /** Earlier stopped runs of Test B, oldest first. */ fixedStopped?: ProofV3Results[];
-  catchRate?: ProofV3Results; grounding?: ProofV3Results; now: Date;
+  catchRate?: ProofV3Results; grounding?: ProofV3Results; /** Test C's stopped runs (the `proof-v3-ground-items.stopped-N.json` files), oldest first. */ groundingStopped?: StoppedGroundRun[]; now: Date;
+}
+/** The few facts read from a stopped Test C items file; its names stay private. */
+export interface StoppedGroundRun {
+  callCounts: { qloo: number; gemini: number; qlooErrors: number; geminiErrors: number };
+  stop: { status: string; reason?: string }; cities: unknown[]; notRun: unknown[];
 }
 
 const f2 = (v: number | null): string => (v === null ? "n/a" : v.toFixed(2));
@@ -65,7 +70,10 @@ function testA(batches: ProofV3Results[]): ProofV3Test {
       sign("Winnability vs fan heat", s.signTests.vs_fan_heat), sign("Winnability vs the generic LLM", s.signTests.vs_llm),
       sign("Winnability vs population (secondary)", s.signTests.vs_population), sign("Winnability vs fan heat, board cities only (secondary)", s.boardOnly.signTest),
     ],
-    claims: lines.filter((l) => !DISCLOSURES.includes(l)), limits: [...DISCLOSURES],
+    claims: lines.filter((l) => !DISCLOSURES.includes(l)),
+    limits: DISCLOSURES.map((l) => (l.startsWith("Sample size:")
+      ? `Sample size: ${section.artists.length} of a planned ${section.plannedTotal} artists completed${section.dropped.length + section.notRun.length ? ` (${section.dropped.length + section.notRun.length} dropped by rule)` : ""}, a small sample, so the sign test has low power.`
+      : l)),
     runs: batches.map((b, i) => {
       const c = b.cityRank;
       return { label: `Batch ${c?.batch ?? i + 1}`, commit: b.protocol.commit, status: b.stop.status === "stopped" ? "stopped" as const : "complete" as const,
@@ -99,7 +107,7 @@ function testB(fixed: ProofV3Results, earlier: ProofV3Results[]): ProofV3Test {
     limits: [
       "Each case has the real pick plus 9 decoys from the city's popularity list, so the test asks whether a method puts the real pick first among plausible options.",
       "Data timing: Qloo's taste data is current, not as of the activation date; Gemini's training data may include the activation.",
-      `Sample size: ${plural(f.cases.length, "case")} is a small sample.`,
+      `Sample size: ${f.cases.length} of ${f.plannedCases} cases scored, a small sample.`,
       ...(f.excluded.length ? [`${plural(f.excluded.length, "case")} excluded: ${f.excluded.map((e) => `${e.id} (${e.reason})`).join("; ")}.`] : []),
     ],
     runs,
@@ -127,7 +135,17 @@ function testCatch(run: ProofV3Results): ProofV3Test {
 const CAT_LABEL = { venue: "Venues", brand: "Brands", local_act: "Local acts" } as const;
 const ARM_NAME = { qloo: "Qloo playbook", llm: "LLM-only" } as const;
 
-function testC(run: ProofV3Results): ProofV3Test {
+function groundRunLines(stopped: StoppedGroundRun[]): string[] {
+  return stopped.map((r, i) => {
+    const total = r.cities.length, done = total - r.notRun.length, errors = r.callCounts.qlooErrors + r.callCounts.geminiErrors;
+    const ceiling = /ceiling of (\d+)/.exec(r.stop.reason ?? "")?.[1];
+    return ceiling
+      ? `Run ${i + 1} stopped at the runner's ${ceiling}-call ceiling after ${done} of ${total} cities (${plural(errors, "error")}); per Amendment 6 the ceiling was raised and Test C re-run from the start before any rating.`
+      : `Run ${i + 1} stopped (${stopCode(r.stop.reason)}) after ${done} of ${total} cities (${plural(errors, "error")}) and Test C was re-run from the start before any rating.`;
+  });
+}
+
+function testC(run: ProofV3Results, stopped: StoppedGroundRun[]): ProofV3Test {
   const g: GroundingSection = run.grounding!;
   const cell = (r: { inCity: number; rated: number; share: number | null }) => `${r.inCity} of ${r.rated} (${f2(r.share)})`;
   return {
@@ -137,7 +155,7 @@ function testC(run: ProofV3Results): ProofV3Test {
     tables: [{ columns: ["Playbook", ...GROUND_CATEGORIES.map((c) => CAT_LABEL[c]), "Overall", "Can't tell"],
       rows: GROUND_ARMS.map((a) => [ARM_NAME[a], ...GROUND_CATEGORIES.map((c) => cell(g.byArm[a].byCategory[c])), cell(g.byArm[a].overall), String(g.byArm[a].overall.cantTell)]) }],
     signTests: [sign("Qloo vs LLM-only (per city)", g.signTest), sign("Qloo vs LLM-only, equal counts (secondary)", g.secondary.signTest)],
-    ...splitLines(summarise({ ...run, cityRank: undefined, fixedRank: undefined, catchRate: undefined })),
+    ...(() => { const sp = splitLines(summarise({ ...run, cityRank: undefined, fixedRank: undefined, catchRate: undefined })); return { claims: sp.claims, limits: [...groundRunLines(stopped), ...sp.limits, "The reviewer had seen the shipped showcase playbooks (Amendment 5)."] }; })(),
     // Aggregates only: shares per city, no venue, brand or act names.
     perUnit: { columns: ["City", "Qloo", "LLM-only"], rows: g.perCity.map((c) => [c.city, f2(c.qloo), f2(c.llm)]) },
   };
@@ -148,7 +166,7 @@ export function buildProofV3(i: PublishInputs): ProofV3Published {
   if (i.batches.length) tests.push(testA(i.batches));
   if (i.fixed?.fixedRank) tests.push(testB(i.fixed, i.fixedStopped ?? []));
   if (i.catchRate?.catchRate) tests.push(testCatch(i.catchRate));
-  if (i.grounding?.grounding) tests.push(testC(i.grounding));
+  if (i.grounding?.grounding) tests.push(testC(i.grounding, i.groundingStopped ?? []));
   return { protocolCommit: i.protocolCommit, generatedAt: i.now.toISOString(), amendments: i.amendments, tests };
 }
 

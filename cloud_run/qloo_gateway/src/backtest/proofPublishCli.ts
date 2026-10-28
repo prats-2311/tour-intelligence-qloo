@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildProofV3, parseAmendments, type Amendment } from "./proofPublish.js";
+import { buildProofV3, parseAmendments, type Amendment, type StoppedGroundRun } from "./proofPublish.js";
 import { defaultIo, privateOut, protocolCommit, PROTOCOL_PATH, REPO_ROOT, writeJson, type CliIo } from "./proofCli.js";
 import type { ProofV3Results } from "./proofResults.js";
 
@@ -35,9 +35,11 @@ export async function main(argv: string[], io: CliIo = defaultIo(), deps: Deps =
   const need = (name: string): ProofV3Results => { if (!existsSync(bt(name))) throw new Error(`missing ${bt(name)}`); return readRun(bt(name)); };
   const stopped: ProofV3Results[] = [];
   for (let n = 1; existsSync(bt(`proof-v3-fixed.stopped-${n}.json`)); n += 1) stopped.push(readRun(bt(`proof-v3-fixed.stopped-${n}.json`)));
+  const groundStopped: StoppedGroundRun[] = [];
+  for (let n = 1; existsSync(bt(`proof-v3-ground-items.stopped-${n}.json`)); n += 1) groundStopped.push(JSON.parse(readFileSync(bt(`proof-v3-ground-items.stopped-${n}.json`), "utf8")) as StoppedGroundRun);
   const proofV3 = buildProofV3({
     protocolCommit: deps.protocolCommit(), amendments: deps.amendments(), batches: [need("proof-v3-city-batch1.json"), need("proof-v3-city-batch2.json")],
-    fixed: need("proof-v3-fixed.json"), fixedStopped: stopped, catchRate: need("proof-v3-catch.json"), grounding: readIf(bt("proof-v3-ground.json")), now: io.now(),
+    fixed: need("proof-v3-fixed.json"), fixedStopped: stopped, catchRate: need("proof-v3-catch.json"), grounding: readIf(bt("proof-v3-ground.json")), groundingStopped: groundStopped, now: io.now(),
   });
   const existing = existsSync(out) ? (JSON.parse(readFileSync(out, "utf8")) as Record<string, unknown>) : {};
   writeJson(out, { ...existing, proofV3 });
