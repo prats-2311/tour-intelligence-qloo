@@ -27,6 +27,22 @@ describe("CityRow Your routing tag", () => {
   });
 });
 
+describe("CityRow low-heat note", () => {
+  const base = SAMPLE_CITIES[2]!;
+  const NOTE = "Low fan heat here, by Qloo's data.";
+  it("shows one honest note for a pasted floored Skip city", () => {
+    render(<ul><CityRow city={{ ...base, verdict: "skip", candidateSource: "your_routing", fanHeatFloor: true }} onOpen={() => {}} /></ul>);
+    expect(screen.getByTestId("row-notes").textContent).toContain(NOTE);
+  });
+  it("is absent for a pasted non-floored city and for a floored major-market city", () => {
+    render(<ul><CityRow city={{ ...base, verdict: "skip", candidateSource: "your_routing", fanHeatFloor: false }} onOpen={() => {}} /></ul>);
+    expect(screen.getByTestId("row-notes").textContent).not.toContain(NOTE);
+    cleanup();
+    render(<ul><CityRow city={{ ...base, verdict: "skip", candidateSource: "major_market", fanHeatFloor: true }} onOpen={() => {}} /></ul>);
+    expect(screen.getByTestId("row-notes").textContent).not.toContain(NOTE);
+  });
+});
+
 describe("BriefForm Paste your cities", () => {
   const fill = () => fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "Lumen Vale" } });
   const paste = (v: string) => fireEvent.change(screen.getByLabelText("Paste your cities"), { target: { value: v } });

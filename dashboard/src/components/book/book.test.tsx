@@ -53,6 +53,15 @@ describe("book components", () => {
     expect(screen.getByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.")).toBeTruthy();
     expect(screen.getByText("7 verified · 2 removed")).toBeTruthy();
   });
+  it("a chapter with an empty summarised week omits the This week section; a non-empty week keeps it", () => {
+    const ch = book.chapters[2]!;
+    if (ch.week?.status !== "ok") throw new Error("fixture week should be ok");
+    render(<CityChapter chapter={{ ...ch, week: { ...ch.week, summarised: true, items: [] } }} />);
+    expect(screen.queryByRole("heading", { name: "This week", level: 3 })).toBeNull();
+    cleanup();
+    render(<CityChapter chapter={ch} />);
+    expect(screen.getByRole("heading", { name: "This week", level: 3 })).toBeTruthy();
+  });
   it("calls appendix lists calls, tools and what each decided per city, and the total", () => {
     render(<CallsAppendix calls={book.calls} />);
     expect(screen.getByRole("heading", { name: "Qloo calls behind this book", level: 2 })).toBeTruthy();

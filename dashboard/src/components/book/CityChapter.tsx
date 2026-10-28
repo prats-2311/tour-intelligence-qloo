@@ -4,7 +4,7 @@ import { Notice } from "@/components/qloo/Notice";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { VerdictClockLine } from "@/components/qloo/VerdictClockLine";
 import { AdvanceSheet } from "@/components/playbook/AdvanceSheet";
-import { CardBody, ThisWeekBody } from "@/components/playbook/cardBody";
+import { CardBody, ThisWeekBody, isEmptyWeek } from "@/components/playbook/cardBody";
 import { ClaimsBadge } from "@/components/playbook/ClaimsBadge";
 import { CARD_TITLE, removalText } from "@/components/playbook/format";
 import { KeyArtPoster } from "@/components/playbook/KeyArtPoster";
@@ -86,10 +86,12 @@ export function CityChapter({ chapter, sample = false, showcase = false, artist,
                 </section>
               );
             })}
-            <section data-section="this_week" className="relative flex min-w-0 flex-col gap-3">
-              <h3 className={H3}>{CARD_TITLE.this_week}</h3>
-              <ThisWeekBody week={week} />
-            </section>
+            {!isEmptyWeek(week) && (
+              <section data-section="this_week" className="relative flex min-w-0 flex-col gap-3">
+                <h3 className={H3}>{CARD_TITLE.this_week}</h3>
+                <ThisWeekBody week={week} />
+              </section>
+            )}
             {chapter.claims && (
               <div className="flex flex-col gap-3 pt-4">
                 <ClaimsBadge verified={chapter.claims.verified} removed={chapter.claims.removed} />

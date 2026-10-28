@@ -77,6 +77,25 @@ describe("CityPlaybook", () => {
     expect(screen.getByText("Colonia Americana", { selector: "dd" })).toBeTruthy();
     expect(screen.getByText("Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.")).toBeTruthy();
   });
+  it("drops an empty This week card and its slot from the counter; a non-empty week keeps it", async () => {
+    const real = await vi.importActual<typeof client>("@/lib/qloo/client");
+    const ok = await real.fetchThisWeek({ city: "Guadalajara", country: "MX" }, { sample: true, cityId: "4005539" });
+    if (ok.status !== "ok") throw new Error("fixture week should be ok");
+    const spy = vi.spyOn(client, "fetchThisWeek").mockResolvedValue({ ...ok, summarised: true, items: [], removed: [] });
+    renderAt("/tours/playbook/4005539?sample=1");
+    await screen.findByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.");
+    await waitFor(() => expect(spy).toHaveBeenCalled());
+    const total = async () => Number((await screen.findByText(/ · 1 of \d+$/)).textContent!.match(/of (\d+)$/)![1]);
+    const without = await total();
+    expect(screen.queryByRole("heading", { name: "This week" })).toBeNull();
+    expect(screen.queryByText("Nothing notable found for these dates")).toBeNull();
+    cleanup();
+    spy.mockResolvedValue(ok);
+    renderAt("/tours/playbook/4005539?sample=1");
+    await screen.findByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.");
+    expect(await total()).toBe(without + 1);
+    expect(screen.getByText("This week")).toBeTruthy();
+  });
   it("shows the verdict clocks and the sponsor assumption line", async () => {
     renderAt("/tours/playbook/4005539?sample=1");
     await screen.findByRole("heading", { name: "Guadalajara" });

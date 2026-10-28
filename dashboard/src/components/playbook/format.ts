@@ -3,6 +3,8 @@ import type { CardKind, PlaybookCard, RemovalReason } from "@/lib/qloo/types";
 export const fit = (v: unknown): string => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(2) : "—");
 /** Where fans and the city overall rank an item: "Fans #3 · city #12" or "Fans #3 · not in the city's top 20". */
 export const rankLine = (artistRank: number, cityRank: number | null): string => `Fans #${artistRank} · ${cityRank === null ? "not in the city's top 20" : `city #${cityRank}`}`;
+export const fanRankLine = (artistRank: number): string => `Fans rank it #${artistRank}`;
+export const SPONSORS_NOT_MAINSTREAM_NOTE = "None of these brands is in the city's top 20, so they set this audience apart.";
 /** Plain-words co-billing line; the formula lives in the tooltip. */
 export const coBillLine = (sharedTaste: number, localAffinity: number): string => `Fans share taste ${Math.round(sharedTaste * 100)}% · the city likes them ${Math.round(localAffinity * 100)}%`;
 export const pct = (share: number): string => `${Math.round(share * 100)}%`;

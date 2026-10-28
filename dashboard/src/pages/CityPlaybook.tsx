@@ -15,7 +15,7 @@ import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { VerdictClockLine } from "@/components/qloo/VerdictClockLine";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
 import { AdvanceSheet } from "@/components/playbook/AdvanceSheet";
-import { CardBody, ThisWeekBody } from "@/components/playbook/cardBody";
+import { CardBody, ThisWeekBody, isEmptyWeek } from "@/components/playbook/cardBody";
 import { ClaimsAudit } from "@/components/playbook/ClaimsAudit";
 import { CARD_TITLE, cityCode, metaLine } from "@/components/playbook/format";
 import { KeyArtPoster } from "@/components/playbook/KeyArtPoster";
@@ -140,7 +140,8 @@ function CityPlaybookPage() {
   const claimsOf = (kind: CardKind) => (narrative?.status === "ok" ? narrative.cards[kind] : undefined);
   const cardOf = (kind: CardKind) => pb.cards.find((c) => c.kind === kind);
 
-  const activateIds: CardId[] = loading ? [...ORDER, "this_week"] : [...ORDER.filter((k) => cardOf(k)), "this_week"];
+  const weekIds: CardId[] = isEmptyWeek(week.data) ? [] : ["this_week"];
+  const activateIds: CardId[] = loading ? [...ORDER, ...weekIds] : [...ORDER.filter((k) => cardOf(k)), ...weekIds];
   const idsKey = activateIds.join("|");
   const shownIdx = Math.min(counterIdx, activateIds.length - 1);
 

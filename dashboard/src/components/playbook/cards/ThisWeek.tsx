@@ -10,6 +10,9 @@ const day = (iso: string | null): string | null => {
 };
 const LINK = "inline-flex min-h-11 min-w-11 items-center justify-center text-[13px] tabular-nums text-canvas-text underline decoration-canvas-muted underline-offset-4 hover:decoration-canvas-text";
 
+/** A summarised, ok week with nothing in it: the card has nothing to say, so it is left out. */
+export const isEmptyWeek = (w: Week | undefined): boolean => w?.status === "ok" && w.summarised && w.items.length === 0;
+
 export function ThisWeekBody({ week }: { week: Week | undefined }) {
   if (!week) return <p className="text-[13px] text-canvas-muted">Looking up this week…</p>;
   if (week.status === "unavailable") return <p className="text-[13px] text-canvas-muted">{week.message}</p>;

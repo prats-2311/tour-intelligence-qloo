@@ -6,6 +6,7 @@ export const MAX_PASTED_CITIES = 8;
 export const ROUTING_CAP_NOTE = `Up to ${MAX_PASTED_CITIES} cities — the first ${MAX_PASTED_CITIES} will be used.`;
 /** Tag on a board row the promoter pasted (candidateSource "your_routing"); styled like "Major market". */
 export const ROUTING_LABEL = "Your routing";
+export const ROUTING_LOW_HEAT_NOTE = "Low fan heat here, by Qloo's data.";
 export const ROUTING_LABEL_NOTE = "You pasted this city, so it is scored whether or not it is in Qloo's top fan hotspots.";
 export const routingUnmatchedText = (names: string[]): string => `Not in our city list: ${names.join(", ")}. Check the spelling or add the country.`;
 

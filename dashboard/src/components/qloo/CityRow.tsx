@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { LOCATION_UNRESOLVED_NOTE, LOCATION_UNRESOLVED_SHORT, FLOORED_SEED_NOTE, MAJOR_MARKET_LABEL, majorMarketNote, showsCappedNote } from "@/lib/qloo/labels";
-import { ROUTING_LABEL, ROUTING_LABEL_NOTE } from "@/lib/qloo/routing";
+import { ROUTING_LABEL, ROUTING_LABEL_NOTE, ROUTING_LOW_HEAT_NOTE } from "@/lib/qloo/routing";
 import type { Score, ScoredCity } from "@/lib/qloo/types";
 import { DataWarningBadge, warningLabel } from "./DataWarningBadge";
 import { CloseCallChip } from "./CloseCallChip";
@@ -36,10 +36,11 @@ export function CityRow({ city, selected, dimActivation, onOpen, openable = true
   const pasted = city.candidateSource === "your_routing";
   const unplaced = city.insufficientReason === "location_unresolved";
   const capped = showsCappedNote(city);
-  const hasNotes = major || pasted || city.closeCall === true || !!warn || unplaced || capped;
+  const lowHeat = pasted && city.fanHeatFloor === true && city.verdict === "skip";
+  const hasNotes = major || pasted || city.closeCall === true || !!warn || unplaced || capped || lowHeat;
   // The button's name is its visible content (WCAG 2.5.3 label-in-name); the numbers that content leaves out go in the description.
   const describedBy = `city-row-desc-${city.id}`;
-  const description = `Winnability ${w === null ? "not available" : Math.round(w)}, fan heat ${num(city.fanHeat)}, activation ${num(city.activation)}. ${major ? `${majorMarketNote(city.country)} ` : ""}${pasted ? `${ROUTING_LABEL_NOTE} ` : ""}${capped ? `${FLOORED_SEED_NOTE} ` : ""}${unplaced ? `${LOCATION_UNRESOLVED_NOTE} ` : ""}${openable ? "Open score breakdown" : ""}`;
+  const description = `Winnability ${w === null ? "not available" : Math.round(w)}, fan heat ${num(city.fanHeat)}, activation ${num(city.activation)}. ${major ? `${majorMarketNote(city.country)} ` : ""}${pasted ? `${ROUTING_LABEL_NOTE} ` : ""}${capped ? `${FLOORED_SEED_NOTE} ` : ""}${lowHeat ? `${ROUTING_LOW_HEAT_NOTE} ` : ""}${unplaced ? `${LOCATION_UNRESOLVED_NOTE} ` : ""}${openable ? "Open score breakdown" : ""}`;
   const rowBody = (
     <>
         <span className="col-start-1 row-start-1 flex min-w-0 flex-col gap-0.5">
@@ -55,6 +56,7 @@ export function CityRow({ city, selected, dimActivation, onOpen, openable = true
               {warn && <DataWarningBadge warnings={city.warnings} />}
               {unplaced && <span className="text-[12px] text-canvas-muted">{LOCATION_UNRESOLVED_SHORT}</span>}
               {capped && <span className="basis-full text-[12px] leading-snug text-canvas-muted">{FLOORED_SEED_NOTE}</span>}
+              {lowHeat && <span className="basis-full text-[12px] leading-snug text-canvas-muted">{ROUTING_LOW_HEAT_NOTE}</span>}
             </span>
           )}
         </span>

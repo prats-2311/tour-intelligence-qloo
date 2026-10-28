@@ -9,7 +9,7 @@ import { Sponsors } from "./cards/Sponsors";
 import { Talent } from "./cards/Talent";
 import { VenueFit } from "./cards/VenueFit";
 
-export { ThisWeekBody } from "./cards/ThisWeek";
+export { ThisWeekBody, isEmptyWeek } from "./cards/ThisWeek";
 
 export function CardBody({ card, merch, city, artist }: { card: PlaybookCard; merch?: MerchDirection | null; city: string; artist?: string }) {
   const empty = card.status === "empty" && card.kind !== "promo_zones";

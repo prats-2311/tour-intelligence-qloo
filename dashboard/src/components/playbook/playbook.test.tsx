@@ -82,6 +82,17 @@ describe("playbook cards", () => {
     expect(screen.queryByText("Lúpulo Tapatío")).toBeNull();
     expect(screen.getByText("+5 more")).toBeTruthy();
   });
+  it("sponsors with no city rank lead with the fan rank and say the city part once", () => {
+    const items = [
+      { name: "Brand A", entityId: "b1", affinity: 0.8, artistRank: 3, cityRank: null, rankLift: 18 },
+      { name: "Brand B", entityId: "b2", affinity: 0.7, artistRank: 1, cityRank: null, rankLift: 12 },
+    ];
+    render(<CardBody card={{ ...card("sponsors"), items, summary: undefined }} city="Guadalajara" />);
+    expect(screen.getByText("Fans rank it #3")).toBeTruthy();
+    expect(screen.getByText("Fans rank it #1")).toBeTruthy();
+    expect(screen.getAllByText("None of these brands is in the city's top 20, so they set this audience apart.")).toHaveLength(1);
+    expect(screen.queryByText(/not in the city's top 20$/)).toBeNull();
+  });
   it("sponsors show where fans and the city rank each brand, and the ranking note", () => {
     const items = [
       { name: "Brand A", entityId: "b1", affinity: 0.8, artistRank: 3, cityRank: null, rankLift: 18 },
