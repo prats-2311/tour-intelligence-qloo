@@ -24,6 +24,8 @@ Sponsorship is the highest-margin business in live music: Live Nation's sponsors
 
 ## The 2-minute judge path
 
+New here? "Take the tour" on the landing page walks through these steps in 8 short stops on the recorded example (Back, Next, Skip; it never starts on its own).
+
 1. **Markets** (opens on the example): fan heat per city, with "Try a routing" to replay a recorded run where a tour's cities were pasted, scored and ordered. To paste your own cities, use "Try your own artist". ![Landing](docs/screens/01-landing-desktop.png)
 2. **Decide:** winnability per city, and the "where fan heat and winnability disagree" section, described as "worth a second look" rather than a ranking claim. ![Decide](docs/screens/02-board-winnability-desktop.png) Compare with the same cities as a generic LLM ranks them, without Qloo: ![Without Qloo](docs/screens/03-board-without-qloo-desktop.png)
 3. **Playbook:** open a city for sponsors (with lift versus the city), local guests, venues, support acts, verified claims and verdict clocks. ![Playbook](docs/screens/04-playbook-desktop.png)
@@ -136,13 +138,17 @@ cd dashboard && RECORDINGS_DIR=<dir> npm run server & npm run dev
 - A short do-not-book list (currently one act) is applied at display time; affected cards say so. Recorded data and proof results are unchanged.
 - Non-profit, advocacy, political and religious organisations are kept off the sponsor card by a model check (one batched Gemini call per playbook: could this brand sponsor a concert? Unanswered ids are hidden) plus a short disclosed name list, because Qloo brand entities carry no tag that identifies them. The card says how many were hidden, or that the check was unavailable. In live runs they are removed before ranking, so the remaining brands' ranks are among the brands shown; the recorded example uses the name list only.
 
+## Operations
+
+During judging, the dashboard (`tour-intel-qloo`) and the gateway (`qloo-gateway`) each keep one warm instance (`--min-instances 1`; a cold start took about 2.8 s against 0.4 s warm). After judging, and no later than 13 Nov 2026, set both back to 0: `gcloud run services update tour-intel-qloo --min-instances 0` and the same for `qloo-gateway` (and `MIN_INSTANCES=0` for later dashboard deploys).
+
 ## Data policy
 
 No Qloo response data is committed here. Real recordings are served from private storage by the dashboard server; tests use synthetic fixtures; `scripts/check-public-data.sh` guards the public clone. Only artist, city, venue and brand names go to Qloo, never personal data. See [ADR 0003](docs/adr/0003-recordings-private-synthetic-tests.md).
 
 ## New versus existing project
 
-Forked from the author's Agentic Cinema (Google Cloud) entry, which supplies the legacy `tour_data_api`, Dialogflow agents and delight-card renderer (see [`archive/`](archive)). The Qloo work began on 2026-10-16: the gateway, scoring, Tour Board, playbooks, Tour Book, strategist, MCP tools, proof and calibration. At the time of writing, 326 commits since that date (`git rev-list --count --since=2026-10-16 HEAD`; `node scripts/readme-numbers.mjs` prints the figures used here).
+Forked from the author's Agentic Cinema (Google Cloud) entry, which supplies the legacy `tour_data_api`, Dialogflow agents and delight-card renderer (see [`archive/`](archive)). The Qloo work began on 2026-10-16: the gateway, scoring, Tour Board, playbooks, Tour Book, strategist, MCP tools, proof and calibration. At the time of writing, 330 commits since that date (`git rev-list --count --since=2026-10-16 HEAD`; `node scripts/readme-numbers.mjs` prints the figures used here).
 
 ### What's next (not built)
 
