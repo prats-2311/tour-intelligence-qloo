@@ -17,7 +17,7 @@ export const SUBLINE = "In Los Angeles, Mac DeMarco's fans rank Stüssy #1. It i
 export const LINE2 = "Then see which cities to win first: fan heat and winnability for every market.";
 export const TRY_ARTIST_LINE = "Type any artist; we build fresh city playbooks on the spot.";
 export const TRY_ROUTING_LINE = "Replays a recorded run where a tour's cities were pasted, scored and ordered.";
-export const PROTAGONIST = "It's Thursday. Holds expire Friday. Confirm two of five secondary markets.";
+export const PROTAGONIST = "In this example, it's Thursday and holds expire Friday. Confirm two of five secondary markets.";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 

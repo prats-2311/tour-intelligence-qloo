@@ -42,7 +42,7 @@ describe("Landing", () => {
     expect(screen.getByText("In Los Angeles, Mac DeMarco's fans rank Stüssy #1. It isn't in LA's top 20. Qloo taste data, per city, for every stop on the routing.")).toBeTruthy();
     expect(screen.getByText("Then see which cities to win first: fan heat and winnability for every market.")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/city picks|places higher|Route with anything/i);
-    expect(screen.getByText("It's Thursday. Holds expire Friday. Confirm two of five secondary markets.")).toBeTruthy();
+    expect(screen.getByText("In this example, it's Thursday and holds expire Friday. Confirm two of five secondary markets.")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/film press tour/i);
     const cta = screen.getByRole("link", { name: "See the example tour" });
     const line = screen.getByTestId("protagonist");
