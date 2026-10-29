@@ -179,6 +179,28 @@ describe("runCityPlaybook", () => {
     const events = await collect(runCityPlaybook(input, { qloo: qloo(happy), cities: CITIES, signal: ac.signal }));
     expect(events).toEqual([{ type: "error", code: "ABORTED", message: "client disconnected" }]);
   });
+  it("non-sponsor organisations never reach the sponsors card, merch brands or the narrative evidence", async () => {
+    const brands = ["Planned Parenthood", "ACLU", "Vans", "Black Lives Matter", "Converse"];
+    let narrated: unknown;
+    const events = await collect(runCityPlaybook(input, {
+      qloo: qloo((t, a) => (t === "qloo_recommend" && a.target_type === "brand" && !a.signals ? happy(t, a) : t === "qloo_recommend" && a.target_type === "brand" ? recs(brands, [0.9, 0.8, 0.7, 0.6, 0.5]) : happy(t, a))),
+      cities: CITIES,
+      narrate: async (x) => { narrated = x.cards; return { status: "unavailable", reason: "error", message: "n/a" }; },
+    }));
+    const cards = cardsOf(events);
+    const sponsors = cards.find((c) => c.kind === "sponsors")! as unknown as { items: Array<{ name: string; artistRank?: number }>; summary?: Record<string, unknown> };
+    expect(sponsors.items.map((i) => i.name)).toEqual(["Vans", "Converse"]);
+    expect(sponsors.summary?.hiddenNonSponsors).toBe(3);
+    const merch = cards.find((c) => c.kind === "merch")! as unknown as { summary?: { brands?: string[] } };
+    expect(merch.summary?.brands).toEqual(["Vans", "Converse"]);
+    const text = JSON.stringify(narrated);
+    for (const n of ["Planned Parenthood", "ACLU", "Black Lives Matter"]) expect(text).not.toContain(n);
+  });
+  it("sponsors carry no hiddenNonSponsors when nothing was excluded", async () => {
+    const events = await collect(runCityPlaybook(input, { qloo: qloo(happy), cities: CITIES }));
+    const sponsors = cardsOf(events).find((c) => c.kind === "sponsors")! as unknown as { summary?: Record<string, unknown> };
+    expect(sponsors.summary?.hiddenNonSponsors).toBeUndefined();
+  });
   it("partial brand recommend puts a partial warning on the sponsors card", async () => {
     const events = await collect(runCityPlaybook(input, {
       qloo: qloo((t, a) => (t === "qloo_recommend" && a.target_type === "brand" ? { ...recs(["B1"], [0.5]), status: "partial", summary: "some missing" } : happy(t, a))),

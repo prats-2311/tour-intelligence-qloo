@@ -348,4 +348,21 @@ describe("playbook cards", () => {
     expect(screen.getByText("TOP ZONE")).toBeTruthy();
     expect(screen.getByText("Colonia Americana").getAttribute("title")).toBe("Colonia Americana");
   });
+  it("keeps organisations off the sponsor card, with a caption, a visible-only count and an ask that names a real brand", () => {
+    const items = [
+      { name: "Planned Parenthood", artistRank: 1, cityRank: null }, { name: "ACLU", artistRank: 2, cityRank: null }, { name: "Black Lives Matter", artistRank: 3, cityRank: null },
+      { name: "Stüssy", artistRank: 4, cityRank: null }, { name: "Vans", artistRank: 5, cityRank: null },
+    ];
+    const sponsors: Card = { ...card("sponsors"), items };
+    render(<CardBody card={sponsors} city="Seattle" />);
+    for (const n of ["Planned Parenthood", "ACLU", "Black Lives Matter"]) expect(screen.queryByText(n)).toBeNull();
+    expect(screen.getByText("Stüssy")).toBeTruthy();
+    expect(screen.getByText("3 organisations hidden (not sponsors)")).toBeTruthy();
+    expect(screen.getByTestId("sponsor-deal").textContent).toContain("Stüssy is #4 with fans");
+    expect(metaLine("SEA", "sponsors", sponsors)).toBe("SEA · SPONSORS · 2 BRANDS");
+  });
+  it("says '1 organisation hidden (not sponsors)' for one", () => {
+    render(<CardBody card={{ ...card("sponsors"), items: [{ name: "ACLU" }, { name: "Vans" }] }} city="Seattle" />);
+    expect(screen.getByText("1 organisation hidden (not sponsors)")).toBeTruthy();
+  });
 });

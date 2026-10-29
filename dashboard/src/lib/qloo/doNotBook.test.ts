@@ -33,7 +33,7 @@ describe("doNotBook", () => {
   });
   it("returns the same card when nothing is hidden", () => {
     const c = card("co_billing", [{ name: "Synthetic Artist 02" }]);
-    expect(applyDoNotBook(c)).toEqual({ card: c, hidden: 0 });
+    expect(applyDoNotBook(c)).toEqual({ card: c, hidden: 0, hiddenOrgs: 0 });
   });
   it("drops verified and removed claims that mention the act, by text or entity", () => {
     const claim = (text: string, ent = "X") => ({ text, entities: [{ name: ent }], numbers: [], evidence_refs: [] });

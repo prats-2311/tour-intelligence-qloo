@@ -8,6 +8,7 @@ import type { CardKind, DataWarning, EvidenceRef, GatewayEvent, NarrateFn, Narra
 import { activationInputs, Aborted, BudgetStop, resolveLocation, trackedCall } from "./tourBoard.js";
 import { LOCAL_DESCRIBE_CAP, LOCAL_SUGGESTIONS, matchPool, matchSuggestion } from "./localActs.js";
 import { cityPopularityArgs, LOCAL_ACT_POOL, localActRankArgs } from "./recArgs.js";
+import { dropNonSponsors } from "./nonSponsors.js";
 import { emptySupportCopy, genreTagNames, HEADLINER_SIZE_UNKNOWN, rankLifted, SIZE_UNCHECKED_COPY, smallerThanHeadliner, SPONSOR_LIFT_NOTE } from "./playbookTrust.js";
 
 /** Size of the baseline lists (the city's own favourites) that lift is measured against. */
@@ -188,7 +189,9 @@ export async function* runCityPlaybook(
     while (events.length) yield events.shift()!;
 
     const { raw } = a;
-    const sponsorLift = rankLifted(extractEntities(raw.brands.envelope), brandBase ? extractEntities(brandBase.envelope) : null);
+    // Non-profit, advocacy, political and religious organisations are not sponsors: removed before ranking, so they reach neither the card, the merch brands nor the narrative evidence.
+    const brandPool = dropNonSponsors(extractEntities(raw.brands.envelope));
+    const sponsorLift = rankLifted(brandPool.items, brandBase ? extractEntities(brandBase.envelope) : null);
     const sponsors = sponsorLift.items;
     const baselineRefs = (r: CallResult | null) => (r ? [ref("qloo_recommend", r)] : []);
     const filmLift = rankLifted(extractEntities(raw.films.envelope), movieBase ? extractEntities(movieBase.envelope) : null, { dropMainstream: true });
@@ -204,7 +207,7 @@ export async function* runCityPlaybook(
     const artistTags = extractMusicTags(tags.envelope).filter((t) => t.id.startsWith("urn:tag:genre:")).map((t, index) => ({ ...t, entityId: t.id, index }));
     const cards: PlaybookCard[] = [
       { ...card("sponsors", sponsors, [ref("qloo_recommend", raw.brands), ...(sponsorLift.lifted ? baselineRefs(brandBase) : [])], warningsFor("qloo_recommend", raw.brands)),
-        ...(sponsorLift.lifted ? { summary: { note: SPONSOR_LIFT_NOTE } } : {}) },
+        ...(sponsorLift.lifted || brandPool.hidden > 0 ? { summary: { ...(sponsorLift.lifted ? { note: SPONSOR_LIFT_NOTE } : {}), ...(brandPool.hidden > 0 ? { hiddenNonSponsors: brandPool.hidden } : {}) } } : {}) },
       { ...card("merch", artistTags, [ref("qloo_entity_tags", tags), ref("qloo_recommend", raw.brands)],
         [...warningsFor("qloo_entity_tags", tags), ...warningsFor("qloo_recommend", raw.brands)], artistTags.length > 0 || sponsors.length > 0),
         ...(sponsors.length > 0 ? { summary: { brands: sponsors.slice(0, 5).map((b) => b.name) } } : {}) },
