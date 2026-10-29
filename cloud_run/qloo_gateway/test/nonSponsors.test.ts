@@ -17,7 +17,7 @@ describe("nonSponsors", () => {
     expect(isNonSponsor("Foundation Brewing")).toBe(false);
   });
   it("leaves real brands alone", () => {
-    for (const n of ["Stüssy", "Vans", "Converse", "Synthetic Brand 01", "Unicorn Goods", "Nrad Co", "Sunrise Coffee", "Costar", "Vice", "ClickHole"]) expect(isNonSponsor(n)).toBe(false);
+    for (const n of ["Stüssy", "OBEY", "Kith", "HUF", "Off-White", "The Onion", "Vans", "Converse", "Synthetic Brand 01", "Unicorn Goods", "Nrad Co", "Sunrise Coffee", "Costar", "Vice", "ClickHole"]) expect(isNonSponsor(n)).toBe(false);
     expect(isNonSponsor(undefined)).toBe(false);
   });
   it("finds a listed name inside prose, not an ending", () => {
