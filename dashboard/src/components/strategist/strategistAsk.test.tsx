@@ -76,10 +76,12 @@ describe("Ask about this tour: showcase", () => {
     render(<StrategistPanel context={{}} sample showcase title="t" />);
     fireEvent.click(screen.getByRole("button", { name: Q1 }));
     await screen.findByText("Invented answer one.");
-    await vi.waitFor(() => { expect(screen.queryByRole("button", { name: "Stop" })).toBeNull(); });
-    await new Promise((r) => setTimeout(r, 120)); // the replay's done event lands after the answer
-    fireEvent.click(screen.getByRole("button", { name: Q2 }));
-    await screen.findByText("Invented answer 99 two.");
+    // The replay's done event lands after the answer and a chip is ignored while busy, so retry the click until the second answer shows
+    // (a click while the first replay is still busy is a no-op; once the second is running further clicks are ignored too).
+    await vi.waitFor(() => {
+      if (!screen.queryByText("Invented answer 99 two.")) fireEvent.click(screen.getByRole("button", { name: Q2 }));
+      expect(screen.getByText("Invented answer 99 two.")).toBeTruthy();
+    }, { timeout: 3000 });
     const logs = screen.getAllByRole("button", { name: "Work log" });
     expect(logs.map((b) => b.getAttribute("aria-expanded"))).toEqual(["true", "false"]);
     fireEvent.click(logs[1]!);

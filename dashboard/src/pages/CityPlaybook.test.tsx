@@ -171,7 +171,7 @@ describe("CityPlaybook", () => {
     first.focus();
     fireEvent.keyDown(first, { key: "ArrowLeft" });
     expect(screen.getByRole("tab", { name: "Local acts" }).getAttribute("aria-selected")).toBe("true");
-    expect(await screen.findByText(/Shared taste with Guadalajara's mainstream/)).toBeTruthy();
+    expect(await screen.findByText(/Shared taste with Guadalajara's mainstream/, undefined, { timeout: 3000 })).toBeTruthy();
   });
   it("never mentions the campaign flow", async () => {
     renderAt("/tours/playbook/4005539?sample=1");

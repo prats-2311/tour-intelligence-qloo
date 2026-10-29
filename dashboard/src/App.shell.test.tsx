@@ -26,7 +26,7 @@ function mount(path: string) {
   );
 }
 
-describe("legacy campaign routes", () => {
+describe("shell: legacy campaign routes redirect to the board", () => {
   it.each(["/campaign", "/city/mumbai", "/compare", "/campaigns/new", "/cities/add"])("%s redirects to the board", async (path) => {
     mount(path);
     await waitFor(() => expect(screen.getByTestId("where").textContent).toBe("/tours/board"));
@@ -46,7 +46,7 @@ describe("legacy campaign routes", () => {
   });
 });
 
-describe("WebMcpTools", () => {
+describe("shell: WebMCP tools", () => {
   it("still registers the same tool names", async () => {
     const names: string[] = [];
     (document as unknown as { modelContext: unknown }).modelContext = { registerTool(t: { name: string }) { names.push(t.name); } };
