@@ -56,13 +56,15 @@ function advanceRows(p: PlaybookState | undefined, week: ThisWeek | undefined, c
   const cards = p?.cards ?? [];
   const sponsors = (cards.find((c) => c.kind === "sponsors")?.items ?? []).slice(0, 3).map((i) => i.name).filter((n): n is string => typeof n === "string");
   const merch = p?.narrative?.status === "ok" ? p.narrative.merch?.title : undefined;
+  const thisWeek = thisWeekValue(week);
   return [
     { label: "Top zone", value: zoneDisplayLabel(firstName(cards, "promo_zones", "label"), cityName) },
     { label: "Best room", value: firstName(cards, "venue_fit", "name") },
     { label: "Support", value: firstName(cards, "co_billing", "name") },
     { label: "Sponsors top 3", value: sponsors.length ? sponsors.join(", ") : "—" },
     { label: "Merch drop", value: merch || "—" },
-    { label: "This week", value: thisWeekValue(week) },
+    // An empty week has nothing to say: no "This week —" tile, same as the omitted section.
+    ...(thisWeek === "—" ? [] : [{ label: "This week", value: thisWeek }]),
   ];
 }
 

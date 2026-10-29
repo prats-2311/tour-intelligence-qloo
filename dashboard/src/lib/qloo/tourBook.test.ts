@@ -35,6 +35,17 @@ describe("buildTourBook", () => {
     expect(gdl.advance.find((r) => r.label === "Best room")?.value).toBe("C3 Stage");
     expect(gdl.advance.find((r) => r.label === "Merch drop")?.value).toBe("Jacaranda season");
   });
+  it("the advance sheet has a This week tile only when the week has something to say", () => {
+    const week = sampleThisWeek("4005539")!;
+    const withWeek = (w: typeof week | undefined) => buildTourBook({ ...base, playbooks: Object.fromEntries(shortlist.map((id) => [id, done(id)])), weeks: Object.fromEntries(shortlist.map((id) => [id, w])) });
+    const labels = (b: ReturnType<typeof withWeek>) => b.chapters[2]!.advance.map((r) => r.label);
+    expect(labels(book)).toContain("This week");
+    if (week.status !== "ok") throw new Error("fixture week should be ok");
+    expect(labels(withWeek({ ...week, summarised: true, items: [] }))).not.toContain("This week");
+    expect(labels(withWeek({ ...week, summarised: false, items: [], citations: [] }))).not.toContain("This week");
+    expect(labels(withWeek(undefined))).not.toContain("This week");
+    expect(labels(withWeek({ status: "unavailable", message: "Live web context unavailable" } as never))).toContain("This week");
+  });
   it("provenance lists each Qloo request once with a truncated hash", () => {
     const keys = book.provenance.map((r) => r.cacheKey);
     expect(new Set(keys).size).toBe(keys.length);
