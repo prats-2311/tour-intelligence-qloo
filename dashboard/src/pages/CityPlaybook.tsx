@@ -13,6 +13,7 @@ import { Notice } from "@/components/qloo/Notice";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { Sheet } from "@/components/qloo/Sheet";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
+import { nearestStop } from "@/lib/qloo/radius";
 import { RadiusNote } from "@/components/qloo/RadiusNote";
 import { VerdictClockLine } from "@/components/qloo/VerdictClockLine";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
@@ -204,6 +205,10 @@ function CityPlaybookPage() {
     ? ([...ORDER, "talent"] as CardKind[]).map((k) => ({ card: CARD_TITLE[k], removed: narrative.cards[k]?.removed ?? [] }))
     : [];
 
+  // The shortlist when it holds another stop with coordinates; otherwise every city on the board.
+  const picked = state.cities.filter((c) => shortlist.includes(c.id));
+  const radiusPool = nearestStop(shownCity, picked) ? picked : state.cities;
+
   const retry = () => { if (req) void loadPlaybook(req); };
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
@@ -322,7 +327,7 @@ function CityPlaybookPage() {
           </div>
           <DualBars fanHeat={shownCity.fanHeat} activation={shownCity.activation} thresholds={state.scoring?.thresholds} />
           <VerdictClockLine window={window} />
-          <RadiusNote city={shownCity} pool={shortlist.length > 0 ? state.cities.filter((c) => shortlist.includes(c.id)) : state.cities} />
+          <RadiusNote city={shownCity} pool={radiusPool} />
           {!isDesktop && whyBtn}
           <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
           <AdvanceSheet rows={[
