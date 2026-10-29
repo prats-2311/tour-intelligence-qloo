@@ -29,6 +29,14 @@ describe("Landing", () => {
     expect(screen.getByRole("link", { name: "See the example tour" }).getAttribute("href")).toBe("/tours/board?showcase=1");
     expect(screen.getByRole("link", { name: "Try your own artist" }).getAttribute("href")).toBe("/tours/board?new=1");
   });
+  it("says what each try-it entry does", () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    expect(screen.getByText("Type any artist; we build fresh city playbooks on the spot.")).toBeTruthy();
+    expect(screen.getByText("Replays a recorded run where a tour's cities were pasted, scored and ordered.")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Try a routing" })).toBeTruthy();
+    setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
+  });
   it("states the approved pitch copy verbatim", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
     expect(screen.getByText("In Los Angeles, Mac DeMarco's fans rank Stüssy #1. It isn't in LA's top 20. Qloo taste data, per city, for every stop on the routing.")).toBeTruthy();

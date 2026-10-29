@@ -15,6 +15,8 @@ import { useIsDesktop } from "@/lib/useMediaQuery";
 export const HEADLINE = "Know which brands your artist's fans love in each city, before the sponsor meeting.";
 export const SUBLINE = "In Los Angeles, Mac DeMarco's fans rank Stüssy #1. It isn't in LA's top 20. Qloo taste data, per city, for every stop on the routing.";
 export const LINE2 = "Then see which cities to win first: fan heat and winnability for every market.";
+export const TRY_ARTIST_LINE = "Type any artist; we build fresh city playbooks on the spot.";
+export const TRY_ROUTING_LINE = "Replays a recorded run where a tour's cities were pasted, scored and ordered.";
 export const PROTAGONIST = "It's Thursday. Holds expire Friday. Confirm two of five secondary markets.";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
@@ -117,10 +119,16 @@ export default function Landing() {
         <p data-testid="protagonist" className="mb-3 max-w-[44ch] text-[15px] leading-[1.45] text-canvas-text [text-wrap:pretty]">{PROTAGONIST}</p>
         <div className="flex flex-col gap-2.5 lg:flex-row lg:gap-4">
           <NextStepLink to="/tours/board?showcase=1" className={`${CTA} bg-gold font-semibold text-on-gold hover:bg-gold-soft active:bg-[#efb900]`}>See the example tour</NextStepLink>
-          <Link to="/tours/board?new=1" className={`${CTA} bg-paper-raised font-medium text-canvas-text hover:bg-[#3a3932]`}>Try your own artist</Link>
+          <div className="flex flex-col gap-1.5">
+            <Link to="/tours/board?new=1" className={`${CTA} bg-paper-raised font-medium text-canvas-text hover:bg-[#3a3932]`}>Try your own artist</Link>
+            <p className="max-w-[34ch] text-[13px] leading-[1.4] text-canvas-muted">{TRY_ARTIST_LINE}</p>
+          </div>
         </div>
         {showcaseRoutingAvailable() && (
+          <>
           <NextStepLink to="/tours/board?showcase=routing" className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Try a routing</NextStepLink>
+          <p className="max-w-[44ch] text-[13px] leading-[1.4] text-canvas-muted">{TRY_ROUTING_LINE}</p>
+          </>
         )}
         <Link to="/proof" className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{PROOF_LINK_TEXT} →</Link>
       </div>
