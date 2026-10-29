@@ -30,3 +30,6 @@ export const isNonSponsor = (name: unknown): boolean => {
 export const mentionsNonSponsor = (text: string): boolean => { const t = fold(text); return NAME_RES.some((re) => re.test(t)); };
 
 export const HIDDEN_ORGS_NOTE = (n: number): string => `${n} organisation${n === 1 ? "" : "s"} hidden (not sponsors)`;
+
+/** Shown on the sponsors card when the gateway's model check could not run and only the name list was applied. */
+export const SPONSOR_CHECK_UNAVAILABLE_NOTE = "Sponsor check unavailable; showing brands not on our exclusion list.";

@@ -1,6 +1,6 @@
 import type { MerchDirection, PlaybookCard } from "@/lib/qloo/types";
 import { HIDDEN_NOTE, applyDoNotBook } from "@/lib/qloo/doNotBook";
-import { HIDDEN_ORGS_NOTE } from "@/lib/qloo/nonSponsors";
+import { HIDDEN_ORGS_NOTE, SPONSOR_CHECK_UNAVAILABLE_NOTE } from "@/lib/qloo/nonSponsors";
 import { DataWarningBadge } from "@/components/qloo/DataWarningBadge";
 import { CARD_TITLE } from "./format";
 import { CoBilling } from "./cards/CoBilling";
@@ -43,6 +43,7 @@ export function CardBody({ card: fullCard, merch, city, artist, venueName }: { c
       {body}
       {hidden > 0 && <p className="mt-2 text-[13px] text-canvas-muted">{HIDDEN_NOTE(hidden)}</p>}
       {hiddenOrgs > 0 && <p className="mt-2 text-[13px] text-canvas-muted">{HIDDEN_ORGS_NOTE(hiddenOrgs)}</p>}
+      {card.kind === "sponsors" && card.summary?.sponsorCheck === "unavailable" && <p className="mt-2 text-[13px] text-canvas-muted">{SPONSOR_CHECK_UNAVAILABLE_NOTE}</p>}
     </div>
   );
 }

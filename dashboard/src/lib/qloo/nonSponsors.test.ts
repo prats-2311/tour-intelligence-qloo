@@ -16,7 +16,7 @@ describe("nonSponsors", () => {
     expect(isNonSponsor("Plánned Parenthood")).toBe(true);
     expect(isNonSponsor("Ford Foundation")).toBe(true);
     expect(isNonSponsor("Party City")).toBe(false);
-    for (const n of ["Stüssy", "Vans", "Costar", "Vice", "ClickHole", "Unicorn Goods"]) expect(isNonSponsor(n)).toBe(false);
+    for (const n of ["Stüssy", "OBEY", "Kith", "HUF", "Off-White", "Vans", "Converse", "Costar", "Vice", "The Onion", "ClickHole", "Unicorn Goods"]) expect(isNonSponsor(n)).toBe(false);
   });
   it("words the caption with the right plural", () => {
     expect(HIDDEN_ORGS_NOTE(1)).toBe("1 organisation hidden (not sponsors)");
