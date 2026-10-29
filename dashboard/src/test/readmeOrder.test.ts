@@ -5,7 +5,7 @@ const at = (s: string): number => { const i = readme.indexOf(s); expect(i, `miss
 
 describe("README leads with sponsor lift", () => {
   it("has the approved top block right under the H1 and badge, before 'Who pays and why'", () => {
-    const order = ["# Tour Intelligence × Qloo", "[![test]", "**Route with anything. Win every city with this.**", "In Los Angeles, Mac DeMarco's fans rank Stüssy #1; it isn't in LA's overall top 20. That gap is the sponsor pitch.", "Qloo ranked the real tour's pick above a popularity baseline 17–1 (4 ties, p<0.001), and the claim checker caught 10 of 10 planted false claims.", "Who pays and why"].map(at);
+    const order = ["# Tour Intelligence × Qloo", "[![test]", "**Route with anything. Win every city with this.**", "In Los Angeles, Mac DeMarco's fans rank Stüssy #1; it isn't in LA's overall top 20. That gap is the sponsor pitch.", "Among 10 candidates per case, Qloo put the real tour's pick at mean reciprocal rank 0.47, against 0.29 for a random order and 0.13 for the city's popularity list, which usually didn't contain the pick at all (Qloo ahead in 17 of 22 cases, p<0.001). Gemini alone did better still (0.57; not significant), and the claim checker caught 10 of 10 planted false claims. Where an LLM did better, we say so under Limits.", "Who pays and why"].map(at);
     expect(order).toEqual([...order].sort((x, y) => x - y));
   });
   it("orders Proof, honestly as Test B, claim checker, Test C placeholder, then Limits with Test A", () => {
@@ -23,5 +23,11 @@ describe("README leads with sponsor lift", () => {
     expect(readme).not.toMatch(/city picks/i);
     expect(readme).not.toMatch(/\b\d+ places higher/i);
     expect(readme).not.toMatch(/Test B[^\n]*city (ranking|picks)/i);
+  });
+  it("frames Test B against chance, owns the weak popularity baseline, and counts 7 amendments", () => {
+    expect(readme).toContain("### Limits\n\n- The popularity baseline is weak by construction: in 18 of 22 cases the real pick wasn't on the city's popularity list, so that arm ranked it last.\n");
+    expect(readme).not.toMatch(/popularity baseline 17–1/);
+    expect(readme).not.toMatch(/\b6 (dated )?amendments/);
+    expect(readme).toMatch(/7 dated amendments/);
   });
 });
