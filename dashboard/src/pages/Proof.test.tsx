@@ -198,14 +198,17 @@ describe("Proof v3", () => {
     view(v3Backtest);
     expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "C", "A", "F"]);
   });
-  it("puts Test A under a visible Limits heading, after F", () => {
+  it("puts Test A and the fusion test (F) under a visible Limits heading, after C", () => {
     view(v3Backtest);
     const h = screen.getByRole("heading", { level: 2, name: "Limits: where Qloo-backed ranking lost" });
-    const [, , , c, a] = sections();
+    const [, , c, a, f] = sections();
     const before = (x: Node, y: Node) => !!(x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(c!.getAttribute("data-test-id")).toBe("C");
     expect(before(c!, h)).toBe(true);
     expect(before(h, a!)).toBe(true);
     expect(a!.getAttribute("data-test-id")).toBe("A");
+    expect(f!.getAttribute("data-test-id")).toBe("F");
+    expect(before(a!, f!)).toBe(true);
   });
   it("each test shows title, question, status, an arm table, verbatim claims and limits", () => {
     view(v3Backtest);
