@@ -4,7 +4,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
-import { WebMcpTools } from "@/components/WebMcpTools";
 import App from "./App";
 
 vi.mock("./pages/TourBoard", () => ({ TourBoard: () => <p>board page</p>, default: () => <p>board page</p> }));
@@ -47,12 +46,18 @@ describe("shell: legacy campaign routes redirect to the board", () => {
 });
 
 describe("shell: WebMCP tools", () => {
-  it("still registers the same tool names", async () => {
+  it("registers only the Qloo tools, never the legacy campaign tools", async () => {
     const names: string[] = [];
     (document as unknown as { modelContext: unknown }).modelContext = { registerTool(t: { name: string }) { names.push(t.name); } };
-    render(<MemoryRouter><WebMcpTools /></MemoryRouter>);
-    await waitFor(() => expect(names.length).toBeGreaterThan(0));
-    expect(names).toEqual(["list_campaigns", "get_campaign_overview", "get_city_detail", "create_campaign", "generate_briefs"]);
-    delete (document as unknown as { modelContext?: unknown }).modelContext;
+    try {
+      mount("/tours/board");
+      await screen.findByText("board page");
+      await waitFor(() => expect(names).toContain("get_tour_board"));
+      for (const legacy of ["list_campaigns", "get_campaign_overview", "get_city_detail", "create_campaign", "generate_briefs"]) {
+        expect(names).not.toContain(legacy);
+      }
+    } finally {
+      delete (document as unknown as { modelContext?: unknown }).modelContext;
+    }
   });
 });

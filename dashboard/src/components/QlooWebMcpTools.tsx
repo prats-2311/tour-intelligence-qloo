@@ -22,7 +22,13 @@ function topItems(card: PlaybookCard): Array<{ name: string; value: number | nul
 }
 
 /**
- * WebMCP tools for the Qloo tour flow (see WebMcpTools.tsx for the platform notes): a browser agent can
+ * WebMCP (https://developer.chrome.com/docs/ai/webmcp) lets an AI agent running in the SAME browser tab as the
+ * visitor call this page's own functions via document.modelContext.registerTool(tool, { signal }). It is
+ * unrelated to the Qloo gateway. Works in Chrome with WebMCP enabled or on a build with VITE_WEBMCP_OT_TOKEN
+ * (Edge 147+ ships it); elsewhere document.modelContext is undefined and this component does nothing.
+ * navigator.modelContext is a deprecated fallback. Cleanup is an AbortController passed at registration.
+ *
+ * WebMCP tools for the Qloo tour flow: a browser agent can
  * read the Tour Board and a city playbook and drive board -> playbook -> book. Every tool returns
  * { ok: false, error } instead of throwing. Registration is re-done when the board's city ids change
  * because the city_id enum is baked into the schema.
@@ -41,7 +47,7 @@ export function QlooWebMcpTools() {
       (document as unknown as { modelContext?: ModelContext }).modelContext ??
       (navigator as unknown as { modelContext?: ModelContext }).modelContext;
     if (typeof modelContext?.registerTool !== "function") return;
-    // Detached native methods throw "Illegal invocation"; bind (same as WebMcpTools).
+    // Detached native methods throw "Illegal invocation"; bind (a detached registerTool loses its [[this]]).
     const registerTool = modelContext.registerTool.bind(modelContext);
     const controller = new AbortController();
     const cityIds = cityKey ? cityKey.split(",") : [];

@@ -3,7 +3,6 @@ import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { TasteInsightsSkeleton, TourBoardSkeleton, PlaybookSkeleton } from "./components/ui/Skeletons";
-import { WebMcpTools } from "./components/WebMcpTools";
 import { QlooWebMcpTools } from "./components/QlooWebMcpTools";
 import { routeImports } from "./lib/routeImports";
 
@@ -23,7 +22,6 @@ export default function App() {
   useShowcaseVariant();
   return (
     <>
-      <WebMcpTools />
       <QlooWebMcpTools />
       <AppShell>
         {/* Every lazy route gets its own Suspense + matching skeleton. A bare
