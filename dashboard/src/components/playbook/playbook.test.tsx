@@ -365,4 +365,13 @@ describe("playbook cards", () => {
     render(<CardBody card={{ ...card("sponsors"), items: [{ name: "ACLU" }, { name: "Vans" }] }} city="Seattle" />);
     expect(screen.getByText("1 organisation hidden (not sponsors)")).toBeTruthy();
   });
+  it("shows the 'not in the city's top 20' note only when no item in the whole visible list has a city rank", () => {
+    const off = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `Brand ${i + 1}`, artistRank: i + 1, cityRank: null }));
+    const { unmount } = render(<CardBody card={{ ...card("sponsors"), items: off(7) }} city="Seattle" />);
+    expect(screen.getByText(/None of these brands is in the city's top 20/)).toBeTruthy();
+    unmount();
+    render(<CardBody card={{ ...card("sponsors"), items: [...off(6), { name: "Brand 7", artistRank: 7, cityRank: 14 }] }} city="Seattle" />);
+    expect(screen.queryByText(/None of these brands is in the city's top 20/)).toBeNull();
+    expect(screen.getByText("Fans #1 · not in the city's top 20")).toBeTruthy();
+  });
 });

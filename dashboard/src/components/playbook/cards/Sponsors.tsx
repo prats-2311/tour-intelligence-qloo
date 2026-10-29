@@ -7,9 +7,10 @@ export function Sponsors({ card, city, venueName }: { card: PlaybookCard; city: 
   const shown = card.items.slice(0, 5);
   const more = card.items.length - shown.length;
   const note = card.summary?.note;
-  const ranked = shown.filter((it) => num(it.artistRank) !== null);
-  const allOffChart = ranked.length > 0 && ranked.every((it) => num(it.cityRank) === null);
-  const top = ranked[0];
+  // The footer claim covers every visible item, including the "+N more": a city-ranked brand anywhere in the list withdraws it.
+  const rankedAll = card.items.filter((it) => num(it.artistRank) !== null);
+  const allOffChart = rankedAll.length > 0 && rankedAll.every((it) => num(it.cityRank) === null);
+  const top = shown.find((it) => num(it.artistRank) !== null);
   const deal = top ? dealLine(str(top.name), num(top.artistRank)!, num(top.cityRank), city, venueName) : null;
   return (
     <>
