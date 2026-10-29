@@ -71,8 +71,8 @@ export function buildTourSteps(show: Showcase): TourStep[] {
     const s = f.sponsor;
     const gap = "That gap is the sponsor pitch, and finding gaps like it in every city is what this app does.";
     if (!pc || !s) return `Each city's playbook shows the brands this artist's fans rank far above the city's own list. ${gap}`;
-    if (s.cityRank === null) return `In ${pc.name} his fans rank ${s.name} #${s.artistRank}, and ${s.name} isn't in ${short(pc.name)}'s own top 20. ${gap}`;
-    if (s.cityRank > s.artistRank) return `In ${pc.name} his fans rank ${s.name} #${s.artistRank}, while the city ranks it #${s.cityRank}. ${gap}`;
+    if (s.cityRank === null) return `In ${pc.name} the artist's fans rank ${s.name} #${s.artistRank}, and ${s.name} isn't in ${short(pc.name)}'s own top 20. ${gap}`;
+    if (s.cityRank > s.artistRank) return `In ${pc.name} the artist's fans rank ${s.name} #${s.artistRank}, while the city ranks it #${s.cityRank}. ${gap}`;
     return `Each city's playbook shows the brands this artist's fans rank against the city's own list. ${gap}`;
   })();
 
@@ -83,7 +83,7 @@ export function buildTourSteps(show: Showcase): TourStep[] {
   return [
     {
       id: "markets", title: "Markets", route: BOARD, targets: ["board-header"],
-      body: `This is a recorded tour for ${f.artist}: ${f.markets} ${f.markets === 1 ? "city" : "cities"}${f.regions.length ? ` across ${joinList(f.regions)}` : ""}. Fan heat shows where his fans are most concentrated, using Qloo taste data.`,
+      body: `This is a recorded tour for ${f.artist}: ${f.markets} ${f.markets === 1 ? "city" : "cities"}${f.regions.length ? ` across ${joinList(f.regions)}` : ""}. Fan heat shows where the artist's fans are most concentrated, using Qloo taste data.`,
     },
     { id: "hook", title: "The hook", route: BOARD, targets: pc ? [`city-${pc.id}`] : [], body: hook },
     {
@@ -96,7 +96,7 @@ export function buildTourSteps(show: Showcase): TourStep[] {
     },
     {
       id: "sponsors", title: "Playbook: Sponsors", route: playbookRoute, targets: ["card-sponsors"],
-      body: `The brands his ${where} fans rank far above the city does, with a ready-made ask: a presale or a co-branded night ${venueAsk}. Causes and advocacy groups are filtered out, because they aren't sponsors.`,
+      body: `The brands the artist's ${where} fans rank far above the city does, with a ready-made ask: a presale or a co-branded night ${venueAsk}. Causes and advocacy groups are filtered out, because they aren't sponsors.`,
     },
     {
       id: "rest", title: "Playbook: the rest", route: playbookRoute, targets: ["card-co_billing"],

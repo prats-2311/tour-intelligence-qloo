@@ -262,7 +262,7 @@ describe("copy is derived from the recording", () => {
   it("step 1 reads the artist, city count and regions from the recording", () => {
     const s = show();
     const n = showcaseCities(s).length;
-    expect(buildTourSteps(s)[0]!.body).toBe(`This is a recorded tour for ${s.artist}: ${n} cities across ${s.brief.regions.slice(0, -1).join(", ")} and ${s.brief.regions.at(-1)}. Fan heat shows where his fans are most concentrated, using Qloo taste data.`);
+    expect(buildTourSteps(s)[0]!.body).toBe(`This is a recorded tour for ${s.artist}: ${n} cities across ${s.brief.regions.slice(0, -1).join(", ")} and ${s.brief.regions.at(-1)}. Fan heat shows where the artist's fans are most concentrated, using Qloo taste data.`);
   });
   it("step 3 quotes the mover's fan-heat and winnability ranks", () => {
     const s = show();
@@ -288,7 +288,7 @@ describe("copy is derived from the recording", () => {
     card("venue_fit").items[0]!.name = "Fixture Room";
     Object.assign(card("sponsors").items[0]!, { name: "Fixture Brand", artistRank: 1, cityRank: null });
     const steps = buildTourSteps(s);
-    expect(steps[1]!.body).toContain(`In ${mover.name} his fans rank Fixture Brand #1, and Fixture Brand isn't in ${mover.name}'s own top 20.`);
+    expect(steps[1]!.body).toContain(`In ${mover.name} the artist's fans rank Fixture Brand #1, and Fixture Brand isn't in ${mover.name}'s own top 20.`);
     expect(steps[4]!.body).toContain("a presale or a co-branded night at Fixture Room.");
     expect(steps[5]!.body).toContain("(Fixture Act: fans share taste 42%)");
   });
