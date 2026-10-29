@@ -132,6 +132,7 @@ cd dashboard && RECORDINGS_DIR=<dir> npm run server & npm run dev
 - The proof samples are small (10 artists, 22 cases) and the limits above apply.
 - The public MCP is a rate-limited demo running on the author's Qloo key.
 - WebMCP tools need Chrome with the feature enabled.
+- A short do-not-book list (currently one act) is applied at display time; affected cards say so. Recorded data and proof results are unchanged.
 
 ## Data policy
 

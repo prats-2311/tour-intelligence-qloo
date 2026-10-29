@@ -1,3 +1,4 @@
+import { isHiddenItem } from "./doNotBook";
 import type { PlaybookCard } from "./types";
 
 /**
@@ -6,6 +7,7 @@ import type { PlaybookCard } from "./types";
  * whatever items it carries must never be quoted.
  */
 export function firstOkName(cards: PlaybookCard[], kind: PlaybookCard["kind"], key = "name"): string | null {
-  const v = cards.find((c) => c.kind === kind && c.status === "ok")?.items[0]?.[key];
+  // Items on the do-not-book list are skipped, so the next act is quoted instead.
+  const v = cards.find((c) => c.kind === kind && c.status === "ok")?.items.find((it) => !isHiddenItem(kind, it))?.[key];
   return typeof v === "string" && v ? v : null;
 }

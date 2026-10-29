@@ -1,3 +1,4 @@
+import { applyDoNotBook } from "@/lib/qloo/doNotBook";
 import type { CardKind, PlaybookCard, RemovalReason } from "@/lib/qloo/types";
 
 export const fit = (v: unknown): string => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(2) : "—");
@@ -25,7 +26,8 @@ const UNIT: Partial<Record<CardKind, string>> = { sponsors: "BRANDS", venue_fit:
 export const metaLine = (code: string, kind: CardKind | "this_week", card?: PlaybookCard): string => {
   const base = `${code} · ${CARD_TITLE[kind].toUpperCase()}`;
   const unit = kind !== "this_week" ? UNIT[kind] : undefined;
-  return card && unit && card.items.length > 0 ? `${base} · ${card.items.length} ${unit}` : base;
+  const n = card ? applyDoNotBook(card).card.items.length : 0; // shown items only
+  return card && unit && n > 0 ? `${base} · ${n} ${unit}` : base;
 };
 
 export const removalText = (r: { reason: RemovalReason; detail: string }): string => {

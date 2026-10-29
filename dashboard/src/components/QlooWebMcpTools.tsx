@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { loadPlaybook } from "../lib/qloo/playbookStore";
 import { useTourBoard } from "../lib/qloo/TourBoardProvider";
+import { applyDoNotBook } from "../lib/qloo/doNotBook";
 import type { PlaybookCard } from "../lib/qloo/types";
 
 type ModelContext = { registerTool?: (tool: Record<string, unknown>, options?: { signal?: AbortSignal }) => unknown };
@@ -13,7 +14,7 @@ const NO_RUN = { ok: false, error: "No Tour Board run yet" };
 const textResult = (value: unknown): WebMcpToolResult => ({ content: [{ type: "text", text: JSON.stringify(value) }] });
 
 function topItems(card: PlaybookCard): Array<{ name: string; value: number | null }> {
-  return card.items.slice(0, 3).map((item) => {
+  return applyDoNotBook(card).card.items.slice(0, 3).map((item) => {
     const name = [item.name, item.label].find((v): v is string => typeof v === "string") ?? "";
     const value = [item.affinity, item.share, item.value].find((v): v is number => typeof v === "number") ?? null;
     return { name, value };

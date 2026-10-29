@@ -1,3 +1,4 @@
+import { isHiddenItem } from "./doNotBook";
 import type { PlaybookCard } from "./types";
 
 const isRec = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -57,7 +58,7 @@ export function playbookCrossDomain(cards: PlaybookCard[]): Array<{ category: Cr
   for (const card of cards ?? []) {
     if (card.kind !== "local_moment" && card.kind !== "sponsors") continue;
     for (const item of card.items ?? []) {
-      if (!isRec(item) || typeof item.name !== "string" || !item.name) continue;
+      if (!isRec(item) || typeof item.name !== "string" || !item.name || isHiddenItem(card.kind, item)) continue;
       const category = card.kind === "sponsors" ? "brand" : inferCategory(item);
       if (category) out.push({ category, name: item.name, affinity: num(item.affinity) });
     }

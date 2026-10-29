@@ -1,8 +1,9 @@
 import type { CardClaims } from "@/lib/qloo/types";
+import { visibleClaims } from "@/lib/qloo/doNotBook";
 import { removalText } from "./format";
 
 export function ClaimsAudit({ claims }: { claims: Array<{ card: string; removed: CardClaims["removed"] }> }) {
-  const groups = claims.filter((g) => g.removed.length > 0);
+  const groups = claims.map((g) => ({ ...g, removed: visibleClaims({ verified: [], removed: g.removed })!.removed })).filter((g) => g.removed.length > 0);
   if (groups.length === 0) return <p className="text-[13px] text-canvas-muted">No claims were removed.</p>;
   return (
     <div className="space-y-5">

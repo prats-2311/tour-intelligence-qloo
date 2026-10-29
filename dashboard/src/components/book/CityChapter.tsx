@@ -9,6 +9,7 @@ import { ClaimsBadge } from "@/components/playbook/ClaimsBadge";
 import { CARD_TITLE, removalText } from "@/components/playbook/format";
 import { KeyArtPoster } from "@/components/playbook/KeyArtPoster";
 import { RadiusNote } from "@/components/qloo/RadiusNote";
+import { visibleClaims } from "@/lib/qloo/doNotBook";
 import { firstOkName } from "@/lib/qloo/playbookFacts";
 import type { BookCityChapter } from "@/lib/qloo/tourBook";
 import type { CardClaims, CardKind, DateWindow, ScoredCity } from "@/lib/qloo/types";
@@ -43,8 +44,8 @@ export function CityChapter({ chapter, sample = false, showcase = false, artist,
   const narrative = playbook?.narrative;
   const ok = chapter.status === "ready";
   const merch = narrative?.status === "ok" ? narrative.merch : null;
-  const claimsOf = (k: CardKind): CardClaims | undefined => (narrative?.status === "ok" ? narrative.cards[k] : undefined);
-  const removed = narrative?.status === "ok" ? ORDER.flatMap((k) => (narrative.cards[k]?.removed ?? []).map((r) => ({ kind: k, ...r }))) : [];
+  const claimsOf = (k: CardKind): CardClaims | undefined => (narrative?.status === "ok" ? visibleClaims(narrative.cards[k]) : undefined);
+  const removed = narrative?.status === "ok" ? ORDER.flatMap((k) => (claimsOf(k)?.removed ?? []).map((r) => ({ kind: k, ...r }))) : [];
   return (
     <section id={`chapter-${city.id}`} aria-labelledby={`title-${city.id}`} className="book-chapter flex min-w-0 flex-col gap-4">
       <div className="relative [&_svg]:rounded-none lg:[&_svg]:rounded-[14px]">

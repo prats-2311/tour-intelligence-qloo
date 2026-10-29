@@ -1,12 +1,14 @@
 import type { ReactNode } from "react";
 import type { CardClaims } from "@/lib/qloo/types";
+import { visibleClaims } from "@/lib/qloo/doNotBook";
 import { ClaimsBadge } from "./ClaimsBadge";
 
 // DESIGN 4.2 CueCard for the playbook: perforated city-accent rail, no border, no shadow.
-export function PlaybookCard({ accent, meta, title, claims, narrativeStatus, refsCount, onAudit, hasEvidence, children }: {
+export function PlaybookCard({ accent, meta, title, claims: allClaims, narrativeStatus, refsCount, onAudit, hasEvidence, children }: {
   accent: string; meta: string; title: string; claims?: CardClaims;
   narrativeStatus: "ok" | "unavailable" | "pending"; refsCount: number; onAudit?: () => void; hasEvidence: boolean; children: ReactNode;
 }) {
+  const claims = visibleClaims(allClaims);
   const verified = claims?.verified ?? [];
   const removed = claims?.removed.length ?? 0;
   return (

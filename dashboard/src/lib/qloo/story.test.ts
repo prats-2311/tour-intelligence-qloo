@@ -59,4 +59,17 @@ describe("storyBeats", () => {
     delete copy.playbooks[goldId];
     expect(storyBeats(copy)!.plan).toMatchObject({ sponsor: null, coBill: null });
   });
+
+  it("takes the next co-billing act when the first is on the do-not-book list, and none when all are", () => {
+    const goldId = showcaseCities(show).find((c) => c.name === storyBeats(show)!.mover.city)!.id;
+    const copy = parseShowcase(JSON.parse(JSON.stringify(fixture)));
+    let second: unknown = null;
+    for (const e of copy.playbooks[goldId]!) if (e.type === "playbook") for (const c of e.playbook.cards) if (c.kind === "co_billing") {
+      c.items = [{ ...c.items[0]!, name: "Ariel Pink" }, ...c.items];
+      second = c.items[1]!.name;
+    }
+    expect(storyBeats(copy)!.plan.coBill).toBe(second);
+    for (const e of copy.playbooks[goldId]!) if (e.type === "playbook") for (const c of e.playbook.cards) if (c.kind === "co_billing") c.items = [{ name: "Ariel Pink" }];
+    expect(storyBeats(copy)!.plan.coBill).toBeNull();
+  });
 });

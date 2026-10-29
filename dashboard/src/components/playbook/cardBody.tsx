@@ -1,4 +1,5 @@
 import type { MerchDirection, PlaybookCard } from "@/lib/qloo/types";
+import { HIDDEN_NOTE, applyDoNotBook } from "@/lib/qloo/doNotBook";
 import { DataWarningBadge } from "@/components/qloo/DataWarningBadge";
 import { CARD_TITLE } from "./format";
 import { CoBilling } from "./cards/CoBilling";
@@ -11,7 +12,8 @@ import { VenueFit } from "./cards/VenueFit";
 
 export { ThisWeekBody, isEmptyWeek } from "./cards/ThisWeek";
 
-export function CardBody({ card, merch, city, artist, venueName }: { card: PlaybookCard; merch?: MerchDirection | null; city: string; artist?: string; /** First ok venue_fit name of the same playbook, for the sponsor deal line. */ venueName?: string }) {
+export function CardBody({ card: fullCard, merch, city, artist, venueName }: { card: PlaybookCard; merch?: MerchDirection | null; city: string; artist?: string; /** First ok venue_fit name of the same playbook, for the sponsor deal line. */ venueName?: string }) {
+  const { card, hidden } = applyDoNotBook(fullCard);
   const empty = card.status === "empty" && card.kind !== "promo_zones";
   let body;
   const emptyCopy = card.summary?.emptyCopy;
@@ -21,6 +23,8 @@ export function CardBody({ card, merch, city, artist, venueName }: { card: Playb
       : card.kind === "venue_fit"
       ? <p className="text-[13px] text-canvas-muted">Qloo lists no music venues in {city} for this artist</p>
       : <p className="text-[13px] text-canvas-muted">Qloo returned no {CARD_TITLE[card.kind].toLowerCase()} for {city}</p>;
+  } else if (hidden > 0 && card.items.length === 0) {
+    body = null; // every act was hidden: the note below is the whole card
   } else {
     switch (card.kind) {
       case "sponsors": body = <Sponsors card={card} city={city} venueName={venueName} />; break;
@@ -36,6 +40,7 @@ export function CardBody({ card, merch, city, artist, venueName }: { card: Playb
     <div>
       {card.warnings.length > 0 && <div className="mb-2"><DataWarningBadge warnings={card.warnings} /></div>}
       {body}
+      {hidden > 0 && <p className="mt-2 text-[13px] text-canvas-muted">{HIDDEN_NOTE(hidden)}</p>}
     </div>
   );
 }

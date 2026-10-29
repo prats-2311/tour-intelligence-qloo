@@ -151,6 +151,18 @@ describe("Landing story beats (spec 1.2b rule 1: every number comes from the rec
     expect(plan).toContain("pitch");
     expect(plan).not.toContain("on the bill");
   });
+  it("never prints a do-not-book act in the beats: next act, or no bill clause", () => {
+    editCards((c) => { if (c.kind === "co_billing") (c as unknown as { items: unknown[] }).items = [{ name: "Ariel Pink" }, { name: "Synthetic Artist 02" }]; });
+    let plan = renderBeats()[2]!.textContent!;
+    expect(document.body.textContent).not.toContain("Ariel Pink");
+    expect(plan).toContain("put Synthetic Artist 02 on the bill");
+    cleanup();
+    editCards((c) => { if (c.kind === "co_billing") (c as unknown as { items: unknown[] }).items = [{ name: "Ariel Pink" }]; });
+    plan = renderBeats()[2]!.textContent!;
+    expect(document.body.textContent).not.toContain("Ariel Pink");
+    expect(plan).not.toContain("on the bill");
+    expect(plan).toContain("pitch");
+  });
   it("on mobile the CTAs come before the beats, and the beats before the proof card", () => {
     setShowcase(parseShowcase(syntheticShowcase));
     renderBeats();
