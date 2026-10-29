@@ -228,3 +228,30 @@ Test B is re-run from the start under this amendment. Test A batch 1 had no stop
 - Test C is re-run from the start. The stopped run is kept (`proof-v3-ground-items.stopped-*.json`) and reported.
 - The re-run regenerates the LLM-only lists, at temperature 0.2. No rating existed when this was decided, so no outcome was known.
 - All other rules are unchanged.
+
+## Amendment 7: Gemini + Qloo combined, on existing Test A and B data (2026-10-29, after Tests A and B were published, before any combined number was computed)
+**Why:** every test so far compares Qloo *instead of* an LLM. The product ships the LLM *plus* Qloo: Gemini proposes, Qloo ranks and checks. This amendment tests the combination. It uses only rankings already stored in `proof-v3-fixed.json` (Test B) and `proof-v3-city-batch1.json` / `-batch2.json` (Test A). It makes no new Qloo or Gemini calls.
+
+**Disclosure:** this was written on 29 Oct 2026. Tests A and B had already been published (Test A: LLM beat winnability, p=0.031; Test B: Qloo beat popularity, p<0.001, and trailed Gemini, not significant). Each arm's per-case rankings existed on disk, but nobody had computed a fused ranking or any fused score before this amendment was committed. Tests A and B stay exactly as published.
+
+### 7.1 Primary: fusion vs Gemini
+- **Fusion rule (fixed; no alternatives will be tried):** reciprocal rank fusion with k = 60 (Cormack, Clarke & Büttcher, SIGIR 2009). This is the standard parameter-free rule for merging two rankings. Each candidate scores `1/(60 + rank_Gemini) + 1/(60 + rank_Qloo)`, with ranks starting at 1. Candidates are sorted by score, descending, and ties are broken by Gemini rank.
+- **Test B:** the 22 reviewed cases. The inputs are the `gemini` and `qloo_rank` arms' `ranking` (10 candidates each). The fused list is scored exactly as Test B scores an arm: reciprocal rank of the real pick, then the mean over cases. A paired sign test compares fusion with Gemini: two-sided exact, ties dropped.
+- **Test A:** every artist in batches 1 and 2. The inputs are the `llm` and `winnability` arms' `ranking` over the artist's candidates. The fused list is scored exactly as Test A scores an arm: R-precision against the played cities. A paired sign test compares fusion with the LLM, using the same rules.
+- **Missing arms:** a case or artist where either input arm's status is not ok (no answer, error, or a non-permutation after the retry) is excluded from that test's fusion analysis. Exclusions are listed with their reason.
+- **Claim rule (unchanged):** a win is claimed only if fusion's mean is higher, fusion has more wins than losses, and p < 0.05. Otherwise the difference is reported as not significant at this sample size, under "what we learned". A loss or tie is stated plainly.
+- **Also reported, descriptively, with no test:** fusion's mean beside every existing arm.
+
+### 7.2 Exploratory: tours after the model's training cutoff
+- **Rule:** keep only the cases the Gemini model that answered them could not have seen. That model is recorded per case as `geminiModel` (Test B) or `llmModel` (Test A). Cutoffs, as Google states them:
+  - `gemini-2.5-flash`: January 2025 (Gemini API model page, <https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash>).
+  - `gemini-3.8-flash`: March 2026, with a note that some domains are limited to January 2025 (Google DeepMind model card, <https://deepmind.google/models/model-cards/gemini-3-8-flash/>). The stated date, March 2026, is used.
+  - Any other or unknown model: the case is excluded, and we say so.
+- **Test B:** keep a case if its tour date (YYYY-MM) is strictly after the cutoff month.
+- **Test A:** keep an artist if `firstShowYear` is strictly greater than the cutoff year. Only the year is stored, so this rule errs towards excluding. Test A's pool is drawn from the 2023 and 2024 concert-tour categories, so this subset may well be empty. If so, it is reported as empty.
+- **Re-scoring:** every arm and the fusion are re-scored on the subset with the same metrics. The subset is labelled "exploratory, small n". Nothing is claimed unless the subset meets the claim rule above, and even then it is reported as exploratory.
+
+### 7.3 Publication
+- A script computes both parts from the stored files and writes the results into `backtest.json` (`proofV3.fusion`).
+- The README proof section and `/proof` publish whatever comes out.
+- If fusion meets the claim rule on Test B, the line reads: "Gemini + Qloo ranked the real tour's pick better than Gemini alone (…)". If not, the result is stated plainly. Tests A and B keep their published wording.
