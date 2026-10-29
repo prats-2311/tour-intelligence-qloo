@@ -37,3 +37,10 @@ export function visibleClaims(claims: CardClaims | undefined): CardClaims | unde
   if (!claims) return claims;
   return { verified: claims.verified.filter((c) => !claimMentions(c)), removed: claims.removed.filter((r) => !claimMentions(r.claim)) };
 }
+
+/** Verified and removed claim totals over a narrative's cards, counting only what visibleClaims leaves on display. */
+export function visibleClaimTotals(cards: Partial<Record<PlaybookCard["kind"], CardClaims>>): { verified: number; removed: number } {
+  let verified = 0, removed = 0;
+  for (const c of Object.values(cards)) { const v = visibleClaims(c); verified += v?.verified.length ?? 0; removed += v?.removed.length ?? 0; }
+  return { verified, removed };
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DO_NOT_BOOK, HIDDEN_NOTE, applyDoNotBook, isDoNotBook, mentionsDoNotBook, visibleClaims } from "./doNotBook";
+import { DO_NOT_BOOK, HIDDEN_NOTE, applyDoNotBook, isDoNotBook, mentionsDoNotBook, visibleClaims, visibleClaimTotals } from "./doNotBook";
 import type { PlaybookCard } from "./types";
 
 const card = (kind: PlaybookCard["kind"], items: PlaybookCard["items"]): PlaybookCard => ({ kind, status: "ok", items, refs: [], warnings: [] });
@@ -44,5 +44,14 @@ describe("doNotBook", () => {
     expect(out.verified.map((c) => c.text)).toEqual(["Safe."]);
     expect(out.removed.map((r) => r.claim.text)).toEqual(["Nope."]);
     expect(visibleClaims(undefined)).toBeUndefined();
+  });
+  it("totals count exactly the claims the display shows", () => {
+    const claim = (text: string) => ({ text, entities: [], numbers: [], evidence_refs: [] });
+    const cards = {
+      sponsors: { verified: [claim("Safe."), claim("Ariel Pink fits."), claim("Also safe.")], removed: [{ claim: claim("Ariel Pink maybe."), reason: "no_refs" as const, detail: "" }, { claim: claim("Nope."), reason: "no_refs" as const, detail: "" }] },
+      venue_fit: undefined,
+    };
+    expect(visibleClaimTotals(cards)).toEqual({ verified: 2, removed: 1 });
+    expect(visibleClaimTotals({ sponsors: { verified: [claim("Safe.")], removed: [] } })).toEqual({ verified: 1, removed: 0 });
   });
 });

@@ -35,6 +35,16 @@ describe("buildTourBook", () => {
     expect(gdl.advance.find((r) => r.label === "Best room")?.value).toBe("C3 Stage");
     expect(gdl.advance.find((r) => r.label === "Merch drop")?.value).toBe("Jacaranda season");
   });
+  it("chapter claim totals skip claims that name a do-not-book act", () => {
+    const pb = done("4005539");
+    if (pb.narrative?.status !== "ok") throw new Error("fixture narrative should be ok");
+    const kind = Object.keys(pb.narrative.cards)[0] as "sponsors";
+    const cc = pb.narrative.cards[kind]!;
+    const extra = { text: "Ariel Pink draws the same fans.", entities: [], numbers: [], evidence_refs: [] };
+    const hidden = { ...pb, narrative: { ...pb.narrative, cards: { ...pb.narrative.cards, [kind]: { ...cc, verified: [...cc.verified, extra] } } } };
+    const chapter = (p: PlaybookState) => buildTourBook({ ...base, playbooks: Object.fromEntries(shortlist.map((id) => [id, id === "4005539" ? p : done(id)])), weeks: {} }).chapters[2]!.claims;
+    expect(chapter(hidden)).toEqual(chapter(pb));
+  });
   it("the advance sheet has a This week tile only when the week has something to say", () => {
     const week = sampleThisWeek("4005539")!;
     const withWeek = (w: typeof week | undefined) => buildTourBook({ ...base, playbooks: Object.fromEntries(shortlist.map((id) => [id, done(id)])), weeks: Object.fromEntries(shortlist.map((id) => [id, w])) });

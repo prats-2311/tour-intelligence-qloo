@@ -36,6 +36,7 @@ import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
 import { isRoutingBrief, setShowcaseVariant, variantOfBrief, type ShowcaseVariant, showcaseAvailable, showcaseBrief, showcaseCities, showcaseParam, showcasePlaybookCities, showcasePlaybookEvents, showcaseQuery, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
 import type { CardKind, PlaybookCard as Card, SampleSet } from "@/lib/qloo/types";
+import { visibleClaimTotals } from "@/lib/qloo/doNotBook";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
 // The Culture and Delight briefs belong to the legacy campaign flow, which is off the promoter path.
@@ -198,8 +199,7 @@ function CityPlaybookPage() {
   const w = shownCity.winnability.value;
   const merch = narrative?.status === "ok" ? narrative.merch : null;
 
-  let verified = 0, removedCount = 0;
-  if (narrative?.status === "ok") for (const c of Object.values(narrative.cards)) { verified += c.verified.length; removedCount += c.removed.length; }
+  const { verified, removed: removedCount } = narrative?.status === "ok" ? visibleClaimTotals(narrative.cards) : { verified: 0, removed: 0 };
   const claimsValue = narrative?.status === "ok" ? `${verified} verified · ${removedCount} removed` : narrative ? "Narrative unavailable" : "—";
   const audit = narrative?.status === "ok"
     ? ([...ORDER, "talent"] as CardKind[]).map((k) => ({ card: CARD_TITLE[k], removed: narrative.cards[k]?.removed ?? [] }))

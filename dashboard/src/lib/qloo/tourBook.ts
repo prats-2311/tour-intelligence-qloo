@@ -5,6 +5,7 @@ import { toolPlainName } from "./labels";
 import { firstOkName } from "./playbookFacts";
 import { zoneDisplayLabel } from "./zones";
 import { sortCities } from "./ranking";
+import { visibleClaimTotals } from "./doNotBook";
 import { summariseCalls, type CallSummary } from "./callSummary";
 
 export interface BookCityChapter {
@@ -70,9 +71,7 @@ function advanceRows(p: PlaybookState | undefined, week: ThisWeek | undefined, c
 
 function claimTotals(p?: PlaybookState): { verified: number; removed: number } | null {
   if (!p || p.status !== "done" || p.narrative?.status !== "ok") return null;
-  let verified = 0, removed = 0;
-  for (const c of Object.values(p.narrative.cards)) { verified += c?.verified.length ?? 0; removed += c?.removed.length ?? 0; }
-  return { verified, removed };
+  return visibleClaimTotals(p.narrative.cards);
 }
 
 const INPUT_KEYS = ["entity", "signals", "within", "filter_location", "signal_location", "target_type"];

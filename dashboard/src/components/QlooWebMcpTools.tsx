@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { loadPlaybook } from "../lib/qloo/playbookStore";
 import { useTourBoard } from "../lib/qloo/TourBoardProvider";
-import { applyDoNotBook } from "../lib/qloo/doNotBook";
+import { applyDoNotBook, visibleClaimTotals } from "../lib/qloo/doNotBook";
 import type { PlaybookCard } from "../lib/qloo/types";
 
 type ModelContext = { registerTool?: (tool: Record<string, unknown>, options?: { signal?: AbortSignal }) => unknown };
@@ -108,10 +108,7 @@ export function QlooWebMcpTools() {
           artist: state.artist.name, artistEntityId: state.artist.entityId,
           city: { id: city.id, name: city.name, country: city.country }, sample, sampleSet: state.sampleSet, delayMs: sample ? 0 : undefined,
         });
-        let verified = 0, removed = 0;
-        if (pb.narrative?.status === "ok") {
-          for (const c of Object.values(pb.narrative.cards)) { verified += c?.verified.length ?? 0; removed += c?.removed.length ?? 0; }
-        }
+        const { verified, removed } = pb.narrative?.status === "ok" ? visibleClaimTotals(pb.narrative.cards) : { verified: 0, removed: 0 };
         return { ok: true, status: pb.status, cards: pb.cards.map((card) => ({ kind: card.kind, status: card.status, top: topItems(card) })), claims: { verified, removed } };
       },
     });
