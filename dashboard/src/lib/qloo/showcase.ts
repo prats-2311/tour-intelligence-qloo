@@ -151,9 +151,9 @@ export function showcaseCities(show?: Showcase, v?: ShowcaseVariant): ScoredCity
 }
 export const showcasePlaybookCities = (v?: ShowcaseVariant): ScoredCity[] => showcaseCities(undefined, v).filter((c) => showcasePlaybookEvents(c.id, v));
 
-/** "Fan density ranks it 4th of 8. Adding winnability puts it 2nd." Descriptive only: it says nothing about which ranking is better. */
-export const rankShiftLine = (fanRank: number, winRank: number, n: number): string =>
-  `Fan density ranks it ${ordinal(fanRank)} of ${n}. Adding winnability ${fanRank === winRank ? "keeps" : "puts"} it ${ordinal(winRank)}.`;
+/** "Fan density ranks it 4th of 8. Adding winnability puts it 2nd." Descriptive only: it says nothing about which ranking is better. With `total` (all markets, scored or not) above `n`, the rank is named as out of the scored subset: "4th of the 8 with data". */
+export const rankShiftLine = (fanRank: number, winRank: number, n: number, total?: number): string =>
+  `Fan density ranks it ${ordinal(fanRank)} of ${total !== undefined && total > n ? `the ${n} with data` : n}. Adding winnability ${fanRank === winRank ? "keeps" : "puts"} it ${ordinal(winRank)}.`;
 
 export interface Proof { city: ScoredCity; line: string }
 
@@ -174,7 +174,7 @@ export function proofFor(all: ScoredCity[], withPlaybook?: readonly string[]): P
   const rankOf = (c: ScoredCity, key: "fanHeat" | "winnability") => boardRank(scored, c, key);
   const rows = pool.map((c) => ({ city: c, d: rankOf(c, "fanHeat"), w: rankOf(c, "winnability") }));
   const best = rows.reduce((a, b) => (b.d - b.w > a.d - a.w ? b : a));
-  if (best.d - best.w > 0) return { city: best.city, line: rankShiftLine(best.d, best.w, scored.length) };
+  if (best.d - best.w > 0) return { city: best.city, line: rankShiftLine(best.d, best.w, scored.length, all.length) };
   const top = rows.reduce((a, b) => (b.w < a.w ? b : a));
   return { city: top.city, line: `Ranked ${ordinal(top.w)} of ${scored.length} scored ${scored.length === 1 ? "market" : "markets"} on winnability.` };
 }

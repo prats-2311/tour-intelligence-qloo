@@ -25,11 +25,12 @@ const GDL = SAMPLE_CITIES[2]!;
 // The recording is fetched at boot and swaps SHOWCASE, so everything derived from it is a function read at render time, never a module constant.
 // A real recording drives the card from its own data; the placeholder keeps the Guadalajara sample card.
 const isRecorded = (): boolean => SHOWCASE.recordedAt !== null;
-const previewCities = (): ScoredCity[] => (isRecorded() ? showcaseCities() : SAMPLE_CITIES).filter((c) => c.verdict !== "insufficient_data");
+const boardCities = (): ScoredCity[] => (isRecorded() ? showcaseCities() : SAMPLE_CITIES);
+const previewCities = (): ScoredCity[] => boardCities().filter((c) => c.verdict !== "insufficient_data");
 const sampleLine = (): string => {
   const cities = previewCities();
   const rank = (mode: "density" | "winnability") => sortCities(cities, mode).findIndex((c) => c.id === GDL.id) + 1;
-  return rankShiftLine(rank("density"), rank("winnability"), cities.length);
+  return rankShiftLine(rank("density"), rank("winnability"), cities.length, boardCities().length);
 };
 // The recording's own scoring config (when it has one) drives the hero bars' ticks; otherwise the bars keep the default thresholds.
 const recordedThresholds = () => SHOWCASE.boardEvents.find((e) => e.type === "scoring")?.scoring?.thresholds;

@@ -84,7 +84,7 @@ describe("Landing", () => {
   it("shows the Guadalajara fragment from the sample fixture and omits the backtest link", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
     expect(screen.getByText("Guadalajara")).toBeTruthy();
-    expect(screen.getByText("Fan density ranks it 6th of 9. Adding winnability puts it 3rd.")).toBeTruthy();
+    expect(screen.getByText("Fan density ranks it 6th of the 9 with data. Adding winnability puts it 3rd.")).toBeTruthy();
     expect(screen.queryByText(/goldmine/i)).toBeNull();
     expect(screen.queryByText(/backtest/i)).toBeNull();
   });
@@ -93,7 +93,7 @@ describe("Landing", () => {
     const rank = (m: "density" | "winnability") => sortCities(SAMPLE_CITIES, m).findIndex((c) => c.id === id) + 1;
     expect([rank("density"), rank("winnability")]).toEqual([6, 3]);
     render(<MemoryRouter><Landing /></MemoryRouter>);
-    expect(screen.getByText("Fan density ranks it 6th of 9. Adding winnability puts it 3rd.")).toBeTruthy();
+    expect(screen.getByText("Fan density ranks it 6th of the 9 with data. Adding winnability puts it 3rd.")).toBeTruthy();
   });
   it("desktop branch: map region is aria-hidden and no LIVE text", async () => {
     vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));

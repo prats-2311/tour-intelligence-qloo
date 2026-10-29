@@ -99,6 +99,16 @@ describe("proofFor", () => {
     expect(p.city.id).toBe("d");
     expect(p.line).toBe("Fan density ranks it 4th of 4. Adding winnability puts it 1st.");
   });
+  it("rankShiftLine names the scored subset when total exceeds n, and is unchanged otherwise", () => {
+    expect(rankShiftLine(4, 1, 9, 10)).toBe("Fan density ranks it 4th of the 9 with data. Adding winnability puts it 1st.");
+    expect(rankShiftLine(3, 3, 9, 10)).toBe("Fan density ranks it 3rd of the 9 with data. Adding winnability keeps it 3rd.");
+    expect(rankShiftLine(4, 1, 9, 9)).toBe("Fan density ranks it 4th of 9. Adding winnability puts it 1st.");
+    expect(rankShiftLine(4, 1, 9)).toBe("Fan density ranks it 4th of 9. Adding winnability puts it 1st.");
+  });
+  it("proofFor says 'of the N with data' when a market is unscored", () => {
+    const p = proofFor([c("a", 90, 60), c("b", 80, 50), c("c", 70, 40), c("d", 60, 95), c("e", 50, null)])!;
+    expect(p.line).toBe("Fan density ranks it 4th of the 4 with data. Adding winnability puts it 1st.");
+  });
   it("rankShiftLine says keeps when the ranks match, and never says better", () => {
     expect(rankShiftLine(3, 3, 8)).toBe("Fan density ranks it 3rd of 8. Adding winnability keeps it 3rd.");
     expect(rankShiftLine(6, 3, 10)).toBe("Fan density ranks it 6th of 10. Adding winnability puts it 3rd.");
