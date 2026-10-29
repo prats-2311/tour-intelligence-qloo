@@ -248,10 +248,23 @@ describe("Proof v3", () => {
     expect(order(sections().at(-1)!, earlier)).toBe(true);
     expect(screen.getByText(/The first eligible list had two design flaws/)).toBeTruthy();
   });
-  it("Test C absent from the data means no Test C section; present means a section with no extra code", () => {
+  it("Test C absent from the data shows a pending section in C's slot; a real C replaces it", () => {
     const v3 = (v3Backtest as { proofV3: { tests: Array<{ id: string }> } }).proofV3;
     view({ ...v3Backtest, proofV3: { ...v3, tests: v3.tests.filter((t) => t.id !== "C") } });
     expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "A", "F"]);
+    const pending = screen.getByRole("region", { name: "Test C: are the picks real places in the city?" });
+    expect(pending.getAttribute("data-test-id")).toBe("C-pending");
+    expect(within(pending).getByText("Run complete; human rating in progress. The result will be published here whatever it shows.")).toBeTruthy();
+    const link = within(pending).getByRole("link", { name: /amendments 4.6/i });
+    expect(link.getAttribute("href")).toBe("https://github.com/prats-2311/tour-intelligence-qloo/blob/master/docs/qloo/proof-v3-protocol.md");
+    // after the claim checker, before the Limits heading
+    const before = (x: Node, y: Node) => !!(x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(before(sections()[1]!, pending)).toBe(true);
+    expect(before(pending, screen.getByRole("heading", { level: 2, name: "Limits: where Qloo-backed ranking lost" }))).toBe(true);
+    cleanup();
+    view(v3Backtest);
+    expect(screen.queryByText(/human rating in progress/)).toBeNull();
+    expect(screen.queryByRole("region", { name: "Test C: are the picks real places in the city?" })).toBeNull();
   });
   it("Test F (Amendment 7) renders as data, sits before A, and an unknown id does not crash", () => {
     const v3 = (v3Backtest as { proofV3: { tests: Array<Record<string, unknown>> } }).proofV3;

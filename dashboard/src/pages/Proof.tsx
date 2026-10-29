@@ -220,8 +220,25 @@ function V3Test({ t }: { t: ProofV3Test }) {
   );
 }
 
+/** Stands in Test C's slot while the data has no C: the run is done, the human rating is not. */
+function TestCPending() {
+  const id = useId();
+  return (
+    <section aria-labelledby={id} data-testid="proof-v3-pending" data-test-id="C-pending" className="flex min-w-0 flex-col gap-3">
+      <h2 id={id} className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">Test C: are the picks real places in the city?</h2>
+      <p className="max-w-[68ch] text-[15px] leading-[1.5] text-canvas-text">Run complete; human rating in progress. The result will be published here whatever it shows.</p>
+      <p className="text-[15px]">
+        <a href={PROTOCOL_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-canvas-text underline decoration-canvas-muted underline-offset-4">Protocol amendments 4–6 on GitHub</a>
+      </p>
+    </section>
+  );
+}
+
 function ProofV3View({ v3, children }: { v3: ProofV3; children?: ReactNode }) {
   const tests = [...v3.tests].sort((a, b) => { const ra = V3_ORDER.indexOf(a.id), rb = V3_ORDER.indexOf(b.id); return (ra < 0 ? 99 : ra) - (rb < 0 ? 99 : rb); });
+  // Test C's slot: before the first test ranked after it (or at the end), only while the data has no C.
+  const cRank = V3_ORDER.indexOf("C");
+  const pendingAt = tests.some((x) => x.id === "C") ? -2 : tests.findIndex((x) => { const r = V3_ORDER.indexOf(x.id); return r < 0 || r > cRank; });
   return (
     <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-10 pb-8">
       <header className="flex flex-col gap-3">
@@ -232,12 +249,14 @@ function ProofV3View({ v3, children }: { v3: ProofV3; children?: ReactNode }) {
           <a href={PROTOCOL_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-canvas-text underline decoration-canvas-muted underline-offset-4">Read the protocol and its amendments on GitHub</a>
         </p>
       </header>
-      {tests.map((t) => (
+      {tests.map((t, i) => (
         <Fragment key={t.id}>
+          {pendingAt === i && <TestCPending />}
           {t.id === "A" && <h2 className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">Limits: where Qloo-backed ranking lost</h2>}
           <V3Test t={t} />
         </Fragment>
       ))}
+      {pendingAt === -1 && <TestCPending />}
       {v3.amendments.length > 0 && (
         <section aria-label="Amendments" className="flex flex-col gap-3">
           <h2 className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">Amendments</h2>
