@@ -1,4 +1,4 @@
-import { extractEntities, extractMusicTags, extractSharedTaste } from "../extract.js";
+import { descriptionsOf, extractEntities, extractMusicTags, extractSharedTaste } from "../extract.js";
 import type { City } from "../geo/cities.js";
 import { findCity } from "../geo/location.js";
 import { displayZones } from "../geo/heat.js";
@@ -9,6 +9,7 @@ import { activationInputs, Aborted, BudgetStop, resolveLocation, trackedCall } f
 import { LOCAL_DESCRIBE_CAP, LOCAL_SUGGESTIONS, matchPool, matchSuggestion } from "./localActs.js";
 import { cityPopularityArgs, LOCAL_ACT_POOL, localActRankArgs } from "./recArgs.js";
 import { dropNonSponsors } from "./nonSponsors.js";
+import type { SponsorCandidate, SponsorVerdicts } from "./sponsorCheck.js";
 import { emptySupportCopy, genreTagNames, HEADLINER_SIZE_UNKNOWN, rankLifted, SIZE_UNCHECKED_COPY, smallerThanHeadliner, SPONSOR_LIFT_NOTE } from "./playbookTrust.js";
 
 /** Size of the baseline lists (the city's own favourites) that lift is measured against. */
@@ -49,7 +50,7 @@ function card<T>(kind: CardKind, items: T[], refs: EvidenceRef[], warnings: Data
 
 export async function* runCityPlaybook(
   input: { artist: string; artistEntityId: string; city: { name: string; country: string; id?: string; lat?: number; lon?: number }; sessionId: string; narrative?: boolean; artistPopularity?: number },
-  deps: { qloo: QlooCaller; cities: City[]; signal?: AbortSignal; narrate?: NarrateFn; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null> },
+  deps: { qloo: QlooCaller; cities: City[]; signal?: AbortSignal; narrate?: NarrateFn; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts> },
 ): AsyncGenerator<GatewayEvent> {
   const events: GatewayEvent[] = [];
   try {
@@ -190,7 +191,20 @@ export async function* runCityPlaybook(
 
     const { raw } = a;
     // Non-profit, advocacy, political and religious organisations are not sponsors: removed before ranking, so they reach neither the card, the merch brands nor the narrative evidence.
-    const brandPool = dropNonSponsors(extractEntities(raw.brands.envelope));
+    // The name list is the backstop (a listed name is hidden whatever the model says); the model check then hides every candidate it does not affirm as a sponsor.
+    const allBrands = extractEntities(raw.brands.envelope);
+    const listed = dropNonSponsors(allBrands);
+    let brandPool = listed;
+    let sponsorCheck: "unavailable" | undefined;
+    if (deps.sponsorCheck && listed.items.length > 0) {
+      if (deps.signal?.aborted) throw new Aborted();
+      const desc = descriptionsOf(raw.brands.envelope);
+      const r = await deps.sponsorCheck(listed.items.map((e) => ({ entityId: e.entityId, name: e.name, ...(desc.has(e.entityId) ? { description: desc.get(e.entityId)! } : {}) })), input.sessionId);
+      // Whole-call failure: name list only (plus any cached "no"). Successful answer: only an explicit yes is kept, so a missing id is hidden.
+      sponsorCheck = r.available ? undefined : "unavailable";
+      const kept = listed.items.filter((e) => (r.available ? r.verdicts.get(e.entityId) === true : r.verdicts.get(e.entityId) !== false));
+      brandPool = { items: kept, hidden: allBrands.length - kept.length };
+    }
     const sponsorLift = rankLifted(brandPool.items, brandBase ? extractEntities(brandBase.envelope) : null);
     const sponsors = sponsorLift.items;
     const baselineRefs = (r: CallResult | null) => (r ? [ref("qloo_recommend", r)] : []);
@@ -207,7 +221,7 @@ export async function* runCityPlaybook(
     const artistTags = extractMusicTags(tags.envelope).filter((t) => t.id.startsWith("urn:tag:genre:")).map((t, index) => ({ ...t, entityId: t.id, index }));
     const cards: PlaybookCard[] = [
       { ...card("sponsors", sponsors, [ref("qloo_recommend", raw.brands), ...(sponsorLift.lifted ? baselineRefs(brandBase) : [])], warningsFor("qloo_recommend", raw.brands)),
-        ...(sponsorLift.lifted || brandPool.hidden > 0 ? { summary: { ...(sponsorLift.lifted ? { note: SPONSOR_LIFT_NOTE } : {}), ...(brandPool.hidden > 0 ? { hiddenNonSponsors: brandPool.hidden } : {}) } } : {}) },
+        ...(sponsorLift.lifted || brandPool.hidden > 0 || sponsorCheck ? { summary: { ...(sponsorLift.lifted ? { note: SPONSOR_LIFT_NOTE } : {}), ...(brandPool.hidden > 0 ? { hiddenNonSponsors: brandPool.hidden } : {}), ...(sponsorCheck ? { sponsorCheck } : {}) } } : {}) },
       { ...card("merch", artistTags, [ref("qloo_entity_tags", tags), ref("qloo_recommend", raw.brands)],
         [...warningsFor("qloo_entity_tags", tags), ...warningsFor("qloo_recommend", raw.brands)], artistTags.length > 0 || sponsors.length > 0),
         ...(sponsors.length > 0 ? { summary: { brands: sponsors.slice(0, 5).map((b) => b.name) } } : {}) },

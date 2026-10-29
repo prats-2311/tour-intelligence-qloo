@@ -118,3 +118,16 @@ export function extractMusicTags(env: QlooEnvelope): Array<{ id: string; name: s
 export function extractCandidates(env: QlooEnvelope): Array<{ id: string; name: string }> {
   return extractIssues(env).flatMap((i) => i.candidates.filter((c) => c.id !== "").map((c) => ({ id: c.id, name: c.name })));
 }
+
+/** Short descriptions by entity id, where the response carries one (top level or under properties). Used only to help a classifier. */
+export function descriptionsOf(env: QlooEnvelope): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const raw of list(env)) {
+    const e = rec(raw);
+    if (!e) continue;
+    const id = String(e.entity_id ?? e.id ?? "");
+    const d = typeof e.description === "string" ? e.description : rec(e.properties) && typeof rec(e.properties)!.description === "string" ? (rec(e.properties)!.description as string) : "";
+    if (id !== "" && d.trim() !== "") out.set(id, d.trim().slice(0, 200));
+  }
+  return out;
+}

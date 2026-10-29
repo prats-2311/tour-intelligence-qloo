@@ -13,6 +13,7 @@ import { createNarrator } from "./narrative/narrate.js";
 import { createTavilySearch } from "./web/tavily.js";
 import { FirestoreUsageStore, MemoryUsageStore } from "./web/usage.js";
 import { suggestLocalActs } from "./pipeline/localActs.js";
+import { classifySponsors } from "./pipeline/sponsorCheck.js";
 import { thisWeek } from "./web/thisWeek.js";
 import { logQlooBaseUrl } from "./startupLog.js";
 
@@ -57,6 +58,7 @@ const cities = loadCities();
 const app = createApp({
   qloo: qlooCaller, cities, health: () => mcp.health(), narrate, thisWeek: (input) => thisWeek(input, webDeps),
   localActs: (input) => suggestLocalActs(input, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
+  sponsorCheck: (candidates, sessionId) => classifySponsors(candidates, sessionId, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
   withoutQloo: (input) => rankWithoutQloo(input, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
   strategist: (input, signal) => runStrategist(input, { generate, models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, qloo: qlooCaller, cities, signal }),
 });
