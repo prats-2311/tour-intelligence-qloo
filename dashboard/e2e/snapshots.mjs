@@ -23,7 +23,6 @@ if (arg("base") || arg("out")) {
       await page.route(/tiles\.openfreemap\.org/, (r) => r.abort());
       await page.route("**/api/recordings/showcase", (r) => r.fulfill({ path: path.join(fixtures, "showcase.synthetic.json"), contentType: "application/json" }));
       await page.route("**/api/recordings/backtest", (r) => r.fulfill({ path: path.join(fixtures, "backtest.v3.synthetic.json"), contentType: "application/json" }));
-      await page.route(/\/api\/campaigns$/, (r) => r.fulfill({ json: { campaigns: [] } }));
     }
     let n = 0;
     // Bounded waits: a missing signal costs at most the timeout and logs a warning; it never hangs the run.
@@ -102,7 +101,7 @@ if (arg("base") || arg("out")) {
 }
 mkdirSync("test-results/html", { recursive: true });
 mkdirSync("test-results/shots", { recursive: true });
-const routes = { landing: "/", board: "/tours/board?sample=1", insights: "/insights", campaign: "/campaign", playbook: "/tours/playbook/4005539?sample=1", book: "/tours/book?sample=1", without: "/tours/board?sample=1&mode=without", strategist: "/tours/board?sample=1" }; // order matters: insights follows board; playbook and book load their own sample run
+const routes = { landing: "/", board: "/tours/board?sample=1", insights: "/insights", playbook: "/tours/playbook/4005539?sample=1", book: "/tours/book?sample=1", without: "/tours/board?sample=1&mode=without", strategist: "/tours/board?sample=1" }; // order matters: insights follows board; playbook and book load their own sample run
 const browser = await chromium.launch();
 for (const [vp, size] of [["mobile", { width: 375, height: 812 }], ["desktop", { width: 1280, height: 800 }]]) {
   const page = await (await browser.newContext({ viewport: size, deviceScaleFactor: vp === "mobile" ? 2 : 1 })).newPage();
@@ -125,7 +124,6 @@ for (const [vp, size] of [["mobile", { width: 375, height: 812 }], ["desktop", {
       await page.getByText(/Hidden goldmine verdict means/).waitFor({ timeout: 15000 });
     }
     if (name === "landing") await page.getByRole("heading", { level: 1 }).waitFor();
-    if (name === "campaign") await page.waitForLoadState("networkidle");
     if (vp === "desktop") {
       // Markup only: strip dev-server <style>/<script> (the whole Tailwind/MapLibre sheet) so the lint sees what the route actually uses.
       const markup = await page.evaluate(() => {

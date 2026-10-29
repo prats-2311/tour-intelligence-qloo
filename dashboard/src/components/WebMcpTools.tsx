@@ -60,9 +60,8 @@ export function WebMcpTools() {
       return { content: [{ type: "text", text: JSON.stringify(value) }] };
     }
 
-    // Real city list, not a hardcoded five -- a city added via the Add
-    // Cities screen (real Parallel Task API research) must be selectable
-    // here too, not just in the New Campaign form. Registration waits on
+    // Real city list, not a hardcoded five -- any city the API knows must be
+    // selectable here too. Registration waits on
     // this fetch since the enum is baked into the tool schema at
     // registration time, not re-validated per call.
     let supportedCityIds: string[] = [];
@@ -123,8 +122,8 @@ export function WebMcpTools() {
     register({
       name: "create_campaign",
       description:
-        "Create a new tour campaign with its city stops. Stops must be an existing city_id -- see " +
-        "get_city_detail's enum, or add a new one via the Add Cities screen first.",
+        "Create a new tour campaign with its city stops. Stops must use an existing city_id -- see " +
+        "get_city_detail's enum.",
       inputSchema: {
         type: "object",
         properties: {

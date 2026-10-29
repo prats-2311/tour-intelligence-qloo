@@ -55,9 +55,9 @@ describe("StrategistLauncher", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour" }));
     expect(await screen.findByText("Ask about a tour")).toBeTruthy();
   });
-  it("does not show the launcher on legacy campaign routes", () => {
+  it("does not show the launcher on a non-product route", () => {
     mm(false);
-    shell("/campaign");
+    shell("/nowhere");
     expect(screen.queryByRole("button", { name: "Ask about this tour" })).toBeNull();
   });
   it("desktop docks the panel, pushes the main area and remembers it open", async () => {

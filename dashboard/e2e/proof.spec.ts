@@ -10,8 +10,8 @@ for (const width of [360, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     const api: string[] = [];
     page.on("request", (r) => { const path = new URL(r.url()).pathname;
-      // /api/campaigns is fetched by the app shell's CampaignProvider on every route; the page itself must call nothing else.
-      if (path.startsWith("/api/") && path !== "/api/campaigns" && !path.startsWith("/api/recordings/")) api.push(path); });
+      // No /api/ call is allowed here (recordings aside); a returning /api/campaigns fetch must fail this spec.
+      if (path.startsWith("/api/") && !path.startsWith("/api/recordings/")) api.push(path); });
     await page.goto("/proof");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("What we tested, and what held up");
     await expect(page.getByRole("heading", { name: "Earlier runs" })).toBeVisible();

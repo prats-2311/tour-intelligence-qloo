@@ -16,7 +16,7 @@ describe("routeKey", () => {
     expect(routeKey("/tours/book")).toBe("book");
     expect(routeKey("/proof")).toBe("proof");
     expect(routeKey("/insights")).toBe("insights");
-    expect(routeKey("/campaign")).toBeNull();
+    expect(routeKey("/nowhere")).toBeNull();
   });
 });
 

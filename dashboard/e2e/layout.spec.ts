@@ -41,7 +41,7 @@ const smallTargets = (page: Page) => page.evaluate(() => [...document.querySelec
   .filter(({ r }) => r.height < 43.5 || r.width < 43.5)
   .map(({ el, r }) => `${el.tagName} "${(el.textContent ?? "").trim().slice(0, 30)}" ${Math.round(r.width)}x${Math.round(r.height)}`));
 
-for (const path of ["/", "/tours/board?sample=1", "/tours/board?sample=long", "/tours/board?sample=1&mode=without", "/tours/board?sample=long&mode=without", "/insights", "/campaign"]) {
+for (const path of ["/", "/tours/board?sample=1", "/tours/board?sample=long", "/tours/board?sample=1&mode=without", "/tours/board?sample=long&mode=without", "/insights"]) {
   test(`no horizontal scroll at this viewport: ${path}`, async ({ page }) => {
     await page.goto(path);
     if (path.includes("mode=without")) await withoutDone(page);

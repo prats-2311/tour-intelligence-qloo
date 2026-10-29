@@ -5,7 +5,6 @@ import { useSyntheticRecordings } from "./fixtures";
 
 test.beforeEach(async ({ page }) => {
   await page.route(/tiles\.openfreemap\.org/, (route) => route.abort());
-  await page.route(/\/api\/campaigns$/, (route) => route.fulfill({ json: { campaigns: [] } }));
   await useSyntheticRecordings(page);
 });
 

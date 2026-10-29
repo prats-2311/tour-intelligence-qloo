@@ -14,7 +14,7 @@ describe("stepOf", () => {
     expect(stepOf("/tours/board")).toBe("decide");
     expect(stepOf("/tours/playbook/123")).toBe("playbook");
     expect(stepOf("/tours/book")).toBe("book");
-    for (const off of ["/insights", "/proof", "/campaign", "/compare", "/city/x"]) expect(stepOf(off)).toBeNull();
+    for (const off of ["/insights", "/proof", "/nowhere"]) expect(stepOf(off)).toBeNull();
   });
 });
 

@@ -16,8 +16,6 @@ test.beforeEach(async ({ page }) => {
   if (!LIVE) {
     await page.route(/tiles\.openfreemap\.org/, (route) => route.abort());
     await useSyntheticRecordings(page);
-    // The dev server has no backend: answer the app shell's campaign list (fetched on every route) instead of letting it 404 into the console.
-    await page.route(/\/api\/campaigns$/, (route) => route.fulfill({ json: { campaigns: [] } }));
   }
 });
 
