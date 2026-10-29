@@ -5,10 +5,9 @@ const raw = {
   ...import.meta.glob("../**/*.tsx", { query: "?raw", import: "default", eager: true }),
   ...import.meta.glob(["../lib/qloo/labels.ts", "../lib/qloo/story.ts", "../lib/qloo/callSummary.ts", "../lib/qloo/clocks.ts"], { query: "?raw", import: "default", eager: true }),
 } as Record<string, string>;
-const LEGACY = ["pages/Dashboard.tsx", "pages/CityDetail.tsx", "pages/NewCampaign.tsx", "pages/CompareCities.tsx", "pages/AddCities.tsx"];
 const sources = Object.entries(raw)
   .map(([path, text]) => [path.replace(/^\.\.\//, ""), text] as const)
-  .filter(([path]) => !/\.test\./.test(path) && !LEGACY.includes(path));
+  .filter(([path]) => !/\.test\./.test(path));
 
 const RULES: Array<[string, RegExp]> = [
   ["AI-powered", /\bAI[- ]powered\b/i],

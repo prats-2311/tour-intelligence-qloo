@@ -9,7 +9,6 @@ import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 
 const panelProps = vi.hoisted(() => ({ last: undefined as undefined | { sample: boolean } }));
 vi.mock("./StrategistPanel", () => ({ StrategistPanel: (p: { sample: boolean; title: string }) => { panelProps.last = p; return <div>{p.title}</div>; } }));
-vi.mock("@/lib/campaignContext", () => ({ useCampaignContext: () => ({ campaigns: [], activeCampaignId: "x", activeCampaign: undefined, setActiveCampaignId() {}, refresh() {} }) }));
 
 const mm = (desktop: boolean) => vi.stubGlobal("matchMedia", () => ({ matches: desktop, addEventListener() {}, removeEventListener() {} }));
 const shell = (path: string) => render(<MemoryRouter initialEntries={[path]}><TourBoardProvider sampleDelayMs={0}><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);

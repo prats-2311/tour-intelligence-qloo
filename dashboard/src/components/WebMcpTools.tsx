@@ -1,7 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { createCampaign, generateBriefs, getCampaignOverview, getCityDetail, listCampaigns, listCities } from "../lib/api";
-import { useCampaignContext } from "../lib/campaignContext";
 
 const CAMPAIGN_TYPES = ["film_promo_tour", "music_world_tour"];
 
@@ -36,9 +34,6 @@ type ToolDefinition = Record<string, unknown> & {
  * except Chrome with WebMCP enabled or Edge 147+) pays zero cost.
  */
 export function WebMcpTools() {
-  const navigate = useNavigate();
-  const { setActiveCampaignId, refresh } = useCampaignContext();
-
   useEffect(() => {
     const modelContext =
       (document as unknown as { modelContext?: ToolDefinition }).modelContext ??
@@ -170,12 +165,6 @@ export function WebMcpTools() {
           selected_metrics: [],
           ...input,
         });
-        // Same race as NewCampaign.tsx's handleSubmit -- must await the
-        // refresh before activating the new id, or the self-heal effect in
-        // campaignContext reverts it right back.
-        await refresh();
-        setActiveCampaignId(result.campaign_id);
-        navigate("/campaign");
         return textResult(result);
       },
     });
@@ -199,7 +188,7 @@ export function WebMcpTools() {
     }
 
     return () => controller.abort();
-  }, [navigate, setActiveCampaignId, refresh]);
+  }, []);
 
   return null;
 }

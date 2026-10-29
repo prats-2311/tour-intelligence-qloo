@@ -1,11 +1,9 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import { AppShell } from "./AppShell";
-
-vi.mock("@/lib/campaignContext", () => ({ useCampaignContext: () => ({ campaigns: [], activeCampaignId: "x", activeCampaign: undefined, setActiveCampaignId() {}, refresh() {} }) }));
 
 const mm = (desktop: boolean) => vi.stubGlobal("matchMedia", () => ({ matches: desktop, addEventListener() {}, removeEventListener() {} }));
 
@@ -43,29 +41,13 @@ describe("AppShell", () => {
     render(<MemoryRouter initialEntries={["/insights"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
     expect(Array.from(document.querySelectorAll("[data-step]")).map((li) => li.getAttribute("data-state"))).toEqual(["todo", "todo", "todo", "todo"]);
   });
-  it("campaign routes expose Compare and Add Cities links", () => {
+  it("primary nav shows only the four steps and no campaign controls", () => {
     mm(true);
-    render(<MemoryRouter initialEntries={["/campaign"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
-    const compare = screen.getByRole("link", { name: /Compare/ });
-    expect(compare.getAttribute("href")).toBe("/compare");
-    expect(compare.getAttribute("data-tour")).toBe("compare-cities-nav");
-    expect(screen.getByRole("link", { name: /Add cities/i }).getAttribute("href")).toBe("/cities/add");
-  });
-  it("switcher toggle reports aria-expanded and closes on Escape", () => {
-    mm(true);
-    render(<MemoryRouter initialEntries={["/campaign"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
-    const btn = screen.getByRole("button", { name: /Active Campaign/ });
-    expect(btn.getAttribute("aria-expanded")).toBe("false");
-    fireEvent.click(btn);
-    expect(btn.getAttribute("aria-expanded")).toBe("true");
-    fireEvent.keyDown(document, { key: "Escape" });
-    expect(btn.getAttribute("aria-expanded")).toBe("false");
-  });
-  it("primary nav shows only the four steps; /campaign still renders by URL", () => {
-    mm(true);
-    render(<MemoryRouter initialEntries={["/campaign"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
+    render(<MemoryRouter initialEntries={["/tours/board"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
     const nav = screen.getByRole("navigation", { name: "Primary" });
     expect(nav.querySelectorAll("a")).toHaveLength(4);
     expect(screen.getByText("child")).toBeTruthy();
+    expect(screen.queryByText(/Active Campaign/i)).toBeNull();
+    expect(screen.queryByRole("link", { name: /Compare|Add cities/i })).toBeNull();
   });
 });

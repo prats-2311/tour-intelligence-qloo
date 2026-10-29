@@ -9,8 +9,6 @@ import { CityChapter } from "@/components/book/CityChapter";
 import { MarketChapter } from "@/components/book/MarketChapter";
 import { CallsAppendix } from "@/components/book/CallsAppendix";
 import { ProvenanceAppendix } from "@/components/book/ProvenanceAppendix";
-import { SaveAsCampaign } from "@/components/book/SaveAsCampaign";
-import type { SaveTourInput } from "@/lib/api";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { Sheet } from "@/components/qloo/Sheet";
 import { fetchThisWeek } from "@/lib/qloo/client";
@@ -19,7 +17,7 @@ import { toIcs } from "@/lib/qloo/ics";
 import { getPlaybook, loadPlaybook, playbookKey, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { SAMPLE_TEXT } from "@/lib/qloo/labels";
 import { defaultShortlist, sortCities } from "@/lib/qloo/ranking";
-import { buildTourBook, campaignTitle } from "@/lib/qloo/tourBook";
+import { buildTourBook } from "@/lib/qloo/tourBook";
 import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
@@ -238,21 +236,6 @@ function TourBookPage() {
     setTimeout(() => setCalendarDone(false), 4000);
   };
 
-  // Live runs only: the snapshot that "Save as campaign" stores with the new campaign.
-  const saveInput: SaveTourInput | null = sample ? null : {
-    title: campaignTitle(artist!.name, effectiveRegions(state.brief!, state.cities)),
-    artist: artist!.name,
-    artist_entity_id: artist!.entityId,
-    regions: effectiveRegions(state.brief!, state.cities),
-    date_window: dateWindow ?? null,
-    cities: book.chapters.map(({ city }) => ({ id: city.id, name: city.name, country: city.country, verdict: city.verdict, winnability: city.winnability.value })),
-    board_json: JSON.stringify({
-      title: book.title, subtitle: book.subtitle,
-      market: book.market.rows.map((c) => ({ id: c.id, name: c.name, country: c.country, verdict: c.verdict, fanHeat: c.fanHeat.value, activation: c.activation.value, winnability: c.winnability.value })),
-      chapters: book.chapters.map((c) => ({ id: c.city.id, status: c.status, incompleteReason: c.incompleteReason ?? null, claims: c.claims, advance: c.advance })),
-    }),
-  };
-
   const actions = (
     <>
       <button type="button" onClick={() => void share()} className={btnSecondary}><Share2 size={16} aria-hidden />Share</button>
@@ -262,7 +245,6 @@ function TourBookPage() {
   );
   const notes = (
     <>
-      {saveInput && <SaveAsCampaign input={saveInput} />}
       {copied && <p role="status" className="text-[13px] text-canvas-muted">Link copied</p>}
       <div aria-live="polite" className="empty:hidden">{calendarDone && <p role="status" className="text-[13px] text-canvas-text">Calendar file downloaded</p>}</div>
       {!dateWindow && <p id="ics-hint" className="text-[13px] text-canvas-muted">Add a date window to export holds</p>}
