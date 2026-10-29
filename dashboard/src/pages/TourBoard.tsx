@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, CircleAlert, History, Square } from "lucide-react";
+import { ArrowRight, CircleAlert, History, RotateCcw, Square } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -118,7 +118,7 @@ const secondaryBtn = "inline-flex h-12 items-center justify-center gap-2 rounded
 const smallBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 
 export default function TourBoard() {
-  const { state, run, abort, reset, shortlist, toggleShortlist } = useTourBoard();
+  const { state, run, replay, abort, reset, shortlist, toggleShortlist } = useTourBoard();
   const reduce = useReducedMotion();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -433,6 +433,9 @@ export default function TourBoard() {
       <div className="flex shrink-0 items-center gap-2">
         {streaming && (
           <button type="button" onClick={abort} className={smallBtn}><Square size={12} aria-hidden />Stop</button>
+        )}
+        {state.source === "showcase" && !streaming && (
+          <button type="button" onClick={replay} className={smallBtn}><RotateCcw size={12} aria-hidden />Replay the agent</button>
         )}
         <AgentLogChip events={state.log} onOpen={() => setLogOpen(true)} />
       </div>

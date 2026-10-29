@@ -167,6 +167,8 @@ test.describe("desktop board header", () => {
   for (const path of ["/tours/board?sample=1", "/tours/board?showcase=1"]) {
     test(`artist name is not clipped while scoring: ${path}`, async ({ page }) => {
       await page.goto(path);
+      // The recorded showcase opens finished; "Replay the agent" is how its step-by-step run (with Stop) is watched.
+      if (path.includes("showcase")) await page.getByRole("button", { name: "Replay the agent" }).click({ timeout: 15_000 });
       await expect(page.getByRole("button", { name: "Stop" })).toBeVisible({ timeout: 15_000 });
       const h1 = page.getByRole("heading", { level: 1 });
       const m = await h1.evaluate((el) => ({ w: el.clientWidth, sw: el.scrollWidth, text: el.textContent }));

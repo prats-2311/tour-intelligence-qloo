@@ -8,12 +8,17 @@ import { defaultShortlist } from "./ranking";
 import { boardReducer, initialBoard, type BoardState } from "./tourBoardReducer";
 import type { SampleSet, StrategistContext, TourBrief } from "./types";
 
-type Ctx = { state: BoardState; strategistContext: StrategistContext; shortlist: string[]; accentOrder: string[]; /** The city whose playbook was opened last in the current run (null before any). */ lastOpenedId: string | null; setLastOpened(id: string): void; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: SampleSet }): void; abort(): void; reset(): void };
+type Ctx = { state: BoardState; strategistContext: StrategistContext; shortlist: string[]; accentOrder: string[]; /** The city whose playbook was opened last in the current run (null before any). */ lastOpenedId: string | null; setLastOpened(id: string): void; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: SampleSet; delayMs?: number }): void; /** Re-runs the held recorded run step by step at the recorded pace. */ replay(): void; abort(): void; reset(): void };
 const TourBoardContext = createContext<Ctx | null>(null);
+
+/** A recorded run opens finished; Replay passes this pace to watch the agent work. */
+export const REPLAY_DELAY_MS = 60;
 
 export function TourBoardProvider({ children, sampleDelayMs }: { children: ReactNode; sampleDelayMs?: number }) {
   const [state, dispatch] = useReducer(boardReducer, initialBoard);
   const controllerRef = useRef<AbortController | null>(null);
+  const stateRef = useRef(state);
+  stateRef.current = state;
   // The last-opened playbook city, keyed by run so a choice never leaks into another run.
   const [opened, setOpened] = useState<Record<string, string>>({});
   const key = runKey(state.source, state.sampleSet, state.brief?.artist, state.source === "showcase" && variantOfBrief(state.brief) === "routing");
@@ -30,7 +35,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
 
   const abort = useCallback(() => { if (silentAbort()) dispatch({ type: "interrupted", reason: "user" }); }, [silentAbort]);
 
-  const run = useCallback((brief: TourBrief, opts: { sample?: boolean; sampleSet?: SampleSet } = {}) => {
+  const run = useCallback((brief: TourBrief, opts: { sample?: boolean; sampleSet?: SampleSet; delayMs?: number } = {}) => {
     silentAbort();
     const controller = new AbortController();
     controllerRef.current = controller;
@@ -39,7 +44,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
     void (async () => {
       let terminal = false;
       try {
-        for await (const event of streamTourBoard(brief, { signal: controller.signal, sample, sampleSet: opts.sampleSet, delayMs: sampleDelayMs })) {
+        for await (const event of streamTourBoard(brief, { signal: controller.signal, sample, sampleSet: opts.sampleSet, delayMs: opts.delayMs ?? sampleDelayMs ?? (sample && opts.sampleSet === "showcase" ? 0 : undefined) })) {
           if (controller.signal.aborted) return;
           dispatch({ type: "event", event });
           if (event.type === "done" || event.type === "error" || event.type === "needs_input") terminal = true;
@@ -51,6 +56,11 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
       if (controllerRef.current === controller) controllerRef.current = null;
     })();
   }, [silentAbort, sampleDelayMs]);
+
+  const replay = useCallback(() => {
+    const brief = stateRef.current.brief;
+    if (brief && stateRef.current.source === "showcase") run(brief, { sample: true, sampleSet: "showcase", delayMs: REPLAY_DELAY_MS });
+  }, [run]);
 
   const reset = useCallback(() => { silentAbort(); dispatch({ type: "reset" }); }, [silentAbort]);
   useEffect(() => () => { silentAbort(); }, [silentAbort]);
@@ -65,7 +75,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
 
   const strategistContext = useMemo<StrategistContext>(() => buildStrategistContext(state.artist, state.brief, state.cities), [state.artist, state.brief, state.cities]);
 
-  const value = useMemo(() => ({ state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, abort, reset }), [state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, abort, reset]);
+  const value = useMemo(() => ({ state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, replay, abort, reset }), [state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, abort, reset]);
   return <TourBoardContext.Provider value={value}>{children}</TourBoardContext.Provider>;
 }
 

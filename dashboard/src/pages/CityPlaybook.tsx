@@ -118,7 +118,7 @@ function CityPlaybookPage() {
   // A showcase city with no recorded playbook has nothing to open: say so instead of showing empty tiles.
   const unrecorded = (wantShowcase || state.source === "showcase") && ready && !!shownCity && showcasePlaybookEvents(cityId, variant) === null;
   const req: PlaybookRequest | null = shownCity && artist && !unrecorded
-    ? { artist: artist.name, artistEntityId: artist.entityId, artistPopularity: artist.popularity, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country, lat: shownCity.lat, lon: shownCity.lon }, sample, sampleSet: state.sampleSet, ...(variant === "routing" ? { variant } : {}), delayMs: sample ? SAMPLE_PLAYBOOK_DELAY_MS : undefined }
+    ? { artist: artist.name, artistEntityId: artist.entityId, artistPopularity: artist.popularity, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country, lat: shownCity.lat, lon: shownCity.lon }, sample, sampleSet: state.sampleSet, ...(variant === "routing" ? { variant } : {}), delayMs: sample ? (state.sampleSet === "showcase" ? 0 : SAMPLE_PLAYBOOK_DELAY_MS) : undefined }
     : null;
   const pb = usePlaybook(req);
   const window = state.brief?.dateWindow;
