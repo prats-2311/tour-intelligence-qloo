@@ -54,7 +54,25 @@ describe("buildEvidence", () => {
   });
 });
 
+describe("local moment evidence", () => {
+  it("labels each item with its type so ranks are per type", () => {
+    const ev = buildEvidence([{ kind: "local_moment", status: "ok", refs: [], warnings: [], items: [{ name: "Little Women", category: "movie", artistRank: 1, cityRank: null, rankLift: 5, affinity: 0.9 }, { name: "Cine Foro", category: "place", affinity: 0.8 }] }]);
+    expect(ev[0]!.label).toContain("type: film");
+    expect(ev[0]!.label).toContain("#1 among films");
+    expect(ev[0]!.label).toContain("artistRank =");
+    expect(ev[1]!.label).toContain("type: place");
+  });
+});
+
 describe("createNarrator", () => {
+  it("prompt tells the model ranks are per type, items are not local, and not to quote raw scores", async () => {
+    const generate = vi.fn<GenerateFn>(async () => answer(good));
+    await createNarrator(deps(generate))(input);
+    const sent = JSON.stringify(generate.mock.calls[0]);
+    expect(sent).toContain("#1 among films");
+    expect(sent).toContain("Do not call local-moment items local");
+    expect(sent).toContain("do not quote raw affinity or fit scores as decimals");
+  });
   it("knows the playbook city as an entity, but not other cities", async () => {
     const json = { cards: [{ kind: "promo_zones", claims: [
       { text: "Colonia Americana accounts for 38% of Guadalajara's fan heat.", entities: [{ name: "Colonia Americana" }, { name: "Guadalajara" }], numbers: [38], evidence_refs: ["promo_zones:0"] },
