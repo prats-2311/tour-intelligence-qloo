@@ -16,7 +16,6 @@ export const HEADLINE = "Know which brands your artist's fans love in each city,
 export const SUBLINE = "In Los Angeles, Mac DeMarco's fans rank Stüssy #1. It isn't in LA's top 20. Qloo taste data, per city, for every stop on the routing.";
 export const LINE2 = "Then see which cities to win first: fan heat and winnability for every market.";
 export const PROTAGONIST = "It's Thursday. Holds expire Friday. Confirm two of five secondary markets.";
-export const SAME_ENGINE = "Same engine for film press tours.";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
@@ -130,7 +129,6 @@ export default function Landing() {
         {isDesktop && <MapPreview />}
         <ProofCard />
       </div>
-      <p className="text-[13px] text-canvas-muted lg:col-span-12 lg:row-start-4">{SAME_ENGINE}</p>
     </div>
   );
 }
