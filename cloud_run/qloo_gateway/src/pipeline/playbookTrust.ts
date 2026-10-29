@@ -18,12 +18,13 @@ export const MAINSTREAM_TOP = 10;
 /**
  * Rank lift = (rank in the city baseline, or 21 when absent from its top 20) minus the rank in the artist's list (both 1-based);
  * higher means this artist's fans favour it more than the city does. Sorted by rank lift descending, ties by the artist's own rank.
- * `dropMainstream` removes titles in the city's top 10 and counts them. Without a baseline (null or empty) the list keeps Qloo's order
+ * `dropMainstream` removes titles in the city's top 10 and counts them. Without a full baseline (null, or fewer than 20 items) the list keeps Qloo's order
  * with no rank fields.
  */
 export function rankLifted<T extends Scored>(items: T[], baseline: Scored[] | null, opts: { dropMainstream?: boolean } = {}): { items: WithRank<T>[]; lifted: boolean; mainstreamDropped: number } {
   const top = (baseline ?? []).slice(0, CITY_BASELINE_TOP);
-  if (top.length === 0) return { items, lifted: false, mainstreamDropped: 0 };
+  // A baseline shorter than the top 20 cannot say an item is "not in the city's top 20", so make no lift claim at all.
+  if (top.length < CITY_BASELINE_TOP) return { items, lifted: false, mainstreamDropped: 0 };
   const cityRankOf = new Map<string, number>();
   top.forEach((b, i) => { if (!cityRankOf.has(b.entityId)) cityRankOf.set(b.entityId, i + 1); });
   let mainstreamDropped = 0;

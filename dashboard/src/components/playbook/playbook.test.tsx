@@ -100,6 +100,16 @@ describe("playbook cards", () => {
     expect(screen.getAllByText("None of these brands is in the city's top 20, so they set this audience apart.")).toHaveLength(1);
     expect(screen.queryByText(/not in the city's top 20$/)).toBeNull();
   });
+  it("sponsors without rank fields (short city baseline) show fit and no top-20 note or deal line", () => {
+    const items = [
+      { name: "Brand A", entityId: "b1", affinity: 0.8 },
+      { name: "Brand B", entityId: "b2", affinity: 0.7 },
+    ];
+    render(<CardBody card={{ ...card("sponsors"), items, summary: undefined }} city="Guadalajara" venueName="Foro Alameda" />);
+    expect(screen.getByText("0.80")).toBeTruthy();
+    expect(screen.queryByText(/top 20/)).toBeNull();
+    expect(screen.queryByTestId("sponsor-deal")).toBeNull();
+  });
   it("sponsors end with one deal line for the top brand, naming the venue when given", () => {
     const items = [
       { name: "Brand A", entityId: "b1", affinity: 0.8, artistRank: 3, cityRank: null, rankLift: 18 },

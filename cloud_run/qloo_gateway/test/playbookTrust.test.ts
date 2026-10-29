@@ -17,14 +17,16 @@ const list = (rows: Row[]): QlooEnvelope => ({ operation: "recommend", status: "
 const tag = (id: string, name: string, score: number) => ({ tag_id: id, name, type: "urn:tag", query: { score } });
 const compareWith = (...tags: ReturnType<typeof tag>[]): QlooEnvelope => ({ operation: "compare_audiences", status: "ok", results: { a: [], b: [], matchEntities: [], tags } });
 
+const pad20 = (rows: Row[], tagp: string): Row[] => [...rows, ...Array.from({ length: Math.max(0, 20 - rows.length) }, (_, i) => ({ id: `${tagp}${i}`, name: `${tagp}${i}`, aff: 0.01 }))];
+
 interface Fake { brands: Row[]; brandBase: Row[]; movies: Row[]; movieBase: Row[]; tvs: Row[]; tvBase: Row[]; artists: Row[]; pool: Row[]; heat: QlooEnvelope; compare: QlooEnvelope; describePop: number | undefined; describeById?: boolean }
 const base = (): Fake => ({
   brands: [{ id: "B1", name: "Brand One", aff: 0.9 }, { id: "B2", name: "Brand Two", aff: 0.75 }, { id: "B3", name: "Brand Three", aff: 0.7 }],
-  brandBase: [{ id: "B2", name: "Brand Two", aff: 0.9 }, { id: "B1", name: "Brand One", aff: 0.8 }, { id: "B9", name: "Brand Nine", aff: 0.7 }],
+  brandBase: pad20([{ id: "B2", name: "Brand Two", aff: 0.9 }, { id: "B1", name: "Brand One", aff: 0.8 }, { id: "B9", name: "Brand Nine", aff: 0.7 }], "PB"),
   movies: [{ id: "M1", name: "Film One", aff: 0.8 }, { id: "M2", name: "Film Two", aff: 0.6 }],
-  movieBase: [{ id: "M1", name: "Film One", aff: 0.9 }, { id: "M7", name: "Film Seven", aff: 0.8 }],
+  movieBase: pad20([{ id: "M1", name: "Film One", aff: 0.9 }, { id: "M7", name: "Film Seven", aff: 0.8 }], "PM"),
   tvs: [{ id: "T1", name: "Show One", aff: 0.7 }, { id: "T2", name: "Show Two", aff: 0.65 }],
-  tvBase: [{ id: "T1", name: "Show One", aff: 0.9 }, { id: "T7", name: "Show Seven", aff: 0.8 }],
+  tvBase: pad20([{ id: "T1", name: "Show One", aff: 0.9 }, { id: "T7", name: "Show Seven", aff: 0.8 }], "PT"),
   artists: [{ id: "C1", name: "Small Act", aff: 0.9, pop: 0.3 }],
   pool: [{ id: "P0", name: "Pool Small", aff: 0.7, pop: 0.2 }],
   heat: cityHeat,
@@ -106,6 +108,20 @@ describe("sponsor lift against the city baseline (rank based)", () => {
     expect(s.items.map((i) => i.name)).toEqual(["Brand One", "Brand Two", "Brand Three"]);
     expect(s.items[0]).not.toHaveProperty("rankLift");
     expect(s.summary?.note).toBeUndefined();
+  });
+  it("makes no lift claim when the city baseline has fewer than 20 items: no ranks, no note, no baseline refs", async () => {
+    const f = base();
+    f.brandBase = [{ id: "B2", name: "Brand Two", aff: 0.9 }, { id: "B1", name: "Brand One", aff: 0.8 }, { id: "B9", name: "Brand Nine", aff: 0.7 }];
+    const s = (await run(f)).card("sponsors");
+    expect(s.items.map((i) => i.name)).toEqual(["Brand One", "Brand Two", "Brand Three"]);
+    for (const it of s.items) for (const k of ["artistRank", "cityRank", "rankLift"]) expect(it).not.toHaveProperty(k);
+    expect(s.summary?.note).toBeUndefined();
+  });
+  it("lifts when the baseline has exactly 20 items", async () => {
+    const f = base();
+    f.brandBase = pad20([{ id: "B2", name: "Brand Two", aff: 0.9 }], "EX");
+    expect(f.brandBase).toHaveLength(20);
+    expect((await run(f)).card("sponsors").items[0]).toHaveProperty("rankLift");
   });
   it("merch cites the top rank-lift brands", async () => {
     expect((await run(base())).card("merch").summary?.brands).toEqual(["Brand Three", "Brand One", "Brand Two"]);
