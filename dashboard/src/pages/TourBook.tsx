@@ -274,13 +274,13 @@ function TourBookPage() {
 
       {usingDefault && <p data-noprint data-testid="default-shortlist-note" className="px-4 pt-3 text-[13px] text-canvas-muted lg:px-6">Showing the {picked.length} {picked.length === 1 ? "market" : "markets"} we'd hold by default: you haven't picked any yet.</p>}
 
-      <div className="lg:mt-6 lg:grid lg:grid-cols-[minmax(180px,240px)_minmax(0,720px)] lg:gap-x-8 xl:grid-cols-[minmax(180px,240px)_minmax(0,720px)_minmax(0,1fr)]">
+      <div className="lg:mt-6 lg:grid lg:grid-cols-[minmax(180px,240px)_minmax(0,1fr)] lg:gap-x-8">
         {isDesktop && (
           <aside data-noprint className="sticky top-[calc(3.5rem+52px+1.5rem)] max-h-[calc(100dvh-10rem)] self-start overflow-y-auto">
             <ChapterIndex items={items} current={current} onJump={jump} />
           </aside>
         )}
-        <div className="book-page flex min-w-0 flex-col gap-12 pb-24 lg:col-start-2 lg:bg-paper lg:p-14 lg:pb-14">
+        <div className="book-page flex min-w-0 flex-col gap-12 pb-24 lg:col-start-2 lg:max-w-5xl lg:bg-paper lg:p-14 lg:pb-14">
           <BookCover artist={artist!.name} regions={effectiveRegions(state.brief!, state.cities)} season={book.subtitle} chapters={book.chapters} sample={book.source !== "live"} showcase={book.source === "showcase"} clocks={!!dateWindow} />
           <MarketChapter market={book.market} />
           {book.chapters.map((c) => <CityChapter key={c.city.id} chapter={c} sample={book.source !== "live"} showcase={book.source === "showcase"} artist={artist?.name} window={dateWindow} />)}

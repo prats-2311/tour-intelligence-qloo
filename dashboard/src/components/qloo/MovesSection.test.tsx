@@ -57,6 +57,16 @@ describe("MovesSection", () => {
     expect(screen.getByText("Fan heat and winnability agree on this board.")).toBeTruthy();
     expect(screen.queryAllByTestId("move-row")).toHaveLength(0);
   });
+  it("leaves no blank band: the agree state reserves no list height and an empty footer row is not rendered", () => {
+    const { container } = render(<MovesSection cities={[mk("A", 90, 90), mk("B", 80, 80)]} done onSelect={() => {}} />);
+    expect(container.querySelector("[class*='min-h-[162px]']")).toBeNull();
+    expect(container.querySelector("[class*='min-h-11']")).toBeNull();
+  });
+  it("hides the footer row on desktop when only the phone-only expander would be in it", () => {
+    const three = [mk("A", 90, 10), mk("B", 50, 50), mk("C", 10, 90)];
+    const { container } = render(<MovesSection cities={three} done onSelect={() => {}} />);
+    expect(container.querySelector("[class*='min-h-11'][class*='lg:hidden']")).toBeTruthy();
+  });
   it("footnotes unplaced cities and never ranks them", () => {
     const ghost = mk("Ghost", null, null, undefined, { insufficientReason: "location_unresolved" });
     render(<MovesSection cities={[...board, ghost]} done onSelect={() => {}} />);

@@ -27,7 +27,7 @@ function MarginNote({ requests, claims }: { requests: number; claims?: CardClaim
   }, []);
   if (requests === 0 && !claims) return null;
   return (
-    <div ref={ref} data-margin-note className={`margin-note flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] tabular-nums transition-colors motion-reduce:transition-none xl:absolute xl:left-full xl:top-1 xl:ml-[88px] xl:w-[160px] xl:flex-col xl:items-start ${lit ? "text-bone" : "text-canvas-muted"}`}>
+    <div ref={ref} data-margin-note className={`margin-note flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] tabular-nums transition-colors motion-reduce:transition-none ${lit ? "text-bone" : "text-canvas-muted"}`}>
       {requests > 0 && <span className="inline-flex h-6 w-fit items-center rounded-[4px] bg-paper-raised px-2 font-medium">Qloo · {requests} {requests === 1 ? "request" : "requests"}</span>}
       {claims && <span>{claims.verified.length} verified · {claims.removed.length} removed</span>}
     </div>
@@ -72,6 +72,7 @@ export function CityChapter({ chapter, sample = false, showcase = false, artist,
           <>
             <AdvanceSheet rows={chapter.advance} />
             {narrative?.status === "unavailable" && <Notice>{narrative.message}</Notice>}
+            <div data-testid="chapter-sections" className="flex min-w-0 flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:gap-y-6">
             {ORDER.map((kind) => {
               const card = playbook?.cards.find((c) => c.kind === kind);
               if (!card) return null;
@@ -92,6 +93,7 @@ export function CityChapter({ chapter, sample = false, showcase = false, artist,
                 <ThisWeekBody week={week} />
               </section>
             )}
+            </div>
             {chapter.claims && (
               <div className="flex flex-col gap-3 pt-4">
                 <ClaimsBadge verified={chapter.claims.verified} removed={chapter.claims.removed} />

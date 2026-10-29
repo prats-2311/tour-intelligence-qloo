@@ -27,7 +27,7 @@ test("judge path: landing → showcase → board → why → taste", async ({ pa
   await page.screenshot({ path: `test-results/judge-path-${test.info().project.name}.png`, fullPage: true });
 });
 
-test("showcase → Guadalajara playbook → Hold these dates → Book", async ({ page }) => {
+test("showcase → Guadalajara playbook → Review shortlist → Book", async ({ page }) => {
   const t0 = Date.now();
   await page.goto("/tours/board?sample=1"); // the Lumen Vale sample: its cities are asserted below
   await expect(page.getByText("Sample data — illustrative, not Qloo output").first()).toBeVisible();
@@ -41,7 +41,7 @@ test("showcase → Guadalajara playbook → Hold these dates → Book", async ({
   await expect(page.getByText("Number 0.93 not in evidence")).toBeVisible();
   await page.keyboard.press("Escape");
   await page.goBack();
-  await page.getByRole("button", { name: "Hold these dates" }).click();
+  await page.getByRole("button", { name: "Review shortlist" }).click();
   await page.getByRole("link", { name: "Open Tour Book" }).click();
   await expect(page.getByRole("heading", { name: "Market selection" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Curitiba", level: 2 })).toBeVisible();

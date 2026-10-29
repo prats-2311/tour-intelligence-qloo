@@ -13,3 +13,10 @@ export function mergeZonesByLabel(zones: Zone[]): Zone[] {
   }
   return [...rows.values()].sort((a, b) => b.affinity - a.affinity);
 }
+
+const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+
+/** Display only: a zone labelled with the city's own name (accent and case aside) reads as "Central {City}"; recorded text is never edited. */
+export function zoneDisplayLabel(label: string, city: string | undefined): string {
+  return city && fold(label) === fold(city) ? `Central ${city}` : label;
+}

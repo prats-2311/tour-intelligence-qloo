@@ -86,7 +86,7 @@ if (arg("base") || arg("out")) {
     await shot("playbook-hidden-goldmine", "City playbook for the hidden goldmine: sponsors, merch, venue and co-billing, checked against evidence");
     await page.goBack();
     await rows.first().waitFor();
-    await page.getByRole("button", { name: "Hold these dates" }).click();
+    await page.getByRole("button", { name: "Review shortlist" }).click();
     await page.getByRole("link", { name: "Open Tour Book" }).click();
     await page.getByText("Advance & sponsor pitch").first().waitFor({ timeout: 30000 });
     await shot("tour-book-cover", "Tour Book cover: the advance and sponsor pitch", false);

@@ -210,8 +210,8 @@ describe("TourBook", () => {
     const { container } = renderAt("/tours/book?sample=1");
     await screen.findByRole("heading", { name: "Market selection" });
     const grid = container.querySelector(".book-page")!.parentElement!;
-    expect(grid.className).toContain("lg:grid-cols-[minmax(180px,240px)_minmax(0,720px)]");
-    expect(grid.className).toContain("xl:grid-cols-[minmax(180px,240px)_minmax(0,720px)_minmax(0,1fr)]");
+    expect(grid.className).toContain("lg:grid-cols-[minmax(180px,240px)_minmax(0,1fr)]");
+    expect(grid.className).not.toContain("720px");
     expect(grid.className).not.toMatch(/grid-cols-\[240px_720px/);
   });
   it("Chapters opens the index sheet and lists every chapter with its verdict", async () => {

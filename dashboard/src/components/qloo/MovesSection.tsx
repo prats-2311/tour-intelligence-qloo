@@ -54,7 +54,7 @@ export function MovesSection({ cities, scoring, done, paused = false, selectedId
     <section aria-labelledby="moves-heading" data-testid="moves-section" className="flex min-w-0 flex-col gap-1 lg:gap-2">
       <h2 id="moves-heading" className="font-title text-[18px] leading-tight text-canvas-text">{MOVES_HEADING}</h2>
       <p className="min-h-[1.1rem] text-[12px] leading-[1.4] text-canvas-muted max-lg:line-clamp-1 lg:min-h-[1.1rem] lg:text-[13px]">{MOVES_SUBLINE}</p>
-      <div className={all ? "" : LIST_H}>
+      <div className={all || agree ? "" : LIST_H}>
         {paused ? (
           <p className="text-[13px] text-canvas-muted">{MOVES_PAUSED}</p>
         ) : !done ? (
@@ -68,7 +68,8 @@ export function MovesSection({ cities, scoring, done, paused = false, selectedId
         )}
       </div>
       {/* Footnote and toggle share one row on phones so the ranked list stays on the first screen. */}
-      <div className="flex min-h-11 items-center gap-3 lg:flex-col lg:items-start lg:gap-2">
+      {(unplaced.length > 0 || canExpand) && (
+      <div className={`flex min-h-11 items-center gap-3 lg:flex-col lg:items-start lg:gap-2${unplaced.length === 0 && expandPhoneOnly ? " lg:hidden" : ""}`}>
         {unplaced.length > 0 && (
           <p data-testid="moves-footnote" className="min-w-0 flex-1 text-[11px] leading-[1.3] text-canvas-muted lg:min-h-[1.1rem] lg:flex-none lg:text-[12px] lg:leading-[1.4]">
             {done && !paused ? `Not ranked: ${unplaced.map((c) => c.name).join(", ")} (Qloo couldn't place ${unplaced.length === 1 ? "it" : "them"} precisely).` : ""}
@@ -80,6 +81,7 @@ export function MovesSection({ cities, scoring, done, paused = false, selectedId
           </button>
         )}
       </div>
+      )}
     </section>
   );
 }

@@ -78,7 +78,7 @@ test("promoter judge path: landing → board → playbook → hold → book → 
   // 4. Back to the board, hold the dates, open the book.
   await page.goBack();
   await expect(rows.first()).toBeVisible();
-  await page.getByRole("button", { name: "Hold these dates" }).click();
+  await page.getByRole("button", { name: "Review shortlist" }).click();
   await page.getByRole("link", { name: "Open Tour Book" }).click();
   await expect(page.getByText("Advance & sponsor pitch").first()).toBeVisible({ timeout: 20_000 });
   expect(await noOverflow(page), "book overflow").toBe(true);

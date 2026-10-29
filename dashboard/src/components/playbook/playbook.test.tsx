@@ -18,6 +18,13 @@ const narrative = (ev.find((e) => e.type === "narrative") as Extract<GatewayEven
 const card = (k: Card["kind"]) => cards.find((c) => c.kind === k)!;
 
 describe("playbook cards", () => {
+  it("shows a zone named after the city as Central {City}", () => {
+    const items = [{ label: "Los Angeles", share: 0.35 }, { label: "Hollywood", share: 0.1 }];
+    render(<CardBody card={{ ...card("promo_zones"), items }} city="Los Angeles" />);
+    expect(screen.getByText("Central Los Angeles")).toBeTruthy();
+    expect(screen.getByText("Hollywood")).toBeTruthy();
+    expect(screen.queryByText("Los Angeles")).toBeNull();
+  });
   it("renders two verified claims with identical text without a duplicate-key warning", () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const same = { text: "Same text.", entities: [{ name: "Same" }], numbers: [], evidence_refs: ["sponsors:0"] };

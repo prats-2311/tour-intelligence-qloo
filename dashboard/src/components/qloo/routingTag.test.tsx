@@ -112,3 +112,14 @@ describe("BriefForm pasted mode regions and hint", () => {
   });
 });
 
+
+describe("CityRow long names", () => {
+  it("wraps a long city name instead of truncating it", () => {
+    render(<ul><CityRow city={{ ...SAMPLE_CITIES[2]!, name: "New York City" }} onOpen={() => {}} /></ul>);
+    const t = screen.getByTestId("city-name-text");
+    expect(t.textContent).toBe("New York City");
+    expect(t.className).toContain("break-words");
+    expect(t.className).toContain("min-w-0");
+    expect(t.className).not.toContain("truncate");
+  });
+});

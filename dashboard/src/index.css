@@ -281,6 +281,7 @@ body {
   .tour-book *:not(svg *):not([data-print-keep]) { color: #111 !important; background-color: transparent !important; box-shadow: none !important; }
   .tour-book [data-noprint], .tour-book [role="dialog"], .tour-book [data-testid="sheet-overlay"] { display: none !important; }
   .tour-book .book-page { width: 100% !important; max-width: none !important; padding: 0 !important; gap: 0 !important; }
+  .tour-book [data-testid="chapter-sections"] { display: flex !important; flex-direction: column; gap: 16px; }
   .tour-book .book-chapter { break-before: page; padding: 0 !important; margin-top: 0 !important; }
   .tour-book .book-chapter:first-child { break-before: auto; }
   .tour-book svg, .tour-book [data-print-keep] { print-color-adjust: exact; -webkit-print-color-adjust: exact; }

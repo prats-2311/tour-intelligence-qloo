@@ -3,6 +3,7 @@ import { accentFor } from "./cityAccent";
 import type { PlaybookState } from "./playbookReducer";
 import { toolPlainName } from "./labels";
 import { firstOkName } from "./playbookFacts";
+import { zoneDisplayLabel } from "./zones";
 import { sortCities } from "./ranking";
 import { summariseCalls, type CallSummary } from "./callSummary";
 
@@ -51,12 +52,12 @@ function thisWeekValue(week?: ThisWeek): string {
   return week.items[0]?.text ?? "—";
 }
 
-function advanceRows(p: PlaybookState | undefined, week: ThisWeek | undefined): Array<{ label: string; value: string }> {
+function advanceRows(p: PlaybookState | undefined, week: ThisWeek | undefined, cityName?: string): Array<{ label: string; value: string }> {
   const cards = p?.cards ?? [];
   const sponsors = (cards.find((c) => c.kind === "sponsors")?.items ?? []).slice(0, 3).map((i) => i.name).filter((n): n is string => typeof n === "string");
   const merch = p?.narrative?.status === "ok" ? p.narrative.merch?.title : undefined;
   return [
-    { label: "Top zone", value: firstName(cards, "promo_zones", "label") },
+    { label: "Top zone", value: zoneDisplayLabel(firstName(cards, "promo_zones", "label"), cityName) },
     { label: "Best room", value: firstName(cards, "venue_fit", "name") },
     { label: "Support", value: firstName(cards, "co_billing", "name") },
     { label: "Sponsors top 3", value: sponsors.length ? sponsors.join(", ") : "—" },
@@ -129,7 +130,7 @@ export function buildTourBook(input: {
       city, accent: accentFor(city.id, input.accentOrder), status: reason ? "incomplete" : "ready",
       ...(reason ? { incompleteReason: reason } : {}),
       ...(playbook ? { playbook } : {}), ...(week ? { week } : {}),
-      advance: advanceRows(playbook, week), claims: claimTotals(playbook),
+      advance: advanceRows(playbook, week, city.name), claims: claimTotals(playbook),
     };
   });
   const logs = [input.boardLog, ...chapters.map((c) => c.playbook?.log ?? [])];

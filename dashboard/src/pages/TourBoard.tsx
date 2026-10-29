@@ -415,7 +415,7 @@ export default function TourBoard() {
         {heldCount} {heldCount === 1 ? "market" : "markets"} shortlisted
       </span>
       <NextStepButton leads="/tours/book" onClick={() => setBuildOpen(true)} className="btn-gold inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:flex-none">
-        Hold these dates<ArrowRight size={16} className="hidden lg:block" aria-hidden />
+        Review shortlist<ArrowRight size={16} className="hidden lg:block" aria-hidden />
       </NextStepButton>
       <button type="button" onClick={() => summaryCity && setWhyId(summaryCity.id)} className="inline-flex min-h-11 shrink-0 items-center px-1 text-left text-[13px] font-medium leading-tight text-canvas-text underline-offset-[0.18em] hover:underline lg:hidden">
         <span className="line-clamp-2 max-w-[6.5rem]">{whyLabel}</span>

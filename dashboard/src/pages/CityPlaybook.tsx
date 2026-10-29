@@ -5,6 +5,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
 import { NextStepLink } from "@/components/qloo/NextStep";
 import { SPONSOR_ASSUMPTION } from "@/lib/qloo/labels";
+import { zoneDisplayLabel } from "@/lib/qloo/zones";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { DualBars } from "@/components/qloo/DualBars";
@@ -323,7 +324,7 @@ function CityPlaybookPage() {
           {!isDesktop && whyBtn}
           <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
           <AdvanceSheet rows={[
-            { label: "TOP ZONE", value: first(pb.cards, "promo_zones", "label") },
+            { label: "TOP ZONE", value: zoneDisplayLabel(first(pb.cards, "promo_zones", "label"), shownCity.name) },
             { label: "BEST ROOM", value: first(pb.cards, "venue_fit", "name") },
             { label: "SUPPORT", value: first(pb.cards, "co_billing", "name") },
             { label: "CLAIMS", value: claimsValue },

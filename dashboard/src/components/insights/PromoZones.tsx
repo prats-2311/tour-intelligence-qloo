@@ -1,4 +1,4 @@
-import { mergeZonesByLabel } from "@/lib/qloo/zones";
+import { mergeZonesByLabel, zoneDisplayLabel } from "@/lib/qloo/zones";
 import type { ScoredCity } from "@/lib/qloo/types";
 
 export function PromoZones({ city }: { city: ScoredCity }) {
@@ -15,7 +15,7 @@ export function PromoZones({ city }: { city: ScoredCity }) {
             return (
               <li key={z.label} data-testid="zone-row" className="flex flex-col gap-1.5">
                 <div className="flex items-baseline justify-between gap-3 text-[14px]">
-                  <span className="min-w-0 truncate text-canvas-text">{z.label}</span>
+                  <span className="min-w-0 truncate text-canvas-text">{zoneDisplayLabel(z.label, city.name)}</span>
                   <span className="font-mono tabular text-canvas-text">{pct}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-canvas" aria-hidden><div className="h-full bg-bone" style={{ width: `${pct}%` }} /></div>

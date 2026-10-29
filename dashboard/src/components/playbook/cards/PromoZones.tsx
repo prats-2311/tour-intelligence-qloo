@@ -1,4 +1,5 @@
 import type { PlaybookCard } from "@/lib/qloo/types";
+import { zoneDisplayLabel } from "@/lib/qloo/zones";
 import { pct } from "../format";
 import { num, str } from "./util";
 
@@ -33,7 +34,7 @@ export function PromoZones({ card, city }: { card: PlaybookCard; city: string })
         <tbody /* taste-skill-ignore: real table rules */ className="divide-y divide-canvas-line">
           {rows.map((it, i) => (
             <tr key={i} className="h-11">
-              <td className="break-words pr-3 text-canvas-text">{str(it.label)}</td>
+              <td className="break-words pr-3 text-canvas-text">{zoneDisplayLabel(str(it.label), city)}</td>
               <td className="text-right tabular-nums text-canvas-text">{pct(num(it.share) ?? 0)}</td>
             </tr>
           ))}
