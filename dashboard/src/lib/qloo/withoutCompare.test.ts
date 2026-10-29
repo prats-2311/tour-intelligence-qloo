@@ -25,24 +25,26 @@ describe("compareWithQloo", () => {
     expect(rows[0]!.qlooRank).toBe(3);
     expect(rows[1]!.qlooRank).toBe(1);
   });
-  it("agrees when the ranks are within 2", () => {
+  it("agrees only when the ranks are identical; a 1-place move is moved", () => {
     const rows = compareWithQloo([L("Alpha", "BR"), L("Charlie", "MX"), L("Bravo", "BR")], board);
-    expect(rows.map((r) => r.flag)).toEqual(["agrees", "agrees", "agrees"]);
+    expect(rows.map((r) => r.flag)).toEqual(["agrees", "moved", "moved"]);
+    expect(rows[1]).toMatchObject({ qlooRank: 3, direction: "down" });
+    expect(rows[2]).toMatchObject({ qlooRank: 2, direction: "up" });
   });
-  it("flags a move of 3 or more", () => {
+  it("flags any move, 3 places included", () => {
     const rows = compareWithQloo([L("Delta", "MX"), L("Bravo", "BR"), L("Charlie", "MX"), L("Alpha", "BR")], board);
     expect(rows[0]).toMatchObject({ flag: "moved", qlooRank: 4 }); // 1 -> 4 is a 3-place gap
     expect(rows[3]).toMatchObject({ flag: "moved", qlooRank: 1 });
     expect(rows[1]).toMatchObject({ flag: "agrees", qlooRank: 2 });
   });
-  it("moved fires at exactly 3 places and says up or down", () => {
+  it("moved says up or down", () => {
     const rows = compareWithQloo([L("Echo", "US"), L("Delta", "MX"), L("Charlie", "MX"), L("Bravo", "BR"), L("Alpha", "BR")], [
       city("a", "Alpha", "BR", "play", 90), city("b", "Bravo", "BR", "play", 80), city("c", "Charlie", "MX", "consider", 70),
       city("d", "Delta", "MX", "consider", 60), city("e", "Echo", "US", "consider", 50),
     ]);
     expect(rows[0]).toMatchObject({ flag: "moved", qlooRank: 5, direction: "down" });
     expect(rows[4]).toMatchObject({ flag: "moved", qlooRank: 1, direction: "up" });
-    expect(rows[1]!.flag).toBe("agrees");
+    expect(rows[1]).toMatchObject({ flag: "moved", qlooRank: 4 });
   });
   it("not_on_board when no city matches", () => {
     const [r] = compareWithQloo([L("Nowhere", "BR")], board);

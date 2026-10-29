@@ -22,8 +22,8 @@ export const FLAG_TEXT: Record<Exclude<CompareFlag, "agrees" | "moved">, string>
   capped: "Capped: no Qloo fan-heat evidence",
 };
 
-/** The gap (in places) from which the LLM's position counts as a disagreement. */
-export const MOVED_BY = 3;
+/** The gap (in places) from which the LLM's position counts as a disagreement: any difference. */
+export const MOVED_BY = 1;
 
 const fold = (v: string): string => v.normalize("NFD").replace(/\p{M}+/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
 // Accent and case folding plus a trailing " city" — no other aliases.

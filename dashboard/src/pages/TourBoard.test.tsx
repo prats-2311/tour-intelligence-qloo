@@ -120,7 +120,7 @@ describe("TourBoard", () => {
   it("Without Qloo says where Qloo disagrees with the generic order", async () => {
     renderPage("/tours/board?sample=1&mode=without");
     const list = await screen.findByRole("list", { name: "Generic ranking" });
-    expect(screen.getByTestId("without-summary").textContent).toBe("Qloo disagrees on 4 of 10: 1 Skip, 1 couldn't be scored, 2 moved.");
+    expect(screen.getByTestId("without-summary").textContent).toBe("Qloo disagrees on 9 of 10: 1 Skip, 1 couldn't be scored, 7 moved.");
     const rows = within(list).getAllByRole("listitem");
     expect(rows).toHaveLength(10);
     expect(rows[0]!.textContent).toContain("Mexico City");
@@ -134,7 +134,7 @@ describe("TourBoard", () => {
     const list = await screen.findByRole("list", { name: "Generic ranking" });
     const cabo = await within(list).findByText("Cabo Frio");
     expect(cabo.closest("li")!.textContent).toContain("Capped: no Qloo fan-heat evidence");
-    expect(screen.getByTestId("without-summary").textContent).toBe("Qloo disagrees on 7 of 8: 1 capped, 1 Skip, 1 couldn't be scored, 4 moved.");
+    expect(screen.getByTestId("without-summary").textContent).toBe("Qloo disagrees on 8 of 8: 1 capped, 1 Skip, 1 couldn't be scored, 5 moved.");
     expect(screen.getByRole("button", { name: /Review shortlist/ })).toBeTruthy();
     // Only cities with a recorded playbook are links.
     expect(within(list).getAllByRole("button").length).toBe(4);
