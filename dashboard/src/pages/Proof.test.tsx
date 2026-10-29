@@ -194,9 +194,18 @@ describe("Proof v3", () => {
     expect(link.getAttribute("href")).toBe("https://github.com/prats-2311/tour-intelligence-qloo/blob/master/docs/qloo/proof-v3-protocol.md");
     expect(link.getAttribute("rel")).toBe("noopener noreferrer");
   });
-  it("renders tests in the order catch, B, C, A", () => {
+  it("renders tests in the order B, catch, C, A", () => {
     view(v3Backtest);
-    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["catch", "B", "C", "A"]);
+    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "C", "A"]);
+  });
+  it("puts Test A under a visible Limits heading, after C", () => {
+    view(v3Backtest);
+    const h = screen.getByRole("heading", { level: 2, name: "Limits: where Qloo-backed ranking lost" });
+    const [, , c, a] = sections();
+    const before = (x: Node, y: Node) => !!(x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(before(c!, h)).toBe(true);
+    expect(before(h, a!)).toBe(true);
+    expect(a!.getAttribute("data-test-id")).toBe("A");
   });
   it("each test shows title, question, status, an arm table, verbatim claims and limits", () => {
     view(v3Backtest);
@@ -239,7 +248,7 @@ describe("Proof v3", () => {
   it("Test C absent from the data means no Test C section; present means a section with no extra code", () => {
     const v3 = (v3Backtest as { proofV3: { tests: Array<{ id: string }> } }).proofV3;
     view({ ...v3Backtest, proofV3: { ...v3, tests: v3.tests.filter((t) => t.id !== "C") } });
-    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["catch", "B", "A"]);
+    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "A"]);
   });
   it("works with v3 alone (no earlier runs) and never says winnability is better", () => {
     const { container } = view({ proofV3: (v3Backtest as { proofV3: unknown }).proofV3 });

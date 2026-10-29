@@ -418,7 +418,7 @@ test("the landing leads with the pitch: headline, protagonist and no overflow, a
   const qloo: string[] = [];
   page.on("request", (r) => { if (/\/api\/qloo/.test(r.url())) qloo.push(r.url()); });
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1, name: "Route with anything. Win every city with this." })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Know which brands your artist's fans love in each city, before the sponsor meeting." })).toBeVisible();
   await expect(page.getByText("It's Thursday. Holds expire Friday. Confirm two of five secondary markets.")).toBeVisible();
   await expect(page.getByRole("link", { name: "How we tested it →" })).toBeVisible();
   await expect(page.getByText("Same engine for film press tours.")).toBeVisible();

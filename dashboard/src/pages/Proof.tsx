@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useId, useState } from "react";
+import { Fragment, useId, useState } from "react";
 import { getBacktest, METHODS, METHOD_LABEL, hitLine, rankText, type Backtest, type BacktestRun, type CaseResult, type MethodResult, type ProofTable, type ProofV3, type ProofV3Test } from "@/lib/qloo/backtest";
 
 import { loadRecordings } from "@/lib/qloo/recordings";
@@ -7,8 +7,8 @@ import { loadRecordings } from "@/lib/qloo/recordings";
 /** The public repo is created later: change the URL here only. */
 export const PROTOCOL_URL = "https://github.com/prats-2311/tour-intelligence-qloo/blob/master/docs/qloo/proof-v3-protocol.md";
 const V3_INTRO = "We pre-registered every test before running it and publish all of it, including where Qloo-backed ranking lost.";
-/** Claimable, positive results first; the ranking result follows. Tests not listed come after, in file order. */
-const V3_ORDER = ["catch", "B", "C", "A"];
+/** Sponsor lift first (B), then the claim checker (catch) and grounding (C); Test A, where the LLM won, sits last under a Limits heading. Tests not listed come after, in file order. */
+const V3_ORDER = ["B", "catch", "C", "A"];
 const TITLE = "Would it have found what the real tour used?";
 const REASON = "Run 1 asked Qloo for artists the headliner's fans like in that city, which returns global taste neighbours. Run 2 ranked the city's own popular artists by taste fit and was judged on fresh cases reviewed after the change; it did no better, because Qloo's city-popularity list misses the most famous national acts.";
 const WHAT = "For naming the specific famous local guest or sponsor a real tour used, a general-purpose LLM did better than Qloo's taste graph in both runs. Qloo's recommendations reflect what over-indexes with an audience in a city, not who is most famous there — that is world knowledge. So the playbook now asks an LLM for local candidates and uses Qloo to check each one exists and to rank it by taste fit. We have not yet tested that change on new cases, so we make no claim about it here.";
@@ -232,7 +232,12 @@ function ProofV3View({ v3, children }: { v3: ProofV3; children?: ReactNode }) {
           <a href={PROTOCOL_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-canvas-text underline decoration-canvas-muted underline-offset-4">Read the protocol and its amendments on GitHub</a>
         </p>
       </header>
-      {tests.map((t) => <V3Test key={t.id} t={t} />)}
+      {tests.map((t) => (
+        <Fragment key={t.id}>
+          {t.id === "A" && <h2 className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">Limits: where Qloo-backed ranking lost</h2>}
+          <V3Test t={t} />
+        </Fragment>
+      ))}
       {v3.amendments.length > 0 && (
         <section aria-label="Amendments" className="flex flex-col gap-3">
           <h2 className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">Amendments</h2>

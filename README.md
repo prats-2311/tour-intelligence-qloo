@@ -1,10 +1,12 @@
 # Tour Intelligence × Qloo
 
-**Route with anything. Win every city with this.**
-
 [![test](https://github.com/prats-2311/tour-intelligence-qloo/actions/workflows/test.yml/badge.svg)](https://github.com/prats-2311/tour-intelligence-qloo/actions/workflows/test.yml)
 
-A promoter or booking agent routing a mid-tier artist through cities with no ticket-sales history has two jobs: choose the cities, then win each one. A routing tool, a spreadsheet or even a general-purpose LLM is fine for the first job. This tool is for the second: for each city it ranks local sponsors and guests by Qloo taste, shows brands by how much higher the artist's fans rank them than the city does, finds real music venues, suggests support acts smaller than the headliner, removes any written claim it cannot verify, puts a verdict clock on each call, and assembles a Tour Book to take into the sponsor or venue conversation.
+**Route with anything. Win every city with this.**
+
+For each city on a tour, Tour Intelligence shows the brands, venues and support acts the artist's fans rank far above the city as a whole. In Los Angeles, Mac DeMarco's fans rank Stüssy #1; it isn't in LA's overall top 20. That gap is the sponsor pitch. It comes from Qloo's taste graph, it is checked against the city's own baseline, and every written claim is verified against the Qloo results it cites (claims that fail are struck).
+
+Qloo ranked the real tour's pick above a popularity baseline 17–1 (4 ties, p<0.001), and the claim checker caught 10 of 10 planted false claims. Where an LLM did better (city ranking, Test A), we say so under Limits.
 
 Who pays and why: promoters and agencies pay per tour; the return comes from sponsor deals and a better-sold room. We state no revenue, customer or price numbers because we have none.
 
@@ -72,12 +74,15 @@ Scores are deterministic code, never LLM output; missing data gives `insufficien
 
 Everything below is from [Proof v3](docs/qloo/proof-v3-protocol.md): a protocol committed before any Qloo or Gemini call, with 6 amendments, each committed before the call it affected. We publish whatever came out, including losses. The full tables are at [/proof](https://tour-intel-qloo.web.app/proof). Raw results stay private (Qloo's data policy).
 
-- **Claim checker** ([protocol](docs/qloo/proof-v3-protocol.md)): it removed 10 of 10 planted false claims (5 plausible wrong numbers, 4 absent numbers, 1 swapped name).
 - **Test B, fixed candidates, 22 of 27 reviewed cases** ([protocol](docs/qloo/proof-v3-protocol.md)): Qloo rank beat popularity (p<0.001): mean reciprocal rank 0.47 vs 0.13, 17 wins, 1 loss, 4 ties over 22 cases. Not significant at this sample size: Qloo rank trails Gemini (0.47 vs 0.57; p=0.118; 4 wins, 11 losses, 7 ties).
-- **Test A, city ranking, 10 of a planned 12 artists** ([protocol](docs/qloo/proof-v3-protocol.md)): The generic LLM beat winnability (p=0.031): mean R-precision 0.82 vs 0.66, 0 wins, 6 losses, 4 ties over 10 artists. For context: fan heat 0.68, population 0.79, chance 0.62. Winnability versus fan heat is not significant (1 win, 1 loss, 8 ties). We therefore do not claim winnability picks better cities, and that is why the product leads with winning each city rather than choosing them ([ADR 0002](docs/adr/0002-winning-a-city-not-choosing-it.md)).
+- **Claim checker** ([protocol](docs/qloo/proof-v3-protocol.md)): it removed 10 of 10 planted false claims (5 plausible wrong numbers, 4 absent numbers, 1 swapped name).
 - **Test C, grounding** ([protocol, Amendments 4–6](docs/qloo/proof-v3-protocol.md)):
 
 <!-- TEST-C: filled after rating -->
+
+### Limits
+
+- **Test A, city ranking, 10 of a planned 12 artists** ([protocol](docs/qloo/proof-v3-protocol.md)): The generic LLM beat winnability (p=0.031): mean R-precision 0.82 vs 0.66, 0 wins, 6 losses, 4 ties over 10 artists. For context: fan heat 0.68, population 0.79, chance 0.62. Winnability versus fan heat is not significant (1 win, 1 loss, 8 ties). We therefore do not claim winnability picks better cities, and that is why the product leads with winning each city rather than choosing them ([ADR 0002](docs/adr/0002-winning-a-city-not-choosing-it.md)).
 
 **Limits.** Qloo data is current, not as of the tour date. "Played" means agreement with the routing a tour actually took, not profit. Samples are small. The venue-name proxy stands in for mid-tier. The Test C reviewer saw the showcase playbooks. The earlier 2026-10-17 backtest (the playbook's local-act card against city popularity and a generic LLM, on 27 cases) is still published at `/proof` and did not beat the LLM at naming a famous local guest, which is why that card is now a hybrid in which Gemini proposes and Qloo verifies.
 
@@ -134,6 +139,10 @@ No Qloo response data is committed here. Real recordings are served from private
 ## New versus existing project
 
 Forked from the author's Agentic Cinema (Google Cloud) entry, which supplies the legacy `tour_data_api`, Dialogflow agents and delight-card renderer (see [`archive/`](archive)). The Qloo work began on 2026-10-16: the gateway, scoring, Tour Board, playbooks, Tour Book, strategist, MCP tools, proof and calibration. At the time of writing, 177 commits since that date (`git rev-list --count --since=2026-10-16 HEAD`; `node scripts/readme-numbers.mjs` prints the figures used here).
+
+### What's next (not built)
+
+Next: a saved taste profile for each artist on a manager's roster: their own likes, their no-go brands, and the outcome of every activation. Qloo supplies the taste, the profile supplies the intent, and the results make each tour's plan better than the last.
 
 ## Licence
 

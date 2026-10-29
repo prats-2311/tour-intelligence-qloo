@@ -12,8 +12,9 @@ import { storyBeats } from "@/lib/qloo/story";
 import type { ScoredCity } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
-export const HEADLINE = "Route with anything. Win every city with this.";
-export const SUBLINE = "Routing tools — even a chatbot — can pick your cities. This tells you how to win each one: the sponsor fans over-index on, the local guest, the right room, and every claim checked.";
+export const HEADLINE = "Know which brands your artist's fans love in each city, before the sponsor meeting.";
+export const SUBLINE = "In Los Angeles, Mac DeMarco's fans rank Stüssy #1. It isn't in LA's top 20. Qloo taste data, per city, for every stop on the routing.";
+export const LINE2 = "Then see which cities to win first: fan heat and winnability for every market.";
 export const PROTAGONIST = "It's Thursday. Holds expire Friday. Confirm two of five secondary markets.";
 export const SAME_ENGINE = "Same engine for film press tours.";
 
@@ -103,11 +104,14 @@ export default function Landing() {
   return (
     <div className="mx-auto grid w-full max-w-[1240px] gap-8 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-12 lg:gap-y-0 lg:pt-6">
       <section className="lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:pt-8">
-        <h1 className="font-hero text-[40px] leading-[1.04] text-bone [text-wrap:balance] lg:text-[60px] lg:leading-[1]">
+        <h1 className="font-hero text-[32px] leading-[1.06] text-bone [text-wrap:balance] lg:text-[48px] lg:leading-[1.02]">
           {HEADLINE}
         </h1>
         <p className="mt-5 max-w-[44ch] text-[17px] leading-[1.45] text-canvas-muted [text-wrap:pretty] lg:mt-6">
           {SUBLINE}
+        </p>
+        <p className="mt-3 max-w-[44ch] text-[17px] leading-[1.45] text-canvas-muted [text-wrap:pretty]">
+          {LINE2}
         </p>
       </section>
       <div className="lg:col-span-5 lg:col-start-1 lg:row-start-2 lg:mt-8 lg:self-start">

@@ -25,13 +25,15 @@ afterEach(() => {
 describe("Landing", () => {
   it("has the headline and both entry points", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
-    expect(screen.getByRole("heading", { level: 1, name: "Route with anything. Win every city with this." })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Know which brands your artist's fans love in each city, before the sponsor meeting." })).toBeTruthy();
     expect(screen.getByRole("link", { name: "See the example tour" }).getAttribute("href")).toBe("/tours/board?showcase=1");
     expect(screen.getByRole("link", { name: "Try your own artist" }).getAttribute("href")).toBe("/tours/board?new=1");
   });
   it("states the approved pitch copy verbatim", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
-    expect(screen.getByText("Routing tools — even a chatbot — can pick your cities. This tells you how to win each one: the sponsor fans over-index on, the local guest, the right room, and every claim checked.")).toBeTruthy();
+    expect(screen.getByText("In Los Angeles, Mac DeMarco's fans rank Stüssy #1. It isn't in LA's top 20. Qloo taste data, per city, for every stop on the routing.")).toBeTruthy();
+    expect(screen.getByText("Then see which cities to win first: fan heat and winnability for every market.")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/city picks|places higher|Route with anything/i);
     expect(screen.getByText("It's Thursday. Holds expire Friday. Confirm two of five secondary markets.")).toBeTruthy();
     expect(screen.getByText("Same engine for film press tours.")).toBeTruthy();
     const cta = screen.getByRole("link", { name: "See the example tour" });
