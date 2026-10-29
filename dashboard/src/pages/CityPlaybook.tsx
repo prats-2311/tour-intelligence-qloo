@@ -13,6 +13,7 @@ import { Notice } from "@/components/qloo/Notice";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { Sheet } from "@/components/qloo/Sheet";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
+import { RadiusNote } from "@/components/qloo/RadiusNote";
 import { VerdictClockLine } from "@/components/qloo/VerdictClockLine";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
 import { AdvanceSheet } from "@/components/playbook/AdvanceSheet";
@@ -227,7 +228,7 @@ function CityPlaybookPage() {
         onAudit={() => setAuditOpen(true)}
         hasEvidence={card.status === "ok"}
       >
-        <CardBody card={card} merch={merch} city={shownCity.name} artist={artist?.name} />
+        <CardBody card={card} merch={merch} city={shownCity.name} artist={artist?.name} venueName={firstOkName(pb.cards, "venue_fit") ?? undefined} />
       </PlaybookCard>
     );
   };
@@ -321,6 +322,7 @@ function CityPlaybookPage() {
           </div>
           <DualBars fanHeat={shownCity.fanHeat} activation={shownCity.activation} thresholds={state.scoring?.thresholds} />
           <VerdictClockLine window={window} />
+          <RadiusNote city={shownCity} pool={shortlist.length > 0 ? state.cities.filter((c) => shortlist.includes(c.id)) : state.cities} />
           {!isDesktop && whyBtn}
           <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
           <AdvanceSheet rows={[

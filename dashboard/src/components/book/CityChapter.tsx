@@ -8,8 +8,10 @@ import { CardBody, ThisWeekBody, isEmptyWeek } from "@/components/playbook/cardB
 import { ClaimsBadge } from "@/components/playbook/ClaimsBadge";
 import { CARD_TITLE, removalText } from "@/components/playbook/format";
 import { KeyArtPoster } from "@/components/playbook/KeyArtPoster";
+import { RadiusNote } from "@/components/qloo/RadiusNote";
+import { firstOkName } from "@/lib/qloo/playbookFacts";
 import type { BookCityChapter } from "@/lib/qloo/tourBook";
-import type { CardClaims, CardKind, DateWindow } from "@/lib/qloo/types";
+import type { CardClaims, CardKind, DateWindow, ScoredCity } from "@/lib/qloo/types";
 
 const ORDER: CardKind[] = ["sponsors", "merch", "promo_zones", "local_moment", "venue_fit", "co_billing", "talent"];
 const TITLE: Record<CardKind, string> = { ...CARD_TITLE };
@@ -36,7 +38,7 @@ function MarginNote({ requests, claims }: { requests: number; claims?: CardClaim
 
 const H3 = "font-title text-[20px] leading-tight text-canvas-text";
 
-export function CityChapter({ chapter, sample = false, showcase = false, artist, window }: { chapter: BookCityChapter; sample?: boolean; showcase?: boolean; artist?: string; window?: DateWindow }) {
+export function CityChapter({ chapter, sample = false, showcase = false, artist, window, stops }: { chapter: BookCityChapter; sample?: boolean; showcase?: boolean; artist?: string; window?: DateWindow; /** The other cities on the tour, for the nearest-stop note. */ stops?: ScoredCity[] }) {
   const { city, accent, playbook, week } = chapter;
   const narrative = playbook?.narrative;
   const ok = chapter.status === "ready";
@@ -65,6 +67,7 @@ export function CityChapter({ chapter, sample = false, showcase = false, artist,
           <h2 id={`title-${city.id}`} className="font-title break-words text-[32px] leading-[1.1] text-canvas-text">{city.name}</h2>
           <div className="flex items-center gap-3"><VerdictChip verdict={city.verdict} size="md" /><span className="text-[13px] text-canvas-muted">{city.country}</span></div>
           <VerdictClockLine window={window} />
+          <RadiusNote city={city} pool={stops ?? []} />
         </div>
         {!ok ? (
           <Notice>Playbook incomplete — {chapter.incompleteReason ?? "Not loaded"}</Notice>
@@ -82,7 +85,7 @@ export function CityChapter({ chapter, sample = false, showcase = false, artist,
                   <h3 className={H3}>{TITLE[kind]}</h3>
                   {claims && claims.verified.map((c, i) => <p key={`${i}-${c.text}`} className="text-[15px] leading-[1.5] text-canvas-text">{c.text}</p>)}
                   {claims && card.status === "ok" && claims.verified.length === 0 && <p className="text-[13px] text-canvas-muted">Narrative removed: no claim passed verification.</p>}
-                  <CardBody card={card} merch={merch} city={city.name} artist={artist} />
+                  <CardBody card={card} merch={merch} city={city.name} artist={artist} venueName={firstOkName(playbook?.cards ?? [], "venue_fit") ?? undefined} />
                   <MarginNote requests={card.refs.length} claims={claims} />
                 </section>
               );

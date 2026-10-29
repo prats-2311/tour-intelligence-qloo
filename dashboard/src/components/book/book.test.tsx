@@ -53,6 +53,17 @@ describe("book components", () => {
     expect(screen.getByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.")).toBeTruthy();
     expect(screen.getByText("7 verified · 2 removed")).toBeTruthy();
   });
+  it("a chapter shows the sponsor deal line with its own venue, and the nearest-stop note", () => {
+    const ch = book.chapters[2]!;
+    const cards = ch.playbook!.cards.map((c) => (c.kind === "sponsors" ? { ...c, items: [{ name: "Brand A", artistRank: 2, cityRank: null }, ...c.items] } : c));
+    const venue = ch.playbook!.cards.find((c) => c.kind === "venue_fit" && c.status === "ok")!.items[0]!.name as string;
+    render(<CityChapter chapter={{ ...ch, playbook: { ...ch.playbook!, cards } }} stops={book.chapters.map((c) => c.city)} />);
+    expect(screen.getByTestId("sponsor-deal").textContent).toBe(`Brand A is #2 with fans and not in Guadalajara's top 20. Suggested ask: presale access or a co-branded night at ${venue}.`);
+    expect(screen.getByTestId("radius-note").textContent).toMatch(/^Nearest other stop: .+, \d+ km — check radius clauses\.$/);
+    cleanup();
+    render(<CityChapter chapter={ch} stops={[ch.city]} />);
+    expect(screen.queryByTestId("radius-note")).toBeNull();
+  });
   it("a chapter with an empty summarised week omits the This week section; a non-empty week keeps it", () => {
     const ch = book.chapters[2]!;
     if (ch.week?.status !== "ok") throw new Error("fixture week should be ok");

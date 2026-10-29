@@ -26,3 +26,21 @@ describe("playbook format", () => {
     expect(cityCode("São Paulo")).toBe("SP"); expect(cityCode("Querétaro")).toBe("QUE");
   });
 });
+
+import { dealLine } from "./format";
+describe("dealLine", () => {
+  it("states the lift without an exact places-higher count when the brand is off the city chart", () => {
+    expect(dealLine("Brand A", 1, null, "Guadalajara", "Foro Alameda")).toBe("Brand A is #1 with fans and not in Guadalajara's top 20. Suggested ask: presale access or a co-branded night at Foro Alameda.");
+  });
+  it("states both ranks when the city ranks the brand lower", () => {
+    expect(dealLine("Brand B", 2, 9, "Guadalajara", "Foro Alameda")).toBe("Fans rank Brand B #2; Guadalajara ranks it #9. Suggested ask: presale access or a co-branded night at Foro Alameda.");
+  });
+  it("falls back to the tour stop without a venue", () => {
+    expect(dealLine("Brand B", 2, 9, "Guadalajara")).toBe("Fans rank Brand B #2; Guadalajara ranks it #9. Suggested ask: presale access or a co-branded night on the tour stop.");
+    expect(dealLine("Brand B", 2, 9, "Guadalajara", "")).toContain("on the tour stop.");
+  });
+  it("returns null when there is no lift", () => {
+    expect(dealLine("Brand C", 3, 3, "Guadalajara", "X")).toBeNull();
+    expect(dealLine("Brand C", 5, 2, "Guadalajara", "X")).toBeNull();
+  });
+});

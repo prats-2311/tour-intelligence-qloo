@@ -103,6 +103,22 @@ describe("CityPlaybook", () => {
     expect(screen.getByTestId("sponsor-assumption").textContent).toBe("Assumption: a local sponsor can offset part of the guarantee. We don't estimate amounts.");
     expect(screen.getByRole("button", { name: /Playbook · \d+ Qloo calls?/ })).toBeTruthy();
   });
+  it("shows the nearest other stop on the verdict when the board has other cities with coordinates", async () => {
+    renderAt("/tours/playbook/4005539?sample=1");
+    await screen.findByRole("heading", { name: "Guadalajara" });
+    expect(screen.getByTestId("radius-note").textContent).toMatch(/^Nearest other stop: Mexico City, \d+ km — check radius clauses\.$/);
+  });
+  it("shows no nearest-stop note when the shortlist holds only this city", async () => {
+    function Only() {
+      const { state, setShortlist } = useTourBoard();
+      useEffect(() => { if (state.status === "done") setShortlist(["4005539"]); }, [state.status, setShortlist]);
+      return null;
+    }
+    renderAt("/tours/playbook/4005539?sample=1", <Only />);
+    await screen.findByRole("heading", { name: "Guadalajara" });
+    await screen.findByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.");
+    expect(screen.queryByTestId("radius-note")).toBeNull();
+  });
   it("a bare playbook url with no run loads the example, as the stepper does", async () => {
     setShowcase(parseShowcase(syntheticShowcase));
     const id = Object.keys(parseShowcase(syntheticShowcase).playbooks)[0]!;

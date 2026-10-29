@@ -100,6 +100,23 @@ describe("playbook cards", () => {
     expect(screen.getAllByText("None of these brands is in the city's top 20, so they set this audience apart.")).toHaveLength(1);
     expect(screen.queryByText(/not in the city's top 20$/)).toBeNull();
   });
+  it("sponsors end with one deal line for the top brand, naming the venue when given", () => {
+    const items = [
+      { name: "Brand A", entityId: "b1", affinity: 0.8, artistRank: 3, cityRank: null, rankLift: 18 },
+      { name: "Brand B", entityId: "b2", affinity: 0.7, artistRank: 1, cityRank: null, rankLift: 12 },
+    ];
+    const { rerender } = render(<CardBody card={{ ...card("sponsors"), items, summary: undefined }} city="Guadalajara" venueName="Foro Alameda" />);
+    expect(screen.getAllByTestId("sponsor-deal")).toHaveLength(1);
+    expect(screen.getByTestId("sponsor-deal").textContent).toBe("Brand A is #3 with fans and not in Guadalajara's top 20. Suggested ask: presale access or a co-branded night at Foro Alameda.");
+    rerender(<CardBody card={{ ...card("sponsors"), items, summary: undefined }} city="Guadalajara" />);
+    expect(screen.getByTestId("sponsor-deal").textContent).toContain("co-branded night on the tour stop.");
+    expect(screen.getByTestId("sponsor-deal").textContent).not.toMatch(/places higher/);
+  });
+  it("sponsors show no deal line when the top brand has no lift", () => {
+    const items = [{ name: "Brand A", entityId: "b1", affinity: 0.8, artistRank: 2, cityRank: 2, rankLift: 0 }];
+    render(<CardBody card={{ ...card("sponsors"), items, summary: undefined }} city="Guadalajara" venueName="Foro Alameda" />);
+    expect(screen.queryByTestId("sponsor-deal")).toBeNull();
+  });
   it("sponsors show where fans and the city rank each brand, and the ranking note", () => {
     const items = [
       { name: "Brand A", entityId: "b1", affinity: 0.8, artistRank: 3, cityRank: null, rankLift: 18 },
