@@ -240,7 +240,8 @@ describe("evidence for lift and merch brands", () => {
       { kind: "sponsors", status: "ok", items: [{ name: "Brand A", entityId: "B1", affinity: 0.8, artistRank: 2, cityRank: null, rankLift: 19 }], refs: [], warnings: [] },
       { kind: "merch", status: "ok", items: [], refs: [], warnings: [], summary: { brands: ["Brand A"] } },
     ]);
-    expect(ev[0]).toMatchObject({ id: "sponsors:0", numbers: [0.8, 2, 19], label: expect.stringContaining("rankLift") });
+    expect(ev[0]).toMatchObject({ id: "sponsors:0", numbers: [0.8, 2], label: expect.stringContaining("artistRank") });
+    expect(ev[0]!.numbers).not.toContain(19);
     expect(ev.find((e) => e.id === "merch:brands")).toMatchObject({ names: ["Brand A"] });
   });
   it("co-bill evidence labels and the narrative prompt use plain words, not 'local affinity'", async () => {
@@ -250,5 +251,27 @@ describe("evidence for lift and merch brands", () => {
     expect(ev[0]!.label).toContain("how much the city likes them");
     const { readFileSync } = await import("node:fs");
     expect(readFileSync(new URL("../src/narrative/narrate.ts", import.meta.url), "utf8")).not.toMatch(/local affinity/i);
+  });
+});
+
+describe("rank lift is not a quotable number", () => {
+  const rankCards: PlaybookCard[] = [
+    { kind: "sponsors", status: "ok", items: [{ entityId: "B1", name: "Cerro Alto Mezcal", affinity: 0.9, artistRank: 1, cityRank: null, rankLift: 20 }], refs: [], warnings: [] },
+  ];
+  const json = { cards: [{ kind: "sponsors", claims: [
+    { text: "Cerro Alto Mezcal ranks 20 places higher with fans.", entities: [{ name: "Cerro Alto Mezcal", entityId: "B1" }], numbers: [20], evidence_refs: ["sponsors:0"] },
+    { text: "Fans rank Cerro Alto Mezcal #1.", entities: [{ name: "Cerro Alto Mezcal", entityId: "B1" }], numbers: [1], evidence_refs: ["sponsors:0"] },
+  ] }] };
+  it("removes a claim quoting the rank difference and keeps one quoting artistRank", async () => {
+    const n = await createNarrator(deps(async () => answer(json)))({ ...input, cards: rankCards });
+    if (n.status !== "ok") throw new Error("expected ok");
+    expect(n.cards.sponsors!.verified.map((c) => c.numbers)).toEqual([[1]]);
+    expect(n.cards.sponsors!.removed[0]).toMatchObject({ reason: "unsupported_number", detail: "20" });
+  });
+  it("tells the model never to state a rank difference as a number of places", async () => {
+    const generate = vi.fn<GenerateFn>(async () => answer(json));
+    await createNarrator(deps(generate))({ ...input, cards: rankCards });
+    const prompt = String((generate.mock.calls[0]![1] as { contents: Array<{ parts: Array<{ text: string }> }> }).contents[0]!.parts[0]!.text);
+    expect(prompt).toContain("Never state a rank difference as a number of places; say 'fans rank it #N; the city ranks it #M' or 'not in the city's top 20'.");
   });
 });
