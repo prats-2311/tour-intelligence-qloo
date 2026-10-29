@@ -208,6 +208,19 @@ describe("TourBoard", () => {
     expect(screen.getByText("Waiting for the board to finish…")).toBeTruthy();
   });
 
+  it("header class contract: the title block cannot shrink to zero and the actions row can wrap", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    const title = screen.getByRole("heading", { level: 1 }).parentElement!;
+    const tokens = (el: Element) => el.className.split(/\s+/);
+    expect(tokens(title)).toEqual(expect.arrayContaining(["min-w-0", "basis-full"]));
+    expect(tokens(title)).not.toContain("flex-1");
+    expect(tokens(title)).not.toContain("shrink");
+    const actions = screen.getByRole("button", { name: /Agent log|Qloo calls/ }).parentElement!;
+    expect(tokens(actions)).toContain("flex-wrap");
+    expect(tokens(actions)).not.toContain("shrink-0");
+  });
+
   it("sample run renders 10 rows, the sample banner and verdict summary", async () => {
     renderPage();
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
