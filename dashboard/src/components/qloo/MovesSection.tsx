@@ -51,7 +51,7 @@ export function MovesSection({ cities, scoring, done, paused = false, selectedId
   // Three moves are all desktop shows, so there the button is only for longer lists.
   const expandPhoneOnly = moves.length <= TOP;
   return (
-    <section aria-labelledby="moves-heading" data-testid="moves-section" className="flex min-w-0 flex-col gap-1 lg:gap-2">
+    <section aria-labelledby="moves-heading" data-testid="moves-section" data-tour="moves" className="flex min-w-0 flex-col gap-1 lg:gap-2">
       <h2 id="moves-heading" className="font-title text-[18px] leading-tight text-canvas-text">{MOVES_HEADING}</h2>
       <p className="min-h-[1.1rem] text-[12px] leading-[1.4] text-canvas-muted max-lg:line-clamp-1 lg:min-h-[1.1rem] lg:text-[13px]">{MOVES_SUBLINE}</p>
       <div className={all || agree || paused ? "" : LIST_H}>

@@ -281,7 +281,7 @@ function TourBookPage() {
           </aside>
         )}
         <div className="book-page flex min-w-0 flex-col gap-12 pb-24 lg:col-start-2 lg:max-w-5xl lg:bg-paper lg:p-14 lg:pb-14">
-          <BookCover artist={artist!.name} regions={effectiveRegions(state.brief!, state.cities)} season={book.subtitle} chapters={book.chapters} sample={book.source !== "live"} showcase={book.source === "showcase"} clocks={!!dateWindow} />
+          <div data-tour="book-cover"><BookCover artist={artist!.name} regions={effectiveRegions(state.brief!, state.cities)} season={book.subtitle} chapters={book.chapters} sample={book.source !== "live"} showcase={book.source === "showcase"} clocks={!!dateWindow} /></div>
           <MarketChapter market={book.market} />
           {book.chapters.map((c) => <CityChapter key={c.city.id} chapter={c} sample={book.source !== "live"} showcase={book.source === "showcase"} artist={artist?.name} window={dateWindow} stops={picked} />)}
           <ProvenanceAppendix rows={book.provenance} calls={book.calls} sample={book.source !== "live"} showcase={book.source === "showcase"} />

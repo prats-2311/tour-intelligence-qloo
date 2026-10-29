@@ -282,7 +282,7 @@ function CityPlaybookPage() {
       <div className="relative -mx-4 lg:mx-0">
         <div ref={scrollerRef} tabIndex={0} role="region" aria-label="Playbook cards" className="flex snap-x focus-visible:outline-2 focus-visible:outline-gold snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 lg:grid lg:grid-cols-12 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0">
           {activateIds.map((id) => (
-            <div key={id} data-card={id} className={`w-[88%] shrink-0 snap-start lg:w-auto ${PLACE[id]}`}>{cardFor(id)}{id === "sponsors" && <p data-testid="sponsor-assumption" className="mt-2 text-[13px] text-canvas-muted">{SPONSOR_ASSUMPTION}</p>}</div>
+            <div key={id} data-card={id} data-tour={`card-${id}`} className={`w-[88%] shrink-0 snap-start lg:w-auto ${PLACE[id]}`}>{cardFor(id)}{id === "sponsors" && <p data-testid="sponsor-assumption" className="mt-2 text-[13px] text-canvas-muted">{SPONSOR_ASSUMPTION}</p>}</div>
           ))}
         </div>
         {shownIdx < activateIds.length - 1 && <span aria-hidden data-testid="swipe-fade" className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-canvas to-transparent lg:hidden" />}
@@ -334,7 +334,7 @@ function CityPlaybookPage() {
             { label: "TOP ZONE", value: zoneDisplayLabel(first(pb.cards, "promo_zones", "label"), shownCity.name) },
             { label: "BEST ROOM", value: first(pb.cards, "venue_fit", "name") },
             { label: "SUPPORT", value: first(pb.cards, "co_billing", "name") },
-            { label: "CLAIMS", value: claimsValue },
+            { label: "CLAIMS", value: claimsValue, tour: "claims-tile" },
           ]} />
           {narrative?.status === "unavailable" && <Notice>{narrative.message}</Notice>}
           {budget && (

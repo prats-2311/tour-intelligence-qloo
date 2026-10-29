@@ -7,10 +7,11 @@ import { NextStepLink } from "@/components/qloo/NextStep";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
 import { sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
-import { proofFor, rankShiftLine, SHOWCASE, showcaseCities, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
+import { proofFor, rankShiftLine, SHOWCASE, showcaseAvailable, showcaseCities, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
 import { storyBeats } from "@/lib/qloo/story";
 import type { ScoredCity } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
+import { useTour } from "@/components/tour/tourContext";
 
 export const HEADLINE = "Know which brands your artist's fans love in each city, before the sponsor meeting.";
 export const SUBLINE = "In Los Angeles, Mac DeMarco's fans rank Stüssy #1. It isn't in LA's top 20. Qloo taste data, per city, for every stop on the routing.";
@@ -103,6 +104,7 @@ function MapPreview() {
 
 export default function Landing() {
   const isDesktop = useIsDesktop();
+  const tour = useTour();
   return (
     <div className="mx-auto grid w-full max-w-[1240px] gap-8 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-12 lg:gap-y-0 lg:pt-6">
       <section className="lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:pt-8">
@@ -132,6 +134,7 @@ export default function Landing() {
           </>
         )}
         <Link to="/proof" className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{PROOF_LINK_TEXT} →</Link>
+        {tour && showcaseAvailable() && <button type="button" data-testid="take-tour" onClick={tour.start} className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Take the tour</button>}
       </div>
       <Story />
       <div className="flex flex-col gap-6 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">

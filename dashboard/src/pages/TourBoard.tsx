@@ -381,7 +381,7 @@ export default function TourBoard() {
       {showInlineLog && <div data-testid="inline-log" className="h-[84px] overflow-hidden rounded-[14px] bg-paper p-3"><AgentLog events={state.log} latest={1} /></div>}
 
       {(state.cities.length > 0 || streaming) && (
-        <div role="tabpanel" aria-label={PANEL_LABEL[mode]}>
+        <div role="tabpanel" aria-label={PANEL_LABEL[mode]} data-tour="board-panel">
           {withoutMode && (
             <div className="flex flex-col gap-2 pb-24 lg:pb-0">
               <div className="flex items-center gap-2 rounded-[10px] bg-[#26251f] px-3 py-2 text-[13px] font-semibold text-canvas-text">
@@ -454,7 +454,7 @@ export default function TourBoard() {
   );
 
   const header = (
-    <header className={`flex min-w-0 flex-wrap items-center gap-x-3 bg-canvas-raised px-4 py-2 lg:px-6 lg:pb-2 lg:pt-5 ${hasMap ? "min-h-[48px]" : "rounded-[14px]"}`}>
+    <header data-tour="board-header" className={`flex min-w-0 flex-wrap items-center gap-x-3 bg-canvas-raised px-4 py-2 lg:px-6 lg:pb-2 lg:pt-5 ${hasMap ? "min-h-[48px]" : "rounded-[14px]"}`}>
       <div className="min-w-0 max-w-full basis-full">
         <h1 className="font-title truncate text-[17px] leading-tight text-canvas-text lg:text-[32px] lg:leading-[1.1]">{artistName}</h1>
         {regionsLine && <p className="truncate text-[13px] text-canvas-muted">{regionsLine}</p>}

@@ -73,6 +73,7 @@ export function CityRow({ city, selected, dimActivation, onOpen, openable = true
       id={`city-row-${city.id}`}
       data-testid="city-row"
       data-city-id={city.id}
+      data-tour={`city-${city.id}`}
       data-city-name={city.name}
       layout={reduce ? false : "position"}
       initial={reduce ? false : { opacity: 0, y: 8 }}
