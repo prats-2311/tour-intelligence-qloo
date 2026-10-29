@@ -289,6 +289,11 @@ describe("playbook cards", () => {
     expect(screen.getByText("Creative direction — model suggestion, not Qloo data")).toBeTruthy();
     expect(screen.getByText("Inspired by")).toBeTruthy();
   });
+  it("merch hides the Inspired by label when there are no tags", () => {
+    render(<CardBody card={{ ...card("merch"), items: [] }} merch={narrative.status === "ok" ? narrative.merch : null} city="Guadalajara" />);
+    expect(screen.getByText("Jacaranda season")).toBeTruthy();
+    expect(screen.queryByText("Inspired by")).toBeNull();
+  });
   it("merch without a direction shows tag chips only", () => {
     render(<CardBody card={card("merch")} merch={null} city="Guadalajara" />);
     expect(screen.queryByText(/Creative direction/)).toBeNull();

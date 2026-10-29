@@ -43,10 +43,12 @@ export function Merch({ card, merch }: { card: PlaybookCard; merch?: MerchDirect
         <div><p className="mb-1 text-[13px] text-canvas-muted">Motifs</p><List items={merch.motifs} /></div>
         <div><p className="mb-1 text-[13px] text-canvas-muted">Products</p><List items={merch.products} /></div>
       </div>
-      <div>
-        <p className="mb-2 text-[13px] text-canvas-muted">Inspired by</p>
-        <Tags card={card} />
-      </div>
+      {card.items.length > 0 && (
+        <div>
+          <p className="mb-2 text-[13px] text-canvas-muted">Inspired by</p>
+          <Tags card={card} />
+        </div>
+      )}
     </div>
   );
 }
