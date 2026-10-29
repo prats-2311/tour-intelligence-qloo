@@ -10,6 +10,7 @@ import { ClaimsBadge } from "./ClaimsBadge";
 import { KeyArtPoster } from "./KeyArtPoster";
 import { PlaybookCard } from "./PlaybookCard";
 import { ReasoningSummary } from "./ReasoningSummary";
+import { CARD_TITLE, metaLine } from "./format";
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 const ev = samplePlaybookEvents("4005539")!;
@@ -255,6 +256,12 @@ describe("playbook cards", () => {
   it("talent unresolved line is singular for one suggestion", () => {
     render(<CardBody card={{ ...card("talent"), summary: { sharedTaste: null, sharedTags: [], suggestionsUnresolved: 1 } }} city="Toronto" />);
     expect(screen.getByText("1 suggestion wasn't found in Qloo and is not shown.")).toBeTruthy();
+  });
+  it("local moment card is titled for fans, with the promo hint", () => {
+    render(<CardBody card={card("local_moment")} city="Guadalajara" />);
+    expect(screen.getByText(/rank highly in this city\. Use them for local promo/)).toBeTruthy();
+    expect(CARD_TITLE.local_moment).toBe("What these fans love here");
+    expect(metaLine("LA", "local_moment", card("local_moment"))).toMatch(/^LA · WHAT THESE FANS LOVE HERE · \d+ PICKS$/);
   });
   it("local moment labels entity types", () => {
     render(<CardBody card={card("local_moment")} city="Guadalajara" />);

@@ -47,7 +47,7 @@ describe("book components", () => {
   it("a ready chapter reads as continuous sections ending with the claims badge", () => {
     render(<CityChapter chapter={book.chapters[2]!} />);
     expect(screen.getByRole("heading", { name: "Guadalajara", level: 2 })).toBeTruthy();
-    for (const name of ["Sponsors", "Merch", "Promo zones", "Local moment", "Venue fit", "Co-billing", "Local acts", "This week"]) {
+    for (const name of ["Sponsors", "Merch", "Promo zones", "What these fans love here", "Venue fit", "Co-billing", "Local acts", "This week"]) {
       expect(screen.getByRole("heading", { name, level: 3 })).toBeTruthy();
     }
     expect(screen.getByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.")).toBeTruthy();

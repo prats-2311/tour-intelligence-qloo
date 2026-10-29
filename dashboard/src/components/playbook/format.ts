@@ -17,7 +17,7 @@ export const pct = (share: number): string => `${Math.round(share * 100)}%`;
 export const liftLine = (sharedTaste: number, a: number, lift: number): string => `${sharedTaste.toFixed(2)} × ${a.toFixed(2)} = ${lift.toFixed(2)}`;
 
 export const CARD_TITLE: Record<CardKind | "this_week", string> = {
-  sponsors: "Sponsors", merch: "Merch", promo_zones: "Promo zones", local_moment: "Local moment",
+  sponsors: "Sponsors", merch: "Merch", promo_zones: "Promo zones", local_moment: "What these fans love here",
   venue_fit: "Venue fit", co_billing: "Co-billing", talent: "Local acts", this_week: "This week",
 };
 

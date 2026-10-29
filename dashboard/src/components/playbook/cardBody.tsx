@@ -22,7 +22,7 @@ export function CardBody({ card: fullCard, merch, city, artist, venueName }: { c
       ? <p className="text-[13px] text-canvas-muted">{emptyCopy}</p>
       : card.kind === "venue_fit"
       ? <p className="text-[13px] text-canvas-muted">Qloo lists no music venues in {city} for this artist</p>
-      : <p className="text-[13px] text-canvas-muted">Qloo returned no {CARD_TITLE[card.kind].toLowerCase()} for {city}</p>;
+      : <p className="text-[13px] text-canvas-muted">Qloo returned no {card.kind === "local_moment" ? "fan picks" : CARD_TITLE[card.kind].toLowerCase()} for {city}</p>;
   } else if (hidden > 0 && card.items.length === 0) {
     body = null; // every act was hidden: the note below is the whole card
   } else {
