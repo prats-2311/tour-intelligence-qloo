@@ -43,7 +43,7 @@ const MODE_NOTE: Record<Exclude<Mode, "without">, string> = {
   winnability: "Ranked by winnability: fan heat and how winnable the city is, 50/50.",
   density: "Same scores, sorted by fan heat only — the order a density-only tool would give.",
 };
-const WITHOUT_NOTE = "No taste data. This is the ranking you'd get without Qloo.";
+const WITHOUT_NOTE = "A generic LLM's city order, with no taste data. It is good at picking big markets (it beat winnability in our Test A); it can't tell you which brands or acts to pitch in each city.";
 const WITHOUT_AGREES = "On the top city, the generic answer agrees.";
 const sameCity = (a: string, b: string): boolean => a.normalize("NFKD").toLowerCase().trim() === b.normalize("NFKD").toLowerCase().trim();
 const PANEL_LABEL: Record<Mode, string> = { winnability: "Winnability ranking", density: "Density-only ranking", without: "Without Qloo ranking" };
@@ -363,7 +363,7 @@ export default function TourBoard() {
         <>
           <SegmentedControl mode={mode} onChange={setMode} />
           {/* Reserves two lines (three in Without Qloo) so a mode change or a late answer never moves the list. */}
-          <p data-testid="mode-note" className={`min-w-0 text-[12px] leading-[1.4] text-canvas-muted lg:text-[13px] ${withoutMode ? "min-h-[3.5rem] lg:min-h-[2.5rem]" : "min-h-[2.1rem] lg:min-h-[1.1rem]"}`}>
+          <p data-testid="mode-note" className={`min-w-0 text-[12px] leading-[1.4] text-canvas-muted lg:text-[13px] ${withoutMode ? "min-h-[5.5rem] lg:min-h-[3.5rem]" : "min-h-[2.1rem] lg:min-h-[1.1rem]"}`}>
             {withoutMode ? (agrees ? `${WITHOUT_NOTE} ${WITHOUT_AGREES}` : WITHOUT_NOTE) : MODE_NOTE[mode]}
           </p>
           <p data-testid="board-summary" className="min-h-[2.1rem] min-w-0 text-[12px] leading-[1.4] text-canvas-muted lg:min-h-[1.1rem] lg:text-[13px]">

@@ -110,7 +110,7 @@ describe("TourBoard", () => {
   it("Without Qloo shows the generic list with Qloo's verdict chips and the banner", async () => {
     renderPage("/tours/board?sample=1&mode=without");
     expect(await screen.findByText("Generic LLM answer — no taste evidence")).toBeTruthy();
-    expect(screen.getByTestId("mode-note").textContent).toMatch(/^No taste data\. This is the ranking you'd get without Qloo\./);
+    expect(screen.getByTestId("mode-note").textContent).toMatch(/^A generic LLM's city order, with no taste data\. It is good at picking big markets/);
     const list = screen.getByRole("list", { name: "Generic ranking" });
     expect(within(list).getAllByRole("listitem").map((li) => li.textContent)).toEqual(expect.arrayContaining([expect.stringContaining("Mexico City")]));
     expect(within(list).getAllByText("Hidden goldmine").length).toBeGreaterThan(0);
@@ -649,13 +649,13 @@ describe("TourBoard explains each tab", () => {
     await screen.findByRole("list", { name: "Generic ranking" });
     const first = screen.getByRole("list", { name: "Generic ranking" }).querySelector("li")!.textContent!;
     const agrees = first.includes(SAMPLE_CITIES.slice().sort((a, b) => (b.winnability.value ?? 0) - (a.winnability.value ?? 0))[0]!.name);
-    expect(note()).toBe(agrees ? "No taste data. This is the ranking you'd get without Qloo. On the top city, the generic answer agrees." : "No taste data. This is the ranking you'd get without Qloo.");
+    expect(note()).toBe(agrees ? "A generic LLM's city order, with no taste data. It is good at picking big markets (it beat winnability in our Test A); it can't tell you which brands or acts to pitch in each city. On the top city, the generic answer agrees." : "A generic LLM's city order, with no taste data. It is good at picking big markets (it beat winnability in our Test A); it can't tell you which brands or acts to pitch in each city.");
   });
   it("Without Qloo says nothing about agreement when the generic top city differs", async () => {
     load2();
     renderPage("/tours/board?showcase=1&mode=without");
     await screen.findByRole("list", { name: "Generic ranking" });
-    expect(note()).toBe("No taste data. This is the ranking you'd get without Qloo.");
+    expect(note()).toBe("A generic LLM's city order, with no taste data. It is good at picking big markets (it beat winnability in our Test A); it can't tell you which brands or acts to pitch in each city.");
   });
   it("Without Qloo adds the agreement sentence when the generic top city is the winnability top city", async () => {
     const raw = JSON.parse(JSON.stringify(syntheticShowcase));
@@ -665,7 +665,7 @@ describe("TourBoard explains each tab", () => {
     setShowcase(parseShowcase(raw));
     renderPage("/tours/board?showcase=1&mode=without");
     await screen.findByRole("list", { name: "Generic ranking" });
-    expect(note()).toBe("No taste data. This is the ranking you'd get without Qloo. On the top city, the generic answer agrees.");
+    expect(note()).toBe("A generic LLM's city order, with no taste data. It is good at picking big markets (it beat winnability in our Test A); it can't tell you which brands or acts to pitch in each city. On the top city, the generic answer agrees.");
   });
   function load2() {
     const raw = JSON.parse(JSON.stringify(syntheticShowcase));
