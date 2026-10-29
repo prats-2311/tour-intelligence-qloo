@@ -134,6 +134,7 @@ cd dashboard && RECORDINGS_DIR=<dir> npm run server & npm run dev
 - The public MCP is a rate-limited demo running on the author's Qloo key.
 - WebMCP tools need Chrome with the feature enabled.
 - A short do-not-book list (currently one act) is applied at display time; affected cards say so. Recorded data and proof results are unchanged.
+- Non-profit, advocacy, political and religious organisations are kept off the sponsor card by a short disclosed name list (Qloo brand entities carry no tag that identifies them); the card says how many were hidden. In live runs they are removed before ranking, so the remaining brands' ranks are among the brands shown.
 
 ## Data policy
 
@@ -141,7 +142,7 @@ No Qloo response data is committed here. Real recordings are served from private
 
 ## New versus existing project
 
-Forked from the author's Agentic Cinema (Google Cloud) entry, which supplies the legacy `tour_data_api`, Dialogflow agents and delight-card renderer (see [`archive/`](archive)). The Qloo work began on 2026-10-16: the gateway, scoring, Tour Board, playbooks, Tour Book, strategist, MCP tools, proof and calibration. At the time of writing, 321 commits since that date (`git rev-list --count --since=2026-10-16 HEAD`; `node scripts/readme-numbers.mjs` prints the figures used here).
+Forked from the author's Agentic Cinema (Google Cloud) entry, which supplies the legacy `tour_data_api`, Dialogflow agents and delight-card renderer (see [`archive/`](archive)). The Qloo work began on 2026-10-16: the gateway, scoring, Tour Board, playbooks, Tour Book, strategist, MCP tools, proof and calibration. At the time of writing, 324 commits since that date (`git rev-list --count --since=2026-10-16 HEAD`; `node scripts/readme-numbers.mjs` prints the figures used here).
 
 ### What's next (not built)
 
