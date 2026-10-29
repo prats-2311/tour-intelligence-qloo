@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { StrategistTurn } from "@/lib/qloo/strategistReducer";
 import { ChatBubble, TypingIndicator } from "@/components/ui/ChatBits";
+import { AnswerText, realUnsupportedNumbers } from "./AnswerText";
 import { WorkLog } from "./WorkLog";
 
 export function numbersNote(tokens: string[]): string {
@@ -10,14 +11,16 @@ export function numbersNote(tokens: string[]): string {
 function Turn({ turn, onRetry, retryDisabled, logOpen }: { turn: StrategistTurn; onRetry: (q: string) => void; retryDisabled: boolean; logOpen: boolean }) {
   const { answer } = turn;
   const failure = turn.status === "error" && turn.error ? turn.error.message : turn.status === "done" && !answer ? "No answer came back — try again" : undefined;
+  // Recorded answers carry the gateway's flag as it was then; list markers and step ordinals it counted are dropped here.
+  const unsupported = answer ? realUnsupportedNumbers(answer.text, answer.unsupportedNumbers) : [];
   return (
     <li className="flex flex-col gap-2">
       <ChatBubble role="user">{turn.question}</ChatBubble>
       {!answer && <WorkLog turn={turn} defaultOpen={logOpen} />}
       {answer && (
         <div className="flex flex-col gap-1.5">
-          <ChatBubble role="assistant"><span className="whitespace-pre-wrap">{answer.text}</span></ChatBubble>
-          {answer.unsupportedNumbers.length > 0 && <p className="text-[13px] text-state-stale">{numbersNote(answer.unsupportedNumbers)}</p>}
+          <ChatBubble role="assistant"><AnswerText text={answer.text} /></ChatBubble>
+          {unsupported.length > 0 && <p className="text-[13px] text-state-stale">{numbersNote(unsupported)}</p>}
           {answer.stoppedEarly && <p className="text-[13px] text-state-stale">Stopped after the tool limit</p>}
         </div>
       )}
