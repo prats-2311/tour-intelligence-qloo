@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, CircleAlert, History, RotateCcw, Square } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, CircleAlert, History, RotateCcw, Square } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -25,6 +25,7 @@ import { effectiveRegions } from "@/lib/qloo/routing";
 import { isRoutingBrief, setShowcaseVariant, variantOfBrief, type ShowcaseVariant, showcaseAvailable, showcaseBrief, showcaseParam, showcasePlaybookCities, showcasePlaybookEvents, showcaseQuery, showcaseRoutingAvailable, showcaseWithoutQloo } from "@/lib/qloo/showcase";
 import { routingUnmatchedText } from "@/lib/qloo/routing";
 import { sortCities, summarize } from "@/lib/qloo/ranking";
+import { compareWithQloo, disagreementLine, FLAG_TEXT, type CompareRow } from "@/lib/qloo/withoutCompare";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
 import { INTEGRITY_LINE, recordedPlaybooksLine, VERDICT_LABEL } from "@/lib/qloo/labels";
@@ -89,17 +90,37 @@ function SegmentedControl({ mode, onChange }: { mode: Mode; onChange: (m: Mode) 
   );
 }
 
-function GenericRanking({ ranked }: { ranked: Array<{ name: string; country: string }> }) {
+function CompareRowItem({ row, openable, onOpen }: { row: CompareRow; openable: boolean; onOpen: (id: string) => void }) {
+  const w = row.city?.winnability.value ?? null;
+  const flagText = row.flag === "agrees" ? null : row.flag === "moved" ? `Qloo ranks it #${row.qlooRank}` : FLAG_TEXT[row.flag];
+  const FlagArrow = row.direction === "up" ? ArrowUp : ArrowDown;
+  const body = (
+    <>
+      <span className="w-6 shrink-0 self-start pt-0.5 font-mono text-[13px] tabular-nums text-canvas-muted">{row.llmRank}</span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="flex min-w-0 items-baseline gap-x-1.5">
+          <span className="min-w-0 break-words text-[16px] font-semibold leading-tight text-canvas-text">{row.name}</span>
+          <span className="shrink-0 text-[12px] text-canvas-muted">{row.country}</span>
+        </span>
+        {flagText && (
+          <span data-testid="compare-flag" className="inline-flex items-center gap-1 text-[12px] leading-snug text-canvas-muted">
+            {row.flag === "moved" && <FlagArrow size={12} className="shrink-0" aria-hidden />}{flagText}
+          </span>
+        )}
+      </span>
+      {row.city && <span className="shrink-0"><VerdictChip verdict={row.city.verdict} /></span>}
+      <span className="w-8 shrink-0 text-right font-mono text-[18px] font-bold leading-none text-canvas-text tabular" aria-hidden={w === null ? undefined : true}>{w === null ? "—" : Math.round(w)}</span>
+    </>
+  );
+  const rowCls = "flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left";
   return (
-    <ol aria-label="Generic ranking" className="flex flex-col gap-0.5">
-      {ranked.map((c, i) => (
-        <li key={`${c.name}-${c.country}`} className="flex min-h-12 items-center gap-3 bg-paper px-3 first:rounded-t-[14px] last:rounded-b-[14px]">
-          <span className="w-6 shrink-0 font-mono text-[13px] tabular-nums text-canvas-muted">{i + 1}</span>
-          <span className="min-w-0 flex-1 truncate text-[17px] font-semibold text-canvas-text">{c.name}</span>
-          <span className="shrink-0 text-[13px] text-canvas-muted">{c.country}</span>
-        </li>
-      ))}
-    </ol>
+    <li data-testid="compare-row" className="bg-paper first:rounded-t-[14px] last:rounded-b-[14px]">
+      {openable && row.city ? (
+        <button type="button" onClick={() => onOpen(row.city!.id)} className={`${rowCls} min-h-14 rounded-[inherit] hover:bg-paper-raised focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-gold`}>{body}</button>
+      ) : (
+        <div className={rowCls}>{body}</div>
+      )}
+    </li>
   );
 }
 
@@ -216,6 +237,7 @@ export default function TourBoard() {
         }) }
       : SAMPLE_WITHOUT_QLOO)
     : withoutLive.data;
+  const compared = useMemo(() => (withoutResult?.status === "ok" ? compareWithQloo(withoutResult.ranked, state.cities) : []), [withoutResult, state.cities]);
   const topGeneric = withoutResult?.status === "ok" ? withoutResult.ranked[0]?.name : undefined;
   const agrees = !!topGeneric && !!sorted[0] && sameCity(topGeneric, sorted[0].name);
   const selected = withoutMode ? undefined : state.cities.find((c) => c.id === selectedId);
@@ -367,7 +389,13 @@ export default function TourBoard() {
               {streaming ? (
                 <p role="status" className="text-[13px] text-canvas-muted">Waiting for the board to finish…</p>
               ) : withoutResult?.status === "ok" ? (
-                <GenericRanking ranked={withoutResult.ranked} />
+                <>
+                  <p data-testid="without-summary" className="px-1 text-[13px] leading-[1.4] text-canvas-text">{disagreementLine(compared)}</p>
+                  <ol aria-label="Generic ranking" className="flex flex-col gap-0.5">
+                    {compared.map((r) => <CompareRowItem key={`${r.name}-${r.country}`} row={r} openable={!!r.city && openable(r.city.id)} onOpen={openRow} />)}
+                  </ol>
+                  <button type="button" onClick={() => setMode("winnability")} className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">Back to the Qloo ranking</button>
+                </>
               ) : withoutResult?.status === "unavailable" || withoutLive.isError ? (
                 <Notice>
                   <CircleAlert size={14} className="text-state-error" aria-hidden />
@@ -409,7 +437,7 @@ export default function TourBoard() {
     </div>
   );
 
-  const footer = state.cities.length > 0 && !withoutMode && (
+  const footer = state.cities.length > 0 && (
     <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 flex items-center gap-3 bg-canvas-raised py-2 pl-3 pr-[68px] lg:bottom-0 lg:px-3 lg:justify-between lg:py-3">
       <span className="hidden min-w-0 text-[13px] text-canvas-muted lg:block">
         {heldCount} {heldCount === 1 ? "market" : "markets"} shortlisted
@@ -417,9 +445,9 @@ export default function TourBoard() {
       <NextStepButton leads="/tours/book" onClick={() => setBuildOpen(true)} className="btn-gold inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:flex-none">
         Review shortlist<ArrowRight size={16} className="hidden lg:block" aria-hidden />
       </NextStepButton>
-      <button type="button" onClick={() => summaryCity && setWhyId(summaryCity.id)} className="inline-flex min-h-11 shrink-0 items-center px-1 text-left text-[13px] font-medium leading-tight text-canvas-text underline-offset-[0.18em] hover:underline lg:hidden">
+      {!withoutMode && <button type="button" onClick={() => summaryCity && setWhyId(summaryCity.id)} className="inline-flex min-h-11 shrink-0 items-center px-1 text-left text-[13px] font-medium leading-tight text-canvas-text underline-offset-[0.18em] hover:underline lg:hidden">
         <span className="line-clamp-2 max-w-[6.5rem]">{whyLabel}</span>
-      </button>
+      </button>}
     </div>
   );
 

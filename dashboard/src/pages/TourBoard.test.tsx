@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import * as client from "@/lib/qloo/client";
 import { SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
-import { VERDICT_LABEL, VERDICT_SHAPE } from "@/lib/qloo/labels";
+import { VERDICT_SHAPE } from "@/lib/qloo/labels";
 import type { TourBrief } from "@/lib/qloo/types";
 import { parseShowcase, setShowcase, showcaseCities } from "@/lib/qloo/showcase";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
@@ -69,16 +69,14 @@ const renderWithRun = (brief: TourBrief) =>
 
 
 describe("TourBoard", () => {
-  it("Without Qloo hides every verdict and score surface on the page", async () => {
+  it("Without Qloo keeps the map legend, score sheet and bars off, but keeps the next step", async () => {
     renderPage("/tours/board?sample=1&mode=without");
     await screen.findByRole("list", { name: "Generic ranking" });
-    for (const label of Object.values(VERDICT_LABEL)) expect(screen.queryByText(label as string)).toBeNull();
     expect(screen.queryByText("Why this score?")).toBeNull();
     expect(screen.queryByRole("button", { name: "Why this score?" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Review shortlist" })).toBeNull();
     expect(screen.queryByLabelText("Map legend")).toBeNull();
-    expect(screen.queryByText(/markets scored.*(Play|Hidden goldmine)/)).toBeNull();
-    expect(screen.getByText(/10 markets scored/).textContent).not.toMatch(/Play|Hidden goldmine|De-risk/);
+    expect(screen.queryAllByRole("meter")).toHaveLength(0);
+    expect(screen.getByRole("button", { name: /Review shortlist/ })).toBeTruthy();
   });
   it("?sample=long applies the long city names to the generic list", async () => {
     renderPage("/tours/board?sample=long&mode=without");
@@ -109,15 +107,44 @@ describe("TourBoard", () => {
     expect(spy.mock.calls[0]![0].artist).toBe("Florence + the Machine");
   });
 
-  it("Without Qloo shows the generic list with no bars, verdicts or scores, and the banner", async () => {
+  it("Without Qloo shows the generic list with Qloo's verdict chips and the banner", async () => {
     renderPage("/tours/board?sample=1&mode=without");
     expect(await screen.findByText("Generic LLM answer — no taste evidence")).toBeTruthy();
     expect(screen.getByTestId("mode-note").textContent).toMatch(/^No taste data\. This is the ranking you'd get without Qloo\./);
     const list = screen.getByRole("list", { name: "Generic ranking" });
     expect(within(list).getAllByRole("listitem").map((li) => li.textContent)).toEqual(expect.arrayContaining([expect.stringContaining("Mexico City")]));
-    expect(within(list).queryByText("Hidden goldmine")).toBeNull();
+    expect(within(list).getAllByText("Hidden goldmine").length).toBeGreaterThan(0);
     expect(within(list).queryByRole("meter")).toBeNull();
     expect(screen.queryAllByTestId("city-row")).toHaveLength(0);
+  });
+  it("Without Qloo says where Qloo disagrees with the generic order", async () => {
+    renderPage("/tours/board?sample=1&mode=without");
+    const list = await screen.findByRole("list", { name: "Generic ranking" });
+    expect(screen.getByTestId("without-summary").textContent).toBe("Qloo disagrees on 4 of 10: 1 Skip, 1 couldn't be scored, 2 moved.");
+    const rows = within(list).getAllByRole("listitem");
+    expect(rows).toHaveLength(10);
+    expect(rows[0]!.textContent).toContain("Mexico City");
+    expect(rows[7]!.textContent).toContain("Qloo says Skip");
+    expect(rows[9]!.textContent).toContain("Qloo couldn't score it");
+    expect(rows[8]!.textContent).toContain("Qloo ranks it #4");
+  });
+  it("Without Qloo in the recorded example flags a capped city and keeps Review shortlist", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    renderPage("/tours/board?showcase=1&mode=without");
+    const list = await screen.findByRole("list", { name: "Generic ranking" });
+    const cabo = await within(list).findByText("Cabo Frio");
+    expect(cabo.closest("li")!.textContent).toContain("Capped: no Qloo fan-heat evidence");
+    expect(screen.getByTestId("without-summary").textContent).toBe("Qloo disagrees on 7 of 8: 1 capped, 1 Skip, 1 couldn't be scored, 4 moved.");
+    expect(screen.getByRole("button", { name: /Review shortlist/ })).toBeTruthy();
+    // Only cities with a recorded playbook are links.
+    expect(within(list).getAllByRole("button").length).toBe(4);
+  });
+  it("Back to the Qloo ranking switches to winnability", async () => {
+    renderPage("/tours/board?sample=1&mode=without");
+    await screen.findByRole("list", { name: "Generic ranking" });
+    fireEvent.click(screen.getByRole("button", { name: "Back to the Qloo ranking" }));
+    expect(currentSearch()).not.toContain("mode=");
+    expect(await screen.findAllByTestId("city-row")).toHaveLength(10);
   });
   it("switching to Without Qloo updates the URL and keeps the sample flag", async () => {
     renderPage("/tours/board?sample=1");
