@@ -14,8 +14,9 @@ BUILD_ENV="PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1"
 [[ -n "${VITE_WEBMCP_OT_TOKEN:-}" ]] && BUILD_ENV="${BUILD_ENV},VITE_WEBMCP_OT_TOKEN=${VITE_WEBMCP_OT_TOKEN}"
 
 # --set-env-vars REPLACES the whole env set: the legacy TOUR_DATA_API_URL/DELIGHT_RENDERER_URL/ORCHESTRATOR_JOB_URL are dropped on deploy, so the legacy routes answer 503.
+# Judging period: one warm instance (cold start ~2.8 s vs 0.4 s warm). After judging: MIN_INSTANCES=0, or gcloud run services update tour-intel-qloo --min-instances 0.
 gcloud run deploy "$SERVICE" --source="$(dirname "$0")/.." --region="$REGION" --project="$PROJECT" \
-  --service-account="$SA" --set-build-env-vars="$BUILD_ENV" --allow-unauthenticated \
+  --service-account="$SA" --min-instances="${MIN_INSTANCES:-1}" --set-build-env-vars="$BUILD_ENV" --allow-unauthenticated \
   --set-env-vars="QLOO_GATEWAY_URL=${QLOO_GATEWAY_URL},RECORDINGS_BUCKET=liifecalling-academy-tour-intel-private"
 
 echo "Note: the qloo-gateway Cloud Run service must already exist (deploy cloud_run/qloo_gateway/scripts/deploy.sh first)."
