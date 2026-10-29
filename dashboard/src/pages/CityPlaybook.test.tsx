@@ -362,3 +362,21 @@ describe("CityPlaybook: main and routing examples stay separate", () => {
     expect(getPlaybook(playbookKey(entity, id, "showcase"))?.error?.message).toBe("main");
   });
 });
+
+describe("live-run loading line", () => {
+  function StartLive() {
+    const { run } = useTourBoard();
+    useEffect(() => { run({ artist: "Ada", regions: ["US"], maxStops: 8 }); }, [run]);
+    return null;
+  }
+  it("shows on a live playbook while it builds, not on the recorded example", async () => {
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield { type: "city_scored", city: SAMPLE_CITIES[0]! }; yield { type: "done", summary: {} }; });
+    vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () { await new Promise(() => {}); });
+    renderAt(`/tours/playbook/${SAMPLE_CITIES[0]!.id}`, <StartLive />);
+    expect((await screen.findByTestId("live-run-line")).textContent).toBe("Live Qloo run: about a minute for 3 cities.");
+    cleanup();
+    renderAt(`/tours/playbook/${SAMPLE_CITIES[0]!.id}?sample=1`);
+    await screen.findByRole("heading", { level: 1 });
+    expect(screen.queryByTestId("live-run-line")).toBeNull();
+  });
+});

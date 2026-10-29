@@ -29,7 +29,7 @@ import { fetchThisWeek } from "@/lib/qloo/client";
 import { accentFor } from "@/lib/qloo/cityAccent";
 import { LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks";
-import { INTEGRITY_LINE, LOCATION_UNRESOLVED_NOTE, recordedPlaybooksLine } from "@/lib/qloo/labels";
+import { INTEGRITY_LINE, LIVE_RUN_LINE, LOCATION_UNRESOLVED_NOTE, recordedPlaybooksLine } from "@/lib/qloo/labels";
 import { firstOkName } from "@/lib/qloo/playbookFacts";
 import { loadPlaybook, usePlaybook, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
@@ -389,6 +389,7 @@ function CityPlaybookPage() {
       </div>
 
       <div id={`${tabBase}-panel`} role="tabpanel" aria-labelledby={`${tabBase}-${tab}`} className="mt-4 min-w-0 px-4 lg:px-0">
+        {!sample && (pb.status === "idle" || pb.status === "streaming") && <p data-testid="live-run-line" className="mb-3 text-[12px] text-canvas-muted">{LIVE_RUN_LINE}</p>}
         {panels[tab]}
         <div className="mt-4 flex min-w-0 flex-col gap-3">
           <ReasoningSummary narrative={narrative} />

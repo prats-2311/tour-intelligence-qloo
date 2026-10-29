@@ -28,7 +28,7 @@ import { sortCities, summarize } from "@/lib/qloo/ranking";
 import { compareWithQloo, disagreementLine, FLAG_TEXT, type CompareRow } from "@/lib/qloo/withoutCompare";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { PROOF_LINK_TEXT } from "@/lib/qloo/backtest";
-import { INTEGRITY_LINE, recordedPlaybooksLine, VERDICT_LABEL } from "@/lib/qloo/labels";
+import { INTEGRITY_LINE, LIVE_RUN_LINE, recordedPlaybooksLine, VERDICT_LABEL } from "@/lib/qloo/labels";
 import type { TourBrief, Verdict } from "@/lib/qloo/types";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
@@ -375,6 +375,8 @@ export default function TourBoard() {
       {streaming && state.cities.length === 0 && (
         <p role="status" className="text-[13px] text-canvas-muted">Scoring markets…</p>
       )}
+
+      {streaming && state.source === "live" && <p data-testid="live-run-line" className="text-[12px] text-canvas-muted">{LIVE_RUN_LINE}</p>}
 
       {showInlineLog && <div data-testid="inline-log" className="h-[84px] overflow-hidden rounded-[14px] bg-paper p-3"><AgentLog events={state.log} latest={1} /></div>}
 

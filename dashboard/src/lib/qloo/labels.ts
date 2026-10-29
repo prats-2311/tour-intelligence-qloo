@@ -5,6 +5,8 @@ export const VERDICT_LABEL: Record<Verdict, string> = {
   play: "Play", hidden_goldmine: "Hidden goldmine", de_risk: "De-risk", consider: "Consider", skip: "Skip", insufficient_data: "Not enough data",
 };
 
+/** Shown only while a live (non-recorded) run is building, on the board and on the playbook. */
+export const LIVE_RUN_LINE = "Live Qloo run: about a minute for 3 cities.";
 export const INTEGRITY_LINE = "Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.";
 export const SAMPLE_TEXT = "Sample data — illustrative, not Qloo output";
 /** Label for a recorded run. A placeholder recording (no date) is honestly the sample. */

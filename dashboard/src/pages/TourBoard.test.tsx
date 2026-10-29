@@ -200,6 +200,17 @@ describe("TourBoard", () => {
     await screen.findByRole("list", { name: "Generic ranking" });
     expect(spy).not.toHaveBeenCalled();
   });
+  it("a live run says how long it takes while scoring, and only then", async () => {
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield cityEvent(0); await new Promise(() => {}); });
+    renderPage("/tours/board");
+    submitArtist("Ada");
+    expect((await screen.findByTestId("live-run-line")).textContent).toBe("Live Qloo run: about a minute for 3 cities.");
+  });
+  it("the recorded example never shows the live-run line", async () => {
+    renderPage("/tours/board?sample=1");
+    await waitFor(() => expect(screen.getAllByTestId("city-row").length).toBeGreaterThan(0));
+    expect(screen.queryByTestId("live-run-line")).toBeNull();
+  });
   it("selecting Without Qloo while streaming says to wait", async () => {
     vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield cityEvent(0); await new Promise(() => {}); });
     renderPage("/tours/board");
