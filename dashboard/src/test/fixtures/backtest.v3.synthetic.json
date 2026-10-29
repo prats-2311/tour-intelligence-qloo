@@ -4368,6 +4368,143 @@
             ]
           ]
         }
+      },
+      {
+        "id": "F",
+        "title": "Gemini + Qloo combined (Amendment 7)",
+        "question": "Does Gemini's ranking get better when Qloo's ranking is fused in?",
+        "status": "Computed offline from stored rankings: Test B 3 of 3 cases, Test A 3 of 3 artists",
+        "n": 3,
+        "tables": [
+          {
+            "columns": [
+              "Test B arm",
+              "Mean reciprocal rank"
+            ],
+            "rows": [
+              [
+                "Gemini",
+                "0.50"
+              ],
+              [
+                "Qloo rank",
+                "0.40"
+              ],
+              [
+                "Popularity",
+                "0.10"
+              ],
+              [
+                "Gemini + Qloo",
+                "0.45"
+              ]
+            ]
+          },
+          {
+            "columns": [
+              "Test A arm",
+              "Mean R-precision"
+            ],
+            "rows": [
+              [
+                "Winnability",
+                "0.60"
+              ],
+              [
+                "Fan heat",
+                "0.60"
+              ],
+              [
+                "The generic LLM",
+                "0.80"
+              ],
+              [
+                "Population",
+                "0.70"
+              ],
+              [
+                "Generic LLM + winnability",
+                "0.75"
+              ]
+            ]
+          },
+          {
+            "columns": [
+              "Exploratory subset (tours after the model's cutoff)",
+              "Arm",
+              "Mean"
+            ],
+            "rows": [
+              [
+                "Test B",
+                "Gemini",
+                "0.30"
+              ],
+              [
+                "Test B",
+                "Gemini + Qloo",
+                "0.50"
+              ],
+              [
+                "Test A",
+                "none (n = 0)",
+                "-"
+              ]
+            ]
+          }
+        ],
+        "signTests": [
+          {
+            "label": "Gemini + Qloo vs Gemini (Test B)",
+            "wins": 1,
+            "losses": 2,
+            "ties": 0,
+            "pairs": 3,
+            "p": 1
+          },
+          {
+            "label": "Gemini + Qloo vs Gemini (Test B, exploratory)",
+            "wins": 2,
+            "losses": 0,
+            "ties": 0,
+            "pairs": 2,
+            "p": 0.5
+          }
+        ],
+        "claims": [
+          "Not significant at this sample size: Gemini + Qloo trails Gemini alone on mean reciprocal rank (0.45 vs 0.50; p=1.000; 1 win, 2 losses over 3 cases).",
+          "Exploratory (Test A, first shows after the model's cutoff): the subset is empty (n = 0), so there is nothing to score."
+        ],
+        "limits": [
+          "Disclosure (Amendment 7): synthetic placeholder disclosure for this fixture.",
+          "Exploratory, small n (7.2): synthetic subset sizes."
+        ],
+        "runs": [],
+        "perUnit": {
+          "columns": [
+            "Test",
+            "Case or artist",
+            "Gemini or LLM",
+            "Qloo or winnability",
+            "Combined"
+          ],
+          "rows": [
+            [
+              "B",
+              "synth-a",
+              "#2",
+              "#1",
+              "#2"
+            ],
+            [
+              "A",
+              "Synthetic Quartet",
+              "0.80",
+              "0.60",
+              "0.75"
+            ]
+          ]
+        }
       }
     ]
   }

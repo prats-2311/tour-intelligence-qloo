@@ -75,7 +75,7 @@ describe("parseBacktest: proofV3", () => {
     expect(b.status).toBe("complete");
     if (b.status !== "complete") return;
     expect(b.runs.length).toBe(2);
-    expect(b.proofV3!.tests.map((t) => t.id)).toEqual(["A", "B", "catch", "C"]);
+    expect(b.proofV3!.tests.map((t) => t.id)).toEqual(["A", "B", "catch", "C", "F"]);
     expect(b.proofV3!.amendments).toHaveLength(2);
   });
   it("is complete with proofV3 alone (no earlier runs)", () => {

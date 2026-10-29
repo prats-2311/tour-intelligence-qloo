@@ -194,14 +194,14 @@ describe("Proof v3", () => {
     expect(link.getAttribute("href")).toBe("https://github.com/prats-2311/tour-intelligence-qloo/blob/master/docs/qloo/proof-v3-protocol.md");
     expect(link.getAttribute("rel")).toBe("noopener noreferrer");
   });
-  it("renders tests in the order B, catch, C, A", () => {
+  it("renders tests in the order B, catch, C, F, A", () => {
     view(v3Backtest);
-    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "C", "A"]);
+    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "C", "F", "A"]);
   });
-  it("puts Test A under a visible Limits heading, after C", () => {
+  it("puts Test A under a visible Limits heading, after F", () => {
     view(v3Backtest);
     const h = screen.getByRole("heading", { level: 2, name: "Limits: where Qloo-backed ranking lost" });
-    const [, , c, a] = sections();
+    const [, , , c, a] = sections();
     const before = (x: Node, y: Node) => !!(x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING);
     expect(before(c!, h)).toBe(true);
     expect(before(h, a!)).toBe(true);
@@ -248,7 +248,19 @@ describe("Proof v3", () => {
   it("Test C absent from the data means no Test C section; present means a section with no extra code", () => {
     const v3 = (v3Backtest as { proofV3: { tests: Array<{ id: string }> } }).proofV3;
     view({ ...v3Backtest, proofV3: { ...v3, tests: v3.tests.filter((t) => t.id !== "C") } });
-    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "A"]);
+    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "F", "A"]);
+  });
+  it("Test F (Amendment 7) renders as data, sits before A, and an unknown id does not crash", () => {
+    const v3 = (v3Backtest as { proofV3: { tests: Array<Record<string, unknown>> } }).proofV3;
+    view(v3Backtest);
+    const f = screen.getByRole("region", { name: "Gemini + Qloo combined (Amendment 7)" });
+    expect(within(f).getByText("Does Gemini's ranking get better when Qloo's ranking is fused in?")).toBeTruthy();
+    expect(within(f).getByText(/Not significant at this sample size: Gemini \+ Qloo trails Gemini alone/)).toBeTruthy();
+    expect(within(f).getByText(/Exploratory, small n \(7.2\)/)).toBeTruthy();
+    expect(within(f).getByText("Gemini + Qloo vs Gemini (Test B, exploratory)")).toBeTruthy();
+    cleanup();
+    view({ ...v3Backtest, proofV3: { ...v3, tests: [...v3.tests, { ...v3.tests[0]!, id: "Z-unknown", title: "Unknown test" }] } });
+    expect(sections().map((s) => s.getAttribute("data-test-id")).at(-1)).toBe("Z-unknown");
   });
   it("works with v3 alone (no earlier runs) and never says winnability is better", () => {
     const { container } = view({ proofV3: (v3Backtest as { proofV3: unknown }).proofV3 });

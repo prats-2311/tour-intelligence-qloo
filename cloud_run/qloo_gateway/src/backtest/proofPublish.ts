@@ -1,7 +1,8 @@
 import {
-  ARMS, ARM_LABEL, DISCLOSURES, FIXED_ARMS, FIXED_LABEL, GROUND_ARMS, GROUND_CATEGORIES, PLANT_KINDS, computeCityRankStats, stopCode, summarise,
-  type CatchRateSection, type CityRankArtist, type CityRankSection, type FixedCaseResult, type GroundingSection, type PlantKind, type ProofV3Results, type SignRow,
+  ARMS, ARM_LABEL, DISCLOSURES, FIXED_ARMS, FIXED_LABEL, GROUND_ARMS, GROUND_CATEGORIES, PLANT_KINDS, N, compare, computeCityRankStats, stopCode, summarise,
+  type CatchRateSection, type CityRankArtist, type CityRankSection, type FixedCaseResult, type GroundingSection, type PlantKind, type ProofV3Results, type Name, type SignRow,
 } from "./proofResults.js";
+import { claimMet, type FusionFile, type FusionSummary, type Subset } from "./fusion.js";
 
 /**
  * The public face of Proof v3 (docs/qloo/proof-v3-protocol.md): one `proofV3` object under the private backtest file, rendered generically by the dashboard's /proof page.
@@ -11,7 +12,7 @@ export interface Table { columns: string[]; rows: string[][] }
 export interface SignLine { label: string; wins: number; losses: number; ties: number; pairs: number; p: number }
 export interface RunLine { label: string; commit: string; status: "complete" | "stopped"; note: string }
 export interface ProofV3Test {
-  id: "A" | "B" | "C" | "catch"; title: string; question: string; status: string; n: number;
+  id: "A" | "B" | "C" | "F" | "catch"; title: string; question: string; status: string; n: number;
   /** Arm table first (R-precision, MRR, catch counts, in-city shares). */
   tables: Table[]; signTests: SignLine[]; claims: string[]; limits: string[]; runs?: RunLine[];
   /** The "Per artist/case" disclosure; null when a test has no per-unit rows. */
@@ -25,7 +26,7 @@ export interface PublishInputs {
   /** Test A batches, in order. */
   batches: ProofV3Results[];
   fixed?: ProofV3Results; /** Earlier stopped runs of Test B, oldest first. */ fixedStopped?: ProofV3Results[];
-  catchRate?: ProofV3Results; grounding?: ProofV3Results; /** Test C's stopped runs (the `proof-v3-ground-items.stopped-N.json` files), oldest first. */ groundingStopped?: StoppedGroundRun[]; now: Date;
+  catchRate?: ProofV3Results; grounding?: ProofV3Results; /** Test C's stopped runs (the `proof-v3-ground-items.stopped-N.json` files), oldest first. */ groundingStopped?: StoppedGroundRun[]; /** Amendment 7: the offline fusion results, when computed. */ fusion?: FusionFile; now: Date;
 }
 /** The few facts read from a stopped Test C items file; its names stay private. */
 export interface StoppedGroundRun {
@@ -161,12 +162,64 @@ function testC(run: ProofV3Results, stopped: StoppedGroundRun[]): ProofV3Test {
   };
 }
 
+// Test F (Amendment 7) -------------------------------------------------------------------------------------------------------
+
+const FUSED = N("Gemini + Qloo", "Gemini + Qloo");
+
+function testF(fu: FusionFile): ProofV3Test {
+  const b = fu.testB, a = fu.testA;
+  const gem = N("Gemini alone", "Gemini alone"), llm = N("The generic LLM", "the generic LLM");
+  const fusedClaim = (full: FusionSummary, ref: Name, metric: string, unit: string, win: string): string => {
+    const text = compare(FUSED, ref, full.means.fusion ?? null, full.means[ref === gem ? "gemini" : "llm"] ?? null, full.signTest, metric, unit);
+    return claimMet(full.means.fusion ?? null, full.means[ref === gem ? "gemini" : "llm"] ?? null, full.signTest) ? text.replace(/^Gemini \+ Qloo beat [^(]*/, win) : text;
+  };
+  const exploratory = (label: string, s: Subset, ref: Name, metric: string, unit: string, win: string): string =>
+    s.n === 0 ? `Exploratory (${label}): the subset is empty (n = 0), so there is nothing to score.` : `Exploratory, small n (${label}): ${fusedClaim(s, ref, metric, unit, win)}`;
+  const dropped = (s: FusionSummary, noun: string) => (s.exclusions.length ? [`${plural(s.exclusions.length, noun)} excluded from the fusion analysis: ${s.exclusions.map((e) => `${e.id} (${e.reason})`).join("; ")}.`] : []);
+  const sub = (s: Subset) => `${s.n}`;
+  const bRow = (label: string, v: number | null) => [label, f2(v)];
+  const subRows = (test: string, s: Subset, arms: Array<[string, string]>): string[][] =>
+    s.n === 0 ? [[test, "none (n = 0)", "-"]] : [...arms.map(([k, name]) => [test, name, f2(s.means[k] ?? null)]), [test, FUSED.start, f2(s.means.fusion ?? null)]];
+  const unitB = b.full.rows.map((r) => ["B", r.id, `#${Math.round(1 / (r.scores.gemini ?? NaN))}`, `#${Math.round(1 / (r.scores.qloo_rank ?? NaN))}`, `#${Math.round(1 / r.fusion)}`]);
+  const unitA = a.full.rows.map((r) => ["A", r.id, f2(r.scores.llm ?? null), f2(r.scores.winnability ?? null), f2(r.fusion)]);
+  return {
+    id: "F", title: "Gemini + Qloo combined (Amendment 7)", question: "Does Gemini's ranking get better when Qloo's ranking is fused in?",
+    status: `Computed offline from stored rankings: Test B ${b.full.n} of ${b.scored} cases, Test A ${a.full.n} of ${a.artists} artists`,
+    n: b.full.n,
+    tables: [
+      { columns: ["Test B arm", "Mean reciprocal rank"], rows: [bRow(FIXED_LABEL.gemini, b.full.means.gemini ?? null), bRow(FIXED_LABEL.qloo_rank, b.full.means.qloo_rank ?? null), bRow(FIXED_LABEL.popularity, b.full.means.popularity ?? null), bRow(FUSED.start, b.full.means.fusion ?? null)] },
+      { columns: ["Test A arm", "Mean R-precision"], rows: [...ARMS.map((arm) => bRow(ARM_LABEL[arm], a.full.means[arm] ?? null)), bRow("Generic LLM + winnability", a.full.means.fusion ?? null)] },
+      { columns: ["Exploratory subset (tours after the model's cutoff)", "Arm", "Mean"], rows: [...subRows("Test B", b.postCutoff, [["gemini", FIXED_LABEL.gemini], ["qloo_rank", FIXED_LABEL.qloo_rank], ["popularity", FIXED_LABEL.popularity]]), ...subRows("Test A", a.postCutoff, ARMS.map((arm) => [arm, ARM_LABEL[arm]] as [string, string]))] },
+    ],
+    signTests: [
+      sign("Gemini + Qloo vs Gemini (Test B)", b.full.signTest), sign("Gemini + Qloo vs the generic LLM (Test A)", a.full.signTest),
+      sign("Gemini + Qloo vs Gemini (Test B, exploratory)", b.postCutoff.signTest), sign("Gemini + Qloo vs the generic LLM (Test A, exploratory)", a.postCutoff.signTest),
+    ],
+    claims: [
+      fusedClaim(b.full, gem, "reciprocal rank", "case", "Gemini + Qloo ranked the real tour's pick better than Gemini alone "),
+      fusedClaim(a.full, llm, "R-precision", "artist", "Gemini + Qloo picked the played cities better than the generic LLM alone "),
+      exploratory("Test B, tours after the model's cutoff", b.postCutoff, gem, "reciprocal rank", "case", "Gemini + Qloo ranked the real tour's pick better than Gemini alone "),
+      exploratory("Test A, first shows after the model's cutoff", a.postCutoff, llm, "R-precision", "artist", "Gemini + Qloo picked the played cities better than the generic LLM alone "),
+    ],
+    limits: [
+      "Disclosure (Amendment 7): this was written on 29 October 2026, after Tests A and B were published (Test A: LLM beat winnability, p=0.031; Test B: Qloo beat popularity, p<0.001, and trailed Gemini, not significant). Each arm's per-case rankings existed on disk, but no fused ranking or fused score had been computed before the amendment was committed. Tests A and B stay exactly as published.",
+      `Method: reciprocal rank fusion with k = ${fu.rule.k} (Cormack, Clarke & Buettcher, SIGIR 2009), fixed in advance, no alternative rule tried. A candidate scores 1/(60 + Gemini or LLM rank) + 1/(60 + Qloo rank); ties go to the Gemini or LLM rank. No new Qloo or Gemini call was made.`,
+      "Data timing: Qloo's taste data is current, not as of the tour date; Gemini's training data may include the tour.",
+      `Sample size: Test B ${b.full.n} of ${b.planned} planned cases and Test A ${a.full.n} of ${a.artists} artists, small samples, so the sign tests have low power.`,
+      `Exploratory, small n (7.2): tours after the answering model's stated training cutoff only. Test B subset ${sub(b.postCutoff)} of ${b.full.n} cases; Test A subset ${sub(a.postCutoff)} of ${a.full.n} artists${a.postCutoff.n === 0 ? " (no Test A artist's first show falls after the cutoff, so that subset is empty)" : ""}. Test A uses only the first-show year, which errs towards excluding.`,
+      ...dropped(b.full, "case"), ...dropped(a.full, "artist"),
+    ],
+    perUnit: { columns: ["Test", "Case or artist", "Gemini or LLM", "Qloo or winnability", "Combined"], rows: [...unitB, ...unitA] },
+  };
+}
+
 export function buildProofV3(i: PublishInputs): ProofV3Published {
   const tests: ProofV3Test[] = [];
   if (i.batches.length) tests.push(testA(i.batches));
   if (i.fixed?.fixedRank) tests.push(testB(i.fixed, i.fixedStopped ?? []));
   if (i.catchRate?.catchRate) tests.push(testCatch(i.catchRate));
   if (i.grounding?.grounding) tests.push(testC(i.grounding, i.groundingStopped ?? []));
+  if (i.fusion) tests.push(testF(i.fusion));
   return { protocolCommit: i.protocolCommit, generatedAt: i.now.toISOString(), amendments: i.amendments, tests };
 }
 

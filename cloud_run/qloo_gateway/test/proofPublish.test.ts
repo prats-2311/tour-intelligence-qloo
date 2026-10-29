@@ -196,3 +196,87 @@ describe("proofPublishCli main", () => {
     expect(() => publishCli.parseArgs(["--dir", join(REPO_ROOT, "docs")])).toThrow(/private-data/);
   });
 });
+
+// Amendment 7: Test F ------------------------------------------------------------------------------------------------------------
+
+import type { FusionFile, FusionSummary, Subset } from "../src/backtest/fusion.js";
+
+const fRow = (id: string, g: number, q: number, f: number) => ({ id, scores: { gemini: g, qloo_rank: q, popularity: 0.1 }, fusion: f });
+const summ = (n: number, means: Record<string, number | null>, st: { wins: number; losses: number; ties: number; p: number }, claim: boolean, rows: FusionSummary["rows"] = []): FusionSummary =>
+  ({ n, rows, exclusions: [], means, signTest: { ...st, n: st.wins + st.losses, pairs: n }, claim });
+const emptySubset: Subset = { ...summ(0, { gemini: null, qloo_rank: null, popularity: null, fusion: null }, { wins: 0, losses: 0, ties: 0, p: 1 }, false), exploratory: true };
+const fusionFile = (over: Partial<FusionFile> = {}): FusionFile => ({
+  schemaVersion: 1, generatedAt: "2026-10-29T00:00:00Z", rule: { name: "rrf", k: 60, tieBreak: "llm-rank" }, sanity: { testB: "passed", testA: "passed" },
+  testB: {
+    planned: 27, scored: 3,
+    full: summ(3, { gemini: 0.5, qloo_rank: 0.4, popularity: 0.1, fusion: 0.45 }, { wins: 1, losses: 2, ties: 0, p: 1 }, false, [fRow("synth-a", 0.5, 1, 0.5), fRow("synth-b", 1, 0.5, 0.5), fRow("synth-c", 0.25, 0.25, 0.25)]),
+    postCutoff: { ...summ(2, { gemini: 0.3, qloo_rank: 0.4, popularity: 0.1, fusion: 0.5 }, { wins: 2, losses: 0, ties: 0, p: 0.5 }, false), exploratory: true },
+  },
+  testA: {
+    artists: 10,
+    full: summ(10, { llm: 0.8, winnability: 0.6, fan_heat: 0.6, population: 0.7, fusion: 0.75 }, { wins: 0, losses: 4, ties: 6, p: 0.125 }, false, [{ id: "Invented Act 1", scores: { llm: 0.8, winnability: 0.6, fan_heat: 0.6, population: 0.7 }, fusion: 0.75 }]),
+    postCutoff: emptySubset,
+  },
+  ...over,
+});
+
+describe("buildProofV3: Test F (Amendment 7)", () => {
+  const withF = buildProofV3(inputs({ fusion: fusionFile() }));
+  const F = test(withF, "F");
+  it("leaves Tests A, B and catch exactly as published when F is added", () => {
+    const without = buildProofV3(inputs());
+    for (const id of ["A", "B", "catch"]) expect(JSON.stringify(test(withF, id))).toBe(JSON.stringify(test(without, id)));
+    expect(without.tests.map((t) => t.id)).not.toContain("F");
+  });
+  it("has the Amendment 7 title and question and the fused tables", () => {
+    expect(F.title).toBe("Gemini + Qloo combined (Amendment 7)");
+    expect(F.question).toBe("Does Gemini's ranking get better when Qloo's ranking is fused in?");
+    const rows = F.tables.flatMap((t) => t.rows.map((r) => r.join("|")));
+    expect(rows.some((r) => /Gemini \+ Qloo\|0\.45/.test(r))).toBe(true);
+    expect(rows.some((r) => /0\.75/.test(r))).toBe(true);
+  });
+  it("sign tests: fusion vs Gemini and vs the LLM, and the exploratory ones labelled", () => {
+    const labels = F.signTests.map((s) => s.label);
+    expect(labels.filter((l) => /exploratory/.test(l)).length).toBe(2);
+    expect(labels.some((l) => /vs Gemini/.test(l) && !/exploratory/.test(l))).toBe(true);
+    expect(labels.some((l) => /vs the generic LLM/.test(l) && !/exploratory/.test(l))).toBe(true);
+  });
+  it("no claim when the rule is not met: states the plain, not-significant result", () => {
+    expect(F.claims.join(" ")).not.toMatch(/ranked the real tour's pick better/);
+    expect(F.claims.join(" ")).toMatch(/Not significant at this sample size/);
+  });
+  it("a Test B claim uses the protocol's wording when the claim rule is met", () => {
+    const f = fusionFile();
+    f.testB.full = summ(10, { gemini: 0.4, qloo_rank: 0.4, popularity: 0.1, fusion: 0.6 }, { wins: 9, losses: 1, ties: 0, p: 0.0215 }, true);
+    expect(test(buildProofV3(inputs({ fusion: f })), "F").claims.join(" ")).toMatch(/^Gemini \+ Qloo ranked the real tour's pick better than Gemini alone \(p=0\.021/m);
+  });
+  it("limits carry the disclosure, the fixed rule, and exploratory / small n; an empty subset is reported as empty", () => {
+    const l = F.limits.join("\n");
+    expect(l).toMatch(/Disclosure/);
+    expect(l).toMatch(/29 October 2026/);
+    expect(l).toMatch(/k = 60/);
+    expect(l).toMatch(/exploratory, small n/i);
+    expect(l).toMatch(/Test A[^.]*n = 0|no Test A artist/i);
+  });
+  it("per-unit rows list cases and artists with aggregates only", () => {
+    expect(F.perUnit!.rows.length).toBe(4);
+    expect(F.perUnit!.rows[0]![0]).toBe("B");
+  });
+});
+
+describe("proofPublishCli main with the fusion file", () => {
+  it("adds F only when proof-v3-fusion.json exists", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "proof-publish-f-"));
+    mkdirSync(join(dir, "backtest"));
+    const w = (name: string, v: unknown) => writeFileSync(join(dir, "backtest", name), JSON.stringify(v));
+    w("proof-v3-city-batch1.json", b1); w("proof-v3-city-batch2.json", b2); w("proof-v3-fixed.json", fixed); w("proof-v3-catch.json", catchRun);
+    const lines: string[] = [];
+    const io: CliIo = { log: (l) => lines.push(l), env: {}, makeClients: () => { throw new Error("no network"); }, now: () => new Date("2026-10-29T00:00:00Z") };
+    const deps = { amendments: () => [], protocolCommit: () => "ccccccc" };
+    await publishCli.main(["--dir", dir], io, deps);
+    expect(JSON.parse(readFileSync(join(dir, "backtest.json"), "utf8")).proofV3.tests.map((t: { id: string }) => t.id)).not.toContain("F");
+    w("proof-v3-fusion.json", fusionFile());
+    await publishCli.main(["--dir", dir], io, deps);
+    expect(JSON.parse(readFileSync(join(dir, "backtest.json"), "utf8")).proofV3.tests.map((t: { id: string }) => t.id)).toContain("F");
+  });
+});
