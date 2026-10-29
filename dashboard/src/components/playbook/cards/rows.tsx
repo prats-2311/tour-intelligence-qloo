@@ -8,12 +8,12 @@ export function Rows({ children }: { children: ReactNode }) {
 export function Row({ name, aside, sub, chips }: { name: string; aside: ReactNode; sub?: string; chips?: string[] }) {
   return (
     <li className="flex min-h-11 items-center justify-between gap-3 py-2">
-      <span className="min-w-0">
+      <span className="min-w-0 flex-1">
         <span className="block break-words text-canvas-text">{name}</span>
         {sub && <span className="block text-[13px] text-canvas-muted">{sub}</span>}
         {chips && chips.length > 0 && <TagChips tags={chips} />}
       </span>
-      <span className="shrink-0 text-right tabular-nums text-canvas-text">{aside}</span>
+      <span className="max-w-[45%] shrink-0 break-words text-right tabular-nums text-canvas-text">{aside}</span>
     </li>
   );
 }

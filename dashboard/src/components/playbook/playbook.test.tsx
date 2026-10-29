@@ -175,6 +175,16 @@ describe("playbook cards", () => {
     expect(screen.queryByText(/×/)).toBeNull();
     expect(screen.getByText("How much fans share taste, and how much the city likes the act")).toBeTruthy();
   });
+  it("co-billing rows let the name take the space: aside capped, name can shrink and wrap", () => {
+    render(<CardBody card={card("co_billing")} city="Guadalajara" />);
+    const aside = screen.getByText("Fans share taste 34% · the city likes them 88%").parentElement!;
+    expect(aside.className).toMatch(/max-w-\[45%\]/);
+    expect(aside.className).toMatch(/shrink-0/);
+    const li = aside.parentElement!;
+    expect(li.firstElementChild!.className).toMatch(/min-w-0/);
+    expect(li.firstElementChild!.className).toMatch(/flex-1/);
+    expect(li.firstElementChild!.firstElementChild!.className).toMatch(/break-words/);
+  });
   it("talent shows shared taste, tags and the proxy list", () => {
     render(<CardBody card={card("talent")} city="Guadalajara" />);
     expect(screen.getByText("Shared taste with Guadalajara's mainstream: 0.12")).toBeTruthy();
