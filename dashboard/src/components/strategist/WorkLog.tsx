@@ -19,7 +19,7 @@ export function WorkLog({ turn, defaultOpen }: { turn: StrategistTurn; defaultOp
         <ChevronDown size={16} strokeWidth={1.75} aria-hidden className={open ? "rotate-180" : ""} />
       </button>
       <div id={id} hidden={!open} className="flex flex-col gap-2">
-        <StrategistThinking summaries={turn.thinking} defaultOpen={defaultOpen} />
+        <StrategistThinking summaries={turn.thinking} />
         <ToolChips tools={turn.tools} streaming={turn.status === "streaming"} />
       </div>
     </div>

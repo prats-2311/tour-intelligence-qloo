@@ -40,7 +40,15 @@ describe("Ask about this tour: showcase", () => {
     fireEvent.click(screen.getByRole("button", { name: Q1 }));
     expect(await screen.findByText("Invented answer one.")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Work log" }).getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByRole("button", { name: "Model reasoning summary" })).toBeTruthy();
+    const reasoning = screen.getByRole("button", { name: "Model reasoning summary" });
+    expect(reasoning.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByText("Invented thought one.").closest("[hidden]")).toBeTruthy();
+    // the answer comes before the work log
+    expect(screen.getByText("Invented answer one.").compareDocumentPosition(screen.getByRole("button", { name: "Work log" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(reasoning);
+    expect(reasoning.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText("Invented thought one.").closest("[hidden]")).toBeNull();
+    expect(screen.getByText("Invented thought one.").className).toMatch(/max-h-/);
     expect(screen.getByText("Gemini's own summary of its reasoning")).toBeTruthy();
     expect(screen.getByText("Invented thought one.")).toBeTruthy();
     const tools = screen.getByRole("list", { name: "Tools used" });

@@ -13,7 +13,7 @@ function Turn({ turn, onRetry, retryDisabled, logOpen }: { turn: StrategistTurn;
   return (
     <li className="flex flex-col gap-2">
       <ChatBubble role="user">{turn.question}</ChatBubble>
-      <WorkLog turn={turn} defaultOpen={logOpen} />
+      {!answer && <WorkLog turn={turn} defaultOpen={logOpen} />}
       {answer && (
         <div className="flex flex-col gap-1.5">
           <ChatBubble role="assistant"><span className="whitespace-pre-wrap">{answer.text}</span></ChatBubble>
@@ -21,6 +21,7 @@ function Turn({ turn, onRetry, retryDisabled, logOpen }: { turn: StrategistTurn;
           {answer.stoppedEarly && <p className="text-[13px] text-state-stale">Stopped after the tool limit</p>}
         </div>
       )}
+      {answer && <WorkLog turn={turn} defaultOpen={logOpen} />}
       {turn.status === "streaming" && !answer && <TypingIndicator label="Strategist is typing" />}
       {turn.status === "interrupted" && <p className="text-[13px] text-canvas-muted">{turn.note}</p>}
       {failure && (
