@@ -185,6 +185,18 @@ describe("playbook cards", () => {
     expect(li.firstElementChild!.className).toMatch(/flex-1/);
     expect(li.firstElementChild!.firstElementChild!.className).toMatch(/break-words/);
   });
+  it("co-billing shows identical shared tags once in the caption, not per row", () => {
+    const base = card("co_billing");
+    const mk = (name: string, tags: string[]) => ({ ...base.items[0]!, name, sharedTags: tags });
+    const { unmount } = render(<CardBody card={{ ...base, items: [mk("Act One", ["Electronic", "Funk", "Dub"]), mk("Act Two", ["Electronic", "Funk", "Dub"])] }} city="Guadalajara" />);
+    expect(screen.getByText("Shared taste: Electronic · Funk · Dub")).toBeTruthy();
+    expect(screen.queryAllByText("Electronic")).toHaveLength(0);
+    unmount();
+    render(<CardBody card={{ ...base, items: [mk("Act One", ["Electronic", "Funk"]), mk("Act Two", ["Dub"])] }} city="Guadalajara" />);
+    expect(screen.queryByText(/Shared taste:/)).toBeNull();
+    expect(screen.getByText("Electronic")).toBeTruthy();
+    expect(screen.getByText("Dub")).toBeTruthy();
+  });
   it("talent shows shared taste, tags and the proxy list", () => {
     render(<CardBody card={card("talent")} city="Guadalajara" />);
     expect(screen.getByText("Shared taste with Guadalajara's mainstream: 0.12")).toBeTruthy();
