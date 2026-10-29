@@ -107,8 +107,10 @@ describe("MovesSection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show all moves" }));
     expect(screen.getAllByTestId("move-row")[2]!.className).not.toContain("max-lg:hidden");
   });
-  it("in the Without Qloo tab hides the rows, keeps the height and points back to Winnability", () => {
-    render(<MovesSection cities={board} done paused onSelect={() => {}} />);
+  it("in the Without Qloo tab hides the rows, reserves no list height or footer row, and points back to Winnability", () => {
+    const { container } = render(<MovesSection cities={[...board, mk("Unplaced", null, null)]} done paused onSelect={() => {}} />);
+    expect(container.querySelector("[class*='min-h-[162px]']")).toBeNull();
+    expect(container.querySelector("[class*='min-h-11']")).toBeNull();
     expect(screen.queryAllByTestId("move-row")).toHaveLength(0);
     expect(screen.getByText("Switch to Winnability to see where fan heat and winnability disagree.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Show all moves" })).toBeNull();
