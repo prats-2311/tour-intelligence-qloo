@@ -56,6 +56,7 @@ if (arg("base") || arg("out")) {
       }
     };
     const shot = async (name, caption, fullPage = true) => {
+      await page.evaluate(() => window.scrollTo(0, 0)); // a sticky top nav lands mid-image (over the header) if the page is still scrolled after a click
       await settle();
       const file = `${String(++n).padStart(2, "0")}-${name}-${vp}.png`;
       await (fullPage ? withoutFixedChrome : (f) => f())(() => page.screenshot({ path: path.join(out, file), fullPage }));
@@ -80,10 +81,12 @@ if (arg("base") || arg("out")) {
     await page.getByRole("tab", { name: "Winnability" }).click();
     await rows.first().waitFor();
     await replayDone();
-    await rows.filter({ hasText: "Hidden goldmine" }).first().getByRole("button").first().click();
+    // Prefer Los Angeles (the README hero example, has a recorded playbook); otherwise fall back to the first hidden goldmine.
+    const la = rows.filter({ hasText: "Los Angeles" });
+    await ((await la.count()) ? la : rows.filter({ hasText: "Hidden goldmine" })).first().getByRole("button").first().click();
     await page.getByRole("heading", { name: "Sponsors" }).first().waitFor({ timeout: 30000 });
     await page.getByText(/\d+ verified · \d+ removed/).first().waitFor({ timeout: 30000 });
-    await shot("playbook-hidden-goldmine", "City playbook for the hidden goldmine: sponsors, merch, venue and co-billing, checked against evidence");
+    await shot("playbook", "City playbook (Los Angeles when present): sponsors, merch, venue and co-billing, checked against evidence");
     await page.goBack();
     await rows.first().waitFor();
     await page.getByRole("button", { name: "Review shortlist" }).click();
