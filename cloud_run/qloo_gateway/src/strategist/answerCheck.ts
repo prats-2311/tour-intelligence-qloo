@@ -10,6 +10,11 @@ function collect(v: unknown, out: number[], scores: number[] = [], inScore = fal
   if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) collect(x, out, scores, inScore || SCORE_KEYS.has(k));
 }
 
+// Markdown list markers ("1.", "2)", "- 3.", "**4.**") at line start and "Step N" ordinals are structure, not claimed figures.
+const LIST_MARKER = /^[ \t]*(?:[-*+][ \t]+)?\**\d{1,2}[.)]\**(?=[ \t])/gm;
+const STEP_ORDINAL = /\bsteps?\s+\d{1,2}\b/gi;
+const stripStructure = (answer: string): string => answer.replace(LIST_MARKER, " ").replace(STEP_ORDINAL, " ");
+
 /** Raw number tokens in the answer that appear in no tool result and no board-context score (same match rules as verifyClaims). */
 export function unsupportedNumbers(answer: string, toolData: unknown[], context: StrategistContext): string[] {
   const pool: number[] = [];
@@ -17,5 +22,5 @@ export function unsupportedNumbers(answer: string, toolData: unknown[], context:
   collect(toolData, pool, scores);
   for (const c of context.cities ?? []) collect([c.fanHeat, c.activation, c.winnability], pool);
   // A percent rendering is only supported by non-score values; plain numbers by any value.
-  return numberTokens(answer).filter((t) => !tokenSupported(t, t.percent ? pool : [...pool, ...scores])).map((t) => t.raw);
+  return numberTokens(stripStructure(answer)).filter((t) => !tokenSupported(t, t.percent ? pool : [...pool, ...scores])).map((t) => t.raw);
 }

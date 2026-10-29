@@ -22,4 +22,14 @@ describe("unsupportedNumbers", () => {
   it("still accepts a percent of a non-score value", () => {
     expect(unsupportedNumbers("Holds 38%.", [[{ share: 0.38 }], [{ query: { age: { x: 0.18 } } }]], {})).toEqual([]);
   });
+  it("does not count list markers or step ordinals as claimed numbers", () => {
+    const text = "Plan:\n1. Lead with Guadalajara at 72.\n2) Hold the second slot.\n  3. Confirm.\n- 4. nested\n**5.** bold marker\nStep 6: wrap up. Then step 7 follows.";
+    expect(unsupportedNumbers(text, [], ctx)).toEqual([]);
+  });
+  it("still flags a real number that sits inside a list item", () => {
+    expect(unsupportedNumbers("1. Expect 5,000 fans.\n2. Fit is 0.97.", [], {})).toEqual(["5,000", "0.97"]);
+  });
+  it("still flags a number that starts a sentence mid-line", () => {
+    expect(unsupportedNumbers("Top picks: 2. Then 3 more.", [], {})).toEqual(["2", "3"]);
+  });
 });
