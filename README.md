@@ -24,7 +24,7 @@ Sponsorship is the highest-margin business in live music: Live Nation's sponsors
 
 ## The 2-minute judge path
 
-1. **Markets** (opens on the example): fan heat per city, with a "Try a routing" box to paste your own cities. ![Landing](docs/screens/01-landing-desktop.png)
+1. **Markets** (opens on the example): fan heat per city, with "Try a routing" to replay a recorded run where a tour's cities were pasted, scored and ordered. To paste your own cities, use "Try your own artist". ![Landing](docs/screens/01-landing-desktop.png)
 2. **Decide:** winnability per city, and the "where fan heat and winnability disagree" section, described as "worth a second look" rather than a ranking claim. ![Decide](docs/screens/02-board-winnability-desktop.png) Compare with the same cities as a generic LLM ranks them, without Qloo: ![Without Qloo](docs/screens/03-board-without-qloo-desktop.png)
 3. **Playbook:** open a city for sponsors (with lift versus the city), local guests, venues, support acts, verified claims and verdict clocks. ![Playbook](docs/screens/04-playbook-desktop.png)
 4. **Tour Book:** the printable document with a chapter per city. ![Tour Book](docs/screens/05-tour-book-cover-desktop.png)
