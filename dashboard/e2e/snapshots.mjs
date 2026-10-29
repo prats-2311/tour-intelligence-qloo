@@ -7,6 +7,14 @@ import { chromium } from "@playwright/test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+// Headless Chromium has no GPU, so MapLibre's WebGL context fails and map panels capture blank: force software GL (SwiftShader via ANGLE).
+const GL_ARGS = ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--disable-gpu-compositing"]; // last flag: without it tall full-page screenshots fail under SwiftShader
+// Bounded wait for a MapLibre canvas on the page to exist and, when the build marks it, to report idle. A page without a map costs 3s at most.
+const mapCanvasDrawn = async (page) => {
+  if (!(await page.waitForSelector(".maplibregl-canvas", { timeout: 3000 }).then(() => true, () => false))) return console.warn("  warn: no .maplibregl-canvas on this page");
+  await page.waitForSelector('[data-map-ready="true"]', { timeout: 15000 }).catch(() => console.warn("  warn: map not idle after 15s"));
+  await page.waitForTimeout(500); // one more frame after idle
+};
 const arg = (name) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : undefined; };
 if (arg("base") || arg("out")) {
   const base = arg("base") ?? `http://localhost:${process.env.E2E_PORT ?? 5173}`;
@@ -15,7 +23,7 @@ if (arg("base") || arg("out")) {
   mkdirSync(out, { recursive: true });
   const fixtures = path.resolve("src/test/fixtures");
   const captions = {};
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({ args: GL_ARGS });
   for (const [vp, size] of [["desktop", { width: 1280, height: 800 }], ["mobile", { width: 390, height: 844 }]]) {
     const ctx = await browser.newContext({ viewport: size, deviceScaleFactor: vp === "mobile" ? 2 : 1, baseURL: base });
     const page = await ctx.newPage();
@@ -65,6 +73,7 @@ if (arg("base") || arg("out")) {
     };
     await page.goto("/");
     await page.getByRole("heading", { level: 1 }).waitFor();
+    await mapCanvasDrawn(page);
     await shot("landing", "Landing: the story in three beats and the example tour");
     await page.getByRole("link", { name: "See the example tour" }).click();
     const rows = page.getByTestId("city-row");
@@ -105,7 +114,7 @@ if (arg("base") || arg("out")) {
 mkdirSync("test-results/html", { recursive: true });
 mkdirSync("test-results/shots", { recursive: true });
 const routes = { landing: "/", board: "/tours/board?sample=1", insights: "/insights", playbook: "/tours/playbook/4005539?sample=1", book: "/tours/book?sample=1", without: "/tours/board?sample=1&mode=without", strategist: "/tours/board?sample=1" }; // order matters: insights follows board; playbook and book load their own sample run
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: GL_ARGS });
 for (const [vp, size] of [["mobile", { width: 375, height: 812 }], ["desktop", { width: 1280, height: 800 }]]) {
   const page = await (await browser.newContext({ viewport: size, deviceScaleFactor: vp === "mobile" ? 2 : 1 })).newPage();
   for (const [name, path] of Object.entries(routes)) {
@@ -126,7 +135,7 @@ for (const [vp, size] of [["mobile", { width: 375, height: 812 }], ["desktop", {
       await page.getByRole("button", { name: "Why is Guadalajara a hidden goldmine?" }).click();
       await page.getByText(/Hidden goldmine verdict means/).waitFor({ timeout: 15000 });
     }
-    if (name === "landing") await page.getByRole("heading", { level: 1 }).waitFor();
+    if (name === "landing") { await page.getByRole("heading", { level: 1 }).waitFor(); await mapCanvasDrawn(page); }
     if (vp === "desktop") {
       // Markup only: strip dev-server <style>/<script> (the whole Tailwind/MapLibre sheet) so the lint sees what the route actually uses.
       const markup = await page.evaluate(() => {
