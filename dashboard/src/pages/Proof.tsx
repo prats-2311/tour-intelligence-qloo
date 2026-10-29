@@ -7,8 +7,8 @@ import { loadRecordings } from "@/lib/qloo/recordings";
 /** The public repo is created later: change the URL here only. */
 export const PROTOCOL_URL = "https://github.com/prats-2311/tour-intelligence-qloo/blob/master/docs/qloo/proof-v3-protocol.md";
 const V3_INTRO = "We pre-registered every test before running it and publish all of it, including where Qloo-backed ranking lost.";
-/** Sponsor lift first (B), then the claim checker (catch) and grounding (C); Test A, where the LLM won, sits last under a Limits heading. Tests not listed come after, in file order. */
-const V3_ORDER = ["B", "catch", "C", "F", "A"];
+/** Sponsor lift first (B), then the claim checker (catch) and grounding (C); Test A, where the LLM won, and the Gemini + Qloo fusion (F), which did not beat Gemini, sit last under a Limits heading. Tests not listed come after, in file order. */
+const V3_ORDER = ["B", "catch", "C", "A", "F"];
 const TITLE = "Would it have found what the real tour used?";
 const REASON = "Run 1 asked Qloo for artists the headliner's fans like in that city, which returns global taste neighbours. Run 2 ranked the city's own popular artists by taste fit and was judged on fresh cases reviewed after the change; it did no better, because Qloo's city-popularity list misses the most famous national acts.";
 const WHAT = "For naming the specific famous local guest or sponsor a real tour used, a general-purpose LLM did better than Qloo's taste graph in both runs. Qloo's recommendations reflect what over-indexes with an audience in a city, not who is most famous there — that is world knowledge. So the playbook now asks an LLM for local candidates and uses Qloo to check each one exists and to rank it by taste fit. We have not yet tested that change on new cases, so we make no claim about it here.";

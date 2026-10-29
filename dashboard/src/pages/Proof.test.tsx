@@ -196,7 +196,7 @@ describe("Proof v3", () => {
   });
   it("renders tests in the order B, catch, C, F, A", () => {
     view(v3Backtest);
-    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "C", "F", "A"]);
+    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "C", "A", "F"]);
   });
   it("puts Test A under a visible Limits heading, after F", () => {
     view(v3Backtest);
@@ -248,7 +248,7 @@ describe("Proof v3", () => {
   it("Test C absent from the data means no Test C section; present means a section with no extra code", () => {
     const v3 = (v3Backtest as { proofV3: { tests: Array<{ id: string }> } }).proofV3;
     view({ ...v3Backtest, proofV3: { ...v3, tests: v3.tests.filter((t) => t.id !== "C") } });
-    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "F", "A"]);
+    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "A", "F"]);
   });
   it("Test F (Amendment 7) renders as data, sits before A, and an unknown id does not crash", () => {
     const v3 = (v3Backtest as { proofV3: { tests: Array<Record<string, unknown>> } }).proofV3;
