@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tour-intel": {
+      "type": "http",
+      "url": "https://tour-intel-mcp-public-602700957663.us-central1.run.app/mcp"
+    }
+  }
+}
