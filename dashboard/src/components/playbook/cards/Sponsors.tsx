@@ -4,6 +4,7 @@ import { dealLine, fanRankLine, fit, rankLine, SPONSORS_NOT_MAINSTREAM_NOTE } fr
 import { Caption, Row, Rows } from "./rows";
 import { num, str } from "./util";
 import { SegmentControl } from "./SponsorSegments";
+import { SponsorsCompare } from "./SponsorsCompare";
 import type { SegmentRequest } from "@/lib/qloo/segmentStore";
 
 /** `segments`: the artist and city to ask for age groups. Absent (sample data, no artist id) means no control, only the all-fans list. */
@@ -36,5 +37,11 @@ export function Sponsors({ card, city, country, venueName, segments }: { card: P
       {typeof note === "string" && note !== "" && <Caption>{note}</Caption>}
     </>
   );
-  return segments ? <SegmentControl request={segments} country={country ?? segments.city.country}>{list}</SegmentControl> : list;
+  if (!segments) return list;
+  return (
+    <>
+      <SegmentControl request={segments} country={country ?? segments.city.country}>{list}</SegmentControl>
+      <SponsorsCompare request={segments} />
+    </>
+  );
 }
