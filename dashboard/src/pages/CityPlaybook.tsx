@@ -27,6 +27,7 @@ import { heroWhys, scrollToCard } from "@/components/playbook/heroWhy";
 import { CardBody, ThisWeekBody, isEmptyWeek } from "@/components/playbook/cardBody";
 import { ClaimsAudit } from "@/components/playbook/ClaimsAudit";
 import { CARD_TITLE, cityCode, metaLine } from "@/components/playbook/format";
+import { NUMBER_KEY } from "@/lib/qloo/numberKey";
 import { KeyArtPoster } from "@/components/playbook/KeyArtPoster";
 import { PlaybookCard } from "@/components/playbook/PlaybookCard";
 import { ReasoningSummary } from "@/components/playbook/ReasoningSummary";
@@ -65,6 +66,18 @@ const PLACE: Record<CardId, string> = {
   talent: "",
 };
 const FALLBACK_MAX_STOPS = 8;
+
+/** A small closed disclosure under the tabs: what each number on the cards means, one line per term. */
+function NumberKey() {
+  return (
+    <details data-number-key className="mt-2 px-4 text-[13px] text-canvas-muted lg:px-0">
+      <summary className="inline-flex min-h-11 cursor-pointer items-center font-medium text-canvas-text underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">How to read these numbers</summary>
+      <dl className="mb-2 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
+        {NUMBER_KEY.map((k) => (<div key={k.term} className="contents"><dt className="font-medium text-canvas-text">{k.term}</dt><dd>{k.text}</dd></div>))}
+      </dl>
+    </details>
+  );
+}
 // Sample playbooks replay ~25 events; the showcase pacing used on the board (60 ms) would make this page feel slow.
 const SAMPLE_PLAYBOOK_DELAY_MS = 10;
 // On phones "Remove from tour" is a quiet text button under the primary action, so the primary label never has to share a row with it.
@@ -438,6 +451,7 @@ function CityPlaybookPage() {
         </div>
       </div>
 
+      <NumberKey />
       <div id={`${tabBase}-panel`} role="tabpanel" aria-labelledby={`${tabBase}-${tab}`} className="mt-4 min-w-0 px-4 lg:px-0">
         {!sample && (pb.status === "idle" || pb.status === "streaming") && <p data-testid="live-run-line" className="mb-3 text-[12px] text-canvas-muted">{LIVE_RUN_LINE}</p>}
         {panels[tab]}

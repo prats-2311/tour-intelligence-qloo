@@ -110,3 +110,14 @@ test("13 targets: outbound links, claims, breadcrumbs and primary buttons are 44
     .map(({ el, r }) => `${el.tagName} "${(el.textContent ?? "").trim().slice(0, 30)}" ${Math.round(r.width)}x${Math.round(r.height)}`));
   expect(small).toEqual([]);
 });
+
+test("4 numbers key: a small expandable key explains every term, and tied venues say so", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(LA);
+  await loaded(page);
+  const key = page.getByText("How to read these numbers");
+  await expect(key).toBeVisible();
+  await key.click();
+  for (const t of ["Affinity", "Fan rank / city rank", "Venue fit", "Shared taste", "Share"]) await expect(page.locator("[data-number-key]").getByText(t, { exact: true })).toBeVisible();
+  await expect(page.locator("[data-number-key]")).toContainText("not a share of fans");
+});

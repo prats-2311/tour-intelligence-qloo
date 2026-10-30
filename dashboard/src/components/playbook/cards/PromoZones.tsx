@@ -1,5 +1,6 @@
 import type { PlaybookCard } from "@/lib/qloo/types";
 import { zoneDisplayLabel } from "@/lib/qloo/zones";
+import { HINT } from "@/lib/qloo/numberKey";
 import { pct } from "../format";
 import { ExtLink, mapsLink } from "./rows";
 import { num, str } from "./util";
@@ -29,7 +30,7 @@ export function PromoZones({ card, city, country }: { card: PlaybookCard; city: 
         <thead>
           <tr /* taste-skill-ignore: DESIGN 3.1 column head */ className="text-left font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-canvas-muted">
             <th scope="col" className="py-1 font-semibold">Zone</th>
-            <th scope="col" className="py-1 text-right font-semibold">Share</th>
+            <th scope="col" title={HINT.share} className="py-1 text-right font-semibold">Share</th>
           </tr>
         </thead>
         <tbody /* taste-skill-ignore: real table rules */ className="divide-y divide-canvas-line">

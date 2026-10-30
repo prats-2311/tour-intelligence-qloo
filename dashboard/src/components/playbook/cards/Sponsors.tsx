@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { HINT } from "@/lib/qloo/numberKey";
 import { carryQuery, pitchPath } from "@/lib/qloo/pitchLinks";
 import type { PlaybookCard } from "@/lib/qloo/types";
 import { dealLine, fanRankLine, fit, rankLine, SPONSORS_NOT_MAINSTREAM_NOTE } from "../format";
@@ -32,8 +33,8 @@ export function Sponsors({ card, city, country, venueName, segments, pitchCityId
         {shown.map((it, i) => {
           const a = num(it.artistRank);
           const action = pitchCityId && str(it.name) ? <PitchLink cityId={pitchCityId} brand={str(it.name)} /> : undefined;
-          if (a === null) return <Row key={i} name={str(it.name)} action={action} aside={fit(num(it.affinity))} />;
-          return <Row key={i} name={str(it.name)} action={action} aside={allOffChart ? fanRankLine(a) : rankLine(a, num(it.cityRank))} />;
+          if (a === null) return <Row key={i} name={str(it.name)} action={action} hint={HINT.affinity} aside={fit(num(it.affinity))} />;
+          return <Row key={i} name={str(it.name)} action={action} hint={HINT.rank} aside={allOffChart ? fanRankLine(a) : rankLine(a, num(it.cityRank))} />;
         })}
       </Rows>
       {allOffChart && <Caption>{SPONSORS_NOT_MAINSTREAM_NOTE}</Caption>}
