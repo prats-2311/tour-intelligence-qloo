@@ -2,7 +2,7 @@ import { Menu } from "lucide-react";
 import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsDesktop } from "@/lib/useMediaQuery";
-import { StrategistDock, StrategistFab, StrategistToggle, showsStrategist, useStrategistDock } from "./strategist/StrategistLauncher";
+import { StrategistDock, StrategistFab, StrategistToggle, showsStrategist, useDockEscape, useStrategistDock } from "./strategist/StrategistLauncher";
 import { JourneyStepper } from "./JourneyStepper";
 import { ActivityPanel } from "./collab/TeamBar";
 import { Breadcrumbs } from "./nav/Breadcrumbs";
@@ -26,6 +26,7 @@ function Shell({ children }: { children: ReactNode }) {
   const dock = useStrategistDock();
   const strategistRoute = showsStrategist(location.pathname);
   const docked = isDesktop && strategistRoute && dock.open;
+  useDockEscape(docked, () => dock.setOpen(false));
   const landing = location.pathname === "/";
   const showSidebar = isDesktop && !landing;
   const { collapsed, toggle } = useNavCollapsed(showSidebar);

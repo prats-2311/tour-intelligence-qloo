@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { Link, MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "../AppShell";
 import { SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
@@ -75,6 +75,48 @@ describe("StrategistLauncher", () => {
     localStorage.setItem("strategistOpen", "1");
     shell("/insights");
     expect(await screen.findByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
+  });
+});
+
+describe("dock dismissal", () => {
+  it("Esc closes the desktop dock and returns focus to the launcher", async () => {
+    mm(true);
+    shell("/tours/board?sample=1");
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour", pressed: false }));
+    const dock = screen.getByRole("complementary", { name: "Ask about this tour" });
+    const inner = document.createElement("button"); dock.appendChild(inner); inner.focus();
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    expect(screen.queryByRole("complementary", { name: "Ask about this tour" })).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Ask about this tour", pressed: false })));
+    expect(localStorage.getItem("strategistOpen")).toBe("0");
+  });
+  it("Esc on the page (focus elsewhere) also closes it, but not while another dialog is open", async () => {
+    mm(true);
+    shell("/tours/board?sample=1");
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour", pressed: false }));
+    const modal = document.createElement("div"); modal.setAttribute("role", "dialog"); document.body.appendChild(modal);
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(screen.getByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
+    modal.remove();
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(screen.queryByRole("complementary", { name: "Ask about this tour" })).toBeNull();
+  });
+  it("closes on a route change instead of following the reader to every page", async () => {
+    mm(true);
+    render(<MemoryRouter initialEntries={["/tours/board?sample=1"]}><TourBoardProvider sampleDelayMs={0}><AppShell><Link to="/tours/book?sample=1">go</Link></AppShell></TourBoardProvider></MemoryRouter>);
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this tour", pressed: false }));
+    expect(screen.getByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("link", { name: "go" }));
+    await waitFor(() => expect(screen.queryByRole("complementary", { name: "Ask about this tour" })).toBeNull());
+  });
+  it("a dock the tour opened survives the route change that brings the tour to its chat step", async () => {
+    mm(true);
+    render(<MemoryRouter initialEntries={["/tours/board?sample=1"]}><TourBoardProvider sampleDelayMs={0}><AppShell><Link to="/tours/book?sample=1">go</Link></AppShell></TourBoardProvider></MemoryRouter>);
+    await screen.findByRole("button", { name: "Ask about this tour", pressed: false });
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:open-ask")); });
+    fireEvent.click(screen.getByRole("link", { name: "go" }));
+    await act(async () => { await new Promise((r) => setTimeout(r, 20)); });
+    expect(screen.getByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
   });
 });
 

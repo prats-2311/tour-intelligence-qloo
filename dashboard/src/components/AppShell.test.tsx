@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import brandMark from "../../public/brand-mark.svg?raw";
+import favicon from "../../public/favicon.svg?raw";
 // @vitest-environment jsdom
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -23,9 +23,8 @@ describe("AppShell", () => {
     expect(document.querySelector("aside")).toBeNull();
   });
   it("brand mark file is the yellow mark, served from a fresh URL", () => {
-    const svg = readFileSync(resolve(__dirname, "../../public/brand-mark.svg"), "utf8");
-    expect(svg).toContain("#ffcc00");
-    expect(svg).toBe(readFileSync(resolve(__dirname, "../../public/favicon.svg"), "utf8"));
+    expect(brandMark).toContain("#ffcc00");
+    expect(brandMark).toBe(favicon);
   });
   it("desktop renders the top bar wordmark and the same four steps", () => {
     mm(true);

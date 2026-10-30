@@ -54,3 +54,32 @@ for (const start of ["/tours/board?showcase=1", "/tours/playbook/4005539?showcas
     expect(qlooDataCalls(qloo), "the replay of a recorded question makes no Qloo calls (team workspace calls are allowed)").toEqual([]);
   });
 }
+
+test.describe("dock dismissal (desktop)", () => {
+  test("Esc closes the dock and returns focus to the launcher; a route change closes it too", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/tours/board?showcase=1");
+    await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+    const launcher = page.getByRole("button", { name: "Ask about this tour" });
+    const dock = page.getByRole("complementary", { name: "Ask about this tour" });
+    await launcher.click();
+    await expect(dock).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dock).toBeHidden();
+    await expect(launcher).toBeFocused();
+
+    await launcher.click();
+    await expect(dock).toBeVisible();
+    await dock.getByRole("button", { name: "Close" }).focus();
+    await page.keyboard.press("Escape");
+    await expect(dock).toBeHidden();
+
+    await launcher.click();
+    await expect(dock).toBeVisible();
+    await page.getByRole("link", { name: /Tour Book/ }).first().click();
+    await expect(page).toHaveURL(/\/tours\/book/);
+    await expect(dock).toBeHidden();
+    await page.goto("/proof");
+    await expect(dock).toBeHidden();
+  });
+});

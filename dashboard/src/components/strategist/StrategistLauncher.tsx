@@ -48,7 +48,32 @@ export function useStrategistDock(): { open: boolean; setOpen(open: boolean): vo
     window.addEventListener(CLOSE_ASK_EVENT, off);
     return () => { window.removeEventListener(OPEN_ASK_EVENT, on); window.removeEventListener(CLOSE_ASK_EVENT, off); };
   }, [setOpen]);
+  // The dock does not follow the reader from page to page: a route change closes it. A dock the tour just opened for its chat step stays.
+  const { pathname } = useLocation();
+  const lastPath = useRef(pathname);
+  useEffect(() => {
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
+    if (before.current === null && openRef.current) setOpen(false);
+  }, [pathname, setOpen]);
   return { open, setOpen };
+}
+
+/** Esc closes the docked panel (focus inside it or on the page) and puts focus back on the launcher, unless another dialog is open or the key was already handled. */
+export function useDockEscape(active: boolean, close: () => void) {
+  const closeRef = useRef(close);
+  closeRef.current = close;
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
+      closeRef.current();
+      requestAnimationFrame(() => document.querySelector<HTMLElement>("[data-ask-launcher]")?.focus());
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [active]);
 }
 
 function useLauncherModel() {
@@ -107,6 +132,7 @@ export function StrategistToggle({ open, onToggle }: { open: boolean; onToggle()
     <button
       type="button"
       aria-pressed={open}
+      data-ask-launcher
       data-tour="ask"
       onClick={onToggle}
       className={`flex min-h-11 items-center gap-1.5 rounded-lg px-2 font-sans text-[13px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold ${open ? "text-gold" : "text-canvas-muted hover:text-bone"}`}

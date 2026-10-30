@@ -83,3 +83,25 @@ test.describe("writes", () => {
     await expect(page.getByRole("list", { name: "Notes" }).getByText(text)).toBeVisible({ timeout: 20_000 });
   });
 });
+
+test("Edit / Revert text lines up with the hero tile text at 1440", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(LA);
+  const tiles = page.locator("[data-tour='advance-tiles'] > div");
+  await expect(tiles.first()).toBeVisible({ timeout: 20_000 });
+  for (const label of ["TOP ZONE", "BEST ROOM", "SUPPORT"]) {
+    const tile = tiles.filter({ has: page.locator("dt", { hasText: label }) });
+    await expect(tile.getByRole("button", { name: /^Edit / })).toBeVisible({ timeout: 20_000 });
+    const [valueLeft, editLeft] = await tile.evaluate((el) => {
+      const firstText = (root: Element) => {
+        const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.textContent ?? "").trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT });
+        const n = w.nextNode()!; const r = document.createRange(); r.selectNodeContents(n); return r.getBoundingClientRect().left;
+      };
+      const dd = el.querySelector("dd")!;
+      const edit = Array.from(dd.querySelectorAll("button")).find((b) => b.textContent?.trim() === "Edit")!;
+      const value = dd.querySelector("[data-testid='team-value']") ?? dd.firstElementChild!;
+      return [firstText(value), firstText(edit)];
+    });
+    expect(Math.abs(editLeft! - valueLeft!), `${label}: Edit text ${editLeft} vs value ${valueLeft}`).toBeLessThanOrEqual(2);
+  }
+});
