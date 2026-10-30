@@ -5,6 +5,7 @@ import { SAMPLE_ACCENT_ORDER } from "@/lib/qloo/cityAccent";
 import { LUMEN_VALE_SAMPLE, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { samplePlaybookEvents, sampleThisWeek } from "@/lib/qloo/fixtures/lumenValePlaybooks";
 import { initialPlaybook, playbookReducer, type PlaybookState } from "@/lib/qloo/playbookReducer";
+import { ARIEL_CLAIM } from "@/test/arielPink";
 import { SAMPLE_TEXT } from "@/lib/qloo/labels";
 import { buildTourBook } from "@/lib/qloo/tourBook";
 import { CallsAppendix } from "./CallsAppendix";
@@ -140,6 +141,16 @@ describe("book components", () => {
   it("labels an incomplete sample chapter too", () => {
     render(<CityChapter sample chapter={{ ...book.chapters[0]!, status: "incomplete", incompleteReason: "x", playbook: undefined, claims: null }} />);
     expect(screen.getAllByText(SAMPLE_TEXT)).toHaveLength(1);
+  });
+  it("never prints a claim that names a do-not-book act, verified or removed", () => {
+    const ch = book.chapters[2]!;
+    const narrative = ch.playbook!.narrative;
+    if (narrative?.status !== "ok") throw new Error("expected ok");
+    const cc = narrative.cards.sponsors!;
+    const sponsors = { verified: [...cc.verified, ARIEL_CLAIM], removed: [...cc.removed, { claim: ARIEL_CLAIM, reason: "no_refs" as const, detail: "" }] };
+    const playbook = { ...ch.playbook!, narrative: { ...narrative, cards: { ...narrative.cards, sponsors } } };
+    const { container } = render(<CityChapter chapter={{ ...ch, playbook }} />);
+    expect(container.textContent).not.toMatch(/Ariel Pink/);
   });
   it("keys duplicate claim text by index so React does not warn", () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
