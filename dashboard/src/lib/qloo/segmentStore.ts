@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { fetchSponsorSegments } from "./client";
-import type { SponsorSegments } from "./segments";
+import { SEGMENTS_ERROR, type SponsorSegments } from "./segments";
 
 /** Session store for sponsors by age group, one entry per artist and city. Nothing loads until `loadSegments` is called (a click); the Tour Book only reads. */
 export interface SegmentRequest { artistId: string; artist?: string; city: { id?: string; name: string; country: string; lat?: number; lon?: number } }
@@ -28,6 +28,7 @@ export function loadSegments(req: SegmentRequest, opts: { fetchImpl?: typeof fet
   notify();
   const job = fetchSponsorSegments({ artistId: req.artistId, ...(req.artist ? { artist: req.artist } : {}), city: req.city.name, country: req.city.country, ...(req.city.id ? { cityId: req.city.id } : {}), ...(req.city.lat !== undefined ? { lat: req.city.lat } : {}), ...(req.city.lon !== undefined ? { lon: req.city.lon } : {}) }, { fetchImpl: opts.fetchImpl })
     .then((data): SegmentState => { const s: SegmentState = { status: "done", data }; states.set(key, s); notify(); return s; })
+    .catch((): SegmentState => { const s: SegmentState = { status: "done", data: SEGMENTS_ERROR }; states.set(key, s); notify(); return s; }) // never leave an entry stuck on "loading"
     .finally(() => { inflight.delete(key); });
   inflight.set(key, job);
   return job;

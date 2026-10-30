@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { HIDDEN_ORGS_NOTE, SPONSOR_CHECK_UNAVAILABLE_NOTE } from "@/lib/qloo/nonSponsors";
-import { BAND_LABEL, bandHeader, differLine, displayItems, NO_SKEW_COPY, SEGMENT_UNAVAILABLE_COPY, showsUnder21Note, UNDER_21_NOTE, type AgeBand, type SegmentBand, type SponsorSegments as Segments } from "@/lib/qloo/segments";
+import { BAND_LABEL, bandHeader, differLine, displayItems, NO_SKEW_COPY, SEGMENT_UNAVAILABLE_COPY, SEGMENT_TIMEOUT_COPY, showsUnder21Note, UNDER_21_NOTE, type AgeBand, type SegmentBand, type SponsorSegments as Segments } from "@/lib/qloo/segments";
 import { loadSegments, segmentKey, useSegments, type SegmentRequest } from "@/lib/qloo/segmentStore";
 import { fanRankLine, rankLine } from "../format";
 import { Caption, Row, Rows } from "./rows";
@@ -68,7 +68,8 @@ export function SegmentControl({ request, country, children }: { request: Segmen
   const data = state.status === "done" ? state.data : null;
   const bands = data?.status === "ok" ? data.bands : [];
   const loading = asked && state.status === "loading";
-  const failed = asked && data?.status === "unavailable";
+  const timedOut = asked && data?.status === "unavailable" && data.reason === "timeout";
+  const failed = asked && data?.status === "unavailable" && !timedOut;
   const noSkew = asked && data?.status === "no_skew";
   const showBands = bands.length > 0;
   const open = () => {
@@ -82,9 +83,15 @@ export function SegmentControl({ request, country, children }: { request: Segmen
         <button type="button" aria-pressed={view === "all"} onClick={() => setView("all")} className={chip(view === "all")}>All fans</button>
         {showBands
           ? bands.map((b) => <button key={b.band} type="button" aria-pressed={view === b.band} onClick={() => setView(b.band)} className={chip(view === b.band)}>{BAND_LABEL[b.band]}</button>)
-          : !noSkew && <button type="button" aria-pressed={loading} disabled={loading} onClick={open} className={chip(false)}>By age group</button>}
+          : !noSkew && !timedOut && <button type="button" aria-pressed={loading} disabled={loading} onClick={open} className={chip(false)}>By age group</button>}
       </div>
       {noSkew && <p data-testid="segment-no-skew" className="mb-2 text-[13px] text-canvas-muted">{NO_SKEW_COPY}</p>}
+      {timedOut && (
+        <div data-testid="segment-timeout" role="alert" className="mb-2 flex flex-wrap items-center gap-2 text-[13px] text-canvas-muted">
+          <span>{SEGMENT_TIMEOUT_COPY}</span>
+          <button type="button" onClick={open} className={chip(false)}>Try again</button>
+        </div>
+      )}
       {failed && <p data-testid="segment-unavailable" className="mb-2 text-[13px] text-canvas-muted">{SEGMENT_UNAVAILABLE_COPY}</p>}
       {loading && <div data-testid="segment-skeleton" aria-busy="true" aria-label="Loading age groups" className="mb-2 flex flex-col gap-2"><div className="skeleton h-4 w-3/4 rounded-md" /><div className="skeleton h-11 w-full rounded-md" /><div className="skeleton h-11 w-full rounded-md" /></div>}
       {current ? <BandList band={current} country={country} /> : children}

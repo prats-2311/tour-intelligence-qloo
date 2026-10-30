@@ -327,4 +327,11 @@ describe("qlooProxy", () => {
       expect(fetchImpl).not.toHaveBeenCalled();
     });
   });
+  it("sponsor-segments gives up with 504 when the gateway hangs past the forward timeout", async () => {
+    const fetchImpl = vi.fn((_u, init) => new Promise((_res, rej) => init.signal.addEventListener("abort", () => rej(new Error("aborted")))));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl, segmentsTimeoutMs: 30 });
+    const res = await fetch(`${base}/api/qloo/sponsor-segments?artistId=A&city=LA&country=US`, { headers: { "x-session-id": "s1" } });
+    expect(res.status).toBe(504);
+    expect(await res.json()).toMatchObject({ status: "unavailable", reason: "timeout" });
+  });
 });

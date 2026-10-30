@@ -36,7 +36,7 @@ async function streamSse(res: Response, gen: AsyncGenerator<GatewayEvent>, contr
   res.end();
 }
 
-export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; advance?: (input: AdvanceInput) => Promise<Advance>; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo>; collab?: CollabDeps; analytics?: Analytics }) {
+export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; advance?: (input: AdvanceInput) => Promise<Advance>; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo>; collab?: CollabDeps; analytics?: Analytics; sponsorSegmentsDeadlineMs?: number }) {
   const app = express();
   const analytics = deps.analytics ?? DISABLED_ANALYTICS;
   const stats = createStats(analytics);
@@ -117,12 +117,19 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
     }
     const controller = new AbortController();
     res.on("close", () => controller.abort());
+    // An overall deadline (default 50 s, under the dashboard's 60 s): past it the work is abandoned and the answer is "unavailable", never a hang.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = new Promise<"timeout">((resolve) => { timer = setTimeout(() => { controller.abort(); resolve("timeout"); }, deps.sponsorSegmentsDeadlineMs ?? 50_000); });
     try {
-      res.json(await runSponsorSegments(
+      const work = runSponsorSegments(
         { artistId: String(artistId), sessionId, city: { name: String(city), country: String(country), ...(typeof cityId === "string" && cityId ? { id: cityId } : {}), ...(latN !== undefined && lonN !== undefined ? { lat: latN, lon: lonN } : {}) } },
         { qloo: deps.qloo, cities: deps.cities, signal: controller.signal, ...(deps.sponsorCheck ? { sponsorCheck: deps.sponsorCheck } : {}) },
-      ));
-    } catch (err) { next(err); }
+      );
+      work.catch(() => {}); // a late failure after the deadline is not an unhandled rejection
+      const out = await Promise.race([work, deadline]);
+      if (out === "timeout") return void res.json({ status: "unavailable", reason: "timeout", message: "This took too long. Try again.", indexes: {}, bands: [] });
+      res.json(out);
+    } catch (err) { next(err); } finally { clearTimeout(timer); }
   });
 
   app.post("/v1/tools/:name", async (req, res) => {

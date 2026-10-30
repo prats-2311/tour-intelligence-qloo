@@ -12,6 +12,8 @@ describe("stats client", () => {
   });
   it("parses trust, team and v2 defensively", () => {
     expect(parseStats("trust", { enabled: true, since: "2026-10-30T00:00:00Z", playbooks: 3, claimsChecked: "x", last24h: { playbooks: 1 } })).toMatchObject({ enabled: true, playbooks: 3, claimsChecked: 0, removedRate: null, last24h: { playbooks: 1, claimsChecked: 0 } });
+    expect(parseStats("trust", { enabled: true, playbooks: 4, narratedPlaybooks: 3, bySource: { live: 3, mcp_public: 1 } })).toMatchObject({ narratedPlaybooks: 3, bySource: { live: 3, mcp_public: 1 } });
+    expect(parseStats("trust", { enabled: true, playbooks: 1 })).toMatchObject({ narratedPlaybooks: 0, bySource: { live: 0, mcp_public: 0 } });
     expect(parseStats("team", { enabled: true, statusCounts: { Confirmed: 2 }, notesByRole: { Manager: 4 } })).toMatchObject({ statusCounts: { Confirmed: 2, Dropped: 0 }, notesByRole: { Manager: 4 }, overridesByField: { top_zone: 0 } });
     expect(parseStats("v2", { enabled: true, byAction: { going: 2 }, byExperience: { listening: { going: 2 } } })).toMatchObject({ byAction: { going: 2, waitlist: 0, was_there: 0 }, byExperience: { listening: { going: 2, waitlist: 0, was_there: 0 } } });
   });

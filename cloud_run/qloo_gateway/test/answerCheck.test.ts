@@ -32,4 +32,13 @@ describe("unsupportedNumbers", () => {
   it("still flags a number that starts a sentence mid-line", () => {
     expect(unsupportedNumbers("Top picks: 2. Then 3 more.", [], {})).toEqual(["2", "3"]);
   });
+  it("matches a number by absolute value when prose drops the minus sign (longitudes)", () => {
+    const data = [[{ name: "Echo Park", lat: 34.07, lon: -118.26 }, { name: "Silver Lake", lat: 34.08, lon: -118.24 }]];
+    expect(unsupportedNumbers("Venues sit near 118.26 and 118.24 west.", data, {})).toEqual([]);
+    expect(unsupportedNumbers("Also at 118.99 west.", data, {})).toEqual(["118.99"]);
+  });
+  it("does not let a negative over/under-index score support its positive spelling", () => {
+    const demo = [{ entity_id: "A", query: { age: { "25_to_29": -0.08 } } }];
+    expect(unsupportedNumbers("Indexes at 0.08.", [demo], {})).toEqual(["0.08"]);
+  });
 });

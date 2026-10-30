@@ -1,9 +1,9 @@
 import { Readable } from "node:stream";
 
-export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, collabDevUrl }) {
+export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, collabDevUrl, segmentsTimeoutMs = 55000 }) {
   const notConfigured = (res) => res.status(503).json({ error: "Qloo gateway not configured" });
 
-  async function forward(req, res, { route, path, method, body, stream, dev }) {
+  async function forward(req, res, { route, path, method, body, stream, dev, timeoutMs }) {
     // dev: the COLLAB_FAKE in-memory server (never set in production): no gateway and no token needed.
     const base = dev ? collabDevUrl : gatewayUrl;
     if (!base) return notConfigured(res);
@@ -13,7 +13,13 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
     }
     const controller = new AbortController();
     res.on("close", () => controller.abort());
+    // Per-route cap (above the gateway's own deadline): a hung upstream becomes a 504 the client can show, not an endless wait.
+    let timedOut = false;
+    const timer = timeoutMs ? setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs) : undefined;
+    res.on("close", () => clearTimeout(timer));
     const fail = (err) => {
+      clearTimeout(timer);
+      if (timedOut && !res.headersSent) return res.status(504).json({ status: "unavailable", reason: "timeout", message: "This took too long. Try again.", indexes: {}, bands: [] });
       if (!controller.signal.aborted) console.error("[qlooProxy]", route, err?.message ?? String(err));
       if (!res.headersSent) res.status(502).json({ error: "Qloo gateway unavailable" });
       else res.end();
@@ -37,6 +43,7 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
         return;
       }
       const text = await upstream.text();
+      clearTimeout(timer);
       if (!upstream.ok && !type.includes("json")) return res.status(upstream.status).json({ error: "Qloo gateway unavailable" });
       res.status(upstream.status).type(type.includes("json") ? "application/json" : "text/plain").send(text);
     } catch (err) {
@@ -115,7 +122,7 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
       const v = req.query[k];
       if (typeof v === "string" && v && v.length <= 80) params.set(k, v);
     }
-    return forward(req, res, { route: "sponsor-segments", path: `/v1/sponsor-segments?${params}`, method: "GET" });
+    return forward(req, res, { route: "sponsor-segments", path: `/v1/sponsor-segments?${params}`, method: "GET", timeoutMs: segmentsTimeoutMs });
   });
   // Optional BigQuery analytics: read-only stats (answer {enabled:false} when the gateway has it off) and the /v2 prototype tap.
   for (const name of ["trust", "team", "v2"]) {

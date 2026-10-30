@@ -12,7 +12,7 @@ import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import { TOUR_STORAGE_KEY } from "@/lib/tour/tourStorage";
 import { BRAND_CATEGORY, categoryOf, isFoodPlace, isNoGo, loadTasteLoop } from "@/lib/v2/tasteLoop";
 import { buildExperiences } from "@/lib/v2/experiences";
-import { V2_TOUR_STEP_COUNT } from "@/lib/tour/v2TourSteps";
+import { buildV2TourSteps, V2_TOUR_STEP_COUNT } from "@/lib/tour/v2TourSteps";
 import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
 import Landing from "./Landing";
 import V2Preview from "./V2Preview";
@@ -326,5 +326,12 @@ describe("V2Preview prototype taps", () => {
     await screen.findByText(/did not go through/);
     expect(going.disabled).toBe(false);
     expect(window.localStorage.getItem("tiq.v2.taps")).toBeNull();
+  });
+
+  it("tour Match step names every crossed-out brand, joined naturally, from the same data as the page", () => {
+    const crossed = loadTasteLoop(SHOWCASE).brands.filter((b) => b.noGo).map((b) => b.name);
+    expect(crossed).toEqual(["Off-white", "Fear Of God"]);
+    const match = buildV2TourSteps(SHOWCASE).find((st) => st.id === "match")!;
+    expect(match.body).toContain("Off-white and Fear Of God are crossed out because they're on the artist's no-go list.");
   });
 });

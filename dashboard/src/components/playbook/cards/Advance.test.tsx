@@ -65,4 +65,13 @@ describe("AdvanceBody", () => {
     expect(screen.getByText("Add a date window to the brief.")).toBeTruthy();
     expect(screen.queryByTestId("advance-skeleton")).toBeNull();
   });
+  it("renders holiday date and name as separate elements with a separator, once per date+name", () => {
+    const dup = { date: "2027-03-26", name: "Good Friday", localName: "Good Friday", near: false };
+    render(<AdvanceBody data={{ ...ok, holidays: { ...ok.holidays, items: [dup, dup] } as AdvanceRisks["holidays"] }} loading={false} />);
+    const h = within(screen.getByRole("region", { name: "Holidays" }));
+    expect(h.getAllByText("Good Friday")).toHaveLength(1);
+    const li = h.getByText("Good Friday").closest("li")!;
+    expect(li.textContent).toContain("26 Mar \u00b7 Good Friday");
+    expect(h.getByText("26 Mar")).not.toBe(h.getByText("Good Friday"));
+  });
 });

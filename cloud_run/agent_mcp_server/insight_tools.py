@@ -42,6 +42,15 @@ def _brand_line(item: dict, lifted: bool) -> dict:
     return out
 
 
+# Human labels matching the website; the gateway's `band` is the Qloo key, `phrase` only echoes the request (e.g. "55-64").
+_BAND_LABELS = {"24_and_younger": "18–24", "25_to_29": "25–29", "30_to_34": "30–34", "35_to_44": "35–44", "45_to_54": "45–54", "55_and_older": "55+"}
+_PHRASE_LABELS = {"18-24": "18–24", "25-29": "25–29", "30-34": "30–34", "35-44": "35–44", "45-54": "45–54", "55-64": "55+"}
+
+
+def _band_label(b: dict):
+    return _BAND_LABELS.get(b.get("band")) or _PHRASE_LABELS.get(b.get("phrase")) or b.get("phrase") or b.get("band")
+
+
 @_guarded
 def get_sponsors_by_age(artist: str, city: str, country: str, *, session_id: str, token_fn) -> dict:
     artist = _check_name("artist", artist)
@@ -65,7 +74,7 @@ def get_sponsors_by_age(artist: str, city: str, country: str, *, session_id: str
         lifted = bool(b.get("lifted"))
         items = [i for i in b.get("items") or [] if isinstance(i, dict)][:5]
         bands.append({
-            "band": b.get("phrase") or b.get("band"), "index": b.get("index"), "index_note": INDEX_NOTE,
+            "band": _band_label(b), "index": b.get("index"), "index_note": INDEX_NOTE,
             "status": b.get("status"), "brands": [_brand_line(i, lifted) for i in items],
             "new_in_top5": b.get("newInTop5"),
             "new_in_top5_note": "brands in this age group's top 5 that are not in the all-fans top 5" if b.get("newInTop5") is not None else None,

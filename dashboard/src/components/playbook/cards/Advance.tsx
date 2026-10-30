@@ -39,9 +39,9 @@ function HolidayBody({ h }: { h: AdvanceHolidays }) {
     <div>
       {h.items.length === 0 ? <p className="text-[15px] text-canvas-muted">No public holidays in the show window</p> : (
         <ul className="space-y-1">
-          {h.items.map((i) => (
+          {h.items.filter((i, n, all) => all.findIndex((o) => o.date === i.date && o.name === i.name) === n).map((i) => (
             <li key={`${i.date}-${i.name}`} className="text-[15px] leading-[1.45] text-canvas-text">
-              <span className="mr-2 text-[13px] tabular-nums text-canvas-muted">{day(i.date)}</span>{i.name}
+              <span className="text-[13px] tabular-nums text-canvas-muted">{day(i.date)}</span><span aria-hidden="true" className="mx-1.5 text-canvas-muted">{" \u00b7 "}</span><span>{i.name}</span>
               {i.localName !== i.name && <span className="text-canvas-muted"> ({i.localName})</span>}
               {i.near && <span className="ml-2 text-[13px] text-canvas-muted">Just outside the window</span>}
             </li>

@@ -6,7 +6,7 @@ export type StatsKind = "trust" | "team" | "v2";
 export const STATS_OFF = { enabled: false } as const;
 
 export interface TrustStats {
-  enabled: true; since: string | null; playbooks: number; claimsChecked: number; claimsRemoved: number; removedRate: number | null;
+  enabled: true; since: string | null; playbooks: number; narratedPlaybooks: number; bySource: { live: number; mcp_public: number }; claimsChecked: number; claimsRemoved: number; removedRate: number | null;
   medianLatencyMs: number | null; sponsorsHidden: number; cities: number; last24h: { playbooks: number; claimsChecked: number };
 }
 export interface TeamStats {
@@ -33,8 +33,8 @@ export function parseStats<K extends StatsKind>(kind: K, raw: unknown): StatsOf<
   const r = obj(raw);
   if (r.enabled !== true) return STATS_OFF as StatsOf<K>;
   if (kind === "trust") {
-    const d = obj(r.last24h);
-    return { enabled: true, since: since(r.since), playbooks: num(r.playbooks), claimsChecked: num(r.claimsChecked), claimsRemoved: num(r.claimsRemoved), removedRate: numOrNull(r.removedRate), medianLatencyMs: numOrNull(r.medianLatencyMs), sponsorsHidden: num(r.sponsorsHidden), cities: num(r.cities), last24h: { playbooks: num(d.playbooks), claimsChecked: num(d.claimsChecked) } } as StatsOf<K>;
+    const d = obj(r.last24h), src = obj(r.bySource);
+    return { enabled: true, since: since(r.since), playbooks: num(r.playbooks), narratedPlaybooks: num(r.narratedPlaybooks), bySource: { live: num(src.live), mcp_public: num(src.mcp_public) }, claimsChecked: num(r.claimsChecked), claimsRemoved: num(r.claimsRemoved), removedRate: numOrNull(r.removedRate), medianLatencyMs: numOrNull(r.medianLatencyMs), sponsorsHidden: num(r.sponsorsHidden), cities: num(r.cities), last24h: { playbooks: num(d.playbooks), claimsChecked: num(d.claimsChecked) } } as StatsOf<K>;
   }
   if (kind === "team") {
     const o = obj(r.overridesByField), s = obj(r.statusCounts), roles = obj(r.notesByRole);

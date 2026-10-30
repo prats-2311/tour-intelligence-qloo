@@ -174,4 +174,11 @@ describe("budget and routing", () => {
     expect(boom.status).toBe(500);
     expect(boom.body).toEqual({ error: "internal error" });
   });
+  it("answers 200 unavailable/timeout instead of hanging when the work outlives the deadline", async () => {
+    const hang: QlooCaller = { call: () => new Promise(() => {}) };
+    const app = createApp({ qloo: hang, cities: CITIES, health: async () => ({ connected: true, ready: true }), sponsorSegmentsDeadlineMs: 30 });
+    const r = await request(app).get(`/v1/sponsor-segments?${q}`).set("x-session-id", "s");
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ status: "unavailable", reason: "timeout", bands: [] });
+  });
 });

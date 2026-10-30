@@ -181,4 +181,16 @@ describe("Tour Book band lists", () => {
     const { container } = render(<LoadedBands data={{ status: "no_skew", indexes: {}, bands: [] }} country="US" />);
     expect(container.innerHTML).toBe("");
   });
+
+  it("shows 'This took too long. Try again.' with a retry button after a timeout, and retry fetches again", async () => {
+    const f = stubFetch({ status: "unavailable", reason: "timeout", message: "This took too long. Try again.", indexes: {}, bands: [] });
+    body();
+    await open();
+    await waitFor(() => expect(screen.getByText("This took too long. Try again.")).toBeTruthy());
+    expect(screen.queryByTestId("segment-skeleton")).toBeNull();
+    f.mockClear();
+    stubFetch(answer());
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(screen.getByTestId("segment-band")).toBeTruthy());
+  });
 });
