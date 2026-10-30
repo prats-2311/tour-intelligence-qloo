@@ -269,3 +269,86 @@ Test B is re-run from the start under this amendment. Test A batch 1 had no stop
 - **Also reported:** the result using AI ratings only, and the agreement figure above.
 
 **Disclosure:** 148 of 182 rows were rated by an AI model, not a person. An AI rater may share blind spots with the LLM-only arm it is judging. Brands and venues rated "in this city, high confidence" in pass 1 (121 rows) were not re-checked against a fetched page. Rows stay private (Qloo-returned names are Qloo data); only aggregates are published.
+
+## Amendment 9: Test B on cases after the model's training cutoff (2026-10-30, before any case for it was collected)
+**Why:** every head-to-head so far used tours from 2023–2025 that Gemini may have read about. Amendment 7.2 found 4 such post-cutoff Test B cases (Qloo 0.44, Gemini 0.31, not significant). This amendment collects a new, larger set of cases that the answering model cannot have seen, and reruns Test B on them unchanged. Decided by Prateek.
+
+**Cases (fixed rule, collected after this commit):**
+- **Eligible:** an activation between a headlining music artist and a city, with the same three types as Test B: `local_artist` (an act from or based in the city who performed with the headliner, as opener or on-stage guest), `sponsor` (a brand named as the show's or tour stop's sponsor or presale partner) and `merch_collab` (a city-specific merch collaboration).
+- **Date:** the show or activation date is on or after 2026-04-01 and on or before 2026-10-29. Both answering models' stated cutoffs (gemini-3.8-flash March 2026; gemini-2.5-flash January 2025) fall before this window.
+- **Evidence:** at least one source page fetched and read during collection that names the headliner, the city and the real pick, and gives the date. Search snippets do not count.
+- **Search procedure:** Sonnet agents search news, Songkick/setlist.fm and official announcements with a fixed query list (one query set per type, recorded in `backtest/cases-post-cutoff.queries.md`). Every candidate found is logged with its outcome (accepted, or rejected with the reason), so no case is dropped silently.
+- **Verification:** a second agent, without access to any ranking, re-fetches each accepted case's source and confirms headliner, city, real pick and date. Cases it cannot confirm are excluded and listed.
+- **Collection closes** at 2026-10-31 01:30 IST or at 40 accepted cases, whichever comes first. Whatever count exists then is the sample; no case is added after any Test B call is made.
+- **No human review** this time (time limit): disclosed with the results.
+
+**Run:** exactly Test B (`fixedRankCli` with `--cases backtest/cases-post-cutoff.json`), same candidates rule (real pick plus 9 decoys from the city popularity list by `sha256(case id + decoy name)`), same arms (Qloo `rank`, Gemini fixed prompt at temperature 0.2, popularity order), same metric (mean reciprocal rank) and the same claim rule (higher mean, more wins than losses, two-sided exact sign test p < 0.05). A case whose real pick can't be resolved in Qloo, or with fewer than 9 decoys, is reported and excluded as in Test B. The answering Gemini model is recorded per case; a case answered by a model whose stated cutoff is not before the case date is excluded.
+
+**Secondary (reported, not claimed unless it meets the claim rule):** Gemini + Qloo by reciprocal rank fusion (k = 60, Amendment 7.1) vs Gemini; Qloo vs popularity.
+
+**Publication:** whatever comes out goes on `/proof` and in the README, with the case count, the exclusions and the disclosures above. If the sample is too small for any claim, it is reported as "not significant at this sample size".
+
+**Budget:** about 40 popularity lists, 40 resolves and 40 rank calls (≈ 120 Qloo calls, partly cached) and up to 80 Gemini calls.
+
+## Amendment 10: catch rates for the product's other checkers (2026-10-30, before any of these was run)
+**Why:** `/proof` publishes one checker test (the claim checker, "Claim-checker catch rate"). The product has four more checks that stop a wrong number or name reaching the user. This amendment tests each with planted errors and clean controls, written down here before any runner exists and before any number is computed. These are checks, not comparisons: no significance test, no arms. Everything is offline: no Qloo call, no Gemini call, no network.
+
+**Reported per checker, in the same wording as the claim checker:** "caught N of 20, false alarms M of 20". Caught = the checker flagged or removed the planted item. A false alarm = it flagged or removed a clean control. Every generator below is fixed and deterministic (an index `i` and the formulas written here; no random numbers, no seed beyond `i`), so anyone can regenerate the same 40 cases per checker. Each generator's test asserts the construction rule (for example "this number is on no tool result"), so a plant that is not actually wrong would fail the test, not inflate the rate. Plants that the checker misses are reported as misses; the cases are not changed after any run.
+
+**Output:** `src/backtest/checkerCatch.ts` and `checkerCatchCli.ts` (`node dist/backtest/checkerCatchCli.js [--out private-data/backtest/proof-v3-checkers.json]`) write every case with its text, whether it is planted, and whether it was flagged. The results are published as `proofV3.checkers` next to the claim-checker catch rate. Case texts contain no Qloo data and are fixtures, but the file stays under `private-data/` like the other outputs.
+
+### 10.a Strategist answer check
+- **Code under test:** `unsupportedNumbers(answer, toolData, context)` in `src/strategist/answerCheck.ts`. An answer is flagged when it returns a non-empty list. `context` is `{}`.
+- **Fixed tool results** (`toolData`, one array, `k` = 0..19): `{audience: 1000+53k}`; `{lon: -(70+3.17k)}` rounded to 2 decimals; `{sharedTaste: 0.50+0.01k}` (2 decimals); `{share: 0.30+0.01k}` (2 decimals); `{query: {age: {band: -(0.10+0.01k)}}}` (2 decimals; negative, an under-index).
+- **Plants (20), each a one-sentence answer:**
+  - 8 absent numbers, `k` = 0..7: "Attendance reached {1007+53k}." (en-US thousands separators). 1007+53k is never 1000+53j.
+  - 4 absent absolute values, `k` = 0..3: "The venue sits near {|lon_k|+5.11} west." (2 decimals; neither the value nor its absolute value is in the results).
+  - 4 wrong-sign scores, `k` = 0..3: "The age band indexes at +{0.10+0.01k} above average." (the result is the negative value; its positive spelling is not supported).
+  - 4 percent-restated demographic indexes, `k` = 4..7: "About {round(100*(0.10+0.01k))}% of the audience is in that band."
+- **Controls (20), none may be flagged:**
+  - 8 present numbers, `k` = 0..7: "Attendance reached {1000+53k}."
+  - 6 sign-dropped coordinates, `k` = 0..5: "The venue sits near {|lon_k|} west." (2 decimals).
+  - 3 plain score values, `k` = 0..2: "Shared taste is {0.50+0.01k}."
+  - 3 percent of a non-score value, `k` = 0..2: "{round(100*(0.30+0.01k))}% of ticket buyers used the presale."
+
+### 10.b Document citation check
+- **Code under test:** the same function with its documents argument, `unsupportedNumbers(answer, toolData, {}, documents)`, which checks a sentence ending in `[doc:id p.n]` only against the numbers on that page. This path lives on branch `feat/doc-context` (commit `8498287`, "answer check verifies document citations against the cited page only"); that branch is merged into the test branch before the runner is written, with no change to the check.
+- **Fixed document** `{id: "rec", name: "recap.txt"}`, pages `n` = 1..10, page text: "Show {n} sold {300+41n} tickets. Gross was {5000+730n}." (en-US thousands separators). Fixed tool results for 10.b.3: `[{fit: 7000+113k}]` for `k` = 0..5.
+- **Plants (20):**
+  - 7 numbers cited to a page that does not contain them, `k` = 1..7: "That date drew {300+41k+9} tickets [doc:rec p.{k}]." (the number is on no page).
+  - 7 numbers cited to the wrong page, `m` = 1..7: "That date drew {300+41m} tickets [doc:rec p.{m+1}]." (the number is on page m, cited to page m+1).
+  - 6 doc citations on a tool-only number, `k` = 0..5: "The fit was {7000+113k} [doc:rec p.1]." (in the tool results, on no page).
+- **Controls (20), none may be flagged:** 10 with `n` = 1..10: "That date drew {300+41n} tickets [doc:rec p.n]."; 10 with `n` = 1..10: "Gross was {5000+730n} [doc:rec p.n]."
+
+### 10.c Advance source and number filter
+- **Code under test:** `resultAboutCountry` and `verifyAdvance` in `src/web/advance.ts`. For each case, `verifyAdvance({items:[item]}, results, destination)` is run with `results` holding the item's source plus one correct-country result for the same destination. An item is caught when it is in `removed` (not in `items`).
+- **Plants (20):**
+  - **10 other-country sources** (fixed list; destination in brackets; each result is `{title, url, content}`; the item's text is the first sentence of its content, so its numbers are in its own source and only the country filter can catch it). The first five name only the other country anywhere; the last five name the other country in the title and the destination only in the body.
+    1. [US] "Canada work permits for visiting musicians" / https://example.test/ca/work-permits / "Foreign performers in Canada may need a work permit; the fee is 155 dollars and processing takes 14 days."
+    2. [US] "UK Permitted Paid Engagement for touring artists" / https://example.test/uk/ppe / "Visitors to the UK can perform for up to 30 days with a Permitted Paid Engagement."
+    3. [MX] "Spain visa for non-EU musicians" / https://example.test/es/visa / "Artists entering Spain apply at the consulate and processing takes 21 days."
+    4. [MX] "France ATA Carnet customs for instruments" / https://example.test/fr/carnet / "Customs in France accept an ATA Carnet valid for 12 months."
+    5. [BR] "Portugal visa for performing artists" / https://example.test/pt/visa / "Portugal issues a temporary stay visa for artists with a fee of 90 euros."
+    6. [US] "Japan entry rules for foreign bands" / https://example.test/jp/bands / "Japan requires a Certificate of Eligibility and processing takes 30 days. Unlike the United States, there is no O-1 category."
+    7. [US] "Germany artist visa guide" / https://example.test/de/artists / "Germany's freelance visa takes 40 days. It differs from the United States P-1 visa."
+    8. [MX] "Colombia customs rules for instruments" / https://example.test/co/customs / "Colombia accepts an ATA Carnet for 6 months. Mexico also accepts it."
+    9. [BR] "Argentina touring visa" / https://example.test/ar/visa / "Argentina grants a touring visa in 25 days. Brazil requires a different visa."
+    10. [BR] "Chile work visa for artists" / https://example.test/cl/visa / "Chile processes artist visas in 20 days. Brazil takes 45 days."
+  - **10 numbers absent from their own source.** The clean source for `i` = 0..19 is `{title: "{Name} work visa processing for touring musicians", url: "https://example.test/{code}/{i}", content: "Processing takes {10+3i} business days and the fee is {150+25i} dollars in {Name}."}` with destination `[US, MX, BR][i mod 3]` (`Name` = United States, Mexico, Brazil; `code` = us, mx, br). Plants use `i` = 0..9: for `i` = 0..4 (number on no source) the item is "The fee is {150+25i+4} dollars." citing source `i`; for `i` = 5..9 (a number from another source) the item is "Allow {10+3(i+1)} business days." citing source `i`.
+- **Controls (20), none may be removed:** for `i` = 0..19, the item "Allow {10+3i} business days and a fee of {150+25i} dollars." citing source `i`.
+
+### 10.d Sponsor check
+- **Code under test:** the sponsor path of `src/pipeline/sponsorSegments.ts`, applied to one list of items `{entityId, name}`: first `dropNonSponsors` (`src/pipeline/nonSponsors.ts`, names and endings), then `keepVerified(items, verdicts)` (`src/pipeline/sponsorCheck.ts`) with a fixed fake classifier answer. An item is removed when it is not in the output.
+- **What this measures:** the rule, given classifier outputs. It does not measure the live model: no model is called, and how often the real classifier answers wrongly or not at all is not measured here. The wrong and missing answers below are made up to exercise the fallback rule.
+- **Plants (20 organisations, ids p01..p20, in this order):** Planned Parenthood, ACLU, Greenpeace, Sierra Club, NAACP, Red Cross, Feeding America, Salvation Army (on the name list); Robin Hood Foundation, Wikimedia Foundation, Libertarian Party, Hillsong Church (generic ending); Everytown for Gun Safety, Focus on the Family, Oxfam, Americans for Prosperity, Mercy Corps, Charity: Water, Heritage Action, Moms Demand Action (neither).
+- **Controls (20 consumer brands, ids c01..c20):** Nike, Coca-Cola, Spotify, Red Bull, Adidas, Samsung, Levi's, Pepsi, Toyota, Heineken, Jack Daniel's, Ticketmaster, Uber, Airbnb, Sony, Converse, Absolut Vodka, Doritos, Fender, Budweiser.
+- **Lists:** four lists of 10 (list `j` = 0..3: plants `5j+1..5j+5` and controls `5j+1..5j+5`, alternating control, plant), checked one list at a time.
+- **Fixed classifier table (`sponsor` verdict by id), main condition (call succeeded, so `available = true`):**
+  - plants: p01 to p12 (all on the list or ending rule): "no" for p01, p02, p04, p05, p06, p07, p08, p09 and "yes" (wrong) for p03, p10, p11, p12. p13 to p16 "no". p17 and p18 no answer (missing). p19 and p20 "yes" (wrong).
+  - controls: "yes" for all except c10 (Heineken) and c12 (Ticketmaster), which are answered "no" (wrong), and c18 (Doritos), which has no answer (missing).
+- **Secondary condition (the check failed, `available = false`, no cached verdicts):** the same lists with an empty verdict map, reported separately, to show what the name rule alone catches.
+- **Headline:** the main condition, "caught N of 20, false alarms M of 20".
+
+### Scope and publication
+- **No retuning:** the checkers are not changed after these cases are written; a miss or a false alarm is a result, not a bug to hide. Fixes to a checker come after the run and are described as fixes.
+- **Publication:** `/proof` shows one row per checker (what it guards, planted errors caught, false alarms on clean controls) under "Verified claims, across the product", and the README quotes the same table. Each row states that the planted errors are synthetic and fixed, that the four fixtures are small, and (10.d) that the live classifier is not tested.
