@@ -4,7 +4,7 @@ import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
 import { INSIGHTS_TYPES, SEARCH_TYPES } from "../validate.js";
 import type { FunctionDeclaration } from "./gemini-tools.js";
-import type { StrategistToolStatus } from "../types.js";
+import type { StrategistToolStatus, UserDocument } from "../types.js";
 import { isSafeName } from "./safety.js";
 
 export const STRATEGIST_QLOO_TOOLS: readonly string[] = [
@@ -107,7 +107,7 @@ export function compactResults(results: unknown, max = 8): unknown {
 const rejected = (name: string, summary: string): ToolOutcome => ({ name, status: "rejected", summary, data: null });
 const failed = (name: string, err: unknown): ToolOutcome => ({ name, status: "error", summary: String((err as Error)?.message ?? err), data: null });
 
-interface Deps { qloo: QlooCaller; cities: City[]; sessionId: string; signal?: AbortSignal }
+interface Deps { qloo: QlooCaller; cities: City[]; sessionId: string; documents?: UserDocument[]; signal?: AbortSignal }
 
 async function playbook(args: Record<string, unknown>, deps: Deps): Promise<ToolOutcome> {
   const name = "get_city_playbook";
@@ -141,9 +141,21 @@ async function playbook(args: Record<string, unknown>, deps: Deps): Promise<Tool
   }
 }
 
+const squash = (t: string): string => t.toLowerCase().replace(/\s+/g, " ").trim();
+const QUOTE_MIN = 40;
+
+/** True when a string argument (or list item) of the call quotes a stretch of the user's documents. Entity names are short; a long verbatim quote means document text is being sent out. */
+function quotesDocument(args: Record<string, unknown>, documents: UserDocument[] | undefined): boolean {
+  if (!documents?.length) return false;
+  const corpus = squash(documents.flatMap((d) => d.pages.map((p) => p.text)).join(" "));
+  const strings = Object.values(args).flatMap((v) => (typeof v === "string" ? [v] : Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []));
+  return strings.some((v) => { const q = squash(v); return q.length >= QUOTE_MIN && corpus.includes(q); });
+}
+
 export async function executeTool(call: { name: string; args: Record<string, unknown> }, deps: Deps): Promise<ToolOutcome> {
   const { name } = call;
   const args = rec(call.args) ?? {};
+  if (quotesDocument(args, deps.documents)) return rejected(name, "Document text is never sent to Qloo");
   if (name === "get_city_playbook") return playbook(args, deps);
   if (!STRATEGIST_QLOO_TOOLS.includes(name)) return rejected(name, `Tool not allowed: ${name}`);
   const bad = unsafeKey(args);

@@ -235,3 +235,25 @@ describe("fetchSponsorSegments", () => {
     expect(r.bands[0]!.items).toEqual([{ name: "A", entityId: "a", artistRank: 1, cityRank: null }]);
   });
 });
+
+describe("streamStrategist documents", () => {
+  const messages = [{ role: "user" as const, text: "What do my files say?" }];
+  const docs = [{ id: "d1", name: "recap.txt", pages: [{ n: 1, text: "Los Angeles drew 1,200." }], note: "ui only" }];
+  it("posts attached documents (id, name, pages only) in the strategist body", async () => {
+    const fetchImpl = vi.fn(async () => sseResponse(['event: done\ndata: {"type":"done","summary":{}}\n\n']));
+    for await (const _ of streamStrategist({ messages, context: {}, documents: docs }, { fetchImpl: fetchImpl as unknown as typeof fetch })) void _;
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("/api/qloo/strategist");
+    expect(JSON.parse(String(init.body)).documents).toEqual([{ id: "d1", name: "recap.txt", pages: [{ n: 1, text: "Los Angeles drew 1,200." }] }]);
+  });
+  it("omits the documents field when none are attached", async () => {
+    const fetchImpl = vi.fn(async () => sseResponse(['event: done\ndata: {"type":"done","summary":{}}\n\n']));
+    for await (const _ of streamStrategist({ messages, context: {}, documents: [] }, { fetchImpl: fetchImpl as unknown as typeof fetch })) void _;
+    expect(JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body))).not.toHaveProperty("documents");
+  });
+  it("sample mode never sends document text anywhere", async () => {
+    const fetchImpl = vi.fn();
+    for await (const _ of streamStrategist({ messages, context: {}, documents: docs }, { fetchImpl: fetchImpl as unknown as typeof fetch, sample: true, delayMs: 0 })) void _;
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});

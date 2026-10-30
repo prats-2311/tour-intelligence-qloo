@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { streamStrategist } from "./client";
 import { LOST_NOTE, STOPPED_NOTE, strategistReducer, type StrategistState } from "./strategistReducer";
-import type { ChatMessage, StrategistContext } from "./types";
+import type { ChatMessage, StrategistContext, StrategistDocument } from "./types";
 
 const MAX_MESSAGES = 12;
 
-export function useStrategist(context: StrategistContext, opts: { sample: boolean; showcase?: boolean }): { state: StrategistState; ask(question: string): void; stop(): void; reset(): void; busy: boolean } {
+export function useStrategist(context: StrategistContext, opts: { sample: boolean; showcase?: boolean; documents?: StrategistDocument[] }): { state: StrategistState; ask(question: string): void; stop(): void; reset(): void; busy: boolean } {
   const [state, dispatch] = useReducer(strategistReducer, { turns: [] });
   const stateRef = useRef(state);
   stateRef.current = state;
   const busyRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
-  const ctxRef = useRef({ context, sample: opts.sample, showcase: opts.showcase === true });
-  ctxRef.current = { context, sample: opts.sample, showcase: opts.showcase === true };
+  const ctxRef = useRef({ context, sample: opts.sample, showcase: opts.showcase === true, documents: opts.documents });
+  ctxRef.current = { context, sample: opts.sample, showcase: opts.showcase === true, documents: opts.documents };
 
   const ask = useCallback((question: string) => {
     const q = question.trim();
@@ -32,7 +32,7 @@ export function useStrategist(context: StrategistContext, opts: { sample: boolea
     void (async () => {
       let finished = false;
       try {
-        for await (const event of streamStrategist({ messages: window, context: ctxRef.current.context }, { signal: ac.signal, sample: ctxRef.current.sample, sampleSet: ctxRef.current.showcase ? "showcase" : undefined })) {
+        for await (const event of streamStrategist({ messages: window, context: ctxRef.current.context, ...(ctxRef.current.documents?.length ? { documents: ctxRef.current.documents } : {}) }, { signal: ac.signal, sample: ctxRef.current.sample, sampleSet: ctxRef.current.showcase ? "showcase" : undefined })) {
           if (ac.signal.aborted) break;
           dispatch({ type: "event", event });
           if (event.type === "done") finished = true;

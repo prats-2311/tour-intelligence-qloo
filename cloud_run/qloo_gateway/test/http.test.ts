@@ -172,6 +172,46 @@ describe("strategist route", () => {
   });
 });
 
+describe("strategist route documents", () => {
+  const base = { qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }) };
+  const doc = { id: "d1", name: "recap.txt", pages: [{ n: 1, text: "Los Angeles drew 1,200." }] };
+  const messages = [{ role: "user", text: "hi" }];
+  const mk = () => vi.fn(async function* () { yield { type: "done", summary: {} } as const; });
+  it("passes validated documents to the strategist", async () => {
+    const strategist = mk();
+    const res = await request(createApp({ ...base, strategist })).post("/v1/strategist").set("x-session-id", "s").send({ messages, documents: [doc] });
+    expect(res.status).toBe(200);
+    expect(strategist.mock.calls[0]![0].documents).toEqual([doc]);
+  });
+  it("omits documents when none are sent", async () => {
+    const strategist = mk();
+    await request(createApp({ ...base, strategist })).post("/v1/strategist").set("x-session-id", "s").send({ messages });
+    expect(strategist.mock.calls[0]![0].documents ?? []).toEqual([]);
+  });
+  it("rejects invalid documents with 400 and never calls the strategist", async () => {
+    const strategist = mk();
+    const app = createApp({ ...base, strategist });
+    const bad = await request(app).post("/v1/strategist").set("x-session-id", "s").send({ messages, documents: [{ ...doc, name: "n".repeat(121) }] });
+    expect(bad.status).toBe(400);
+    expect(strategist).not.toHaveBeenCalled();
+  });
+  it("accepts a body up to 150 KB on this route, but other routes keep the 64 KB limit", async () => {
+    const strategist = mk();
+    const app = createApp({ ...base, strategist });
+    const big = { id: "d1", name: "big.txt", pages: Array.from({ length: 20 }, (_, i) => ({ n: i + 1, text: "é".repeat(3000) })) };
+    const ok = await request(app).post("/v1/strategist").set("x-session-id", "s").send({ messages, documents: [big] });
+    expect(ok.status).toBe(200);
+    const pad = { messages, pad: "x".repeat(70_000) };
+    expect((await request(app).post("/v1/without-qloo").set("x-session-id", "s").send(pad)).status).toBe(413);
+  });
+  it("does not echo document text in an error response", async () => {
+    const res = await request(createApp({ ...base, strategist: mk() })).post("/v1/strategist").set("x-session-id", "s")
+      .send({ messages, documents: [{ ...doc, pages: [{ n: 1.5, text: "SECRET-TEXT" }] }] });
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).not.toContain("SECRET-TEXT");
+  });
+});
+
 describe("without-qloo route", () => {
   const base = { qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }) };
   const body = { artist: "Lumen Vale", regions: ["Mexico"], cities: [{ name: "Guadalajara", country: "MX" }] };

@@ -6,7 +6,7 @@ import { SAMPLE_WITHOUT_QLOO, sampleStrategistEvents } from "./fixtures/strategi
 import { recordedQuestion, showcaseBoardEvents, showcaseStrategist, showcasePlaybookEvents, showcaseThisWeek, showcaseWithoutQloo, variantOfBrief } from "./showcase";
 import { parseWithoutQloo } from "./withoutQloo";
 import { parseSponsorSegments, SEGMENTS_ERROR, SEGMENTS_TIMEOUT, type SponsorSegments } from "./segments";
-import type { AdvanceRisks, ChatMessage, DateWindow, GatewayEvent, SampleSet, StrategistContext, ThisWeek, TourBrief, WithoutQloo } from "./types";
+import type { AdvanceRisks, ChatMessage, DateWindow, GatewayEvent, SampleSet, StrategistContext, StrategistDocument, ThisWeek, TourBrief, WithoutQloo } from "./types";
 
 export const SHOWCASE_STRATEGIST_NOTE = "The live strategist needs a live run";
 
@@ -73,7 +73,9 @@ export function streamCityPlaybook(q: { artist: string; artistEntityId: string; 
   return stream(`/api/qloo/city-playbook?${qs}`, { method: "GET", headers: { "x-session-id": getSessionId() } }, opts);
 }
 
-export function streamStrategist(body: { messages: ChatMessage[]; context: StrategistContext }, opts: StreamOpts = {}): AsyncGenerator<GatewayEvent> {
+export type StrategistBody = { messages: ChatMessage[]; context: StrategistContext; documents?: StrategistDocument[] };
+
+export function streamStrategist(body: StrategistBody, opts: StreamOpts = {}): AsyncGenerator<GatewayEvent> {
   if (opts.sample && opts.sampleSet === "showcase") {
     // Recorded Q&As replay with their full work log; a recording without any keeps the original note.
     const hasRecorded = showcaseStrategist().length > 0;
@@ -94,11 +96,12 @@ export function streamStrategist(body: { messages: ChatMessage[]; context: Strat
   return liveStrategist(body, opts);
 }
 
-function liveStrategist(body: { messages: ChatMessage[]; context: StrategistContext }, opts: StreamOpts): AsyncGenerator<GatewayEvent> {
+function liveStrategist(body: StrategistBody, opts: StreamOpts): AsyncGenerator<GatewayEvent> {
   return friendlyStrategistErrors(stream("/api/qloo/strategist", {
     method: "POST",
     headers: { "content-type": "application/json", "x-session-id": getSessionId() },
-    body: JSON.stringify(body),
+    // Document text rides only in this body (id, name, pages); UI-only fields never leave the page.
+    body: JSON.stringify({ messages: body.messages, context: body.context, ...(body.documents?.length ? { documents: body.documents.map((d) => ({ id: d.id, name: d.name, pages: d.pages })) } : {}) }),
   }, opts));
 }
 

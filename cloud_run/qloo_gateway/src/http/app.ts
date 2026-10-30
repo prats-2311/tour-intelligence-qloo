@@ -12,10 +12,10 @@ import { runSponsorSegments } from "../pipeline/sponsorSegments.js";
 import { MAX_ROUTING_CITIES } from "../pipeline/routing.js";
 import { runTourBoard } from "../pipeline/tourBoard.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
-import { isSafeContextText, LIMITS, sanitizeMessages, validateContext } from "../strategist/safety.js";
+import { isSafeContextText, LIMITS, sanitizeMessages, validateContext, validateDocuments } from "../strategist/safety.js";
 import type { Advance, AdvanceInput } from "../web/advance.js";
 import { advanceUnavailable } from "../web/advance.js";
-import type { ChatMessage, GatewayEvent, NarrateFn, StrategistContext, ThisWeek, WithoutQloo } from "../types.js";
+import type { ChatMessage, GatewayEvent, NarrateFn, StrategistContext, ThisWeek, UserDocument, WithoutQloo } from "../types.js";
 
 function validSession(id: string | undefined): id is string {
   return typeof id === "string" && id.length >= 1 && id.length <= 128;
@@ -36,10 +36,12 @@ async function streamSse(res: Response, gen: AsyncGenerator<GatewayEvent>, contr
   res.end();
 }
 
-export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; advance?: (input: AdvanceInput) => Promise<Advance>; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo>; collab?: CollabDeps; analytics?: Analytics; sponsorSegmentsDeadlineMs?: number }) {
+export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; advance?: (input: AdvanceInput) => Promise<Advance>; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; documents?: UserDocument[]; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo>; collab?: CollabDeps; analytics?: Analytics; sponsorSegmentsDeadlineMs?: number }) {
   const app = express();
   const analytics = deps.analytics ?? DISABLED_ANALYTICS;
   const stats = createStats(analytics);
+  // Only the strategist route may carry private documents (up to 60,000 characters of text), so only it gets a larger body; the parser runs first and marks the body read.
+  app.use("/v1/strategist", express.json({ limit: "150kb" }));
   app.use(express.json({ limit: "64kb" }));
 
   // Cloud Run reserves paths ending in "z" (Google answers 404 before the app), so /health is the deployed path; /healthz stays for local use.
@@ -150,9 +152,11 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
     if (!messages.ok) return void res.status(400).json({ error: messages.error });
     const context = validateContext(req.body?.context);
     if (!context.ok) return void res.status(400).json({ error: context.error });
+    const documents = validateDocuments(req.body?.documents);
+    if (!documents.ok) return void res.status(400).json({ error: documents.error });
     const controller = new AbortController();
     const gen = deps.strategist
-      ? deps.strategist({ messages: messages.messages, context: context.context, sessionId }, controller.signal)
+      ? deps.strategist({ messages: messages.messages, context: context.context, ...(documents.documents.length ? { documents: documents.documents } : {}), sessionId }, controller.signal)
       : (async function* (): AsyncGenerator<GatewayEvent> {
         yield { type: "strategist_error", code: "UNAVAILABLE", message: "Strategist unavailable right now" };
         yield { type: "done", summary: { rounds: 0, toolCalls: 0, forcedFinal: false } };
