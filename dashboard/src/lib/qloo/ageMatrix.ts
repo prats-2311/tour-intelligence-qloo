@@ -1,4 +1,6 @@
 import { isDoNotBook, isHiddenItem } from "./doNotBook";
+import type { PlaybookCard } from "./types";
+import { sponsorLiftRows } from "./tourInsights";
 import { AGE_BANDS, signedIndex, type AgeBand, type SegmentItem } from "./segments";
 import type { SegmentState } from "./segmentStore";
 
@@ -56,4 +58,10 @@ export function matrixSummary(m: AgeMatrix): string | null {
   const line = (who: string, n: number) => `In ${n} of ${cmp.length} ${cmp.length === 1 ? "city" : "cities"}, the ${who} over-indexed group's top brand differs from all fans'.`;
   if (cmp.every(({ bands }) => bands.length === 1)) return line("", differs((bs) => bs[0]!)).replace("the  ", "the ");
   return `${line("oldest", differs((bs) => bs[bs.length - 1]!))} ${line("youngest", differs((bs) => bs[0]!))}`;
+}
+
+/** The city's all-fans sponsors from its playbook Sponsors card (already filtered for display), or null when the card is missing or not ok. */
+export function allFansFromCard(card: PlaybookCard | undefined): AllFansBrand[] | null {
+  if (!card || card.status !== "ok") return null;
+  return sponsorLiftRows(card).map((r) => ({ name: r.name, fanRank: r.fanRank, cityRank: r.cityRank }));
 }

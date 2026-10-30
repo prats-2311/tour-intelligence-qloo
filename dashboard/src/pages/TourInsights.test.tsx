@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WorkspaceContext, OFF } from "@/lib/collab/workspaceContext";
 import { resetPlaybooks } from "@/lib/qloo/playbookStore";
+import { resetSegments } from "@/lib/qloo/segmentStore";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
 import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
@@ -51,7 +52,7 @@ beforeEach(() => {
   mapProps.last = null;
   vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
 });
-afterEach(() => { cleanup(); resetPlaybooks(); setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE)); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); resetPlaybooks(); resetSegments(); setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE)); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("Insights page", () => {
   it("opens the recorded example with the map, the filters and every chart", async () => {
@@ -173,10 +174,44 @@ describe("accessibility", () => {
     renderAt("/tours/insights?showcase=1");
     await flush();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    for (const sec of document.querySelectorAll("section[aria-labelledby]")) {
+    for (const sec of document.querySelectorAll("section[aria-labelledby]:not([data-testid=age-matrix])")) {
       expect(sec.querySelector("h2")!.textContent).toBeTruthy();
       expect(sec.querySelector("table")).toBeTruthy();
     }
     for (const img of screen.getAllByRole("img")) expect((img.getAttribute("aria-label") ?? "").length).toBeGreaterThan(5);
+  });
+});
+
+const segBody = (names: string[]) => ({ status: "ok", indexes: {}, bands: [{ band: "25_to_29", phrase: "", index: 0.9, status: "ok", hiddenCount: 0, newInTop5: 1, lifted: false, items: names.map((name, i) => ({ name, entityId: `e${i}`, artistRank: i + 1, cityRank: null })) }] });
+
+describe("Age matrix on the Charts page", () => {
+  const stubSegments = (names: string[]) => { const f = vi.fn(async (_u: unknown) => new Response(JSON.stringify(segBody(names)), { status: 200, headers: { "content-type": "application/json" } })); vi.stubGlobal("fetch", f); return f; };
+  it("is the first section, with its title, and fetches nothing until the button is pressed", async () => {
+    const f = stubSegments(["Brand A"]);
+    renderAt("/tours/insights?showcase=1");
+    await flush();
+    const sections = [...document.querySelectorAll("section[aria-labelledby]")];
+    expect(sections[0]!.getAttribute("data-testid")).toBe("age-matrix");
+    expect(screen.getByRole("heading", { name: "Which brands each age group loves, city by city" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: `Load age groups for all ${Math.min(10, SCORED)} cities` })).toBeTruthy();
+    expect(f.mock.calls.filter((c) => String(c[0]).includes("sponsor-segments"))).toHaveLength(0);
+  });
+  it("counts only the cities the filters leave", async () => {
+    renderAt("/tours/insights?showcase=1&country=US");
+    await flush();
+    expect(screen.getByRole("button", { name: "Load age groups for all 2 cities" })).toBeTruthy();
+  });
+  it("after the click: unique badge from the city's own all-fans list, playbook link with the band, planted names never shown", async () => {
+    const f = stubSegments(["Ariel Pink", "Planned Parenthood", "Zzz Unlisted Brand"]);
+    renderAt("/tours/insights?showcase=1&country=US");
+    await flush();
+    fireEvent.click(screen.getByRole("button", { name: "Load age groups for all 2 cities" }));
+    const cell = (await screen.findAllByRole("button", { name: /Zzz Unlisted Brand/ }))[0]!;
+    expect(f.mock.calls.filter((c) => String(c[0]).includes("sponsor-segments"))).toHaveLength(2);
+    expect(cell.textContent).toContain("unique");
+    fireEvent.click(cell);
+    const link = within(screen.getByRole("dialog")).getByRole("link", { name: /playbook/ });
+    expect(link.getAttribute("href")).toMatch(/^\/tours\/playbook\/\d+\?.*showcase=1.*band=25_to_29/);
+    expect(screen.getByTestId("age-matrix").textContent).not.toMatch(/Ariel Pink|Planned Parenthood/);
   });
 });

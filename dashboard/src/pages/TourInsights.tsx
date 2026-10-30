@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
+import { AgeMatrix } from "@/components/tourInsights/AgeMatrix";
 import { CityScoresChart } from "@/components/tourInsights/CityScoresChart";
 import { FiltersBar } from "@/components/tourInsights/FiltersBar";
 import { QuadrantChart } from "@/components/tourInsights/QuadrantChart";
@@ -14,15 +15,16 @@ import { TasteInsightsSkeleton } from "@/components/ui/Skeletons";
 import { STATUS_LABEL } from "@/lib/collab/types";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
 import { LONG_NAMES_BRIEF, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
-import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks";
+import { SAMPLE_PLAYBOOK_CITY_IDS, samplePlaybookEvents } from "@/lib/qloo/fixtures/lumenValePlaybooks";
+import { allFansFromCard } from "@/lib/qloo/ageMatrix";
 import { cityHasPlaybook, sourceQuery } from "@/lib/qloo/journey";
 import { DEFAULT_SCORING_DISPLAY, INTEGRITY_LINE } from "@/lib/qloo/labels";
-import { playbookKey, usePlaybook, usePlaybookSnapshot, type PlaybookRequest } from "@/lib/qloo/playbookStore";
+import { getPlaybook, playbookKey, usePlaybook, usePlaybookSnapshot, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { isRoutingBrief, setShowcaseVariant, showcaseAvailable, showcaseBrief, showcaseParam, showcasePlaybookEvents, showcaseRoutingAvailable, variantOfBrief, type ShowcaseVariant } from "@/lib/qloo/showcase";
 import { applyTourFilters, defaultTourFilters, hasActiveFilters, parseTourFilters, topCityId, writeTourFilters, type TourFilters } from "@/lib/qloo/tourInsights";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
-import type { ScoredCity } from "@/lib/qloo/types";
+import type { PlaybookCard, ScoredCity } from "@/lib/qloo/types";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 const linkBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
@@ -63,6 +65,15 @@ function InsightsPage() {
   const variant: ShowcaseVariant = state.source === "showcase" ? variantOfBrief(state.brief) : "main";
   const q = sourceQuery(state.source, state.sampleSet, state.source === "showcase" && variant === "routing");
   const hrefFor = (id: string): string | null => (cityHasPlaybook(state.source, id, variant === "routing") ? `/tours/playbook/${id}${q}` : null);
+
+  /** The city's all-fans Sponsors card from memory only: the recording, the sample, or a live playbook someone already opened. Never starts a lookup. */
+  const sponsorsCardOf = (city: ScoredCity): PlaybookCard | undefined => {
+    const artistId = state.artist?.entityId;
+    const events = state.source === "showcase" ? showcasePlaybookEvents(city.id, variant) : state.source === "sample" && (SAMPLE_PLAYBOOK_CITY_IDS as readonly string[]).includes(city.id) ? samplePlaybookEvents(city.id, { long: state.sampleSet === "long" }) : null;
+    const cards = events ? events.flatMap((e) => (e.type === "playbook" ? e.playbook.cards : [])) : artistId ? getPlaybook(playbookKey(artistId, city.id, state.sampleSet, variant === "routing" && state.source === "showcase" ? "routing" : undefined))?.cards ?? [] : [];
+    return cards.find((c) => c.kind === "sponsors");
+  };
+  const bandHref = (id: string, band?: string): string | null => { const h = hrefFor(id); return h && band ? `${h}${h.includes("?") ? "&" : "?"}band=${band}` : h; };
 
   // Filters live in the URL so a copied link opens the same view.
   const filters = useMemo(() => parseTourFilters(params), [params]);
@@ -107,6 +118,8 @@ function InsightsPage() {
           </p>
         </div>
       </header>
+
+      {state.artist && <AgeMatrix cities={visible} artist={state.artist} allFansOf={(c) => allFansFromCard(sponsorsCardOf(c))} hrefFor={bandHref} />}
 
       <section aria-label="Market map" className="flex min-w-0 flex-col gap-2 rounded-[14px] bg-paper p-3 lg:p-4">
         <h2 className="font-title text-[20px] leading-tight text-canvas-text">Market map</h2>
