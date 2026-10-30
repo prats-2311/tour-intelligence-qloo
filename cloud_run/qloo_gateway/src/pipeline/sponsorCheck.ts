@@ -74,3 +74,12 @@ export async function classifySponsors(candidates: SponsorCandidate[], sessionId
     return { available: false, verdicts };
   }
 }
+
+/**
+ * The playbook's fallback rule, shared with the age segments. A successful answer keeps only an explicit yes (a missing id is hidden);
+ * a failed or absent check keeps everything except a cached "no" (the caller has already applied the name list).
+ */
+export function keepVerified<T extends { entityId: string }>(items: T[], r: SponsorVerdicts | null): T[] {
+  if (!r) return items;
+  return items.filter((e) => (r.available ? r.verdicts.get(e.entityId) === true : r.verdicts.get(e.entityId) !== false));
+}

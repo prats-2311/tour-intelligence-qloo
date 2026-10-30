@@ -101,6 +101,22 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
     }
     return forward(req, res, { route: "advance", path: `/v1/advance?${params}`, method: "GET" });
   });
+  // Sponsors by age group: GET with a short allowlist; the required ones are validated here, the optional city hints only forwarded when well formed.
+  const SEGMENT_REQUIRED = ["artistId", "city", "country"];
+  const SEGMENT_OPTIONAL = ["artist", "cityId", "lat", "lon"];
+  app.get("/api/qloo/sponsor-segments", (req, res) => {
+    const params = new URLSearchParams();
+    for (const k of SEGMENT_REQUIRED) {
+      const v = req.query[k];
+      if (typeof v !== "string" || !v || v.length > 80) return res.status(400).json({ error: "artistId, city, country required (≤ 80 chars)" });
+      params.set(k, v);
+    }
+    for (const k of SEGMENT_OPTIONAL) {
+      const v = req.query[k];
+      if (typeof v === "string" && v && v.length <= 80) params.set(k, v);
+    }
+    return forward(req, res, { route: "sponsor-segments", path: `/v1/sponsor-segments?${params}`, method: "GET" });
+  });
   // Spec §8: raw Qloo tools are never exposed publicly — only the compare panel's tool is reachable.
   const PUBLIC_TOOLS = new Set(["qloo_compare_audiences"]);
   const MAX_GROUP = 3;

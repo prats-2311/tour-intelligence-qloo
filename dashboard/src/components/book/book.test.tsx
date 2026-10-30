@@ -153,3 +153,23 @@ describe("book components", () => {
     expect(err.mock.calls.flat().join(" ")).not.toMatch(/same key/);
   });
 });
+
+describe("age groups in the Tour Book", () => {
+  it("shows nothing and makes no request when they were never loaded; shows the lists when they were", async () => {
+    const f = vi.fn();
+    vi.stubGlobal("fetch", f);
+    const { segmentKey, loadSegments, resetSegments } = await import("@/lib/qloo/segmentStore");
+    resetSegments();
+    const ch = book.chapters[2]!;
+    const { rerender } = render(<CityChapter chapter={ch} artistId="ART-1" />);
+    expect(screen.queryByTestId("book-segments")).toBeNull();
+    expect(f).not.toHaveBeenCalled();
+    const answer = { status: "ok", indexes: { "25_to_29": 0.9 }, bands: [{ band: "25_to_29", phrase: "25-29", index: 0.9, status: "ok", hiddenCount: 0, newInTop5: 2, lifted: true, items: [{ name: "Brand Z", entityId: "z", artistRank: 1, cityRank: null }] }] };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(answer), { status: 200 })));
+    await loadSegments({ artistId: "ART-1", city: { id: ch.city.id, name: ch.city.name, country: ch.city.country } });
+    rerender(<CityChapter chapter={ch} artistId="ART-1" />);
+    expect(screen.getByTestId("book-segments").textContent).toContain("Brand Z");
+    expect(segmentKey("ART-1", ch.city)).toContain("ART-1");
+    resetSegments();
+  });
+});

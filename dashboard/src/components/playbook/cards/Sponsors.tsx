@@ -3,8 +3,11 @@ import type { PlaybookCard } from "@/lib/qloo/types";
 import { dealLine, fanRankLine, fit, rankLine, SPONSORS_NOT_MAINSTREAM_NOTE } from "../format";
 import { Caption, Row, Rows } from "./rows";
 import { num, str } from "./util";
+import { SegmentControl } from "./SponsorSegments";
+import type { SegmentRequest } from "@/lib/qloo/segmentStore";
 
-export function Sponsors({ card, city, venueName }: { card: PlaybookCard; city: string; venueName?: string }) {
+/** `segments`: the artist and city to ask for age groups. Absent (sample data, no artist id) means no control, only the all-fans list. */
+export function Sponsors({ card, city, country, venueName, segments }: { card: PlaybookCard; city: string; country?: string; venueName?: string; segments?: SegmentRequest }) {
   const [open, setOpen] = useState(false);
   const shown = card.items.slice(0, open ? undefined : 5);
   const more = card.items.length - 5;
@@ -14,7 +17,7 @@ export function Sponsors({ card, city, venueName }: { card: PlaybookCard; city: 
   const allOffChart = rankedAll.length > 0 && rankedAll.every((it) => num(it.cityRank) === null);
   const top = card.items.slice(0, 5).find((it) => num(it.artistRank) !== null);
   const deal = top ? dealLine(str(top.name), num(top.artistRank)!, num(top.cityRank), city, venueName) : null;
-  return (
+  const list = (
     <>
       <Rows>
         {shown.map((it, i) => {
@@ -33,4 +36,5 @@ export function Sponsors({ card, city, venueName }: { card: PlaybookCard; city: 
       {typeof note === "string" && note !== "" && <Caption>{note}</Caption>}
     </>
   );
+  return segments ? <SegmentControl request={segments} country={country ?? segments.city.country}>{list}</SegmentControl> : list;
 }

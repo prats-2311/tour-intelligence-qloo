@@ -5,6 +5,7 @@ import { samplePlaybookEvents, sampleThisWeek } from "./fixtures/lumenValePlaybo
 import { SAMPLE_WITHOUT_QLOO, sampleStrategistEvents } from "./fixtures/strategistSample";
 import { recordedQuestion, showcaseBoardEvents, showcaseStrategist, showcasePlaybookEvents, showcaseThisWeek, showcaseWithoutQloo, variantOfBrief } from "./showcase";
 import { parseWithoutQloo } from "./withoutQloo";
+import { parseSponsorSegments, SEGMENTS_ERROR, type SponsorSegments } from "./segments";
 import type { AdvanceRisks, ChatMessage, DateWindow, GatewayEvent, SampleSet, StrategistContext, ThisWeek, TourBrief, WithoutQloo } from "./types";
 
 export const SHOWCASE_STRATEGIST_NOTE = "The live strategist needs a live run";
@@ -157,6 +158,21 @@ export async function fetchAdvance(q: { city: string; country: string; window: D
     return res.ok ? ((await res.json()) as AdvanceRisks) : advanceError();
   } catch {
     return advanceError();
+  }
+}
+
+/** Sponsors by age group for one artist and city. Always a live gateway read (a recorded run has no segment data), made only when asked for. Never throws. */
+export async function fetchSponsorSegments(q: { artistId: string; artist?: string; city: string; country: string; cityId?: string; lat?: number; lon?: number }, opts: { fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<SponsorSegments> {
+  const params = new URLSearchParams({ artistId: q.artistId, city: q.city, country: q.country });
+  if (q.artist) params.set("artist", q.artist);
+  if (q.cityId) params.set("cityId", q.cityId);
+  if (typeof q.lat === "number" && typeof q.lon === "number") { params.set("lat", String(q.lat)); params.set("lon", String(q.lon)); }
+  try {
+    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/sponsor-segments?${params}`, { signal: opts.signal, headers: { "x-session-id": getSessionId() } });
+    if (!res.ok) return SEGMENTS_ERROR;
+    return parseSponsorSegments(await res.json());
+  } catch {
+    return SEGMENTS_ERROR;
   }
 }
 

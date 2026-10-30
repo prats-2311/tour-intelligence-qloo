@@ -419,3 +419,32 @@ describe("live-run loading line", () => {
     expect(screen.queryByTestId("live-run-line")).toBeNull();
   });
 });
+
+describe("CityPlaybook age groups", () => {
+  it("the invented sample playbook has no age control and fetches nothing", async () => {
+    const f = vi.fn();
+    vi.stubGlobal("fetch", f);
+    renderAt("/tours/playbook/4005539?sample=1");
+    await screen.findByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.");
+    expect(screen.queryByTestId("segment-control")).toBeNull();
+    expect(f).not.toHaveBeenCalled();
+  });
+  it("the recorded example shows the control, fetches only on click, with the entity id read from the run", async () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    const base = parseShowcase(syntheticShowcase);
+    const entity = (base.boardEvents.find((e) => e.type === "resolve") as { entity: { entityId: string } }).entity.entityId;
+    const id = Object.keys(base.playbooks)[0]!;
+    const f = vi.fn(async (u: string | URL | Request) => String(u).includes("sponsor-segments")
+      ? new Response(JSON.stringify({ status: "no_skew", indexes: {}, bands: [] }), { status: 200 })
+      : new Response("{}", { status: 404 }));
+    vi.stubGlobal("fetch", f);
+    renderAt(`/tours/playbook/${id}?showcase=1`);
+    const btn = await screen.findByRole("button", { name: "By age group" });
+    expect(f.mock.calls.filter((c) => String(c[0]).includes("sponsor-segments"))).toHaveLength(0);
+    fireEvent.click(btn);
+    await screen.findByTestId("segment-no-skew");
+    const calls = f.mock.calls.filter((c) => String(c[0]).includes("sponsor-segments"));
+    expect(calls).toHaveLength(1);
+    expect(String(calls[0]![0])).toContain(`artistId=${entity}`);
+  });
+});

@@ -9,7 +9,7 @@ import { activationInputs, Aborted, BudgetStop, resolveLocation, trackedCall } f
 import { LOCAL_DESCRIBE_CAP, LOCAL_SUGGESTIONS, matchPool, matchSuggestion } from "./localActs.js";
 import { cityPopularityArgs, LOCAL_ACT_POOL, localActRankArgs } from "./recArgs.js";
 import { dropNonSponsors } from "./nonSponsors.js";
-import type { SponsorCandidate, SponsorVerdicts } from "./sponsorCheck.js";
+import { keepVerified, type SponsorCandidate, type SponsorVerdicts } from "./sponsorCheck.js";
 import { emptySupportCopy, genreTagNames, HEADLINER_SIZE_UNKNOWN, rankLifted, SIZE_UNCHECKED_COPY, smallerThanHeadliner, SPONSOR_LIFT_NOTE } from "./playbookTrust.js";
 
 /** Size of the baseline lists (the city's own favourites) that lift is measured against. */
@@ -202,7 +202,7 @@ export async function* runCityPlaybook(
       const r = await deps.sponsorCheck(listed.items.map((e) => ({ entityId: e.entityId, name: e.name, ...(desc.has(e.entityId) ? { description: desc.get(e.entityId)! } : {}) })), input.sessionId);
       // Whole-call failure: name list only (plus any cached "no"). Successful answer: only an explicit yes is kept, so a missing id is hidden.
       sponsorCheck = r.available ? undefined : "unavailable";
-      const kept = listed.items.filter((e) => (r.available ? r.verdicts.get(e.entityId) === true : r.verdicts.get(e.entityId) !== false));
+      const kept = keepVerified(listed.items, r);
       brandPool = { items: kept, hidden: allBrands.length - kept.length };
     }
     const sponsorLift = rankLifted(brandPool.items, brandBase ? extractEntities(brandBase.envelope) : null);

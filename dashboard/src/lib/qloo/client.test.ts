@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { callQlooTool, fetchThisWeek, fetchWithoutQloo, streamCityPlaybook, streamStrategist, streamTourBoard } from "./client";
+import { callQlooTool, fetchSponsorSegments, fetchThisWeek, fetchWithoutQloo, streamCityPlaybook, streamStrategist, streamTourBoard } from "./client";
 import { SAMPLE_QUESTIONS } from "./fixtures/strategistSample";
 import type { GatewayEvent } from "./types";
 import { LONG_NAMES_SAMPLE, LUMEN_VALE_SAMPLE, SAMPLE_BRIEF } from "./fixtures/lumenVale";
@@ -207,5 +207,31 @@ describe("fetchAdvance", () => {
     expect(bad.visa.status).toBe("unavailable");
     const thrown = await fetchAdvance({ city: "G", country: "MX", window: w }, { fetchImpl: (async () => { throw new Error("net"); }) as unknown as typeof fetch });
     expect(thrown.weather.status).toBe("unavailable");
+  });
+});
+
+describe("fetchSponsorSegments", () => {
+  const json = (b: unknown, status = 200) => vi.fn(async () => new Response(JSON.stringify(b), { status, headers: { "content-type": "application/json" } }));
+  const Q = { artistId: "A1", artist: "Mac", city: "Los Angeles", country: "US", cityId: "9", lat: 34.05, lon: -118.24 };
+  it("asks the BFF with the session header and the city hints", async () => {
+    const f = json({ status: "no_skew", indexes: { "25_to_29": 0.1 }, bands: [] });
+    expect(await fetchSponsorSegments(Q, { fetchImpl: f })).toEqual({ status: "no_skew", indexes: { "25_to_29": 0.1 }, bands: [] });
+    const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("/api/qloo/sponsor-segments?artistId=A1&city=Los+Angeles&country=US&artist=Mac&cityId=9&lat=34.05&lon=-118.24");
+    expect((init.headers as Record<string, string>)["x-session-id"]).toBeTruthy();
+  });
+  it("maps a failed request, a bad status and a malformed body to the unavailable state", async () => {
+    for (const f of [json({ error: "x" }, 502), json({ nope: 1 }), json({ status: "ok", bands: "x" }), vi.fn(async () => { throw new Error("offline"); })]) {
+      expect(await fetchSponsorSegments(Q, { fetchImpl: f })).toMatchObject({ status: "unavailable", bands: [] });
+    }
+  });
+  it("drops bands and items it cannot label or read", async () => {
+    const r = await fetchSponsorSegments(Q, { fetchImpl: json({ status: "ok", indexes: { "25_to_29": 0.9, bogus: 1 }, bands: [
+      { band: "25_to_29", phrase: "25-29", index: 0.9, status: "ok", hiddenCount: 2, newInTop5: 3, lifted: true, items: [{ name: "A", entityId: "a", artistRank: 1, cityRank: null }, { name: "", entityId: "b", artistRank: 2 }] },
+      { band: "bogus", index: 1, items: [] },
+    ] }) });
+    expect(r.indexes).toEqual({ "25_to_29": 0.9 });
+    expect(r.bands).toHaveLength(1);
+    expect(r.bands[0]!.items).toEqual([{ name: "A", entityId: "a", artistRank: 1, cityRank: null }]);
   });
 });

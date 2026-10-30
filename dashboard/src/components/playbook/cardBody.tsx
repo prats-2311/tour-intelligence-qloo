@@ -2,6 +2,7 @@ import type { MerchDirection, PlaybookCard } from "@/lib/qloo/types";
 import { HIDDEN_NOTE, applyDoNotBook } from "@/lib/qloo/doNotBook";
 import { HIDDEN_ORGS_NOTE, SPONSOR_CHECK_UNAVAILABLE_NOTE } from "@/lib/qloo/nonSponsors";
 import { DataWarningBadge } from "@/components/qloo/DataWarningBadge";
+import type { SegmentRequest } from "@/lib/qloo/segmentStore";
 import { CARD_TITLE } from "./format";
 import { CoBilling } from "./cards/CoBilling";
 import { LocalMoment } from "./cards/LocalMoment";
@@ -13,7 +14,7 @@ import { VenueFit } from "./cards/VenueFit";
 
 export { ThisWeekBody, isEmptyWeek } from "./cards/ThisWeek";
 
-export function CardBody({ card: fullCard, merch, city, country, artist, venueName }: { card: PlaybookCard; merch?: MerchDirection | null; city: string; country?: string; artist?: string; /** First ok venue_fit name of the same playbook, for the sponsor deal line. */ venueName?: string }) {
+export function CardBody({ card: fullCard, merch, city, country, artist, venueName, segments }: { card: PlaybookCard; merch?: MerchDirection | null; city: string; country?: string; artist?: string; /** First ok venue_fit name of the same playbook, for the sponsor deal line. */ venueName?: string; /** Sponsors card only: where to ask for age groups. Absent means no age control. */ segments?: SegmentRequest }) {
   const { card, hidden, hiddenOrgs } = applyDoNotBook(fullCard);
   const empty = card.status === "empty" && card.kind !== "promo_zones";
   let body;
@@ -28,7 +29,7 @@ export function CardBody({ card: fullCard, merch, city, country, artist, venueNa
     body = null; // every act was hidden: the note below is the whole card
   } else {
     switch (card.kind) {
-      case "sponsors": body = <Sponsors card={card} city={city} venueName={venueName} />; break;
+      case "sponsors": body = <Sponsors card={card} city={city} country={country} venueName={venueName} segments={segments} />; break;
       case "merch": body = <Merch card={card} merch={merch} />; break;
       case "promo_zones": body = <PromoZones card={card} city={city} country={country} />; break;
       case "local_moment": body = <LocalMoment card={card} city={city} country={country} />; break;
