@@ -210,3 +210,24 @@ describe("without-qloo route", () => {
     expect(res.body).toMatchObject({ status: "unavailable", reason: "disabled" });
   });
 });
+
+describe("advance route", () => {
+  const base = { qloo, cities: CITIES, health: async () => ({ connected: true, ready: true }) };
+  it("validates query params and forwards optional artistCountry, lat and lon", async () => {
+    const advance = vi.fn(async () => ({ weather: { status: "unavailable" as const, message: "x" }, holidays: { status: "unavailable" as const, message: "x" }, visa: { status: "unavailable" as const, message: "x" }, equipment: { status: "unavailable" as const, message: "x" }, generatedAt: "t" }));
+    const app = createApp({ ...base, advance });
+    const q = "city=G&country=MX&start=2027-03-12&end=2027-03-15";
+    expect((await request(app).get(`/v1/advance?${q}`)).status).toBe(400);
+    expect((await request(app).get("/v1/advance?city=G&country=MX&start=2027-03-20&end=2027-03-12").set("x-session-id", "s")).status).toBe(400);
+    expect((await request(app).get(`/v1/advance?${q}&lat=20.6`).set("x-session-id", "s")).status).toBe(400);
+    expect((await request(app).get(`/v1/advance?${q}&lat=999&lon=1`).set("x-session-id", "s")).status).toBe(400);
+    expect(advance).not.toHaveBeenCalled();
+    const ok = await request(app).get(`/v1/advance?${q}&artistCountry=GB&lat=20.6&lon=-103.3`).set("x-session-id", "s");
+    expect(ok.status).toBe(200);
+    expect(advance).toHaveBeenCalledWith({ city: "G", country: "MX", start: "2027-03-12", end: "2027-03-15", sessionId: "s", artistCountry: "GB", lat: 20.6, lon: -103.3 });
+  });
+  it("answers all-unavailable when not configured", async () => {
+    const res = await request(createApp(base)).get("/v1/advance?city=G&country=MX&start=2027-03-12&end=2027-03-15").set("x-session-id", "s");
+    expect(res.body.visa.status).toBe("unavailable");
+  });
+});
