@@ -6,6 +6,7 @@ import { dealLine, fanRankLine, fit, rankLine, SPONSORS_NOT_MAINSTREAM_NOTE } fr
 import { Caption, Row, Rows } from "./rows";
 import { num, str } from "./util";
 import { SegmentControl } from "./SponsorSegments";
+import { SponsorsCompare } from "./SponsorsCompare";
 import type { SegmentRequest } from "@/lib/qloo/segmentStore";
 
 /** Opens the one-page brief for this brand. Keeps the example set and workspace of the page it is on. */
@@ -45,5 +46,11 @@ export function Sponsors({ card, city, country, venueName, segments, pitchCityId
       {typeof note === "string" && note !== "" && <Caption>{note}</Caption>}
     </>
   );
-  return segments ? <SegmentControl request={segments} country={country ?? segments.city.country}>{list}</SegmentControl> : list;
+  if (!segments) return list;
+  return (
+    <>
+      <SegmentControl request={segments} country={country ?? segments.city.country}>{list}</SegmentControl>
+      <SponsorsCompare request={segments} />
+    </>
+  );
 }

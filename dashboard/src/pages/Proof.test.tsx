@@ -14,6 +14,20 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 const REASON = "Run 1 asked Qloo for artists the headliner's fans like in that city, which returns global taste neighbours. Run 2 ranked the city's own popular artists by taste fit and was judged on fresh cases reviewed after the change; it did no better, because Qloo's city-popularity list misses the most famous national acts.";
 const WHAT = "For naming the specific famous local guest or sponsor a real tour used, a general-purpose LLM did better than Qloo's taste graph in both runs. Qloo's recommendations reflect what over-indexes with an audience in a city, not who is most famous there — that is world knowledge. So the playbook now asks an LLM for local candidates and uses Qloo to check each one exists and to rank it by taste fit. We have not yet tested that change on new cases, so we make no claim about it here.";
 
+describe("Proof: the same model, without Qloo (sponsors)", () => {
+  it.each([["legacy", twoRunsFixture], ["v3", v3Backtest]])("explains the method and the circularity and links the LA playbook (%s)", (_n, raw) => {
+    const { container } = view(raw);
+    const sec = screen.getByRole("region", { name: "The same model, without Qloo (sponsors)" });
+    expect(within(sec).getByText(/asks Gemini alone which brands to pitch/)).toBeTruthy();
+    expect(within(sec).getByText(/measured on Qloo's own ranking, so it shows how far a model's memory strays from where the fans' taste is, not that Qloo is right/i)).toBeTruthy();
+    const link = within(sec).getByRole("link", { name: /Los Angeles playbook/ });
+    expect(link.getAttribute("href")).toBe("/tours/playbook/5368361?showcase=1");
+    expect(sec.textContent).not.toMatch(/\d/);
+    expect(sec.textContent).not.toContain("%");
+    expect(container).toBeTruthy();
+  });
+});
+
 describe("Proof", () => {
   it("leads with the promoter's question and the latest run's hit rates", () => {
     view(twoRunsFixture);

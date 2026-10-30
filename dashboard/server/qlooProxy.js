@@ -124,6 +124,20 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
     }
     return forward(req, res, { route: "sponsor-segments", path: `/v1/sponsor-segments?${params}`, method: "GET", timeoutMs: segmentsTimeoutMs });
   });
+  // Sponsors: the same model without Qloo. Lazy GET; same hint allowlist and the long forward timeout of sponsor-segments.
+  app.get("/api/qloo/sponsors-without-qloo", (req, res) => {
+    const params = new URLSearchParams();
+    for (const k of ["artist", "artistId", "city", "country"]) {
+      const v = req.query[k];
+      if (typeof v !== "string" || !v || v.length > 80) return res.status(400).json({ error: "artist, artistId, city, country required (≤ 80 chars)" });
+      params.set(k, v);
+    }
+    for (const k of ["cityId", "lat", "lon"]) {
+      const v = req.query[k];
+      if (typeof v === "string" && v && v.length <= 80) params.set(k, v);
+    }
+    return forward(req, res, { route: "sponsors-without-qloo", path: `/v1/sponsors-without-qloo?${params}`, method: "GET", timeoutMs: segmentsTimeoutMs });
+  });
   // Optional BigQuery analytics: read-only stats (answer {enabled:false} when the gateway has it off) and the /v2 prototype tap.
   for (const name of ["trust", "team", "v2"]) {
     app.get(`/api/qloo/stats/${name}`, (req, res) => forward(req, res, { route: `stats-${name}`, path: `/v1/stats/${name}`, method: "GET" }));

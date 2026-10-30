@@ -1,3 +1,4 @@
+import { COMPARE_ERROR, COMPARE_TIMEOUT, parseSponsorsCompare, type SponsorsCompare } from "./sponsorsCompare";
 import { LONG_NAMES_SAMPLE, LUMEN_VALE_SAMPLE } from "./fixtures/lumenVale";
 import { getSessionId } from "./session";
 import { SseParser } from "./sse";
@@ -181,6 +182,28 @@ export async function fetchSponsorSegments(q: { artistId: string; artist?: strin
     return parseSponsorSegments(await res.json());
   } catch {
     return timedOut ? SEGMENTS_TIMEOUT : SEGMENTS_ERROR;
+  } finally {
+    clearTimeout(timer);
+    opts.signal?.removeEventListener("abort", onAbort);
+  }
+}
+
+/** "The same model, without Qloo" for sponsors: one Gemini call (cached server-side) placed on Qloo's fan ranking. Made only when asked for. Never throws. */
+export async function fetchSponsorsWithoutQloo(q: { artistId: string; artist: string; city: string; country: string; cityId?: string; lat?: number; lon?: number }, opts: { fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<SponsorsCompare> {
+  const params = new URLSearchParams({ artist: q.artist, artistId: q.artistId, city: q.city, country: q.country });
+  if (q.cityId) params.set("cityId", q.cityId);
+  if (typeof q.lat === "number" && typeof q.lon === "number") { params.set("lat", String(q.lat)); params.set("lon", String(q.lon)); }
+  const ctl = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, SEGMENTS_TIMEOUT_MS);
+  const onAbort = () => ctl.abort();
+  opts.signal?.addEventListener("abort", onAbort);
+  try {
+    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/sponsors-without-qloo?${params}`, { signal: ctl.signal, headers: { "x-session-id": getSessionId() } });
+    if (!res.ok) return res.status === 504 ? COMPARE_TIMEOUT : COMPARE_ERROR;
+    return parseSponsorsCompare(await res.json());
+  } catch {
+    return timedOut ? COMPARE_TIMEOUT : COMPARE_ERROR;
   } finally {
     clearTimeout(timer);
     opts.signal?.removeEventListener("abort", onAbort);

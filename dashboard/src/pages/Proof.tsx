@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Fragment, useId, useState } from "react";
+import { Link } from "react-router-dom";
 import { getBacktest, METHODS, METHOD_LABEL, hitLine, rankText, type Backtest, type BacktestRun, type CaseResult, type MethodResult, type ProofTable, type ProofV3, type ProofV3Test } from "@/lib/qloo/backtest";
 
 import { loadRecordings } from "@/lib/qloo/recordings";
@@ -301,6 +302,26 @@ function LegacyRuns({ data, header }: { data: Extract<Backtest, { status: "compl
   );
 }
 
+/** The recorded Los Angeles playbook, where the comparison can be opened. */
+const LA_PLAYBOOK = "/tours/playbook/5368361?showcase=1";
+
+/** Method and circularity only: the numbers are live and per city, so none appear here. */
+function SponsorsWithoutQlooSection() {
+  const id = useId();
+  return (
+    <section aria-labelledby={id} className="flex max-w-[68ch] flex-col gap-2">
+      <h2 id={id} className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">The same model, without Qloo (sponsors)</h2>
+      <p className="text-[16px] leading-[1.5] text-canvas-text">
+        On a city playbook, the sponsors card has a comparison that asks Gemini alone which brands to pitch for that artist in that city, with no Qloo data, and places each of its picks on Qloo's fan ranking for the same city.
+        It is measured on Qloo's own ranking, so it shows how far a model's memory strays from where the fans' taste is, not that Qloo is right.
+      </p>
+      <p className="text-[16px] leading-[1.5] text-canvas-text">
+        The answer is live and differs by city, so there are no numbers here. Open it on the <Link to={LA_PLAYBOOK} className="underline underline-offset-4 hover:text-bone">Los Angeles playbook</Link> and press "Compare: the same model, without Qloo".
+      </p>
+    </section>
+  );
+}
+
 export function ProofView({ data }: { data: Backtest }) {
   const earlierId = useId();
   const header = (
@@ -320,6 +341,7 @@ export function ProofView({ data }: { data: Backtest }) {
   if (data.proofV3) {
     return (
       <ProofV3View v3={data.proofV3}>
+        <SponsorsWithoutQlooSection />
         {data.runs.length > 0 && (
           <section aria-labelledby={earlierId} className="flex flex-col gap-10 border-t border-canvas-muted/20 pt-10">
             <h2 id={earlierId} className="font-title text-[26px] leading-tight text-bone lg:text-[32px]">Earlier runs</h2>
@@ -332,6 +354,7 @@ export function ProofView({ data }: { data: Backtest }) {
   return (
     <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-10 pb-8">
       <LegacyRuns data={data} header={header} />
+      <SponsorsWithoutQlooSection />
     </div>
   );
 }
