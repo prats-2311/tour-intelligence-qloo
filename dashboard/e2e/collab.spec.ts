@@ -48,6 +48,13 @@ test("the Notes sheet shows the demo banner over seeded notes from demo teammate
   await expect(sheet).toBeHidden();
 });
 
+test("the seeded Best room override shows its team reason and Qloo's pick with its why", async ({ page }) => {
+  await page.goto("/tours/playbook/5368361?showcase=1");
+  const line = page.getByTestId("team-line").first();
+  await expect(line).toContainText("Team value · Maya — Smaller room suits a presale night (team call)", { timeout: 20_000 });
+  await expect(page.getByTestId("qloo-suggested").first()).toContainText(/Qloo suggested: .+ — venue fit \d\.\d\d, #1 of \d+ rooms/);
+});
+
 test.describe("writes", () => {
   test.skip(!LIVE, LIVE_SKIP_REASON);
 
