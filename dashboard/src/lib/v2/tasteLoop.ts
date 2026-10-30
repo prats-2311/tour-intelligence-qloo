@@ -155,3 +155,9 @@ export const HONEST_LIMITS: readonly string[] = [
   "There is no proof until real events happen. Nothing on this page has been tested with fans.",
   "An LLM can do the easy matching too. The edge is what fans rank above their city, plus an outcome record no LLM has read.",
 ];
+
+/** "A", "A and B", "A, B and C": names joined the way a sentence would. */
+export function joinNames(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
