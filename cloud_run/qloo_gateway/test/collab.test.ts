@@ -29,6 +29,19 @@ describe("collab model", () => {
     expect(WS_ID.test("short")).toBe(false);
     expect(WS_ID.test("has space in it")).toBe(false);
   });
+  it("ws id bounds and alphabet: 10 to 64 of A-Z a-z 0-9 _ -, nothing path-like", () => {
+    expect(WS_ID.test("a".repeat(9))).toBe(false);
+    expect(WS_ID.test("a".repeat(10))).toBe(true);
+    expect(WS_ID.test("a".repeat(64))).toBe(true);
+    expect(WS_ID.test("a".repeat(65))).toBe(false);
+    for (const bad of ["abcde.fghij", "abcde/fghij", "abcde%2Ffghij", "..abcdefghij", "abcdefghi\n"]) expect(WS_ID.test(bad), bad).toBe(false);
+    expect(WS_ID.test("Ab_-0123456789")).toBe(true);
+  });
+  it("accepts text of exactly the cap and rejects one over", () => {
+    const d = emptyDoc(0);
+    expect(() => applyOp(d, "message", { ...me, key: "city:1", text: "x".repeat(LIMITS.text) }, 1)).not.toThrow();
+    expect(() => applyOp(d, "message", { ...me, key: "city:1", text: "x".repeat(LIMITS.text + 1) }, 1)).toThrow(/over 1000/);
+  });
   it("rejects bad names, roles and text", () => {
     const d = emptyDoc(0);
     const m = (b: object) => () => applyOp(d, "message", { key: "city:1", ...b }, 1);
@@ -153,6 +166,14 @@ describe("collab routes", () => {
     expect((await request(app).post(`/v1/ws/${ws}/status`).set(SID).send([1])).status).toBe(400);
     advance(31 * 86_400_000);
     expect((await request(app).get(`/v1/ws/${ws}`)).status).toBe(404);
+  });
+  it("writes need an x-session-id of 1 to 128 characters", async () => {
+    const { app } = setup();
+    const { ws } = await create(app);
+    const body = { ...me, key: "city:1", text: "hi" };
+    expect((await request(app).post(`/v1/ws/${ws}/message`).send(body)).status).toBe(400);
+    expect((await post(app, ws, "message", body, "s".repeat(129))).status).toBe(400);
+    expect((await post(app, ws, "message", body, "s".repeat(128))).status).toBe(200);
   });
   it("sets expiresAt 30 days after createdAt", async () => {
     const { app, store } = setup();
