@@ -86,6 +86,7 @@ describe("desktop sidebar", () => {
       if (collapsed) fireEvent.click(toggle());
       const aside = sidebar()!;
       expect(aside.className).toContain("overflow-y-auto");
+      expect(aside.className).toContain("scroll-pt-"); // keyboard focus and scrollIntoView stop short of the pinned toggle
       const first = aside.querySelector("button, a")!;
       expect(first).toBe(toggle());
       expect(toggle().parentElement!.className).toMatch(/sticky/);

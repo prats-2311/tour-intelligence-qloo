@@ -15,7 +15,7 @@ export function Sidebar({ collapsed, onToggle, onAction }: { collapsed: boolean;
   return (
     <aside
       id={SIDEBAR_ID} aria-label="Site sections" data-collapsed={collapsed}
-      className={`sticky top-14 flex h-[calc(100dvh-3.5rem)] min-w-0 flex-col gap-4 self-start overflow-y-auto overflow-x-hidden bg-canvas-raised pb-4 ${collapsed ? "px-2" : "px-3"}`}
+      className={`sticky top-14 flex h-[calc(100dvh-3.5rem)] min-w-0 flex-col gap-4 self-start scroll-pt-[4.5rem] overflow-y-auto overflow-x-hidden bg-canvas-raised pb-4 ${collapsed ? "px-2" : "px-3"}`}
     >
       <Tipped as="div" tip={label} collapsed={collapsed} className="sticky top-0 z-10 -mx-1 bg-canvas-raised px-1 pb-1 pt-4">
         <button

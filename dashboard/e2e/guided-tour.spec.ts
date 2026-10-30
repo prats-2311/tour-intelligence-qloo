@@ -237,17 +237,18 @@ for (const vp of [{ w: 390, h: 844 }, { w: 1440, h: 900 }]) {
   }
 }
 
-test("The essentials never leave a page they have left: playbook steps, then the board, then the book", async ({ page }) => {
+test("The essentials never leave a page they have left: six playbook steps, then the board twice, then the book", async ({ page }) => {
   test.setTimeout(120_000);
   await startFromNav(page, TOURS[0]!);
-  const paths: string[] = [];
+  const seen: string[] = [];
   for (let i = 1; i <= 9; i += 1) {
+    const want = i <= 6 ? "/tours/playbook/" : i <= 8 ? "/tours/board" : "/tours/book";
     await expect(popover(page)).toContainText(`${i} of 9`);
-    paths.push(new URL(page.url()).pathname.replace(/\/playbook\/.*/, "/playbook"));
+    await expect.poll(() => new URL(page.url()).pathname, { message: `step ${i} route` }).toContain(want);
+    seen.push(new URL(page.url()).pathname.replace(/\/playbook\/.*/, "/playbook"));
     if (i < 9) await advance(page);
   }
-  const visits = paths.filter((p, i) => i === 0 || p !== paths[i - 1]);
-  expect(visits).toEqual(["/tours/playbook", "/tours/board", "/tours/book"]);
+  expect(seen.filter((p, i) => i === 0 || p !== seen[i - 1])).toEqual(["/tours/playbook", "/tours/board", "/tours/book"]);
 });
 
 test("the first-visit prompt never covers body text or links, on the landing page at 390 and 1440", async ({ page }) => {

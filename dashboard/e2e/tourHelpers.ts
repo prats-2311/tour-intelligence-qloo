@@ -16,7 +16,7 @@ export const visibleTarget = (page: Page, ids: string[]) => page.evaluate((list)
 }, ids);
 
 /**
- * True when the tour ring sits on the on-screen target (the target's box padded by 6px), measured in one frame so scrolling cannot skew it.
+ * True when the tour ring sits on the on-screen target (the target's box padded by 6px, or that box cut to the viewport and the band the popover leaves free), measured in one frame so scrolling cannot skew it.
  * A prefix id (trailing *) matches several elements (every board row is `city-<id>`) and the overlay picks one by exact id, which the spec cannot
  * know on an arbitrary recording: the ring must then sit on one of them.
  */
@@ -32,7 +32,11 @@ export const ringOnTarget = (page: Page, ids: string[]) => page.evaluate((list) 
   const r = ring.getBoundingClientRect();
   return els.some((el) => {
     const t = el.getBoundingClientRect();
-    return Math.abs(r.left - (t.left - 6)) < 10 && Math.abs(r.top - (t.top - 6)) < 10 && Math.abs(r.width - (t.width + 12)) < 10 && Math.abs(r.height - (t.height + 12)) < 10;
+    if (Math.abs(r.left - (t.left - 6)) < 10 && Math.abs(r.top - (t.top - 6)) < 10 && Math.abs(r.width - (t.width + 12)) < 10 && Math.abs(r.height - (t.height + 12)) < 10) return true;
+    // A target taller (or wider) than the free band gets a ring cut to the viewport and the band: it must lie inside the padded target and start where the visible part starts.
+    const inside = r.left >= t.left - 16 && r.right <= t.right + 16 && r.top >= t.top - 16 && r.bottom <= t.bottom + 16;
+    const cut = r.height < t.height + 12 - 10 || r.width < t.width + 12 - 10 || r.top > t.top - 6 + 10;
+    return inside && cut && r.height > 20;
   });
 }, ids);
 

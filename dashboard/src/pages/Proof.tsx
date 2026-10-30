@@ -422,7 +422,7 @@ function ProofV3View({ v3, live, children }: { v3: ProofV3; live?: ReactNode; ch
         <section aria-label="Amendments" className="flex flex-col gap-3">
           <h2 className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">Amendments</h2>
           <ul className="m-0 flex max-w-[68ch] list-none flex-col gap-2 p-0 text-[14px] leading-[1.45] text-canvas-text">
-            {v3.amendments.map((a) => <li key={a.n} className="break-words">Amendment {a.n} · {/^[0-9a-f]{7,40}$/.test(a.commit) ? <a href={`${COMMIT_URL}${a.commit}`} target="_blank" rel="noopener noreferrer" className="font-mono underline decoration-canvas-muted underline-offset-4">{a.commit.slice(0, 7)}</a> : <span className="font-mono">{a.commit.slice(0, 7)}</span>} · <Inline text={a.summary} /></li>)}
+            {v3.amendments.map((a) => <li key={a.n} className="flex flex-wrap items-center gap-x-1 break-words">Amendment {a.n} · {/^[0-9a-f]{7,40}$/.test(a.commit) ? <a href={`${COMMIT_URL}${a.commit}`} target="_blank" rel="noopener noreferrer" aria-label={`Amendment ${a.n} commit ${a.commit.slice(0, 7)} on GitHub`} className="inline-flex min-h-11 items-center font-mono underline decoration-canvas-muted underline-offset-4">{a.commit.slice(0, 7)}</a> : <span className="font-mono">{a.commit.slice(0, 7)}</span>} · <Inline text={a.summary} /></li>)}
           </ul>
         </section>
       )}

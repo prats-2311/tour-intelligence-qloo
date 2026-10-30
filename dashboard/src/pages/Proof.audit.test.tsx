@@ -117,7 +117,7 @@ describe("Proof amendments (audit C 9)", () => {
     expect(sec.textContent).not.toMatch(/[*`]/);
     expect(sec.querySelector("em")!.textContent).toBe("instead of");
     expect(sec.querySelector("code")!.textContent).toBe("/proof");
-    const link = within(sec).getByRole("link", { name: /0d73164/ });
+    const link = within(sec).getByRole("link", { name: /Amendment 7 commit 0d73164/ });
     expect(link.getAttribute("href")).toBe("https://github.com/prats-2311/tour-intelligence-qloo/commit/0d7316422a8d40fa68c44545619b25d017de6017");
   });
 });
