@@ -14,6 +14,8 @@ import { TourPrompt } from "./TourPrompt";
 import { TourContext, type TourApi } from "./tourContext";
 
 const MAX_RENAVIGATIONS = 5;
+/** How long after the tour's own navigation a stray location change still counts as the race to correct, not the user. */
+const NAV_WINDOW_MS = 2000;
 
 /** Guided tour of the recorded example: owns the step state, the stored outcome, the first-visit prompt and the overlay. */
 export function TourProvider({ children }: { children: ReactNode }) {
@@ -34,21 +36,34 @@ export function TourProvider({ children }: { children: ReactNode }) {
   // The newest workspace id, read at navigation time so a step never drops it (and never waits on a render to see it).
   const wsNow = useRef<string | null>(null);
   wsNow.current = new URLSearchParams(search).get("ws") ?? workspace.ws;
+  // Set by go(): the step's own navigation. Until its page is reached (or the window passes) a wrong location is a race to fix; after that it is the user.
+  const stepNav = useRef({ route: "", reached: false, until: 0 });
+  // Routes the tour itself navigated to in the last moments: a location that matches one is the tour still arriving (quick Next presses), not the user.
+  const ownNavs = useRef<Array<{ route: string; at: number }>>([]);
   const go = useCallback((list: TourStep[], i: number) => {
     setIndex(i);
     const step = list[i]!;
     if (step.opens === "ask") { askOpened.current = true; window.dispatchEvent(new CustomEvent(OPEN_ASK_EVENT)); }
     else if (askOpened.current) { askOpened.current = false; window.dispatchEvent(new CustomEvent(CLOSE_ASK_EVENT)); }
+    // Same page as the previous step and already reached there: nothing to wait for. Anything else waits for its own navigation (a stale location would lie).
+    const prev = stepNav.current;
+    stepNav.current = { route: step.route, reached: prev.route === step.route && prev.reached, until: Date.now() + NAV_WINDOW_MS };
+    ownNavs.current = [...ownNavs.current.filter((n) => Date.now() - n.at < NAV_WINDOW_MS), { route: step.route, at: Date.now() }];
     navigate(routeKeepingWs(step.route, wsNow.current));
   }, [navigate]);
 
-  // Another navigation (the workspace id being written into the URL, a late redirect) can land after the step's own and leave the
-  // page behind: the running step re-navigates until the location is its page, a few tries at most so a bad route cannot loop.
+  // Another navigation (the workspace id being written into the URL, a late redirect) can land right after the step's own and leave
+  // the page behind: within a short window the step re-navigates. Once its page was reached or the window passed, a location that is
+  // not the step's is the user (a link, Back): the tour ends and leaves them where they went.
   const stepRoute = steps?.[index]?.route ?? null;
   const onStepPage = stepRoute === null || routeMatches(stepRoute, pathname, search);
   const tries = useRef({ route: "", n: 0 });
+  const endByUser = useRef<() => void>(() => undefined);
   useEffect(() => {
-    if (stepRoute === null || onStepPage) return;
+    if (stepRoute === null) return;
+    if (onStepPage) { stepNav.current = { ...stepNav.current, reached: true }; return; }
+    if (ownNavs.current.some((n) => Date.now() - n.at < NAV_WINDOW_MS && routeMatches(n.route, pathname, search))) return;
+    if (stepNav.current.reached || Date.now() > stepNav.current.until) { endByUser.current(); return; }
     if (tries.current.route !== stepRoute) tries.current = { route: stepRoute, n: 0 };
     if (tries.current.n >= MAX_RENAVIGATIONS) return;
     tries.current.n += 1;
@@ -59,6 +74,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     setRunning(id);
     returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setSteps(list);
+    stepNav.current = { route: "", reached: false, until: 0 };
     go(list, 0);
   }, [go]);
 
@@ -67,18 +83,23 @@ export function TourProvider({ children }: { children: ReactNode }) {
     if (def) begin(id, def.steps(SHOWCASE));
   }, [begin]);
 
-  const finish = useCallback((result: TourOutcome) => {
+  const finish = useCallback((result: TourOutcome, byUser = false) => {
     setSteps(null);
     if (askOpened.current) { askOpened.current = false; window.dispatchEvent(new CustomEvent(CLOSE_ASK_EVENT)); }
     if (running === "v2") writeV2TourOutcome(result);
+    else if (running && byUser && outcomes[running] === "completed") { /* walked away from a tour already finished: keep the tick */ }
     else if (running) { setOutcomes((o) => ({ ...o, [running]: result })); writeOutcomeAt(tourStorageKey(running), result); }
     setRunning(null);
     const el = returnFocus.current;
     returnFocus.current = null;
+    // The user clicked somewhere else: only take focus back if it was left on nothing or on the closing popover.
+    const a = document.activeElement;
+    if (byUser && a && a !== document.body && !a.closest("[data-testid='tour-overlay']")) return;
     // Started from the phone drawer, the button that was focused is gone by now: the hamburger that opened the drawer is the next best place.
     const target = el && el.isConnected ? el : document.querySelector<HTMLElement>("[data-nav-toggle]");
     target?.focus();
-  }, [running]);
+  }, [running, outcomes]);
+  endByUser.current = () => finish("dismissed", true);
 
   const available = useCallback((t: { requires?: "workspace" }) => t.requires !== "workspace" || workspace.enabled, [workspace.enabled]);
   const successor = running && running !== "v2" ? nextTour(running, available) : null;
