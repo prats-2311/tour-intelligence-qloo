@@ -6,11 +6,12 @@ import type { QlooCaller } from "../qlooCall.js";
 import type { ChatMessage, GatewayEvent, StrategistContext, UserDocument } from "../types.js";
 import { unsupportedNumbers } from "./answerCheck.js";
 import { generateTurn, type TurnResult } from "./gemini-tools.js";
+import { redactAnswer } from "../displayFilters/doNotBook.js";
 import { executeTool, STRATEGIST_DECLARATIONS, type ToolOutcome } from "./tools.js";
 
 export const STRATEGIST_LIMITS = { rounds: 4, toolCalls: 6 } as const;
 
-export interface StrategistDeps { generate?: GenerateFn | undefined; models: string[]; ceiling: CeilingDeps; qloo: QlooCaller; cities: City[]; signal?: AbortSignal }
+export interface StrategistDeps { generate?: GenerateFn | undefined; models: string[]; ceiling: CeilingDeps; qloo: QlooCaller; cities: City[]; signal?: AbortSignal; thinkingBudget?: number }
 
 class ModelUnavailable extends Error {}
 
@@ -60,7 +61,7 @@ export async function* runStrategist(input: { messages: ChatMessage[]; context: 
   // Only model-call failures become UNAVAILABLE; the budget stop and anything else keep their own mapping.
   const turn = async (tools: typeof STRATEGIST_DECLARATIONS): Promise<TurnResult> => {
     try {
-      const t = await generateTurn(generate, deps.models, { system, contents, tools }, { beforeAttempt: reserveAttempt(deps.ceiling, input.sessionId) });
+      const t = await generateTurn(generate, deps.models, { system, contents, tools }, { beforeAttempt: reserveAttempt(deps.ceiling, input.sessionId), ...(deps.thinkingBudget !== undefined ? { thinkingBudget: deps.thinkingBudget } : {}) });
       if (!forcedFinal) rounds += 1;
       return t;
     } catch (e) {
@@ -68,13 +69,17 @@ export async function* runStrategist(input: { messages: ChatMessage[]; context: 
     }
   };
   // Only model text is number-checked; our own fallback summary is not model output.
-  const message = (text: string, model: string, stoppedEarly: boolean, check = true): GatewayEvent =>
-    ({ type: "strategist_message", text, unsupportedNumbers: check ? unsupportedNumbers(text, collected, input.context, documents) : [], stoppedEarly, model });
+  // Whatever the model wrote, sentences naming a do-not-book act or a non-sponsor organisation never leave the gateway.
+  const message = (raw: string, model: string, stoppedEarly: boolean, check = true): GatewayEvent => {
+    const { text, removed } = redactAnswer(raw);
+    return { type: "strategist_message", text, unsupportedNumbers: check ? unsupportedNumbers(text, collected, input.context, documents) : [], stoppedEarly, model, redactedSentences: removed };
+  };
 
   try {
     let id = 0;
     while (rounds < STRATEGIST_LIMITS.rounds && toolCalls < STRATEGIST_LIMITS.toolCalls) {
       if (aborted()) { yield* err("ABORTED", "client disconnected"); return; }
+      yield { type: "strategist_stage", stage: rounds === 0 ? "thinking" : "writing" };
       const t = await turn(STRATEGIST_DECLARATIONS);
       if (t.thoughtSummary) yield { type: "strategist_thinking", summary: t.thoughtSummary };
       if (t.calls.length === 0) {
@@ -103,6 +108,7 @@ export async function* runStrategist(input: { messages: ChatMessage[]; context: 
     }
     if (aborted()) { yield* err("ABORTED", "client disconnected"); return; }
     forcedFinal = true;
+    yield { type: "strategist_stage", stage: "writing" };
     const last = await turn([]);
     const modelText = last.text.trim();
     const text = modelText || `I stopped after ${toolCalls} tool calls — here is what I found.\n${summaries.map((s) => `- ${s}`).join("\n")}`;

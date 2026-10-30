@@ -14,7 +14,7 @@ describe("generateTurn", () => {
     const body = generate.mock.calls[0]![1] as Record<string, any>;
     expect(body.systemInstruction).toEqual({ parts: [{ text: "sys" }] });
     expect(body.tools).toEqual([{ functionDeclarations: decl }]);
-    expect(body.generationConfig.thinkingConfig).toEqual({ includeThoughts: true });
+    expect(body.generationConfig.thinkingConfig).toEqual({ includeThoughts: true, thinkingBudget: 256 });
     expect(r.calls).toEqual([{ name: "qloo_recommend", args: { target_type: "brand" } }]);
     expect(r.thoughtSummary).toBe("Checking sponsors.");
     expect(r.parts[1]!.thoughtSignature).toBe("sig");

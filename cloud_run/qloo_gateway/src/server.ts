@@ -5,6 +5,7 @@ import { loadCities } from "./geo/cities.js";
 import { createApp } from "./http/app.js";
 import { rankWithoutQloo } from "./withoutQloo.js";
 import { compareSponsorsWithoutQloo } from "./sponsorsWithoutQloo.js";
+import { thinkingBudgetFromEnv } from "./strategist/gemini-tools.js";
 import { runStrategist } from "./strategist/run.js";
 import { QlooMcpClient, defaultFactory } from "./mcpClient.js";
 import { createQlooCaller } from "./qlooCall.js";
@@ -70,7 +71,7 @@ const app = createApp({
   sponsorCheck: (candidates, sessionId) => classifySponsors(candidates, sessionId, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
   withoutQloo: (input) => rankWithoutQloo(input, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
   sponsorsWithoutQloo: (input, signal) => compareSponsorsWithoutQloo(input, { qloo: qlooCaller, cities, ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache, signal }),
-  strategist: (input, signal) => runStrategist(input, { generate, models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, qloo: qlooCaller, cities, signal }),
+  strategist: (input, signal) => runStrategist(input, { generate, models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, qloo: qlooCaller, cities, signal, thinkingBudget: thinkingBudgetFromEnv(process.env.STRATEGIST_THINKING_BUDGET) }),
 });
 const port = Number(process.env.PORT ?? 8080);
 const server = app.listen(port, (err?: Error) => {

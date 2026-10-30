@@ -20,8 +20,8 @@ describe("runStrategist", () => {
   it("calls a tool, feeds the result back, and answers with tool chips and thinking", async () => {
     const generate = script(call("qloo_recommend", { target_type: "brand", signals: ["Q1"], signal_location: "Guadalajara, MX" }), text("Cerro Alto Mezcal fits best at 0.91.", "Looked at brand fit."));
     const events = await collect(runStrategist(input, deps(generate)));
-    expect(events.map((e) => e.type)).toEqual(["strategist_tool_call", "strategist_tool_result", "strategist_thinking", "strategist_message", "done"]);
-    expect(events[3]).toMatchObject({ text: "Cerro Alto Mezcal fits best at 0.91.", unsupportedNumbers: [], stoppedEarly: false });
+    expect(events.map((e) => e.type)).toEqual(["strategist_stage", "strategist_tool_call", "strategist_tool_result", "strategist_stage", "strategist_thinking", "strategist_message", "done"]);
+    expect(events[5]).toMatchObject({ text: "Cerro Alto Mezcal fits best at 0.91.", unsupportedNumbers: [], stoppedEarly: false });
     const second = generate.mock.calls[1]![1] as { contents: Array<{ role: string; parts: Array<Record<string, unknown>> }> };
     expect(second.contents.at(-1)!.parts[0]!.functionResponse).toMatchObject({ name: "qloo_recommend" });
   });
@@ -97,15 +97,15 @@ describe("runStrategist", () => {
   });
   it("reports UNAVAILABLE instead of a blank answer when the turn is empty (e.g. safety-blocked)", async () => {
     const events = await collect(runStrategist(input, deps(script({ candidates: [{ content: { parts: [] } }] }))));
-    expect(events).toEqual([{ type: "strategist_error", code: "UNAVAILABLE", message: "Strategist unavailable right now" }, { type: "done", summary: { rounds: 1, toolCalls: 0, forcedFinal: false } }]);
+    expect(events.filter((e) => e.type !== "strategist_stage")).toEqual([{ type: "strategist_error", code: "UNAVAILABLE", message: "Strategist unavailable right now" }, { type: "done", summary: { rounds: 1, toolCalls: 0, forcedFinal: false } }]);
   });
   it("reports UNAVAILABLE when every model fails", async () => {
     const events = await collect(runStrategist(input, deps(vi.fn(async () => { throw new Error("503"); }))));
-    expect(events[0]).toMatchObject({ type: "strategist_error", code: "UNAVAILABLE" });
+    expect(events.find((e) => e.type === "strategist_error")).toMatchObject({ code: "UNAVAILABLE" });
   });
   it("reports CAPPED when the Gemini ceiling is spent", async () => {
     const events = await collect(runStrategist(input, deps(script(text("x")), qloo(), 0)));
-    expect(events).toEqual([{ type: "strategist_error", code: "CAPPED", message: "Strategist limit reached — try again tomorrow or use the showcase" }, { type: "done", summary: { rounds: 0, toolCalls: 0, forcedFinal: false } }]);
+    expect(events.filter((e) => e.type !== "strategist_stage")).toEqual([{ type: "strategist_error", code: "CAPPED", message: "Strategist limit reached — try again tomorrow or use the showcase" }, { type: "done", summary: { rounds: 0, toolCalls: 0, forcedFinal: false } }]);
   });
   it("reports UNAVAILABLE without a generate function and ABORTED on an aborted signal", async () => {
     expect((await collect(runStrategist(input, { ...deps(script()), generate: undefined })))[0]).toMatchObject({ type: "strategist_error", code: "UNAVAILABLE" });

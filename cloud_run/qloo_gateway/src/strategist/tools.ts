@@ -6,6 +6,8 @@ import { INSIGHTS_TYPES, SEARCH_TYPES } from "../validate.js";
 import type { FunctionDeclaration } from "./gemini-tools.js";
 import type { StrategistToolStatus, UserDocument } from "../types.js";
 import { isSafeName } from "./safety.js";
+import { filterToolData, isDoNotBook, mentionsDoNotBook } from "../displayFilters/doNotBook.js";
+import { isNonSponsor } from "../pipeline/nonSponsors.js";
 
 export const STRATEGIST_QLOO_TOOLS: readonly string[] = [
   "qloo_describe", "qloo_where_popular", "qloo_audience_demographics", "qloo_entity_tags", "qloo_trends",
@@ -126,9 +128,14 @@ async function playbook(args: Record<string, unknown>, deps: Deps): Promise<Tool
     }
     const cards = got.cards;
     if (!cards) return { name, status: "error", summary: "playbook stream ended without results", data: null };
+    // Listed acts and non-sponsor organisations are dropped before the top-3 cut, so the cut fills with allowed items.
+    const allowed = (c: Card, it: unknown): boolean => {
+      const n = rec(it)?.name;
+      return !(isDoNotBook(n) || (c.kind === "sponsors" && isNonSponsor(n)));
+    };
     const data = cards.map((c) => ({
       kind: c.kind, status: c.status,
-      top: c.items.slice(0, 3).map((it) => {
+      top: c.items.filter((it) => allowed(c, it)).slice(0, 3).map((it) => {
         const o = rec(it) ?? {};
         const out: Record<string, unknown> = { name: clip(o.name ?? o.label) };
         for (const k of ["affinity", "share", "lift"]) if (o[k] !== undefined) { out[k] = o[k]; break; }
@@ -165,10 +172,13 @@ export async function executeTool(call: { name: string; args: Record<string, unk
     const e = r.envelope;
     const n = Array.isArray(e.results) ? e.results.length : 0;
     const resultCount = typeof e.result_count === "number" && Number.isFinite(e.result_count) ? e.result_count : n;
-    const data = name === "qloo_trends" ? extractTrendPoints(e).slice(0, 8)
+    const raw = name === "qloo_trends" ? extractTrendPoints(e).slice(0, 8)
       : e.status === "needs_input" ? extractCandidates(e).slice(0, 5) // F6: ids the model can retry with
       : compactResults(e.results);
-    return { name, status: e.status, summary: e.summary ?? `${n} results`, resultCount, data, cacheKey: r.cacheKey, cached: r.cached };
+    // Same display rules as the dashboard: no do-not-book acts; no non-sponsor organisations among brands.
+    const brands = [args.target_type, args.entity_type, args.option_type].some((t) => t === "brand");
+    const data = filterToolData(raw, { brands }).data;
+    return { name, status: e.status, summary: e.summary && !mentionsDoNotBook(e.summary) ? e.summary : `${n} results`, resultCount, data, cacheKey: r.cacheKey, cached: r.cached };
   } catch (err) {
     return err instanceof ValidationError ? rejected(name, err.message) : failed(name, err);
   }
