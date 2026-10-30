@@ -15,6 +15,18 @@ const ok: AdvanceRisks = {
 };
 
 describe("AdvanceBody", () => {
+  it("lays the lookups out in two columns from 1024px (Weather + Holidays | Visas + Equipment), one column below", () => {
+    render(<AdvanceBody data={ok} loading={false} />);
+    const grid = screen.getByTestId("advance-columns");
+    expect(grid.className).toMatch(/\bgrid-cols-1\b/);
+    expect(grid.className).toMatch(/\blg:grid-cols-2\b/);
+    const cols = Array.from(grid.children);
+    expect(cols).toHaveLength(2);
+    expect(within(cols[0] as HTMLElement).getByRole("region", { name: "Weather" })).toBeTruthy();
+    expect(within(cols[0] as HTMLElement).getByRole("region", { name: "Holidays" })).toBeTruthy();
+    expect(within(cols[1] as HTMLElement).getByRole("region", { name: "Visas and work permits" })).toBeTruthy();
+    expect(within(cols[1] as HTMLElement).getByRole("region", { name: "Equipment and customs" })).toBeTruthy();
+  });
   it("shows a skeleton per section while loading", () => {
     render(<AdvanceBody data={undefined} loading />);
     expect(screen.getAllByTestId("advance-skeleton")).toHaveLength(4);

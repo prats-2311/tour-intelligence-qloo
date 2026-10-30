@@ -125,3 +125,20 @@ test("Compare: the same model, without Qloo loads only on click, from a fake gat
   await card.scrollIntoViewIfNeeded();
   if (process.env.SWQ_SHOT) await card.screenshot({ path: `${process.env.SWQ_SHOT}-${test.info().project.name}.png` });
 });
+
+test("Advance & risks uses the full tab panel width at 1440, in two columns", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(LA);
+  await done(page);
+  await page.getByRole("tab", { name: "Advance & risks" }).click();
+  const card = page.getByTestId("advance-panel");
+  await expect(card).toBeVisible();
+  const panelW = (await page.getByRole("tabpanel").boundingBox())!.width;
+  const cardW = (await card.boundingBox())!.width;
+  expect(cardW / panelW, `advance card ${cardW} of panel ${panelW}`).toBeGreaterThanOrEqual(0.8);
+  const cols = page.getByTestId("advance-columns");
+  if (await cols.count()) {
+    const [a, b] = await cols.locator("> div").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().left));
+    expect(b!, "second column sits to the right of the first").toBeGreaterThan(a! + 300);
+  }
+});

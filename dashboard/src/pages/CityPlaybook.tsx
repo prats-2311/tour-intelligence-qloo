@@ -375,7 +375,7 @@ function CityPlaybookPage() {
   const talentPanel = noSample ? noSamplePanel : loading ? <div className="skeleton h-[280px] rounded-[18px]" aria-hidden /> : talentCard ? <div>{playbookCard("talent")}</div> : <p className="text-[13px] text-canvas-muted">Acts these fans love here are unavailable for {shownCity.name}</p>;
   const advanceNote = !window ? (sample ? "This example has no date window, so there are no dates to check." : "Add a date window to the brief to see weather, holidays, visas and customs for these dates.") : !advanceReady ? "Advance details are not available for this sample city." : undefined;
   const advancePanel = noSample ? noSamplePanel : (
-    <div className="max-w-xl">
+    <div data-testid="advance-panel" className="w-full">
       <PlaybookCard accent={accent} meta={`${code} · ADVANCE & RISKS`} title="Advance & risks" narrativeStatus="unavailable" refsCount={0} hasEvidence>
         <AdvanceBody data={advance.data} loading={advance.isPending || advance.isFetching} onRetry={() => void advance.refetch()} {...(advanceNote ? { message: advanceNote } : {})} />
       </PlaybookCard>

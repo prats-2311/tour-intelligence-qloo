@@ -1,3 +1,5 @@
+import brandMark from "../../public/brand-mark.svg?raw";
+import favicon from "../../public/favicon.svg?raw";
 // @vitest-environment jsdom
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -20,11 +22,15 @@ describe("AppShell", () => {
     expect(screen.getByRole("link", { name: /Decide/ }).getAttribute("aria-current")).toBe("page");
     expect(document.querySelector("aside")).toBeNull();
   });
+  it("brand mark file is the yellow mark, served from a fresh URL", () => {
+    expect(brandMark).toContain("#ffcc00");
+    expect(brandMark).toBe(favicon);
+  });
   it("desktop renders the top bar wordmark and the same four steps", () => {
     mm(true);
     render(<MemoryRouter initialEntries={["/"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
     expect(screen.getByText("Tour Intelligence")).toBeTruthy();
-    const mark = document.querySelector('header img[src="/favicon.svg"]');
+    const mark = document.querySelector('header img[src="/brand-mark.svg"]');
     expect(mark?.getAttribute("alt")).toBe("");
     expect(mark?.nextElementSibling?.textContent).toBe("Tour Intelligence");
     const nav = screen.getByRole("navigation", { name: "Primary" });

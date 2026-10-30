@@ -2,7 +2,7 @@ import { Menu } from "lucide-react";
 import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsDesktop } from "@/lib/useMediaQuery";
-import { StrategistDock, StrategistFab, StrategistToggle, showsStrategist, useStrategistDock } from "./strategist/StrategistLauncher";
+import { StrategistDock, StrategistFab, StrategistToggle, showsStrategist, useDockEscape, useStrategistDock } from "./strategist/StrategistLauncher";
 import { JourneyStepper } from "./JourneyStepper";
 import { ActivityPanel } from "./collab/TeamBar";
 import { Breadcrumbs } from "./nav/Breadcrumbs";
@@ -26,6 +26,7 @@ function Shell({ children }: { children: ReactNode }) {
   const dock = useStrategistDock();
   const strategistRoute = showsStrategist(location.pathname);
   const docked = isDesktop && strategistRoute && dock.open;
+  useDockEscape(docked, () => dock.setOpen(false));
   const landing = location.pathname === "/";
   const showSidebar = isDesktop && !landing;
   const { collapsed, toggle } = useNavCollapsed(showSidebar);
@@ -51,7 +52,7 @@ function Shell({ children }: { children: ReactNode }) {
         <header data-app-shell className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-canvas-raised px-8">
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2">
-              <img src="/favicon.svg" alt="" width={20} height={20} className="size-5 shrink-0 self-center" />
+              <img src="/brand-mark.svg" alt="" width={20} height={20} className="size-5 shrink-0 self-center" />
               <span className="font-title text-[18px] font-semibold text-bone">Tour Intelligence</span>
               <span className="font-sans text-[13px] font-medium text-canvas-muted">× Qloo</span>
             </div>

@@ -7,7 +7,7 @@ import type { CardKind } from "@/lib/qloo/types";
 import { collabInput } from "./ui";
 import { useCollabWrite } from "./useCollabWrite";
 
-const link = "inline-flex min-h-11 min-w-11 items-center justify-center text-[12px] font-medium text-canvas-muted underline-offset-4 hover:text-canvas-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
+export const OVERRIDE_LINK = "inline-flex min-h-11 min-w-11 items-center justify-start text-[12px] font-medium text-canvas-muted underline-offset-4 hover:text-canvas-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 
 /**
  * The value inside a hero tile when the team can override Qloo's suggestion. The team value is shown first and Qloo's own
@@ -40,7 +40,7 @@ export function OverrideValue({ cityId, field, qloo, editable, why, onGoToCard, 
         <input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={LIMITS.reason} placeholder="Why? (optional)" aria-label="Why? (optional)" className={collabInput} />
         <div className="flex items-center gap-3">
           <button type="submit" disabled={!text.trim()} className="inline-flex min-h-11 items-center text-[13px] font-semibold text-gold disabled:opacity-50">Save</button>
-          <button type="button" onClick={cancelEdit} className={link}>Cancel</button>
+          <button type="button" onClick={cancelEdit} className={OVERRIDE_LINK}>Cancel</button>
         </div>
       </form>
     );
@@ -56,8 +56,8 @@ export function OverrideValue({ cityId, field, qloo, editable, why, onGoToCard, 
       ) : <>{children}{why && <WhyLine why={why} onGo={onGoToCard} className="mt-0.5 block" />}</>}
       {editable && (
         <span className="flex flex-wrap items-center gap-x-3">
-          <button ref={editBtn} type="button" onClick={() => { setText(o?.value ?? ""); setReason(o?.reason ?? ""); setEditing(true); }} aria-label={`Edit ${FIELD_LABEL[field]}`} className={link}>Edit</button>
-          {o && <button type="button" onClick={() => void write("override_clear", { cityId, field }, "Back to Qloo's value.")} className={link}>Revert to Qloo</button>}
+          <button ref={editBtn} type="button" onClick={() => { setText(o?.value ?? ""); setReason(o?.reason ?? ""); setEditing(true); }} aria-label={`Edit ${FIELD_LABEL[field]}`} className={OVERRIDE_LINK}>Edit</button>
+          {o && <button type="button" onClick={() => void write("override_clear", { cityId, field }, "Back to Qloo's value.")} className={OVERRIDE_LINK}>Revert to Qloo</button>}
         </span>
       )}
     </>
