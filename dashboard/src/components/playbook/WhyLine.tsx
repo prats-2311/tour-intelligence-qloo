@@ -7,7 +7,7 @@ export function WhyLine({ why, onGo, className = "" }: { why: HeroWhy; onGo?: (k
     <a
       href={`#card-${why.card}`}
       onClick={(e) => { e.preventDefault(); (onGo ?? scrollToCard)(why.card); }}
-      className={`-my-[13px] py-[13px] text-[12px] font-normal text-canvas-muted underline-offset-4 hover:text-canvas-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${className}`}
+      className={`-my-[15px]! py-[15px] text-[12px] font-normal text-canvas-muted underline-offset-4 hover:text-canvas-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${className}`}
     >{why.text}</a>
   );
 }
