@@ -66,7 +66,7 @@ function SegmentedControl({ mode, onChange }: { mode: Mode; onChange: (m: Mode) 
     document.getElementById(`${base}-${next.id}`)?.focus();
   };
   return (
-    <div role="tablist" aria-label="Ranking" onKeyDown={onKey} className="flex h-[52px] w-full rounded-[10px] bg-canvas p-1 lg:h-10">
+    <div role="tablist" aria-label="Ranking" onKeyDown={onKey} className="flex h-[52px] w-full rounded-[10px] bg-canvas p-1">
       {MODES.map((m) => {
         const on = m.id === mode;
         return (

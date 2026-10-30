@@ -61,7 +61,7 @@ export function QuadrantChart({ cities, thresholds, hrefFor }: { cities: ScoredC
               const common = {
                 "aria-label": label, style, onMouseEnter: () => setActive(p.id), onMouseLeave: () => setActive(null), onFocus: () => setActive(p.id), onBlur: () => setActive(null),
                 onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Escape") setActive(null); },
-                className: `absolute size-6 -translate-x-1/2 -translate-y-1/2 rounded-full ${FOCUS}`,
+                className: `absolute size-11 -translate-x-1/2 -translate-y-1/2 rounded-full ${FOCUS}`,
               };
               return href ? <Link key={p.id} to={href} {...common} /> : <button key={p.id} type="button" {...common} />;
             })}

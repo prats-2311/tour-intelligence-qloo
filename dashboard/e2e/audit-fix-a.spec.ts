@@ -232,3 +232,23 @@ for (const [name, url] of [["landing", "/"], ["board", "/tours/board?sample=1"],
     expect(await lowContrast(page)).toEqual([]);
   });
 }
+
+const small = (page: Page, sel: string) => page.evaluate((s) => [...document.querySelectorAll(s)]
+  .map((el) => ({ el, r: el.getBoundingClientRect() })).filter(({ r }) => r.width > 0 && r.height > 0)
+  .filter(({ r }) => r.height < 43.5 || r.width < 43.5)
+  .map(({ el, r }) => `${(el.getAttribute("aria-label") ?? el.textContent ?? "").trim().slice(0, 30)} ${Math.round(r.width)}x${Math.round(r.height)}`), sel);
+
+test("13. breadcrumbs, ranking tabs and map markers are at least 44x44 on the board at 1440", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/tours/board?sample=1");
+  await boardReady(page);
+  expect(await small(page, "nav[aria-label=Breadcrumb] a, [role=tab], .maplibregl-marker button")).toEqual([]);
+});
+test("13. chart scatter markers are at least 44x44", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/tours/insights?sample=1");
+  await expect(page.getByRole("heading", { name: "Verdict mix" })).toBeVisible({ timeout: 20_000 });
+  const n = await page.locator("[data-tour=quadrant] a.absolute, [data-tour=quadrant] button.absolute").count();
+  expect(n, "scatter has markers").toBeGreaterThan(3);
+  expect(await small(page, "[data-tour=quadrant] a.absolute, [data-tour=quadrant] button.absolute")).toEqual([]);
+});
