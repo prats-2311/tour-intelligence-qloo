@@ -1,9 +1,11 @@
 import { NOT_IN_CITY_TOP_20, fit, pct } from "@/components/playbook/format";
-import { isDoNotBook, mentionsDoNotBook, applyDoNotBook } from "./doNotBook";
+import type { Snapshot } from "@/lib/collab/types";
+import { isDoNotBook, mentionsDoNotBook, applyDoNotBook, visibleClaimTotals } from "./doNotBook";
+import { INTEGRITY_LINE } from "./labels";
 import { firstOkItem } from "./playbookFacts";
 import { isNonSponsor } from "./nonSponsors";
 import { BAND_LABEL, displayItems, showsUnder21Note, signedIndex, UNDER_21_NOTE, type SponsorSegments } from "./segments";
-import type { PlaybookCard, ThisWeek } from "./types";
+import type { Narrative, PlaybookCard, ThisWeek } from "./types";
 import { zoneDisplayLabel } from "./zones";
 
 /** Everything the sheet is assembled from: data already in the app for one city. Nothing here is fetched. */
@@ -19,6 +21,9 @@ export interface PitchInput {
   /** Age bands already loaded in the session store, or null/absent. The sheet never loads them. */
   segments?: SponsorSegments | null;
   week?: ThisWeek;
+  narrative?: Narrative;
+  /** The team workspace snapshot already held by the page, if any. */
+  snapshot?: Snapshot | null;
 }
 
 export const UNAVAILABLE_MESSAGE = "This name isn't available for a pitch sheet.";
@@ -35,7 +40,13 @@ export interface PitchSheetOk {
   room: { name: string; fit: string } | null;
   opener: string | null;
   week: PitchWeekItem[];
+  activation: { label: "Suggestion"; text: string };
+  /** "N verified · M removed" for the Sponsors card, or null when no checked narrative is available. */
+  claims: string | null;
+  evidence: string;
+  team: string | null;
 }
+export const DRAFT_FOOTER = "Draft for discussion — not an offer or agreement.";
 export type PitchSheet = PitchSheetOk | { status: "unavailable"; message: string };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -73,7 +84,65 @@ export function buildPitchSheet(input: PitchInput): PitchSheet {
     room: roomOf(input.cards),
     opener: openerOf(input.cards),
     week: weekOf(input.week),
+    activation: { label: "Suggestion", text: activationText(name, roomOf(input.cards)?.name, zonesOf(input.cards, city.name)[0]?.label) },
+    claims: claimsOf(input.narrative),
+    evidence: evidenceOf(input),
+    team: teamLine(name, city.id, input.snapshot),
   };
+}
+
+/** Fixed template, no model: every clause comes from the city's own data and is dropped when that data is missing. */
+export function activationText(brand: string, room?: string, zone?: string): string {
+  return `${brand} presale and co-branded night${room ? ` at ${room}` : ""}${zone ? `, with a pop-up in ${zone}` : ""}.`;
+}
+
+function claimsOf(n: Narrative | undefined): string | null {
+  if (!n || n.status !== "ok" || !n.cards.sponsors) return null;
+  const t = visibleClaimTotals({ sponsors: n.cards.sponsors });
+  return `${t.verified} verified · ${t.removed} removed`;
+}
+
+function evidenceOf(i: PitchInput): string {
+  const lead = i.source === "live" ? "Every number above comes from Qloo results recorded today (live run)."
+    : i.source === "showcase" && i.recordedAt ? `Every number above comes from Qloo results recorded on ${dayText(new Date(i.recordedAt))} (recorded example).`
+    : "Every number above comes from invented sample data, not from Qloo (sample example).";
+  return `${lead} ${INTEGRITY_LINE}`;
+}
+
+/** The newest team lead or note that names the brand, as one line. Resolved threads read as decisions. */
+function teamLine(brand: string, cityId: string, snap: Snapshot | null | undefined): string | null {
+  if (!snap) return null;
+  const b = fold(brand);
+  const named = (t: string) => fold(t).includes(b) && !mentionsDoNotBook(t);
+  const who = (a: { name: string; role: string; demo?: true }) => `${a.name} (${a.role})${a.demo ? " · Demo teammate" : ""}`;
+  const found: Array<{ at: number; line: string }> = [];
+  for (const l of snap.leads[cityId] ?? []) if (named(l.text)) found.push({ at: l.at, line: `Sponsor lead: "${l.text}" — ${who(l)}` });
+  for (const [key, th] of Object.entries(snap.threads)) {
+    if (key !== `city:${cityId}` && !key.startsWith(`card:${cityId}:`)) continue;
+    for (const m of th.messages) if (named(m.text)) found.push({ at: m.at, line: `${th.resolved ? "Decision" : "Team note"}: "${m.text}" — ${who(m)}` });
+  }
+  return found.sort((x, y) => y.at - x.at)[0]?.line ?? null;
+}
+
+/** The sheet as plain text, section by section, for the clipboard. */
+export function pitchSheetText(s: PitchSheetOk): string {
+  const out: string[] = [s.title, `${s.date} · ${s.preparedWith}`, "", "Why this brand", s.why, "", "Who loves it most"];
+  if (s.segments.state === "bands") { out.push(...s.segments.lines); if (s.segments.note) out.push(s.segments.note); } else out.push(s.segments.message);
+  out.push("", "Where the fans are (share of in-city fan heat)", ...(s.zones.length ? s.zones.map((z) => `${z.label} ${z.share}`) : ["No neighbourhood data."]));
+  out.push("", "The night");
+  if (s.room) out.push(`Best room: ${s.room.name} (fit ${s.room.fit})`);
+  if (s.opener) out.push(`Suggested opening act: ${s.opener}`);
+  if (s.week.length) {
+    out.push("", "This week in the city");
+    for (const w of s.week) out.push(`- ${w.text}${w.date ? ` (${w.date})` : ""}${w.links.map((l) => ` [${l.n}] ${l.href}`).join("")}`);
+  }
+  out.push("", `${s.activation.label}: ${s.activation.text}`);
+  out.push("", "Evidence and trust");
+  if (s.claims) out.push(`Sponsors card claims: ${s.claims}`);
+  out.push(s.evidence);
+  if (s.team) out.push("", "Team", s.team);
+  out.push("", DRAFT_FOOTER);
+  return out.join("\n");
 }
 
 function segmentsFor(brand: string, country: string, data: SponsorSegments | null | undefined): PitchSegments {

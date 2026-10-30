@@ -82,3 +82,48 @@ describe("pitch sheet: age bands, zones, the night", () => {
     expect(ok(base({ week: { status: "unavailable", reason: "error", message: "x" } as ThisWeek })).week).toEqual([]);
   });
 });
+
+import { emptySnapshot, type Snapshot } from "@/lib/collab/types";
+import { INTEGRITY_LINE } from "./labels";
+import type { Narrative } from "./types";
+import { pitchSheetText } from "./pitchSheet";
+
+const claim = (text: string, names: string[] = []) => ({ text, entities: names.map((name) => ({ name })), numbers: [], evidence_refs: [] as string[] });
+const narrative = (): Narrative => ({ status: "ok", model: "m", thoughtSummary: null, merch: null, cached: false, cards: { sponsors: { verified: [claim("Stüssy leads."), claim("Ariel Pink is a fan.", ["Ariel Pink"]), claim("Stüssy again.")], removed: [{ claim: claim("Bad number."), reason: "number_not_in_evidence", detail: "" }, { claim: claim("About Planned Parenthood."), reason: "no_refs", detail: "" }] }, venue_fit: { verified: [claim("Other card.")], removed: [] } } } as Narrative);
+const team = (): Snapshot => ({ ...emptySnapshot("ws-1234567890"), leads: { "9": [{ id: "l1", text: "Stüssy: intro via Kim", name: "Kim", role: "Manager", at: 1000 }, { id: "l2", text: "Other brand", name: "Lee", role: "Promoter", at: 3000 }] }, threads: { "card:9:sponsors": { resolved: true, messages: [{ id: "m1", text: "Agreed to pitch Stüssy for the Echo night", name: "Sam", role: "Promoter", at: 2000 }] } } });
+
+describe("pitch sheet: activation, evidence, team, text", () => {
+  it("builds the activation suggestion from the fixed template and is deterministic", () => {
+    const a = ok(base()).activation;
+    expect(a).toEqual({ label: "Suggestion", text: "Stüssy presale and co-branded night at The Echo, with a pop-up in Echo Park." });
+    expect(ok(base()).activation).toEqual(a);
+  });
+  it("drops the clauses it has no data for", () => {
+    const only = cards().filter((c) => c.kind === "sponsors");
+    expect(ok(base({ cards: only })).activation.text).toBe("Stüssy presale and co-branded night.");
+    expect(ok(base({ cards: cards().filter((c) => c.kind !== "venue_fit") })).activation.text).toBe("Stüssy presale and co-branded night, with a pop-up in Echo Park.");
+  });
+  it("counts only the sponsor claims that are shown (do-not-book and non-sponsor claims are out)", () => {
+    expect(ok(base({ narrative: narrative() })).claims).toBe("2 verified · 1 removed");
+    expect(ok(base()).claims).toBeNull();
+    expect(ok(base({ narrative: { status: "unavailable", message: "x" } as Narrative })).claims).toBeNull();
+  });
+  it("dates the evidence by source and always carries the integrity sentence", () => {
+    expect(ok(base()).evidence).toBe(`Every number above comes from Qloo results recorded on 16 Oct 2026 (recorded example). ${INTEGRITY_LINE}`);
+    expect(ok(base({ source: "live", recordedAt: null })).evidence).toBe(`Every number above comes from Qloo results recorded today (live run). ${INTEGRITY_LINE}`);
+    expect(ok(base({ source: "sample", recordedAt: null })).evidence).toBe(`Every number above comes from invented sample data, not from Qloo (sample example). ${INTEGRITY_LINE}`);
+  });
+  it("shows the latest team line that names the brand (lead or note), and nothing without a workspace or a match", () => {
+    expect(ok(base({ snapshot: team() })).team).toBe("Decision: \"Agreed to pitch Stüssy for the Echo night\" — Sam (Promoter)");
+    expect(ok(base()).team).toBeNull();
+    expect(ok(base({ snapshot: team(), brand: "HUF" })).team).toBeNull();
+    const leadOnly = team(); leadOnly.threads = {};
+    expect(ok(base({ snapshot: leadOnly })).team).toBe("Sponsor lead: \"Stüssy: intro via Kim\" — Kim (Manager)");
+  });
+  it("plain text carries every section, the draft footer, and no percent except zone shares, no do-not-book name", () => {
+    const t = pitchSheetText(ok(base({ week, narrative: narrative(), snapshot: team(), segments: segs([band()]) })));
+    for (const part of ["Stüssy × Mac DeMarco — Los Angeles", "Prepared with Tour Intelligence × Qloo", "Why this brand", "Who loves it most", "Aged 25–29", "Where the fans are", "Echo Park 31%", "The night", "Best room: The Echo (fit 0.91)", "Suggested opening act: Mild High Club", "This week in the city", "Street fair on Sunset", "https://example.com/fair", "Suggestion: Stüssy presale", "2 verified · 1 removed", "Decision:", "Draft for discussion — not an offer or agreement."]) expect(t).toContain(part);
+    expect(t).not.toMatch(/Ariel Pink/);
+    expect((t.match(/\d+%/g) ?? []).sort()).toEqual(["12%", "20%", "31%"]);
+  });
+});
