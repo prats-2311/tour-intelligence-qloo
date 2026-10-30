@@ -433,6 +433,7 @@ export default function TourBoard() {
             <div className="flex flex-wrap items-center gap-x-4">
               <button type="button" onClick={newBrief} className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">New brief</button>
               <Link to="/insights" className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">Taste profile</Link>
+              <Link to={`/tours/budget${sampleQ}`} className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">Tour budget</Link>
             </div>
           )}
         </div>
@@ -469,7 +470,6 @@ export default function TourBoard() {
           <button type="button" onClick={replay} className={smallBtn}><RotateCcw size={12} aria-hidden />Replay the agent</button>
         )}
         <AgentLogChip events={state.log} onOpen={() => setLogOpen(true)} />
-        {state.cities.length > 0 && <Link to={`/tours/budget${sampleQ}`} className="inline-flex min-h-11 items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Tour budget</Link>}
         {state.cities.length > 0 && <TeamBar cities={state.cities} tourThread="tour:board" />}
       </div>
     </header>

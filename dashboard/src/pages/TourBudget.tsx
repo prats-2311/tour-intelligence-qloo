@@ -145,7 +145,7 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
 
       <Section title="Routing legs" id="legs-h">
         <p className="text-[12px] text-canvas-muted">Distances are great-circle (straight line) between consecutive cities. Mode is an app assumption: drive up to 600 km, fly beyond; a driving day is counted as 700 km, a flight as 1 day. Real routes differ.</p>
-        <div className="min-w-0 overflow-x-auto">
+        <div role="region" aria-label="Routing legs table" tabIndex={0} className="min-w-0 overflow-x-auto">
           <table aria-label="Routing legs" className="w-full min-w-[560px] border-collapse text-left text-[14px]">
             <thead><tr className="text-[12px] text-canvas-muted"><th scope="col" className="py-2 pr-3 font-medium">Leg</th><th scope="col" className="py-2 pr-3 font-medium">Km</th><th scope="col" className="py-2 pr-3 font-medium">Mode (assumption)</th><th scope="col" className="py-2 pr-3 font-medium">Travel days</th><th scope="col" className="py-2 font-medium">Travel cost ({budget.currency})</th></tr></thead>
             <tbody>
@@ -172,7 +172,7 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
         return (
           <Section key={s.id} title={s.name} id={`city-${s.id}`}>
             <div className="flex flex-wrap items-center gap-2">
-              <button type="button" className={btn} onClick={() => update((b) => copyCityToAll(b, s.id))} aria-label={`Copy ${s.name}'s values to all cities`}>Copy this city's values to all cities</button>
+              <button type="button" className={btn} onClick={() => update((b) => copyCityToAll(b, s.id))} aria-label={`Copy this city's values to all cities (${s.name})`}>Copy this city's values to all cities</button>
               <NotesButton threadKey={`city:${s.id}`} title={s.name} label="Discuss" />
             </div>
             {(notes[s.id] ?? []).length > 0 && (
@@ -234,7 +234,7 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
         </dl>
         <p className="text-[12px] text-canvas-muted">Cost adds every amount you entered: city costs, leg travel, per diems and hotels. Income and margin appear once every city has ticket price, capacity and sell-through %.</p>
         <h3 className="text-[15px] font-semibold text-canvas-text">If sell-through were 60%, 80% or 100%</h3>
-        <div className="min-w-0 overflow-x-auto">
+        <div role="region" aria-label="Sell-through sensitivity table" tabIndex={0} className="min-w-0 overflow-x-auto">
           <table aria-label="Margin at 60, 80 and 100 percent sell-through" className="w-full min-w-[420px] border-collapse text-left text-[14px]">
             <thead><tr className="text-[12px] text-canvas-muted"><th scope="col" className="py-2 pr-3 font-medium">Margin ({budget.currency})</th>{[60, 80, 100].map((p) => <th key={p} scope="col" className="py-2 pr-3 font-medium">{p}%</th>)}</tr></thead>
             <tbody>
