@@ -1,7 +1,8 @@
 import { Send, Square } from "lucide-react";
 import { useState } from "react";
 import { SAMPLE_QUESTIONS } from "@/lib/qloo/fixtures/strategistSample";
-import { showcaseStrategist } from "@/lib/qloo/showcase";
+import { liveAskSuggestions } from "@/lib/qloo/liveAskSuggestions";
+import { SHOWCASE, showcaseStrategist } from "@/lib/qloo/showcase";
 import { liveSuggestions } from "@/lib/qloo/strategistSuggestions";
 import type { StrategistContext } from "@/lib/qloo/types";
 import { CHAT_INPUT_CLASS, CHAT_SEND_CLASS, MicButton, SuggestionChips } from "@/components/ui/ChatBits";
@@ -31,12 +32,19 @@ export function Composer({ replay = false, busy, empty, sample, showcase = false
     </form>
   );
   if (replay) {
+    const live = liveAskSuggestions(SHOWCASE);
     // Showcase: the recorded questions replay for free; a typed one runs live against the example's own context.
     return (
       <div className="px-4 pb-4 pt-2">
         <SuggestionChips suggestions={showcaseStrategist().map((r) => r.question)} onPick={(q) => { if (!busy) onAsk(q); }} />
         <p className="mb-1.5 mt-3 text-[13px] font-medium text-canvas-text">{LIVE_ASK_LABEL}</p>
         {form}
+        {live.length > 0 && (
+          <div className="mt-3">
+            <p className="mb-1.5 text-[13px] font-medium text-canvas-text">Ask live</p>
+            <SuggestionChips suggestions={live} onPick={(q) => { if (!busy) onAsk(q); }} />
+          </div>
+        )}
       </div>
     );
   }
