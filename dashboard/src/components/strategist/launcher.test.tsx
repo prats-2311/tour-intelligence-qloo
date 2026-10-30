@@ -129,7 +129,7 @@ describe("launcher sample flag", () => {
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("blocked"); });
     shell("/insights");
     expect(await screen.findByRole("button", { name: "Ask about this tour" })).toBeTruthy();
-    expect(screen.queryByRole("complementary")).toBeNull();
+    expect(screen.queryByRole("complementary", { name: "Ask about this tour" })).toBeNull();
   });
 });
 

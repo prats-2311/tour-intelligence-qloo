@@ -292,3 +292,8 @@ body {
   /* Sample books carry the label on every printed page. */
   .tour-book .print-footer { display: block; position: fixed; bottom: 0; left: 0; right: 0; padding: 4px 0; text-align: center; font-size: 11px; }
 }
+
+/* Mobile nav drawer slides in from the left; no motion when the user asks for less. */
+@keyframes nav-drawer-in { from { transform: translateX(-100%); } to { transform: none; } }
+.nav-drawer-in { animation: nav-drawer-in 0.2s ease-out; }
+@media (prefers-reduced-motion: reduce) { .nav-drawer-in { animation: none; } }
