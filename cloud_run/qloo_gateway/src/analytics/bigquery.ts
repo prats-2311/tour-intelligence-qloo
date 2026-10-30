@@ -16,14 +16,22 @@ export const BQ_SCHEMAS: Record<BqTable, BqField[]> = {
   playbook_runs: [
     f("ts", "TIMESTAMP", "REQUIRED"), f("session_hash", "STRING"), f("source", "STRING"), f("city_id", "STRING"), f("city", "STRING"), f("country", "STRING"), f("verdict", "STRING"),
     f("cards_ok", "INT64"), f("cards_empty", "INT64"), f("claims_verified", "INT64"), f("claims_removed", "INT64"), f("sponsors_hidden", "INT64"),
-    f("qloo_calls", "INT64"), f("cache_hits", "INT64"), f("gemini_calls", "INT64"), f("latency_ms", "INT64"), f("narrative_status", "STRING"), f("error", "STRING"),
+    f("qloo_calls", "INT64"), f("cache_hits", "INT64"), f("gemini_calls", "INT64"), f("latency_ms", "INT64"), f("narrative_status", "STRING"), f("error", "STRING"), f("test", "BOOL"),
   ],
   team_events: [
     f("ts", "TIMESTAMP", "REQUIRED"), f("ws_hash", "STRING"), f("event", "STRING"), f("city_id", "STRING"), f("city", "STRING"), f("country", "STRING"),
-    f("card_kind", "STRING"), f("role", "STRING"), f("status_to", "STRING"), f("override_field", "STRING"), f("overrode_qloo", "BOOL"),
+    f("card_kind", "STRING"), f("role", "STRING"), f("status_to", "STRING"), f("override_field", "STRING"), f("overrode_qloo", "BOOL"), f("test", "BOOL"),
   ],
-  v2_outcome_taps: [f("ts", "TIMESTAMP", "REQUIRED"), f("session_hash", "STRING"), f("experience", "STRING"), f("action", "STRING")],
+  v2_outcome_taps: [f("ts", "TIMESTAMP", "REQUIRED"), f("session_hash", "STRING"), f("experience", "STRING"), f("action", "STRING"), f("test", "BOOL")],
 };
+
+/**
+ * Test traffic convention: our own e2e specs, MCP checks and smoke scripts. A request is test traffic when its session id starts with `e2e-` or `test-`,
+ * or it carries the header `x-tiq-test: 1`. Rows get `test = TRUE`; the stats queries leave those out (NULL, from before the column existed, counts as real).
+ */
+export const TEST_HEADER = "x-tiq-test";
+export const isTestTraffic = (sessionId: string | undefined, header?: string | undefined): boolean =>
+  header === "1" || (typeof sessionId === "string" && (sessionId.startsWith("e2e-") || sessionId.startsWith("test-")));
 
 export const sha256 = (s: string): string => createHash("sha256").update(s).digest("hex");
 

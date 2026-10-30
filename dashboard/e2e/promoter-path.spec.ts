@@ -1,8 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { expect, test, type Page } from "@playwright/test";
-import { dismissTourPrompt, isTeamOrStatsConsoleError, qlooDataCalls, useSyntheticRecordings, useWorkingWorkspace } from "./fixtures";
+import { expect, type Page } from "@playwright/test";
+import { test, dismissTourPrompt, isTeamOrStatsConsoleError, qlooDataCalls, useSyntheticRecordings, useWorkingWorkspace } from "./fixtures";
 
 // E2E_BASE_URL set = the daily live run against the deployed site: real recordings, real gateway.
 const LIVE = Boolean(process.env.E2E_BASE_URL);

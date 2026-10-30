@@ -2,7 +2,7 @@ import express, { type NextFunction, type Request, type Response } from "express
 import type { City } from "../geo/cities.js";
 import { mountCollab, type CollabDeps } from "../collab/routes.js";
 import { PUBLIC_SESSION_PREFIX } from "../budget.js";
-import { DISABLED_ANALYTICS, sha256, type Analytics } from "../analytics/bigquery.js";
+import { DISABLED_ANALYTICS, TEST_HEADER, isTestTraffic, sha256, type Analytics } from "../analytics/bigquery.js";
 import { observePlaybook } from "../analytics/playbookLog.js";
 import { createStats } from "../analytics/stats.js";
 import { WindowLimiter } from "../collab/limits.js";
@@ -103,7 +103,7 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
     const hybrid = deps.localActs && narrative && !sessionId!.startsWith(PUBLIC_SESSION_PREFIX);
     const cityIn = { name: String(city), country: String(country), ...(typeof cityId === "string" && cityId ? { id: cityId } : {}) };
     await streamSse(res, observePlaybook(runCityPlaybook({ artist: String(artist), artistEntityId: String(artistEntityId), city: { name: String(city), country: String(country), ...(typeof cityId === "string" && cityId ? { id: cityId } : {}), ...(latN !== undefined && lonN !== undefined ? { lat: latN, lon: lonN } : {}) }, sessionId: sessionId!, narrative, ...(popularityN !== undefined ? { artistPopularity: popularityN } : {}) },
-      { qloo: deps.qloo, cities: deps.cities, signal: controller.signal, narrate: deps.narrate, ...(deps.sponsorCheck && narrative ? { sponsorCheck: deps.sponsorCheck } : {}), ...(hybrid ? { localActs: deps.localActs! } : {}) }), { sessionId: sessionId!, city: cityIn, narrative }, analytics), controller);
+      { qloo: deps.qloo, cities: deps.cities, signal: controller.signal, narrate: deps.narrate, ...(deps.sponsorCheck && narrative ? { sponsorCheck: deps.sponsorCheck } : {}), ...(hybrid ? { localActs: deps.localActs! } : {}) }), { sessionId: sessionId!, city: cityIn, narrative, test: isTestTraffic(sessionId, req.header(TEST_HEADER)) }, analytics), controller);
   });
 
   // Sponsors by age group: one demographics lookup, then per-band brand recommends. Budget stops answer 200 {status:"unavailable", reason:"budget"}, like this-week's unavailable shape.
@@ -246,7 +246,7 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
     if (experience !== undefined && (typeof experience !== "string" || !/^[a-z0-9_]{1,40}$/.test(experience))) return void res.status(400).json({ error: "experience must be a short id" });
     if (!analytics.enabled) return void res.json({ enabled: false });
     if (!tapLimit.take(sessionId)) return void res.status(429).json({ error: "Too many taps, slow down a moment" });
-    analytics.track("v2_outcome_taps", { session_hash: sha256(sessionId), experience: experience ?? "listening_session", action });
+    analytics.track("v2_outcome_taps", { session_hash: sha256(sessionId), experience: experience ?? "listening_session", action, test: isTestTraffic(sessionId, req.header(TEST_HEADER)) });
     res.status(202).json({ enabled: true, ok: true });
   });
 

@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
-import { qlooDataCalls, dismissTourPrompt, useSyntheticRecordings } from "./fixtures";
+import { expect } from "@playwright/test";
+import { test, qlooDataCalls, dismissTourPrompt, useSyntheticRecordings } from "./fixtures";
 
 // Runs must not depend on the network: map tile/style requests are blocked (the map shows its "tiles unavailable" note).
 test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); await useSyntheticRecordings(page); await dismissTourPrompt(page); });

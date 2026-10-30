@@ -4,6 +4,7 @@ always apply. Error messages are safe to show to an MCP client."""
 
 from __future__ import annotations
 
+import contextvars
 import json
 import os
 
@@ -11,6 +12,11 @@ import requests
 
 _TIMEOUT = 180
 _UNAVAILABLE = "Qloo gateway unavailable"
+
+
+# Set per request by the server middleware when the caller sent `x-tiq-test: 1` (our own checks and smoke runs): the gateway then
+# keeps the call out of its analytics. Never set for real traffic.
+TEST_TRAFFIC: contextvars.ContextVar[bool] = contextvars.ContextVar("tiq_test_traffic", default=False)
 
 
 class GatewayError(Exception):
@@ -34,7 +40,10 @@ def _headers(session_id: str, token_fn) -> dict:
         token = token_fn()
     except Exception:
         raise GatewayError(_UNAVAILABLE) from None
-    return {"Authorization": f"Bearer {token}", "x-session-id": session_id}
+    headers = {"Authorization": f"Bearer {token}", "x-session-id": session_id}
+    if TEST_TRAFFIC.get():
+        headers["x-tiq-test"] = "1"
+    return headers
 
 
 def stream_events(path: str, *, method: str = "GET", params: dict | None = None, body: dict | None = None,

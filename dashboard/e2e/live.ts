@@ -15,5 +15,5 @@ export async function blockMapTiles(page: Page): Promise<void> {
 
 /** Clears what the app keeps in this browser (tour outcome, identity), before the page loads. */
 export async function freshBrowser(page: Page): Promise<void> {
-  await page.addInitScript(() => { try { window.localStorage.clear(); } catch { /* blocked */ } });
+  await page.addInitScript(() => { try { window.localStorage.clear(); window.localStorage.setItem("tiq.test", "1"); } catch { /* blocked */ } });
 }

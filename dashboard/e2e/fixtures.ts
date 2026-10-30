@@ -1,7 +1,19 @@
 import path from "node:path";
-import type { ConsoleMessage, Page } from "@playwright/test";
+import { test as base, type BrowserContext, type ConsoleMessage, type Page } from "@playwright/test";
 
 const dir = path.resolve("src/test/fixtures");
+
+/**
+ * Our own e2e traffic (LIVE=1 runs included) must not count as real usage in the gateway's BigQuery analytics. The dashboard client sends
+ * `x-tiq-test: 1` (and an `e2e-` session id) on every /api/qloo request when localStorage `tiq.test` is "1"; the BFF forwards the header.
+ * Every spec imports `test` from here, so every context starts marked. A spec that builds its own context calls `markTestTraffic(ctx)`.
+ */
+export async function markTestTraffic(ctx: BrowserContext): Promise<void> {
+  await ctx.addInitScript(() => { try { window.localStorage.setItem("tiq.test", "1"); } catch { /* storage blocked: the ?e2e=1 / session prefix paths still apply */ } });
+}
+export const test = base.extend({
+  context: async ({ context }, use) => { await markTestTraffic(context); await use(context); },
+});
 
 /**
  * The real recordings are private and served by the dashboard server; the e2e dev server has no such endpoint,

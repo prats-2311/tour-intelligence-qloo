@@ -18,5 +18,10 @@
     "name": "action",
     "type": "STRING",
     "mode": "NULLABLE"
+  },
+  {
+    "name": "test",
+    "type": "BOOL",
+    "mode": "NULLABLE"
   }
 ]

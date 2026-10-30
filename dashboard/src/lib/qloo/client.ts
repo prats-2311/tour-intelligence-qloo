@@ -1,6 +1,6 @@
 import { COMPARE_ERROR, COMPARE_TIMEOUT, parseSponsorsCompare, type SponsorsCompare } from "./sponsorsCompare";
 import { LONG_NAMES_SAMPLE, LUMEN_VALE_SAMPLE } from "./fixtures/lumenVale";
-import { getSessionId } from "./session";
+import { sessionHeaders } from "./session";
 import { SseParser } from "./sse";
 import { samplePlaybookEvents, sampleThisWeek } from "./fixtures/lumenValePlaybooks";
 import { SAMPLE_WITHOUT_QLOO, sampleStrategistEvents } from "./fixtures/strategistSample";
@@ -51,7 +51,7 @@ export function streamTourBoard(brief: TourBrief, opts: StreamOpts = {}): AsyncG
   if (opts.sample) return sample(opts.sampleSet === "long" ? LONG_NAMES_SAMPLE : LUMEN_VALE_SAMPLE, opts);
   return stream("/api/qloo/tour-board", {
     method: "POST",
-    headers: { "content-type": "application/json", "x-session-id": getSessionId() },
+    headers: { "content-type": "application/json", ...sessionHeaders() },
     body: JSON.stringify(brief),
   }, opts);
 }
@@ -71,7 +71,7 @@ export function streamCityPlaybook(q: { artist: string; artistEntityId: string; 
   if (opts.cityId) params.set("cityId", opts.cityId);
   if (typeof opts.lat === "number" && typeof opts.lon === "number") { params.set("lat", String(opts.lat)); params.set("lon", String(opts.lon)); }
   const qs = params.toString();
-  return stream(`/api/qloo/city-playbook?${qs}`, { method: "GET", headers: { "x-session-id": getSessionId() } }, opts);
+  return stream(`/api/qloo/city-playbook?${qs}`, { method: "GET", headers: { ...sessionHeaders() } }, opts);
 }
 
 export type StrategistBody = { messages: ChatMessage[]; context: StrategistContext; documents?: StrategistDocument[] };
@@ -100,7 +100,7 @@ export function streamStrategist(body: StrategistBody, opts: StreamOpts = {}): A
 function liveStrategist(body: StrategistBody, opts: StreamOpts): AsyncGenerator<GatewayEvent> {
   return friendlyStrategistErrors(stream("/api/qloo/strategist", {
     method: "POST",
-    headers: { "content-type": "application/json", "x-session-id": getSessionId() },
+    headers: { "content-type": "application/json", ...sessionHeaders() },
     // Document text rides only in this body (id, name, pages); UI-only fields never leave the page.
     body: JSON.stringify({ messages: body.messages, context: body.context, ...(body.documents?.length ? { documents: body.documents.map((d) => ({ id: d.id, name: d.name, pages: d.pages })) } : {}) }),
   }, opts));
@@ -121,7 +121,7 @@ export async function fetchWithoutQloo(body: { artist: string; regions: string[]
   try {
     const res = await (opts.fetchImpl ?? fetch)("/api/qloo/without-qloo", {
       method: "POST", signal: opts.signal,
-      headers: { "content-type": "application/json", "x-session-id": getSessionId() },
+      headers: { "content-type": "application/json", ...sessionHeaders() },
       body: JSON.stringify(body),
     });
     if (!res.ok) return WITHOUT_QLOO_ERROR;
@@ -140,7 +140,7 @@ export async function fetchThisWeek(q: { city: string; country: string; window?:
   if (!q.window) return { status: "unavailable", reason: "no_window", message: "Add a date window to the brief to check this week in the city" };
   const qs = new URLSearchParams({ city: q.city, country: q.country, start: q.window.start, end: q.window.end }).toString();
   try {
-    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/this-week?${qs}`, { signal: opts.signal, headers: { "x-session-id": getSessionId() } });
+    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/this-week?${qs}`, { signal: opts.signal, headers: { ...sessionHeaders() } });
     if (res.status === 400) return { status: "unavailable", reason: "error", message: "Date window too long (max 62 days)" };
     if (!res.ok) return WEB_ERROR;
     return (await res.json()) as ThisWeek;
@@ -158,7 +158,7 @@ export async function fetchAdvance(q: { city: string; country: string; window: D
   if (q.artistCountry?.trim()) p.set("artistCountry", q.artistCountry.trim());
   if (typeof q.lat === "number" && typeof q.lon === "number") { p.set("lat", String(q.lat)); p.set("lon", String(q.lon)); }
   try {
-    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/advance?${p}`, { signal: opts.signal, headers: { "x-session-id": getSessionId() } });
+    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/advance?${p}`, { signal: opts.signal, headers: { ...sessionHeaders() } });
     return res.ok ? ((await res.json()) as AdvanceRisks) : advanceError();
   } catch {
     return advanceError();
@@ -180,7 +180,7 @@ export async function fetchSponsorSegments(q: { artistId: string; artist?: strin
   const onAbort = () => ctl.abort();
   opts.signal?.addEventListener("abort", onAbort);
   try {
-    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/sponsor-segments?${params}`, { signal: ctl.signal, headers: { "x-session-id": getSessionId() } });
+    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/sponsor-segments?${params}`, { signal: ctl.signal, headers: { ...sessionHeaders() } });
     if (!res.ok) return res.status === 504 ? SEGMENTS_TIMEOUT : SEGMENTS_ERROR;
     return parseSponsorSegments(await res.json());
   } catch {
@@ -202,7 +202,7 @@ export async function fetchSponsorsWithoutQloo(q: { artistId: string; artist: st
   const onAbort = () => ctl.abort();
   opts.signal?.addEventListener("abort", onAbort);
   try {
-    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/sponsors-without-qloo?${params}`, { signal: ctl.signal, headers: { "x-session-id": getSessionId() } });
+    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/sponsors-without-qloo?${params}`, { signal: ctl.signal, headers: { ...sessionHeaders() } });
     if (!res.ok) return res.status === 504 ? COMPARE_TIMEOUT : COMPARE_ERROR;
     return parseSponsorsCompare(await res.json());
   } catch {
@@ -216,7 +216,7 @@ export async function fetchSponsorsWithoutQloo(q: { artistId: string; artist: st
 export async function callQlooTool(name: string, args: Record<string, unknown>, opts: { fetchImpl?: typeof fetch; signal?: AbortSignal } = {}) {
   const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/tools/${encodeURIComponent(name)}`, {
     method: "POST", signal: opts.signal,
-    headers: { "content-type": "application/json", "x-session-id": getSessionId() },
+    headers: { "content-type": "application/json", ...sessionHeaders() },
     body: JSON.stringify(args),
   });
   let json: { envelope?: unknown; cached?: boolean; stale?: boolean; error?: string };
