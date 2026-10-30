@@ -327,3 +327,17 @@ body {
   .pitch-sheet section { break-inside: avoid; }
   .pitch-sheet a[data-cite]::after { content: " (" attr(href) ")"; font-size: 9pt; }
 }
+
+/*
+ * Sticky and fixed chrome must not cover what a jump or a scroll-into-view lands on.
+ * Top: the playbook tab bar is sticky at top-0 (phones) or under the 56px header (lg), 44px tall. A card the page scrolls to keeps clear of it.
+ * Bottom (phones): the fixed journey stepper (4rem), the first-visit tour prompt (publishes --tour-prompt-h) and the sticky "Add to tour" bar (about 4rem).
+ */
+:root {
+  --tabbar-top: 0px;
+  --tabbar-h: 2.75rem;
+  --chrome-bottom: calc(4rem + env(safe-area-inset-bottom) + var(--tour-prompt-h, 0px) + 4rem);
+}
+@media (min-width: 1024px) { :root { --tabbar-top: 3.5rem; --chrome-bottom: 0px; } }
+html { scroll-padding-bottom: var(--chrome-bottom); }
+[data-card] { scroll-margin-top: calc(var(--tabbar-top) + var(--tabbar-h) + 0.75rem); }
