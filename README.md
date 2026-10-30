@@ -190,17 +190,48 @@ Claude Code plugin (the MCP server plus a `plan-tour` skill, no key needed):
 
 ## Run it
 
-Needs Node 22 and a Qloo hackathon key. Environment variable names only (never commit values): `QLOO_API_KEY`, `QLOO_BASE_URL`, `QLOO_TRUSTED_BASE_URL`, `QLOO_GATEWAY_URL`, `TOUR_DATA_API_URL`, `RECORDINGS_DIR`, `TAVILY_API_KEY` (optional; web lookups for this week and Advance), `PORT` (collaboration dev server), `COLLAB_FAKE`, `COLLAB_FAKE_URL` (local development only); Google Cloud application-default credentials for Vertex and Firestore.
+Needs Node 22 (22.19 or newer) and git. Nothing else: no keys, no Google Cloud account, no Firestore.
 
 ```bash
-npm i -g @qloo/qloo-harness@^0.1.26 && qloo setup --qloo
-cd cloud_run/qloo_gateway && npm ci && npm run build && npm test
-cd ../../dashboard && npm ci && npm test
-./run_tests.sh                       # pytest, dashboard and gateway vitest, graft check
-cd dashboard && RECORDINGS_DIR=<dir> npm run server & npm run dev
+git clone <this repo> && cd <repo>
+npm run setup        # npm ci for the gateway and the dashboard
+npm run dev:all      # gateway :8080 + dashboard server :8787 + Vite :5173, all in memory
 ```
 
-`RECORDINGS_DIR` holds the real recordings; without it, synthetic fixtures stand in and `?sample=1` shows the invented Lumen Vale tour.
+Open <http://localhost:5173/?sample=1>. `dev:all` prints one line per optional service that is off and what still works. Ctrl+C stops all three.
+
+The real recorded Mac DeMarco example is private under Qloo's data terms and is not in this repo, so a local run uses the synthetic "Lumen Vale" sample instead (the landing page's "See the example tour" says the recording is unavailable and links to the sample; two 503s on `/api/recordings/*` in the browser console are expected).
+
+### Three levels
+
+1. **No keys (sample mode).** Works: the Lumen Vale sample board, city playbooks, Tour Book, Charts, Budget, team workspaces (in memory), `/v2`, `/agents`, `/proof`. Off: live runs for your own artist, Gemini narration, "this week" and Advance, analytics.
+2. **Qloo key (live runs).** Install the harness once, put your key in `.env`, restart `dev:all`: `npm i -g @qloo/qloo-harness@^0.1.26 && qloo setup --qloo`, then `cp .env.example .env` and set `QLOO_API_KEY`. Then "Try your own artist" builds real boards. Without Gemini, narration and local acts fall back to deterministic text. Check `http://127.0.0.1:8080/health`: `connected:true` after the first live call.
+3. **Plus Gemini.** Either a Google AI Studio key (`GEMINI_API_KEY`, no Google Cloud needed) or Vertex AI (`GOOGLE_CLOUD_PROJECT` plus `gcloud auth application-default login`). If both are set the AI Studio key wins unless `GEMINI_PROVIDER=vertex`. Optional on top: `TAVILY_API_KEY` for this-week and Advance web lookups; `BQ_DATASET` for BigQuery analytics (needs a Google project and ADC).
+
+### Configuration
+
+Names only; copy [`.env.example`](.env.example) to `.env` (git-ignored; loaded by `dev:all`). Never commit values.
+
+| Variable | Needed for | Without it |
+| --- | --- | --- |
+| `QLOO_API_KEY` | live Qloo runs | live runs disabled; the sample tour still works |
+| `GEMINI_API_KEY` or `GOOGLE_CLOUD_PROJECT` + ADC | narration, local acts, sponsor check, strategist | deterministic fallbacks; those features are off |
+| `TAVILY_API_KEY` | this week, Advance & risks | those cards are off |
+| `BQ_DATASET` (+ project, ADC) | analytics | off; stats routes answer "disabled" |
+| `RECORDINGS_DIR` | the private recorded example | the synthetic Lumen Vale sample |
+| `QLOO_GATEWAY_URL` | dashboard server to gateway | set by `dev:all`; a loopback URL sends no Google token |
+| `PORT`, `GATEWAY_PORT` | ports | gateway 8080, dashboard server 8787, Vite 5173 |
+
+Other names (`QLOO_BASE_URL`, `QLOO_TRUSTED_BASE_URL`, `QLOO_BIN`, daily ceilings, model names, `QLOO_CACHE_BACKEND`, `QLOO_USAGE_BACKEND`, deployment-only URLs) are documented in `.env.example`. The gateway keeps its cache, usage counts and team workspaces in memory unless `QLOO_*_BACKEND=firestore`, which needs Google ADC.
+
+### Tests
+
+```bash
+npm run test:scripts                                  # dev:all and .env.example guards
+cd cloud_run/qloo_gateway && npm test                 # gateway
+cd dashboard && npm test && npm run lint              # dashboard
+./run_tests.sh                                        # everything, needs a Python .venv (see requirements-dev.txt)
+```
 
 ## Limitations
 
