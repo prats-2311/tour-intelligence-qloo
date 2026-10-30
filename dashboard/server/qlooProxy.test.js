@@ -287,4 +287,44 @@ describe("qlooProxy", () => {
       expect(getToken).not.toHaveBeenCalled();
     });
   });
+
+  describe("analytics stats and v2 tap", () => {
+    const json = (o) => new Response(JSON.stringify(o), { status: 200, headers: { "content-type": "application/json" } });
+    const h = { "content-type": "application/json", "x-session-id": "s" };
+    it.each(["trust", "team", "v2"])("forwards GET /api/qloo/stats/%s with auth and the session", async (name) => {
+      const fetchImpl = vi.fn(async () => json({ enabled: false }));
+      const base = await start({ gatewayUrl: "https://gw", getToken: async () => "tok", fetchImpl });
+      const res = await fetch(`${base}/api/qloo/stats/${name}`, { headers: { "x-session-id": "s" } });
+      expect(await res.json()).toEqual({ enabled: false });
+      const [url, init] = fetchImpl.mock.calls[0];
+      expect(url).toBe(`https://gw/v1/stats/${name}`);
+      expect(init.method).toBe("GET");
+      expect(init.headers.authorization).toBe("Bearer tok");
+    });
+    it("stats need a session header and a configured gateway", async () => {
+      const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl: vi.fn() });
+      expect((await fetch(`${base}/api/qloo/stats/trust`)).status).toBe(400);
+      const off = await start({ gatewayUrl: undefined, getToken: async () => "t" });
+      expect((await fetch(`${off}/api/qloo/stats/trust`, { headers: { "x-session-id": "s" } })).status).toBe(503);
+    });
+    it("forwards a valid tap with only the allowed fields", async () => {
+      const fetchImpl = vi.fn(async () => json({ enabled: true, ok: true }));
+      const base = await start({ gatewayUrl: "https://gw", getToken: async () => "tok", fetchImpl });
+      const res = await fetch(`${base}/api/qloo/v2/tap`, { method: "POST", headers: h, body: JSON.stringify({ action: "going", experience: "listening", extra: "x" }) });
+      expect(res.status).toBe(200);
+      const [url, init] = fetchImpl.mock.calls[0];
+      expect(url).toBe("https://gw/v1/v2/tap");
+      expect(JSON.parse(init.body)).toEqual({ action: "going", experience: "listening" });
+    });
+    it("rejects a bad action, a bad experience and a body over 1 KB before the gateway", async () => {
+      const fetchImpl = vi.fn(async () => json({}));
+      const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+      const post = (b) => fetch(`${base}/api/qloo/v2/tap`, { method: "POST", headers: h, body: JSON.stringify(b) });
+      expect((await post({ action: "nope" })).status).toBe(400);
+      expect((await post({})).status).toBe(400);
+      expect((await post({ action: "going", experience: "Bad Id" })).status).toBe(400);
+      expect((await post({ action: "going", pad: "x".repeat(1100) })).status).toBe(400);
+      expect(fetchImpl).not.toHaveBeenCalled();
+    });
+  });
 });
