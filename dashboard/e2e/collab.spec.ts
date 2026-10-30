@@ -69,9 +69,9 @@ test.describe("writes", () => {
     await notes.click();
     await page.getByRole("textbox", { name: "Add a note" }).fill(text);
     await page.getByRole("button", { name: "Add note" }).click();
-    // First write on this device: who is writing?
-    const who = page.getByRole("dialog", { name: "Who's writing?" });
-    if (await who.isVisible().catch(() => false)) {
+    // First write on this device: "Who's writing?" appears inline in the notes sheet (not a separate dialog).
+    const who = page.getByTestId("inline-identity");
+    if (await who.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await who.getByLabel("Your name").fill("E2E Tester");
       await who.getByText("Promoter", { exact: true }).click();
       await who.getByRole("button", { name: "Save" }).click();
