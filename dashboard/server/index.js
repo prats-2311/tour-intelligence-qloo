@@ -1053,20 +1053,23 @@ mountQlooProxy(app, { gatewayUrl: QLOO_GATEWAY, getToken: getQlooGatewayToken, c
 // identity from the metadata server, else the local gcloud session. Valid ~1 h, cached 50 min.
 let cachedRecordingsToken = null;
 let cachedRecordingsAt = 0;
-async function getRecordingsAccessToken() {
+// Cached until 60 s before the token's own expiry (the metadata server can hand out a token with little life left).
+async function getRecordingsAccessToken({ force = false } = {}) {
   const now = Date.now();
-  if (cachedRecordingsToken && now - cachedRecordingsAt < 50 * 60 * 1000) return cachedRecordingsToken;
+  if (!force && cachedRecordingsToken && now < cachedRecordingsAt) return cachedRecordingsToken;
   try {
     const res = await fetch("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token", {
       headers: { "Metadata-Flavor": "Google" },
       signal: AbortSignal.timeout(1000),
     });
     if (!res.ok) throw new Error(`metadata server returned ${res.status}`);
-    cachedRecordingsToken = (await res.json()).access_token;
+    const tok = await res.json();
+    cachedRecordingsToken = tok.access_token;
+    cachedRecordingsAt = now + Math.max(0, (Number(tok.expires_in) || 300) - 60) * 1000;
   } catch {
     cachedRecordingsToken = execSync("gcloud auth print-access-token").toString().trim();
+    cachedRecordingsAt = now + 10 * 60 * 1000;
   }
-  cachedRecordingsAt = now;
   return cachedRecordingsToken;
 }
 mountRecordings(app, { getAccessToken: getRecordingsAccessToken });

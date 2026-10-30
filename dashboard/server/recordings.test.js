@@ -79,3 +79,25 @@ describe("recordings", () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("recordings token refresh", () => {
+  it("on a storage 401 it asks for a fresh token and retries once", async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(new Response("expired", { status: 401 }))
+      .mockResolvedValueOnce(new Response(BODY, { status: 200 }));
+    const getAccessToken = vi.fn(async (opts) => (opts?.force ? "fresh" : "stale"));
+    const base = await start({ bucket: "b", fetchImpl, getAccessToken });
+    const res = await fetch(`${base}/api/recordings/showcase`);
+    expect(res.status).toBe(200);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl.mock.calls[1][1].headers.authorization).toBe("Bearer fresh");
+    expect(getAccessToken).toHaveBeenLastCalledWith({ force: true });
+  });
+  it("still answers 503 when the retry is also refused", async () => {
+    const fetchImpl = vi.fn(async () => new Response("no", { status: 401 }));
+    const base = await start({ bucket: "b", fetchImpl, getAccessToken: async () => "t" });
+    const res = await fetch(`${base}/api/recordings/showcase`);
+    expect(res.status).toBe(503);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+});
