@@ -268,6 +268,15 @@ describe("CityPlaybook Advance & risks tab", () => {
     expect(q).toMatchObject({ window: { start: "2027-03-12", end: "2027-03-15" }, lat: expect.any(Number), lon: expect.any(Number) });
     expect(q.artistCountry).toBeUndefined();
   });
+  it("the Advance panel uses the full content width (no max-width cap) and so does the unavailable panel", async () => {
+    withWindow({ start: "2027-03-12", end: "2027-03-15" });
+    vi.spyOn(client, "fetchAdvance").mockResolvedValue(risks);
+    renderAt(`/tours/playbook/${firstId()}?showcase=1`);
+    fireEvent.click(await screen.findByRole("tab", { name: "Advance & risks" }));
+    const panel = await screen.findByTestId("advance-panel");
+    expect(panel.className).toMatch(/\bw-full\b/);
+    expect(panel.className).not.toMatch(/max-w-/);
+  });
   it("tells the reader when the lookups finish after they moved to another tab, and stays quiet when they are watching", async () => {
     withWindow({ start: "2027-03-12", end: "2027-03-15" });
     let done!: (v: typeof risks) => void;

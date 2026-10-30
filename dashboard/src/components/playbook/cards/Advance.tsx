@@ -95,11 +95,17 @@ export function AdvanceBody({ data, loading, message, onRetry }: { data: Advance
   const wait = loading || !data;
   return (
     <div>
-      <Section title="Weather" label="Weather">{wait ? <Skeleton /> : <WeatherBody w={data.weather} />}</Section>
-      <Section title="Holidays in the window" label="Holidays">{wait ? <Skeleton /> : <HolidayBody h={data.holidays} />}</Section>
-      <Section title="Visas & work permits" label="Visas and work permits">{wait ? <Skeleton /> : <WebBody s={data.visa} nationality />}</Section>
-      <Section title="Equipment & customs" label="Equipment and customs">{wait ? <Skeleton /> : <WebBody s={data.equipment} />}</Section>
-      <p className={`border-t border-canvas-line pt-3 ${MUTED}`}>{ADVANCE_FOOTER}</p>
+      <div data-testid="advance-columns" className="grid grid-cols-1 gap-x-10 lg:grid-cols-2">
+        <div className="min-w-0">
+          <Section title="Weather" label="Weather">{wait ? <Skeleton /> : <WeatherBody w={data.weather} />}</Section>
+          <Section title="Holidays in the window" label="Holidays">{wait ? <Skeleton /> : <HolidayBody h={data.holidays} />}</Section>
+        </div>
+        <div className="min-w-0 border-t border-canvas-line pt-4 lg:border-t-0 lg:pt-0">
+          <Section title="Visas & work permits" label="Visas and work permits">{wait ? <Skeleton /> : <WebBody s={data.visa} nationality />}</Section>
+          <Section title="Equipment & customs" label="Equipment and customs">{wait ? <Skeleton /> : <WebBody s={data.equipment} />}</Section>
+        </div>
+      </div>
+      <p className={`mt-4 border-t border-canvas-line pt-3 ${MUTED}`}>{ADVANCE_FOOTER}</p>
     </div>
   );
 }
