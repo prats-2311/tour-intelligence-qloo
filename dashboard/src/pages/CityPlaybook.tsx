@@ -463,6 +463,7 @@ function CityPlaybookPage() {
 
       <NumberKey />
       <div id={`${tabBase}-panel`} ref={panelRef} style={panelMin ? { minHeight: panelMin } : undefined} role="tabpanel" aria-labelledby={`${tabBase}-${tab}`} className="mt-4 min-w-0 px-4 lg:px-0">
+        <h2 className="sr-only">{tab === "advance" ? "Advance and risks" : TABS.find((t) => t.id === tab)?.label}</h2>
         {!sample && (pb.status === "idle" || pb.status === "streaming") && <p data-testid="live-run-line" className="mb-3 text-[12px] text-canvas-muted">{LIVE_RUN_LINE}</p>}
         {panels[tab]}
         <div className="mt-4 flex min-w-0 flex-col gap-3">

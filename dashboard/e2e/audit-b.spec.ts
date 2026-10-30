@@ -179,3 +179,11 @@ test("lower: Acts tab uses the width, card renamed, claims panel names the sente
   const main = await page.locator("main").boundingBox();
   expect((await card.boundingBox())!.width, "Acts card width").toBeGreaterThan(main!.width * 0.7);
 });
+
+test("a11y: heading order has no skipped level on the playbook", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(LA);
+  await loaded(page);
+  const levels = await page.locator("main h1, main h2, main h3, main h4").evaluateAll((hs) => hs.map((h) => Number(h.tagName[1])));
+  for (let i = 1; i < levels.length; i++) expect(levels[i]! - levels[i - 1]!, `heading jump at ${i}`).toBeLessThanOrEqual(1);
+});
