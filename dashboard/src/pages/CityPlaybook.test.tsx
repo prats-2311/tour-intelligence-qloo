@@ -320,7 +320,7 @@ describe("CityPlaybook naming and SUPPORT rule", () => {
     const zone = await screen.findByRole("link", { name: /of in-city fan heat \(#1 of \d+ zones\)/ });
     expect(zone.getAttribute("href")).toBe("#card-promo_zones");
     expect(screen.getByRole("link", { name: /^venue fit \d\.\d\d, #\d+ of \d+ rooms$/ }).getAttribute("href")).toBe("#card-venue_fit");
-    expect(screen.getByRole("link", { name: /^fans share taste \d+% · the city likes them \d+%$/ }).getAttribute("href")).toBe("#card-co_billing");
+    expect(screen.getByRole("link", { name: /^shared taste 0\.\d\d · the city likes them 0\.\d\d$/ }).getAttribute("href")).toBe("#card-co_billing");
     expect(document.getElementById("card-promo_zones")).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "Acts fans love" }));
     fireEvent.click(zone);

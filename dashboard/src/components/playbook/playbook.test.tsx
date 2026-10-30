@@ -185,14 +185,14 @@ describe("playbook cards", () => {
   });
   it("co-billing shows both lift factors", () => {
     render(<CardBody card={card("co_billing")} city="Guadalajara" />);
-    expect(screen.getByText("Fans share taste 34% · the city likes them 88%")).toBeTruthy();
-    expect(screen.getByText("Fans share taste 34% · the city likes them 88%").getAttribute("title")).toBe("0.34 × 0.88 = 0.30");
+    expect(screen.getByText("Shared taste 0.34 · the city likes them 0.88")).toBeTruthy();
+    expect(screen.getByText("Shared taste 0.34 · the city likes them 0.88").getAttribute("title")).toBe("0.34 × 0.88 = 0.30");
     expect(screen.queryByText(/×/)).toBeNull();
     expect(screen.getByText("How much fans share taste, and how much the city likes the act")).toBeTruthy();
   });
   it("co-billing rows let the name take the space: aside capped, name can shrink and wrap", () => {
     render(<CardBody card={card("co_billing")} city="Guadalajara" />);
-    const aside = screen.getByText("Fans share taste 34% · the city likes them 88%").parentElement!;
+    const aside = screen.getByText("Shared taste 0.34 · the city likes them 0.88").parentElement!;
     expect(aside.className).toMatch(/max-w-\[45%\]/);
     expect(aside.className).toMatch(/shrink-0/);
     const li = aside.parentElement!;

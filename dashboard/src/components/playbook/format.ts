@@ -13,7 +13,7 @@ export const dealLine = (brand: string, artistRank: number, cityRank: number | n
   return lift === null ? null : `${lift} Suggested ask: presale access or a co-branded night ${venue ? `at ${venue}` : "on the tour stop"}.`;
 };
 /** Plain-words co-billing line; the formula lives in the tooltip. */
-export const coBillLine = (sharedTaste: number, localAffinity: number): string => `Fans share taste ${Math.round(sharedTaste * 100)}% · the city likes them ${Math.round(localAffinity * 100)}%`;
+export const coBillLine = (sharedTaste: number, localAffinity: number): string => `Shared taste ${sharedTaste.toFixed(2)} · the city likes them ${localAffinity.toFixed(2)}`;
 export const pct = (share: number): string => `${Math.round(share * 100)}%`;
 export const liftLine = (sharedTaste: number, a: number, lift: number): string => `${sharedTaste.toFixed(2)} × ${a.toFixed(2)} = ${lift.toFixed(2)}`;
 

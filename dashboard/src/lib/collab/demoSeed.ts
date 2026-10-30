@@ -154,8 +154,8 @@ export function buildDemoSeed(rec: Recording): Seed | null {
     const a = items(lead, "co_billing");
     const [a1, a2] = a.map((x) => str(x.name));
     thread(cardThread(lead.id, "co_billing"), 2500, [
-      ["Leo", a1 ? say`Top support pick is ${a1}: fans share taste ${pc(a[0]?.sharedTaste)}% and the city likes them ${pc(a[0]?.localAffinity)}%.` : null],
-      ["Sam", a2 ? say`${a2} is right behind at ${pc(a[1]?.sharedTaste)}%. Which one fits our local crowd better?` : null],
+      ["Leo", a1 ? say`Top support pick is ${a1}: shared taste ${fit2(a[0]?.sharedTaste)} and the city likes them ${fit2(a[0]?.localAffinity)}.` : null],
+      ["Sam", a2 ? say`${a2} is right behind at shared taste ${fit2(a[1]?.sharedTaste)}. Which one fits our local crowd better?` : null],
       ["Priya", a1 && a2 ? say`Both read well. I'd lead with ${a1} and keep ${a2} as the back-up.` : null],
       ["Maya", a1 && a2 ? say`Decision: support shortlist is ${a1} first, ${a2} second.` : null],
     ], "Maya");

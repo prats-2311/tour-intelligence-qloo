@@ -8,7 +8,7 @@ describe("playbook format", () => {
     expect(liftLine(0.34, 0.88, 0.2992)).toBe("0.34 × 0.88 = 0.30");
   });
   it("coBillLine says it in plain words", () => {
-    expect(coBillLine(0.34, 0.88)).toBe("Fans share taste 34% · the city likes them 88%");
+    expect(coBillLine(0.34, 0.88)).toBe("Shared taste 0.34 · the city likes them 0.88");
   });
   it("builds the mono meta line from the city code and item count", () => {
     expect(metaLine("GDL", "sponsors", { kind: "sponsors", status: "ok", items: new Array(10).fill({}), refs: [], warnings: [] })).toBe("GDL · SPONSORS · 10 BRANDS");

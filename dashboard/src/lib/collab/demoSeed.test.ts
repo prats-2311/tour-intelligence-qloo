@@ -30,7 +30,7 @@ function allowedNumbers(r: Recording): Set<string> {
     add(i + 1);
     const cards = r.cards(c.id) ?? [];
     for (const card of cards) for (const it of card.items) {
-      for (const k of ["affinity"]) if (typeof it[k] === "number") add((it[k] as number).toFixed(2));
+      for (const k of ["affinity", "sharedTaste", "localAffinity"]) if (typeof it[k] === "number") add((it[k] as number).toFixed(2));
       for (const k of ["share", "sharedTaste", "localAffinity"]) if (typeof it[k] === "number") { add(pct(it[k] as number).replace("%", "")); add(Math.round((it[k] as number) * 100)); }
       for (const k of ["artistRank", "cityRank"]) add(it[k]);
     }
@@ -117,7 +117,7 @@ describe("demo seed", () => {
     const cards = r.cards(lead.id)!;
     const co = cards.find((c) => c.kind === "co_billing")!.items[0]!;
     const support = all.find((m) => m.key === `card:${lead.id}:co_billing`)!.text;
-    expect(support).toContain(`fans share taste ${Math.round((co.sharedTaste as number) * 100)}% and the city likes them ${Math.round((co.localAffinity as number) * 100)}%`);
+    expect(support).toContain(`shared taste ${(co.sharedTaste as number).toFixed(2)} and the city likes them ${(co.localAffinity as number).toFixed(2)}`);
     const nar = r.narrative(lead.id);
     if (nar?.status !== "ok") throw new Error("expected a narrative");
     const cc = Object.values(nar.cards);
@@ -133,7 +133,7 @@ describe("demo seed", () => {
     const seed = buildDemoSeed(bare);
     const kept = messages(seed);
     expect(kept.length).toBeLessThan(withFigures);
-    for (const m of kept) expect(m.text, m.text).not.toMatch(/\b(null|undefined|NaN)\b|#\s|%\s*and the city likes them %/);
+    for (const m of kept) expect(m.text, m.text).not.toMatch(/\b(null|undefined|NaN)\b|#\s|and the city likes them \./);
   });
   it("never quotes a do-not-book act or a hidden non-sponsor, even when the raw recording lists them first", () => {
     const bad = (name: string) => ({ name, entityId: "x", affinity: 0.9, sharedTaste: 0.5, localAffinity: 0.5, category: "artist", source: "suggested" });
