@@ -39,9 +39,10 @@ describe("NavList", () => {
   });
   it("Playbooks is disabled with a hint when there is no playbook", () => {
     mount({ playbookHref: null });
-    expect(screen.queryByRole("link", { name: "Playbooks" })).toBeNull();
-    const btn = screen.getByRole("button", { name: "Playbooks" });
+    expect(screen.queryByRole("button", { name: /Playbook/ })).toBeNull();
+    const btn = screen.getByRole("link", { name: "Playbooks" });
     expect(btn.getAttribute("aria-disabled")).toBe("true");
+    expect(btn.getAttribute("href")).toBeNull();
     expect(btn.getAttribute("aria-describedby")).toBeTruthy();
     expect(screen.getByText("Open a city on the Tour Board first")).toBeTruthy();
   });

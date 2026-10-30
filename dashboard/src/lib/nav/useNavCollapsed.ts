@@ -2,7 +2,15 @@ import { useCallback, useEffect, useState } from "react";
 
 export const NAV_COLLAPSED_KEY = "tiq.nav.collapsed";
 
-const read = (): boolean => { try { return localStorage.getItem(NAV_COLLAPSED_KEY) === "1"; } catch { return false; } };
+/** Below this width the board's two columns need the room, so with no stored choice the rail starts collapsed. */
+const WIDE = "(min-width: 1440px)";
+const read = (): boolean => {
+  try {
+    const v = localStorage.getItem(NAV_COLLAPSED_KEY);
+    if (v !== null) return v === "1";
+  } catch { /* fall through to the width default */ }
+  try { return !window.matchMedia(WIDE).matches; } catch { return false; }
+};
 const write = (v: boolean): void => { try { localStorage.setItem(NAV_COLLAPSED_KEY, v ? "1" : "0"); } catch { /* private mode: state lives for the session only */ } };
 const typing = (t: EventTarget | null): boolean => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
 

@@ -41,13 +41,13 @@ function Row({ item, active, collapsed, href, onAction, onNavigate }: { item: Na
   } else if (href === null) {
     tip = `${item.label}: ${item.hint ?? ""}`;
     body = (
-      <button type="button" aria-label={item.label} aria-disabled="true" aria-describedby={hintId} onClick={(e) => e.preventDefault()} className={`${row(collapsed, false)} cursor-not-allowed opacity-60`}>
+      <a role="link" aria-label={item.label} aria-disabled="true" aria-describedby={hintId} className={`${row(collapsed, false)} cursor-not-allowed opacity-60`}>
         {icon}
         <span className="flex min-w-0 flex-col">
           {label}
           <span id={hintId} className={collapsed ? "sr-only" : "text-[12px] font-normal leading-snug text-canvas-muted"}>{item.hint}</span>
         </span>
-      </button>
+      </a>
     );
   } else {
     body = <Link to={href} aria-current={active ? "page" : undefined} onClick={onNavigate} className={row(collapsed, active)}>{icon}{label}</Link>;

@@ -52,12 +52,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       ) : (
         <>
         {!landing && (
-          <div data-mobile-bar className="flex h-12 shrink-0 items-center gap-1 bg-canvas-raised px-2">
+          <div data-mobile-bar className="flex h-11 shrink-0 items-center gap-1 bg-canvas-raised pr-2">
             <button ref={hamburger} type="button" aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls={DRAWER_ID} onClick={() => setDrawerOpen(true)} className="inline-flex size-11 items-center justify-center rounded-[8px] text-bone outline-none focus-visible:ring-2 focus-visible:ring-gold">
               <Menu size={20} aria-hidden />
             </button>
-            <img src="/favicon.svg" alt="" width={20} height={20} className="size-5 shrink-0" />
-            <span className="font-title text-[16px] font-semibold text-bone">Tour Intelligence</span>
+            <Breadcrumbs inline />
           </div>
         )}
         <nav
@@ -77,8 +76,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         {showSidebar && <Sidebar collapsed={collapsed} onToggle={toggle} onAction={onAction} />}
         <div className="flex min-w-0 flex-1 flex-col">
-      {!landing && <Breadcrumbs />}
-      <main className={`min-w-0 flex-1 px-4 py-6 lg:px-8 lg:py-8 ${isDesktop ? "" : "pb-[calc(5rem+env(safe-area-inset-bottom))]"} ${docked ? "lg:pr-[380px]" : ""}`}>
+      {!landing && isDesktop && <Breadcrumbs />}
+      <main className={`min-w-0 flex-1 px-4 ${landing ? "pt-6 lg:pt-8" : "pt-2 lg:pt-3"} ${isDesktop ? "pb-8" : "pb-[calc(5rem+env(safe-area-inset-bottom))]"} lg:px-8 ${docked ? "lg:pr-[380px]" : ""}`}>
         {children}
       </main>
         </div>

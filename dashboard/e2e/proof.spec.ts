@@ -49,6 +49,6 @@ for (const width of [375, 1280]) {
 
 test("board header links to proof", async ({ page }) => {
   await page.goto("/tours/board?showcase=1");
-  await page.getByRole("link", { name: /How we tested it/ }).first().click();
+  await page.getByRole("main").getByRole("link", { name: /How we tested it/ }).first().click();
   await expect(page).toHaveURL(/\/proof$/);
 });

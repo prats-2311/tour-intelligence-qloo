@@ -11,7 +11,7 @@ let desktop = true;
 beforeEach(() => {
   desktop = true;
   localStorage.clear();
-  vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("1024") ? desktop : q.includes("max-width") ? !desktop : false, addEventListener() {}, removeEventListener() {} }));
+  vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("1024") || q.includes("1440") ? desktop : q.includes("max-width") ? !desktop : false, addEventListener() {}, removeEventListener() {} }));
 });
 afterEach(() => { vi.unstubAllGlobals(); });
 
@@ -110,6 +110,12 @@ describe("tablet and mobile drawer", () => {
     expect(h.getAttribute("aria-expanded")).toBe("false");
     expect(h.closest("[data-mobile-bar]")).toBeTruthy();
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+  it("puts the breadcrumbs in the same top bar as the hamburger (one 44px row)", () => {
+    mount("/tours/board?showcase=1");
+    const bar = document.querySelector("[data-mobile-bar]")!;
+    expect(within(bar as HTMLElement).getByRole("navigation", { name: "Breadcrumb" })).toBeTruthy();
+    expect(document.querySelectorAll("nav[aria-label='Breadcrumb']")).toHaveLength(1);
   });
   it("opens a modal drawer with the nav, moves focus in, and closes on Escape returning focus", () => {
     mount("/tours/board?showcase=1");

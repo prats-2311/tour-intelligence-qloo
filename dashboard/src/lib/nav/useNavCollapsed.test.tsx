@@ -1,13 +1,27 @@
 // @vitest-environment jsdom
 import { act, fireEvent, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NAV_COLLAPSED_KEY, useNavCollapsed } from "./useNavCollapsed";
 
-beforeEach(() => localStorage.clear());
-afterEach(() => { document.body.innerHTML = ""; });
+let wide = true;
+beforeEach(() => {
+  localStorage.clear();
+  wide = true;
+  vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("1440") ? wide : true, addEventListener() {}, removeEventListener() {} }));
+});
+afterEach(() => { document.body.innerHTML = ""; vi.unstubAllGlobals(); });
 
 describe("useNavCollapsed", () => {
-  it("starts expanded", () => expect(renderHook(() => useNavCollapsed(true)).result.current.collapsed).toBe(false));
+  it("with nothing stored it starts collapsed below 1440px so the board keeps its width", () => {
+    wide = false;
+    expect(renderHook(() => useNavCollapsed(true)).result.current.collapsed).toBe(true);
+  });
+  it("a stored choice beats the width default", () => {
+    wide = false;
+    localStorage.setItem("tiq.nav.collapsed", "0");
+    expect(renderHook(() => useNavCollapsed(true)).result.current.collapsed).toBe(false);
+  });
+  it("starts expanded on a wide screen", () => expect(renderHook(() => useNavCollapsed(true)).result.current.collapsed).toBe(false));
   it("toggle collapses and persists under tiq.nav.collapsed", () => {
     const { result } = renderHook(() => useNavCollapsed(true));
     act(() => result.current.toggle());
