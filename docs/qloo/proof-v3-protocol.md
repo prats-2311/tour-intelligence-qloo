@@ -93,7 +93,7 @@ This is a known property of the method, stated in the results: the two Qloo arms
 - The README quotes only the published summary numbers.
 
 ## Amendment 1 (2026-10-24, before any Qloo or Gemini call)
-**Why:** the first eligible list (commit 96b2ed6) showed two design flaws. We saw the artist names and their show counts, and no outcome of any arm.
+**Why:** the first eligible list (commit 67ce4d8) showed two design flaws. We saw the artist names and their show counts, and no outcome of any arm.
 - **Flaw 1:** rule (c) let arena acts through (Bob Dylan, Sting, Sabrina Carpenter, Tears for Fears, Weezer, Lil Nas X). The product is for mid-tier artists.
 - **Flaw 2:** for very large tours (Bob Dylan played 93 distinct cities), nearly every candidate is a played city. R-precision then approaches 1 for every arm, so the test measures nothing.
 
@@ -106,7 +106,7 @@ This is a known property of the method, stated in the results: the two Qloo arms
    - If the board's own cities already include more played cities than unplayed, keep them all, add nothing, and flag the artist as "board mostly played".
 4. **Chance level:** each artist's chance R-precision (N / candidate count) is reported next to the four arms, along with the mean chance level over all artists.
 
-Everything else stands: artist order by sha256, batches of 6, the stop rule, metrics, the claim rule and the published limits. The eligible list is regenerated under the amended rules, and `backtest/city/artists.json` and `cases.json` are replaced. The first list stays in git history (96b2ed6).
+Everything else stands: artist order by sha256, batches of 6, the stop rule, metrics, the claim rule and the published limits. The eligible list is regenerated under the amended rules, and `backtest/city/artists.json` and `cases.json` are replaced. The first list stays in git history (67ce4d8).
 
 ## Amendment 2 (2026-10-24, before any Qloo or Gemini call)
 **Why:** the runner review (task 4a) found that Amendment 1's candidate rule biases the comparison.
@@ -312,7 +312,7 @@ Test B is re-run from the start under this amendment. Test A batch 1 had no stop
   - 3 percent of a non-score value, `k` = 0..2: "{round(100*(0.30+0.01k))}% of ticket buyers used the presale."
 
 ### 10.b Document citation check
-- **Code under test:** the same function with its documents argument, `unsupportedNumbers(answer, toolData, {}, documents)`, which checks a sentence ending in `[doc:id p.n]` only against the numbers on that page. This path lives on branch `feat/doc-context` (commit `8498287`, "answer check verifies document citations against the cited page only"); that branch is merged into the test branch before the runner is written, with no change to the check.
+- **Code under test:** the same function with its documents argument, `unsupportedNumbers(answer, toolData, {}, documents)`, which checks a sentence ending in `[doc:id p.n]` only against the numbers on that page. This path lives on branch `feat/doc-context` (commit `94e231a`, "answer check verifies document citations against the cited page only"); that branch is merged into the test branch before the runner is written, with no change to the check.
 - **Fixed document** `{id: "rec", name: "recap.txt"}`, pages `n` = 1..10, page text: "Show {n} sold {300+41n} tickets. Gross was {5000+730n}." (en-US thousands separators). Fixed tool results for 10.b.3: `[{fit: 7000+113k}]` for `k` = 0..5.
 - **Plants (20):**
   - 7 numbers cited to a page that does not contain them, `k` = 1..7: "That date drew {300+41k+9} tickets [doc:rec p.{k}]." (the number is on no page).

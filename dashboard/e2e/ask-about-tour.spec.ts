@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 
 const Q1 = "Why does Los Angeles rank above São Paulo here?";
 const Q2 = "Which sponsor should I pitch first in Mexico City, and why?";
-// d965259: the recorded example also takes a free-text question (runs live, labelled), and offers "Ask live" suggestions.
+// f747574: the recorded example also takes a free-text question (runs live, labelled), and offers "Ask live" suggestions.
 const LIVE_LABEL = "Ask your own question — runs live, about 30 seconds";
 
 for (const start of ["/tours/board?showcase=1", "/tours/playbook/4005539?showcase=1"]) {
@@ -29,7 +29,7 @@ for (const start of ["/tours/board?showcase=1", "/tours/playbook/4005539?showcas
     await panel.getByRole("button", { name: Q1 }).click();
     await expect(panel.getByText(/Invented test answer/)).toBeVisible({ timeout: 15_000 });
     await expect(panel.getByRole("button", { name: "Work log" })).toHaveAttribute("aria-expanded", "true");
-    // b509f02: the reasoning summary is collapsed by default (it sits below the answer); one click opens it.
+    // 85386e6: the reasoning summary is collapsed by default (it sits below the answer); one click opens it.
     const reasoning = panel.getByRole("button", { name: "Model reasoning summary" });
     await expect(reasoning).toHaveAttribute("aria-expanded", "false");
     await expect(panel.getByText("Gemini's own summary of its reasoning")).toBeHidden();

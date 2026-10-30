@@ -265,7 +265,7 @@ test("the four steps walk through the stepper: Markets, Decide, Playbook, Tour B
   // Markets
   await page.goto("/");
   await expect(nav.getByRole("link")).toHaveText([/Markets/, /Decide/, /Playbook/, /Tour Book/]);
-  expect(await stepState(page, "markets"), "2e5057a: no active step on the landing doorway").toBe("todo");
+  expect(await stepState(page, "markets"), "3b8ed6a: no active step on the landing doorway").toBe("todo");
   expect(await noOverflow(page), "markets overflow").toBe(true);
   await expectNoSeriousA11y(page, "markets");
   if (info.project.name === "mobile") {
@@ -363,7 +363,7 @@ test("each board tab explains itself in one line", async ({ page }) => {
   await page.getByRole("tab", { name: "Density-only" }).click();
   await expect(note).toHaveText("Same scores, sorted by fan heat only — the order a density-only tool would give.");
   await page.getByRole("tab", { name: "Without Qloo" }).click();
-  await expect(note).toContainText("A generic LLM's city order, with no taste data."); // 7aa6588: the note matches Test A
+  await expect(note).toContainText("A generic LLM's city order, with no taste data."); // 510ebee: the note matches Test A
 });
 
 test("preloading the next step loads a chunk and makes zero /api/qloo requests", async ({ page }) => {
@@ -387,8 +387,8 @@ test("the board leads with where fan heat and winnability disagree", async ({ pa
   await expect(section.getByTestId("move-row").first().or(section.getByText("Fan heat and winnability agree on this board."))).toBeVisible();
   const visibleRows = await section.getByTestId("move-row").evaluateAll((els) => els.filter((e) => (e as HTMLElement).offsetParent !== null).length);
   expect(visibleRows, "phones show two moves, desktop three").toBeLessThanOrEqual(info.project.name === "mobile" ? 2 : 3);
-  // The ranking controls must stay on the first screen. The ranked list itself used to start there too; since 24b2106 (artist title on its own row on
-  // phones) and f4e678b (the team bar, 96 px on phones, in the header) its first row starts just below the fold (about 830-930 px at 375x812, 864 at
+  // The ranking controls must stay on the first screen. The ranked list itself used to start there too; since 4bc56d0 (artist title on its own row on
+  // phones) and b3264ff (the team bar, 96 px on phones, in the header) its first row starts just below the fold (about 830-930 px at 375x812, 864 at
   // 1280x800), so the guard is the Ranking tabs. If the list should be back on the first screen, that is a layout change, not a spec change.
   await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
   const tabsTop = await page.locator('[role="tablist"][aria-label="Ranking"]').evaluate((e) => e.getBoundingClientRect().top + window.scrollY);
@@ -427,9 +427,9 @@ test("the landing leads with the pitch: headline, protagonist and no overflow, a
   page.on("request", (r) => { if (/\/api\/qloo/.test(r.url())) qloo.push(r.url()); });
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1, name: "Know which brands your artist's fans love in each city, before the sponsor meeting." })).toBeVisible();
-  await expect(page.getByText("The scenario: venues are holding dates until Friday. Pick which 2 of 5 smaller markets to confirm.")).toBeVisible(); // 5cb6457 landing copy
+  await expect(page.getByText("The scenario: venues are holding dates until Friday. Pick which 2 of 5 smaller markets to confirm.")).toBeVisible(); // e3c6616 landing copy
   await expect(page.getByRole("link", { name: "How we tested it →" })).toBeVisible();
-  await expect(page.getByText("Same engine for film press tours."), "632c95a dropped the unbacked film-press line").toHaveCount(0);
+  await expect(page.getByText("Same engine for film press tours."), "9bb862a dropped the unbacked film-press line").toHaveCount(0);
   expect(await noOverflow(page)).toBe(true);
   await expectNoSeriousA11y(page, "landing");
   const dir = process.env.SHOT_DIR;

@@ -33,7 +33,7 @@ for (const width of [375, 1280]) {
     await page.goto("/proof");
     await expect(page.getByText("We pre-registered every test before running it and publish all of it, including where Qloo-backed ranking lost.")).toBeVisible();
     const titles = await page.locator('[data-testid="proof-v3-test"] > h2').allTextContents();
-    // Audit C: the At a glance scoreboard leads, then the claim checker and the product checkers (the clean wins), then B, C, and last A (where the LLM won) and the fusion (34c7565).
+    // Audit C: the At a glance scoreboard leads, then the claim checker and the product checkers (the clean wins), then B, C, and last A (where the LLM won) and the fusion (950433b).
     expect(titles.map((t) => t.split(":")[0])).toEqual(["Claim checker", "Test B", "Test C", "Test A", "Gemini + Qloo combined (Amendment 7)"]);
     await expect(page.getByRole("link", { name: /protocol and its amendments/ })).toHaveAttribute("href", /github\.com\/prats-2311\/tour-intelligence-qloo\/blob\/master\/docs\/qloo\/proof-v3-protocol\.md$/);
     await page.locator("details > summary", { hasText: /^(Per |How to read)/ }).first().click();
@@ -41,7 +41,7 @@ for (const width of [375, 1280]) {
     expect(overflow).toBeLessThanOrEqual(0);
     const bad = (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze()).violations;
     expect(bad.map((v) => `${v.id}: ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`)).toEqual([]);
-    // Live stats (ca096a2) are the one allowed call on /proof; the backtest itself calls nothing.
+    // Live stats (d4f283d) are the one allowed call on /proof; the backtest itself calls nothing.
     expect(qlooDataCalls(qloo)).toEqual([]);
     if (process.env.PROOF_SHOTS) await page.screenshot({ path: `${process.env.PROOF_SHOTS}/proof-${width}.png`, fullPage: true, clip: { x: 0, y: 0, width, height: 2600 } });
   });

@@ -45,7 +45,7 @@ export function isTeamOrStatsConsoleError(m: ConsoleMessage): boolean {
 }
 
 /**
- * The guided tour (86cc069) offers itself on a first visit to the recorded example with a fixed card above the bottom bar. On a phone it sits over the
+ * The guided tour (11fdb52) offers itself on a first visit to the recorded example with a fixed card above the bottom bar. On a phone it sits over the
  * sticky action footer, so specs that are not about the tour start as a returning visitor who already dismissed it (the stored outcome, as "No thanks" writes).
  * guided-tour.spec.ts never calls this: it needs the first-visit prompt.
  */

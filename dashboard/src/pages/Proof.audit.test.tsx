@@ -108,8 +108,8 @@ describe("Proof tables (audit C 4, 10)", () => {
 
 describe("Proof amendments (audit C 9)", () => {
   const withAmendments = () => parseBacktest({ ...v3Backtest, proofV3: { ...v3Of(), amendments: [
-    { n: 7, commit: "0d7316422a8d40fa68c44545619b25d017de6017", summary: "every test so far compares Qloo *instead of* an LLM." },
-    { n: 10, commit: "4db53763ba49264bacbeee614e00e38fbb9f850e", summary: "`/proof` publishes one checker test." },
+    { n: 7, commit: "02de5dff6ac99c65885d28aff70667493b42ca8f", summary: "every test so far compares Qloo *instead of* an LLM." },
+    { n: 10, commit: "9cf5b7688832808939292bf2a5e2a21aacc19c71", summary: "`/proof` publishes one checker test." },
   ] } });
   it("renders emphasis and code, never raw markers, and links each commit to the public repo", () => {
     render(<MemoryRouter><ProofView data={withAmendments()} /></MemoryRouter>);
@@ -117,7 +117,7 @@ describe("Proof amendments (audit C 9)", () => {
     expect(sec.textContent).not.toMatch(/[*`]/);
     expect(sec.querySelector("em")!.textContent).toBe("instead of");
     expect(sec.querySelector("code")!.textContent).toBe("/proof");
-    const link = within(sec).getByRole("link", { name: /Amendment 7 commit 0d73164/ });
-    expect(link.getAttribute("href")).toBe("https://github.com/prats-2311/tour-intelligence-qloo/commit/0d7316422a8d40fa68c44545619b25d017de6017");
+    const link = within(sec).getByRole("link", { name: /Amendment 7 commit 02de5df/ });
+    expect(link.getAttribute("href")).toBe("https://github.com/prats-2311/tour-intelligence-qloo/commit/02de5dff6ac99c65885d28aff70667493b42ca8f");
   });
 });

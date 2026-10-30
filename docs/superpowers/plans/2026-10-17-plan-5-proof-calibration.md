@@ -1633,7 +1633,7 @@ git commit -m "feat(dashboard): Why-this-score shows the scoring config the gate
 - Test: `dashboard/src/lib/qloo/backtest.test.ts`, `dashboard/src/pages/Proof.test.tsx`, `dashboard/e2e/proof.spec.ts`
 
 **Interfaces:**
-- Consumes: the `backtest/results.json` shape from Task 2 (`BacktestResults`). The dashboard re-declares the types in `backtest.ts`, because it must not import gateway code (see commit 7da6406).
+- Consumes: the `backtest/results.json` shape from Task 2 (`BacktestResults`). The dashboard re-declares the types in `backtest.ts`, because it must not import gateway code (see commit b7d758a).
 - Produces:
   - `type Backtest = { status: "pending" } | (BacktestResults & { status: "complete" })`
   - `parseBacktest(raw: unknown): Backtest`
@@ -1975,7 +1975,7 @@ Once every task is complete: run the whole-branch review on the most capable mod
 
 ## Addendum (2026-10-17, approved by Prateek: "2 and 1")
 
-**Why:** backtest run 1 (`backtest/results.json`, commit 6a2e2b9) found no bug but a recipe gap. For local acts, the playbook asked Qloo "artists this artist's fans like, in this city" and got global taste neighbours (Harry Styles for Dua Lipa in Buenos Aires), not local acts. Calibration run 1 passed its gates, but it made 14 of 32 cities "skip" (Consider set at the median), kept a knife-edge (Oaxaca 36.7 against 37) and turned thin-data cities into 0.
+**Why:** backtest run 1 (`backtest/results.json`, commit 0000000) found no bug but a recipe gap. For local acts, the playbook asked Qloo "artists this artist's fans like, in this city" and got global taste neighbours (Harry Styles for Dua Lipa in Buenos Aires), not local acts. Calibration run 1 passed its gates, but it made 14 of 32 cities "skip" (Consider set at the median), kept a knife-edge (Oaxaca 36.7 against 37) and turned thin-data cities into 0.
 
 **Live spike (not a backtest case):** `qloo_rank` with `options` (up to 10 entity ids), `option_type: "artist"`, `signals: [artistId]` and `signal_location` re-orders a city's popular artists by taste fit. Khruangbin in Lisbon gave Branko and Dino d'Santiago at the top. `filter_location` is ignored for artists.
 

@@ -64,7 +64,7 @@ test("Without Qloo shows the generic list with the banner and no verdicts", asyn
   await page.getByRole("tab", { name: "Without Qloo" }).click();
   await expect(page.getByText("Generic LLM answer — no taste evidence")).toBeVisible();
   await expect(page.getByRole("list", { name: "Generic ranking" })).toBeVisible();
-  // Since a81e699 ("Without Qloo compares the LLM's order with Qloo's verdicts") each generic row carries Qloo's verdict as a comparison badge.
+  // Since 2d236ec ("Without Qloo compares the LLM's order with Qloo's verdicts") each generic row carries Qloo's verdict as a comparison badge.
   // The generic answer itself still has none: outside the Generic ranking list (page-wide) there is no verdict label, and no map legend anywhere.
   for (const label of ["Play", "Hidden goldmine", "De-risk", "Consider", "Skip", "Not enough data"]) {
     const outside = await page.getByText(label, { exact: true }).evaluateAll((els) => els.filter((e) => !e.closest('[aria-label="Generic ranking"]')).length);

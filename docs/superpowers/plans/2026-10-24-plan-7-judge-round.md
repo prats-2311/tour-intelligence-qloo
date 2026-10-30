@@ -8,7 +8,7 @@
 
 **Tech stack:** Node 22 TS gateway (Express 5, `qloo mcp` harness), React/Vite/Tailwind dashboard, Vitest, Playwright, Vertex Gemini.
 
-**Spec:** `docs/superpowers/specs/2026-10-16-tour-intelligence-qloo-design.md`. **Decisions:** the brain note `hackathons/qloo/decisions-2026-10-24.md` (D1–D21), as relayed by the hub session and confirmed by Prateek on 2026-10-24. **Code map:** `.superpowers/sdd/plan-7-notes/code-map.md` (git-ignored; file:line map at 70997c5).
+**Spec:** `docs/superpowers/specs/2026-10-16-tour-intelligence-qloo-design.md`. **Decisions:** the brain note `hackathons/qloo/decisions-2026-10-24.md` (D1–D21), as relayed by the hub session and confirmed by Prateek on 2026-10-24. **Code map:** `.superpowers/sdd/plan-7-notes/code-map.md` (git-ignored; file:line map at 2776c7e).
 
 ## Global Constraints
 - Free tiers only, with no paid fallback. Gemini on Vertex is approved within the existing caps: 20 per session and `GEMINI_DAILY_CEILING` 300 per day. Tavily caps are unchanged: basic search, 25 per day, 600 per month.
