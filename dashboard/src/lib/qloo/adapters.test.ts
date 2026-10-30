@@ -59,4 +59,11 @@ describe("adapters", () => {
     const out = playbookCrossDomain([{ kind: "sponsors", status: "ok", refs: [], warnings: [], items: [{ name: "X", affinity: null }] }]);
     expect(out).toEqual([{ category: "brand", name: "X", affinity: null }]);
   });
+  it("cross-domain never lists a do-not-book artist or a non-sponsor organisation", () => {
+    const out = playbookCrossDomain([
+      { kind: "local_moment", status: "ok", refs: [], warnings: [], items: [{ name: "Ariel Pink", category: "artist", affinity: 0.9 }, { name: "Cine Foro", category: "place", affinity: 0.7 }] },
+      { kind: "sponsors", status: "ok", refs: [], warnings: [], items: [{ name: "UNICEF", affinity: 0.8 }, { name: "Cerro Alto Mezcal", affinity: 0.91 }] },
+    ]);
+    expect(out.map((o) => o.name)).toEqual(["Cine Foro", "Cerro Alto Mezcal"]);
+  });
 });
