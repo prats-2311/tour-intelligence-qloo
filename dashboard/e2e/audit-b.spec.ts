@@ -98,3 +98,15 @@ test("12 keyboard: skip link first, Remove precedes Next, card DOM order matches
   const visual = [...cards].sort((a, b) => a.y - b.y || a.x - b.x).map((c) => c.id);
   expect(cards.map((c) => c.id)).toEqual(visual);
 });
+
+test("13 targets: outbound links, claims, breadcrumbs and primary buttons are 44px high on desktop", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(LA);
+  await loaded(page);
+  const small = await page.locator("main a, main button, nav[aria-label='Breadcrumb'] a, nav[aria-label='Breadcrumb'] button").evaluateAll((els) => els
+    .map((el) => ({ el, r: el.getBoundingClientRect() }))
+    .filter(({ el, r }) => r.width > 1 && r.height > 1 && !/\bsr-only\b/.test(el.className) && !el.closest("[role=tablist]"))
+    .filter(({ r }) => r.height < 43.5)
+    .map(({ el, r }) => `${el.tagName} "${(el.textContent ?? "").trim().slice(0, 30)}" ${Math.round(r.width)}x${Math.round(r.height)}`));
+  expect(small).toEqual([]);
+});

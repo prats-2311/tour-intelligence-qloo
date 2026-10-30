@@ -12,7 +12,7 @@ import type { SegmentRequest } from "@/lib/qloo/segmentStore";
 /** Opens the one-page brief for this brand. Keeps the example set and workspace of the page it is on. */
 export function PitchLink({ cityId, brand, search }: { cityId: string; brand: string; /** Query to carry; default is the current page's showcase/sample/ws. */ search?: string }) {
   const [params] = useSearchParams();
-  return <Link to={pitchPath(cityId, brand, search ?? carryQuery(params))} data-tour="sponsors-pitch" aria-label={`Pitch sheet for ${brand}`} data-noprint className="inline-flex min-h-11 items-center text-[13px] text-canvas-muted underline decoration-canvas-line underline-offset-4 outline-none hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:min-h-0">Pitch sheet <span aria-hidden>→</span></Link>;
+  return <Link to={pitchPath(cityId, brand, search ?? carryQuery(params))} data-tour="sponsors-pitch" aria-label={`Pitch sheet for ${brand}`} data-noprint className="inline-flex min-h-11 items-center text-[13px] text-canvas-muted underline decoration-canvas-line underline-offset-4 outline-none hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:-my-3">Pitch sheet <span aria-hidden>→</span></Link>;
 }
 
 /** `segments`: the artist and city to ask for age groups. Absent (sample data, no artist id) means no control, only the all-fans list. */

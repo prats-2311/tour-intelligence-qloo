@@ -68,8 +68,8 @@ const FALLBACK_MAX_STOPS = 8;
 // Sample playbooks replay ~25 events; the showcase pacing used on the board (60 ms) would make this page feel slow.
 const SAMPLE_PLAYBOOK_DELAY_MS = 10;
 // On phones "Remove from tour" is a quiet text button under the primary action, so the primary label never has to share a row with it.
-const removeBtn = "inline-flex min-h-11 items-center justify-center rounded-[10px] px-3 text-[14px] font-semibold text-canvas-muted underline underline-offset-4 hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:h-10 lg:bg-paper-raised lg:px-5 lg:text-[15px] lg:text-canvas-text lg:no-underline lg:hover:bg-[#3a3932]";
-const btnGold = "btn-gold inline-flex h-12 w-full min-w-0 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:w-auto";
+const removeBtn = "inline-flex min-h-11 items-center justify-center rounded-[10px] px-3 text-[14px] font-semibold text-canvas-muted underline underline-offset-4 hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:h-11 lg:bg-paper-raised lg:px-5 lg:text-[15px] lg:text-canvas-text lg:no-underline lg:hover:bg-[#3a3932]";
+const btnGold = "btn-gold inline-flex h-12 w-full min-w-0 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-11 lg:w-auto";
 const textBtn = "inline-flex min-h-11 items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 const smallBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 const first = (cards: Card[], kind: CardKind, key: string): string => firstOkName(cards, kind, key) ?? "—";
@@ -286,7 +286,7 @@ function CityPlaybookPage() {
       {inTour ? (
         <div className="flex min-w-0 flex-1 flex-col items-stretch gap-0.5 lg:flex-none lg:flex-row lg:items-center lg:gap-2">
           <button ref={toggleRef} type="button" onClick={toggle} className={removeBtn}>Remove from tour</button>
-          <NextStepLink data-testid="primary-action" to={nextHeld ? `/tours/playbook/${nextHeld.id}${sampleQ}` : `/tours/book${sampleQ}`} className="btn-gold inline-flex min-h-12 min-w-0 items-center justify-center rounded-[10px] px-4 py-2 text-center text-[15px] font-semibold leading-tight lg:h-10 lg:min-h-0 lg:px-5">
+          <NextStepLink data-testid="primary-action" to={nextHeld ? `/tours/playbook/${nextHeld.id}${sampleQ}` : `/tours/book${sampleQ}`} className="btn-gold inline-flex min-h-12 min-w-0 items-center justify-center rounded-[10px] px-4 py-2 text-center text-[15px] font-semibold leading-tight lg:h-11 lg:min-h-0 lg:px-5">
             <span className="min-w-0 break-words">{nextHeld ? `Next: ${nextHeld.name}` : "Next: Tour Book"}</span>
           </NextStepLink>
         </div>
