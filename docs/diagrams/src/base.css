@@ -1,0 +1,32 @@
+:root { --bg:#1c1b18; --text:#f2f0ea; --muted:#a4a094; --accent:#ffcc00; --web:#6aa8ff; --panel:#26251f; --line:#4a473c; --ok:#8fd694; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); }
+body { width: 1500px; height: 1000px; overflow: hidden; color: var(--text); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+#c { position: relative; width: 1500px; height: 1000px; background: var(--bg); }
+.abs { position: absolute; }
+h1 { position: absolute; left: 40px; top: 28px; font-size: 30px; font-weight: 700; letter-spacing: -0.2px; }
+.sub { position: absolute; left: 40px; top: 70px; font-size: 16px; color: var(--muted); }
+.box { position: absolute; background: var(--panel); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; justify-content: center; }
+.box .t { font-size: 17px; font-weight: 700; line-height: 1.2; }
+.box .s { font-size: 14.5px; color: var(--muted); line-height: 1.3; margin-top: 4px; }
+.box .s b { color: var(--text); font-weight: 600; }
+.box.qloo { border-color: var(--accent); }
+.box.web { border-color: var(--web); }
+.box.check { border-color: var(--accent); background: #34301a; }
+.box.check .t { color: var(--accent); }
+.box.dim { background: transparent; border-style: dashed; }
+.box.plain { background: transparent; border: none; padding: 0; }
+.zone { position: absolute; border: 2px dashed var(--accent); border-radius: 16px; }
+.zone.grey { border-color: var(--line); }
+.zlabel { position: absolute; font-size: 14.5px; font-weight: 700; color: var(--accent); letter-spacing: 0.4px; text-transform: uppercase; }
+.zlabel.grey { color: var(--muted); }
+.lbl { position: absolute; background: var(--bg); font-size: 14px; color: var(--muted); padding: 1px 6px; line-height: 1.25; text-align: center; }
+.lbl.y { color: var(--accent); } .lbl.b { color: var(--web); }
+.num { position: absolute; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #1c1b18; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; }
+.num.b { background: var(--web); }
+svg.over { position: absolute; left: 0; top: 0; width: 1500px; height: 1000px; pointer-events: none; }
+.legend { position: absolute; left: 40px; bottom: 26px; display: flex; gap: 28px; font-size: 14.5px; color: var(--muted); align-items: center; }
+.legend i { display: inline-block; width: 22px; height: 14px; border: 2px solid; border-radius: 4px; margin-right: 8px; vertical-align: -2px; }
+code, .mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.93em; }
+
+.lbl, .num { z-index: 5; } svg.over { z-index: 3; } .box { z-index: 2; }

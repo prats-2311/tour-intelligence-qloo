@@ -1,0 +1,34 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css"><style>.box .s{font-size:16.5px}.box .t{font-size:19px}.x{color:var(--muted);font-size:22px;font-weight:700;margin-right:6px}.tag{font-size:13.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}</style></head><body><div id="c"></div>
+<script src="lib.js"></script><script>
+title("What happens to a document you add", "Files are read in your browser. Their text goes to the model with your question and nowhere else.");
+const XS = [40, 328, 616, 904, 1192], BW = 250, BH = 250, Y = 190;
+zone(28, 135, 562, 370, "Stays in your tab", "grey");
+zone(606, 135, 866, 370, "Server side, for this one request", "");
+const S = [
+  ["1", "Your file", "<b>.pdf, .txt, .md or .csv.</b> Up to 3 files, 40 pages and 60,000 characters in total.", "dim"],
+  ["2", "Text read in the tab", "A PDF is read with pdf.js in the browser. Plain text is cut into numbered sections so a citation can point at one.", ""],
+  ["3", "One strategist request", "Only the text travels, inside <span class='mono'>POST /v1/strategist</span> with your question. Control characters are stripped.", ""],
+  ["4", "Gemini", "Each page is marked <span class='mono'>[doc:id p.n]</span>. The model is told the files are data, not instructions, and to cite pages. The text is sent to Google's model.", ""],
+  ["5", "Answer check", "A sentence that cites a page has its numbers checked against that page. A wrong page or an absent number is flagged.", "check"],
+];
+S.forEach((s, i) => {
+  const b = h(`<div class="tag">${s[0]}</div><div class="t">${s[1]}</div><div class="s">${s[2]}</div>`, "box " + s[3], XS[i], Y, BW, BH);
+  b.style.justifyContent = "flex-start"; b.style.paddingTop = "16px";
+  if (i < 4) arrow([[XS[i] + BW, Y + 125], [XS[i + 1], Y + 125]], {c: "t"});
+});
+h("What does not happen", "zlabel grey", 40, 545);
+const N = [
+  ["Qloo", "Tool arguments are validated names. A string of 40 or more characters that quotes a document is rejected before any call."],
+  ["Cache", "No cache entry is made. The strategist has no response cache."],
+  ["Database", "Nothing is written to Firestore, BigQuery or a team workspace."],
+  ["Logs", "Request bodies are never logged. An error prints its name only."],
+  ["After you close the tab", "Nothing is kept anywhere. Add the file again next time."],
+];
+N.forEach((n, i) => {
+  const b = h(`<div class="t"><span class="x">&#10005;</span>${n[0]}</div><div class="s">${n[1]}</div>`, "box dim", XS[i], 585, BW, 210);
+  b.style.justifyContent = "flex-start"; b.style.paddingTop = "18px";
+});
+h("Numbers are checked, claims in words are not. A scanned PDF without a text layer gives no text; there is no OCR.", "abs", 40, 830, 1400).style.cssText += "font-size:15.5px;color:#a4a094";
+legend([["#ffcc00", "Checker"], ["#4a473c", "Step", "border-style:solid"], ["#4a473c", "Does not happen", "border-style:dashed"]]);
+finish();
+</script></body></html>

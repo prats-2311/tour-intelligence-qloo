@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css"><style>.box .s{font-size:15.5px}.list{list-style:none}.list li{font-size:16px;color:var(--muted);line-height:1.35;margin:0 0 9px 0;padding-left:22px;position:relative}.list li:before{content:"";position:absolute;left:2px;top:8px;width:8px;height:8px;border-radius:50%;background:var(--accent)}.list.no li:before{background:none;content:"\2715";top:0;left:0;width:auto;height:auto;color:var(--muted);font-size:15px}.list b{color:var(--text);font-weight:600}</style></head><body><div id="c"></div>
+<script src="lib.js"></script><script>
+title("What goes to BigQuery", "Optional and off by default. Only counts and labels are written. Test traffic is flagged and left out.");
+// sources
+h("Written by the gateway", "zlabel grey", 40, 118);
+box(40, 150, 330, 92, "Playbook runs", "One row per city playbook stream");
+box(40, 262, 330, 92, "Team workspace writes", "Status, note, override, lead events");
+box(40, 374, 330, 92, "/v2 prototype taps", "Going, waitlist, was there");
+// buffer
+box(420, 150, 230, 316, "Buffer", "Fire-and-forget. 20 rows or 5 seconds. Never awaited on a request, never throws. On any failure the app behaves as before.", "check");
+[[196], [308], [420]].forEach(([y]) => arrow([[370, y], [420, y]], {c: "t"}));
+// BigQuery
+zone(700, 135, 340, 345, "BigQuery, day-partitioned", "grey");
+box(716, 175, 308, 84, "playbook_runs", "source, cards, claims, latency");
+box(716, 273, 308, 84, "team_events", "event type, role, overrode Qloo");
+box(716, 371, 308, 84, "v2_outcome_taps", "experience, action");
+arrow([[650, 308], [700, 308]], {c: "y"});
+// stats + proof
+h("Read back", "zlabel grey", 1090, 118);
+box(1090, 150, 350, 150, "Stats routes", "<span class='mono'>/v1/stats/trust, team, v2</span><br>Rows where test is false. Last 90 days, cached 60 s. Off or failing: <span class='mono'>{enabled:false}</span>.");
+box(1090, 336, 350, 130, "/proof live panels", "Trust meter and team decisions. Hidden when analytics are off.", "check");
+arrow([[1040, 225], [1090, 225]], {c: "t"}); arrow([[1265, 300], [1265, 336]], {c: "t"});
+// written / never
+zone(40, 520, 680, 300, "", "grey"); h("Written", "zlabel", 56, 532);
+h(`<ul class="list"><li><b>Counts</b>: cards ok or empty, claims verified and removed, sponsors hidden, Qloo calls and cache hits</li><li><b>Latency</b>, narrative status, error code</li><li><b>City and country</b> as typed, card kinds, team event type, role</li><li><b>Hashed ids</b>: sha256 of session and workspace ids</li><li><b>Test flag</b>: session id starting <span class="mono">e2e-</span> or <span class="mono">test-</span>, or header <span class="mono">x-tiq-test: 1</span></li></ul>`, "abs", 56, 572, 648);
+zone(760, 520, 680, 300, "", "grey"); h("Never written", "zlabel grey", 776, 532);
+h(`<ul class="list no"><li><b>Qloo results</b>: entity names, affinities, card items</li><li><b>Note and lead text</b>, people's names</li><li><b>The artist name</b></li><li><b>Document text</b> from the chat</li><li><b>Raw ids and IPs</b>: raw session or workspace ids, IP addresses</li></ul><div style="font-size:15px;color:#a4a094;margin-top:14px">Logging is best effort, so counts are indicative, not an audit log.</div>`, "abs", 776, 572, 648);
+legend([["#ffcc00", "Write path and checks"], ["#4a473c", "Other", "border-style:solid"]]);
+finish();
+</script></body></html>
