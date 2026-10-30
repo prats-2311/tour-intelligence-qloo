@@ -1,8 +1,5 @@
-import { fmt } from "./BudgetBits";
+import { fmt } from "@/lib/budget/format";
 import { cityResult, type CityInputs, type Currency } from "@/lib/budget/math";
-
-/** True when the user typed anything for this city. */
-export const hasBudget = (c: CityInputs | undefined): boolean => !!c && Object.entries(c).some(([k, v]) => k !== "sponsorName" && v.trim() !== "");
 
 /** Tour Book chapter: the city's numbers from the user's own budget (browser storage, no fetch). Only values that can be worked out are shown. */
 export function ChapterBudget({ cityId, inputs, currency }: { cityId: string; inputs: CityInputs; currency: Currency }) {

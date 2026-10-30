@@ -1,7 +1,5 @@
 import type { ReactNode } from "react";
 
-export const fmt = (n: number | null | undefined): string => (n === null || n === undefined ? "—" : n.toLocaleString("en-US", { maximumFractionDigits: 2 }));
-export const btn = "inline-flex min-h-11 items-center justify-center gap-2 rounded-[10px] bg-paper-raised px-4 text-[14px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 const inputCls = "h-11 w-full min-w-0 rounded-[8px] border border-transparent bg-canvas px-3 text-[15px] tabular-nums text-canvas-text placeholder:text-canvas-muted focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-gold";
 
 /** A labelled input; the accessible name is "<label>, <context>" so it starts with the visible text. */
