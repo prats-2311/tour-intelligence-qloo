@@ -34,10 +34,11 @@ function Step({ id, label, n, state, to, preload, bottom }: { id: StepId; label:
 
 /** The four-step journey, same steps and order in the desktop top bar and the phone bottom bar. */
 export function JourneyStepper({ variant }: { variant: "top" | "bottom" }) {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const { state, shortlist, lastOpenedId } = useTourBoard();
   const links = journeyLinks({ status: state.status, source: state.source, sampleSet: state.sampleSet, routing: isRoutingBrief(state.brief), cities: state.cities, shortlist, lastOpenedId });
-  const current = stepOf(pathname);
+  // The blank "Plan a tour" form (?new=1) is step 1: nothing is scored, so nothing is done.
+  const current = pathname === "/tours/board" && new URLSearchParams(search).get("new") === "1" ? "markets" : stepOf(pathname);
   const at = current ? STEPS.findIndex((s) => s.id === current) : -1;
   const bottom = variant === "bottom";
   return (

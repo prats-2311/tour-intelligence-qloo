@@ -81,4 +81,10 @@ describe("Breadcrumbs", () => {
     expect(trail()).toHaveLength(3);
     expect(screen.queryByRole("button", { name: "Show full path" })).toBeNull();
   });
+  it("new-tour form (?new=1) never shows the showcase artist", () => {
+    localStorage.setItem("ws", "team42");
+    mount("/tours/board?new=1&ws=team42");
+    expect(trail()).toEqual(["Overview", "New tour"]);
+    expect(document.body.textContent).not.toContain(SHOWCASE.artist);
+  });
 });

@@ -194,3 +194,16 @@ describe("tablet and mobile drawer", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
+
+describe("journey stepper on the new-tour form", () => {
+  it("?new=1: Markets is current, nothing is done", () => {
+    mount("/tours/board?new=1&ws=team42");
+    const steps = Array.from(document.querySelectorAll("header [data-step]")).map((e) => `${e.getAttribute("data-step")}:${e.getAttribute("data-state")}`);
+    expect(steps).toEqual(["markets:current", "decide:todo", "playbook:todo", "book:todo"]);
+  });
+  it("the example board still reads Markets done, Decide current", () => {
+    mount("/tours/board?showcase=1");
+    expect(document.querySelector("header [data-step=markets]")?.getAttribute("data-state")).toBe("done");
+    expect(document.querySelector("header [data-step=decide]")?.getAttribute("data-state")).toBe("current");
+  });
+});

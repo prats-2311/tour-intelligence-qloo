@@ -6,9 +6,10 @@ const STANDALONE: Record<string, string> = { "/proof": "How we tested it", "/age
 const safeDecode = (s: string): string => { try { return decodeURIComponent(s); } catch { return s; } };
 
 /** The trail under the header. The tour segment is the artist; the city comes from the playbook route. Empty on the landing page. */
-export function buildCrumbs({ pathname, artist, cityName }: { pathname: string; artist: string | null; cityName: string | null }): Crumb[] {
+export function buildCrumbs({ pathname, artist, cityName, fresh = false }: { pathname: string; artist: string | null; cityName: string | null; /** The blank "Plan a tour" form (?new=1): no tour exists yet, so no artist. */ fresh?: boolean }): Crumb[] {
   const pitch = /^\/tours\/pitch\/([^/]+)\/([^/]+)\/?$/.exec(pathname);
   if (pathname === "/") return [];
+  if (fresh && pathname === "/tours/board") return [{ label: "Overview", href: "/" }, { label: "New tour", current: true }];
   const tour = { label: artist ? `${artist} tour` : "Your tour", href: "/tours/board" };
   const home = { label: "Overview", href: "/" };
   let trail: Crumb[];
