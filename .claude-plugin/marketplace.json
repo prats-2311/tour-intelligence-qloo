@@ -1,0 +1,11 @@
+{
+  "name": "tour-intelligence-qloo",
+  "owner": { "name": "Prateek Srivastava" },
+  "plugins": [
+    {
+      "name": "tour-intel",
+      "source": "./plugins/tour-intel",
+      "description": "Tour Intelligence × Qloo for Claude Code: plan tours, sponsor briefs and advance risks from Qloo taste data through a public MCP server."
+    }
+  ]
+}

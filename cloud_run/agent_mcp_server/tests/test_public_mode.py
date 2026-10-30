@@ -27,8 +27,11 @@ def public_main():
                 os.environ[k] = v
 
 
-def test_public_mode_registers_only_taste_tools(public_main):
-    assert set(public_main.registered_tool_names()) == {"find_tour_markets", "get_city_playbook", "suggest_support_acts", "rank_venues", "get_local_moment"}
+def test_public_mode_registers_only_the_nine_public_tools(public_main):
+    names = public_main.registered_tool_names()
+    assert len(names) == 9
+    assert set(names) == {"find_tour_markets", "get_city_playbook", "suggest_support_acts", "rank_venues", "get_local_moment",
+                          "get_sponsors_by_age", "get_advance_risks", "get_team_notes", "get_tour_report"}
 
 
 def test_public_mode_imports_without_tour_data_api_url(public_main):
@@ -133,3 +136,47 @@ def test_public_mode_instructions_name_the_qloo_project(public_main):
     ins = public_main.mcp.instructions
     assert "Tour Intelligence × Qloo" in ins
     assert "Agentic Tour" not in ins
+
+
+def test_tour_report_is_capped_and_counts_as_three_requests(public_main, monkeypatch):
+    seen = {}
+
+    def fake(artist, regions, max_stops, **kw):
+        seen.update(kw, max_stops=max_stops)
+        return {"status": "ok"}
+
+    monkeypatch.setattr(public_main.insight_tools, "get_tour_report", fake)
+    monkeypatch.setattr(public_main, "_request_ip", lambda: "203.0.113.77")
+    old = public_main.LIMITER
+    public_main.LIMITER = public_main.SlidingWindow(limit=30, window_s=600, now=lambda: 0.0)
+    try:
+        public_main.get_tour_report("A", ["x"], 20)
+        assert seen["max_regions"] == 2 and seen["max_cities"] == 3 and seen["max_stops"] == 3
+        assert len(public_main.LIMITER._hits["203.0.113.77"]) == public_main.REPORT_WEIGHT - 1  # the middleware records the first hit
+        public_main.LIMITER = public_main.SlidingWindow(limit=1, window_s=600, now=lambda: 0.0)
+        with pytest.raises(RuntimeError, match="Rate limit"):
+            public_main.get_tour_report("A", ["x"], 3)
+    finally:
+        public_main.LIMITER = old
+
+
+def test_prompts_and_about_resource_are_registered(public_main):
+    import asyncio
+    prompts = {p.name for p in asyncio.run(public_main.mcp.list_prompts())}
+    assert {"plan_tour", "brief_for_sponsor_meeting"} <= prompts
+    res = asyncio.run(public_main.mcp.list_resources())
+    assert "tour-intel://about" in {str(r.uri) for r in res}
+    text = public_main.about()
+    assert "https://tour-intel-qloo.web.app/proof" in text and "not a ticket forecast" in text
+    plan = public_main.plan_tour("Lumen Vale", "Mexico, Brazil")
+    assert "find_tour_markets" in plan and "get_tour_report" in plan and "never claim" in plan
+    brief = public_main.brief_for_sponsor_meeting("Lumen Vale", "Guadalajara", "MX")
+    assert "get_sponsors_by_age" in brief and "Guadalajara" in brief and "no deal is implied" in brief
+
+
+def test_new_tools_are_callable_through_the_mcp_registry(public_main, monkeypatch):
+    import asyncio
+    monkeypatch.setattr(public_main.insight_tools, "get_json", lambda path, **kw: {"ws": "x", "statuses": {}, "threads": {}, "overrides": {}, "leads": {}, "activity": []})
+    monkeypatch.setattr(public_main, "_request_ip", lambda: "198.51.100.90")
+    res = asyncio.run(public_main.mcp.call_tool("get_team_notes", {"workspace_link_or_id": "https://tour-intel-qloo.web.app/?ws=AbCdEfGh12345678"}))
+    assert "read_only" in str(res)

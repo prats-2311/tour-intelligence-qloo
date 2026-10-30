@@ -15,7 +15,8 @@ class SlidingWindow:
         self._now = now
         self._hits: dict[str, deque] = {}  # insertion-ordered: oldest key first
 
-    def allow(self, key: str) -> bool:
+    def allow(self, key: str, weight: int = 1) -> bool:
+        """Record `weight` hits for key; refuse (and record nothing) if they would exceed the limit."""
         t = self._now()
         hits = self._hits.get(key)
         if hits is None:
@@ -24,7 +25,7 @@ class SlidingWindow:
             hits = self._hits[key] = deque()
         while hits and hits[0] <= t - self.window_s:
             hits.popleft()
-        if len(hits) >= self.limit:
+        if len(hits) + weight > self.limit:
             return False
-        hits.append(t)
+        hits.extend([t] * weight)
         return True

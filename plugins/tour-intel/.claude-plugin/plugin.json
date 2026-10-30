@@ -1,0 +1,10 @@
+{
+  "name": "tour-intel",
+  "version": "0.1.0",
+  "description": "Plan tours from Qloo taste data: market board, city playbooks, sponsors by age, advance risks, team notes and a one-call report. Affinity signals, not ticket forecasts.",
+  "author": { "name": "Prateek Srivastava" },
+  "homepage": "https://tour-intel-qloo.web.app",
+  "repository": "https://github.com/prats-2311/tour-intelligence-qloo",
+  "license": "MIT",
+  "keywords": ["music", "touring", "qloo", "mcp", "sponsors"]
+}

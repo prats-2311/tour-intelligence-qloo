@@ -44,6 +44,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 
+import insight_tools  # noqa: E402
 import taste_tools  # noqa: E402
 from gateway import gateway_url  # noqa: E402
 from ratelimit import SlidingWindow  # noqa: E402
@@ -52,6 +53,7 @@ from ratelimit import SlidingWindow  # noqa: E402
 PUBLIC = os.environ.get("MCP_PUBLIC") == "1"
 PUBLIC_MAX_REGIONS = 2
 PUBLIC_MAX_STOPS = 3
+REPORT_WEIGHT = 3  # get_tour_report counts as this many requests against the per-IP limiter
 LIMITER = SlidingWindow(limit=30, window_s=600)
 _REQUEST_IP: contextvars.ContextVar[str] = contextvars.ContextVar("request_ip", default="unknown")
 
@@ -67,8 +69,10 @@ if PUBLIC:
         version="1.0.0",
         instructions=(
             "Taste tools from Tour Intelligence × Qloo: find tour markets a mid-tier artist can win, "
-            "and the per-city playbook (sponsor, co-bill, venue, local moment). "
-            "Backed by Qloo taste data; rate-limited public demo."
+            "the per-city playbook (sponsor, co-bill, venue, local moment), sponsors by age group, "
+            "advance risks (weather, holidays, visas, equipment), read-only team notes, and a one-call "
+            "tour report. Backed by Qloo taste data; affinity signals, not ticket forecasts. "
+            "Rate-limited public demo; read tour-intel://about for limits and privacy."
         ),
     )
 else:
@@ -241,6 +245,109 @@ def get_local_moment(artist: str, city: str, country: str) -> dict:
     """Get local cultural moments (events, scenes, places) in a city that fit an
     artist's audience, each with its type and affinity."""
     return taste_tools.get_local_moment(artist, city, country, **_gw())
+
+
+@mcp.tool()
+def get_sponsors_by_age(artist: str, city: str, country: str) -> dict:
+    """Use when someone asks which brands fit an artist's younger or older fans in a city.
+    Returns the age bands where the artist's fans over-index (index vs the average audience;
+    not a share), each with the top 5 brands (fan rank, city rank, how many are new in the
+    top 5 vs all fans). Age only. Affinity signal from aggregate taste data, not a ticket
+    forecast; it is not evidence that any brand will sponsor."""
+    return insight_tools.get_sponsors_by_age(artist, city, country, **_gw())
+
+
+@mcp.tool()
+def get_advance_risks(city: str, country: str, start_date: str, end_date: str, artist_country: str = "") -> dict:
+    """Use when planning a stop and you need advance risks: typical weather for the dates,
+    public holidays in the window, work-visa and equipment/customs notes (each with its source
+    URL). Dates are YYYY-MM-DD, end on or after start, window at most 60 days. Weather is
+    typical weather for these dates in past years, not a forecast. Pass artist_country for
+    nationality-specific visa notes. Web-sourced; confirm before relying on it."""
+    return insight_tools.get_advance_risks(city, country, start_date, end_date, artist_country, **_gw())
+
+
+@mcp.tool()
+def get_team_notes(workspace_link_or_id: str) -> dict:
+    """Read a Tour Intelligence team workspace: city statuses, open threads (last 2 messages),
+    resolved decisions, overrides next to the value Qloo suggested, sponsor leads and the last
+    10 activity events. Accepts the full share link or the bare workspace id. Read-only.
+    Anyone with the workspace link can read it; don't share links you don't want others to see.
+    Entries marked "Demo teammate" are seeded demo content."""
+    return insight_tools.get_team_notes(workspace_link_or_id, **_gw())
+
+
+@mcp.tool()
+def get_tour_report(artist: str, regions: list[str], max_stops: int = 3) -> dict:
+    """One call, full report: scores markets in up to 2 regions (3 stops), then runs the
+    playbook for the top Play / hidden-goldmine cities (at most 3) and returns structured JSON
+    plus a ready-to-share `markdown` report (board table; per city top 3 sponsors, best venue,
+    top co-billing act, top promo zone). Slow: about 1-3 minutes on a cold cache, and it counts
+    as 3 requests against the per-IP rate limit. Use find_tour_markets / get_city_playbook for
+    quick single questions. Affinity signal from aggregate taste data, not a ticket forecast.
+    A failed city is skipped with a note instead of failing the report."""
+    if PUBLIC and not LIMITER.allow(_request_ip(), weight=REPORT_WEIGHT - 1):
+        raise RuntimeError("Rate limit reached — try again in a few minutes")
+    extra = {"max_regions": PUBLIC_MAX_REGIONS, "max_cities": PUBLIC_MAX_STOPS} if PUBLIC else {}
+    if PUBLIC and isinstance(max_stops, int) and not isinstance(max_stops, bool):
+        max_stops = min(max_stops, PUBLIC_MAX_STOPS)
+    return insight_tools.get_tour_report(artist, regions, max_stops, **extra, **_gw())
+
+
+ABOUT = (
+    "Tour Intelligence × Qloo — public MCP demo.\n\n"
+    "What it does: helps a mid-tier artist's team pick tour markets and plan each stop using Qloo "
+    "taste data: market board, city playbook (sponsors, co-billing, venues, promo zones, local "
+    "moments), sponsors by age group, advance risks (weather, holidays, visas, equipment), "
+    "read-only team notes, and a one-call report.\n\n"
+    "Honest limits: every score is an affinity signal from aggregate taste data, not a ticket "
+    "forecast and not a claim about individuals. Index values compare with the average audience "
+    "and are not shares. Weather is typical for past years, not a forecast. Visa and equipment "
+    "notes are web-sourced; confirm them. Nothing here shows that a brand or act has agreed to anything.\n\n"
+    "Public demo limits: 2 regions and 3 stops per call, 30 requests per 10 minutes per client "
+    "(get_tour_report counts as 3), a shared daily Qloo-call ceiling, and a 1-3 minute cold "
+    "report. Results may come from recorded (cached) data rather than live calls.\n\n"
+    "Privacy: no sign-in and no personal data stored by this server. Your IP is hashed to scope "
+    "a rate-limit and budget session. Artist, city and region names you send go to the Qloo "
+    "gateway. Team workspaces are readable by anyone holding the link.\n\n"
+    "Proof and method: https://tour-intel-qloo.web.app/proof"
+)
+
+
+@mcp.resource("tour-intel://about", name="about", mime_type="text/plain",
+              description="What this server does, its limits, privacy and the proof link.")
+def about() -> str:
+    return ABOUT
+
+
+@mcp.prompt()
+def plan_tour(artist: str, regions: str) -> str:
+    """Plan a tour for an artist across up to 2 regions (comma-separated)."""
+    return (
+        f"Plan a tour for {artist} in: {regions}.\n"
+        "1. Call find_tour_markets (max 2 regions, 3 stops). If it returns candidates, ask me which artist I mean and stop.\n"
+        "2. For the top Play / hidden-goldmine cities (at most 3), call get_city_playbook; add get_sponsors_by_age for sponsor ideas "
+        "and suggest_support_acts / rank_venues if I ask. If I want everything in one go, call get_tour_report instead (slow, 1-3 minutes).\n"
+        "3. If I give dates, call get_advance_risks for each stop.\n"
+        "Present honestly: scores are affinity signals from aggregate taste data, not ticket forecasts; age indexes are not shares of fans; "
+        "weather is typical, not a forecast; never claim a brand or act has agreed to anything. Say when a city's data was missing or partial, "
+        "and mention results may come from recorded rather than live data. Finish with a short ranked list and the next step."
+    )
+
+
+@mcp.prompt()
+def brief_for_sponsor_meeting(artist: str, city: str, country: str) -> str:
+    """Prepare a sponsor-meeting brief for one artist in one city."""
+    return (
+        f"Prepare a one-page sponsor-meeting brief for {artist} in {city}, {country}.\n"
+        "1. Call get_city_playbook and read the sponsors card (fan rank vs city rank).\n"
+        "2. Call get_sponsors_by_age and note which age group each brand fits; if there is no age skew, say so.\n"
+        "3. Optionally call get_local_moment for a local hook and suggest_support_acts for a co-billing angle.\n"
+        "Write: who the fans are (age bands as an index vs the average audience, never a percentage of fans), "
+        "the 3 strongest brand fits with the lift wording (for example 'fans rank it #2; not in the city's top 20'), and a local hook. "
+        "State that this is an affinity signal from aggregate taste data, not a ticket forecast or a sign that any brand will sponsor, "
+        "and that no deal is implied. Do not invent brands or numbers that the tools did not return."
+    )
 
 
 # stateless_http=True: a streamable-http session tied to one server instance
