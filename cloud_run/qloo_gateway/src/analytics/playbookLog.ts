@@ -1,9 +1,9 @@
 import type { Analytics } from "./bigquery.js";
-import { sha256 } from "./bigquery.js";
+import { isTestTraffic, sha256 } from "./bigquery.js";
 import { PUBLIC_SESSION_PREFIX } from "../budget.js";
 import type { CardClaims, CardKind, GatewayEvent, Narrative, PlaybookCard } from "../types.js";
 
-export interface PlaybookLogInput { sessionId: string; city: { id?: string; name: string; country: string }; narrative: boolean }
+export interface PlaybookLogInput { sessionId: string; city: { id?: string; name: string; country: string }; narrative: boolean; /** x-tiq-test header was set */ test?: boolean }
 
 const clip = (s: string): string => s.slice(0, 80);
 
@@ -52,6 +52,7 @@ export async function* observePlaybook(gen: AsyncGenerator<GatewayEvent>, input:
       verdict: null, // the playbook is built from a city already chosen; the board's verdict is not part of this call
       cards_ok: cardsOk, cards_empty: cardsEmpty, claims_verified: verified, claims_removed: removed, sponsors_hidden: sponsorsHidden,
       qloo_calls: qlooCalls, cache_hits: cacheHits, gemini_calls: null, latency_ms: Math.max(0, now() - started), narrative_status: narrativeStatus, error,
+      test: input.test === true || isTestTraffic(input.sessionId),
     });
   }
 }

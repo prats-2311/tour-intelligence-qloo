@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import express from "express";
 import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Analytics, BQ_SCHEMAS, BQ_TABLES, createAnalytics, sha256, type BqClientLike, type BqRow, type BqTable } from "../src/analytics/bigquery.js";
+import { Analytics, BQ_SCHEMAS, BQ_TABLES, createAnalytics, isTestTraffic, sha256, type BqClientLike, type BqRow, type BqTable } from "../src/analytics/bigquery.js";
 import { observePlaybook } from "../src/analytics/playbookLog.js";
 import { createStats } from "../src/analytics/stats.js";
 import { mountCollab } from "../src/collab/routes.js";
@@ -304,5 +304,77 @@ describe("collab events", () => {
     mountCollab(app, { store: new MemoryCollabStore(), analytics: a, newId: () => "ws00000001" });
     const ws = (await request(app).post("/v1/ws").set("x-session-id", "s").send({})).body.ws;
     expect((await request(app).post(`/v1/ws/${ws}/status`).set("x-session-id", "s").send({ ...me, cityId: "1", status: "confirmed" })).status).toBe(200);
+  });
+});
+
+describe("test traffic convention", () => {
+  it("isTestTraffic: e2e- or test- session ids, or x-tiq-test: 1", () => {
+    expect(isTestTraffic("e2e-abc")).toBe(true);
+    expect(isTestTraffic("test-abc")).toBe(true);
+    expect(isTestTraffic("sess-1", "1")).toBe(true);
+    expect(isTestTraffic("sess-1", "0")).toBe(false);
+    expect(isTestTraffic("sess-1", undefined)).toBe(false);
+    expect(isTestTraffic("mcp-public-1")).toBe(false);
+    expect(isTestTraffic("my-e2e-test")).toBe(false);
+    expect(isTestTraffic(undefined)).toBe(false);
+  });
+  it("every table has a nullable BOOL test column", () => {
+    for (const t of BQ_TABLES) expect(BQ_SCHEMAS[t]).toContainEqual({ name: "test", type: "BOOL", mode: "NULLABLE" });
+  });
+  it("observePlaybook sets test from the input flag or the session prefix", async () => {
+    const c = fake();
+    const a = enabled(c);
+    const base = { city: { id: "123", name: "Lima", country: "PE" }, narrative: false };
+    const done: GatewayEvent[] = [{ type: "done", summary: {} }];
+    await drain(observePlaybook(evs(done), { ...base, sessionId: "sess-1" }, a));
+    await drain(observePlaybook(evs(done), { ...base, sessionId: "sess-1", test: true }, a));
+    await drain(observePlaybook(evs(done), { ...base, sessionId: "e2e-9" }, a));
+    await a.flush();
+    expect(c.inserts.flatMap((i) => i.rows).map((r) => r.test)).toEqual([false, true, true]);
+  });
+  it("operator script adds the test column idempotently", () => {
+    const sh = readFileSync(new URL("../scripts/bq_add_test_column.sh", import.meta.url), "utf8");
+    expect(sh).toContain("bq --project_id=\"$PROJECT\" update");
+    expect(sh).toContain("already has test");
+    for (const t of BQ_TABLES) expect(sh).toContain(t);
+    expect(readFileSync(new URL("../CLAUDE.md", import.meta.url), "utf8")).toContain("scripts/bq_add_test_column.sh");
+  });
+  it("stats exclude test = TRUE and keep NULL (pre-column rows) as real", async () => {
+    const c = fake();
+    const s = createStats(enabled(c));
+    await s.trust(); await s.team(); await s.v2();
+    const real = "IFNULL(test, FALSE) = FALSE";
+    expect(c.queries).toHaveLength(3);
+    expect(c.queries[0]).toContain(real);
+    expect((c.queries[1]!.match(/IFNULL\(test, FALSE\) = FALSE/g) ?? []).length).toBe(4);
+    expect(c.queries[2]).toContain(real);
+  });
+  it("tap and city-playbook log test from the session prefix or header", async () => {
+    const c = fake();
+    const a = enabled(c);
+    const app = createApp({ qloo, cities: CITIES, health, analytics: a });
+    await request(app).post("/v1/v2/tap").set("x-session-id", "s").send({ action: "going" });
+    await request(app).post("/v1/v2/tap").set("x-session-id", "e2e-s").send({ action: "going" });
+    await request(app).post("/v1/v2/tap").set("x-session-id", "s2").set("x-tiq-test", "1").send({ action: "going" });
+    const q = { artist: "A", artistEntityId: "E", city: "Lima", country: "PE", cityId: "123", narrative: "0" };
+    await request(app).get("/v1/city-playbook").set("x-session-id", "s").set("x-tiq-test", "1").query(q);
+    await request(app).get("/v1/city-playbook").set("x-session-id", "s").query(q);
+    await a.flush();
+    const by = (t: BqTable) => c.inserts.filter((i) => i.table === t).flatMap((i) => i.rows).map((r) => r.test);
+    expect(by("v2_outcome_taps")).toEqual([false, true, true]);
+    expect(by("playbook_runs")).toEqual([true, false]);
+  });
+  it("team events log test from the header or session prefix", async () => {
+    const c = fake();
+    const a = enabled(c);
+    const app = express(); app.use(express.json());
+    mountCollab(app, { store: new MemoryCollabStore(), analytics: a, newId: () => "ws00000001" });
+    const ws = (await request(app).post("/v1/ws").set("x-session-id", "s").send({})).body.ws;
+    const body = { name: "Sam", role: "Manager", cityId: "1", status: "confirmed" };
+    await request(app).post(`/v1/ws/${ws}/status`).set("x-session-id", "s").send(body);
+    await request(app).post(`/v1/ws/${ws}/status`).set("x-session-id", "s").set("x-tiq-test", "1").send(body);
+    await request(app).post(`/v1/ws/${ws}/status`).set("x-session-id", "test-1").send(body);
+    await a.flush();
+    expect(c.inserts.flatMap((i) => i.rows).map((r) => r.test)).toEqual([false, true, true]);
   });
 });

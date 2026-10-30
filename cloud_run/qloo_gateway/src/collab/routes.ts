@@ -3,7 +3,7 @@ import type { Express, Request, Response } from "express";
 import { applyOp, CollabError, emptyDoc, seedDoc, toSnapshot, WS_ID, type Op } from "./model.js";
 import { WindowLimiter } from "./limits.js";
 import type { CollabStore } from "./store.js";
-import { DISABLED_ANALYTICS, sha256, type Analytics } from "../analytics/bigquery.js";
+import { DISABLED_ANALYTICS, TEST_HEADER, isTestTraffic, sha256, type Analytics } from "../analytics/bigquery.js";
 import { teamEventRow } from "../analytics/teamLog.js";
 
 export interface CollabDeps {
@@ -83,7 +83,7 @@ export function mountCollab(app: Express, deps: CollabDeps): void {
         if (analytics.enabled) {
           try {
             const row = teamEventRow(op, body as Record<string, unknown>, doc, deps.cityOf);
-            if (row) analytics.track("team_events", { ws_hash: sha256(ws), ...row });
+            if (row) analytics.track("team_events", { ws_hash: sha256(ws), ...row, test: isTestTraffic(sid, req.header(TEST_HEADER)) });
           } catch { /* analytics must never affect a write */ }
         }
         res.set("cache-control", "no-store").json(toSnapshot(ws, doc));

@@ -3,6 +3,8 @@ import type { Analytics } from "./bigquery.js";
 export type Disabled = { enabled: false };
 const DISABLED: Disabled = { enabled: false };
 const WINDOW = "ts >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 90 DAY)"; // partition filter: keeps every query to the last 90 days of partitions
+/** Test traffic (`test = TRUE`) is left out; NULL (rows from before the column) counts as real. */
+const REAL = "IFNULL(test, FALSE) = FALSE";
 const n = (v: unknown): number => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
 const iso = (v: unknown): string | null => {
   const raw = v && typeof v === "object" && "value" in v ? (v as { value: unknown }).value : v;
@@ -59,7 +61,7 @@ export function createStats(a: Analytics, now: () => number = Date.now) {
       APPROX_QUANTILES(latency_ms, 2)[OFFSET(1)] AS median_latency_ms, SUM(IFNULL(sponsors_hidden, 0)) AS sponsors_hidden,
       COUNT(DISTINCT COALESCE(city_id, CONCAT(IFNULL(city, ''), '|', IFNULL(country, '')))) AS cities,
       COUNTIF(${day}) AS p24, SUM(IF(${day}, ${checked}, 0)) AS c24
-      FROM ${t} WHERE ${WINDOW} AND error IS NULL`);
+      FROM ${t} WHERE ${WINDOW} AND ${REAL} AND error IS NULL`);
     const row = r ?? {};
     const claimsChecked = n(row.claims_checked), claimsRemoved = n(row.claims_removed), playbooks = n(row.playbooks);
     return {
@@ -72,10 +74,10 @@ export function createStats(a: Analytics, now: () => number = Date.now) {
 
   const team = () => cached<TeamStats>("team", async () => {
     const t = a.tableRef("team_events");
-    const rows = await a.query(`SELECT 'total' AS k, '' AS g, COUNT(*) AS n, COUNT(DISTINCT ws_hash) AS w, MIN(ts) AS since FROM ${t} WHERE ${WINDOW}
-      UNION ALL SELECT 'override', IFNULL(override_field, ''), COUNT(*), 0, NULL FROM ${t} WHERE ${WINDOW} AND event = 'override' GROUP BY 2
-      UNION ALL SELECT 'status', IFNULL(status_to, ''), COUNT(*), 0, NULL FROM ${t} WHERE ${WINDOW} AND event = 'status' GROUP BY 2
-      UNION ALL SELECT 'role', IFNULL(role, ''), COUNT(*), 0, NULL FROM ${t} WHERE ${WINDOW} AND event = 'message' GROUP BY 2`);
+    const rows = await a.query(`SELECT 'total' AS k, '' AS g, COUNT(*) AS n, COUNT(DISTINCT ws_hash) AS w, MIN(ts) AS since FROM ${t} WHERE ${WINDOW} AND ${REAL}
+      UNION ALL SELECT 'override', IFNULL(override_field, ''), COUNT(*), 0, NULL FROM ${t} WHERE ${WINDOW} AND ${REAL} AND event = 'override' GROUP BY 2
+      UNION ALL SELECT 'status', IFNULL(status_to, ''), COUNT(*), 0, NULL FROM ${t} WHERE ${WINDOW} AND ${REAL} AND event = 'status' GROUP BY 2
+      UNION ALL SELECT 'role', IFNULL(role, ''), COUNT(*), 0, NULL FROM ${t} WHERE ${WINDOW} AND ${REAL} AND event = 'message' GROUP BY 2`);
     const overridesByField = { top_zone: 0, best_room: 0, support: 0 };
     const statusCounts = { Considering: 0, Confirmed: 0, "On hold": 0, Dropped: 0 };
     const notesByRole = { Manager: 0, "Booking agent": 0, Promoter: 0, "Brand team": 0, Other: 0 };
@@ -93,7 +95,7 @@ export function createStats(a: Analytics, now: () => number = Date.now) {
 
   const v2 = () => cached<V2Stats>("v2", async () => {
     const t = a.tableRef("v2_outcome_taps");
-    const rows = await a.query(`SELECT experience, action, COUNT(*) AS n, MIN(ts) AS since FROM ${t} WHERE ${WINDOW} GROUP BY experience, action`);
+    const rows = await a.query(`SELECT experience, action, COUNT(*) AS n, MIN(ts) AS since FROM ${t} WHERE ${WINDOW} AND ${REAL} GROUP BY experience, action`);
     const byAction = { going: 0, waitlist: 0, was_there: 0 };
     const byExperience: V2Stats["byExperience"] = {};
     let since: string | null = null;
