@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FIELD_LABEL, LIMITS, timeAgo, type Field } from "@/lib/collab/types";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
 import { WhyLine } from "@/components/playbook/WhyLine";
@@ -20,6 +20,11 @@ export function OverrideValue({ cityId, field, qloo, editable, why, onGoToCard, 
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
   const [reason, setReason] = useState("");
+  // Escape or Cancel closes the inline edit and puts focus back on its Edit button.
+  const editBtn = useRef<HTMLButtonElement>(null);
+  const refocusEdit = useRef(false);
+  useEffect(() => { if (!editing && refocusEdit.current) { refocusEdit.current = false; editBtn.current?.focus(); } }, [editing]);
+  const cancelEdit = () => { refocusEdit.current = true; setEditing(false); };
   if (!w.enabled) return <>{children}{why && <WhyLine why={why} onGo={onGoToCard} className="mt-0.5 block" />}</>;
   const save = async () => {
     const v = text.trim();
@@ -30,12 +35,12 @@ export function OverrideValue({ cityId, field, qloo, editable, why, onGoToCard, 
   };
   if (editing) {
     return (
-      <form className="flex flex-col gap-1" onSubmit={(e) => { e.preventDefault(); void save(); }}>
+      <form className="flex flex-col gap-1" onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); cancelEdit(); } }} onSubmit={(e) => { e.preventDefault(); void save(); }}>
         <input autoFocus value={text} onChange={(e) => setText(e.target.value)} maxLength={LIMITS.value} aria-label={`Team value for ${FIELD_LABEL[field]}`} className={collabInput} />
         <input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={LIMITS.reason} placeholder="Why? (optional)" aria-label="Why? (optional)" className={collabInput} />
         <div className="flex items-center gap-3">
           <button type="submit" disabled={!text.trim()} className="inline-flex min-h-11 items-center text-[13px] font-semibold text-gold disabled:opacity-50">Save</button>
-          <button type="button" onClick={() => setEditing(false)} className={link}>Cancel</button>
+          <button type="button" onClick={cancelEdit} className={link}>Cancel</button>
         </div>
       </form>
     );
@@ -50,8 +55,8 @@ export function OverrideValue({ cityId, field, qloo, editable, why, onGoToCard, 
         </span>
       ) : <>{children}{why && <WhyLine why={why} onGo={onGoToCard} className="mt-0.5 block" />}</>}
       {editable && (
-        <span className="flex items-center gap-3">
-          <button type="button" onClick={() => { setText(o?.value ?? ""); setReason(o?.reason ?? ""); setEditing(true); }} aria-label={`Edit ${FIELD_LABEL[field]}`} className={link}>Edit</button>
+        <span className="flex flex-wrap items-center gap-x-3">
+          <button ref={editBtn} type="button" onClick={() => { setText(o?.value ?? ""); setReason(o?.reason ?? ""); setEditing(true); }} aria-label={`Edit ${FIELD_LABEL[field]}`} className={link}>Edit</button>
           {o && <button type="button" onClick={() => void write("override_clear", { cityId, field }, "Back to Qloo's value.")} className={link}>Revert to Qloo</button>}
         </span>
       )}

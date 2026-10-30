@@ -1,4 +1,5 @@
 import type { PlaybookCard } from "@/lib/qloo/types";
+import { HINT } from "@/lib/qloo/numberKey";
 import { fit } from "../format";
 import { Caption, Row, Rows, TagChips, listenLink } from "./rows";
 import { num, str } from "./util";
@@ -28,7 +29,7 @@ export function Talent({ card, city, artist }: { card: PlaybookCard; city: strin
         </p>
         {typeof sharedTaste === "number" && tags.length > 0 && <TagChips tags={tags} />}
       </div>
-      <Rows>{items.map((it, i) => <Row key={i} name={str(it.name)} sub={SOURCE_LABEL[str(it.source)]} aside={unranked ? null : fit(num(it.affinity))} link={str(it.name) ? listenLink(str(it.name)) : undefined} />)}</Rows>
+      <Rows className="lg:grid lg:grid-cols-2 lg:gap-x-10">{items.map((it, i) => <Row key={i} name={str(it.name)} sub={SOURCE_LABEL[str(it.source)]} hint={HINT.affinity} aside={unranked ? null : fit(num(it.affinity))} link={str(it.name) ? listenLink(str(it.name)) : undefined} />)}</Rows>
       <Caption>{caption}</Caption>
       <p className="mt-1 text-[13px] text-canvas-muted">Not all are from the city — check before billing as a local guest.</p>
       {typeof card.summary?.sizeNote === "string" && <p className="mt-1 text-[13px] text-canvas-muted">{card.summary.sizeNote}</p>}

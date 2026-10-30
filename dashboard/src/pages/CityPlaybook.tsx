@@ -28,6 +28,7 @@ import { heroWhys, scrollToCard } from "@/components/playbook/heroWhy";
 import { CardBody, ThisWeekBody, isEmptyWeek } from "@/components/playbook/cardBody";
 import { ClaimsAudit } from "@/components/playbook/ClaimsAudit";
 import { CARD_TITLE, cityCode, metaLine } from "@/components/playbook/format";
+import { NUMBER_KEY } from "@/lib/qloo/numberKey";
 import { KeyArtPoster } from "@/components/playbook/KeyArtPoster";
 import { PlaybookCard } from "@/components/playbook/PlaybookCard";
 import { ReasoningSummary } from "@/components/playbook/ReasoningSummary";
@@ -51,7 +52,8 @@ import { useIsDesktop } from "@/lib/useMediaQuery";
 // The Culture and Delight briefs belong to the legacy campaign flow, which is off the promoter path.
 type Tab = "activate" | "talent" | "advance";
 const TABS: Array<{ id: Tab; label: string }> = [{ id: "activate", label: "How to win" }, { id: "talent", label: "Acts fans love" }, { id: "advance", label: "Advance & risks" }];
-const ORDER: CardKind[] = ["sponsors", "merch", "promo_zones", "local_moment", "venue_fit", "co_billing"];
+// DOM order = the desktop grid order (row by row), so keyboard order matches what is seen.
+const ORDER: CardKind[] = ["sponsors", "promo_zones", "venue_fit", "co_billing", "local_moment", "merch"];
 type CardId = CardKind | "this_week";
 // Desktop (lg) grid placement, brief 3b. On phones every card is a snap-scroller item.
 const PLACE: Record<CardId, string> = {
@@ -65,11 +67,23 @@ const PLACE: Record<CardId, string> = {
   talent: "",
 };
 const FALLBACK_MAX_STOPS = 8;
+
+/** A small closed disclosure under the tabs: what each number on the cards means, one line per term. */
+function NumberKey() {
+  return (
+    <details data-number-key className="mt-2 px-4 text-[13px] text-canvas-muted lg:px-0">
+      <summary className="inline-flex min-h-11 cursor-pointer items-center font-medium text-canvas-text underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">How to read these numbers</summary>
+      <dl className="mb-2 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
+        {NUMBER_KEY.map((k) => (<div key={k.term} className="contents"><dt className="font-medium text-canvas-text">{k.term}</dt><dd>{k.text}</dd></div>))}
+      </dl>
+    </details>
+  );
+}
 // Sample playbooks replay ~25 events; the showcase pacing used on the board (60 ms) would make this page feel slow.
 const SAMPLE_PLAYBOOK_DELAY_MS = 10;
 // On phones "Remove from tour" is a quiet text button under the primary action, so the primary label never has to share a row with it.
-const removeBtn = "inline-flex min-h-11 items-center justify-center rounded-[10px] px-3 text-[14px] font-semibold text-canvas-muted underline underline-offset-4 hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:h-10 lg:bg-paper-raised lg:px-5 lg:text-[15px] lg:text-canvas-text lg:no-underline lg:hover:bg-[#3a3932]";
-const btnGold = "btn-gold inline-flex h-12 w-full min-w-0 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-10 lg:w-auto";
+const removeBtn = "inline-flex min-h-11 items-center justify-center rounded-[10px] px-3 text-[14px] font-semibold text-canvas-muted underline underline-offset-4 hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:h-11 lg:bg-paper-raised lg:px-5 lg:text-[15px] lg:text-canvas-text lg:no-underline lg:hover:bg-[#3a3932]";
+const btnGold = "btn-gold inline-flex h-12 w-full min-w-0 items-center justify-center rounded-[10px] px-5 text-[15px] font-semibold lg:h-11 lg:w-auto";
 const textBtn = "inline-flex min-h-11 items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 const smallBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 const first = (cards: Card[], kind: CardKind, key: string): string => firstOkName(cards, kind, key) ?? "—";
@@ -84,6 +98,9 @@ function CityPlaybookPage() {
   const { cityId = "" } = useParams();
   const { state, run, shortlist, toggleShortlist, accentOrder, setLastOpened } = useTourBoard();
   const { toast } = useToast();
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const refocusToggle = useRef(false);
+  useEffect(() => { if (refocusToggle.current) { refocusToggle.current = false; toggleRef.current?.focus(); } }, [shortlist]);
   const [params] = useSearchParams();
   const sampleParam = params.get("sample");
   const wantLong = sampleParam === "long";
@@ -105,6 +122,15 @@ function CityPlaybookPage() {
   const setKey = `${wantSet}|${wantRouting ? "routing" : ""}`;
   const started = useRef<string | null>(null); // the sample set this page already asked the board for
   const [tab, setTab] = useState<Tab>("activate");
+  // Switching tabs swaps a tall panel for a short one; hold the old height so the page (and the reader's scroll position) does not jump.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelMin, setPanelMin] = useState(0);
+  const selectTab = (id: Tab) => {
+    const el = panelRef.current;
+    // Keep only as much height as the current scroll position needs (not the whole tall panel), so short tabs are not followed by a screen of blank page.
+    setPanelMin(el ? Math.min(el.offsetHeight, Math.max(0, Math.ceil(globalThis.scrollY + globalThis.innerHeight - (el.getBoundingClientRect().top + globalThis.scrollY)))) : 0);
+    setTab(id);
+  };
   const [whyOpen, setWhyOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
@@ -254,7 +280,7 @@ function CityPlaybookPage() {
     e.preventDefault();
     const at = TABS.findIndex((t) => t.id === tab);
     const next = TABS[(at + (e.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length]!;
-    setTab(next.id);
+    selectTab(next.id);
     document.getElementById(`${tabBase}-${next.id}`)?.focus();
   };
 
@@ -272,6 +298,7 @@ function CityPlaybookPage() {
         onAudit={() => setAuditOpen(true)}
         hasEvidence={card.status === "ok"}
         notes={<NotesButton threadKey={cardThread(shownCity.id, kind)} title={CARD_TITLE[kind]} />}
+        leadOnly={kind === "sponsors" || kind === "venue_fit" || kind === "promo_zones" || kind === "co_billing"}
       >
         <CardBody card={card} merch={merch} city={shownCity.name} country={shownCity.country} artist={artist?.name} venueName={firstOkName(pb.cards, "venue_fit") ?? undefined} segments={segments} pitchCityId={shownCity.id} />
         {kind === "sponsors" && <SponsorLeads cityId={shownCity.id} />}
@@ -289,17 +316,23 @@ function CityPlaybookPage() {
     return loading ? <div className="skeleton h-[280px] rounded-[18px]" aria-hidden /> : playbookCard(id);
   };
 
+  // Remove/Add swaps the button for its twin; keep keyboard focus on whichever one now stands in its place.
+  const toggle = () => {
+    refocusToggle.current = true;
+    toggleShortlist(shownCity.id);
+    toast(inTour ? { message: `Removed ${shownCity.name} from the tour.`, tone: "info" } : { message: `Added ${shownCity.name} to the tour.`, tone: "success" });
+  };
   const addToTour = (
-    <div className="flex min-w-0 flex-1 flex-col gap-1 lg:flex-none lg:items-start">
+    <div className="flex min-w-0 flex-1 flex-col justify-end gap-1 max-lg:min-h-12 lg:flex-none lg:items-start">
       {inTour ? (
-        <div className="flex min-w-0 flex-1 flex-col items-stretch gap-0.5 lg:flex-none lg:flex-row-reverse lg:items-center lg:gap-2">
-          <NextStepLink data-testid="primary-action" to={nextHeld ? `/tours/playbook/${nextHeld.id}${sampleQ}` : `/tours/book${sampleQ}`} className="btn-gold inline-flex min-h-12 min-w-0 items-center justify-center rounded-[10px] px-4 py-2 text-center text-[15px] font-semibold leading-tight lg:h-10 lg:min-h-0 lg:px-5">
+        <div className="flex min-w-0 flex-1 flex-row items-center gap-2 lg:flex-none">
+          <button ref={toggleRef} type="button" onClick={toggle} className={removeBtn}>Remove from tour</button>
+          <NextStepLink data-testid="primary-action" to={nextHeld ? `/tours/playbook/${nextHeld.id}${sampleQ}` : `/tours/book${sampleQ}`} className="btn-gold inline-flex min-h-12 min-w-0 items-center justify-center rounded-[10px] px-4 py-2 text-center text-[15px] font-semibold leading-tight lg:h-11 lg:min-h-0 lg:px-5">
             <span className="min-w-0 break-words">{nextHeld ? `Next: ${nextHeld.name}` : "Next: Tour Book"}</span>
           </NextStepLink>
-          <button type="button" onClick={() => { toggleShortlist(shownCity.id); toast({ message: `Removed ${shownCity.name} from the tour.`, tone: "info" }); }} className={removeBtn}>Remove from tour</button>
         </div>
       ) : (
-        <button type="button" disabled={full} onClick={() => { toggleShortlist(shownCity.id); toast({ message: `Added ${shownCity.name} to the tour.`, tone: "success" }); }} className={btnGold}>Add to tour</button>
+        <button ref={toggleRef} type="button" disabled={full} onClick={toggle} className={btnGold}>Add to tour</button>
       )}
       {full && <p className="text-[13px] text-canvas-muted">Max stops reached — raise it in the brief</p>}
     </div>
@@ -339,12 +372,12 @@ function CityPlaybookPage() {
     </>
   );
   const talentCard = cardOf("talent");
-  const talentPanel = noSample ? noSamplePanel : loading ? <div className="skeleton h-[280px] max-w-xl rounded-[18px]" aria-hidden /> : talentCard ? <div className="max-w-xl">{playbookCard("talent")}</div> : <p className="text-[13px] text-canvas-muted">Acts these fans love here are unavailable for {shownCity.name}</p>;
+  const talentPanel = noSample ? noSamplePanel : loading ? <div className="skeleton h-[280px] rounded-[18px]" aria-hidden /> : talentCard ? <div>{playbookCard("talent")}</div> : <p className="text-[13px] text-canvas-muted">Acts these fans love here are unavailable for {shownCity.name}</p>;
   const advanceNote = !window ? (sample ? "This example has no date window, so there are no dates to check." : "Add a date window to the brief to see weather, holidays, visas and customs for these dates.") : !advanceReady ? "Advance details are not available for this sample city." : undefined;
   const advancePanel = noSample ? noSamplePanel : (
     <div className="max-w-xl">
       <PlaybookCard accent={accent} meta={`${code} · ADVANCE & RISKS`} title="Advance & risks" narrativeStatus="unavailable" refsCount={0} hasEvidence>
-        <AdvanceBody data={advance.data} loading={advance.isPending} {...(advanceNote ? { message: advanceNote } : {})} />
+        <AdvanceBody data={advance.data} loading={advance.isPending || advance.isFetching} onRetry={() => void advance.refetch()} {...(advanceNote ? { message: advanceNote } : {})} />
       </PlaybookCard>
     </div>
   );
@@ -354,12 +387,9 @@ function CityPlaybookPage() {
     <div className="-mx-4 -mt-6 lg:mx-0 lg:mt-0">
       {(sample || wantSample) && <SampleBanner source={wantShowcase || state.source === "showcase" ? "showcase" : "sample"} />}
       <header className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-x-8 lg:pt-4">
-        {isDesktop && (
-          <div aria-hidden className="lg:order-2 lg:col-span-7 [&_svg]:rounded-[18px]">
-            <KeyArtPoster city={shownCity.name} accent={accent} ratio="16:9" decorative />
-          </div>
-        )}
-        <div className="flex min-w-0 flex-col gap-3 px-4 lg:order-1 lg:col-span-5 lg:px-0">
+        <div className="flex min-w-0 flex-col gap-3 px-4 lg:col-span-12 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-8 lg:px-0">
+          {/* Phones stack both groups; from lg they are two balanced columns (the old decorative poster is gone). */}
+          <div className="contents lg:col-span-6 lg:flex lg:min-w-0 lg:flex-col lg:gap-3">
           <div className="flex flex-wrap items-center justify-between gap-x-4">
             <Link to={`/tours/board${sampleQ}`} aria-label="Back to Tour Board" className="-mx-2 inline-flex min-h-11 w-fit items-center gap-1 rounded-[10px] px-2 text-[13px] font-medium text-canvas-muted hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
               <ChevronLeft size={18} aria-hidden />Tour Board
@@ -382,6 +412,9 @@ function CityPlaybookPage() {
           <RadiusNote city={shownCity} pool={radiusPool} />
           {!isDesktop && whyBtn}
           <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
+          {isDesktop && <div className="flex flex-wrap items-center gap-3">{addToTour}{whyBtn}</div>}
+          </div>
+          <div className="contents lg:col-span-6 lg:flex lg:min-w-0 lg:flex-col lg:gap-3">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <StatusPicker cityId={shownCity.id} />
             <NotesButton threadKey={cityThread(shownCity.id)} title={shownCity.name} label="City notes" tour="city-notes" />
@@ -413,12 +446,12 @@ function CityPlaybookPage() {
               <Link to="/tours/board?showcase=1" className={smallBtn}>See the example tour</Link>
             </Notice>
           )}
-          {isDesktop && <div className="flex flex-wrap items-center gap-3">{addToTour}{whyBtn}</div>}
           {!isDesktop && (
             <div data-testid="poster-strip" aria-hidden className="overflow-hidden rounded-[14px] [&_svg]:rounded-[14px]">
               <KeyArtPoster city={shownCity.name} accent={accent} ratio="strip" decorative />
             </div>
           )}
+          </div>
         </div>
       </header>
 
@@ -436,7 +469,7 @@ function CityPlaybookPage() {
                 data-tour={`tab-${t.id}`}
                 aria-controls={`${tabBase}-panel`}
                 tabIndex={on ? 0 : -1}
-                onClick={() => setTab(t.id)}
+                onClick={() => selectTab(t.id)}
                 className={`min-h-11 flex-1 border-b-2 px-2 text-[14px] font-semibold focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gold lg:flex-none lg:px-5 ${on ? "border-gold text-canvas-text" : "border-transparent text-canvas-muted hover:text-canvas-text"}`}
               >
                 {t.label}
@@ -446,7 +479,9 @@ function CityPlaybookPage() {
         </div>
       </div>
 
-      <div id={`${tabBase}-panel`} role="tabpanel" aria-labelledby={`${tabBase}-${tab}`} className="mt-4 min-w-0 px-4 lg:px-0">
+      <NumberKey />
+      <div id={`${tabBase}-panel`} ref={panelRef} style={panelMin ? { minHeight: panelMin } : undefined} role="tabpanel" aria-labelledby={`${tabBase}-${tab}`} className="mt-4 min-w-0 px-4 lg:px-0">
+        <h2 className="sr-only">{tab === "advance" ? "Advance and risks" : TABS.find((t) => t.id === tab)?.label}</h2>
         {!sample && (pb.status === "idle" || pb.status === "streaming") && <p data-testid="live-run-line" className="mb-3 text-[12px] text-canvas-muted">{LIVE_RUN_LINE}</p>}
         {panels[tab]}
         <div className="mt-4 flex min-w-0 flex-col gap-3">

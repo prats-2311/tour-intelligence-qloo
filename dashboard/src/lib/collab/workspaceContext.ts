@@ -12,6 +12,8 @@ export interface Workspace {
   clearError: () => void;
   /** Opens the name and role dialog (also from the header chip). */
   editIdentity: () => void;
+  /** Saves who is writing (name and role) without opening the dialog, for forms that ask inline. */
+  identify?: (a: Actor) => void;
   /** Applies a write optimistically, asking who is writing and creating the workspace first when needed. Resolves false if it did not go through. */
   write: (op: Op, body: Record<string, unknown>) => Promise<boolean>;
   /** Makes sure a workspace exists, then returns the current URL with `ws` (and whether it was copied). */

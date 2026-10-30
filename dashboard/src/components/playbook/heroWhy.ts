@@ -1,6 +1,7 @@
 import { applyDoNotBook } from "@/lib/qloo/doNotBook";
 import { firstOkItem } from "@/lib/qloo/playbookFacts";
 import type { CardKind, PlaybookCard } from "@/lib/qloo/types";
+import { tiedFlags } from "@/lib/qloo/numberKey";
 import { coBillLine, fit, pct } from "./format";
 
 /** One muted line under a hero tile, and the playbook card it points at (`data-tour="card-<kind>"`, `id="card-<kind>"`). */
@@ -26,7 +27,7 @@ export function heroWhys(cards: PlaybookCard[]): HeroWhys {
   if (share !== null) out.top_zone = { text: `${pct(share)} of in-city fan heat (#${rankIn(share, pool(cards, "promo_zones", "share"))} of ${pool(cards, "promo_zones", "share").length} zones)`, card: "promo_zones" };
   const room = firstOkItem(cards, "venue_fit");
   const affinity = num(room?.affinity);
-  if (affinity !== null) out.best_room = { text: `venue fit ${fit(affinity)}, #${rankIn(affinity, pool(cards, "venue_fit", "affinity"))} of ${pool(cards, "venue_fit", "affinity").length} rooms`, card: "venue_fit" };
+  if (affinity !== null) { const rooms = pool(cards, "venue_fit", "affinity"); out.best_room = { text: `venue fit ${fit(affinity)}, ${tiedFlags(rooms)[rooms.indexOf(affinity)] ? "tied " : ""}#${rankIn(affinity, rooms)} of ${rooms.length} rooms`, card: "venue_fit" }; }
   const act = firstOkItem(cards, "co_billing");
   const s = num(act?.sharedTaste), a = num(act?.localAffinity);
   if (s !== null && a !== null) { const l = coBillLine(s, a); out.support = { text: l.charAt(0).toLowerCase() + l.slice(1), card: "co_billing" }; }

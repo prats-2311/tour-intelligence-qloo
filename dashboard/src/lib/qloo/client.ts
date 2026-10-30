@@ -149,7 +149,7 @@ export async function fetchThisWeek(q: { city: string; country: string; window?:
   }
 }
 
-const ADVANCE_DOWN = "Could not load this. Try again later.";
+export const ADVANCE_DOWN = "Could not load this. Try again later.";
 const advanceError = (): AdvanceRisks => ({ weather: { status: "unavailable", message: ADVANCE_DOWN }, holidays: { status: "unavailable", message: ADVANCE_DOWN }, visa: { status: "unavailable", message: ADVANCE_DOWN }, equipment: { status: "unavailable", message: ADVANCE_DOWN }, generatedAt: "" });
 
 /** Advance & risks for one city; a failed request becomes four "unavailable" sections. */

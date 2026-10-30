@@ -1,3 +1,4 @@
+import { ADVANCE_DOWN } from "@/lib/qloo/client";
 import type { AdvanceHolidays, AdvanceRisks, AdvanceWeather, AdvanceWeb } from "@/lib/qloo/types";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -79,8 +80,18 @@ function WebBody({ s, nationality }: { s: AdvanceWeb; nationality?: boolean }) {
 }
 
 /** Advance & risks body: one block per lookup, each with its own loading, unavailable and capped states. */
-export function AdvanceBody({ data, loading, message }: { data: AdvanceRisks | undefined; loading: boolean; message?: string }) {
+export const ADVANCE_OFFLINE = "Advance & risks needs the live service. Try again.";
+export function AdvanceBody({ data, loading, message, onRetry }: { data: AdvanceRisks | undefined; loading: boolean; message?: string; /** Offered when every lookup failed at once (the service itself is down). */ onRetry?: () => void }) {
   if (message) return <p className={MUTED}>{message}</p>;
+  // A failed request becomes four identical "unavailable" sections; say it once, with a way to try again.
+  if (data && [data.weather, data.holidays, data.visa, data.equipment].every((s) => s.status === "unavailable" && s.message === ADVANCE_DOWN)) {
+    return (
+      <div role="status" className="flex flex-col items-start gap-2">
+        <p className="text-[15px] text-canvas-text">{ADVANCE_OFFLINE}</p>
+        {onRetry && <button type="button" onClick={onRetry} className="inline-flex min-h-11 items-center rounded-[10px] bg-paper-raised px-4 text-[14px] font-semibold text-canvas-text outline-none hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Retry</button>}
+      </div>
+    );
+  }
   const wait = loading || !data;
   return (
     <div>

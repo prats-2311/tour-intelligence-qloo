@@ -1,8 +1,9 @@
 import { Check, MessageSquare } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Sheet } from "@/components/qloo/Sheet";
 import { DEMO_BANNER, LIMITS, ROLES, SHARE_NOTICE, timeAgo, type Message } from "@/lib/collab/types";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
+import { IdentityForm } from "./IdentityDialog";
 import { collabBtn, collabInput, demoChip, roleChip } from "./ui";
 import { useCollabWrite } from "./useCollabWrite";
 
@@ -35,13 +36,18 @@ export function NotesSheet({ open, onClose, title, threadKey }: { open: boolean;
   const messages = thread?.messages ?? [];
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const send = async () => {
+  // Asking who is writing happens inside this sheet (one dialog, the draft stays on screen), not in a second dialog that replaces it.
+  const [askWho, setAskWho] = useState(false);
+  const composer = useRef<HTMLTextAreaElement>(null);
+  const send = async (identified = false) => {
     const t = text.trim();
     if (!t || busy) return;
+    if (!identified && !w.identity && w.identify) { setAskWho(true); return; }
     setBusy(true);
     const ok = await save("message", { key: threadKey, text: t }, "Note posted.", { quietFail: true });
     setBusy(false);
     if (ok) setText("");
+    composer.current?.focus();
   };
   return (
     <Sheet open={open} onClose={onClose} title={title}>
@@ -55,8 +61,14 @@ export function NotesSheet({ open, onClose, title, threadKey }: { open: boolean;
         {messages.length === 0 ? <p className="text-[14px] text-canvas-muted">No notes yet. Start the thread below.</p> : <ul aria-label="Notes" className="flex flex-col gap-2">{messages.map((m) => <MessageItem key={m.id} m={m} />)}</ul>}
         {/* Sticky inside the sheet's scroll area: on a phone the thread can be long, and the box must stay in view. */}
         <div data-testid="notes-composer" className="sticky bottom-0 z-10 -mx-4 mt-auto flex flex-col gap-2 border-t border-canvas-line bg-paper px-4 pb-3 pt-3 md:-mx-6 md:px-6">
+          {askWho && !w.identity && w.identify && (
+            <div data-testid="inline-identity" className="flex flex-col gap-2 rounded-[10px] bg-canvas-raised p-3">
+              <p className="text-[14px] font-semibold text-canvas-text">Who's writing?</p>
+              <IdentityForm current={null} onSave={(a) => { w.identify!(a); setAskWho(false); void send(true); }} />
+            </div>
+          )}
           <textarea
-            value={text} onChange={(e) => setText(e.target.value)} maxLength={LIMITS.text} rows={3} aria-label="Add a note"
+            ref={composer} value={text} onChange={(e) => setText(e.target.value)} maxLength={LIMITS.text} rows={3} aria-label="Add a note"
             onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void send(); } }}
             placeholder="Write a note. Type @Promoter or @Manager to flag a role." className={collabInput}
           />

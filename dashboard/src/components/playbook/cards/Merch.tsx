@@ -1,8 +1,8 @@
 import type { MerchDirection, PlaybookCard } from "@/lib/qloo/types";
 import { fit } from "../format";
+import { swatchFor } from "@/lib/qloo/merchColor";
 import { num, str } from "./util";
 
-const SWATCH: Record<string, string> = { lilac: "#b9a3d9", bone: "#efe9dc", lagoon: "#00a0b0", vermilion: "#ff3d00", "pitch green": "#009e5c" };
 
 function Tags({ card }: { card: PlaybookCard }) {
   return (
@@ -28,12 +28,12 @@ export function Merch({ card, merch }: { card: PlaybookCard; merch?: MerchDirect
         <p className="text-[13px] text-canvas-muted">Creative direction — model suggestion, not Qloo data</p>
         <p className="font-title mt-1 text-[17px] text-canvas-text">{merch.title}</p>
       </div>
-      <ul className="flex flex-wrap gap-x-4 gap-y-2">
+      <ul aria-label="Colour palette" className="flex flex-wrap gap-2">
         {merch.palette.map((name) => {
-          const hexValue = SWATCH[name.toLowerCase()];
+          const colour = swatchFor(name);
           return (
-            <li key={name} className="inline-flex items-center gap-2 text-[13px] text-canvas-text">
-              <span aria-hidden className="h-6 w-6 rounded-[4px]" style={hexValue ? { backgroundColor: hexValue } : { border: "1.5px solid #a4a094" }} />
+            <li key={name} data-palette-chip className="inline-flex items-center gap-2 rounded-full bg-paper-raised py-1 pl-1.5 pr-3 text-[13px] text-canvas-text">
+              {colour && <span aria-hidden className="size-4 rounded-full border border-canvas-line" style={{ backgroundColor: colour }} />}
               {name}
             </li>
           );

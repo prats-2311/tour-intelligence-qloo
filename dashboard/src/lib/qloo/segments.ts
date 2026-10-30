@@ -24,6 +24,14 @@ export interface SponsorSegments {
 }
 
 export const SEGMENT_UNAVAILABLE_COPY = "Qloo couldn't break this segment out.";
+export const SEGMENT_SERVICE_DOWN_COPY = "The live service is unavailable right now.";
+export const SEGMENT_NO_BREAKDOWN_COPY = "Qloo has no age breakdown for this city.";
+/** Why an age-group request failed, in words: the service itself is down (our request failed) vs Qloo answering that this city has no breakdown. */
+export function segmentFailureCopy(d: { reason?: string; message?: string }): string {
+  if (!d.reason || d.reason === "error") return SEGMENT_SERVICE_DOWN_COPY;
+  if (/no_?data|no_?age|not_?found|empty|insufficient|no_?breakdown/i.test(d.reason)) return SEGMENT_NO_BREAKDOWN_COPY;
+  return d.message && d.message !== SEGMENT_UNAVAILABLE_COPY ? d.message : SEGMENT_SERVICE_DOWN_COPY;
+}
 export const NO_SKEW_COPY = "No age group stands out for this artist's fans.";
 export const UNDER_21_NOTE = "Includes under-21s: keep alcohol sponsors out of this segment.";
 

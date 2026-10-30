@@ -40,7 +40,10 @@ for (const start of ["/tours/board?showcase=1", "/tours/playbook/4005539?showcas
     await expect(tools.getByText("7 cards")).toBeVisible();
     await expect(tools.getByText("5 results")).toBeVisible();
 
-    // The second question replays too, with its log collapsed until opened.
+    // The suggestions fold away once an answer exists (the answer keeps the room); reopening them offers the second question, which replays too.
+    await expect(panel.getByRole("button", { name: "Suggestions" })).toHaveAttribute("aria-expanded", "false");
+    await expect(panel.getByRole("button", { name: Q2 })).toBeHidden();
+    await panel.getByRole("button", { name: "Suggestions" }).click();
     await expect(panel.getByRole("button", { name: Q2 })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "no horizontal overflow").toBe(true);
     await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));

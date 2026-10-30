@@ -129,8 +129,9 @@ function teamLine(brand: string, cityId: string, snap: Snapshot | null | undefin
 
 /** The sheet as plain text, section by section, for the clipboard. */
 export function pitchSheetText(s: PitchSheetOk): string {
-  const out: string[] = [s.title, `${s.date} · ${s.preparedWith}`, "", "Why this brand", s.why, "", "Who loves it most"];
-  if (s.segments.state === "bands") { out.push(...s.segments.lines); if (s.segments.note) out.push(s.segments.note); } else out.push(s.segments.message);
+  const out: string[] = [s.title, `${s.date} · ${s.preparedWith}`, "", "Why this brand", s.why];
+  // No age data: the section is left out (the on-screen hint is an instruction for the viewer, never part of the leave-behind).
+  if (s.segments.state === "bands") { out.push("", "Who loves it most", ...s.segments.lines); if (s.segments.note) out.push(s.segments.note); } else if (s.segments.state === "none") out.push("", "Who loves it most", s.segments.message);
   out.push("", "Where the fans are (share of in-city fan heat)", ...(s.zones.length ? s.zones.map((z) => `${z.label} ${z.share}`) : ["No neighbourhood data."]));
   out.push("", "The night");
   if (s.room) out.push(`Best room: ${s.room.name} (fit ${s.room.fit})`);

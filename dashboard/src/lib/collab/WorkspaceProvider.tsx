@@ -156,7 +156,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Workspace>(() => ({
     enabled: !unavailable, ws, snapshot: snap && snap.ws === ws ? snap : null, identity, error,
-    clearError: () => setError(null), editIdentity: () => setAsk({ done: () => undefined }), write, share,
+    clearError: () => setError(null), identify: (a: Actor) => { saveIdentity(a); setIdentity(a); identityRef.current = a; }, editIdentity: () => setAsk({ done: () => undefined }), write, share,
   }), [unavailable, ws, snap, identity, error, write, share]);
 
   return (

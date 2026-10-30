@@ -4,9 +4,9 @@ import { visibleClaims } from "@/lib/qloo/doNotBook";
 import { ClaimsBadge } from "./ClaimsBadge";
 
 // DESIGN 4.2 CueCard for the playbook: perforated city-accent rail, no border, no shadow.
-export function PlaybookCard({ accent, meta, title, claims: allClaims, narrativeStatus, refsCount, onAudit, hasEvidence, notes, children }: {
+export function PlaybookCard({ accent, meta, title, claims: allClaims, narrativeStatus, refsCount, onAudit, hasEvidence, notes, leadOnly = false, children }: {
   accent: string; meta: string; title: string; claims?: CardClaims;
-  narrativeStatus: "ok" | "unavailable" | "pending"; refsCount: number; onAudit?: () => void; hasEvidence: boolean; /** Team notes button, next to the claims badge. */ notes?: ReactNode; children: ReactNode;
+  narrativeStatus: "ok" | "unavailable" | "pending"; refsCount: number; onAudit?: () => void; hasEvidence: boolean; /** Team notes button, next to the claims badge. */ notes?: ReactNode; /** The card lists its items below: lead with one verified sentence instead of repeating the list in prose (the rest stay in "Checked claims"). */ leadOnly?: boolean; children: ReactNode;
 }) {
   const claims = visibleClaims(allClaims);
   const verified = claims?.verified ?? [];
@@ -30,7 +30,7 @@ export function PlaybookCard({ accent, meta, title, claims: allClaims, narrative
         {narrativeStatus === "pending" && <div className="skeleton mt-3 h-4 w-4/5 rounded-[4px]" aria-hidden />}
         {narrativeStatus === "ok" && verified.length > 0 && (
           <ul className="mt-3 space-y-2 text-[15px] leading-[1.45] text-canvas-text">
-            {verified.map((c, i) => <li key={`${i}-${c.text}`}>{c.text}</li>)}
+            {(leadOnly ? verified.slice(0, 1) : verified).map((c, i) => <li key={`${i}-${c.text}`}>{c.text}</li>)}
           </ul>
         )}
         {narrativeStatus === "ok" && claims && hasEvidence && verified.length === 0 && (

@@ -127,3 +127,9 @@ describe("pitch sheet: activation, evidence, team, text", () => {
     expect((t.match(/\d+%/g) ?? []).sort()).toEqual(["12%", "20%", "31%"]);
   });
 });
+
+describe("pitchSheetText without an age breakdown", () => {
+  it("never copies the on-screen instruction into the text", () => {
+    expect(pitchSheetText(ok(base()))).not.toContain("By age group");
+  });
+});

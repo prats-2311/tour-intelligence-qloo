@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { HIDDEN_ORGS_NOTE, SPONSOR_CHECK_UNAVAILABLE_NOTE } from "@/lib/qloo/nonSponsors";
-import { AGE_BANDS, BAND_LABEL, bandHeader, differLine, displayItems, NO_SKEW_COPY, SEGMENT_UNAVAILABLE_COPY, SEGMENT_TIMEOUT_COPY, showsUnder21Note, UNDER_21_NOTE, type AgeBand, type SegmentBand, type SponsorSegments as Segments } from "@/lib/qloo/segments";
+import { AGE_BANDS, BAND_LABEL, bandHeader, differLine, displayItems, NO_SKEW_COPY, SEGMENT_UNAVAILABLE_COPY, SEGMENT_TIMEOUT_COPY, segmentFailureCopy, showsUnder21Note, UNDER_21_NOTE, type AgeBand, type SegmentBand, type SponsorSegments as Segments } from "@/lib/qloo/segments";
 import { getSegments, loadSegments, segmentKey, useSegments, type SegmentRequest } from "@/lib/qloo/segmentStore";
 import { fanRankLine, rankLine } from "../format";
 import { Caption, Row, Rows } from "./rows";
@@ -79,6 +79,9 @@ export function SegmentControl({ request, country, children }: { request: Segmen
   const failed = asked && data?.status === "unavailable" && !timedOut;
   const noSkew = asked && data?.status === "no_skew";
   const showBands = bands.length > 0;
+  // While loading or after a failure the age-group chip is the selected one (not "All fans"); the message and a Retry button sit above the all-fans list, which stays as context.
+  const ageSelected = asked && !showBands && !noSkew;
+  const control = useRef<HTMLButtonElement>(null);
   const open = () => {
     setAsked(true);
     void loadSegments(request).then((s) => {
@@ -91,19 +94,24 @@ export function SegmentControl({ request, country, children }: { request: Segmen
   return (
     <>
       <div role="group" aria-label="Age group" data-testid="segment-control" data-tour="sponsors-age" className="mb-2 flex flex-wrap gap-2" data-noprint>
-        <button type="button" aria-pressed={view === "all"} onClick={() => setView("all")} className={chip(view === "all")}>All fans</button>
+        <button type="button" aria-pressed={view === "all" && !ageSelected} onClick={() => { setView("all"); setAsked(false); }} className={chip(view === "all" && !ageSelected)}>All fans</button>
         {showBands
           ? bands.map((b) => <button key={b.band} type="button" aria-pressed={view === b.band} onClick={() => setView(b.band)} className={chip(view === b.band)}>{BAND_LABEL[b.band]}</button>)
-          : !noSkew && !timedOut && <button type="button" aria-pressed={loading} disabled={loading} onClick={open} className={chip(false)}>By age group</button>}
+          : !noSkew && <button ref={control} type="button" aria-pressed={ageSelected} aria-disabled={loading || undefined} onClick={() => { if (!loading) open(); }} className={chip(ageSelected)}>By age group</button>}
       </div>
       {noSkew && <p data-testid="segment-no-skew" className="mb-2 text-[13px] text-canvas-muted">{NO_SKEW_COPY}</p>}
       {timedOut && (
         <div data-testid="segment-timeout" className="mb-2 flex flex-wrap items-center gap-2 text-[13px] text-canvas-muted">
           <span>{SEGMENT_TIMEOUT_COPY}</span>
-          <button type="button" onClick={open} className={chip(false)}>Try again</button>
+          <button type="button" onClick={() => { open(); control.current?.focus(); }} className={chip(false)}>Retry</button>
         </div>
       )}
-      {failed && <p data-testid="segment-unavailable" className="mb-2 text-[13px] text-canvas-muted">{SEGMENT_UNAVAILABLE_COPY}</p>}
+      {failed && (
+        <div data-testid="segment-unavailable" role="alert" className="mb-2 flex flex-wrap items-center gap-2 text-[13px] text-canvas-muted">
+          <span>{segmentFailureCopy(data!)}</span>
+          <button type="button" onClick={() => { open(); control.current?.focus(); }} className={chip(false)}>Retry</button>
+        </div>
+      )}
       {loading && <div data-testid="segment-skeleton" aria-busy="true" aria-label="Loading age groups" className="mb-2 flex flex-col gap-2"><div className="skeleton h-4 w-3/4 rounded-md" /><div className="skeleton h-11 w-full rounded-md" /><div className="skeleton h-11 w-full rounded-md" /></div>}
       {current ? <BandList band={current} country={country} /> : children}
     </>

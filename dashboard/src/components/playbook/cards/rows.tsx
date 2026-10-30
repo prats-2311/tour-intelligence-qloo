@@ -2,19 +2,19 @@ import type { ReactNode } from "react";
 import { mapsSearchUrl, spotifySearchUrl } from "@/lib/mapsLink";
 
 
-export function Rows({ children, tour }: { children: ReactNode; /** `data-tour` value for the guided tour. */ tour?: string }) {
-  return <ul data-tour={tour} className="text-[15px]">{children}</ul>;
+export function Rows({ children, tour, className = "" }: { children: ReactNode; /** `data-tour` value for the guided tour. */ tour?: string; className?: string }) {
+  return <ul data-tour={tour} className={`text-[15px] ${className}`}>{children}</ul>;
 }
 
 /** Small muted outbound link; `data-noprint` hides it in the Tour Book print view. */
 export function ExtLink({ href, text, label }: { href: string; text: string; label: string }) {
-  return <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label} data-noprint className="inline-flex min-h-11 items-center text-[13px] text-canvas-muted underline decoration-canvas-line underline-offset-4 outline-none hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:min-h-0">{text} <span aria-hidden>↗</span></a>;
+  return <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label} data-noprint className="inline-flex min-h-11 items-center text-[13px] text-canvas-muted underline decoration-canvas-line underline-offset-4 outline-none hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:-my-3">{text} <span aria-hidden>↗</span></a>;
 }
 
 export const mapsLink = (name: string, city: string, country?: string) => ({ href: mapsSearchUrl(name, city, country), text: "Google Maps", label: `Open ${name} in Google Maps (new tab)` });
 export const listenLink = (name: string) => ({ href: spotifySearchUrl(name), text: "Listen", label: `Listen to ${name} on Spotify (new tab)` });
 
-export function Row({ name, aside, sub, chips, link, action }: { name: string; aside: ReactNode; sub?: string; chips?: string[]; link?: { href: string; text: string; label: string }; action?: ReactNode }) {
+export function Row({ name, aside, hint, sub, chips, link, action }: { name: string; aside: ReactNode; /** Tooltip and screen-reader description for the number on the right. */ hint?: string; sub?: string; chips?: string[]; link?: { href: string; text: string; label: string }; action?: ReactNode }) {
   return (
     <li className="flex min-h-11 items-center justify-between gap-3 py-2">
       <span className="min-w-0 flex-1">
@@ -24,7 +24,7 @@ export function Row({ name, aside, sub, chips, link, action }: { name: string; a
         {link && <ExtLink {...link} />}
         {action}
       </span>
-      <span className="max-w-[45%] shrink-0 break-words text-right tabular-nums text-canvas-text">{aside}</span>
+      <span title={hint} aria-description={hint} className="max-w-[45%] shrink-0 break-words text-right tabular-nums text-canvas-text">{aside}</span>
     </li>
   );
 }
