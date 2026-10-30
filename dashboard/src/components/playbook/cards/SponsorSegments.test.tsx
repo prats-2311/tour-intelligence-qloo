@@ -207,8 +207,41 @@ describe("Tour Book band lists", () => {
     expect(screen.queryByTestId("segment-skeleton")).toBeNull();
     f.mockClear();
     stubFetch(answer());
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(screen.getByTestId("segment-band")).toBeTruthy());
+  });
+});
+
+describe("age group selection and errors", () => {
+  it("a service failure selects 'By age group' (not All fans), says the live service is unavailable, keeps focus and offers Retry", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("offline"); }));
+    body();
+    const control = screen.getByRole("button", { name: "By age group" });
+    control.focus();
+    fireEvent.click(control);
+    await waitFor(() => screen.getByTestId("segment-unavailable"));
+    expect(screen.getByTestId("segment-unavailable").textContent).toContain("The live service is unavailable right now.");
+    expect(screen.getByRole("button", { name: "By age group" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "All fans" }).getAttribute("aria-pressed")).toBe("false");
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "By age group" }));
+    expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
+  });
+  it("a city Qloo has no age breakdown for says that instead", async () => {
+    stubFetch({ status: "unavailable", reason: "no_age_data", message: "x", indexes: {}, bands: [] });
+    body();
+    await open();
+    await waitFor(() => screen.getByTestId("segment-unavailable"));
+    expect(screen.getByTestId("segment-unavailable").textContent).toContain("Qloo has no age breakdown for this city.");
+    expect(screen.getByTestId("segment-unavailable").textContent).not.toContain("live service");
+  });
+  it("All fans leaves the error state", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("offline"); }));
+    body();
+    await open();
+    await waitFor(() => screen.getByTestId("segment-unavailable"));
+    fireEvent.click(screen.getByRole("button", { name: "All fans" }));
+    expect(screen.getByRole("button", { name: "All fans" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.queryByTestId("segment-unavailable")).toBeNull();
   });
 });
 
