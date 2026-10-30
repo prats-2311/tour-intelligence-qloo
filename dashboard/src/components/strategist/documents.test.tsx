@@ -20,7 +20,12 @@ const answer = (text: string) => `data: ${JSON.stringify({ type: "strategist_mes
 const sseFetch = () => vi.fn(async (_url: string, _init?: RequestInit) => new Response(answer("Done."), { status: 200, headers: { "content-type": "text/event-stream" } }));
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); pdf.pages = []; pdf.numPages = 0; });
 
-const panel = () => render(<StrategistPanel context={{ artist: { name: "Example artist", entityId: "e1" } }} sample={false} title="t" />);
+// The documents area is a closed disclosure ("Your documents ▾") so the answer keeps the room; these tests work inside it.
+const panel = () => {
+  const r = render(<StrategistPanel context={{ artist: { name: "Example artist", entityId: "e1" } }} sample={false} title="t" />);
+  fireEvent.click(screen.getByRole("button", { name: /^Your documents/ }));
+  return r;
+};
 const fileInput = (c: HTMLElement) => c.querySelector('input[type="file"]') as HTMLInputElement;
 const upload = (c: HTMLElement, ...files: File[]) => fireEvent.change(fileInput(c), { target: { files } });
 const txt = (name: string, body = "Los Angeles drew 1,200 fans.") => new File([body], name, { type: "text/plain" });

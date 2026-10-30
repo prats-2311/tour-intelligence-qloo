@@ -102,6 +102,8 @@ describe("Ask about this tour: showcase", () => {
     await screen.findByText("Invented answer one.");
     // The replay's done event lands after the answer and a chip is ignored while busy, so retry the click until the second answer shows
     // (a click while the first replay is still busy is a no-op; once the second is running further clicks are ignored too).
+    // Suggestions fold away after the first answer; reopen them to ask the second recorded question.
+    fireEvent.click(screen.getByRole("button", { name: "Suggestions" }));
     await vi.waitFor(() => {
       if (!screen.queryByText("Invented answer 99 two.")) fireEvent.click(screen.getByRole("button", { name: Q2 }));
       expect(screen.getByText("Invented answer 99 two.")).toBeTruthy();

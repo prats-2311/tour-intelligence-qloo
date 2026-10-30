@@ -67,15 +67,15 @@ describe("StrategistPanel", () => {
     ask("q");
     expect(await screen.findByText("Connection lost — partial answer shown")).toBeTruthy();
   });
-  it("an error shows one sentence and Try again re-asks the same question", async () => {
+  it("an error shows one sentence and Retry re-asks the same question", async () => {
     const spy = vi.spyOn(client, "streamStrategist").mockImplementation(async function* () {
       yield { type: "strategist_error", code: "UNAVAILABLE", message: "Strategist is unavailable." } as const;
       yield { type: "done", summary: {} } as const;
     });
     render(<StrategistPanel context={{}} sample={false} title="t" />);
     ask("same q");
-    expect(await screen.findByText("Strategist is unavailable.")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("The live strategist isn't available right now. Recorded answers still work.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await vi.waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
     expect(spy.mock.calls[1]![0].messages.at(-1)).toEqual({ role: "user", text: "same q" });
   });
@@ -130,11 +130,35 @@ describe("StrategistPanel", () => {
     await vi.waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
     expect(screen.getByText("two")).toBeTruthy();
   });
-  it("done without a message or error says no answer came back, with Try again", async () => {
+  it("done without a message or error says no answer came back, with Retry", async () => {
     vi.spyOn(client, "streamStrategist").mockImplementation(async function* () { yield { type: "done", summary: {} } as const; });
     render(<StrategistPanel context={{}} sample={false} title="t" />);
     ask("q");
     expect(await screen.findByText("No answer came back — try again")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
+  });
+});
+
+describe("strategist errors and suggestions", () => {
+  it("shows plain-language copy, not the gateway's internal message", async () => {
+    vi.spyOn(client, "streamStrategist").mockImplementation(async function* () {
+      yield { type: "error", code: "HTTP_503", message: "Qloo gateway not configured" } as const;
+    });
+    render(<StrategistPanel context={{}} sample={false} title="t" />);
+    ask("q");
+    expect(await screen.findByText("The live strategist isn't available right now. Recorded answers still work.")).toBeTruthy();
+    expect(screen.queryByText(/gateway not configured/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
+  });
+  it("folds the suggestions away once there is an answer", async () => {
+    vi.spyOn(client, "streamStrategist").mockImplementation(async function* () {
+      yield { type: "strategist_message", text: "An answer.", unsupportedNumbers: [], stoppedEarly: false, model: "m" } as const;
+      yield { type: "done", summary: {} } as const;
+    });
+    render(<StrategistPanel context={{ focusCityId: "1", cities: [{ id: "1", name: "Los Angeles" }] } as never} sample={false} title="t" />);
+    expect(screen.getByRole("button", { name: "Suggestions" }).getAttribute("aria-expanded")).toBe("true");
+    ask("q");
+    await screen.findByText("An answer.");
+    expect(screen.getByRole("button", { name: "Suggestions" }).getAttribute("aria-expanded")).toBe("false");
   });
 });

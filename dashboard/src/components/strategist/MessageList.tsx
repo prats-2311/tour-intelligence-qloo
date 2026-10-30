@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { StrategistTurn } from "@/lib/qloo/strategistReducer";
 import { ChatBubble, TypingIndicator } from "@/components/ui/ChatBits";
+import { strategistErrorCopy } from "@/lib/qloo/strategistErrorCopy";
 import { AnswerText, realUnsupportedNumbers } from "./AnswerText";
 import { SaveToNotes } from "./SaveToNotes";
 import { WorkLog } from "./WorkLog";
@@ -11,7 +12,7 @@ export function numbersNote(tokens: string[], citesFile = false): string {
 
 function Turn({ turn, onRetry, retryDisabled, logOpen, documentNames, notesKey }: { notesKey?: string; documentNames?: Record<string, string>; turn: StrategistTurn; onRetry: (q: string) => void; retryDisabled: boolean; logOpen: boolean }) {
   const { answer } = turn;
-  const failure = turn.status === "error" && turn.error ? turn.error.message : turn.status === "done" && !answer ? "No answer came back — try again" : undefined;
+  const failure = turn.status === "error" && turn.error ? strategistErrorCopy(turn.error.code, turn.error.message) : turn.status === "done" && !answer ? "No answer came back — try again" : undefined;
   // Recorded answers carry the gateway's flag as it was then; list markers and step ordinals it counted are dropped here.
   const unsupported = answer ? realUnsupportedNumbers(answer.text, answer.unsupportedNumbers) : [];
   return (
@@ -19,7 +20,7 @@ function Turn({ turn, onRetry, retryDisabled, logOpen, documentNames, notesKey }
       <ChatBubble role="user">{turn.question}</ChatBubble>
       {!answer && <WorkLog turn={turn} defaultOpen={logOpen} />}
       {answer && (
-        <div className="flex flex-col gap-1.5">
+        <div data-answer className="flex flex-col gap-1.5">
           <ChatBubble role="assistant"><AnswerText text={answer.text} {...(documentNames ? { documentNames } : {})} /></ChatBubble>
           {unsupported.length > 0 && <p className="text-[13px] text-state-stale">{numbersNote(unsupported, /\[doc:[A-Za-z0-9_-]+ p\.\d+\]/.test(answer.text))}</p>}
           {notesKey && <SaveToNotes answer={answer.text} names={documentNames ?? {}} threadKey={notesKey} />}
@@ -32,7 +33,7 @@ function Turn({ turn, onRetry, retryDisabled, logOpen, documentNames, notesKey }
       {failure && (
         <div className="flex flex-wrap items-center gap-3 rounded-[14px] bg-state-error-bg px-4 py-2 text-[14px] text-state-error">
           <p className="flex-1">{failure}</p>
-          <button type="button" disabled={retryDisabled} onClick={() => onRetry(turn.question)} className="min-h-11 rounded-[10px] px-3 font-semibold underline outline-none focus-visible:ring-2 focus-visible:ring-gold/50 disabled:opacity-50">Try again</button>
+          <button type="button" disabled={retryDisabled} onClick={() => onRetry(turn.question)} className="min-h-11 rounded-[10px] px-3 font-semibold underline outline-none focus-visible:ring-2 focus-visible:ring-gold/50 disabled:opacity-50">Retry</button>
         </div>
       )}
     </li>
