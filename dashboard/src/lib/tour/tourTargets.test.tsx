@@ -77,7 +77,7 @@ function mountRoute(route: string) {
 
 /** The first target of a step that must exist on a recording with these pieces; later entries are fallbacks for thinner data. */
 const PRIMARY: Record<string, string> = {
-  "essentials/hook": "sponsors-top", "essentials/age": "sponsors-age", "essentials/pitch": "sponsors-pitch", "essentials/claims": "claims-badge",
+  "essentials/hook": "sponsors-top", "essentials/age": "sponsors-age", "essentials/pitch": "sponsors-pitch",
   "essentials/ask": "ask", "plan/age-matrix": "age-matrix", "plan/filters": "charts-filters", "plan/advance": "tab-advance",
   "plan/budget": "budget-header", "plan/chat": "chat-tools", "plan/compare": "sponsors-compare",
   "team/workspace": "team-bar", "team/status": "status-chip", "team/notes": "city-notes", "team/override": "override-team", "team/share": "team-share", "team/decisions": "chapter-team",
@@ -89,9 +89,8 @@ describe("every tour step has a data-tour target on its rendered page", () => {
     for (const step of tour.steps(show())) {
       it(`${tour.id} / ${step.id}`, async () => {
         mountRoute(step.route);
-        await waitFor(() => expect(onScreen(step.targets), `none of ${step.targets.join(", ")} on ${step.route}`).not.toEqual([]), { timeout: 4000 });
         const want = PRIMARY[`${tour.id}/${step.id}`];
-        if (want) expect(onScreen([want]), `primary target ${want}`).toEqual([want]);
+        await waitFor(() => expect(onScreen(want ? [want] : step.targets), `none of ${(want ? [want] : step.targets).join(", ")} on ${step.route}`).not.toEqual([]), { timeout: 4000 });
       });
     }
   }

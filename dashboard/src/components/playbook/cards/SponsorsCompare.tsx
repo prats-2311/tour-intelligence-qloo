@@ -19,7 +19,7 @@ export function SponsorsCompare({ request }: { request: SegmentRequest }) {
   const data = state.status === "done" ? state.data : null;
   const timedOut = data?.status === "unavailable" && data.reason === "timeout";
   return (
-    <div data-testid="sponsors-compare" className="mt-3 border-t border-canvas-line pt-2" data-noprint>
+    <div data-testid="sponsors-compare" data-tour="sponsors-compare" className="mt-3 border-t border-canvas-line pt-2" data-noprint>
       <button type="button" aria-expanded={open} onClick={toggle} className={BTN}>{COMPARE_TOGGLE}</button>
       <Caption>{COMPARE_LIVE_LABEL}</Caption>
       {open && (

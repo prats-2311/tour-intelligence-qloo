@@ -97,7 +97,7 @@ export default function Agents() {
   const report = useMemo(() => buildExampleReport(SHOWCASE), []);
   return (
     <div className="mx-auto flex w-full min-w-0 max-w-[1000px] flex-col gap-5 pb-10">
-      <header className="rounded-[18px] bg-paper p-5 md:p-6">
+      <header data-tour="agents-top" className="rounded-[18px] bg-paper p-5 md:p-6">
         <h1 className="font-title text-[32px] leading-[1.1] text-bone [text-wrap:balance] lg:text-[44px]">Use Tour Intelligence from your AI agent</h1>
         <p className="mt-3 max-w-[60ch] text-[16px] leading-[1.5] text-canvas-muted [text-wrap:pretty]">
           The same Qloo-backed tools that power this app are available to any MCP client: Claude Code, Claude Desktop, Cursor and others.

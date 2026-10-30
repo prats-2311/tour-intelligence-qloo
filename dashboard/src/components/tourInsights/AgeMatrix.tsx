@@ -47,7 +47,7 @@ export function AgeMatrix({ cities, artist, allFansOf, hrefFor }: Props) {
   const close = () => { setOpen(null); trigger.current?.focus(); };
 
   return (
-    <section data-testid="age-matrix" aria-labelledby={titleId} className="flex min-w-0 flex-col gap-3 rounded-[14px] bg-paper p-3 lg:p-4">
+    <section data-testid="age-matrix" data-tour="age-matrix" aria-labelledby={titleId} className="flex min-w-0 flex-col gap-3 rounded-[14px] bg-paper p-3 lg:p-4">
       <h2 id={titleId} className="font-title text-[20px] leading-tight text-canvas-text">{MATRIX_TITLE}</h2>
       <p className="text-[12px] leading-[1.45] text-canvas-muted">Each age group's #1 brand in each city, from the age bands where fans of this artist over-index. Header ranges are Qloo's signed index values, not shares of fans.</p>
       {(!touched || someIdle) && !running && (

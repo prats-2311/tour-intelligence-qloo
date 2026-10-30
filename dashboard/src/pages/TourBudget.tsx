@@ -120,7 +120,7 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
 
   return (
     <div className="mx-auto flex w-full min-w-0 max-w-5xl flex-col gap-4 pb-24">
-      <header className="flex min-w-0 flex-col gap-2">
+      <header data-tour="budget-header" className="flex min-w-0 flex-col gap-2">
         <h1 className="font-title text-[28px] leading-tight text-canvas-text lg:text-[32px]">Tour budget</h1>
         <p className="text-[13px] text-canvas-muted">{artist}. Your numbers, our maths, real distances: every amount is yours to type, we only work out the distances, travel days and totals. Saved in this browser only, never sent to a server.</p>
         <nav aria-label="Related pages" className="flex flex-wrap gap-2">

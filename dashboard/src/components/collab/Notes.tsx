@@ -79,7 +79,7 @@ export function NotesSheet({ open, onClose, title, threadKey }: { open: boolean;
 }
 
 /** "Notes (N)" on a card or in the city header; hidden when collaboration is off. */
-export function NotesButton({ threadKey, title, label }: { threadKey: string; title: string; label?: string }) {
+export function NotesButton({ threadKey, title, label, tour }: { threadKey: string; title: string; label?: string; /** `data-tour` value, for the guided tour. */ tour?: string }) {
   const w = useWorkspace();
   const [open, setOpen] = useState(false);
   if (!w.enabled) return null;
@@ -87,7 +87,7 @@ export function NotesButton({ threadKey, title, label }: { threadKey: string; ti
   const n = t?.messages.length ?? 0;
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-label={`${label ?? "Notes"} for ${title}: ${n} ${n === 1 ? "note" : "notes"}${t?.resolved ? ", resolved" : ""}`} className="inline-flex min-h-11 items-center gap-1.5 rounded-[4px] px-1 text-[12px] font-medium tabular-nums text-canvas-muted hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
+      <button type="button" data-tour={tour} onClick={() => setOpen(true)} aria-label={`${label ?? "Notes"} for ${title}: ${n} ${n === 1 ? "note" : "notes"}${t?.resolved ? ", resolved" : ""}`} className="inline-flex min-h-11 items-center gap-1.5 rounded-[4px] px-1 text-[12px] font-medium tabular-nums text-canvas-muted hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
         {t?.resolved ? <Check size={13} aria-hidden /> : <MessageSquare size={13} aria-hidden />}
         {label ?? "Notes"} ({n})
       </button>

@@ -35,11 +35,11 @@ export function OverrideValue({ cityId, field, qloo, editable, children }: { cit
   return (
     <>
       {o ? (
-        <>
+        <span data-tour="override-team" className="block">
           <span data-testid="team-value" className="break-words">{o.value}</span>
           <span className="mt-0.5 block text-[12px] font-normal text-canvas-muted">Team value · {o.name} · {timeAgo(o.at)}{o.demo ? " · Demo teammate" : ""}</span>
           <span data-testid="qloo-suggested" className="block text-[12px] font-normal text-canvas-muted">Qloo suggested: {qloo !== "—" ? qloo : o.original || "—"}</span>
-        </>
+        </span>
       ) : children}
       {editable && (
         <span className="flex items-center gap-3">

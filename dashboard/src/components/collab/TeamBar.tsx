@@ -56,10 +56,10 @@ export function TeamBar({ cities, tourThread }: { cities: Array<{ id: string; na
   const [shared, setShared] = useState<{ url: string | null; copied: boolean } | null>(null);
   if (!w.enabled) return null;
   return (
-    <div data-testid="team-bar" className="flex min-w-0 flex-wrap items-center gap-2">
+    <div data-testid="team-bar" data-tour="team-bar" className="flex min-w-0 flex-wrap items-center gap-2">
       {tourThread && <NotesButton threadKey={tourThread} title="the whole tour" label="Tour notes" />}
       <button type="button" onClick={() => setOpen(true)} className={collabBtn}><Users size={14} aria-hidden />Team activity</button>
-      <button type="button" onClick={() => void w.share().then(setShared)} className={collabBtn}><Link2 size={14} aria-hidden />Share with your team</button>
+      <button type="button" data-tour="team-share" onClick={() => void w.share().then(setShared)} className={collabBtn}><Link2 size={14} aria-hidden />Share with your team</button>
       {w.identity && (
         <button type="button" onClick={w.editIdentity} aria-label={`Writing as ${w.identity.name}, ${w.identity.role}. Change`} className="inline-flex min-h-11 items-center gap-1.5 rounded-[8px] border border-canvas-line px-3 text-[13px] font-medium text-canvas-text hover:bg-paper-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
           <Pencil size={12} aria-hidden />{w.identity.name} · {w.identity.role}
