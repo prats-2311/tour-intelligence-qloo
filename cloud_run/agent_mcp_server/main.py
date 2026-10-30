@@ -46,7 +46,7 @@ if _HERE not in sys.path:
 
 import insight_tools  # noqa: E402
 import taste_tools  # noqa: E402
-from gateway import gateway_url  # noqa: E402
+from gateway import TEST_TRAFFIC, gateway_url  # noqa: E402
 from ratelimit import SlidingWindow  # noqa: E402
 
 # Public demo mode: only the five taste tools, per-IP rate limit and gateway budget.
@@ -387,9 +387,11 @@ class RateLimitMiddleware:
             resp = JSONResponse({"error": "Rate limit reached — try again in a few minutes"}, status_code=429)
             return await resp(scope, receive, send)
         token = _REQUEST_IP.set(ip)
+        test_token = TEST_TRAFFIC.set((b"x-tiq-test", b"1") in (scope.get("headers") or []))
         try:
             await self.app(scope, receive, send)
         finally:
+            TEST_TRAFFIC.reset(test_token)
             _REQUEST_IP.reset(token)
 
 
