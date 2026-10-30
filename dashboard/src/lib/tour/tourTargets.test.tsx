@@ -28,13 +28,13 @@ const show = () => parseShowcase(syntheticShowcase);
 /** A workspace with the seeded pieces the team tour points at: a status, a resolved note and an override for every city. */
 function seeded(): Workspace {
   const snap = emptySnapshot("demoworkspace1");
-  const actor = { name: "Demo Tour Manager", role: "manager", at: Date.now(), demo: true };
+  const actor = { name: "Demo Tour Manager", role: "Manager" as const, at: Date.now(), demo: true as const };
   for (const c of showcaseCities(show())) {
     snap.statuses[c.id] = { status: "considering", ...actor };
     snap.threads[cityThread(c.id)] = { resolved: true, messages: [{ id: "m1", text: "Decision: hold the room", ...actor }] } as never;
     snap.overrides[c.id] = { top_zone: { value: "East side", original: "West side", ...actor } } as never;
   }
-  return { ...OFF, enabled: true, ws: snap.ws, snapshot: snap, identity: { name: "Demo Tour Manager", role: "manager" } as never };
+  return { ...OFF, enabled: true, ws: snap.ws, snapshot: snap, identity: { name: "Demo Tour Manager", role: "Manager" } as never };
 }
 
 beforeEach(() => {

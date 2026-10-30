@@ -38,8 +38,9 @@ function NotFound() {
 export default function App() {
   useShowcaseVariant();
   return (
-    <TourProvider>
-      <WorkspaceProvider>
+    // The tour provider sits inside the workspace provider: the team tour is offered only while a workspace is on.
+    <WorkspaceProvider>
+      <TourProvider>
       <QlooWebMcpTools />
       <AppShell>
         {/* Every lazy route gets its own Suspense + matching skeleton. A bare
@@ -64,7 +65,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AppShell>
-      </WorkspaceProvider>
-    </TourProvider>
+      </TourProvider>
+    </WorkspaceProvider>
   );
 }
