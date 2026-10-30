@@ -44,7 +44,7 @@ function place(b: Box, popH: number, vw: number, vh: number): Pos | null {
   return null;
 }
 
-export function TourOverlay({ steps, index, next, onNextTour, onBack, onNext, onSkip }: { steps: TourStep[]; index: number; /** The tour that follows this one, offered on the last step. */ next?: { title: string; steps: number } | null; onNextTour?: () => void; onBack: () => void; onNext: () => void; onSkip: () => void }) {
+export function TourOverlay({ steps, index, next, onNextTour, onBack, onNext, onSkip, loading = false }: { steps: TourStep[]; index: number; /** True while the location is not yet this step's page: the popover says so instead of showing step text over the wrong page. */ loading?: boolean; /** The tour that follows this one, offered on the last step. */ next?: { title: string; steps: number } | null; onNextTour?: () => void; onBack: () => void; onNext: () => void; onSkip: () => void }) {
   const step = steps[index]!;
   const last = index === steps.length - 1;
   const isDesktop = useIsDesktop();
@@ -110,8 +110,9 @@ export function TourOverlay({ steps, index, next, onNextTour, onBack, onNext, on
     let scrolledAt = 0;
     const startedAt = performance.now();
     const tick = () => {
+      if (loading) targetRef.current = null;
       let el = targetRef.current;
-      if (!el || !el.isConnected) { el = step.targets.length ? findTarget(step.targets) : null; targetRef.current = el; }
+      if (!el || !el.isConnected) { el = step.targets.length && !loading ? findTarget(step.targets) : null; targetRef.current = el; }
       let next: Box | null = null;
       if (el) {
         if (scrolledFor !== el) {
@@ -151,7 +152,7 @@ export function TourOverlay({ steps, index, next, onNextTour, onBack, onNext, on
     };
     raf = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(raf);
-  }, [step.id, step.route, step.targets, isDesktop, scrollToTarget, freeBand]);
+  }, [step.id, step.route, step.targets, loading, isDesktop, scrollToTarget, freeBand]);
 
   // Esc skips, arrows move, Tab never leaves the popover. The page stays usable otherwise (no modal).
   useEffect(() => {
@@ -213,10 +214,10 @@ export function TourOverlay({ steps, index, next, onNextTour, onBack, onNext, on
         className={`pointer-events-auto flex flex-col gap-3 bg-paper-raised p-4 shadow-xl outline-none ${popClass} ${motion}`}
       >
         <div className="flex items-baseline justify-between gap-3">
-          <h2 id={titleId} className="font-title text-[18px] leading-tight text-canvas-text">{step.title}</h2>
+          <h2 id={titleId} className="font-title text-[18px] leading-tight text-canvas-text">{loading ? "Loading…" : step.title}</h2>
           <span aria-live="polite" className="shrink-0 font-mono text-[12px] tabular-nums text-canvas-muted">{index + 1} of {steps.length}</span>
         </div>
-        <p id={bodyId} className="text-[14px] leading-[1.5] text-canvas-text">{step.body}</p>
+        <p id={bodyId} className="text-[14px] leading-[1.5] text-canvas-text">{loading ? "Opening the page for this step." : step.body}</p>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={onBack} disabled={index === 0} className={`${btn} bg-paper text-canvas-text hover:bg-paper-raised`}>Back</button>
           {last && next && onNextTour

@@ -67,6 +67,7 @@ describe("tour navigation vs the workspace id arriving in the URL", () => {
     await waitFor(() => expect(where()).toMatch(/ws=testws/));
     expect(where()).toMatch(/^\/tours\/insights\?/);
     expect(where()).toContain("showcase=1");
+    await waitFor(() => expect(screen.getByTestId("tour-popover").textContent).toContain("Age groups, city by city"));
   });
   it("re-navigates when something else replaces the URL after the step started", async () => {
     const release = mount();

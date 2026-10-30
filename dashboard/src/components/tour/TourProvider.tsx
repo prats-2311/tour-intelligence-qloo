@@ -104,8 +104,9 @@ export function TourProvider({ children }: { children: ReactNode }) {
     <TourContext.Provider value={api}>
       {children}
       {showPrompt && <TourPrompt onStart={startV1} onDismiss={dismissPrompt} />}
-      {steps && onStepPage && (
+      {steps && (
         <TourOverlay
+          loading={!onStepPage}
           steps={steps}
           index={index}
           next={successor ? { title: successor.title, steps: successor.steps(SHOWCASE).length } : null}
