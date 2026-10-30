@@ -205,7 +205,7 @@ export const DISCLOSURES: readonly string[] = [
 /** "p<0.001" or "p=0.031": the operator is part of the string. */
 const fmtP = (p: number): string => (p < 0.001 ? "p<0.001" : `p=${p.toFixed(3)}`);
 const fmtV = (v: number | null): string => (v === null ? "n/a" : v.toFixed(2));
-const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;
+const plural = (n: number, one: string, many = /[^aeiou]y$/.test(one) ? `${one.slice(0, -1)}ies` : `${one}s`): string => `${n} ${n === 1 ? one : many}`;
 
 /** A name as it opens a sentence and as it reads mid-sentence ("Winnability" / "winnability", "Gemini" / "Gemini"). */
 export interface Name { start: string; inline: string }

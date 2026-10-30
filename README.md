@@ -16,7 +16,7 @@ Who pays and why: promoters and agencies pay per tour; the return comes from spo
 - Proof page: <https://tour-intel-qloo.web.app/proof>
 - Public MCP server (rate-limited demo, no auth): <https://tour-intel-mcp-public-602700957663.us-central1.run.app/mcp>
 - Licence: [MIT](LICENSE)
-- Proof protocol, with its 8 dated amendments: [docs/qloo/proof-v3-protocol.md](docs/qloo/proof-v3-protocol.md)
+- Proof protocol, with its 10 dated amendments: [docs/qloo/proof-v3-protocol.md](docs/qloo/proof-v3-protocol.md)
 
 ## The problem
 
@@ -88,9 +88,10 @@ Scores are deterministic code, never LLM output; missing data gives `insufficien
 
 ## Proof, honestly
 
-Everything below is from [Proof v3](docs/qloo/proof-v3-protocol.md): a protocol committed before any Qloo or Gemini call, with 8 amendments, each committed before the call it affected. We publish whatever came out, including losses. The full tables are at [/proof](https://tour-intel-qloo.web.app/proof). Raw results stay private (Qloo's data policy).
+Everything below is from [Proof v3](docs/qloo/proof-v3-protocol.md): a protocol committed before any Qloo or Gemini call, with 10 amendments, each committed before the call it affected. We publish whatever came out, including losses. The full tables are at [/proof](https://tour-intel-qloo.web.app/proof). Raw results stay private (Qloo's data policy).
 
 - **Test B, fixed candidates, 22 of 27 reviewed cases** ([protocol](docs/qloo/proof-v3-protocol.md)): Qloo rank beat popularity (p<0.001): mean reciprocal rank 0.47 vs 0.13, 17 wins, 1 loss, 4 ties over 22 cases. Not significant at this sample size: Qloo rank trails Gemini (0.47 vs 0.57; p=0.118; 4 wins, 11 losses, 7 ties).
+- **Test B after the model's cutoff** ([Amendment 9](docs/qloo/proof-v3-protocol.md), cases dated 1 Apr to 29 Oct 2026, fixed before any case was collected): 8 of 18 collected cases were scored. Mean reciprocal rank: Qloo rank 0.70, Gemini 0.88, popularity 0.10; chance level 0.29. Qloo rank beat popularity (p=0.016): 7 wins, 0 losses, 1 tie over 8 cases. Not significant at this sample size: Qloo rank trails Gemini (0.70 vs 0.88; p=0.625; 1 win, 3 losses, 4 ties). 10 cases were excluded because the real pick could not be resolved in Qloo. The cases were collected and verified by AI agents, with no human review, and the sample is small.
 - **Claim checker** ([protocol](docs/qloo/proof-v3-protocol.md)): it removed 10 of 10 planted false claims (5 plausible wrong numbers, 4 absent numbers, 1 swapped name).
 - **Test C, grounding** ([protocol, Amendments 4–6 and 8](docs/qloo/proof-v3-protocol.md)): this is a loss for Qloo. We asked whether the names each playbook returns exist in the city. Share rated as existing in the city: venues 1.00 (27/27) for Qloo against 1.00 (36/36) for the LLM-only playbook; brands 1.00 (31/31) against 1.00 (36/36); local acts 0.48 (13/27) against 1.00 (27/27); overall 0.84 against 1.00. The LLM-only playbook beat Qloo in 7 cities, Qloo won none and 2 tied (p=0.016). The secondary analysis (each playbook cut to the smaller of the two counts per city and category) reaches the same conclusion. Qloo's local-act names were often real acts that are not from the city, so the playbook card is now called "Acts these fans love here" and carries a warning that some acts may not be local. **Raters (Amendment 8):** 148 of 182 rows were rated by blinded AI agents (Claude Sonnet), with every local-act row and every uncertain row re-checked against a fetched page. The author rated 34 rows and agreed with the agents on 28 (82%); the author adjudicated the 6 disagreements against the fetched evidence. The author had seen the showcase playbooks, so those 34 ratings are not fully blind to prior exposure. Names stay private; only aggregates are published.
 
@@ -104,8 +105,6 @@ Everything below is from [Proof v3](docs/qloo/proof-v3-protocol.md): a protocol 
 | Sponsor check | Non-profits, advocacy, political and religious groups listed as sponsors | 18 of 20 | 3 of 20 |
 
 The planted errors are synthetic and the fixtures small. The sponsor row measures the rule given a fixed fake classifier output (including made-up wrong and missing answers), not the live model; with the classifier unavailable, the name rule alone caught 12 of 20 with 0 of 20 false alarms. The 2 misses are classifier answers that wrongly said "yes"; the 3 false alarms are brands the made-up classifier wrongly said "no" or did not answer for. Counts of automated tests, rule mutation checks and end-to-end specs are on `/proof`.
-
-**Pending (Amendment 9):** Test B on cases dated after the answering model's training cutoff (1 Apr to 29 Oct 2026) is being collected. Its cases and claim rule were fixed before any case was collected, and the result will be published on `/proof` and here whatever it shows.
 
 ### Limits
 
