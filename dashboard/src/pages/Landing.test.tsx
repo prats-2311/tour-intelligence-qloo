@@ -42,7 +42,7 @@ describe("Landing", () => {
     expect(screen.getByText("In Los Angeles, Mac DeMarco's fans rank Stüssy #1. It isn't in LA's top 20. Qloo taste data, per city, for every stop on the routing.")).toBeTruthy();
     expect(screen.getByText("Then see which cities to win first: fan heat and winnability for every market.")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/city picks|places higher|Route with anything/i);
-    expect(screen.getByText("In this example, it's Thursday and holds expire Friday. Confirm two of five secondary markets.")).toBeTruthy();
+    expect(screen.getByText("The scenario: venues are holding dates until Friday. Pick which 2 of 5 smaller markets to confirm.")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/film press tour/i);
     const cta = screen.getByRole("link", { name: "See the example tour" });
     const line = screen.getByTestId("protagonist");
@@ -100,6 +100,17 @@ describe("Landing", () => {
     const { container } = render(<MemoryRouter><Landing /></MemoryRouter>);
     expect(container.querySelector('[aria-hidden="true"][inert]')).toBeTruthy();
     expect(screen.queryByText(/\blive\b/i)).toBeNull();
+  });
+  it("desktop: a muted legend under the map names every marker shape from the map's own verdict shapes", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    const legend = screen.getByTestId("map-legend");
+    expect(legend.textContent).toBe("● Play · ◆ Under the radar · ▲ De-risk · ○ Consider · ✕ Skip. Shape is the verdict; top picks are named.");
+    expect(legend.className).toContain("text-canvas-muted");
+  });
+  it("phone: no map, so no legend", () => {
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    expect(screen.queryByTestId("map-legend")).toBeNull();
   });
 });
 

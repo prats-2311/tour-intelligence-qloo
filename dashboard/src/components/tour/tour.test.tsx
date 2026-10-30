@@ -109,7 +109,7 @@ describe("first-visit prompt", () => {
 });
 
 describe("persistent entry", () => {
-  it("Landing offers Take the tour and it starts step 1 on the board even after dismissal", async () => {
+  it("Landing offers How it works (60 s) and it starts step 1 on the board even after dismissal", async () => {
     window.localStorage.setItem(TOUR_STORAGE_KEY, "dismissed");
     mount("/");
     expect(screen.queryByTestId("tour-prompt")).toBeNull();
@@ -117,6 +117,15 @@ describe("persistent entry", () => {
     await flush();
     expect(counter()).toBe("1 of 8");
     expect(screen.getByTestId("where").textContent).toBe("/tours/board?showcase=1");
+  });
+  it("sits directly under the two main buttons, before Try a routing", () => {
+    mount("/");
+    const how = screen.getByRole("button", { name: "How it works (60 s)" });
+    const routing = screen.getByRole("link", { name: "Try a routing" });
+    const own = screen.getByRole("link", { name: "Try your own artist" });
+    expect(own.compareDocumentPosition(how) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(how.compareDocumentPosition(routing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByText("Take the tour")).toBeNull();
   });
 });
 

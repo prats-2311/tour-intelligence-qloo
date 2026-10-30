@@ -18,7 +18,9 @@ export const SUBLINE = "In Los Angeles, Mac DeMarco's fans rank Stüssy #1. It i
 export const LINE2 = "Then see which cities to win first: fan heat and winnability for every market.";
 export const TRY_ARTIST_LINE = "Type any artist; we build fresh city playbooks on the spot.";
 export const TRY_ROUTING_LINE = "Replays a recorded run where a tour's cities were pasted, scored and ordered.";
-export const PROTAGONIST = "In this example, it's Thursday and holds expire Friday. Confirm two of five secondary markets.";
+/** Mirrors the map glyphs (VERDICT_SHAPE): shape carries the verdict. "Under the radar" is the Hidden goldmine shape; copy rules keep that phrase off the landing. */
+export const MAP_LEGEND = "● Play · ◆ Under the radar · ▲ De-risk · ○ Consider · ✕ Skip. Shape is the verdict; top picks are named.";
+export const PROTAGONIST = "The scenario: venues are holding dates until Friday. Pick which 2 of 5 smaller markets to confirm.";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
@@ -127,6 +129,7 @@ export default function Landing() {
             <p className="max-w-[34ch] text-[13px] leading-[1.4] text-canvas-muted">{TRY_ARTIST_LINE}</p>
           </div>
         </div>
+        {tour && showcaseAvailable() && <button type="button" data-testid="take-tour" onClick={tour.start} className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">How it works (60 s)</button>}
         {showcaseRoutingAvailable() && (
           <>
           <NextStepLink to="/tours/board?showcase=routing" className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Try a routing</NextStepLink>
@@ -134,11 +137,15 @@ export default function Landing() {
           </>
         )}
         <Link to="/proof" className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{PROOF_LINK_TEXT} →</Link>
-        {tour && showcaseAvailable() && <button type="button" data-testid="take-tour" onClick={tour.start} className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Take the tour</button>}
       </div>
       <Story />
       <div className="flex flex-col gap-6 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
-        {isDesktop && <MapPreview />}
+        {isDesktop && (
+          <div>
+            <MapPreview />
+            <p data-testid="map-legend" className="mt-2 text-[13px] leading-[1.4] text-canvas-muted">{MAP_LEGEND}</p>
+          </div>
+        )}
         <ProofCard />
       </div>
     </div>
