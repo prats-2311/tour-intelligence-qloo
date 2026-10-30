@@ -42,3 +42,46 @@ describe("unsupportedNumbers", () => {
     expect(unsupportedNumbers("Indexes at 0.08.", [demo], {})).toEqual(["0.08"]);
   });
 });
+
+describe("unsupportedNumbers with document citations", () => {
+  const docs = [
+    { id: "d1", name: "recap.txt", pages: [{ n: 1, text: "Los Angeles drew 1,200 fans." }, { n: 2, text: "Austin sold 340 tickets, 38% on presale. Longitude -118.26." }] },
+    { id: "d2", name: "b.txt", pages: [{ n: 1, text: "Budget 9,000." }] },
+  ];
+  const check = (a: string, tool: unknown[] = [], d = docs) => unsupportedNumbers(a, tool, {}, d);
+  it("passes a number found on the cited page", () => {
+    expect(check("Los Angeles drew 1,200 fans [doc:d1 p.1].")).toEqual([]);
+    expect(check("Austin sold 340 tickets, 38% on presale. [doc:d1 p.2]")).toEqual([]);
+    expect(check("Near 118.26 west [doc:d1 p.2].")).toEqual([]);
+  });
+  it("flags a number that is on a different page than the one cited", () => {
+    expect(check("Los Angeles drew 1,200 fans [doc:d1 p.2].")).toEqual(["1,200"]);
+  });
+  it("flags a number absent from the cited page and from an unknown document or page", () => {
+    expect(check("They drew 5,000 fans [doc:d1 p.1].")).toEqual(["5,000"]);
+    expect(check("Drew 1,200 [doc:zz p.1].")).toEqual(["1,200"]);
+    expect(check("Drew 1,200 [doc:d1 p.9].")).toEqual(["1,200"]);
+  });
+  it("never lets tool results satisfy a document citation", () => {
+    expect(check("Affinity 0.91 [doc:d1 p.1].", [[{ affinity: 0.91 }]])).toEqual(["0.91"]);
+  });
+  it("never lets a document satisfy an uncited number", () => {
+    expect(check("Los Angeles drew 1,200 fans.")).toEqual(["1,200"]);
+    expect(check("Cited 1,200 [doc:d1 p.1]. But also 340 here.")).toEqual(["340"]);
+  });
+  it("still checks uncited numbers against tool results", () => {
+    expect(check("Fit is 0.91. Los Angeles drew 1,200 [doc:d1 p.1].", [[{ affinity: 0.91 }]])).toEqual([]);
+  });
+  it("does not read digits inside the doc id or page marker as claimed numbers", () => {
+    expect(check("Budget 9,000 [doc:d2 p.1].")).toEqual([]);
+  });
+  it("keeps a citation placed after the sentence's full stop with that sentence", () => {
+    expect(check("Los Angeles drew 1,200 fans. [doc:d1 p.1]")).toEqual([]);
+  });
+  it("accepts a sentence citing two pages if the number is on either", () => {
+    expect(check("About 340 and 1,200 [doc:d1 p.1][doc:d1 p.2].")).toEqual([]);
+  });
+  it("keeps the old behaviour without documents", () => {
+    expect(unsupportedNumbers("Expect 5,000 [doc:d1 p.1].", [], {})).toEqual(["5,000"]);
+  });
+});
