@@ -151,6 +151,19 @@ function CityPlaybookPage() {
     staleTime: Infinity,
     retry: false,
   });
+  // The lookups use web credits and can take a while: if the reader has moved to another tab by the time they finish, say so.
+  const tabNow = useRef(tab);
+  tabNow.current = tab;
+  const wasFetching = useRef(false);
+  useEffect(() => {
+    if (advance.isFetching) { wasFetching.current = true; return; }
+    if (!wasFetching.current) return;
+    wasFetching.current = false;
+    if (tabNow.current === "advance") return;
+    const name = shownCity?.name ?? "this city";
+    if (advance.isError) toast({ message: `Couldn't load Advance & risks for ${name}.`, tone: "error" });
+    else toast({ message: `Advance & risks are ready for ${name}.`, tone: "success" });
+  }, [advance.isFetching, advance.isError, shownCity?.name, toast]);
 
   // Age groups are always a live gateway read made on click, so they exist for live runs and the recorded example, never for the invented sample set.
   const segments: SegmentRequest | undefined = shownCity && artist && (!sample || state.sampleSet === "showcase") && !unrecorded

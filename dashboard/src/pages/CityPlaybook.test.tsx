@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -267,6 +267,24 @@ describe("CityPlaybook Advance & risks tab", () => {
     const q = spy.mock.calls[0]![0];
     expect(q).toMatchObject({ window: { start: "2027-03-12", end: "2027-03-15" }, lat: expect.any(Number), lon: expect.any(Number) });
     expect(q.artistCountry).toBeUndefined();
+  });
+  it("tells the reader when the lookups finish after they moved to another tab, and stays quiet when they are watching", async () => {
+    withWindow({ start: "2027-03-12", end: "2027-03-15" });
+    let done!: (v: typeof risks) => void;
+    vi.spyOn(client, "fetchAdvance").mockImplementation(() => new Promise((r) => { done = r as typeof done; }));
+    renderAt(`/tours/playbook/${firstId()}?showcase=1`);
+    fireEvent.click(await screen.findByRole("tab", { name: "Advance & risks" }));
+    fireEvent.click(screen.getByRole("tab", { name: "How to win" }));
+    await act(async () => { done(risks); });
+    await waitFor(() => expect(document.querySelector("[data-toast-viewport]")?.textContent).toMatch(/Advance & risks are ready for .+\./));
+  });
+  it("no toast when the Advance tab is open as the lookups finish", async () => {
+    withWindow({ start: "2027-03-12", end: "2027-03-15" });
+    vi.spyOn(client, "fetchAdvance").mockResolvedValue(risks);
+    renderAt(`/tours/playbook/${firstId()}?showcase=1`);
+    fireEvent.click(await screen.findByRole("tab", { name: "Advance & risks" }));
+    expect(await screen.findByText("Web lookups are paused for today.")).toBeTruthy();
+    expect(document.querySelector("[data-toast-viewport]")?.textContent).toBe("");
   });
   it("without a date window it explains and does not fetch", async () => {
     withWindow();
