@@ -2,10 +2,12 @@ import { useState } from "react";
 import { LIMITS, timeAgo } from "@/lib/collab/types";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
 import { collabInput, demoChip } from "./ui";
+import { useCollabWrite } from "./useCollabWrite";
 
 /** Free-text sponsor leads the team adds beside Qloo's ranked list. `readOnly` (the Tour Book) lists them without controls. */
 export function SponsorLeads({ cityId, readOnly = false }: { cityId: string; readOnly?: boolean }) {
   const w = useWorkspace();
+  const write = useCollabWrite();
   const [adding, setAdding] = useState(false);
   const [text, setText] = useState("");
   const leads = w.snapshot?.leads[cityId] ?? [];
@@ -15,7 +17,7 @@ export function SponsorLeads({ cityId, readOnly = false }: { cityId: string; rea
     if (!t) return;
     setAdding(false);
     setText("");
-    await w.write("lead", { cityId, text: t });
+    await write("lead", { cityId, text: t }, "Sponsor lead added.");
   };
   return (
     <div data-testid="sponsor-leads" className="mt-3 flex min-w-0 flex-col gap-1 border-t border-canvas-line pt-2">
@@ -25,7 +27,7 @@ export function SponsorLeads({ cityId, readOnly = false }: { cityId: string; rea
           {leads.map((l) => (
             <li key={l.id} className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 py-1 text-[15px] text-canvas-text">
               <span className="min-w-0 break-words">{l.text} <span className="text-[12px] text-canvas-muted">{l.name} · {timeAgo(l.at)}</span>{l.demo && <span className={`${demoChip} ml-1.5`}>Demo teammate</span>}</span>
-              {!readOnly && <button type="button" onClick={() => void w.write("lead_remove", { cityId, id: l.id })} aria-label={`Remove lead ${l.text}`} className="inline-flex min-h-11 items-center text-[12px] text-canvas-muted underline-offset-4 hover:text-canvas-text hover:underline">Remove</button>}
+              {!readOnly && <button type="button" onClick={() => void write("lead_remove", { cityId, id: l.id }, "Sponsor lead removed.")} aria-label={`Remove lead ${l.text}`} className="inline-flex min-h-11 items-center text-[12px] text-canvas-muted underline-offset-4 hover:text-canvas-text hover:underline">Remove</button>}
             </li>
           ))}
         </ul>

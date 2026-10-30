@@ -8,6 +8,7 @@ import * as client from "@/lib/qloo/client";
 import { LUMEN_VALE_SAMPLE, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { countQlooCalls } from "@/lib/qloo/narrate";
 import { resetPlaybooks } from "@/lib/qloo/playbookStore";
+import { ToastProvider } from "@/components/ui/Toast";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
@@ -52,7 +53,7 @@ function EmptyShortlist() {
 const renderAt = (url: string, extra?: React.ReactNode) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <TourBoardProvider sampleDelayMs={0}>
+      <ToastProvider><TourBoardProvider sampleDelayMs={0}>
         <MemoryRouter initialEntries={[url]}>
           <Routes>
             <Route path="/tours/book" element={<TourBook />} />
@@ -60,7 +61,7 @@ const renderAt = (url: string, extra?: React.ReactNode) =>
           </Routes>
           {extra}
         </MemoryRouter>
-      </TourBoardProvider>
+      </TourBoardProvider></ToastProvider>
     </QueryClientProvider>,
   );
 
@@ -165,7 +166,8 @@ describe("TourBook", () => {
     fireEvent.click(screen.getByRole("button", { name: "Calendar" }));
     expect(click).toHaveBeenCalled();
     expect(await readBlob(created[0]!)).toContain("SUMMARY:Hold — Guadalajara\\, MX");
-    const toast = await screen.findByText("Calendar file downloaded");
+    const toast = await screen.findByText("Calendar file downloaded.");
+    expect(toast.closest("[data-toast-viewport]")).not.toBeNull();
     expect(toast.closest("[aria-live]")?.getAttribute("aria-live")).toBe("polite");
   });
   it("Share uses the Web Share API when available, else copies the link", async () => {
@@ -179,8 +181,17 @@ describe("TourBook", () => {
     vi.stubGlobal("navigator", { ...navigator, share: undefined, clipboard: { writeText } });
     renderAt("/tours/book?sample=1");
     fireEvent.click(await screen.findByRole("button", { name: "Share" }));
-    expect(await screen.findByText("Link copied")).toBeTruthy();
+    const toast = await screen.findByRole("status");
+    expect(toast.textContent).toContain("Link copied");
+    expect(toast.closest("[data-toast-viewport]")).not.toBeNull();
+    expect(document.querySelectorAll("[role=status]")).toHaveLength(1); // nothing inline beside the toast
     expect(writeText).toHaveBeenCalled();
+    cleanup();
+    vi.stubGlobal("navigator", { ...navigator, share: undefined, clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) } });
+    renderAt("/tours/book?sample=1");
+    fireEvent.click(await screen.findByRole("button", { name: "Share" }));
+    const alert = await screen.findByRole("alert");
+    expect((within(alert).getByLabelText("Text to copy") as HTMLInputElement).value).toBe(location.href);
   });
   it("loads playbooks one at a time", async () => {
     let active = 0, maxActive = 0;

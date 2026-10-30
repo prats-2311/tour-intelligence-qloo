@@ -5,6 +5,7 @@ import type { PlaybookCard } from "@/lib/qloo/types";
 import type { SegmentBand, SponsorSegments } from "@/lib/qloo/segments";
 import { bandHeader, showsUnder21Note, signedIndex, UNDER_21_NOTE } from "@/lib/qloo/segments";
 import { loadSegments, resetSegments, type SegmentRequest } from "@/lib/qloo/segmentStore";
+import { ToastProvider } from "@/components/ui/Toast";
 import { CardBody } from "../cardBody";
 import { LoadedBands } from "./SponsorSegments";
 
@@ -23,7 +24,23 @@ const stubFetch = (body: unknown, status = 200) => {
   return f;
 };
 const open = async () => { fireEvent.click(screen.getByRole("button", { name: "By age group" })); };
-const body = (r: SegmentRequest = req()) => render(<CardBody card={card()} city={r.city.name} country={r.city.country} segments={r} />);
+const body = (r: SegmentRequest = req()) => render(<ToastProvider><CardBody card={card()} city={r.city.name} country={r.city.country} segments={r} /></ToastProvider>);
+
+describe("age group lookups report back in a toast", () => {
+  it("says when the age groups are ready, so a reader who scrolled away knows", async () => {
+    stubFetch(answer());
+    body();
+    await open();
+    await waitFor(() => expect(screen.getByTestId("segment-band")).toBeTruthy());
+    expect(document.querySelector("[data-toast-viewport]")?.textContent).toContain("Age groups are ready.");
+  });
+  it("a failed lookup is an alert toast", async () => {
+    stubFetch({ error: "x" }, 502);
+    body();
+    await open();
+    expect((await screen.findAllByRole("alert")).some((a) => a.closest("[data-toast-viewport]") && /Couldn't load age groups/.test(a.textContent ?? ""))).toBe(true);
+  });
+});
 
 describe("sponsors by age group on the sponsors card", () => {
   it("makes no lift claim for a band with lifted:false: no city-rank caption, every row reads Fans rank it #N", async () => {

@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { OFF, WorkspaceContext } from "@/lib/collab/workspaceContext";
 import { loadPlaybook, resetPlaybooks } from "@/lib/qloo/playbookStore";
+import { ToastProvider } from "@/components/ui/Toast";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
@@ -33,7 +34,7 @@ const renderAt = (url: string, opts: { qc?: QueryClient; ws?: boolean } = {}) =>
       </TourBoardProvider>
     </QueryClientProvider>
   );
-  return render(opts.ws ? <WorkspaceContext.Provider value={{ ...OFF, enabled: true, ws: "abc12345" }}>{page}</WorkspaceContext.Provider> : page);
+  return render(<ToastProvider>{opts.ws ? <WorkspaceContext.Provider value={{ ...OFF, enabled: true, ws: "abc12345" }}>{page}</WorkspaceContext.Provider> : page}</ToastProvider>);
 };
 const ready = async () => { await screen.findByRole("heading", { name: "Tour budget", level: 1 }); await screen.findByLabelText("Artist fee, Guadalajara"); };
 const type = async (label: string, v: string) => { const el = screen.getByLabelText(label); await userEvent.clear(el); await userEvent.type(el, v); };
@@ -94,6 +95,7 @@ describe("Tour budget page", () => {
     await type("Artist fee, Guadalajara", "7000");
     await userEvent.click(screen.getByRole("button", { name: "Copy this city's values to all cities (Guadalajara)" }));
     expect((screen.getByLabelText("Artist fee, Curitiba") as HTMLInputElement).value).toBe("7000");
+    expect(document.querySelector("[data-toast-viewport]")?.textContent).toMatch(/Copied Guadalajara's values to \d+ other cit/);
   });
   it("copy-to-all confirms in a status line naming the city and how many cities got the values (audit A12)", async () => {
     renderAt("/tours/budget?sample=1");
@@ -136,6 +138,7 @@ describe("Tour budget page", () => {
     await userEvent.click(within(await screen.findByRole("dialog", { name: "Clear this budget?" })).getByRole("button", { name: "Yes, clear it" }));
     expect((screen.getByLabelText("Artist fee, Guadalajara") as HTMLInputElement).value).toBe("");
     expect(localStorage.getItem(keys[0]!)).toBeNull();
+    expect(document.querySelector("[data-toast-viewport]")?.textContent ?? "").toContain("Budget cleared.");
   });
   it("Load example fills fictional figures and keeps a persistent banner, even after edits", async () => {
     renderAt("/tours/budget?sample=1");
@@ -144,6 +147,7 @@ describe("Tour budget page", () => {
     await userEvent.click(screen.getByRole("button", { name: "Load example (fictional figures)" }));
     expect(screen.getByText(EXAMPLE_BANNER)).toBeTruthy();
     expect((screen.getByLabelText("Artist fee, Guadalajara") as HTMLInputElement).value).toBe("10000");
+    expect(document.querySelector("[data-toast-viewport]")?.textContent ?? "").toContain("Example budget loaded. The figures are fictional.");
     await type("Artist fee, Guadalajara", "9000");
     expect(screen.getByText(EXAMPLE_BANNER)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Clear budget" }));
@@ -192,7 +196,17 @@ describe("Tour budget page", () => {
     const csv = writeText.mock.calls[0]![0] as string;
     expect(csv.startsWith("City,Currency,Artist fee")).toBe(true);
     expect(csv).toContain("Guadalajara,USD,5000");
-    expect(await screen.findByText("CSV copied")).toBeTruthy();
+    const toast = await screen.findByRole("status");
+    expect(toast.textContent).toContain("CSV copied.");
+    expect(toast.closest("[data-toast-viewport]")).not.toBeNull();
+    expect(document.querySelectorAll("[role=status]")).toHaveLength(1);
+  });
+  it("a blocked clipboard is an error toast", async () => {
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText: vi.fn().mockRejectedValue(new Error("no")) } });
+    renderAt("/tours/budget?sample=1");
+    await ready();
+    await userEvent.click(screen.getByRole("button", { name: "Copy as CSV" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Couldn't copy");
   });
   it("makes no network call", async () => {
     const f = vi.fn();

@@ -94,6 +94,8 @@ describe("desktop sidebar", () => {
     await act(async () => { fireEvent.click(within(sidebar()!).getByRole("button", { name: "Share link" })); });
     expect(share).toHaveBeenCalledTimes(1);
     expect((await screen.findByRole("status")).textContent).toContain("Link copied");
+    expect((await screen.findByRole("status")).closest("[data-toast-viewport]")).not.toBeNull(); // the shared toast, not a bespoke pill
+    expect(screen.queryByRole("button", { name: "Dismiss" })).toBeNull();
   });
 });
 

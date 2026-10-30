@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
+import { useToast } from "@/components/ui/Toast";
 import { ArrowDown, ArrowRight, ArrowUp, BarChart3, CircleAlert, History, RotateCcw, Square } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
@@ -157,6 +158,7 @@ export default function TourBoard() {
     if (streaming) stopRef.current?.focus();
     else { replayFocus.current = false; if (!document.activeElement || document.activeElement === document.body) replayRef.current?.focus(); }
   }, [streaming]);
+  const { toast } = useToast();
   const reduce = useReducedMotion();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -244,6 +246,15 @@ export default function TourBoard() {
     staleTime: Infinity,
     retry: false,
   });
+  // A live lookup: say when it lands (or fails) in case the reader scrolled away. The result itself still renders in place.
+  const withoutWasFetching = useRef(false);
+  useEffect(() => {
+    if (withoutLive.isFetching) { withoutWasFetching.current = true; return; }
+    if (!withoutWasFetching.current) return;
+    withoutWasFetching.current = false;
+    if (withoutLive.isError || withoutLive.data?.status === "unavailable") toast({ message: "Couldn't get the generic ranking.", tone: "error" });
+    else if (withoutLive.data) toast({ message: "Generic ranking is ready.", tone: "success" });
+  }, [withoutLive.isFetching, withoutLive.isError, withoutLive.data, toast]);
   const withoutResult = state.source === "showcase"
     ? showcaseWithoutQloo(variant)
     : isSample
@@ -530,7 +541,7 @@ export default function TourBoard() {
                           checked={checked}
                           disabled={blocked}
                           aria-describedby={blocked ? "max-stops-hint" : undefined}
-                          onChange={() => toggleShortlist(c.id)}
+                          onChange={() => { toggleShortlist(c.id); toast({ message: checked ? `Removed ${c.name} from the tour.` : `Added ${c.name} to the tour.`, tone: checked ? "info" : "success" }); }}
                           className="size-5 accent-[#ffcc00]"
                         />
                         <span className="min-w-0 flex-1 truncate text-[15px] text-canvas-text">{c.name}</span>

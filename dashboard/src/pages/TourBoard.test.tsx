@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/components/ui/Toast";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import * as client from "@/lib/qloo/client";
 import { SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
@@ -36,9 +37,9 @@ const PlaybookStub = () => <p>playbook {useParams().cityId}</p>;
 const Where = () => <span data-testid="search">{useLocation().search}</span>;
 const qc = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
 const wrap = (page: React.ReactNode, url: string) => (
-  <QueryClientProvider client={qc()}>
+  <ToastProvider><QueryClientProvider client={qc()}>
     <TourBoardProvider sampleDelayMs={0}><MemoryRouter initialEntries={[url]} key={url}>{page}<Where /></MemoryRouter></TourBoardProvider>
-  </QueryClientProvider>
+  </QueryClientProvider></ToastProvider>
 );
 const currentSearch = () => screen.getByTestId("search").textContent ?? "";
 const submitArtist = (name: string) => {
@@ -101,6 +102,26 @@ describe("TourBoard", () => {
     expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
   });
 
+  it("the generic ranking arriving (or failing) is announced by a toast, because it is a live lookup", async () => {
+    const spy = vi.spyOn(client, "fetchWithoutQloo").mockResolvedValue({ status: "ok", ranked: [{ name: "Mexico City", country: "MX" }], model: "m", cached: false });
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield cityEvent(0); yield { type: "done", summary: {} }; });
+    renderPage("/tours/board");
+    submitArtist("Ada");
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    fireEvent.click(await screen.findByRole("tab", { name: "Without Qloo" }));
+    await waitFor(() => expect(spy).toHaveBeenCalled());
+    await waitFor(() => expect(document.querySelector("[data-toast-viewport]")?.textContent).toContain("Generic ranking is ready."));
+  });
+  it("a thrown generic-ranking fetch is also an alert toast", async () => {
+    vi.spyOn(client, "fetchWithoutQloo").mockRejectedValue(new Error("boom"));
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield cityEvent(0); yield { type: "done", summary: {} }; });
+    renderPage("/tours/board");
+    submitArtist("Ada");
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    fireEvent.click(await screen.findByRole("tab", { name: "Without Qloo" }));
+    const alert = await screen.findByText("Couldn't get the generic ranking.");
+    expect(alert.closest("[data-toast-viewport]")).not.toBeNull();
+  });
   it("Without Qloo sends the resolved artist name, not the raw brief text", async () => {
     const spy = vi.spyOn(client, "fetchWithoutQloo").mockResolvedValue({ status: "unavailable", reason: "error", message: "Generic ranking unavailable" });
     vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
@@ -427,6 +448,17 @@ describe("TourBoard", () => {
     fireEvent.click(screen.getByRole("button", { name: "New brief" }));
     expect((await screen.findByLabelText("Artist") as HTMLInputElement).value).toBe("Lumen Vale");
     expect(screen.getByTestId("search").textContent).toBe("?new=1");
+  });
+  it("taking a city off or back onto the holds list confirms in a toast", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: /Review shortlist/ }));
+    const box = within(await screen.findByRole("dialog", { name: "Holds" })).getAllByRole("checkbox")[0]!;
+    fireEvent.click(box);
+    expect(document.querySelector("[data-toast-viewport]")?.textContent ?? "").toMatch(/Removed .+ from the tour\./);
+    fireEvent.click(box);
+    expect(document.querySelector("[data-toast-viewport]")?.textContent ?? "").toMatch(/Added .+ to the tour\./);
   });
   it("a new run clears the shortlist exclusions", async () => {
     renderPage();

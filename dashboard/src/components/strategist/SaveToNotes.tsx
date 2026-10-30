@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useToast } from "@/components/ui/Toast";
 import { LIMITS } from "@/lib/collab/types";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
 
@@ -13,14 +14,16 @@ export function noteText(answer: string, names: Record<string, string>): string 
 /** "Save to team notes" under an answer: only when a team workspace exists, and only after an explicit confirm. */
 export function SaveToNotes({ answer, names, threadKey }: { answer: string; names: Record<string, string>; threadKey: string }) {
   const w = useWorkspace();
-  const [step, setStep] = useState<"idle" | "confirm" | "saving" | "saved" | "failed">("idle");
+  const { toast } = useToast();
+  const [step, setStep] = useState<"idle" | "confirm" | "saving" | "failed">("idle");
   if (!w.enabled || !w.ws) return null;
   const btn = "min-h-11 rounded-[10px] px-3 text-[13px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-gold/50 disabled:opacity-50";
   const save = async () => {
     setStep("saving");
-    setStep((await w.write("message", { key: threadKey, text: noteText(answer, names) })) ? "saved" : "failed");
+    const ok = await w.write("message", { key: threadKey, text: noteText(answer, names) });
+    if (ok) toast({ message: "Saved to team notes.", tone: "success" });
+    setStep(ok ? "idle" : "failed");
   };
-  if (step === "saved") return <p role="status" className="text-[13px] text-canvas-muted">Saved to team notes.</p>;
   if (step === "idle" || step === "failed") {
     return (
       <div className="flex flex-col items-start gap-1">

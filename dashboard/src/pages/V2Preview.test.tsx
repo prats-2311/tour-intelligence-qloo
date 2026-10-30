@@ -293,6 +293,8 @@ describe("V2Preview prototype taps", () => {
     expect(taps(f)).toHaveLength(1);
     expect(JSON.parse(String((taps(f)[0]![1] as RequestInit).body))).toEqual({ action: "going", experience: "listening" });
     expect(JSON.parse(window.localStorage.getItem("tiq.v2.taps")!)).toEqual(["going"]);
+    expect(document.querySelector("[data-toast-viewport]")?.textContent ?? "").toContain("Counted. Thanks.");
+    expect(document.querySelector("main [role=status]:not([data-toast])")).toBeNull();
     expect((screen.getByRole("button", { name: "Waitlist" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
@@ -331,7 +333,7 @@ describe("V2Preview prototype taps", () => {
     const going = await screen.findByRole("button", { name: "Going" }) as HTMLButtonElement;
     await vi.waitFor(() => expect(going.disabled).toBe(false));
     await act(async () => { fireEvent.click(going); });
-    await screen.findByText(/did not go through/);
+    expect((await screen.findByRole("alert")).textContent).toContain("That tap did not go through");
     expect(going.disabled).toBe(false);
     expect(window.localStorage.getItem("tiq.v2.taps")).toBeNull();
   });

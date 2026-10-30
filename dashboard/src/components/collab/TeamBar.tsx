@@ -1,10 +1,13 @@
-import { Link2, Pencil, Users } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, Link2, Pencil, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useToast } from "@/components/ui/Toast";
 import { Sheet } from "@/components/qloo/Sheet";
 import { DEMO_BANNER, FIELD_LABEL, SHARE_NOTICE, STATUS_LABEL, timeAgo, type ActivityEvent, type Field } from "@/lib/collab/types";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
-import { NotesButton } from "./Notes";
+import { useMediaQuery } from "@/lib/useMediaQuery";
+import { NotesButton, NotesSheet } from "./Notes";
 import { collabBtn, demoChip, roleChip } from "./ui";
+import { shareToast } from "./useCollabWrite";
 
 const ACTIVITY_LIMIT = 50;
 
@@ -49,29 +52,96 @@ export function ActivityPanel({ open, onClose, cities }: { open: boolean; onClos
   );
 }
 
+const MENU_ITEM = "flex min-h-11 w-full items-center gap-2 rounded-[8px] px-3 text-left text-[13px] font-medium text-canvas-text hover:bg-paper-raised focus-visible:bg-paper-raised focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-gold";
+
+/** Below 1280px the secondary actions share one "Team" menu so the header row is the same width whatever is clicked. */
+function TeamMenu({ tourThread, onActivity, onShare }: { tourThread?: string; onActivity: () => void; onShare: () => void }) {
+  const w = useWorkspace();
+  const [open, setOpen] = useState(false);
+  const [notes, setNotes] = useState(false);
+  const btn = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+  const items = () => Array.from(menu.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+  useEffect(() => { if (open) items()[0]?.focus(); }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: MouseEvent) => { if (!menu.current?.contains(e.target as Node) && !btn.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", away);
+    return () => document.removeEventListener("mousedown", away);
+  }, [open]);
+  const close = (refocus = true) => { setOpen(false); if (refocus) btn.current?.focus(); };
+  const pick = (fn: () => void) => () => { setOpen(false); fn(); };
+  const onKey = (e: React.KeyboardEvent) => {
+    const list = items();
+    const i = list.indexOf(document.activeElement as HTMLElement);
+    const go = (n: number) => { e.preventDefault(); list[(n + list.length) % list.length]?.focus(); };
+    if (e.key === "ArrowDown") go(i + 1);
+    else if (e.key === "ArrowUp") go(i - 1);
+    else if (e.key === "Home") go(0);
+    else if (e.key === "End") go(list.length - 1);
+    else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); }
+    else if (e.key === "Tab") setOpen(false);
+  };
+  const n = tourThread ? w.snapshot?.threads[tourThread]?.messages.length ?? 0 : 0;
+  return (
+    <>
+      <button ref={btn} type="button" data-tour="team-share" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} onKeyDown={(e) => { if (e.key === "ArrowDown" && !open) { e.preventDefault(); setOpen(true); } }} className={collabBtn}>
+        <Users size={14} aria-hidden />Team<ChevronDown size={14} aria-hidden />
+      </button>
+      {open && (
+        <div ref={menu} role="menu" aria-label="Team" onKeyDown={onKey} className="absolute right-0 top-full z-40 mt-1 flex w-64 flex-col gap-0.5 rounded-[10px] border border-canvas-line bg-paper p-1 shadow-lg">
+          {tourThread && <button type="button" role="menuitem" onClick={pick(() => setNotes(true))} className={MENU_ITEM}>Tour notes ({n})</button>}
+          <button type="button" role="menuitem" onClick={pick(onActivity)} className={MENU_ITEM}>Team activity</button>
+          <button type="button" role="menuitem" onClick={pick(onShare)} className={MENU_ITEM}>Share with your team</button>
+          {w.identity && <button type="button" role="menuitem" onClick={pick(w.editIdentity)} className={MENU_ITEM}>Writing as {w.identity.name} · {w.identity.role}</button>}
+        </div>
+      )}
+      {tourThread && <NotesSheet open={notes} onClose={() => setNotes(false)} title="Notes: the whole tour" threadKey={tourThread} />}
+    </>
+  );
+}
+
+/** Room (px) the inline row needs: below this the secondary actions share the Team menu. */
+const INLINE_MIN = 900;
+
+/** Width of the room the bar sits in (its header, else the page column). Null until measured, and in environments without ResizeObserver. */
+function useRoom(ref: React.RefObject<HTMLElement | null>, on: boolean): number | null {
+  const [w, setW] = useState<number | null>(null);
+  useEffect(() => {
+    const host = ref.current?.closest("header, main");
+    if (!host || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((es) => { const x = es[0]?.contentRect.width; if (x) setW(x); });
+    ro.observe(host);
+    return () => ro.disconnect();
+  }, [ref, on]);
+  return w;
+}
+
 /** Header controls: team activity, share link and who is writing. Hidden when collaboration is off. */
 export function TeamBar({ cities, tourThread }: { cities: Array<{ id: string; name: string }>; /** Thread key for whole-tour notes (the board and the book), shown as "Tour notes (N)". */ tourThread?: string }) {
   const w = useWorkspace();
   const [open, setOpen] = useState(false);
-  const [shared, setShared] = useState<{ url: string | null; copied: boolean } | null>(null);
+  const { toast } = useToast();
+  const bar = useRef<HTMLDivElement>(null);
+  const room = useRoom(bar, w.enabled);
+  const viewportWide = useMediaQuery("(min-width: 1280px)");
+  const wide = room === null ? viewportWide : room >= INLINE_MIN;
   if (!w.enabled) return null;
+  const share = () => void w.share().then((r) => toast(shareToast(r, w.error)));
   return (
-    <div data-testid="team-bar" data-tour="team-bar" className="flex min-w-0 flex-wrap items-center gap-2">
-      {tourThread && <NotesButton threadKey={tourThread} title="the whole tour" label="Tour notes" />}
-      <button type="button" onClick={() => setOpen(true)} className={collabBtn}><Users size={14} aria-hidden />Team activity</button>
-      <button type="button" data-tour="team-share" onClick={() => void w.share().then(setShared)} className={collabBtn}><Link2 size={14} aria-hidden />Share with your team</button>
-      {w.identity && (
-        <button type="button" onClick={w.editIdentity} aria-label={`Writing as ${w.identity.name}, ${w.identity.role}. Change`} className="inline-flex min-h-11 items-center gap-1.5 rounded-[8px] border border-canvas-line px-3 text-[13px] font-medium text-canvas-text hover:bg-paper-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
-          <Pencil size={12} aria-hidden />{w.identity.name} · {w.identity.role}
-        </button>
-      )}
-      {shared && (
-        <p role="status" className="basis-full text-[12px] text-canvas-muted">
-          {shared.copied ? "Link copied. " : shared.url ? "Copy this link: " : ""}
-          {shared.url && !shared.copied && <input readOnly value={shared.url} onFocus={(e) => e.currentTarget.select()} aria-label="Workspace link" className="w-full rounded-[6px] border border-canvas-line bg-canvas px-2 py-1 text-[12px] text-canvas-text" />}
-          {shared.url ? SHARE_NOTICE : w.error ?? ""}
-        </p>
-      )}
+    <div ref={bar} data-testid="team-bar" data-tour="team-bar" className="relative flex min-w-0 flex-nowrap items-center gap-2">
+      {wide ? (
+        <>
+          {tourThread && <NotesButton threadKey={tourThread} title="the whole tour" label="Tour notes" />}
+          <button type="button" onClick={() => setOpen(true)} className={`${collabBtn} whitespace-nowrap`}><Users size={14} aria-hidden />Team activity</button>
+          <button type="button" data-tour="team-share" onClick={share} className={`${collabBtn} whitespace-nowrap`}><Link2 size={14} aria-hidden />Share with your team</button>
+          {w.identity && (
+            <button type="button" onClick={w.editIdentity} aria-label={`Writing as ${w.identity.name}, ${w.identity.role}. Change`} className="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[8px] border border-canvas-line px-3 text-[13px] font-medium text-canvas-text hover:bg-paper-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
+              <Pencil size={12} aria-hidden />{w.identity.name} · {w.identity.role}
+            </button>
+          )}
+        </>
+      ) : <TeamMenu tourThread={tourThread} onActivity={() => setOpen(true)} onShare={share} />}
       <ActivityPanel open={open} onClose={() => setOpen(false)} cities={cities} />
     </div>
   );

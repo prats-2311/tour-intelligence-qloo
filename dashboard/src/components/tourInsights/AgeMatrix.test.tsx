@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { loadSegments, resetSegments } from "@/lib/qloo/segmentStore";
 import type { ScoredCity } from "@/lib/qloo/types";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
+import { ToastProvider } from "@/components/ui/Toast";
 import { AgeMatrix } from "./AgeMatrix";
 
 afterEach(() => { cleanup(); resetSegments(); vi.unstubAllGlobals(); });
@@ -24,8 +25,18 @@ const stub = (answer: (url: string) => Response | Promise<Response>) => {
 };
 const fans = (_c: ScoredCity) => [{ name: "Stüssy", fanRank: 1, cityRank: 2 }, { name: "HUF", fanRank: 2, cityRank: 4 }];
 const hrefFor = (id: string, band?: string) => `/tours/playbook/${id}?showcase=1${band ? `&band=${band}` : ""}`;
-const view = (cities: ScoredCity[], over: Partial<React.ComponentProps<typeof AgeMatrix>> = {}) => render(<MemoryRouter><AgeMatrix cities={cities} artist={artist} allFansOf={fans} hrefFor={hrefFor} {...over} /></MemoryRouter>);
+const view = (cities: ScoredCity[], over: Partial<React.ComponentProps<typeof AgeMatrix>> = {}) => render(<ToastProvider><MemoryRouter><AgeMatrix cities={cities} artist={artist} allFansOf={fans} hrefFor={hrefFor} {...over} /></MemoryRouter></ToastProvider>);
 const load = (n: number) => fireEvent.click(screen.getByRole("button", { name: `Load age groups for all ${n} ${n === 1 ? "city" : "cities"}` }));
+
+describe("AgeMatrix completion", () => {
+  it("toasts once when the whole matrix has loaded, then the progress line is gone", async () => {
+    stub(() => res(okBody(bandBody("25_to_29", 0.9, ["Off-white"]))));
+    view(mk(3));
+    load(3);
+    await waitFor(() => expect(document.querySelector("[data-toast-viewport]")?.textContent).toContain("Age groups loaded for 3 cities."));
+    expect(screen.queryByText(/Loaded \d of 3 cities/)).toBeNull();
+  });
+});
 
 describe("AgeMatrix", () => {
   it("titles the section without the word insights, shows the button and the honest cost note, and fetches nothing until the click", () => {

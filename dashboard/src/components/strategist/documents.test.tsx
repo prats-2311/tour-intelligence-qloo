@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { ToastProvider } from "@/components/ui/Toast";
 import { StrategistPanel } from "./StrategistPanel";
 
 const pdf = { pages: [] as string[][], numPages: 0 };
@@ -20,7 +21,8 @@ const answer = (text: string) => `data: ${JSON.stringify({ type: "strategist_mes
 const sseFetch = () => vi.fn(async (_url: string, _init?: RequestInit) => new Response(answer("Done."), { status: 200, headers: { "content-type": "text/event-stream" } }));
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); pdf.pages = []; pdf.numPages = 0; });
 
-const panel = () => render(<StrategistPanel context={{ artist: { name: "Example artist", entityId: "e1" } }} sample={false} title="t" />);
+const panel = () => render(<ToastProvider><StrategistPanel context={{ artist: { name: "Example artist", entityId: "e1" } }} sample={false} title="t" /></ToastProvider>);
+const tv = () => document.querySelector("[data-toast-viewport]")?.textContent ?? "";
 const fileInput = (c: HTMLElement) => c.querySelector('input[type="file"]') as HTMLInputElement;
 const upload = (c: HTMLElement, ...files: File[]) => fireEvent.change(fileInput(c), { target: { files } });
 const txt = (name: string, body = "Los Angeles drew 1,200 fans.") => new File([body], name, { type: "text/plain" });
@@ -56,25 +58,27 @@ describe("Add your documents", () => {
     upload(container, txt("a.txt"), txt("b.txt"), txt("c.txt"), txt("d.txt"));
     expect(await screen.findByText("c.txt")).toBeTruthy();
     expect(screen.queryByText("d.txt")).toBeNull();
-    expect(screen.getByRole("status").textContent).toContain("Only 3 files can be added at a time, so d.txt was skipped.");
+    await waitFor(() => expect(tv()).toContain("Only 3 files can be added at a time, so d.txt was skipped."));
+    expect(document.querySelector("[data-testid=doc-dropzone] [role=status]")).toBeNull(); // not inline
   });
   it("reads only the first 40 pages of a long PDF and shows the note", async () => {
     pdf.numPages = 60; pdf.pages = Array.from({ length: 60 }, (_, i) => [`p${i + 1}`]);
     const { container } = panel();
     upload(container, new File([new ArrayBuffer(4)], "long.pdf", { type: "application/pdf" }));
     expect(await screen.findByText("40 pages")).toBeTruthy();
-    expect(screen.getByRole("status").textContent).toContain("Only the first 40 pages of long.pdf were read.");
+    await waitFor(() => expect(tv()).toContain("Only the first 40 pages of long.pdf were read."));
+    expect(tv()).toContain("Added long.pdf.");
   });
   it("truncates at about 60,000 characters with a visible note", async () => {
     const { container } = panel();
     upload(container, txt("huge.txt", Array.from({ length: 2000 }, (_, i) => `row ${i} ${"z".repeat(50)}`).join("\n")));
     await screen.findByText("huge.txt");
-    expect(screen.getByRole("status").textContent).toMatch(/Only the first \d+ pages of huge\.txt were read\./);
+    await waitFor(() => expect(tv()).toMatch(/Only the first \d+ pages of huge\.txt were read\./));
   });
   it("says plainly when a file type is not supported", async () => {
     const { container } = panel();
     upload(container, new File(["x"], "deck.pptx"));
-    await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Only .pdf, .txt, .md and .csv files can be added"));
+    expect((await screen.findByRole("alert")).textContent).toContain("Only .pdf, .txt, .md and .csv files can be added");
     expect(screen.queryByText("deck.pptx")).toBeNull();
   });
   it("removes a file with its Remove button", async () => {
@@ -84,6 +88,7 @@ describe("Add your documents", () => {
     fireEvent.click(screen.getByRole("button", { name: "Remove a.txt" }));
     expect(screen.queryByText("a.txt")).toBeNull();
     expect(screen.getByText("b.txt")).toBeTruthy();
+    expect(tv()).toContain("Removed a.txt.");
   });
   it("sends the documents with the question, to the strategist endpoint only, and to no other endpoint", async () => {
     const fetchSpy = sseFetch();

@@ -34,7 +34,6 @@ export function DocumentsBar({ docs }: { docs: ReturnType<typeof useDocuments> }
           ))}
         </ul>
       )}
-      <div role="status" className="text-[13px] text-state-stale">{docs.notes.map((n) => <p key={n}>{n}</p>)}</div>
     </div>
   );
 }

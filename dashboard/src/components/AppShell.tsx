@@ -9,11 +9,18 @@ import { Breadcrumbs } from "./nav/Breadcrumbs";
 import { DRAWER_ID, NavDrawer } from "./nav/NavDrawer";
 import { Sidebar } from "./nav/Sidebar";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
+import { ToastProvider, useToast } from "./ui/Toast";
+import { shareToast } from "./collab/useCollabWrite";
 import type { NavActionId } from "@/lib/nav/navConfig";
 import { useNavCollapsed } from "@/lib/nav/useNavCollapsed";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 
+/** The shell owns the one toast viewport for every page under it. */
 export function AppShell({ children }: { children: ReactNode }) {
+  return <ToastProvider><Shell>{children}</Shell></ToastProvider>;
+}
+
+function Shell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const isDesktop = useIsDesktop();
   const dock = useStrategistDock();
@@ -24,13 +31,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { collapsed, toggle } = useNavCollapsed(showSidebar);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
-  const [shared, setShared] = useState<{ url: string | null; copied: boolean } | null>(null);
+  const { toast } = useToast();
   const hamburger = useRef<HTMLButtonElement>(null);
   const workspace = useWorkspace();
   const { state } = useTourBoard();
   const onAction = (a: NavActionId) => {
     if (a === "activity") setActivityOpen(true);
-    else void workspace.share().then(setShared);
+    else void workspace.share().then((r) => toast(shareToast(r, workspace.error)));
   };
 
   return (
@@ -85,13 +92,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {!isDesktop && !landing && <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} returnFocusTo={hamburger} onAction={onAction} />}
       {workspace.enabled && <ActivityPanel open={activityOpen} onClose={() => setActivityOpen(false)} cities={state.cities} />}
-      {shared && (
-        <div role="status" data-app-chrome className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-4 z-[45] flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-[10px] bg-paper px-3 py-2 text-[13px] text-bone shadow-lg lg:bottom-4">
-          <span>{shared.copied ? "Link copied." : shared.url ? "Copy this link:" : workspace.error ?? "Could not create a link."}</span>
-          {shared.url && !shared.copied && <input readOnly value={shared.url} onFocus={(e) => e.currentTarget.select()} aria-label="Workspace link" className="w-56 rounded-[6px] border border-canvas-line bg-canvas px-2 py-1 text-[12px]" />}
-          <button type="button" onClick={() => setShared(null)} className="inline-flex min-h-11 items-center rounded-[6px] px-2 text-canvas-muted hover:text-bone focus-visible:outline-2 focus-visible:outline-gold">Dismiss</button>
-        </div>
-      )}
 
       {strategistRoute && !isDesktop && <StrategistFab />}
       {docked && <StrategistDock onClose={() => dock.setOpen(false)} />}

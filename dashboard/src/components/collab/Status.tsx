@@ -1,5 +1,6 @@
 import { STATUS_LABEL, STATUSES, timeAgo, type CityStatus } from "@/lib/collab/types";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
+import { useCollabWrite } from "./useCollabWrite";
 
 const TONE: Record<CityStatus, string> = {
   considering: "text-canvas-text",
@@ -27,6 +28,7 @@ export function CityStatusChip({ cityId }: { cityId: string }) {
 /** Status picker for the playbook header, with who set it and when. */
 export function StatusPicker({ cityId }: { cityId: string }) {
   const w = useWorkspace();
+  const save = useCollabWrite();
   if (!w.enabled) return null;
   const s = w.snapshot?.statuses[cityId];
   const cur: CityStatus = s?.status ?? "considering";
@@ -34,7 +36,7 @@ export function StatusPicker({ cityId }: { cityId: string }) {
     <div data-testid="status-picker" className="flex min-w-0 flex-col gap-1">
       <label className="flex items-center gap-2 text-[13px] font-medium text-canvas-muted">
         Status
-        <select value={cur} onChange={(e) => void w.write("status", { cityId, status: e.target.value })} className="min-h-11 rounded-[8px] border border-canvas-line bg-paper-raised px-2 text-[14px] font-semibold text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
+        <select value={cur} onChange={(e) => void save("status", { cityId, status: e.target.value }, `Status set to ${STATUS_LABEL[e.target.value as CityStatus] ?? e.target.value}.`)} className="min-h-11 rounded-[8px] border border-canvas-line bg-paper-raised px-2 text-[14px] font-semibold text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
           {STATUSES.map((x) => <option key={x} value={x}>{STATUS_LABEL[x]}</option>)}
         </select>
       </label>

@@ -1,4 +1,5 @@
 import { Copy, Eraser, FlaskConical } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { NotesButton } from "@/components/collab/Notes";
@@ -104,9 +105,8 @@ function SponsorSelect({ city, artistId, sampleSet, variant, value, onChange }: 
 function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, boardHref, bookHref }: { tourKey: string; stops: ScoredCity[]; artist: string; artistId: string; sampleSet?: SampleSet; variant?: "routing"; boardHref: string; bookHref: string }) {
   const ids = useMemo(() => stops.map((s) => s.id), [stops]);
   const [budget, setBudget] = useState<Budget>(() => loadBudget(tourKey, ids));
-  const [copied, setCopied] = useState(false);
-  const [copiedAll, setCopiedAll] = useState<{ id: string; text: string } | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const { toast } = useToast();
   const stopList: Stop[] = stops;
   const legs = useMemo(() => buildLegs(stopList), [stopList]);
   const totals = legTotals(legs);
@@ -117,14 +117,13 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
   const set = (k: "perDiem" | "crewSize" | "hotel" | "rooms", v: string) => update((b) => ({ ...b, [k]: v }));
   const csv = () => budgetCsv(budget, stopList);
   const copyCsv = async () => {
-    try { await navigator.clipboard.writeText(csv()); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch { /* clipboard unavailable: nothing honest to confirm */ }
+    try { await navigator.clipboard.writeText(csv()); toast({ message: "CSV copied.", tone: "success" }); } catch { toast({ message: "Couldn't copy the CSV. Your browser blocked the clipboard.", tone: "error" }); }
   };
-  const clear = () => { clearBudget(tourKey); setBudget(loadBudget("\u0000none", ids)); setConfirmClear(false); };
+  const clear = () => { clearBudget(tourKey); setBudget(loadBudget("\u0000none", ids)); setConfirmClear(false); toast({ message: "Budget cleared.", tone: "success" }); };
   const copyAll = (s: ScoredCity) => {
     update((b) => copyCityToAll(b, s.id));
     const n = stops.length - 1;
-    // toast: hook for the toast agent; until then this inline status in a reserved slot (no layout shift) confirms it.
-    setCopiedAll({ id: s.id, text: n > 0 ? `Copied ${s.name}'s values to ${n} other ${n === 1 ? "city" : "cities"}.` : `There are no other cities to copy ${s.name}'s values to.` });
+    toast(n > 0 ? { message: `Copied ${s.name}'s values to ${n} other ${n === 1 ? "city" : "cities"}.`, tone: "success" } : { message: `There are no other cities to copy ${s.name}'s values to.`, tone: "info" });
   };
 
   return (
@@ -144,12 +143,11 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
               {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
-          <button type="button" className={btn} onClick={() => update(() => exampleBudget(ids, legs.map((l) => l.key)))}><FlaskConical size={16} aria-hidden />Load example (fictional figures)</button>
+          <button type="button" className={btn} onClick={() => { update(() => exampleBudget(ids, legs.map((l) => l.key))); toast({ message: "Example budget loaded. The figures are fictional.", tone: "info" }); }}><FlaskConical size={16} aria-hidden />Load example (fictional figures)</button>
           <button type="button" className={btn} onClick={() => void copyCsv()}><Copy size={16} aria-hidden />Copy as CSV</button>
           <button type="button" className={btn} onClick={() => setConfirmClear(true)}><Eraser size={16} aria-hidden />Clear budget</button>
         </div>
         <p className="text-[12px] text-canvas-muted">One currency per budget. No conversion between currencies is done.</p>
-        <div aria-live="polite" className="empty:hidden">{copied && <p role="status" className="text-[13px] text-canvas-text">CSV copied</p>}</div>
       </header>
 
       <Section title="Routing legs" id="legs-h">
@@ -183,7 +181,6 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" className={btn} onClick={() => copyAll(s)} aria-label={`Copy this city's values to all cities (${s.name})`}>Copy this city's values to all cities</button>
               <NotesButton threadKey={`city:${s.id}`} title={s.name} label="Discuss" />
-              <span role="status" aria-live="polite" data-testid={`copied-all-${s.id}`} className="min-w-0 text-[13px] text-canvas-text">{copiedAll?.id === s.id ? copiedAll.text : ""}</span>
             </div>
             {(notes[s.id] ?? []).length > 0 && (
               <ul data-testid={`advance-note-${s.id}`} aria-label={`Advance risks for ${s.name}`} className="flex flex-col gap-1 rounded-[10px] bg-paper-raised px-3 py-2 text-[13px] text-canvas-text">

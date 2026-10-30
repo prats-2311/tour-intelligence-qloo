@@ -5,6 +5,7 @@ import { WhyLine } from "@/components/playbook/WhyLine";
 import type { HeroWhy } from "@/components/playbook/heroWhy";
 import type { CardKind } from "@/lib/qloo/types";
 import { collabInput } from "./ui";
+import { useCollabWrite } from "./useCollabWrite";
 
 const link = "inline-flex min-h-11 min-w-11 items-center justify-center text-[12px] font-medium text-canvas-muted underline-offset-4 hover:text-canvas-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 
@@ -14,6 +15,7 @@ const link = "inline-flex min-h-11 min-w-11 items-center justify-center text-[12
  */
 export function OverrideValue({ cityId, field, qloo, editable, why, onGoToCard, children }: { cityId: string; field: Field; qloo: string; editable: boolean; why?: HeroWhy; onGoToCard?: (kind: CardKind) => void; children: ReactNode }) {
   const w = useWorkspace();
+  const write = useCollabWrite();
   const o = w.enabled ? w.snapshot?.overrides[cityId]?.[field] : undefined;
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
@@ -24,7 +26,7 @@ export function OverrideValue({ cityId, field, qloo, editable, why, onGoToCard, 
     if (!v) return;
     setEditing(false);
     const r = reason.trim();
-    await w.write("override", { cityId, field, value: v, original: qloo, ...(r ? { reason: r } : {}) });
+    await write("override", { cityId, field, value: v, original: qloo, ...(r ? { reason: r } : {}) }, "Team value saved.");
   };
   if (editing) {
     return (
@@ -50,7 +52,7 @@ export function OverrideValue({ cityId, field, qloo, editable, why, onGoToCard, 
       {editable && (
         <span className="flex items-center gap-3">
           <button type="button" onClick={() => { setText(o?.value ?? ""); setReason(o?.reason ?? ""); setEditing(true); }} aria-label={`Edit ${FIELD_LABEL[field]}`} className={link}>Edit</button>
-          {o && <button type="button" onClick={() => void w.write("override_clear", { cityId, field })} className={link}>Revert to Qloo</button>}
+          {o && <button type="button" onClick={() => void write("override_clear", { cityId, field }, "Back to Qloo's value.")} className={link}>Revert to Qloo</button>}
         </span>
       )}
     </>
