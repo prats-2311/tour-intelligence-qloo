@@ -1,0 +1,57 @@
+[
+  {
+    "name": "ts",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "ws_hash",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "event",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "city_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "city",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "country",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "card_kind",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "role",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "status_to",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "override_field",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "overrode_qloo",
+    "type": "BOOL",
+    "mode": "NULLABLE"
+  }
+]

@@ -18,6 +18,7 @@ import { advance } from "./web/advance.js";
 import { thisWeek } from "./web/thisWeek.js";
 import { FirestoreCollabStore, MemoryCollabStore } from "./collab/store.js";
 import { logQlooBaseUrl } from "./startupLog.js";
+import { createAnalytics } from "./analytics/bigquery.js";
 
 logQlooBaseUrl(process.env);
 
@@ -59,8 +60,11 @@ const webDeps = {
 const collabStore = firestoreUsage ? new FirestoreCollabStore({ db: new Firestore() }) : new MemoryCollabStore();
 const qlooCaller = createQlooCaller({ mcp, cache, budget });
 const cities = loadCities();
+// Optional BigQuery analytics: on only when BQ_DATASET (and GOOGLE_CLOUD_PROJECT) are set; otherwise a no-op.
+const analytics = createAnalytics(process.env);
+if (analytics.enabled) console.log(`analytics: BigQuery dataset ${analytics.dataset}`);
 const app = createApp({
-  qloo: qlooCaller, cities, collab: { store: collabStore }, health: () => mcp.health(), narrate, thisWeek: (input) => thisWeek(input, webDeps), advance: (input) => advance(input, webDeps),
+  qloo: qlooCaller, cities, analytics, collab: { store: collabStore }, health: () => mcp.health(), narrate, thisWeek: (input) => thisWeek(input, webDeps), advance: (input) => advance(input, webDeps),
   localActs: (input) => suggestLocalActs(input, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
   sponsorCheck: (candidates, sessionId) => classifySponsors(candidates, sessionId, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
   withoutQloo: (input) => rankWithoutQloo(input, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
@@ -73,5 +77,6 @@ const server = app.listen(port, (err?: Error) => {
 });
 process.on("SIGTERM", () => {
   server.close();
+  void analytics.flush().catch(() => undefined);
   void mcp.close().catch(() => undefined).finally(() => process.exit(0));
 });
