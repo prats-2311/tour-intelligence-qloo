@@ -20,6 +20,8 @@ export function unsupportedNumbers(answer: string, toolData: unknown[], context:
   const pool: number[] = [];
   const scores: number[] = [];
   collect(toolData, pool, scores);
+  // Prose drops the minus sign of coordinates (-118.26 -> "118.26"), so non-score negatives also match by absolute value.
+  for (const v of [...pool]) if (v < 0) pool.push(-v);
   for (const c of context.cities ?? []) collect([c.fanHeat, c.activation, c.winnability], pool);
   // A percent rendering is only supported by non-score values; plain numbers by any value.
   return numberTokens(stripStructure(answer)).filter((t) => !tokenSupported(t, t.percent ? pool : [...pool, ...scores])).map((t) => t.raw);
