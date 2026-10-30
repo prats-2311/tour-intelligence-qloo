@@ -1043,7 +1043,10 @@ app.post("/api/rank-cities", async (req, res) => {
   }
 });
 
-mountQlooProxy(app, { gatewayUrl: QLOO_GATEWAY, getToken: getQlooGatewayToken });
+// COLLAB_FAKE=1 (dev/test only, ignored when NODE_ENV=production): the team-workspace routes go to a local in-memory server
+// (cloud_run/qloo_gateway: node dist/collab/devServer.js, COLLAB_FAKE_URL, default http://127.0.0.1:8094) instead of the gateway.
+const collabDevUrl = process.env.COLLAB_FAKE === "1" && process.env.NODE_ENV !== "production" ? (process.env.COLLAB_FAKE_URL || "http://127.0.0.1:8094") : undefined;
+mountQlooProxy(app, { gatewayUrl: QLOO_GATEWAY, getToken: getQlooGatewayToken, collabDevUrl });
 
 // OAuth access token (not an identity token) for reading the private recordings bucket: the service's own
 // identity from the metadata server, else the local gcloud session. Valid ~1 h, cached 50 min.

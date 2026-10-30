@@ -24,6 +24,10 @@ describe("requireTourDataApi", () => {
     expect(res.status).toBe(503);
     expect(await res.json()).toEqual({ error: "tour_data_api not configured" });
   });
+  it("lets /api/qloo/ws/* (team workspace) through when the URL is unset", async () => {
+    const res = await fetch(`${await start("")}/api/qloo/ws/abcdefghij123456/message`);
+    expect(res.status).toBe(200);
+  });
   it("lets /api/qloo/* through when the URL is unset", async () => {
     const res = await fetch(`${await start("")}/api/qloo/x`);
     expect(res.status).toBe(200);

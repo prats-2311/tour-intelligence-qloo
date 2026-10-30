@@ -218,4 +218,49 @@ describe("qlooProxy", () => {
     expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/without-qloo");
     expect(JSON.parse(fetchImpl.mock.calls[0][1].body)).toEqual(body);
   });
+  describe("team workspace (/api/qloo/ws)", () => {
+    const WS = "abcdefghij123456";
+    const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json" } });
+    const call = (base, path, init = {}) => fetch(`${base}/api/qloo/ws${path}`, { headers: { "content-type": "application/json", "x-session-id": "s", ...(init.headers ?? {}) }, ...init });
+    it("forwards create, snapshot and each write op with auth and the session header", async () => {
+      const fetchImpl = vi.fn(async () => json({ ok: true }));
+      const base = await start({ gatewayUrl: "https://gw", getToken: async () => "tok", fetchImpl });
+      await call(base, "", { method: "POST", body: JSON.stringify({ seed: {} }) });
+      await call(base, `/${WS}`);
+      for (const op of ["status", "message", "resolve", "override", "override/clear", "lead", "lead/remove"]) await call(base, `/${WS}/${op}`, { method: "POST", body: JSON.stringify({ a: 1 }) });
+      const urls = fetchImpl.mock.calls.map((c) => `${c[1].method} ${c[0]}`);
+      expect(urls[0]).toBe("POST https://gw/v1/ws");
+      expect(urls[1]).toBe(`GET https://gw/v1/ws/${WS}`);
+      expect(urls).toContain(`POST https://gw/v1/ws/${WS}/override/clear`);
+      expect(urls).toHaveLength(9);
+      expect(fetchImpl.mock.calls[2][1].headers).toMatchObject({ authorization: "Bearer tok", "x-session-id": "s" });
+    });
+    it("rejects a bad ws id, a missing session and bodies over 8 KB before forwarding", async () => {
+      const fetchImpl = vi.fn(async () => json({}));
+      const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+      expect((await call(base, "/short")).status).toBe(400);
+      expect((await call(base, "/..%2Fx/status", { method: "POST", body: "{}" })).status).toBe(400);
+      expect((await call(base, `/${WS}/status`, { method: "POST", body: JSON.stringify({ text: "x".repeat(9 * 1024) }) })).status).toBe(400);
+      expect((await call(base, "", { method: "POST", body: JSON.stringify({ seed: "x".repeat(9 * 1024) }) })).status).toBe(400);
+      expect((await fetch(`${base}/api/qloo/ws/${WS}`)).status).toBe(400);
+      expect(fetchImpl).not.toHaveBeenCalled();
+    });
+    it("503 without a gateway and passes upstream JSON errors through", async () => {
+      expect((await call(await start({ gatewayUrl: undefined, getToken: async () => "t" }), `/${WS}`)).status).toBe(503);
+      server.closeAllConnections?.(); await new Promise((r) => server.close(r));
+      const fetchImpl = vi.fn(async () => json({ error: "Workspace not found or expired" }, 404));
+      const res = await call(await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl }), `/${WS}`);
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ error: "Workspace not found or expired" });
+    });
+    it("collabDevUrl (COLLAB_FAKE) sends workspace calls to the local server with no token and no gateway", async () => {
+      const fetchImpl = vi.fn(async () => json({ ok: true }));
+      const getToken = vi.fn(async () => "t");
+      const base = await start({ gatewayUrl: undefined, getToken, fetchImpl, collabDevUrl: "http://127.0.0.1:8094" });
+      expect((await call(base, `/${WS}`)).status).toBe(200);
+      expect(fetchImpl.mock.calls[0][0]).toBe(`http://127.0.0.1:8094/v1/ws/${WS}`);
+      expect(fetchImpl.mock.calls[0][1].headers.authorization).toBeUndefined();
+      expect(getToken).not.toHaveBeenCalled();
+    });
+  });
 });
