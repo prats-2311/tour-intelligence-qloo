@@ -254,7 +254,7 @@ function CityPlaybookPage() {
         hasEvidence={card.status === "ok"}
         notes={<NotesButton threadKey={cardThread(shownCity.id, kind)} title={CARD_TITLE[kind]} />}
       >
-        <CardBody card={card} merch={merch} city={shownCity.name} country={shownCity.country} artist={artist?.name} venueName={firstOkName(pb.cards, "venue_fit") ?? undefined} segments={segments} />
+        <CardBody card={card} merch={merch} city={shownCity.name} country={shownCity.country} artist={artist?.name} venueName={firstOkName(pb.cards, "venue_fit") ?? undefined} segments={segments} pitchCityId={shownCity.id} />
         {kind === "sponsors" && <SponsorLeads cityId={shownCity.id} />}
       </PlaybookCard>
     );

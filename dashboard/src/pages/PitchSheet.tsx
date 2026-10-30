@@ -80,13 +80,16 @@ function PitchSheetPage() {
   const segments = useSegments(artist && shownCity ? segmentKey(artist.entityId, { id: shownCity.id, name: shownCity.name, country: shownCity.country }) : null);
   const today = useMemo(() => new Date(), []);
 
+  // A requested example that has not started (or a run of another set still held) shows nothing from the earlier run.
+  if (!ready) return <PlaybookSkeleton />;
   const back = <Link to={`/tours/playbook/${cityId}${carry}`} className={btn}>Back to playbook</Link>;
   if (!shownCity) {
     if (state.status === "streaming" || !ready || bareExample) return <PlaybookSkeleton />;
     return <Plain>{<p className={muted}>Pitch sheets are built from a scored run. Open this city from a Tour Board.</p>}<Link to="/tours/board" className={btn}>Go to Tour Board</Link></Plain>;
   }
   if (!artist || unrecorded || pb.status === "error" || pb.status === "interrupted") return <Plain><p className={muted}>The playbook for {shownCity.name} isn't loaded, so there is nothing to build a sheet from. Open it on the playbook first.</p>{back}</Plain>;
-  if (pb.cards.length === 0) return <PlaybookSkeleton />;
+  // Built only from a finished playbook: cards arrive one by one and the narrative last, so a partial one would change under the reader.
+  if (pb.status !== "done") return <PlaybookSkeleton />;
 
   const sheet = buildPitchSheet({
     brand, artist: artist.name, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country }, cards: pb.cards,

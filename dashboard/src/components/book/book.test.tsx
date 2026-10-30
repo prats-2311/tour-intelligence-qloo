@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SAMPLE_ACCENT_ORDER } from "@/lib/qloo/cityAccent";
 import { LUMEN_VALE_SAMPLE, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
@@ -53,6 +54,17 @@ describe("book components", () => {
     }
     expect(screen.getByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.")).toBeTruthy();
     expect(screen.getByText("7 verified · 2 removed")).toBeTruthy();
+  });
+  it("a chapter links its top sponsor to the pitch sheet, hidden in print, keeping the example query", () => {
+    const ch = book.chapters[2]!;
+    render(<MemoryRouter><CityChapter chapter={ch} pitchSearch="?showcase=1&ws=abcdefghij12" /></MemoryRouter>);
+    const link = screen.getByRole("link", { name: "Pitch sheet for Cerro Alto Mezcal" });
+    expect(link.getAttribute("href")).toBe(`/tours/pitch/${ch.city.id}/Cerro%20Alto%20Mezcal?showcase=1&ws=abcdefghij12`);
+    expect(link.hasAttribute("data-noprint")).toBe(true);
+    expect(screen.getAllByRole("link", { name: /Pitch sheet/ })).toHaveLength(1);
+    cleanup();
+    render(<CityChapter chapter={ch} />);
+    expect(screen.queryByRole("link", { name: /Pitch sheet/ })).toBeNull();
   });
   it("a chapter shows the sponsor deal line with its own venue, and the nearest-stop note", () => {
     const ch = book.chapters[2]!;

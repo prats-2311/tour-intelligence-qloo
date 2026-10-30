@@ -128,3 +128,23 @@ describe("pitch sheet page", () => {
     expect(within(document.body).queryByText(/Ariel Pink/)).toBeNull();
   });
 });
+
+import { MemoryRouter as MR } from "react-router-dom";
+import { CardBody } from "@/components/playbook/cardBody";
+import type { PlaybookCard } from "@/lib/qloo/types";
+
+describe("Pitch sheet action on the Sponsors card", () => {
+  const sponsors = { kind: "sponsors", status: "ok", refs: [], warnings: [], items: [{ name: "Stüssy", artistRank: 1, cityRank: null }, { name: "HUF", artistRank: 2, cityRank: 4 }, { name: "Greenpeace", artistRank: 3, cityRank: 5 }] } as PlaybookCard;
+  const body = (props: { pitchCityId?: string }, at = "/tours/playbook/9?showcase=1&ws=abcdefghij12&x=1") => render(<MR initialEntries={[at]}><CardBody card={sponsors} city="Los Angeles" {...props} /></MR>);
+  it("gives each shown sponsor row a Pitch sheet link that keeps showcase and ws", () => {
+    body({ pitchCityId: "9" });
+    const links = screen.getAllByRole("link", { name: /^Pitch sheet/ });
+    expect(links.map((l) => l.getAttribute("href"))).toEqual(["/tours/pitch/9/St%C3%BCssy?showcase=1&ws=abcdefghij12", "/tours/pitch/9/HUF?showcase=1&ws=abcdefghij12"]);
+    expect(links[0]!.getAttribute("aria-label")).toBe("Pitch sheet for Stüssy");
+    expect(links[0]!.textContent).toMatch(/^Pitch sheet/);
+  });
+  it("shows no action where the card has no pitch target (the Tour Book list)", () => {
+    body({});
+    expect(screen.queryByRole("link", { name: /Pitch sheet/ })).toBeNull();
+  });
+});

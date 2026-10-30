@@ -10,6 +10,7 @@ import { ClaimsBadge } from "@/components/playbook/ClaimsBadge";
 import { CARD_TITLE, removalText } from "@/components/playbook/format";
 import { KeyArtPoster } from "@/components/playbook/KeyArtPoster";
 import { RadiusNote } from "@/components/qloo/RadiusNote";
+import { PitchLink } from "@/components/playbook/cards/Sponsors";
 import { LoadedBands } from "@/components/playbook/cards/SponsorSegments";
 import { segmentKey, useSegments } from "@/lib/qloo/segmentStore";
 import { visibleClaims } from "@/lib/qloo/doNotBook";
@@ -42,10 +43,11 @@ function MarginNote({ requests, claims }: { requests: number; claims?: CardClaim
 
 const H3 = "font-title text-[20px] leading-tight text-canvas-text";
 
-export function CityChapter({ chapter, sample = false, showcase = false, artist, artistId, window, stops }: { chapter: BookCityChapter; sample?: boolean; showcase?: boolean; artist?: string; /** The artist's Qloo entity id: lets the chapter show age groups already loaded in this session (never loads them). */ artistId?: string; window?: DateWindow; /** The other cities on the tour, for the nearest-stop note. */ stops?: ScoredCity[] }) {
+export function CityChapter({ chapter, sample = false, showcase = false, artist, artistId, window, stops, pitchSearch }: { chapter: BookCityChapter; sample?: boolean; showcase?: boolean; artist?: string; /** The artist's Qloo entity id: lets the chapter show age groups already loaded in this session (never loads them). */ artistId?: string; window?: DateWindow; /** The other cities on the tour, for the nearest-stop note. */ stops?: ScoredCity[]; /** The query a pitch-sheet link carries (example set, workspace). Absent means no pitch-sheet link. */ pitchSearch?: string }) {
   const { city, accent, playbook, week } = chapter;
   const narrative = playbook?.narrative;
   const segments = useSegments(artistId ? segmentKey(artistId, city) : null);
+  const topSponsor = firstOkName(playbook?.cards ?? [], "sponsors");
   const ok = chapter.status === "ready";
   const merch = narrative?.status === "ok" ? narrative.merch : null;
   const claimsOf = (k: CardKind): CardClaims | undefined => (narrative?.status === "ok" ? visibleClaims(narrative.cards[k]) : undefined);
@@ -92,6 +94,7 @@ export function CityChapter({ chapter, sample = false, showcase = false, artist,
                   {claims && claims.verified.map((c, i) => <p key={`${i}-${c.text}`} className="text-[15px] leading-[1.5] text-canvas-text">{c.text}</p>)}
                   {claims && card.status === "ok" && claims.verified.length === 0 && <p className="text-[13px] text-canvas-muted">Narrative removed: no claim passed verification.</p>}
                   <CardBody card={card} merch={merch} city={city.name} country={city.country} artist={artist} venueName={firstOkName(playbook?.cards ?? [], "venue_fit") ?? undefined} />
+                  {kind === "sponsors" && pitchSearch !== undefined && topSponsor && <PitchLink cityId={city.id} brand={topSponsor} search={pitchSearch} />}
                   {kind === "sponsors" && segments.status === "done" && <LoadedBands data={segments.data} country={city.country} />}
                   <MarginNote requests={card.refs.length} claims={claims} />
                 </section>

@@ -14,7 +14,7 @@ export function ExtLink({ href, text, label }: { href: string; text: string; lab
 export const mapsLink = (name: string, city: string, country?: string) => ({ href: mapsSearchUrl(name, city, country), text: "Google Maps", label: `Open ${name} in Google Maps (new tab)` });
 export const listenLink = (name: string) => ({ href: spotifySearchUrl(name), text: "Listen", label: `Listen to ${name} on Spotify (new tab)` });
 
-export function Row({ name, aside, sub, chips, link }: { name: string; aside: ReactNode; sub?: string; chips?: string[]; link?: { href: string; text: string; label: string } }) {
+export function Row({ name, aside, sub, chips, link, action }: { name: string; aside: ReactNode; sub?: string; chips?: string[]; link?: { href: string; text: string; label: string }; action?: ReactNode }) {
   return (
     <li className="flex min-h-11 items-center justify-between gap-3 py-2">
       <span className="min-w-0 flex-1">
@@ -22,6 +22,7 @@ export function Row({ name, aside, sub, chips, link }: { name: string; aside: Re
         {sub && <span className="block text-[13px] text-canvas-muted">{sub}</span>}
         {chips && chips.length > 0 && <TagChips tags={chips} />}
         {link && <ExtLink {...link} />}
+        {action}
       </span>
       <span className="max-w-[45%] shrink-0 break-words text-right tabular-nums text-canvas-text">{aside}</span>
     </li>
