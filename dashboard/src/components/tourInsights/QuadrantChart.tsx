@@ -50,7 +50,7 @@ export function QuadrantChart({ cities, thresholds, hrefFor }: { cities: ScoredC
                 <VerdictMark verdict={p.verdict} r={6} />
               </g>
             ))}
-            {labelled.map((p) => <text key={p.id} data-testid="quad-label" x={px(p.x) + 10} y={py(p.y) + 4} fontSize={12} fontWeight={600} fill="var(--color-canvas-text)" stroke="var(--color-canvas)" strokeWidth={3} paintOrder="stroke">{p.name}</text>)}
+            {labelled.map((p) => <text key={p.id} data-testid="quad-label" x={p.x > 65 ? px(p.x) - 10 : px(p.x) + 10} textAnchor={p.x > 65 ? "end" : "start"} y={py(p.y) + 4} fontSize={12} fontWeight={600} fill="var(--color-canvas-text)" stroke="var(--color-canvas)" strokeWidth={3} paintOrder="stroke">{p.name}</text>)}
           </svg>
           {/* Focusable hit areas over the plot: the svg is one image for screen readers, these give keyboard and pointer access. */}
           <div className="absolute inset-0">
