@@ -20,3 +20,12 @@ def test_tracked_keys_are_capped_dropping_the_oldest():
         w.allow(f"ip{i}")
     assert len(w._hits) <= 10_000
     assert w.allow("ip0") is True  # oldest was dropped, so it is fresh again
+
+
+def test_weighted_hits_count_and_are_refused_whole():
+    w = SlidingWindow(limit=5, window_s=600, now=lambda: 0.0)
+    assert w.allow("ip", weight=3) and w.allow("ip", weight=2)
+    assert not w.allow("ip", weight=1)
+    w2 = SlidingWindow(limit=5, window_s=600, now=lambda: 0.0)
+    assert w2.allow("ip", weight=4) and not w2.allow("ip", weight=2)
+    assert w2.allow("ip", weight=1)  # the refused weight recorded nothing

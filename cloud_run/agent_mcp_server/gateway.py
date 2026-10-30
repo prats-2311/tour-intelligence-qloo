@@ -25,6 +25,10 @@ def gateway_url() -> str:
     return url
 
 
+class GatewayNotFound(GatewayError):
+    """The gateway answered 404 (for example an unknown or expired workspace)."""
+
+
 def _headers(session_id: str, token_fn) -> dict:
     try:
         token = token_fn()
@@ -75,3 +79,21 @@ def call_tool(name: str, args: dict, *, session_id: str, token_fn) -> dict:
     except (requests.RequestException, ValueError):
         raise GatewayError(_UNAVAILABLE) from None
     return {"envelope": payload.get("envelope") if isinstance(payload, dict) else None}
+
+
+def get_json(path: str, *, params: dict | None = None, session_id: str, token_fn) -> dict:
+    """Plain JSON GET (e.g. /v1/advance, /v1/sponsor-segments, /v1/ws/:ws). 404 raises GatewayNotFound."""
+    url = f"{gateway_url()}{path}"
+    headers = _headers(session_id, token_fn)
+    try:
+        with requests.get(url, headers=headers, params=params or {}, timeout=_TIMEOUT) as resp:
+            if resp.status_code == 404:
+                raise GatewayNotFound("Not found")
+            if resp.status_code != 200:
+                raise GatewayError(_UNAVAILABLE)
+            payload = resp.json()
+    except (requests.RequestException, ValueError):
+        raise GatewayError(_UNAVAILABLE) from None
+    if not isinstance(payload, dict):
+        raise GatewayError(_UNAVAILABLE)
+    return payload

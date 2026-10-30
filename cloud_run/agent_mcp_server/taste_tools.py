@@ -7,14 +7,41 @@ apply. Gateway failures surface as RuntimeError with a safe message."""
 from __future__ import annotations
 
 import re
+import unicodedata
 
 import requests  # noqa: F401  (tests patch taste_tools.requests.post/get; same module gateway uses)
 
 from gateway import GatewayError, call_tool, stream_events
 
 _NAME = re.compile(r"[\w '.,&()-]{1,100}")
+# Mirrored from dashboard/src/lib/qloo/doNotBook.ts (display-time filter; the gateway does not apply it).
+# Keep the two lists identical. Matching is accent- and case-folded, exact name.
+DO_NOT_BOOK = ["Ariel Pink"]
 _INTEGRITY = "Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals."
 _FORMULA = "lift = shared taste × local affinity"
+
+
+def _fold(s: str) -> str:
+    return " ".join(unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode().lower().split())
+
+
+_DNB_FOLDED = {_fold(n) for n in DO_NOT_BOOK}
+
+
+def is_do_not_book(name) -> bool:
+    return isinstance(name, str) and _fold(name) in _DNB_FOLDED
+
+
+def visible_items(kind: str, items: list) -> tuple[list, int]:
+    """Drop do-not-book acts from act-bearing cards (co_billing, talent, artist local moments).
+    Brands, places and films are never hidden. Returns (kept, hidden_count)."""
+    kept = []
+    for it in items:
+        if isinstance(it, dict) and is_do_not_book(it.get("name")):
+            if kind in ("co_billing", "talent") or (kind == "local_moment" and "artist" in str(it.get("category") or it.get("type") or it.get("subtype") or "").lower()):
+                continue
+        kept.append(it)
+    return kept, len(items) - len(kept)
 
 
 def _check_name(label: str, value) -> str:
@@ -79,6 +106,11 @@ def find_tour_markets(artist: str, regions: list[str], max_stops: int = 8, *, se
     who = _resolve_artist(artist, session_id=session_id, token_fn=token_fn)
     if "status" in who:
         return who
+    return _board(who, regions, max_stops, session_id=session_id, token_fn=token_fn)
+
+
+def _board(who: dict, regions: list[str], max_stops: int, *, session_id: str, token_fn) -> dict:
+    """The tour-board stream for an already-resolved artist (inputs already validated)."""
     events = stream_events(
         "/v1/tour-board", method="POST",
         body={"artist": who["name"], "artistEntityId": who["id"], "regions": regions, "maxStops": max_stops},
@@ -114,6 +146,28 @@ def find_tour_markets(artist: str, regions: list[str], max_stops: int = 8, *, se
     }
 
 
+def _stream_playbook(who: dict, city: str, country: str, *, session_id: str, token_fn) -> tuple[list, dict | None]:
+    """Playbook cards (and the narrative event, if the gateway sent one) for a resolved artist."""
+    events = stream_events(
+        "/v1/city-playbook",
+        params={"artist": who["name"], "artistEntityId": who["id"], "city": city, "country": country, "narrative": "0"},
+        session_id=session_id, token_fn=token_fn,
+    )
+    cards = None
+    narrative = None
+    for ev in events:
+        if ev.get("type") == "error":
+            raise RuntimeError("Qloo gateway could not build the playbook")
+        if ev.get("type") == "playbook" and isinstance(ev.get("playbook"), dict) and cards is None:
+            c = ev["playbook"].get("cards")
+            cards = c if isinstance(c, list) else []
+        elif ev.get("type") == "narrative" and isinstance(ev.get("narrative"), dict):
+            narrative = ev["narrative"]
+    if cards is None:
+        raise RuntimeError("Qloo gateway returned no playbook")
+    return cards, narrative
+
+
 def _playbook_cards(artist: str, city: str, country: str, *, session_id: str, token_fn):
     """Returns (artist_dict, cards) or (early_return_dict, None)."""
     artist = _check_name("artist", artist)
@@ -121,24 +175,15 @@ def _playbook_cards(artist: str, city: str, country: str, *, session_id: str, to
     who = _resolve_artist(artist, session_id=session_id, token_fn=token_fn)
     if "status" in who:
         return who, None
-    events = stream_events(
-        "/v1/city-playbook",
-        params={"artist": who["name"], "artistEntityId": who["id"], "city": city, "country": country, "narrative": "0"},
-        session_id=session_id, token_fn=token_fn,
-    )
-    for ev in events:
-        if ev.get("type") == "error":
-            raise RuntimeError("Qloo gateway could not build the playbook")
-        if ev.get("type") == "playbook" and isinstance(ev.get("playbook"), dict):
-            cards = ev["playbook"].get("cards")
-            return who, cards if isinstance(cards, list) else []
-    raise RuntimeError("Qloo gateway returned no playbook")
+    cards, _ = _stream_playbook(who, city, country, session_id=session_id, token_fn=token_fn)
+    return who, cards
 
 
 def _card_items(cards: list, kind: str) -> list[dict]:
+    """Items of the first card of this kind, with do-not-book acts removed."""
     for c in cards:
         if isinstance(c, dict) and c.get("kind") == kind:
-            return [i for i in c.get("items") or [] if isinstance(i, dict)]
+            return visible_items(kind, [i for i in c.get("items") or [] if isinstance(i, dict)])[0]
     return []
 
 
@@ -152,7 +197,8 @@ def get_city_playbook(artist: str, city: str, country: str, *, session_id: str, 
         if not isinstance(c, dict):
             continue
         top = []
-        for it in (c.get("items") or [])[:3]:
+        shown = visible_items(str(c.get("kind")), [i for i in c.get("items") or []])[0]
+        for it in shown[:3]:
             o = it if isinstance(it, dict) else {}
             entry = {"name": str(o.get("name") or o.get("label") or "")[:100]}
             for k in ("affinity", "share", "lift"):

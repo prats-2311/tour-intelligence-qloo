@@ -182,4 +182,8 @@ def test_all_read_tools_are_registered_with_the_mcp_server():
         "suggest_support_acts",
         "rank_venues",
         "get_local_moment",
+        "get_sponsors_by_age",
+        "get_advance_risks",
+        "get_team_notes",
+        "get_tour_report",
     }
