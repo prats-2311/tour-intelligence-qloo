@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
@@ -15,7 +15,7 @@ beforeEach(() => {
   fetchSpy = vi.fn(async () => new Response("{}", { status: 200, headers: { "content-type": "application/json" } }));
   vi.stubGlobal("fetch", fetchSpy);
 });
-afterEach(() => { vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); }); // unmount before the matchMedia stub goes, or a late re-render throws in the next test
 
 function Where() { return <output data-testid="where">{useLocation().pathname}</output>; }
 function mount(path: string) {
@@ -29,6 +29,10 @@ describe("shell: legacy campaign routes redirect to the board", () => {
   it.each(["/campaign", "/city/mumbai", "/compare", "/campaigns/new", "/cities/add"])("%s redirects to the board", async (path) => {
     mount(path);
     await waitFor(() => expect(screen.getByTestId("where").textContent).toBe("/tours/board"));
+  });
+  it("/tours/budget is a route of its own", async () => {
+    mount("/tours/budget?sample=1");
+    expect(await screen.findByRole("heading", { name: "Tour budget", level: 1 })).toBeTruthy();
   });
   it("an unknown route shows a not-found page with a way back", async () => {
     mount("/nope");

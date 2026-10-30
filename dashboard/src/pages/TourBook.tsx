@@ -17,6 +17,8 @@ import { LONG_NAMES_BRIEF, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { toIcs } from "@/lib/qloo/ics";
 import { getPlaybook, loadPlaybook, playbookKey, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { SAMPLE_TEXT } from "@/lib/qloo/labels";
+import { loadBudget } from "@/lib/budget/storage";
+import { runKey } from "@/lib/qloo/journey";
 import { defaultShortlist, sortCities } from "@/lib/qloo/ranking";
 import { buildTourBook } from "@/lib/qloo/tourBook";
 import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
@@ -135,6 +137,10 @@ function TourBookPage() {
   const weeksKey = weekQueries.map((q) => q.dataUpdatedAt).join(",");
 
   const prepared = boardReady && preparedKey === prepKey;
+  // The user's own figures from browser storage (never fetched); read once the book is ready.
+  const savedBudget = useMemo(() => (prepared ? loadBudget(runKey(state.source, state.sampleSet, artist?.name, variant === "routing"), picked.map((c) => c.id)) : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [prepared, prepKey]);
   const book = useMemo(() => {
     if (!prepared || !artist || !state.brief) return null;
     return buildTourBook({
@@ -264,6 +270,7 @@ function TourBookPage() {
       <header data-noprint className="sticky top-0 z-30 flex h-[52px] items-center gap-2 bg-canvas-raised px-2 lg:top-14 lg:px-6">
         <Link to={`/tours/board${sampleQ}`} aria-label="Close" className="inline-flex size-11 shrink-0 items-center justify-center rounded-[10px] text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"><X size={20} aria-hidden /></Link>
         <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-canvas-text">Tour & Activation Book</span>
+        <Link to={`/tours/budget${sampleQ}`} className="inline-flex min-h-11 items-center px-3 text-[14px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Tour budget</Link>
         {!isDesktop && <button type="button" onClick={() => setChaptersOpen(true)} className="inline-flex min-h-11 items-center px-3 text-[14px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Chapters</button>}
         {isDesktop && <div className="flex items-center gap-2">{notes}{actions}</div>}
         <div
@@ -286,7 +293,7 @@ function TourBookPage() {
         <div className="book-page flex min-w-0 flex-col gap-12 pb-24 lg:col-start-2 lg:max-w-5xl lg:bg-paper lg:p-14 lg:pb-14">
           <div data-tour="book-cover"><BookCover artist={artist!.name} regions={effectiveRegions(state.brief!, state.cities)} season={book.subtitle} chapters={book.chapters} sample={book.source !== "live"} showcase={book.source === "showcase"} clocks={!!dateWindow} /></div>
           <MarketChapter market={book.market} />
-          {book.chapters.map((c) => <CityChapter key={c.city.id} chapter={c} sample={book.source !== "live"} showcase={book.source === "showcase"} artist={artist?.name} artistId={artist?.entityId} window={dateWindow} stops={picked} />)}
+          {book.chapters.map((c) => <CityChapter key={c.city.id} chapter={c} sample={book.source !== "live"} showcase={book.source === "showcase"} artist={artist?.name} artistId={artist?.entityId} window={dateWindow} stops={picked} budget={savedBudget} />)}
           <ProvenanceAppendix rows={book.provenance} calls={book.calls} sample={book.source !== "live"} showcase={book.source === "showcase"} />
           <CallsAppendix calls={book.calls} />
           {book.source !== "live" && <p data-print-footer className="print-footer">{book.source === "showcase" ? showcaseBannerText() : SAMPLE_TEXT}</p>}

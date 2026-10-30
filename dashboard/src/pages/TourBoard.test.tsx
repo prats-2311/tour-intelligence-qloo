@@ -506,6 +506,10 @@ describe("TourBoard", () => {
     expect(screen.getByRole("checkbox", { name: /Guadalajara/ })).toHaveProperty("disabled", false);
     expect(screen.queryByText("Max stops reached — raise it in the brief")).toBeNull();
   });
+  it("the header links to the Tour budget and keeps the sample flag", async () => {
+    renderPage("/tours/board?sample=1");
+    expect((await screen.findByRole("link", { name: "Tour budget" })).getAttribute("href")).toBe("/tours/budget?sample=1");
+  });
   it("Open Tour Book navigates to the book in sample mode", async () => {
     render(
       <QueryClientProvider client={qc()}><TourBoardProvider sampleDelayMs={0}>

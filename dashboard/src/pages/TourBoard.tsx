@@ -469,6 +469,7 @@ export default function TourBoard() {
           <button type="button" onClick={replay} className={smallBtn}><RotateCcw size={12} aria-hidden />Replay the agent</button>
         )}
         <AgentLogChip events={state.log} onOpen={() => setLogOpen(true)} />
+        {state.cities.length > 0 && <Link to={`/tours/budget${sampleQ}`} className="inline-flex min-h-11 items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Tour budget</Link>}
         {state.cities.length > 0 && <TeamBar cities={state.cities} tourThread="tour:board" />}
       </div>
     </header>

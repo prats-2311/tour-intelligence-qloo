@@ -8,6 +8,7 @@ export function routeKey(path: string): RouteKey | null {
   if (p === "/tours/board") return "board";
   if (p.startsWith("/tours/playbook/")) return "playbook";
   if (p === "/tours/book") return "book";
+  if (p === "/tours/budget") return "budget";
   if (p === "/proof") return "proof";
   if (p === "/insights") return "insights";
   return null;

@@ -5,6 +5,7 @@ export const routeImports = {
   board: () => import("../pages/TourBoard"),
   playbook: () => import("../pages/CityPlaybook"),
   book: () => import("../pages/TourBook"),
+  budget: () => import("../pages/TourBudget"),
   proof: () => import("../pages/Proof"),
   insights: () => import("../pages/TasteInsights"),
   v2: () => import("../pages/V2Preview"),
