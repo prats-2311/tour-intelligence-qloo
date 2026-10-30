@@ -91,7 +91,15 @@ describe("playbook cards", () => {
     render(<CardBody card={card("sponsors")} city="Guadalajara" />);
     expect(screen.getByText("Cerro Alto Mezcal")).toBeTruthy();
     expect(screen.queryByText("Lúpulo Tapatío")).toBeNull();
-    expect(screen.getByText("+5 more")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "+5 more" })).toBeTruthy();
+  });
+  it("+N more expands the remaining sponsors and Show fewer collapses them", () => {
+    render(<CardBody card={card("sponsors")} city="Guadalajara" />);
+    fireEvent.click(screen.getByRole("button", { name: "+5 more" }));
+    expect(screen.getByText("Lúpulo Tapatío")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Show fewer" }));
+    expect(screen.queryByText("Lúpulo Tapatío")).toBeNull();
+    expect(screen.getByRole("button", { name: "+5 more" })).toBeTruthy();
   });
   it("sponsors with no city rank lead with the fan rank and say the city part once", () => {
     const items = [
