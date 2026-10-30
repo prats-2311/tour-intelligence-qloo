@@ -1,16 +1,17 @@
 import AxeBuilder from "@axe-core/playwright";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { useSyntheticRecordings } from "./fixtures";
+import { qlooDataCalls, dismissTourPrompt, useSyntheticRecordings } from "./fixtures";
 
 test.beforeEach(async ({ page }) => {
   await page.route(/tiles\.openfreemap\.org/, (route) => route.abort());
-  await useSyntheticRecordings(page);
+  await useSyntheticRecordings(page); await dismissTourPrompt(page);
 });
 
 const Q1 = "Why does Los Angeles rank above São Paulo here?";
 const Q2 = "Which sponsor should I pitch first in Mexico City, and why?";
-const NOTE = "This example can replay the two recorded questions. Try your own artist to ask anything.";
+// d965259: the recorded example also takes a free-text question (runs live, labelled), and offers "Ask live" suggestions.
+const LIVE_LABEL = "Ask your own question — runs live, about 30 seconds";
 
 for (const start of ["/tours/board?showcase=1", "/tours/playbook/4005539?showcase=1"]) {
   test(`Ask about this tour replays a recorded question with its work log (${start})`, async ({ page }, info) => {
@@ -22,13 +23,17 @@ for (const start of ["/tours/board?showcase=1", "/tours/playbook/4005539?showcas
     const panel = page.getByRole("region", { name: "Strategist" });
     await expect(panel.getByRole("button", { name: Q1 })).toBeVisible();
     await expect(panel.getByRole("button", { name: Q2 })).toBeVisible();
-    await expect(panel.getByText(NOTE)).toBeVisible();
-    await expect(panel.getByRole("textbox")).toHaveCount(0);
+    await expect(panel.getByText(LIVE_LABEL)).toBeVisible();
+    await expect(panel.getByRole("textbox", { name: "Ask a question about this tour" })).toHaveCount(1);
 
     await panel.getByRole("button", { name: Q1 }).click();
     await expect(panel.getByText(/Invented test answer/)).toBeVisible({ timeout: 15_000 });
     await expect(panel.getByRole("button", { name: "Work log" })).toHaveAttribute("aria-expanded", "true");
-    await expect(panel.getByRole("button", { name: "Model reasoning summary" })).toBeVisible();
+    // b509f02: the reasoning summary is collapsed by default (it sits below the answer); one click opens it.
+    const reasoning = panel.getByRole("button", { name: "Model reasoning summary" });
+    await expect(reasoning).toHaveAttribute("aria-expanded", "false");
+    await expect(panel.getByText("Gemini's own summary of its reasoning")).toBeHidden();
+    await reasoning.click();
     await expect(panel.getByText("Gemini's own summary of its reasoning")).toBeVisible();
     await expect(panel.getByText(/Invented reasoning for the test fixture/)).toBeVisible();
     const tools = panel.getByRole("list", { name: "Tools used" });
@@ -43,6 +48,6 @@ for (const start of ["/tours/board?showcase=1", "/tours/playbook/4005539?showcas
     expect(violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id}: ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`)).toEqual([]);
     const dir = process.env.SHOT_DIR;
     if (dir) await page.screenshot({ path: path.join(dir, `ask-${start.includes("playbook") ? "playbook" : "board"}-${info.project.name}.png`) });
-    expect(qloo, "the replay makes no Qloo calls").toEqual([]);
+    expect(qlooDataCalls(qloo), "the replay of a recorded question makes no Qloo calls (team workspace calls are allowed)").toEqual([]);
   });
 }

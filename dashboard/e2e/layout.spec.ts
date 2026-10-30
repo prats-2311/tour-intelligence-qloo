@@ -1,8 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
-import { useSyntheticRecordings } from "./fixtures";
+import { dismissTourPrompt, useSyntheticRecordings } from "./fixtures";
 
 // Runs must not depend on the network: map tile/style requests are blocked (the map shows its "tiles unavailable" note).
-test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); await useSyntheticRecordings(page); });
+test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); await useSyntheticRecordings(page); await dismissTourPrompt(page); });
 
 const noHorizontalScroll = async (page: Page) =>
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);

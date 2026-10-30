@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { useSyntheticRecordings } from "./fixtures";
+import { qlooDataCalls, dismissTourPrompt, useSyntheticRecordings } from "./fixtures";
 
 // Runs must not depend on the network: map tile/style requests are blocked (the map shows its "tiles unavailable" note).
-test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); await useSyntheticRecordings(page); });
+test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); await useSyntheticRecordings(page); await dismissTourPrompt(page); });
 
 test("judge path: landing → showcase → board → why → taste", async ({ page }) => {
   await page.goto("/");
@@ -64,9 +64,11 @@ test("Without Qloo shows the generic list with the banner and no verdicts", asyn
   await page.getByRole("tab", { name: "Without Qloo" }).click();
   await expect(page.getByText("Generic LLM answer — no taste evidence")).toBeVisible();
   await expect(page.getByRole("list", { name: "Generic ranking" })).toBeVisible();
-  // Page-wide, not just inside the list: no verdict label and no map legend anywhere.
+  // Since a81e699 ("Without Qloo compares the LLM's order with Qloo's verdicts") each generic row carries Qloo's verdict as a comparison badge.
+  // The generic answer itself still has none: outside the Generic ranking list (page-wide) there is no verdict label, and no map legend anywhere.
   for (const label of ["Play", "Hidden goldmine", "De-risk", "Consider", "Skip", "Not enough data"]) {
-    await expect(page.getByText(label, { exact: true }), `verdict label "${label}"`).toHaveCount(0);
+    const outside = await page.getByText(label, { exact: true }).evaluateAll((els) => els.filter((e) => !e.closest('[aria-label="Generic ranking"]')).length);
+    expect(outside, `verdict label "${label}" outside the comparison list`).toBe(0);
   }
   await expect(page.getByLabel("Map legend")).toHaveCount(0);
 });
@@ -90,5 +92,5 @@ test("showcase mode replays the recording with zero gateway calls", async ({ pag
   await open.click();
   await page.getByRole("button", { name: "Why does Los Angeles rank above São Paulo here?" }).click();
   await expect(page.getByText(/Invented test answer/)).toBeVisible();
-  expect(api).toEqual([]);
+  expect(qlooDataCalls(api), "no Qloo, Gemini or Tavily call (team workspace calls are allowed)").toEqual([]);
 });
