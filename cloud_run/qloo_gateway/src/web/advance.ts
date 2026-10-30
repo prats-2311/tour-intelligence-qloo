@@ -152,15 +152,22 @@ async function weather(input: AdvanceInput, deps: AdvanceDeps, ctry: { code?: st
 }
 
 // ---- holidays ----
-export interface NagerHoliday { date?: unknown; name?: unknown; localName?: unknown }
+export interface NagerHoliday { date?: unknown; name?: unknown; localName?: unknown; global?: unknown; counties?: unknown }
 
 /** Keep holidays in start..end, plus those within 2 days either side, marked near. */
 export function filterHolidays(all: NagerHoliday[], start: string, end: string): Array<{ date: string; name: string; localName: string; near: boolean }> {
   const lo = iso(utc(start) - 2 * DAY), hi = iso(utc(end) + 2 * DAY);
-  return all.flatMap((h) => {
-    if (typeof h.date !== "string" || typeof h.name !== "string" || h.date < lo || h.date > hi) return [];
-    return [{ date: h.date, name: h.name, localName: typeof h.localName === "string" ? h.localName : h.name, near: h.date < start || h.date > end }];
-  }).sort((a, b) => a.date.localeCompare(b.date));
+  // Nager repeats a holiday once per subdivision; keep one per date+name, preferring the nationwide entry.
+  const nationwide = (h: NagerHoliday) => h.global === true || h.counties == null;
+  const byKey = new Map<string, NagerHoliday>();
+  for (const h of all) {
+    if (typeof h.date !== "string" || typeof h.name !== "string" || h.date < lo || h.date > hi) continue;
+    const k = `${h.date}|${h.name.trim().toLowerCase()}`;
+    const prev = byKey.get(k);
+    if (!prev || (!nationwide(prev) && nationwide(h))) byKey.set(k, h);
+  }
+  return [...byKey.values()].map((h) => ({ date: h.date as string, name: h.name as string, localName: typeof h.localName === "string" ? h.localName : (h.name as string), near: (h.date as string) < start || (h.date as string) > end }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 async function holidays(input: AdvanceInput, deps: AdvanceDeps, ctry: { code?: string }): Promise<Holidays> {

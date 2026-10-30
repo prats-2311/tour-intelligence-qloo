@@ -217,3 +217,20 @@ describe("destination-country filtering", () => {
     expect(QUERY_VERSION).toBe("advance-v2");
   });
 });
+
+describe("holiday de-duplication", () => {
+  it("collapses per-subdivision duplicates by date and name, preferring the nationwide entry", () => {
+    const all = [
+      { date: "2027-03-26", name: "Good Friday", localName: "Good Friday", global: false, counties: ["US-CA"] },
+      { date: "2027-03-26", name: "Good Friday", localName: "Good Friday", global: true, counties: null },
+      { date: "2027-03-26", name: "Good Friday", localName: "Good Friday", global: false, counties: ["US-NY"] },
+      { date: "2027-03-26", name: "Other", localName: "Other" },
+    ];
+    const out = filterHolidays(all, "2027-03-25", "2027-03-27");
+    expect(out.map((h) => h.name)).toEqual(["Good Friday", "Other"]);
+  });
+  it("keeps one entry when only subdivision entries exist", () => {
+    const all = [{ date: "2027-03-26", name: "Good Friday", global: false, counties: ["US-CA"] }, { date: "2027-03-26", name: "Good Friday", global: false, counties: ["US-NY"] }];
+    expect(filterHolidays(all, "2027-03-25", "2027-03-27")).toHaveLength(1);
+  });
+});
