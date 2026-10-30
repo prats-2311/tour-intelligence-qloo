@@ -125,7 +125,13 @@ export const zoneShareRows = (city: ScoredCity): ZoneShareRow[] =>
 type StatusSnap = Pick<Snapshot, "statuses" | "threads">;
 export function statusCounts(cities: ScoredCity[], snap: StatusSnap): Record<CityStatus, number> {
   const out = { considering: 0, confirmed: 0, on_hold: 0, dropped: 0 } as Record<CityStatus, number>;
-  for (const c of cities) out[snap.statuses[c.id]?.status ?? "considering"] += 1;
+  const seen = new Set<string>(); // one count per city, however often a list repeats it
+  for (const c of cities) {
+    if (seen.has(c.id)) continue;
+    seen.add(c.id);
+    const s = snap.statuses[c.id]?.status;
+    out[s && s in out ? s : "considering"] += 1;
+  }
   return out;
 }
 

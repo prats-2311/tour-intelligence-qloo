@@ -192,6 +192,14 @@ describe("team status overview", () => {
       "city:3464975": { resolved: false, messages: [] },
     },
   } as never;
+  it("status counts always add up to the cities shown, even with extra statuses, threads or events for other cities (audit A16)", () => {
+    const many = { statuses: { ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`ghost${i}`, { status: "dropped" }])), [SAMPLE_CITIES[0]!.id]: { status: "dropped" } }, threads: {}, activity: Array.from({ length: 20 }, (_, i) => ({ id: `${i}`, type: "status", cityId: SAMPLE_CITIES[0]!.id, text: "dropped" })) } as never;
+    const c = statusCounts(SAMPLE_CITIES, many);
+    expect(c.considering + c.confirmed + c.on_hold + c.dropped).toBe(SAMPLE_CITIES.length);
+    expect(c.dropped).toBe(1);
+    const dup = statusCounts([...SAMPLE_CITIES, ...SAMPLE_CITIES], many);
+    expect(dup.considering + dup.confirmed + dup.on_hold + dup.dropped, "a repeated city must not be counted twice").toBe(SAMPLE_CITIES.length);
+  });
   it("counts cities by status, unset as Considering", () => {
     const c = statusCounts(SAMPLE_CITIES, snap);
     expect(c.confirmed).toBe(1);
