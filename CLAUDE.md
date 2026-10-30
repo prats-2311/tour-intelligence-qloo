@@ -28,7 +28,7 @@ Tour Intelligence × Qloo: "Route with anything. Win every city with this." (REA
 - **Strategist** (`POST /v1/strategist`, gateway `strategist/run.ts`): a bounded Gemini tool-calling loop. Limits per turn: 4 model rounds and 6 tool calls, then one forced text-only answer. Every Gemini attempt reserves the narrative ceiling (20 per session in memory, `GEMINI_DAILY_CEILING` per day, persisted); Qloo calls stay behind the gateway cache and the `QLOO_DAILY_CEILING` budget. UI: a FAB ("Ask the strategist") opening a full-screen dialog on phones, a top-bar "Strategist" toggle with a docked panel on desktop; both show only on `/tours/*` and `/insights`. Tool calls render as chips (get_city_playbook is "Playbook").
 - **Sample behaviour**: with `?sample=1|long` the strategist never calls the network. It replays scripted answers (`fixtures/strategistSample.ts`) for the three `SAMPLE_QUESTIONS`; any other question gets an honest UNAVAILABLE reply ("try a suggested question"). Every number in a scripted answer exists in the sample data (guarded by a test).
 - **`?mode=`** on `/tours/board`: `winnability` (default, param absent), `density`, `without`. `without` shows the Without Qloo list (`aria-label="Generic ranking"`, banner "Generic LLM answer — no taste evidence", no verdicts); sample uses a fixed list, live asks `POST /v1/without-qloo` and accepts only a permutation of the scored cities.
-- **WebMCP Qloo tools** (`components/QlooWebMcpTools.tsx`, six): `get_tour_board`, `get_city_playbook` (read-only); `open_city`, `set_comparison_mode`, `build_tour_from_shortlist`, `open_tour_book` (UI-driving).
+- **WebMCP tools** (`components/QlooWebMcpTools.tsx`, 11): read-only `get_tour_board`, `get_city_playbook`, `get_sponsors_by_age`, `get_advance_risks`, `get_team_notes`; UI-driving `open_city`, `set_comparison_mode`, `build_tour_from_shortlist`, `open_tour_book`; team writes `add_team_note`, `set_city_status`.
 - **MCP server** (`cloud_run/agent_mcp_server`): private mode (IAM-gated `agent-mcp-server`) exposes the nine campaign tools plus the five taste tools; public mode (`MCP_PUBLIC=1`, service `tour-intel-mcp-public`, `scripts/deploy_public.sh <gateway-url>`) exposes the five taste tools only, 30 requests per 10 minutes per IP, unauthenticated by design. Connection instructions and the tool table are in the README ("Connect an MCP client").
 
 ## Judge round, data policy and the public clone (Plans 6-7)
@@ -44,6 +44,11 @@ Tour Intelligence × Qloo: "Route with anything. Win every city with this." (REA
 - The public MCP stays new: `cloud_run/agent_mcp_server/scripts/deploy_public.sh` (Plan 4) targets `tour-intel-mcp-public`.
 - This project reuses the finished Google-hackathon dataset `tour_intelligence` via an explicit opt-in: run the migration as `ALLOW_SHARED_DATASET=1 bigquery/apply_migration.sh tour_intelligence bigquery/migrations/2026-10-17-qloo-tours.sql` (Prateek), and deploy `tour-data-api` with `BQ_DATASET=tour_intelligence,ALLOW_SHARED_DATASET=1,QLOO_GATEWAY_URL=<gateway>`. Without the flag the default guards still refuse `tour_intelligence`.
 - Cloud Run reserves paths ending in `z`: the gateway health route is `/health`.
+
+## Docs, ADRs and diagrams
+- ADRs in `docs/adr/` (0001 gateway, 0002 winning a city, 0003 private recordings, 0004 private documents, 0005 BigQuery analytics, 0006 workspaces as capability links, 0007 public MCP and plugin, 0008 honest proof). Add one for any decision that changes what is stored, sent or promised.
+- Diagrams: HTML sources in `docs/diagrams/src/`, PNGs in `docs/diagrams/`; `docs/screens/architecture.png` and `playbook-flow.png` are copies of the @2x renders. Redraw with `node docs/diagrams/src/render.mjs` (needs Playwright; set `PLAYWRIGHT_DIR` if it is not at the default path).
+- README structure is pinned by `dashboard/src/test/readmeOrder.test.ts`; check it after editing the README.
 
 ## Nested guides
 Existing per-directory `CLAUDE.md` files remain authoritative for their services; `cloud_run/qloo_gateway/CLAUDE.md` covers the gateway.
