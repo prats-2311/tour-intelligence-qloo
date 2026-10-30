@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { isRoutingBrief, SHOWCASE, showcaseAvailable } from "@/lib/qloo/showcase";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
@@ -6,17 +6,19 @@ import { readOutcomeAt, writeOutcomeAt, writeV2TourOutcome, type TourOutcome } f
 import type { TourStep } from "@/lib/tour/tourSteps";
 import { nextTour, TOURS, tourById, tourStorageKey, type TourId } from "@/lib/tour/tours";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
+import { routeKeepingWs, routeMatches } from "@/lib/tour/tourRoute";
 import { buildV2TourSteps } from "@/lib/tour/v2TourSteps";
 import { CLOSE_ASK_EVENT, OPEN_ASK_EVENT } from "@/components/strategist/StrategistLauncher";
 import { TourOverlay } from "./TourOverlay";
 import { TourPrompt } from "./TourPrompt";
 import { TourContext, type TourApi } from "./tourContext";
 
+const MAX_RENAVIGATIONS = 5;
 
 /** Guided tour of the recorded example: owns the step state, the stored outcome, the first-visit prompt and the overlay. */
 export function TourProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const { state } = useTourBoard();
   const workspace = useWorkspace();
   const [steps, setSteps] = useState<TourStep[] | null>(null);
@@ -29,13 +31,29 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
   // True while the tour has the Ask panel open for a step; it is closed again on the next step that does not need it, or when the tour ends.
   const askOpened = useRef(false);
+  // The newest workspace id, read at navigation time so a step never drops it (and never waits on a render to see it).
+  const wsNow = useRef<string | null>(null);
+  wsNow.current = new URLSearchParams(search).get("ws") ?? workspace.ws;
   const go = useCallback((list: TourStep[], i: number) => {
     setIndex(i);
     const step = list[i]!;
     if (step.opens === "ask") { askOpened.current = true; window.dispatchEvent(new CustomEvent(OPEN_ASK_EVENT)); }
     else if (askOpened.current) { askOpened.current = false; window.dispatchEvent(new CustomEvent(CLOSE_ASK_EVENT)); }
-    navigate(step.route);
+    navigate(routeKeepingWs(step.route, wsNow.current));
   }, [navigate]);
+
+  // Another navigation (the workspace id being written into the URL, a late redirect) can land after the step's own and leave the
+  // page behind: the running step re-navigates until the location is its page, a few tries at most so a bad route cannot loop.
+  const stepRoute = steps?.[index]?.route ?? null;
+  const onStepPage = stepRoute === null || routeMatches(stepRoute, pathname, search);
+  const tries = useRef({ route: "", n: 0 });
+  useEffect(() => {
+    if (stepRoute === null || onStepPage) return;
+    if (tries.current.route !== stepRoute) tries.current = { route: stepRoute, n: 0 };
+    if (tries.current.n >= MAX_RENAVIGATIONS) return;
+    tries.current.n += 1;
+    navigate(routeKeepingWs(stepRoute, wsNow.current), { replace: true });
+  }, [stepRoute, onStepPage, pathname, search, navigate]);
 
   const begin = useCallback((id: TourId | "v2", list: TourStep[]) => {
     setRunning(id);
@@ -86,7 +104,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     <TourContext.Provider value={api}>
       {children}
       {showPrompt && <TourPrompt onStart={startV1} onDismiss={dismissPrompt} />}
-      {steps && (
+      {steps && onStepPage && (
         <TourOverlay
           steps={steps}
           index={index}
