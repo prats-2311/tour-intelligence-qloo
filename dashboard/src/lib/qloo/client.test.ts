@@ -193,3 +193,19 @@ describe("streamCityPlaybook sample mode and fetchThisWeek", () => {
       .toEqual({ status: "unavailable", reason: "error", message: "Generic ranking unavailable" });
   });
 });
+
+describe("fetchAdvance", () => {
+  it("sends city, window, optional artistCountry and coordinates, and maps failures to unavailable sections", async () => {
+    const { fetchAdvance } = await import("./client");
+    const f = vi.fn(async (_u: string) => new Response(JSON.stringify({ visa: { status: "ok" } }), { status: 200 }));
+    const w = { start: "2027-03-12", end: "2027-03-15" };
+    await fetchAdvance({ city: "Guadalajara", country: "MX", window: w, artistCountry: " GB ", lat: 20.67, lon: -103.35 }, { fetchImpl: f as unknown as typeof fetch });
+    expect(String(f.mock.calls[0]![0])).toBe("/api/qloo/advance?city=Guadalajara&country=MX&start=2027-03-12&end=2027-03-15&artistCountry=GB&lat=20.67&lon=-103.35");
+    await fetchAdvance({ city: "G", country: "MX", window: w }, { fetchImpl: f as unknown as typeof fetch });
+    expect(String(f.mock.calls[1]![0])).toBe("/api/qloo/advance?city=G&country=MX&start=2027-03-12&end=2027-03-15");
+    const bad = await fetchAdvance({ city: "G", country: "MX", window: w }, { fetchImpl: (async () => new Response("x", { status: 502 })) as unknown as typeof fetch });
+    expect(bad.visa.status).toBe("unavailable");
+    const thrown = await fetchAdvance({ city: "G", country: "MX", window: w }, { fetchImpl: (async () => { throw new Error("net"); }) as unknown as typeof fetch });
+    expect(thrown.weather.status).toBe("unavailable");
+  });
+});

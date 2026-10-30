@@ -64,6 +64,18 @@ export interface ThisWeekItem { text: string; date: string | null; entities: str
 export type ThisWeek =
   | { status: "ok"; window: DateWindow; items: ThisWeekItem[]; removed: Array<{ item: ThisWeekItem; reason: string }>; citations: Array<{ id: string; url: string; title: string }>; summarised: boolean; cached: boolean }
   | { status: "unavailable"; reason: "no_key" | "capped" | "error" | "no_window"; message: string };
+export interface AdvanceItem { text: string; sourceUrl: string }
+export interface AdvanceSource { title: string; url: string }
+export type AdvanceWeather =
+  | { status: "ok"; source: string; sourceUrl: string; years: number[]; days: number; tempMaxC: { mean: number; min: number; max: number }; tempMinC: { mean: number }; rainDaysShare: number; note: string }
+  | { status: "unavailable"; message: string };
+export type AdvanceHolidays =
+  | { status: "ok"; source: string; sourceUrl: string; items: Array<{ date: string; name: string; localName: string; near: boolean }> }
+  | { status: "unavailable"; message: string };
+export type AdvanceWeb =
+  | { status: "ok"; summary: string; leadTime?: string; items: AdvanceItem[]; sources: AdvanceSource[]; artistCountry?: string; cached: boolean }
+  | { status: "unavailable" | "capped"; message: string; items?: AdvanceItem[]; sources?: AdvanceSource[]; artistCountry?: string };
+export interface AdvanceRisks { weather: AdvanceWeather; holidays: AdvanceHolidays; visa: AdvanceWeb; equipment: AdvanceWeb; generatedAt: string }
 export interface ArtistProfile {
   demographics: unknown[];
   tags: Array<{ name: string; affinity: number }>;
@@ -95,7 +107,7 @@ export type GatewayEvent =
 /** One pasted city: "City" or "City, Country" (country as ISO-2 or English name). */
 export interface RoutingCity { name: string; country?: string }
 /** `cities` set means "paste your cities" mode: the board scores only those (at most 8), and `regions` only help match names without a country. */
-export interface TourBrief { artist: string; artistEntityId?: string; regions: string[]; maxStops: number; dateWindow?: DateWindow; cities?: RoutingCity[] }
+export interface TourBrief { artist: string; /** Where the artist is from (optional); sharpens the visa lookup in Advance & risks. */ artistCountry?: string; artistEntityId?: string; regions: string[]; maxStops: number; dateWindow?: DateWindow; cities?: RoutingCity[] }
 export interface ChatMessage { role: "user" | "assistant"; text: string }
 export interface StrategistContext {
   artist?: { name: string; entityId: string };

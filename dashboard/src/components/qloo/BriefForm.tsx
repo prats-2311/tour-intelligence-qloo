@@ -10,8 +10,9 @@ const MAX_WINDOW_DAYS = 62; // the gateway rejects longer This week windows
 const field = "h-12 w-full min-w-0 rounded-[10px] bg-paper-raised px-3 text-[15px] text-canvas-text placeholder:text-canvas-muted lg:h-10";
 
 export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBrief) => void; defaultBrief?: TourBrief }) {
-  const ids = { paste: useId(), pasteHint: useId(), artist: useId(), stops: useId(), region: useId(), err: useId(), wStart: useId(), wEnd: useId(), wErr: useId() };
+  const ids = { paste: useId(), pasteHint: useId(), artist: useId(), home: useId(), homeHint: useId(), stops: useId(), region: useId(), err: useId(), wStart: useId(), wEnd: useId(), wErr: useId() };
   const [artist, setArtist] = useState(defaultBrief?.artist ?? "");
+  const [home, setHome] = useState(defaultBrief?.artistCountry ?? "");
   const [regions, setRegions] = useState<string[]>(defaultBrief?.regions ?? DEFAULT_REGIONS);
   const [custom, setCustom] = useState<string[]>(() => (defaultBrief?.regions ?? []).filter((r) => !PRESETS.includes(r)));
   const [draft, setDraft] = useState("");
@@ -56,7 +57,7 @@ export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBr
     if (winStart && winEnd && (Date.parse(winEnd) - Date.parse(winStart)) / 86_400_000 > MAX_WINDOW_DAYS) return setWinError(`Date window can be at most ${MAX_WINDOW_DAYS} days`);
     setError(null);
     setWinError(null);
-    onSubmit({ ...(defaultBrief?.artistEntityId && name === defaultBrief.artist ? { artistEntityId: defaultBrief.artistEntityId } : {}), artist: name, regions: routing.cities.length > 0 ? [] : regions, maxStops: n, ...(routing.cities.length > 0 ? { cities: routing.cities } : {}), ...(winStart && winEnd ? { dateWindow: { start: winStart, end: winEnd } } : {}) });
+    onSubmit({ ...(defaultBrief?.artistEntityId && name === defaultBrief.artist ? { artistEntityId: defaultBrief.artistEntityId } : {}), artist: name, ...(home.trim() ? { artistCountry: home.trim() } : {}), regions: routing.cities.length > 0 ? [] : regions, maxStops: n, ...(routing.cities.length > 0 ? { cities: routing.cities } : {}), ...(winStart && winEnd ? { dateWindow: { start: winStart, end: winEnd } } : {}) });
   };
 
   return (
@@ -65,6 +66,11 @@ export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBr
       <div className="flex flex-col gap-1.5">
         <label htmlFor={ids.artist} className="text-[13px] font-medium text-canvas-muted">Artist</label>
         <input id={ids.artist} value={artist} onChange={(e) => setArtist(e.target.value)} autoComplete="off" placeholder="Artist name" className={field} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={ids.home} className="text-[13px] font-medium text-canvas-muted">Artist&rsquo;s home country (optional)</label>
+        <input id={ids.home} value={home} maxLength={80} onChange={(e) => setHome(e.target.value)} autoComplete="off" aria-describedby={ids.homeHint} placeholder="For example United Kingdom" className={field} />
+        <p id={ids.homeHint} className="text-[12px] text-canvas-muted">Used only to look up visa and work permit rules.</p>
       </div>
       <fieldset disabled={routing.cities.length > 0} className="flex min-w-0 flex-col gap-2 disabled:opacity-50">
         <legend className="mb-1.5 text-[13px] font-medium text-canvas-muted">Regions ({regions.length} of {MAX_REGIONS})</legend>

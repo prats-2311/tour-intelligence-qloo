@@ -5,7 +5,7 @@ import { samplePlaybookEvents, sampleThisWeek } from "./fixtures/lumenValePlaybo
 import { SAMPLE_WITHOUT_QLOO, sampleStrategistEvents } from "./fixtures/strategistSample";
 import { recordedQuestion, showcaseBoardEvents, showcaseStrategist, showcasePlaybookEvents, showcaseThisWeek, showcaseWithoutQloo, variantOfBrief } from "./showcase";
 import { parseWithoutQloo } from "./withoutQloo";
-import type { ChatMessage, DateWindow, GatewayEvent, SampleSet, StrategistContext, ThisWeek, TourBrief, WithoutQloo } from "./types";
+import type { AdvanceRisks, ChatMessage, DateWindow, GatewayEvent, SampleSet, StrategistContext, ThisWeek, TourBrief, WithoutQloo } from "./types";
 
 export const SHOWCASE_STRATEGIST_NOTE = "The live strategist needs a live run";
 
@@ -141,6 +141,22 @@ export async function fetchThisWeek(q: { city: string; country: string; window?:
     return (await res.json()) as ThisWeek;
   } catch {
     return WEB_ERROR;
+  }
+}
+
+const ADVANCE_DOWN = "Could not load this. Try again later.";
+const advanceError = (): AdvanceRisks => ({ weather: { status: "unavailable", message: ADVANCE_DOWN }, holidays: { status: "unavailable", message: ADVANCE_DOWN }, visa: { status: "unavailable", message: ADVANCE_DOWN }, equipment: { status: "unavailable", message: ADVANCE_DOWN }, generatedAt: "" });
+
+/** Advance & risks for one city; a failed request becomes four "unavailable" sections. */
+export async function fetchAdvance(q: { city: string; country: string; window: DateWindow; artistCountry?: string; lat?: number; lon?: number }, opts: { fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<AdvanceRisks> {
+  const p = new URLSearchParams({ city: q.city, country: q.country, start: q.window.start, end: q.window.end });
+  if (q.artistCountry?.trim()) p.set("artistCountry", q.artistCountry.trim());
+  if (typeof q.lat === "number" && typeof q.lon === "number") { p.set("lat", String(q.lat)); p.set("lon", String(q.lon)); }
+  try {
+    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/advance?${p}`, { signal: opts.signal, headers: { "x-session-id": getSessionId() } });
+    return res.ok ? ((await res.json()) as AdvanceRisks) : advanceError();
+  } catch {
+    return advanceError();
   }
 }
 

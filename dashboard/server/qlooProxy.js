@@ -76,6 +76,29 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch })
     }
     return forward(req, res, { route: "this-week", path: `/v1/this-week?${params}`, method: "GET" });
   });
+  // Advance & risks: same required params as this-week; artistCountry, lat and lon are optional.
+  app.get("/api/qloo/advance", (req, res) => {
+    const params = new URLSearchParams();
+    for (const k of WEEK_PARAMS) {
+      const v = req.query[k];
+      if (typeof v !== "string" || !v || v.length > 80) return res.status(400).json({ error: "city, country, start, end required (≤ 80 chars)" });
+      params.set(k, v);
+    }
+    const ac = req.query.artistCountry;
+    if (ac !== undefined) {
+      if (typeof ac !== "string" || ac.length > 80) return res.status(400).json({ error: "artistCountry must be ≤ 80 chars" });
+      if (ac.trim()) params.set("artistCountry", ac.trim());
+    }
+    const { lat, lon } = req.query;
+    if ((lat === undefined) !== (lon === undefined)) return res.status(400).json({ error: "lat and lon go together" });
+    if (lat !== undefined) {
+      const ok = (v, max) => typeof v === "string" && v !== "" && Number.isFinite(Number(v)) && Math.abs(Number(v)) <= max;
+      if (!ok(lat, 90) || !ok(lon, 180)) return res.status(400).json({ error: "lat/lon out of range" });
+      params.set("lat", lat);
+      params.set("lon", lon);
+    }
+    return forward(req, res, { route: "advance", path: `/v1/advance?${params}`, method: "GET" });
+  });
   // Spec §8: raw Qloo tools are never exposed publicly — only the compare panel's tool is reachable.
   const PUBLIC_TOOLS = new Set(["qloo_compare_audiences"]);
   const MAX_GROUP = 3;
