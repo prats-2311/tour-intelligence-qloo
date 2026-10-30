@@ -105,6 +105,22 @@ describe("AgeMatrix", () => {
     await waitFor(() => expect(screen.getAllByRole("button", { name: /Off-white/ })).toHaveLength(3));
     expect(s.f).toHaveBeenCalledTimes(1);
   });
+  it("when every city fails (no live service) it shows one banner with one Retry, keeps focus, and no per-row errors or table (audit A3)", async () => {
+    const s = stub(() => res({}, 503));
+    view(mk(4));
+    load(4);
+    const banner = await screen.findByText(/Age groups need the live service/);
+    expect(banner).toBeTruthy();
+    const retries = screen.getAllByRole("button", { name: /^Retry/ });
+    expect(retries).toHaveLength(1);
+    expect(screen.queryByText(/Couldn.t load/)).toBeNull();
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.queryByText("Not in memory")).toBeNull();
+    expect(document.activeElement).toBe(retries[0]);
+    s.f.mockClear();
+    fireEvent.click(retries[0]!);
+    await waitFor(() => expect(s.f).toHaveBeenCalledTimes(4));
+  });
   it("no_skew city reads No age group stands out", async () => {
     stub(() => res({ status: "no_skew", indexes: {}, bands: [] }));
     view(mk(1));

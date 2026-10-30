@@ -58,7 +58,7 @@ function Row({ item, active, collapsed, href, onAction, onNavigate }: { item: Na
   } else {
     body = <Link to={href} aria-current={active ? "page" : undefined} onClick={onNavigate} className={row(collapsed, active)}>{icon}{label}</Link>;
   }
-  return <li className="group/item relative">{body}{collapsed && <Tooltip>{tip}</Tooltip>}</li>;
+  return <li className={`group/item relative ${item.kind === "route" && item.hint && !collapsed ? "min-h-[3.75rem]" : ""}`}>{body}{collapsed && <Tooltip>{tip}</Tooltip>}</li>;
 }
 
 function TourRow({ tour, collapsed, onStart }: { tour: NavTour; collapsed: boolean; onStart: () => void }) {

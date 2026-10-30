@@ -15,7 +15,7 @@ describe("hero tile why lines (derived from the loaded cards only)", () => {
     expect(heroWhys([rooms]).best_room).toEqual({ text: "venue fit 0.94, #1 of 2 rooms", card: "venue_fit" });
   });
   it("support: the Co-billing card's own wording", () => {
-    expect(heroWhys([acts]).support).toEqual({ text: "fans share taste 62% · the city likes them 40%", card: "co_billing" });
+    expect(heroWhys([acts]).support).toEqual({ text: "shared taste 0.62 · the city likes them 0.40", card: "co_billing" });
   });
   it("ranks by the value, so a first item that is not the biggest says so", () => {
     const z = card("promo_zones", [{ label: "Beta Quarter", share: 0.2 }, { label: "Alpha Quarter", share: 0.31 }]);
@@ -28,6 +28,6 @@ describe("hero tile why lines (derived from the loaded cards only)", () => {
   });
   it("skips a do-not-book act and uses the next one (same item as the tile)", () => {
     const c = card("co_billing", [{ name: "Ariel Pink", sharedTaste: 0.9, localAffinity: 0.9, lift: 0.8 }, { name: "Synthetic Artist 02", sharedTaste: 0.5, localAffinity: 0.3, lift: 0.15 }]);
-    expect(heroWhys([c]).support?.text).toBe("fans share taste 50% · the city likes them 30%");
+    expect(heroWhys([c]).support?.text).toBe("shared taste 0.50 · the city likes them 0.30");
   });
 });

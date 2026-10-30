@@ -9,7 +9,7 @@ export function Sidebar({ collapsed, onToggle, onAction }: { collapsed: boolean;
   const Icon = collapsed ? PanelLeftOpen : PanelLeftClose;
   return (
     <aside
-      id={SIDEBAR_ID} aria-label="Site sections" data-collapsed={collapsed}
+      id={SIDEBAR_ID} data-app-chrome aria-label="Site sections" data-collapsed={collapsed}
       className={`sticky top-14 flex h-[calc(100dvh-3.5rem)] min-w-0 flex-col gap-4 self-start bg-canvas-raised py-4 ${collapsed ? "px-2" : "overflow-y-auto px-3"}`}
     >
       <NavPanel collapsed={collapsed} onAction={onAction} />

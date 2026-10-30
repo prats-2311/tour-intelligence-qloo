@@ -8,13 +8,15 @@ const FILL: Record<Verdict, string> = {
   play: "var(--color-verdict-play)", hidden_goldmine: "var(--color-verdict-goldmine)", de_risk: "var(--color-verdict-derisk)",
   consider: "var(--color-verdict-consider)", skip: "var(--color-verdict-skip)", insufficient_data: "var(--color-heat-2)",
 };
+/** Count colour per fill: dark text on the light fills, light text on the dark one (insufficient data), each at 4.5:1 or more. */
+const INK: Partial<Record<Verdict, string>> = { insufficient_data: "var(--color-canvas-text)" };
 const describe = (c: Record<Verdict, number>): string => SHOWN_VERDICTS.filter((v) => c[v] > 0).map((v) => `${INSIGHTS_VERDICT_LABEL[v]} ${c[v]}`).join(", ");
 
 function Stack({ counts, total, testId }: { counts: Record<Verdict, number>; total: number; testId?: string }) {
   return (
     <span data-testid={testId} className="flex h-6 w-full overflow-hidden rounded-[6px] bg-canvas">
       {SHOWN_VERDICTS.filter((v) => counts[v] > 0).map((v) => (
-        <span key={v} data-testid="mix-seg" data-verdict={v} data-count={counts[v]} className="flex items-center justify-center border-r-2 border-paper font-mono text-[11px] font-bold text-canvas last:border-r-0" style={{ width: `${(counts[v] / total) * 100}%`, background: FILL[v] }}>
+        <span key={v} data-testid="mix-seg" data-verdict={v} data-count={counts[v]} className="flex items-center justify-center border-r-2 border-paper font-mono text-[11px] font-bold last:border-r-0" style={{ width: `${(counts[v] / total) * 100}%`, background: FILL[v], color: INK[v] ?? "var(--color-canvas)" }}>
           {counts[v]}
         </span>
       ))}

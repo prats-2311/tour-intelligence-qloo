@@ -36,6 +36,8 @@
   --color-canvas-line: rgba(240, 238, 230, 0.09);
   --color-canvas-text: #f2f0ea;
   --color-canvas-muted: #a4a094;
+  /* Form field outline: about 4.6:1 on the raised card (WCAG 1.4.11 asks 3:1). */
+  --color-field-border: #8a877d;
 
   --color-paper: #282722;
   --color-paper-raised: #32312a;
@@ -188,6 +190,11 @@ body {
   color: var(--color-canvas-text);
 }
 
+/* Visible keyboard focus everywhere (audit A2). Unlayered on purpose: Tailwind's `outline-none` (layered) used to leave links with no indicator because
+   `focus-visible:outline-2` only sets a width. Style, width and colour are global; the offset sits in the base layer so a component's own offset utility wins. */
+@layer base { :focus-visible { outline-offset: 2px; } }
+:focus-visible { outline: 2px solid var(--color-gold); }
+
 ::selection {
   background: var(--color-gold);
   color: var(--color-on-gold);
@@ -276,6 +283,9 @@ body {
 @media print {
   body:has(.tour-book), body:has(.tour-book) #root > div { background: #fff !important; }
   body:has(.tour-book) [data-app-shell] { display: none !important; }
+  /* Everything that is app chrome rather than book: phone bar, breadcrumb, sample banner, sidebar, Ask button and dock, toasts (audit A7). */
+  body:has(.tour-book) [data-app-chrome], body:has(.pitch-sheet) [data-app-chrome] { display: none !important; }
+  body:has(.tour-book) [data-nav-grid] { display: block !important; }
   body:has(.tour-book) main { padding: 0 !important; }
   .tour-book { margin: 0 !important; background: #fff; color: #111; }
   .tour-book *:not(svg *):not([data-print-keep]) { color: #111 !important; background-color: transparent !important; box-shadow: none !important; }

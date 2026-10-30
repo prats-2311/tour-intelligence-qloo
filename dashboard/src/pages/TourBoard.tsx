@@ -35,11 +35,16 @@ import type { TourBrief, Verdict } from "@/lib/qloo/types";
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
 type Mode = "winnability" | "density" | "without";
-const MODES: Array<{ id: Mode; label: string }> = [
+const MODES: Array<{ id: Mode; label: string; hint?: string }> = [
   { id: "winnability", label: "Winnability" },
-  { id: "density", label: "Density-only" },
-  { id: "without", label: "Without Qloo" },
+  { id: "density", label: "Density-only", hint: "Density-only: the same cities sorted by fan heat alone, the way a tool that only counts fans would rank them." },
+  { id: "without", label: "Without Qloo", hint: "Without Qloo: a generic AI model's city order with no taste data, shown for comparison." },
 ];
+export const BOARD_LEGEND = [
+  { term: "Fan heat", def: "how much this artist's fans over-index here", bar: "fanheat" },
+  { term: "Activation", def: "sponsor, venue and local fit", bar: "activation" },
+  { term: "Winnability", def: "50/50 of the two" },
+] as const;
 const MODE_NOTE: Record<Exclude<Mode, "without">, string> = {
   winnability: "Ranked by winnability: fan heat and how winnable the city is, 50/50.",
   density: "Same scores, sorted by fan heat only — the order a density-only tool would give.",
@@ -61,7 +66,7 @@ function SegmentedControl({ mode, onChange }: { mode: Mode; onChange: (m: Mode) 
     document.getElementById(`${base}-${next.id}`)?.focus();
   };
   return (
-    <div role="tablist" aria-label="Ranking" onKeyDown={onKey} className="flex h-[52px] w-full rounded-[10px] bg-canvas p-1 lg:h-10">
+    <div role="tablist" aria-label="Ranking" onKeyDown={onKey} className="flex h-[52px] w-full rounded-[10px] bg-canvas p-1">
       {MODES.map((m) => {
         const on = m.id === mode;
         return (
@@ -71,6 +76,7 @@ function SegmentedControl({ mode, onChange }: { mode: Mode; onChange: (m: Mode) 
             role="tab"
             type="button"
             aria-selected={on}
+            title={m.hint}
             tabIndex={on ? 0 : -1}
             onClick={() => onChange(m.id)}
             className={`relative flex-1 rounded-[8px] text-[13px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${on ? "text-canvas-text" : "text-canvas-muted hover:text-canvas-text"}`}
@@ -141,6 +147,16 @@ const smallBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-pap
 
 export default function TourBoard() {
   const { state, run, replay, abort, reset, shortlist, toggleShortlist } = useTourBoard();
+  const streaming = state.status === "streaming";
+  // The Replay button is swapped for Stop while it runs: carry keyboard focus across both swaps so it never falls to the page body.
+  const stopRef = useRef<HTMLButtonElement>(null);
+  const replayRef = useRef<HTMLButtonElement>(null);
+  const replayFocus = useRef(false);
+  useEffect(() => {
+    if (!replayFocus.current) return;
+    if (streaming) stopRef.current?.focus();
+    else { replayFocus.current = false; if (!document.activeElement || document.activeElement === document.body) replayRef.current?.focus(); }
+  }, [streaming]);
   const reduce = useReducedMotion();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -292,8 +308,8 @@ export default function TourBoard() {
     );
   }
 
-  const streaming = state.status === "streaming";
   const hasMap = state.cities.length > 0 || streaming;
+  const replaying = streaming && state.source === "showcase";
   const artistName = state.artist?.name ?? state.brief?.artist ?? "Tour Board";
   // Pasted run: the cities that matched (the scored ones once done), never the pasted lines that matched nothing.
   const matchedCount = state.status === "done" ? state.cities.length : Math.max(0, (state.brief?.cities?.length ?? 0) - state.routingUnmatched.length);
@@ -367,6 +383,17 @@ export default function TourBoard() {
           <p data-testid="mode-note" className={`min-w-0 text-[12px] leading-[1.4] text-canvas-muted lg:text-[13px] ${withoutMode ? "min-h-[5.5rem] lg:min-h-[3.5rem]" : "min-h-[2.1rem] lg:min-h-[1.1rem]"}`}>
             {withoutMode ? (agrees ? `${WITHOUT_NOTE} ${WITHOUT_AGREES}` : WITHOUT_NOTE) : MODE_NOTE[mode]}
           </p>
+          {!withoutMode && (
+            <p data-testid="board-legend" className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12px] leading-[1.4] text-canvas-muted">
+              {BOARD_LEGEND.map((l, i) => (
+                <span key={l.term} className="inline-flex flex-wrap items-center gap-x-1">
+                  {i > 0 && <span aria-hidden className="mr-0.5">·</span>}
+                  {"bar" in l && <span aria-hidden data-bar-key={l.bar} className="inline-block h-1 w-3 rounded-[2px]" style={{ background: l.bar === "fanheat" ? "var(--color-bone)" : "var(--color-gold)" }} />}
+                  <span className="font-medium text-canvas-text">{l.term}:</span> {l.def}
+                </span>
+              ))}
+            </p>
+          )}
           <p data-testid="board-summary" className="min-h-[2.1rem] min-w-0 text-[12px] leading-[1.4] text-canvas-muted lg:min-h-[1.1rem] lg:text-[13px]">
             {scored}{!withoutMode && verdictBits.map((b, i) => <span key={i}>{" · "}{b}</span>)}
             {streaming && " · still scoring"}
@@ -465,14 +492,14 @@ export default function TourBoard() {
       <Link to="/proof" className="order-last inline-flex min-h-11 basis-full items-center font-mono text-[12px] text-canvas-muted underline-offset-4 hover:text-canvas-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:order-none lg:basis-auto lg:flex-1">{PROOF_LINK_TEXT} →</Link>
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         {streaming && (
-          <button type="button" onClick={abort} className={smallBtn}><Square size={12} aria-hidden />Stop</button>
+          <button ref={stopRef} type="button" onClick={abort} className={smallBtn}><Square size={12} aria-hidden />Stop</button>
         )}
         {state.source === "showcase" && !streaming && (
-          <button type="button" onClick={replay} className={smallBtn}><RotateCcw size={12} aria-hidden />Replay the agent</button>
+          <button ref={replayRef} type="button" onClick={() => { replayFocus.current = true; replay(); }} className={smallBtn}><RotateCcw size={12} aria-hidden />Replay the agent</button>
         )}
-        <AgentLogChip events={state.log} onOpen={() => setLogOpen(true)} />
+        <AgentLogChip events={state.log} replaying={replaying} onOpen={() => setLogOpen(true)} />
         {state.cities.length > 0 && <Link to={`/tours/insights${sampleQ}`} className={`${smallBtn} max-lg:hidden`}><BarChart3 size={12} aria-hidden />Charts</Link>}
-        {state.cities.length > 0 && <TeamBar cities={state.cities} tourThread="tour:board" />}
+        {(state.cities.length > 0 || replaying) && <TeamBar cities={state.cities} tourThread="tour:board" />}
       </div>
     </header>
   );
@@ -535,7 +562,7 @@ export default function TourBoard() {
   }
 
   return (
-    <div className="-mx-4 -mt-6 lg:-mx-8 lg:-my-8">
+    <div className="-mx-4 -mt-6 lg:-mx-8 lg:-mb-8 lg:-mt-3">
       {isSample && <SampleBanner source={state.source} />}
       <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_1fr]">
         <div className="lg:col-span-6 lg:col-start-7 lg:row-start-1 xl:col-span-5 xl:col-start-8">{header}</div>

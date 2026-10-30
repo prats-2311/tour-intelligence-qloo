@@ -7,6 +7,8 @@ import { loadSegments, segmentKey, useSegmentsMany, type SegmentRequest } from "
 import type { ScoredCity } from "@/lib/qloo/types";
 
 export const MATRIX_TITLE = "Which brands each age group loves, city by city";
+const running0 = (p: { done: number; total: number } | null) => p !== null && p.done < p.total;
+export const MATRIX_UNAVAILABLE = "Age groups need the live service. Try again.";
 export const MATRIX_COST_NOTE = "Runs live Qloo lookups, about 5 per city the first time; cached after.";
 
 const btn = "inline-flex min-h-11 items-center rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
@@ -32,8 +34,13 @@ export function AgeMatrix({ cities, artist, allFansOf, hrefFor }: Props) {
   const popRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   useEffect(() => { if (open) popRef.current?.focus(); }, [open]);
+  const retryAll = useRef<HTMLButtonElement>(null);
 
   const matrix = useMemo(() => buildAgeMatrix(rows.map((c, i) => ({ id: c.id, name: c.name, segments: states[i] ?? { status: "idle" as const }, allFans: allFansOf(c) }))), [rows, states, allFansOf]);
+  const allFailed = matrix.rows.length > 0 && matrix.rows.every((r) => r.state === "unavailable");
+  const resolved = matrix.rows.some((r) => r.state !== "idle" && r.state !== "loading");
+  // One banner instead of N identical per-row errors; keep keyboard focus where the visitor was (on the button they pressed, now replaced by Retry).
+  useEffect(() => { if (allFailed && !running0(progress)) { const a = document.activeElement; if (!a || a === document.body) retryAll.current?.focus(); } }, [allFailed, progress]);
   if (!artist || rows.length === 0) return null;
 
   const touched = states.some((s) => s.status !== "idle");
@@ -57,8 +64,14 @@ export function AgeMatrix({ cities, artist, allFansOf, hrefFor }: Props) {
         </div>
       )}
       {running && <p role="status" className="text-[13px] text-canvas-muted">Loaded {progress!.done} of {progress!.total} {progress!.total === 1 ? "city" : "cities"}…</p>}
+      {allFailed && !running && (
+        <div role="alert" data-testid="matrix-unavailable" className="flex flex-col items-start gap-2 rounded-[10px] border border-canvas-line bg-paper-raised p-3">
+          <p className="text-[14px] text-canvas-text">{MATRIX_UNAVAILABLE}</p>
+          <button ref={retryAll} type="button" onClick={run} className={btn}>Retry</button>
+        </div>
+      )}
       {touched && summary && <p data-testid="matrix-summary" className="text-[14px] font-medium text-canvas-text">{summary}</p>}
-      {touched && (
+      {touched && resolved && !allFailed && (
         <div className="max-w-full overflow-x-auto rounded-[10px]">
           <table className="w-full min-w-max border-collapse text-left text-[13px] text-canvas-text">
             <caption className="sr-only">{MATRIX_TITLE}</caption>

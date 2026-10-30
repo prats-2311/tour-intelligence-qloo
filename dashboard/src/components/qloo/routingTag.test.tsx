@@ -119,7 +119,7 @@ describe("CityRow long names", () => {
     const t = screen.getByTestId("city-name-text");
     expect(t.textContent).toBe("New York City");
     expect(t.className).toContain("break-words");
-    expect(t.className).toContain("min-w-0");
+    expect(t.className).toContain("max-w-full");
     expect(t.className).not.toContain("truncate");
   });
 });

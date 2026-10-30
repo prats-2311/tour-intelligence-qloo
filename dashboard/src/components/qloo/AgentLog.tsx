@@ -5,13 +5,13 @@ import { countQlooCalls, narrate, type LogStep } from "@/lib/qloo/narrate";
 import type { GatewayEvent } from "@/lib/qloo/types";
 
 /** `label` names whose calls these are: the board by default, "Playbook" on a playbook page. */
-export function AgentLogChip({ events, onOpen, label: scope = "Board" }: { events: GatewayEvent[]; onOpen: () => void; label?: string }) {
+export function AgentLogChip({ events, onOpen, label: scope = "Board", replaying = false }: { events: GatewayEvent[]; onOpen: () => void; label?: string; /** A recorded run is replaying: the count restarts, so say so instead of showing a number that is not the total. */ replaying?: boolean }) {
   const { total } = countQlooCalls(events);
   const label = total === 1 ? "call" : "calls";
   return (
     <button type="button" onClick={onOpen} className="inline-flex h-11 items-center gap-2 rounded-md bg-canvas-raised px-3 text-[13px] text-canvas-text">
       <Radio size={16} aria-hidden />
-      <span>{scope} · {total} Qloo {label}</span>
+      <span>{replaying ? `${scope} · replaying…` : `${scope} · ${total} Qloo ${label}`}</span>
     </button>
   );
 }

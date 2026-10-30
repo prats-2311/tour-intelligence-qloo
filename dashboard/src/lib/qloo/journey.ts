@@ -64,5 +64,5 @@ export function journeyLinks(input: JourneyInput): Record<StepId, string> {
   const byId = new Map(cities.map((c) => [c.id, c]));
   const candidates = [lastOpened, ...shortlist, ...sortCities(cities, "winnability").map((c) => c.id)];
   const target = candidates.find((id): id is string => !!id && byId.has(id) && cityHasPlaybook(source, id, routing));
-  return { markets: "/", decide, playbook: target ? `/tours/playbook/${target}${q}` : decide, book: `/tours/book${q}` };
+  return { markets: hasRun ? `/${q}` : "/", decide, playbook: target ? `/tours/playbook/${target}${q}` : decide, book: `/tours/book${q}` };
 }

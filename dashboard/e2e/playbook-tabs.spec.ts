@@ -86,7 +86,7 @@ test("hero tiles explain each Qloo pick and the why links to its card", async ({
   await page.goto(LA);
   await done(page);
   await expect(page.getByRole("link", { name: /of in-city fan heat \(#1 of \d+ zones\)/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: /^fans share taste \d+% · the city likes them \d+%$/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^shared taste [01]\.\d\d · the city likes them [01]\.\d\d$/ })).toBeVisible();
   await page.getByRole("tab", { name: "Acts fans love" }).click();
   await page.getByRole("link", { name: /of in-city fan heat/ }).click();
   await expect(page.getByRole("tab", { name: "How to win" })).toHaveAttribute("aria-selected", "true");

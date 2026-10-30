@@ -38,6 +38,13 @@ describe("journeyLinks", () => {
     expect(l.book).toBe("/tours/book?showcase=1");
     expect(l.playbook).toBe(`/tours/playbook/${recorded()[0]!.id}?showcase=1`);
   });
+  it("Markets keeps the run's data mode in its query like the other steps (audit A18)", () => {
+    const cities = showcaseCities();
+    const run = { status: "done" as const, cities, shortlist: [], lastOpenedId: null };
+    expect(journeyLinks({ ...run, source: "showcase" }).markets).toBe("/?showcase=1");
+    expect(journeyLinks({ ...run, source: "sample", sampleSet: "long" }).markets).toBe("/?sample=long");
+    expect(journeyLinks({ ...run, source: "live" }).markets).toBe("/");
+  });
   it("falls back to the invented sample when no recording loaded", () => {
     setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
     const l = journeyLinks(idle);
