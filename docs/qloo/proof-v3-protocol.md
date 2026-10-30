@@ -269,3 +269,23 @@ Test B is re-run from the start under this amendment. Test A batch 1 had no stop
 - **Also reported:** the result using AI ratings only, and the agreement figure above.
 
 **Disclosure:** 148 of 182 rows were rated by an AI model, not a person. An AI rater may share blind spots with the LLM-only arm it is judging. Brands and venues rated "in this city, high confidence" in pass 1 (121 rows) were not re-checked against a fetched page. Rows stay private (Qloo-returned names are Qloo data); only aggregates are published.
+
+## Amendment 9: Test B on cases after the model's training cutoff (2026-10-30, before any case for it was collected)
+**Why:** every head-to-head so far used tours from 2023–2025 that Gemini may have read about. Amendment 7.2 found 4 such post-cutoff Test B cases (Qloo 0.44, Gemini 0.31, not significant). This amendment collects a new, larger set of cases that the answering model cannot have seen, and reruns Test B on them unchanged. Decided by Prateek.
+
+**Cases (fixed rule, collected after this commit):**
+- **Eligible:** an activation between a headlining music artist and a city, with the same three types as Test B: `local_artist` (an act from or based in the city who performed with the headliner, as opener or on-stage guest), `sponsor` (a brand named as the show's or tour stop's sponsor or presale partner) and `merch_collab` (a city-specific merch collaboration).
+- **Date:** the show or activation date is on or after 2026-04-01 and on or before 2026-10-29. Both answering models' stated cutoffs (gemini-3.8-flash March 2026; gemini-2.5-flash January 2025) fall before this window.
+- **Evidence:** at least one source page fetched and read during collection that names the headliner, the city and the real pick, and gives the date. Search snippets do not count.
+- **Search procedure:** Sonnet agents search news, Songkick/setlist.fm and official announcements with a fixed query list (one query set per type, recorded in `backtest/cases-post-cutoff.queries.md`). Every candidate found is logged with its outcome (accepted, or rejected with the reason), so no case is dropped silently.
+- **Verification:** a second agent, without access to any ranking, re-fetches each accepted case's source and confirms headliner, city, real pick and date. Cases it cannot confirm are excluded and listed.
+- **Collection closes** at 2026-10-31 01:30 IST or at 40 accepted cases, whichever comes first. Whatever count exists then is the sample; no case is added after any Test B call is made.
+- **No human review** this time (time limit): disclosed with the results.
+
+**Run:** exactly Test B (`fixedRankCli` with `--cases backtest/cases-post-cutoff.json`), same candidates rule (real pick plus 9 decoys from the city popularity list by `sha256(case id + decoy name)`), same arms (Qloo `rank`, Gemini fixed prompt at temperature 0.2, popularity order), same metric (mean reciprocal rank) and the same claim rule (higher mean, more wins than losses, two-sided exact sign test p < 0.05). A case whose real pick can't be resolved in Qloo, or with fewer than 9 decoys, is reported and excluded as in Test B. The answering Gemini model is recorded per case; a case answered by a model whose stated cutoff is not before the case date is excluded.
+
+**Secondary (reported, not claimed unless it meets the claim rule):** Gemini + Qloo by reciprocal rank fusion (k = 60, Amendment 7.1) vs Gemini; Qloo vs popularity.
+
+**Publication:** whatever comes out goes on `/proof` and in the README, with the case count, the exclusions and the disclosures above. If the sample is too small for any claim, it is reported as "not significant at this sample size".
+
+**Budget:** about 40 popularity lists, 40 resolves and 40 rank calls (≈ 120 Qloo calls, partly cached) and up to 80 Gemini calls.
