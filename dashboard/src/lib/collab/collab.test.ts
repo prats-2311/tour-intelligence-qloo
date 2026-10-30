@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CollabHttpError, createWorkspace, fetchWorkspace, writeWorkspace } from "./api";
 import { loadIdentity, saveIdentity } from "./identity";
 import { applyLocal } from "./optimistic";
-import { cardThread, emptySnapshot, fieldOf, isSnapshot, timeAgo } from "./types";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { cardThread, emptySnapshot, fieldOf, isSnapshot, timeAgo, WS_ID } from "./types";
 
 const who = { name: "Sam", role: "Manager" as const };
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json" } });
@@ -43,7 +45,23 @@ describe("optimistic apply", () => {
   });
 });
 
+describe("workspace id", () => {
+  it("is the same pattern as the gateway's and has the same bounds and alphabet", () => {
+    const gw = readFileSync(resolve("../cloud_run/qloo_gateway/src/collab/model.ts"), "utf8");
+    expect(/export const WS_ID = (\/.*\/);/.exec(gw)![1]).toBe(String(WS_ID));
+    expect(WS_ID.test("a".repeat(10))).toBe(true);
+    expect(WS_ID.test("a".repeat(64))).toBe(true);
+    expect(WS_ID.test("a".repeat(9))).toBe(false);
+    expect(WS_ID.test("a".repeat(65))).toBe(false);
+    for (const bad of ["abcde.fghij", "abcde/fghij", "abcde%2Ffghij"]) expect(WS_ID.test(bad), bad).toBe(false);
+  });
+});
+
 describe("api", () => {
+  it("create refuses an answer whose ws id is not a valid id", async () => {
+    const f = vi.fn(async (..._a: unknown[]) => json({ ws: "../etc/passwd", snapshot: emptySnapshot("abcdefghij1") }, 201));
+    await expect(createWorkspace({ threads: [] }, { fetchImpl: f as never })).rejects.toMatchObject({ status: 502 });
+  });
   it("create returns the snapshot and checks the answer's shape", async () => {
     const snap = emptySnapshot("abcdefghij1");
     const f = vi.fn(async (..._a: unknown[]) => json({ ws: "abcdefghij1", snapshot: snap }, 201));
