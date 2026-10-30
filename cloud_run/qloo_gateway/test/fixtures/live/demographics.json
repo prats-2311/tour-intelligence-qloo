@@ -1,0 +1,49 @@
+{
+  "status": "ok",
+  "results": [
+    {
+      "entity_id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+      "query": {
+        "age": {
+          "24_and_younger": 0.18206,
+          "25_to_29": -0.119813,
+          "30_to_34": -0.746946,
+          "35_to_44": 0.246173,
+          "45_to_54": -0.58663,
+          "55_and_older": -0.634339
+        },
+        "gender": {
+          "male": -0.239637,
+          "female": 0.233674
+        }
+      }
+    }
+  ],
+  "resolution": {
+    "contract_version": "1.0-preview.1",
+    "provider": {
+      "contract_version": "1.0-preview.1",
+      "provider_id": "qloo_api",
+      "name": "Qloo native resolution",
+      "entity_strategy": "exact_name_context_or_choice",
+      "tag_strategy": "target_scoped_semantic_search_exact_name_or_choice",
+      "remote": true,
+      "uses_model": false,
+      "fallback": "none"
+    },
+    "outcomes": [
+      {
+        "input": "00000000-1B6A-207F-7244-3B86201B8F8D",
+        "status": "resolved",
+        "match": "identifier",
+        "selected": {
+          "id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+          "name": "Synthetic Artist 01",
+          "type": "urn:entity:artist",
+          "popularity": 1,
+          "description": "Synthetic description."
+        }
+      }
+    ]
+  }
+}

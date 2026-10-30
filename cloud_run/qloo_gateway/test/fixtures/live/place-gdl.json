@@ -1,0 +1,207 @@
+{
+  "status": "ok",
+  "results": [
+    {
+      "entity_id": "00000000-570A-2FD1-18E3-8BB952969BB9",
+      "name": "Synthetic Place 01",
+      "type": "urn:entity",
+      "subtype": "urn:entity:place",
+      "popularity": 0.834248,
+      "affinity": 0.846603,
+      "explainability": {
+        "signal.interests.entities": [
+          {
+            "entity_id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+            "score": 1
+          }
+        ]
+      },
+      "properties": {
+        "description": "Synthetic description.",
+        "short_description": "Synthetic short description.",
+        "image": {
+          "url": "https://example.invalid/synthetic.jpg"
+        },
+        "geocode": {
+          "city": "Guadalajara",
+          "name": "Synthetic district",
+          "metro": null,
+          "country": "Mexico",
+          "country_code": "MX",
+          "admin1_region": "Jalisco",
+          "admin2_region": "Guadalajara"
+        },
+        "address": "Synthetic address",
+        "price_level": null,
+        "business_rating": 1
+      }
+    },
+    {
+      "entity_id": "00000000-DC83-78E9-8C20-B3867B0A4F05",
+      "name": "Synthetic Place 02",
+      "type": "urn:entity",
+      "subtype": "urn:entity:place",
+      "popularity": 0.966757,
+      "affinity": 0.880085,
+      "explainability": {
+        "signal.interests.entities": [
+          {
+            "entity_id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+            "score": 1
+          }
+        ]
+      },
+      "properties": {
+        "description": "Synthetic description.",
+        "short_description": "Synthetic short description.",
+        "image": {
+          "url": "https://example.invalid/synthetic.jpg"
+        },
+        "geocode": {
+          "city": "Zapopan",
+          "name": "Synthetic district",
+          "metro": null,
+          "country": "Mexico",
+          "country_code": "MX",
+          "admin1_region": "Jalisco",
+          "admin2_region": "Zapopan"
+        },
+        "address": "Synthetic address",
+        "price_level": null,
+        "business_rating": 1
+      }
+    },
+    {
+      "entity_id": "00000000-3FF8-CA6B-4F9F-B5C5F133A5D1",
+      "name": "Synthetic Place 03",
+      "type": "urn:entity",
+      "subtype": "urn:entity:place",
+      "popularity": 0.916795,
+      "affinity": 0.909575,
+      "explainability": {
+        "signal.interests.entities": [
+          {
+            "entity_id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+            "score": 1
+          }
+        ]
+      },
+      "properties": {
+        "description": "Synthetic description.",
+        "short_description": "Synthetic short description.",
+        "image": {
+          "url": "https://example.invalid/synthetic.jpg"
+        },
+        "geocode": {
+          "city": "Guadalajara",
+          "name": "Synthetic district",
+          "metro": null,
+          "country": "Mexico",
+          "country_code": "MX",
+          "admin1_region": "Jalisco",
+          "admin2_region": "Guadalajara"
+        },
+        "address": "Synthetic address",
+        "price_level": null,
+        "business_rating": 1
+      }
+    },
+    {
+      "entity_id": "00000000-18C4-D52D-96A8-5F4F769A74E1",
+      "name": "Synthetic Place 04",
+      "type": "urn:entity",
+      "subtype": "urn:entity:place",
+      "popularity": 0.706937,
+      "affinity": 0.901557,
+      "explainability": {
+        "signal.interests.entities": [
+          {
+            "entity_id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+            "score": 1
+          }
+        ]
+      },
+      "properties": {
+        "description": "Synthetic description.",
+        "short_description": "Synthetic short description.",
+        "image": {
+          "url": "https://example.invalid/synthetic.jpg"
+        },
+        "geocode": {
+          "city": "Guadalajara",
+          "name": "Synthetic district",
+          "metro": null,
+          "country": "Mexico",
+          "country_code": "MX",
+          "admin1_region": "Jalisco",
+          "admin2_region": "Guadalajara"
+        },
+        "address": "Synthetic address",
+        "price_level": null,
+        "business_rating": 1
+      }
+    },
+    {
+      "entity_id": "00000000-4228-9203-3A90-278B149B97A9",
+      "name": "Synthetic Place 05",
+      "type": "urn:entity",
+      "subtype": "urn:entity:place",
+      "popularity": 0.706582,
+      "affinity": 0.829441,
+      "explainability": {
+        "signal.interests.entities": [
+          {
+            "entity_id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+            "score": 1
+          }
+        ]
+      },
+      "properties": {
+        "description": "Synthetic description.",
+        "short_description": "Synthetic short description.",
+        "image": {
+          "url": "https://example.invalid/synthetic.jpg"
+        },
+        "geocode": {
+          "city": "Guadalajara",
+          "name": "Synthetic district",
+          "metro": null,
+          "country": "Mexico",
+          "country_code": "MX",
+          "admin1_region": "Jalisco",
+          "admin2_region": "Guadalajara"
+        },
+        "address": "Synthetic address",
+        "price_level": 1,
+        "business_rating": 1
+      }
+    }
+  ],
+  "resolution": {
+    "contract_version": "1.0-preview.1",
+    "provider": {
+      "contract_version": "1.0-preview.1",
+      "provider_id": "qloo_api",
+      "name": "Qloo native resolution",
+      "entity_strategy": "exact_name_context_or_choice",
+      "tag_strategy": "target_scoped_semantic_search_exact_name_or_choice",
+      "remote": true,
+      "uses_model": false,
+      "fallback": "none"
+    },
+    "outcomes": [
+      {
+        "input": "00000000-1B6A-207F-7244-3B86201B8F8D",
+        "status": "resolved",
+        "match": "identifier",
+        "selected": {
+          "id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+          "name": "Synthetic Artist 01",
+          "type": "urn:entity:artist",
+          "popularity": 1,
+          "description": "Synthetic description."
+        }
+      }
+    ]
+  }
+}

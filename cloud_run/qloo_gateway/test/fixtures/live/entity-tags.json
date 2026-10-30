@@ -1,0 +1,102 @@
+{
+  "status": "ok",
+  "results": [
+    {
+      "id": "urn:tag:credit_card:place:synthetic-tag-01",
+      "name": "Synthetic Tag 01",
+      "type": "urn:tag:credit_card:place",
+      "popularity": 1,
+      "affinity": 1
+    },
+    {
+      "id": "urn:tag:genre:person:synthetic-tag-02",
+      "name": "Synthetic Tag 02",
+      "type": "urn:tag:genre:person",
+      "popularity": 0.959055,
+      "affinity": 1
+    },
+    {
+      "id": "urn:tag:genre:place:restaurant:synthetic-tag-03",
+      "name": "Synthetic Tag 03",
+      "type": "urn:tag:genre:place",
+      "popularity": 1,
+      "affinity": 1
+    },
+    {
+      "id": "urn:tag:genre:brand:synthetic-tag-04",
+      "name": "Synthetic Tag 04",
+      "type": "urn:tag:genre:brand",
+      "popularity": 0.974996,
+      "affinity": 1
+    },
+    {
+      "id": "urn:tag:cost_description:place:synthetic-tag-05",
+      "name": "Synthetic Tag 05",
+      "type": "urn:tag:cost_description:place",
+      "popularity": 1,
+      "affinity": 1
+    },
+    {
+      "id": "urn:tag:inclusivity:place:synthetic-tag-06",
+      "name": "Synthetic Tag 06",
+      "type": "urn:tag:inclusivity:place",
+      "popularity": 0.965656,
+      "affinity": 1
+    },
+    {
+      "id": "urn:tag:specialty_dish:place:synthetic-tag-07",
+      "name": "Synthetic Tag 07",
+      "type": "urn:tag:specialty_dish:place",
+      "popularity": 0.915415,
+      "affinity": 1
+    },
+    {
+      "id": "urn:tag:hotel_rating:place:synthetic-tag-08",
+      "name": "Synthetic Tag 08",
+      "type": "urn:tag:hotel_rating:place",
+      "popularity": 1,
+      "affinity": 1
+    },
+    {
+      "id": "urn:tag:keyword:media:synthetic-tag-09",
+      "name": "Synthetic Tag 09",
+      "type": "urn:tag:keyword:media",
+      "popularity": 1,
+      "affinity": 0.976527
+    },
+    {
+      "id": "urn:tag:genre:music:synthetic-tag-10",
+      "name": "Synthetic Tag 10",
+      "type": "urn:tag:genre:music",
+      "popularity": 1,
+      "affinity": 0.989797
+    }
+  ],
+  "resolution": {
+    "contract_version": "1.0-preview.1",
+    "provider": {
+      "contract_version": "1.0-preview.1",
+      "provider_id": "qloo_api",
+      "name": "Qloo native resolution",
+      "entity_strategy": "exact_name_context_or_choice",
+      "tag_strategy": "target_scoped_semantic_search_exact_name_or_choice",
+      "remote": true,
+      "uses_model": false,
+      "fallback": "none"
+    },
+    "outcomes": [
+      {
+        "input": "00000000-1B6A-207F-7244-3B86201B8F8D",
+        "status": "resolved",
+        "match": "identifier",
+        "selected": {
+          "id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+          "name": "Synthetic Artist 01",
+          "type": "urn:entity:artist",
+          "popularity": 0.961009,
+          "description": "Synthetic description."
+        }
+      }
+    ]
+  }
+}

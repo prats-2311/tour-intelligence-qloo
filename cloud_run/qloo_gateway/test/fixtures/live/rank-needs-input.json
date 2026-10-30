@@ -1,0 +1,44 @@
+{
+  "status": "needs_input",
+  "results": [],
+  "resolution": {
+    "issues": [
+      {
+        "input": "Synthetic Place 01",
+        "kind": "ambiguous",
+        "input_kind": "entity",
+        "field": "options",
+        "scope": "urn:entity:place",
+        "candidates": [
+          {
+            "id": "00000000-6339-189E-80DB-92743A56A20D",
+            "name": "Synthetic Place 01",
+            "type": "urn:entity:place",
+            "popularity": 1,
+            "description": "Synthetic description.",
+            "address": "Synthetic address"
+          },
+          {
+            "id": "00000000-8B2F-1D2F-564A-B395044AE76E",
+            "name": "Synthetic Place 01",
+            "type": "urn:entity:place",
+            "popularity": 0.949965,
+            "description": "Synthetic description.",
+            "address": "Synthetic address"
+          },
+          {
+            "id": "00000000-4683-6F5F-25BF-F4607CABD517",
+            "name": "Synthetic Place 01",
+            "type": "urn:entity:place",
+            "description": "Synthetic description.",
+            "address": "Synthetic address"
+          }
+        ],
+        "warnings": [
+          "Qloo candidate choices were narrowed using the supplied name and location terms."
+        ]
+      }
+    ]
+  },
+  "summary": "Choose or correct the unresolved ranking inputs."
+}

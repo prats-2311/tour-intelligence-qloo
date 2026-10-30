@@ -1,0 +1,89 @@
+{
+  "status": "ok",
+  "results": [
+    {
+      "entity_id": "00000000-320F-7A09-1EF3-4DFCBEA316B9",
+      "name": "Synthetic Artist 01",
+      "type": "urn:entity",
+      "subtype": "urn:entity:artist",
+      "popularity": 0.986721,
+      "affinity": 1,
+      "properties": {
+        "description": "Synthetic description.",
+        "image": {
+          "url": "https://example.invalid/synthetic.jpg"
+        }
+      }
+    },
+    {
+      "entity_id": "00000000-7D27-D5D5-29EF-8DD78CD59D82",
+      "name": "Synthetic Artist 02",
+      "type": "urn:entity",
+      "subtype": "urn:entity:artist",
+      "popularity": 0.891827,
+      "affinity": 1,
+      "properties": {
+        "description": "Synthetic description.",
+        "image": {
+          "url": "https://example.invalid/synthetic.jpg"
+        }
+      }
+    },
+    {
+      "entity_id": "00000000-57E0-F19D-508E-1018AE8B3C23",
+      "name": "Synthetic Artist 03",
+      "type": "urn:entity",
+      "subtype": "urn:entity:artist",
+      "popularity": 0.957322,
+      "affinity": 1,
+      "properties": {
+        "description": "Synthetic description.",
+        "image": {
+          "url": "https://example.invalid/synthetic.jpg"
+        }
+      }
+    },
+    {
+      "entity_id": "00000000-2D59-26CF-6425-CA2B3C752437",
+      "name": "Synthetic Artist 04",
+      "type": "urn:entity",
+      "subtype": "urn:entity:artist",
+      "popularity": 0.955788,
+      "affinity": 0.960319,
+      "properties": {
+        "description": "Synthetic description.",
+        "image": {
+          "url": "https://example.invalid/synthetic.jpg"
+        }
+      }
+    },
+    {
+      "entity_id": "00000000-EFB6-3B21-09F4-E116043EC836",
+      "name": "Synthetic Artist 05",
+      "type": "urn:entity",
+      "subtype": "urn:entity:artist",
+      "popularity": 0.54763,
+      "affinity": 1,
+      "properties": {
+        "description": "Synthetic description.",
+        "image": {
+          "url": "https://example.invalid/synthetic.jpg"
+        }
+      }
+    }
+  ],
+  "resolution": {
+    "contract_version": "1.0-preview.1",
+    "provider": {
+      "contract_version": "1.0-preview.1",
+      "provider_id": "qloo_api",
+      "name": "Qloo native resolution",
+      "entity_strategy": "exact_name_context_or_choice",
+      "tag_strategy": "target_scoped_semantic_search_exact_name_or_choice",
+      "remote": true,
+      "uses_model": false,
+      "fallback": "none"
+    },
+    "outcomes": []
+  }
+}

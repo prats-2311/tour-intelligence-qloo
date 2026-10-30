@@ -1,0 +1,871 @@
+{
+  "status": "ok",
+  "results": {
+    "tags": [
+      {
+        "tag_id": "urn:tag:genre:music:synthetic-tag-01",
+        "name": "Synthetic Tag 01",
+        "type": "urn:tag",
+        "subtype": "urn:tag:genre:music",
+        "entity_id": "00000000-7E85-769B-364D-058AC59608F6",
+        "popularity": 1,
+        "query": {
+          "score": 0.815411,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:genre:music:synthetic-tag-02",
+        "name": "Synthetic Tag 02",
+        "type": "urn:tag",
+        "subtype": "urn:tag:genre:music",
+        "entity_id": "00000000-0AAF-6D83-DE7E-7D55AD050D46",
+        "popularity": 1,
+        "query": {
+          "score": 0.831397,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:genre:music:synthetic-tag-03",
+        "name": "Synthetic Tag 03",
+        "type": "urn:tag",
+        "subtype": "urn:tag:genre:music",
+        "entity_id": "00000000-A7CC-B78D-AF57-BCD4BF47971F",
+        "popularity": 0.999596,
+        "query": {
+          "score": 0.820885,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:genre:music:synthetic-tag-04",
+        "name": "Synthetic Tag 04",
+        "type": "urn:tag",
+        "subtype": "urn:tag:genre:music",
+        "entity_id": "00000000-B966-C899-A0B2-C05AD807C5B4",
+        "popularity": 0.958586,
+        "query": {
+          "score": 0.888898,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:genre:music:synthetic-tag-05",
+        "name": "Synthetic Tag 05",
+        "type": "urn:tag",
+        "subtype": "urn:tag:genre:music",
+        "entity_id": "00000000-9931-1C81-5A1D-12773737AF29",
+        "popularity": 1,
+        "query": {
+          "score": 0.832028,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:genre:music:synthetic-tag-06",
+        "name": "Synthetic Tag 06",
+        "type": "urn:tag",
+        "subtype": "urn:tag:genre:music",
+        "entity_id": "00000000-138C-4853-BEA4-63D0EE921868",
+        "popularity": 1,
+        "query": {
+          "score": 0.845843,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:music:synthetic-tag-07",
+        "name": "Synthetic Tag 07",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:music",
+        "entity_id": "00000000-5229-4CF7-8E2C-C512CDAF4B51",
+        "popularity": 0,
+        "query": {
+          "score": 0.77916,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:region:qloo:synthetic-tag-08",
+        "name": "Synthetic Tag 08",
+        "type": "urn:tag",
+        "subtype": "urn:tag:region:qloo",
+        "entity_id": "00000000-3BAF-A10F-F459-247509CA8A90",
+        "popularity": 0,
+        "query": {
+          "score": 0.781496,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:genre:music:synthetic-tag-09",
+        "name": "Synthetic Tag 09",
+        "type": "urn:tag",
+        "subtype": "urn:tag:genre:music",
+        "entity_id": "00000000-D3E9-DE84-36A4-079427C93EEB",
+        "popularity": 0.995846,
+        "query": {
+          "score": 0.75372,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:genre:music:synthetic-tag-10",
+        "name": "Synthetic Tag 10",
+        "type": "urn:tag",
+        "subtype": "urn:tag:genre:music",
+        "entity_id": "00000000-6752-3F75-9DBF-5D9320CA156C",
+        "popularity": 1,
+        "query": {
+          "score": 0.729264,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:style:qloo:synthetic-tag-11",
+        "name": "Synthetic Tag 11",
+        "type": "urn:tag",
+        "subtype": "urn:tag:style:qloo",
+        "entity_id": "00000000-6497-033C-FD1C-ED992F891FFC",
+        "popularity": 0.986165,
+        "query": {
+          "score": 0.705742,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:theme:qloo:synthetic-tag-12",
+        "name": "Synthetic Tag 12",
+        "type": "urn:tag",
+        "subtype": "urn:tag:theme:qloo",
+        "entity_id": "00000000-BE9E-CD84-804C-CE580EC7D1B6",
+        "popularity": 1,
+        "query": {
+          "score": 0.765377,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:audience:qloo:synthetic-tag-13",
+        "name": "Synthetic Tag 13",
+        "type": "urn:tag",
+        "subtype": "urn:tag:audience:qloo",
+        "entity_id": "00000000-F4F8-9EFA-D218-1C37B9AA6B30",
+        "popularity": 0.973557,
+        "query": {
+          "score": 0.765078,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-14",
+        "name": "Synthetic Tag 07",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-26A2-DA93-6500-004C7D7F75D6",
+        "popularity": 1,
+        "query": {
+          "score": 0.768179,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-15",
+        "name": "Synthetic Tag 14",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-C3FC-40B3-8021-B1D0404508C3",
+        "popularity": 1,
+        "query": {
+          "score": 0.764771,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:style:qloo:synthetic-tag-16",
+        "name": "Synthetic Tag 15",
+        "type": "urn:tag",
+        "subtype": "urn:tag:style:qloo",
+        "entity_id": "00000000-C981-6E55-4463-85207E44125A",
+        "popularity": 1,
+        "query": {
+          "score": 0.764474,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:audience:qloo:synthetic-tag-17",
+        "name": "Synthetic Tag 16",
+        "type": "urn:tag",
+        "subtype": "urn:tag:audience:qloo",
+        "entity_id": "00000000-CCF0-7A92-4C16-1DBB00497FDF",
+        "popularity": 0.966335,
+        "query": {
+          "score": 0.733072,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-18",
+        "name": "Synthetic Tag 17",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-C32D-479F-C5A2-0F8051D46772",
+        "popularity": 0.964194,
+        "query": {
+          "score": 0.711991,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:theme:qloo:synthetic-tag-19",
+        "name": "Synthetic Tag 18",
+        "type": "urn:tag",
+        "subtype": "urn:tag:theme:qloo",
+        "entity_id": "00000000-5EF0-E6C2-0ED2-83004DEA2D8F",
+        "popularity": 0.945898,
+        "query": {
+          "score": 0.751398,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-20",
+        "name": "Synthetic Tag 19",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-283A-B164-34B4-BCA369A47DBE",
+        "popularity": 0.958363,
+        "query": {
+          "score": 0.730844,
+          "a.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ],
+          "b.signal.interests.entities": [
+            "[detail omitted]",
+            "[detail omitted]"
+          ]
+        }
+      }
+    ],
+    "a": [
+      {
+        "tag_id": "urn:tag:subgenre:qloo:synthetic-tag-21",
+        "name": "Synthetic Tag 20",
+        "type": "urn:tag",
+        "subtype": "urn:tag:subgenre:qloo",
+        "entity_id": "00000000-E642-DDA2-70FF-BD57D6B664E0",
+        "popularity": 0.050431,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:artist:qloo:synthetic-tag-22",
+        "name": "Synthetic Tag 21",
+        "type": "urn:tag",
+        "subtype": "urn:tag:artist:qloo",
+        "entity_id": "00000000-6B32-408B-905E-739C29A9CF8B",
+        "popularity": 0.851491,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:theme:qloo:synthetic-tag-23",
+        "name": "Synthetic Tag 22",
+        "type": "urn:tag",
+        "subtype": "urn:tag:theme:qloo",
+        "entity_id": "00000000-A680-46F0-A1E1-1397916D8EA1",
+        "popularity": 0.91055,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:music:qloo:synthetic-tag-24",
+        "name": "Synthetic Tag 21",
+        "type": "urn:tag",
+        "subtype": "urn:tag:music:qloo",
+        "entity_id": "00000000-25F6-EF33-CD17-940C0181A12D",
+        "popularity": 0.97756,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:audience:qloo:synthetic-tag-25",
+        "name": "Synthetic Tag 23",
+        "type": "urn:tag",
+        "subtype": "urn:tag:audience:qloo",
+        "entity_id": "00000000-EE83-8DCD-C29B-4467848D6B06",
+        "popularity": 0.9465,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:theme:qloo:synthetic-tag-26",
+        "name": "Synthetic Tag 24",
+        "type": "urn:tag",
+        "subtype": "urn:tag:theme:qloo",
+        "entity_id": "00000000-5116-1437-FA67-1C04ED69614C",
+        "popularity": 0.926421,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-14",
+        "name": "Synthetic Tag 07",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-26A2-DA93-6500-004C7D7F75D6",
+        "popularity": 0.973705,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:artist:qloo:synthetic-tag-27",
+        "name": "Synthetic Tag 25",
+        "type": "urn:tag",
+        "subtype": "urn:tag:artist:qloo",
+        "entity_id": "00000000-611E-9088-DDCA-E9269895F10F",
+        "popularity": 0.903889,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:genre:music:synthetic-tag-09",
+        "name": "Synthetic Tag 09",
+        "type": "urn:tag",
+        "subtype": "urn:tag:genre:music",
+        "entity_id": "00000000-D3E9-DE84-36A4-079427C93EEB",
+        "popularity": 1,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:audience:qloo:synthetic-tag-28",
+        "name": "Synthetic Tag 26",
+        "type": "urn:tag",
+        "subtype": "urn:tag:audience:qloo",
+        "entity_id": "00000000-7D28-2384-4994-346B89D28134",
+        "popularity": 0.967231,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:music:qloo:synthetic-tag-29",
+        "name": "Synthetic Tag 23",
+        "type": "urn:tag",
+        "subtype": "urn:tag:music:qloo",
+        "entity_id": "00000000-328D-CB62-A0F5-8575F3406EDA",
+        "popularity": 0.893055,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:music:qloo:synthetic-tag-30",
+        "name": "Synthetic Tag 25",
+        "type": "urn:tag",
+        "subtype": "urn:tag:music:qloo",
+        "entity_id": "00000000-C13B-801B-1BDF-A960CD92A938",
+        "popularity": 0.938483,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-20",
+        "name": "Synthetic Tag 19",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-283A-B164-34B4-BCA369A47DBE",
+        "popularity": 0.978608,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:audience:qloo:synthetic-tag-17",
+        "name": "Synthetic Tag 16",
+        "type": "urn:tag",
+        "subtype": "urn:tag:audience:qloo",
+        "entity_id": "00000000-CCF0-7A92-4C16-1DBB00497FDF",
+        "popularity": 0.950608,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-31",
+        "name": "Synthetic Tag 27",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-25E2-1E08-59E3-414F6CF4C257",
+        "popularity": 0.931157,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:theme:qloo:synthetic-tag-32",
+        "name": "Synthetic Tag 28",
+        "type": "urn:tag",
+        "subtype": "urn:tag:theme:qloo",
+        "entity_id": "00000000-53DE-0075-1699-AC9138026E4A",
+        "popularity": 0.953546,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:genre:music:synthetic-tag-33",
+        "name": "Synthetic Tag 23",
+        "type": "urn:tag",
+        "subtype": "urn:tag:genre:music",
+        "entity_id": "00000000-D54B-70AA-4CDB-3DB1DC4A1927",
+        "popularity": 0.968345,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:theme:qloo:synthetic-tag-19",
+        "name": "Synthetic Tag 18",
+        "type": "urn:tag",
+        "subtype": "urn:tag:theme:qloo",
+        "entity_id": "00000000-5EF0-E6C2-0ED2-83004DEA2D8F",
+        "popularity": 0.953063,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-15",
+        "name": "Synthetic Tag 14",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-C3FC-40B3-8021-B1D0404508C3",
+        "popularity": 0.971738,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:style:qloo:synthetic-tag-16",
+        "name": "Synthetic Tag 15",
+        "type": "urn:tag",
+        "subtype": "urn:tag:style:qloo",
+        "entity_id": "00000000-C981-6E55-4463-85207E44125A",
+        "popularity": 0.979024,
+        "query": {
+          "count": "1"
+        }
+      }
+    ],
+    "b": [
+      {
+        "tag_id": "urn:tag:artist:qloo:synthetic-tag-34",
+        "name": "Synthetic Tag 23",
+        "type": "urn:tag",
+        "subtype": "urn:tag:artist:qloo",
+        "entity_id": "00000000-7E3A-FDB6-59F2-11EE14BA145C",
+        "popularity": 0.627572,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:artist:qloo:synthetic-tag-22",
+        "name": "Synthetic Tag 21",
+        "type": "urn:tag",
+        "subtype": "urn:tag:artist:qloo",
+        "entity_id": "00000000-6B32-408B-905E-739C29A9CF8B",
+        "popularity": 0.809497,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:music:qloo:synthetic-tag-24",
+        "name": "Synthetic Tag 21",
+        "type": "urn:tag",
+        "subtype": "urn:tag:music:qloo",
+        "entity_id": "00000000-25F6-EF33-CD17-940C0181A12D",
+        "popularity": 0.914185,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:audience:qloo:synthetic-tag-35",
+        "name": "Synthetic Tag 29",
+        "type": "urn:tag",
+        "subtype": "urn:tag:audience:qloo",
+        "entity_id": "00000000-20EC-A914-11E5-999041EF5030",
+        "popularity": 1,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:theme:qloo:synthetic-tag-26",
+        "name": "Synthetic Tag 24",
+        "type": "urn:tag",
+        "subtype": "urn:tag:theme:qloo",
+        "entity_id": "00000000-5116-1437-FA67-1C04ED69614C",
+        "popularity": 0.920611,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:audience:qloo:synthetic-tag-36",
+        "name": "Synthetic Tag 30",
+        "type": "urn:tag",
+        "subtype": "urn:tag:audience:qloo",
+        "entity_id": "00000000-AA97-EC09-CB5A-0D75EC8C9CFD",
+        "popularity": 0.943181,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-14",
+        "name": "Synthetic Tag 07",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-26A2-DA93-6500-004C7D7F75D6",
+        "popularity": 0.991056,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:artist:qloo:synthetic-tag-27",
+        "name": "Synthetic Tag 25",
+        "type": "urn:tag",
+        "subtype": "urn:tag:artist:qloo",
+        "entity_id": "00000000-611E-9088-DDCA-E9269895F10F",
+        "popularity": 0.873634,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:genre:music:synthetic-tag-09",
+        "name": "Synthetic Tag 09",
+        "type": "urn:tag",
+        "subtype": "urn:tag:genre:music",
+        "entity_id": "00000000-D3E9-DE84-36A4-079427C93EEB",
+        "popularity": 0.964028,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:genre:music:synthetic-tag-37",
+        "name": "Synthetic Tag 31",
+        "type": "urn:tag",
+        "subtype": "urn:tag:genre:music",
+        "entity_id": "00000000-E43A-BBCC-1E6C-5E7F031E3B8A",
+        "popularity": 0.987859,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:music:qloo:synthetic-tag-29",
+        "name": "Synthetic Tag 23",
+        "type": "urn:tag",
+        "subtype": "urn:tag:music:qloo",
+        "entity_id": "00000000-328D-CB62-A0F5-8575F3406EDA",
+        "popularity": 0.912864,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:music:qloo:synthetic-tag-30",
+        "name": "Synthetic Tag 25",
+        "type": "urn:tag",
+        "subtype": "urn:tag:music:qloo",
+        "entity_id": "00000000-C13B-801B-1BDF-A960CD92A938",
+        "popularity": 0.933078,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-38",
+        "name": "Synthetic Tag 32",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-1896-9381-A4E0-2BF6EC9F9D11",
+        "popularity": 0.968888,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-20",
+        "name": "Synthetic Tag 19",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-283A-B164-34B4-BCA369A47DBE",
+        "popularity": 1,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:audience:qloo:synthetic-tag-17",
+        "name": "Synthetic Tag 16",
+        "type": "urn:tag",
+        "subtype": "urn:tag:audience:qloo",
+        "entity_id": "00000000-CCF0-7A92-4C16-1DBB00497FDF",
+        "popularity": 0.958528,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:theme:qloo:synthetic-tag-19",
+        "name": "Synthetic Tag 18",
+        "type": "urn:tag",
+        "subtype": "urn:tag:theme:qloo",
+        "entity_id": "00000000-5EF0-E6C2-0ED2-83004DEA2D8F",
+        "popularity": 0.941818,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-15",
+        "name": "Synthetic Tag 14",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-C3FC-40B3-8021-B1D0404508C3",
+        "popularity": 0.997581,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:style:qloo:synthetic-tag-16",
+        "name": "Synthetic Tag 15",
+        "type": "urn:tag",
+        "subtype": "urn:tag:style:qloo",
+        "entity_id": "00000000-C981-6E55-4463-85207E44125A",
+        "popularity": 1,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:instrument:qloo:synthetic-tag-18",
+        "name": "Synthetic Tag 17",
+        "type": "urn:tag",
+        "subtype": "urn:tag:instrument:qloo",
+        "entity_id": "00000000-C32D-479F-C5A2-0F8051D46772",
+        "popularity": 1,
+        "query": {
+          "count": "1"
+        }
+      },
+      {
+        "tag_id": "urn:tag:artist:qloo:synthetic-tag-39",
+        "name": "Synthetic Tag 29",
+        "type": "urn:tag",
+        "subtype": "urn:tag:artist:qloo",
+        "entity_id": "00000000-FBE9-8A4E-2656-6FBE632DABCC",
+        "popularity": 0.759114,
+        "query": {
+          "count": "1"
+        }
+      }
+    ],
+    "matchEntities": []
+  },
+  "resolution": {
+    "contract_version": "1.0-preview.1",
+    "provider": {
+      "contract_version": "1.0-preview.1",
+      "provider_id": "qloo_api",
+      "name": "Qloo native resolution",
+      "entity_strategy": "exact_name_context_or_choice",
+      "tag_strategy": "target_scoped_semantic_search_exact_name_or_choice",
+      "remote": true,
+      "uses_model": false,
+      "fallback": "none"
+    },
+    "outcomes": [
+      {
+        "input": "00000000-1B6A-207F-7244-3B86201B8F8D",
+        "status": "resolved",
+        "match": "identifier",
+        "selected": {
+          "id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+          "name": "Synthetic Artist 01",
+          "type": "urn:entity:artist",
+          "popularity": 0.971926,
+          "description": "Synthetic description."
+        }
+      },
+      {
+        "input": "00000000-3BFB-39AF-303E-8F8E4EDFB9B5",
+        "status": "resolved",
+        "match": "identifier",
+        "selected": {
+          "id": "00000000-3BFB-39AF-303E-8F8E4EDFB9B5",
+          "name": "Synthetic Artist 02",
+          "type": "urn:entity:artist",
+          "popularity": 1,
+          "description": "Synthetic description."
+        }
+      }
+    ]
+  }
+}

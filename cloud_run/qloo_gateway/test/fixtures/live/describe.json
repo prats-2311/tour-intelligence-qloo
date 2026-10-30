@@ -1,0 +1,73 @@
+{
+  "status": "ok",
+  "results": [
+    {
+      "entity_id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+      "name": "Synthetic Entity 01",
+      "popularity": 1,
+      "properties": {
+        "short_description": "Synthetic short description.",
+        "duration": {},
+        "image": {
+          "url": "https://example.invalid/synthetic.jpg"
+        }
+      }
+    }
+  ],
+  "resolution": {
+    "contract_version": "1.0-preview.1",
+    "provider": {
+      "contract_version": "1.0-preview.1",
+      "provider_id": "qloo_api",
+      "name": "Qloo native resolution",
+      "entity_strategy": "exact_name_context_or_choice",
+      "tag_strategy": "target_scoped_semantic_search_exact_name_or_choice",
+      "remote": true,
+      "uses_model": false,
+      "fallback": "none"
+    },
+    "outcomes": [
+      {
+        "input": "Synthetic Entity 01",
+        "status": "resolved",
+        "match": "exact",
+        "selected": {
+          "id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+          "name": "Synthetic Entity 01",
+          "type": "urn:entity:artist",
+          "popularity": 0.959408,
+          "description": "Synthetic description."
+        },
+        "alternatives": [
+          {
+            "id": "00000000-147D-8B23-9144-9265C8DB0754",
+            "name": "Synthetic Artist 01",
+            "type": "urn:entity:artist",
+            "popularity": 0.264576
+          },
+          {
+            "id": "00000000-C37B-CCDD-DD45-20BB868A4A67",
+            "name": "Synthetic Artist 02",
+            "type": "urn:entity:artist",
+            "popularity": 0.294582,
+            "description": "Synthetic description."
+          },
+          {
+            "id": "00000000-0A82-CB38-14A2-7F56C9E2454E",
+            "name": "Synthetic Artist 03",
+            "type": "urn:entity:artist",
+            "popularity": 1,
+            "description": "Synthetic description."
+          },
+          {
+            "id": "00000000-6AA5-4168-8B75-45891C943253",
+            "name": "Synthetic Artist 04",
+            "type": "urn:entity:artist",
+            "popularity": 0.963728,
+            "description": "Synthetic description."
+          }
+        ]
+      }
+    ]
+  }
+}

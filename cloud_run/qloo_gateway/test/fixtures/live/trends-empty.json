@@ -1,0 +1,42 @@
+{
+  "status": "ok",
+  "series": [
+    {
+      "entity": {
+        "input": "00000000-1B6A-207F-7244-3B86201B8F8D",
+        "entityId": "00000000-1B6A-207F-7244-3B86201B8F8D",
+        "name": "Synthetic Artist 01",
+        "type": "urn:entity:artist",
+        "match": "identifier"
+      },
+      "points": []
+    }
+  ],
+  "resolution": {
+    "contract_version": "1.0-preview.1",
+    "provider": {
+      "contract_version": "1.0-preview.1",
+      "provider_id": "qloo_api",
+      "name": "Qloo native resolution",
+      "entity_strategy": "exact_name_context_or_choice",
+      "tag_strategy": "target_scoped_semantic_search_exact_name_or_choice",
+      "remote": true,
+      "uses_model": false,
+      "fallback": "none"
+    },
+    "outcomes": [
+      {
+        "input": "00000000-1B6A-207F-7244-3B86201B8F8D",
+        "status": "resolved",
+        "match": "identifier",
+        "selected": {
+          "id": "00000000-1B6A-207F-7244-3B86201B8F8D",
+          "name": "Synthetic Artist 01",
+          "type": "urn:entity:artist",
+          "popularity": 1,
+          "description": "Synthetic description."
+        }
+      }
+    ]
+  }
+}
