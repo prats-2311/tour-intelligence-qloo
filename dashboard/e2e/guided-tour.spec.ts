@@ -1,5 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { blockMapTiles } from "./live";
+import { ringOnTarget, visibleTarget } from "./tourHelpers";
 
 // The recorded example's guided tour (src/lib/tour/tourSteps.ts): 9 steps, each highlighting a `data-tour` target.
 // Runs on whatever recording the server serves; no live Qloo or Gemini call is made.
@@ -9,33 +10,6 @@ const STEP_TARGETS = [["board-header"], ["city-*"], ["moves"], ["board-panel"], 
 
 // Every Playwright test gets a fresh browser context, so no tour outcome is stored when a test starts.
 test.beforeEach(async ({ page }) => { await blockMapTiles(page); });
-
-/** The on-screen element carrying a data-tour value that starts with `prefix`. */
-const visibleTarget = (page: Page, ids: string[]) => page.evaluate((list) => {
-  const all = [...document.querySelectorAll<HTMLElement>("[data-tour]")];
-  let el: HTMLElement | undefined;
-  for (const id of list) {
-    el = all.find((e) => (id.endsWith("*") ? (e.dataset.tour ?? "").startsWith(id.slice(0, -1)) : e.dataset.tour === id) && e.getClientRects().length > 0);
-    if (el) break;
-  }
-  if (!el) return null;
-  const r = el.getBoundingClientRect();
-  return { tour: el.dataset.tour!, label: el.getAttribute("aria-label") ?? "", text: (el.textContent ?? "").trim().slice(0, 40), top: r.top, left: r.left, width: r.width, height: r.height };
-}, ids);
-
-/** True when the tour ring sits on the on-screen target (the target's box padded by 6px), measured in one frame so scrolling cannot skew it. */
-const ringOnTarget = (page: Page, ids: string[]) => page.evaluate((list) => {
-  const all = [...document.querySelectorAll<HTMLElement>("[data-tour]")];
-  let el: HTMLElement | undefined;
-  for (const id of list) {
-    el = all.find((e) => (id.endsWith("*") ? (e.dataset.tour ?? "").startsWith(id.slice(0, -1)) : e.dataset.tour === id) && e.getClientRects().length > 0);
-    if (el) break;
-  }
-  const ring = document.querySelector<HTMLElement>("[data-testid='tour-ring']");
-  if (!el || !ring) return false;
-  const t = el.getBoundingClientRect(), r = ring.getBoundingClientRect();
-  return Math.abs(r.left - (t.left - 6)) < 10 && Math.abs(r.top - (t.top - 6)) < 10 && Math.abs(r.width - (t.width + 12)) < 10 && Math.abs(r.height - (t.height + 12)) < 10;
-}, ids);
 
 test("the tour has 9 steps and every step highlights its target", async ({ page }) => {
   await page.goto("/");
