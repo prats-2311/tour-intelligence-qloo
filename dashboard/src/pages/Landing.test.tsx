@@ -105,7 +105,11 @@ describe("Landing", () => {
     vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
     render(<MemoryRouter><Landing /></MemoryRouter>);
     const legend = screen.getByTestId("map-legend");
-    expect(legend.textContent).toBe("● Play · ◆ Under the radar · ▲ De-risk · ○ Consider · ✕ Skip. Shape is the verdict; top picks are named.");
+    expect(legend.textContent).toBe("PlayUnder the radarDe-riskConsiderSkipShape is the verdict; top picks are named.");
+    const marks = [...legend.querySelectorAll("[data-shape]")];
+    expect(marks.map((m) => m.getAttribute("data-shape"))).toEqual(["circle", "diamond", "triangle", "ring", "x"].map((x) => x));
+    const paint = (m: Element) => m.getAttribute("fill") !== "none" ? m.getAttribute("fill") : m.getAttribute("stroke");
+    expect(marks.map(paint)).toEqual(["var(--color-verdict-play)", "var(--color-verdict-goldmine)", "var(--color-verdict-derisk)", "var(--color-verdict-consider)", "var(--color-verdict-skip)"]);
     expect(legend.className).toContain("text-canvas-muted");
   });
   it("phone: no map, so no legend", () => {

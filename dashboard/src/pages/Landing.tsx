@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { DualBars } from "@/components/qloo/DualBars";
+import { VerdictGlyph } from "@/components/qloo/VerdictGlyph";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { INTEGRITY_LINE } from "@/lib/qloo/labels";
 import { NextStepLink } from "@/components/qloo/NextStep";
@@ -9,7 +10,7 @@ import { sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { proofFor, rankShiftLine, SHOWCASE, showcaseAvailable, showcaseCities, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
 import { storyBeats } from "@/lib/qloo/story";
-import type { ScoredCity } from "@/lib/qloo/types";
+import type { ScoredCity, Verdict } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 import { useTour } from "@/components/tour/tourContext";
 
@@ -19,7 +20,10 @@ export const LINE2 = "Then see which cities to win first: fan heat and winnabili
 export const TRY_ARTIST_LINE = "Type any artist; we build fresh city playbooks on the spot.";
 export const TRY_ROUTING_LINE = "Replays a recorded run where a tour's cities were pasted, scored and ordered.";
 /** Mirrors the map glyphs (VERDICT_SHAPE): shape carries the verdict. "Under the radar" is the Hidden goldmine shape; copy rules keep that phrase off the landing. */
-export const MAP_LEGEND = "● Play · ◆ Under the radar · ▲ De-risk · ○ Consider · ✕ Skip. Shape is the verdict; top picks are named.";
+export const MAP_LEGEND_ITEMS: Array<{ verdict: Verdict; label: string }> = [
+  { verdict: "play", label: "Play" }, { verdict: "hidden_goldmine", label: "Under the radar" }, { verdict: "de_risk", label: "De-risk" }, { verdict: "consider", label: "Consider" }, { verdict: "skip", label: "Skip" },
+];
+export const MAP_LEGEND_NOTE = "Shape is the verdict; top picks are named.";
 export const PROTAGONIST = "The scenario: venues are holding dates until Friday. Pick which 2 of 5 smaller markets to confirm.";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
@@ -143,7 +147,10 @@ export default function Landing() {
         {isDesktop && (
           <div>
             <MapPreview />
-            <p data-testid="map-legend" className="mt-2 text-[13px] leading-[1.4] text-canvas-muted">{MAP_LEGEND}</p>
+            <p data-testid="map-legend" className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] leading-[1.4] text-canvas-muted">
+              {MAP_LEGEND_ITEMS.map((i) => <span key={i.verdict} className="inline-flex items-center gap-1.5"><VerdictGlyph verdict={i.verdict} />{i.label}</span>)}
+              <span>{MAP_LEGEND_NOTE}</span>
+            </p>
           </div>
         )}
         <ProofCard />
