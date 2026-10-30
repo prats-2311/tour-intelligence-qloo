@@ -25,7 +25,8 @@ import { KeyArtPoster } from "@/components/playbook/KeyArtPoster";
 import { PlaybookCard } from "@/components/playbook/PlaybookCard";
 import { ReasoningSummary } from "@/components/playbook/ReasoningSummary";
 import { PlaybookSkeleton } from "@/components/ui/Skeletons";
-import { fetchThisWeek } from "@/lib/qloo/client";
+import { AdvanceBody } from "@/components/playbook/cards/Advance";
+import { fetchAdvance, fetchThisWeek } from "@/lib/qloo/client";
 import { accentFor } from "@/lib/qloo/cityAccent";
 import { LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks";
@@ -40,8 +41,8 @@ import { visibleClaimTotals } from "@/lib/qloo/doNotBook";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
 // The Culture and Delight briefs belong to the legacy campaign flow, which is off the promoter path.
-type Tab = "activate" | "talent";
-const TABS: Array<{ id: Tab; label: string }> = [{ id: "activate", label: "How to win" }, { id: "talent", label: "Local acts" }];
+type Tab = "activate" | "talent" | "advance";
+const TABS: Array<{ id: Tab; label: string }> = [{ id: "activate", label: "How to win" }, { id: "talent", label: "Local acts" }, { id: "advance", label: "Advance & risks" }];
 const ORDER: CardKind[] = ["sponsors", "merch", "promo_zones", "local_moment", "venue_fit", "co_billing"];
 type CardId = CardKind | "this_week";
 // Desktop (lg) grid placement, brief 3b. On phones every card is a snap-scroller item.
@@ -130,6 +131,15 @@ function CityPlaybookPage() {
     queryKey: ["this-week", sample, state.sampleSet, variant, cityId, window?.start, window?.end],
     queryFn: () => fetchThisWeek({ city: shownCity!.name, country: shownCity!.country, window }, { sample, sampleSet: state.sampleSet, ...(variant === "routing" ? { variant } : {}), cityId }),
     enabled: !!shownCity && !!artist && !unrecorded,
+    staleTime: Infinity,
+    retry: false,
+  });
+  // Advance & risks is fetched only once its tab is opened (web lookups cost credits); the recorded example gets live lookups for its real cities, the invented sample none.
+  const advanceReady = !!shownCity && !!window && !unrecorded && (!sample || state.sampleSet === "showcase");
+  const advance = useQuery({
+    queryKey: ["advance", sample, state.sampleSet, cityId, window?.start, window?.end, state.brief?.artistCountry ?? ""],
+    queryFn: () => fetchAdvance({ city: shownCity!.name, country: shownCity!.country, window: window!, lat: shownCity!.lat, lon: shownCity!.lon, ...(state.brief?.artistCountry ? { artistCountry: state.brief.artistCountry } : {}) }),
+    enabled: tab === "advance" && advanceReady,
     staleTime: Infinity,
     retry: false,
   });
@@ -299,7 +309,15 @@ function CityPlaybookPage() {
   );
   const talentCard = cardOf("talent");
   const talentPanel = noSample ? noSamplePanel : loading ? <div className="skeleton h-[280px] max-w-xl rounded-[18px]" aria-hidden /> : talentCard ? <div className="max-w-xl">{playbookCard("talent")}</div> : <p className="text-[13px] text-canvas-muted">Local acts unavailable for {shownCity.name}</p>;
-  const panels: Record<Tab, ReactNode> = { activate: activatePanel, talent: talentPanel };
+  const advanceNote = !window ? (sample ? "This example has no date window, so there are no dates to check." : "Add a date window to the brief to see weather, holidays, visas and customs for these dates.") : !advanceReady ? "Advance details are not available for this sample city." : undefined;
+  const advancePanel = noSample ? noSamplePanel : (
+    <div className="max-w-xl">
+      <PlaybookCard accent={accent} meta={`${code} · ADVANCE & RISKS`} title="Advance & risks" narrativeStatus="unavailable" refsCount={0} hasEvidence>
+        <AdvanceBody data={advance.data} loading={advance.isPending} {...(advanceNote ? { message: advanceNote } : {})} />
+      </PlaybookCard>
+    </div>
+  );
+  const panels: Record<Tab, ReactNode> = { activate: activatePanel, talent: talentPanel, advance: advancePanel };
 
   return (
     <div className="-mx-4 -mt-6 lg:mx-0 lg:mt-0">

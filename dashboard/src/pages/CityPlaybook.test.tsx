@@ -163,13 +163,13 @@ describe("CityPlaybook", () => {
     expect(await screen.findByText("Max stops reached — raise it in the brief")).toBeTruthy();
     expect((screen.getByRole("button", { name: "Add to tour" }) as HTMLButtonElement).disabled).toBe(true);
   });
-  it("has only the two promoter tabs, How to win and Local acts, and Local acts shows the talent card", async () => {
+  it("has the three promoter tabs, How to win, Local acts and Advance & risks, and Local acts shows the talent card", async () => {
     renderAt("/tours/playbook/4005539?sample=1");
     const first = await screen.findByRole("tab", { name: "How to win" });
-    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["How to win", "Local acts"]);
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["How to win", "Local acts", "Advance & risks"]);
     expect(screen.queryByRole("tab", { name: /Culture|Delight|Activate|Talent/ })).toBeNull();
     first.focus();
-    fireEvent.keyDown(first, { key: "ArrowLeft" });
+    fireEvent.keyDown(first, { key: "ArrowRight" });
     expect(screen.getByRole("tab", { name: "Local acts" }).getAttribute("aria-selected")).toBe("true");
     expect(await screen.findByText(/Shared taste with Guadalajara's mainstream/, undefined, { timeout: 3000 })).toBeTruthy();
   });
@@ -226,6 +226,45 @@ describe("CityPlaybook in showcase mode", () => {
     expect(screen.queryByText("—")).toBeNull();
     expect(screen.queryByText("TOP ZONE")).toBeNull();
     expect(screen.queryByRole("tab")).toBeNull();
+  });
+});
+
+describe("CityPlaybook Advance & risks tab", () => {
+  const risks = { weather: { status: "unavailable" as const, message: "w" }, holidays: { status: "unavailable" as const, message: "h" }, visa: { status: "capped" as const, message: "Web lookups are paused for today." }, equipment: { status: "unavailable" as const, message: "e" }, generatedAt: "t" };
+  const withWindow = (window?: { start: string; end: string }) => {
+    const raw = syntheticShowcase as unknown as { brief: Record<string, unknown> };
+    setShowcase(parseShowcase({ ...syntheticShowcase, brief: { ...raw.brief, ...(window ? { dateWindow: window } : {}) } } as never));
+  };
+  const firstId = () => Object.keys(parseShowcase(syntheticShowcase).playbooks)[0]!;
+  it("fetches only when the tab is opened, with the city, window and coordinates, and no artist country for the showcase", async () => {
+    withWindow({ start: "2027-03-12", end: "2027-03-15" });
+    const spy = vi.spyOn(client, "fetchAdvance").mockResolvedValue(risks);
+    renderAt(`/tours/playbook/${firstId()}?showcase=1`);
+    const tab = await screen.findByRole("tab", { name: "Advance & risks" });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(spy).not.toHaveBeenCalled();
+    fireEvent.click(tab);
+    expect(await screen.findByText("Web lookups are paused for today.")).toBeTruthy();
+    expect(spy).toHaveBeenCalledTimes(1);
+    const q = spy.mock.calls[0]![0];
+    expect(q).toMatchObject({ window: { start: "2027-03-12", end: "2027-03-15" }, lat: expect.any(Number), lon: expect.any(Number) });
+    expect(q.artistCountry).toBeUndefined();
+  });
+  it("without a date window it explains and does not fetch", async () => {
+    withWindow();
+    const spy = vi.spyOn(client, "fetchAdvance").mockResolvedValue(risks);
+    renderAt(`/tours/playbook/${firstId()}?showcase=1`);
+    fireEvent.click(await screen.findByRole("tab", { name: "Advance & risks" }));
+    expect(await screen.findByText("This example has no date window, so there are no dates to check.")).toBeTruthy();
+    expect(spy).not.toHaveBeenCalled();
+  });
+  it("never fetches advance details on page load, on any tab", async () => {
+    withWindow({ start: "2027-03-12", end: "2027-03-15" });
+    const spy = vi.spyOn(client, "fetchAdvance").mockResolvedValue(risks);
+    renderAt(`/tours/playbook/${firstId()}?showcase=1`);
+    fireEvent.click(await screen.findByRole("tab", { name: "Local acts" }));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 
