@@ -28,5 +28,5 @@ if (existsSync("private-data/showcase.json")) {
   line("showcase.strategist answers", s.strategist.length);
 } else line("showcase", "private-data/showcase.json missing");
 
-line("commits since 2026-10-16", execSync("git rev-list --count --since=2026-10-16 HEAD").toString().trim());
+line("commits since 2026-10-16", execSync("git rev-list --count --since=\"2026-10-16 00:00\" HEAD").toString().trim());
 console.log(out.join("\n"));
