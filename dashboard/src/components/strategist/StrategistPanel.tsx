@@ -26,7 +26,7 @@ export function StrategistPanel({ context, sample, showcase = false, title, onCl
         )}
       </header>
       {sample && <div className="px-4 pt-2"><SampleBanner compact source={showcase ? "showcase" : "sample"} /></div>}
-      <MessageList turns={state.turns} onRetry={ask} busy={busy} replay={replay} />
+      <MessageList documentNames={docs.names} turns={state.turns} onRetry={ask} busy={busy} replay={replay} />
       <Composer docs={docs} replay={replay} busy={busy} empty={state.turns.length === 0} sample={sample} showcase={showcase} context={context} onAsk={ask} onStop={stop} />
     </section>
   );

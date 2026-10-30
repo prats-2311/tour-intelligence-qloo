@@ -4,11 +4,11 @@ import { ChatBubble, TypingIndicator } from "@/components/ui/ChatBits";
 import { AnswerText, realUnsupportedNumbers } from "./AnswerText";
 import { WorkLog } from "./WorkLog";
 
-export function numbersNote(tokens: string[]): string {
-  return `${tokens.length} ${tokens.length === 1 ? "number" : "numbers"} not found in tool results: ${tokens.join(", ")}`;
+export function numbersNote(tokens: string[], citesFile = false): string {
+  return `${tokens.length} ${tokens.length === 1 ? "number" : "numbers"} not found in ${citesFile ? "the cited page or tool results" : "tool results"}: ${tokens.join(", ")}`;
 }
 
-function Turn({ turn, onRetry, retryDisabled, logOpen }: { turn: StrategistTurn; onRetry: (q: string) => void; retryDisabled: boolean; logOpen: boolean }) {
+function Turn({ turn, onRetry, retryDisabled, logOpen, documentNames }: { documentNames?: Record<string, string>; turn: StrategistTurn; onRetry: (q: string) => void; retryDisabled: boolean; logOpen: boolean }) {
   const { answer } = turn;
   const failure = turn.status === "error" && turn.error ? turn.error.message : turn.status === "done" && !answer ? "No answer came back — try again" : undefined;
   // Recorded answers carry the gateway's flag as it was then; list markers and step ordinals it counted are dropped here.
@@ -19,8 +19,8 @@ function Turn({ turn, onRetry, retryDisabled, logOpen }: { turn: StrategistTurn;
       {!answer && <WorkLog turn={turn} defaultOpen={logOpen} />}
       {answer && (
         <div className="flex flex-col gap-1.5">
-          <ChatBubble role="assistant"><AnswerText text={answer.text} /></ChatBubble>
-          {unsupported.length > 0 && <p className="text-[13px] text-state-stale">{numbersNote(unsupported)}</p>}
+          <ChatBubble role="assistant"><AnswerText text={answer.text} {...(documentNames ? { documentNames } : {})} /></ChatBubble>
+          {unsupported.length > 0 && <p className="text-[13px] text-state-stale">{numbersNote(unsupported, /\[doc:[A-Za-z0-9_-]+ p\.\d+\]/.test(answer.text))}</p>}
           {answer.stoppedEarly && <p className="text-[13px] text-state-stale">Stopped after the tool limit</p>}
         </div>
       )}
@@ -38,12 +38,12 @@ function Turn({ turn, onRetry, retryDisabled, logOpen }: { turn: StrategistTurn;
 }
 
 /** `replay`: recorded answers; only the first one starts with its work log open (live answers always do). */
-export function MessageList({ turns, onRetry, busy, replay = false }: { turns: StrategistTurn[]; onRetry: (q: string) => void; busy: boolean; replay?: boolean }) {
+export function MessageList({ turns, onRetry, busy, replay = false, documentNames }: { documentNames?: Record<string, string>; turns: StrategistTurn[]; onRetry: (q: string) => void; busy: boolean; replay?: boolean }) {
   const endRef = useRef<HTMLLIElement>(null);
   useEffect(() => { endRef.current?.scrollIntoView?.({ block: "end" }); }, [turns]);
   return (
     <ol aria-live="polite" className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 py-3">
-      {turns.map((t, i) => <Turn key={i} turn={t} onRetry={onRetry} retryDisabled={busy} logOpen={!replay || i === 0} />)}
+      {turns.map((t, i) => <Turn key={i} documentNames={documentNames} turn={t} onRetry={onRetry} retryDisabled={busy} logOpen={!replay || i === 0} />)}
       <li ref={endRef} aria-hidden />
     </ol>
   );

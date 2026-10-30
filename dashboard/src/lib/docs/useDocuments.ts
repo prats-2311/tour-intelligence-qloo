@@ -5,11 +5,13 @@ export const SAMPLE_DOC_URL = "/samples/example-artist-2024-tour-recap.txt";
 export const SAMPLE_DOC_NAME = "example-artist-2024-tour-recap.txt";
 
 /** Attached documents live in React state only: no storage, lost when the tab closes. */
-export function useDocuments(): { docs: AttachedDoc[]; notes: string[]; busy: boolean; addFiles(files: ArrayLike<File>): Promise<void>; addSample(): Promise<void>; remove(id: string): void } {
+export function useDocuments(): { docs: AttachedDoc[]; notes: string[]; busy: boolean; addFiles(files: ArrayLike<File>): Promise<void>; addSample(): Promise<void>; remove(id: string): void; /** Every id attached this session -> file name, so earlier answers keep their file labels after a Remove. */ names: Record<string, string> } {
   const [docs, setDocs] = useState<AttachedDoc[]>([]);
   const [notes, setNotes] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const ref = useRef<AttachedDoc[]>([]);
+  const counter = useRef(0);
+  const [names, setNames] = useState<Record<string, string>>({});
 
   const add = useCallback(async (files: File[]) => {
     if (files.length === 0) return;
@@ -19,7 +21,8 @@ export function useDocuments(): { docs: AttachedDoc[]; notes: string[]; busy: bo
     for (const f of files) {
       try { incoming.push(await readDocument(f)); } catch (e) { problems.push(e instanceof Error ? e.message : `Could not read ${f.name}`); }
     }
-    const fit = fitDocuments(ref.current, incoming);
+    const fit = fitDocuments(ref.current, incoming, () => `d${++counter.current}`);
+    setNames((cur) => ({ ...cur, ...Object.fromEntries(fit.docs.map((d) => [d.id, d.name])) }));
     ref.current = fit.docs;
     setDocs(fit.docs);
     setNotes([...problems, ...fit.notes]);
@@ -41,5 +44,5 @@ export function useDocuments(): { docs: AttachedDoc[]; notes: string[]; busy: bo
     setDocs(ref.current);
     setNotes([]);
   }, []);
-  return { docs, notes, busy, addFiles, addSample, remove };
+  return { docs, notes, names, busy, addFiles, addSample, remove };
 }

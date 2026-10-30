@@ -68,6 +68,11 @@ describe("fitDocuments", () => {
     const r = fitDocuments([doc("d2", "b", ["x"])], [doc("", "c", ["x"])]);
     expect(r.docs.map((d) => d.id)).toEqual(["d2", "d1"]);
   });
+  it("takes ids from a caller-supplied generator so an id is never reused", () => {
+    let n = 5;
+    const r = fitDocuments([], [doc("", "c", ["x"])], () => `d${++n}`);
+    expect(r.docs[0]!.id).toBe("d6");
+  });
   it("truncates to about 60,000 characters in total and says how many pages were read", () => {
     const page = "y".repeat(25_000);
     const r = fitDocuments([doc("d1", "a", [page, page])], [doc("", "b", [page, page, page])]);

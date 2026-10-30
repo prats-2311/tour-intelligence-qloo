@@ -56,7 +56,7 @@ const used = (docs: AttachedDoc[]): number => docs.reduce((n, d) => n + d.pages.
 const freeId = (docs: AttachedDoc[]): string => { for (let i = 1; ; i++) if (!docs.some((d) => d.id === `d${i}`)) return `d${i}`; };
 
 /** Adds incoming files to the attached set within the limits (3 files, 60,000 characters). Returns the new set and a note for everything that was cut or skipped. */
-export function fitDocuments(existing: AttachedDoc[], incoming: AttachedDoc[]): { docs: AttachedDoc[]; notes: string[] } {
+export function fitDocuments(existing: AttachedDoc[], incoming: AttachedDoc[], newId: (docs: AttachedDoc[]) => string = freeId): { docs: AttachedDoc[]; notes: string[] } {
   const docs = [...existing];
   const notes: string[] = [];
   for (const d of incoming) {
@@ -74,7 +74,7 @@ export function fitDocuments(existing: AttachedDoc[], incoming: AttachedDoc[]): 
     const cut = pages.length < d.pages.length || pages[lastKept]!.text.length < d.pages[lastKept]!.text.length;
     if (cut) notes.push(pages.length === 1 ? `Only the first page of ${d.name} was read.` : `Only the first ${pages.length} pages of ${d.name} were read.`);
     else if (d.note) notes.push(d.note);
-    docs.push({ id: freeId(docs), name: d.name, pages, ...(cut ? { note: notes.at(-1)! } : d.note ? { note: d.note } : {}) });
+    docs.push({ id: newId(docs), name: d.name, pages, ...(cut ? { note: notes.at(-1)! } : d.note ? { note: d.note } : {}) });
   }
   return { docs, notes };
 }
