@@ -95,6 +95,23 @@ function RunButtons() {
 }
 const withRunner = (path: string) => render(<MemoryRouter initialEntries={[path]}><TourBoardProvider sampleDelayMs={0}><RunButtons /><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
 
+describe("tour:open-ask (the guided tour opens the Ask panel)", () => {
+  it("opens the desktop dock", async () => {
+    mm(true);
+    shell("/tours/board?sample=1");
+    expect(screen.queryByRole("complementary", { name: "Ask about this tour" })).toBeNull();
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:open-ask")); });
+    expect(await screen.findByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
+  });
+  it("opens the phone sheet", async () => {
+    mm(false);
+    shell("/tours/board?sample=1");
+    await screen.findByRole("button", { name: "Ask about this tour" });
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:open-ask")); });
+    expect(await screen.findByRole("dialog", { name: "Ask about this tour" })).toBeTruthy();
+  });
+});
+
 describe("launcher sample flag", () => {
   beforeEach(() => { panelProps.last = undefined; mm(false); });
   it("is true after a sample run, and the title names the artist", async () => {

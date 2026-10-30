@@ -65,7 +65,7 @@ const mount = (url = "/", routes?: React.ReactNode) => render(
 );
 const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 0)); });
 const popover = () => screen.getByTestId("tour-popover");
-const counter = () => screen.getByText(/^\d of 9$/).textContent;
+const counter = () => screen.getByText(/^\d of \d$/).textContent;
 
 describe("first-visit prompt", () => {
   it("shows on the first visit, is not modal, and does not start the tour", async () => {
@@ -339,6 +339,19 @@ describe("the four tours", () => {
     fireEvent.click(screen.getByRole("button", { name: "Skip" }));
     expect(window.localStorage.getItem("tiq.tour.plan")).toBe("dismissed");
     expect(window.localStorage.getItem(TOUR_STORAGE_KEY)).toBeNull();
+  });
+  it("the chat step asks the Ask panel to open (a window event, nothing is sent)", async () => {
+    const heard = vi.fn();
+    window.addEventListener("tour:open-ask", heard);
+    mountPlan();
+    fireEvent.click(screen.getByRole("button", { name: "go plan" }));
+    await flush();
+    await walk(3);
+    expect(heard).not.toHaveBeenCalled();
+    await walk(1);
+    expect(counter()).toBe("5 of 6");
+    expect(heard).toHaveBeenCalledTimes(1);
+    window.removeEventListener("tour:open-ask", heard);
   });
   it("the last tour offers no successor", async () => {
     const Last = () => { const t = useTour()!; return <button type="button" onClick={() => t.startTour("trust")}>go trust</button>; };

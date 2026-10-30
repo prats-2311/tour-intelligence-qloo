@@ -33,7 +33,7 @@ function place(b: Box, popH: number, vw: number, vh: number): Pos | null {
   return null;
 }
 
-export function TourOverlay({ steps, index, onBack, onNext, onSkip }: { steps: TourStep[]; index: number; onBack: () => void; onNext: () => void; onSkip: () => void }) {
+export function TourOverlay({ steps, index, next, onNextTour, onBack, onNext, onSkip }: { steps: TourStep[]; index: number; /** The tour that follows this one, offered on the last step. */ next?: { title: string; steps: number } | null; onNextTour?: () => void; onBack: () => void; onNext: () => void; onSkip: () => void }) {
   const step = steps[index]!;
   const last = index === steps.length - 1;
   const isDesktop = useIsDesktop();
@@ -158,7 +158,10 @@ export function TourOverlay({ steps, index, onBack, onNext, onSkip }: { steps: T
         <p id={bodyId} className="text-[14px] leading-[1.5] text-canvas-text">{step.body}</p>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={onBack} disabled={index === 0} className={`${btn} bg-paper text-canvas-text hover:bg-paper-raised`}>Back</button>
-          <button type="button" onClick={onNext} className={`btn-gold ${btn}`}>{last ? "Done" : "Next"}</button>
+          {last && next && onNextTour
+            ? <button type="button" onClick={onNextTour} className={`btn-gold ${btn}`}>{`Next: ${next.title} (${next.steps} ${next.steps === 1 ? "step" : "steps"})`}</button>
+            : null}
+          <button type="button" onClick={onNext} className={`${last && next ? "bg-paper text-canvas-text hover:bg-paper-raised" : "btn-gold"} ${btn}`}>{last ? "Done" : "Next"}</button>
           <button type="button" onClick={onSkip} className={`${btn} ml-auto text-canvas-muted hover:text-canvas-text`}>Skip</button>
         </div>
       </div>

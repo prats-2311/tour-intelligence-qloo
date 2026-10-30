@@ -29,3 +29,21 @@ export function writeV2TourOutcome(outcome: TourOutcome): void {
     /* nothing depends on it */
   }
 }
+
+/** Per-tour outcome for the follow-on tours (`tiq.tour.<id>`); the essentials keep the v1 key through `tourStorageKey`. */
+export function readOutcomeAt(key: string): TourOutcome | null {
+  try {
+    const v = window.localStorage.getItem(key);
+    return v === "dismissed" || v === "completed" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeOutcomeAt(key: string, outcome: TourOutcome): void {
+  try {
+    window.localStorage.setItem(key, outcome);
+  } catch {
+    /* the tour still works; the tick may not survive a reload */
+  }
+}

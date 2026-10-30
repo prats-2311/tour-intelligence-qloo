@@ -1,5 +1,5 @@
 import { showcaseParam } from "@/lib/qloo/showcase";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, matchPath } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
 import { Sheet } from "@/components/qloo/Sheet";
@@ -10,6 +10,8 @@ import { StrategistPanel } from "./StrategistPanel";
 
 const STORAGE_KEY = "strategistOpen";
 export const DOCK_WIDTH = 380;
+/** The guided tour dispatches this on `window` to open the Ask panel (see TourProvider); the dock and the phone sheet both listen. */
+export const OPEN_ASK_EVENT = "tour:open-ask";
 const SHOWCASE_IDLE_HINT = "Tap a recorded question to replay how the agent answered it.";
 
 /** Tour routes and Taste only; the legacy campaign pages never get the launcher. */
@@ -33,6 +35,11 @@ function writeOpen(open: boolean) {
 export function useStrategistDock(): { open: boolean; setOpen(open: boolean): void } {
   const [open, setOpenState] = useState(readOpen);
   const setOpen = useCallback((v: boolean) => { setOpenState(v); writeOpen(v); }, []);
+  useEffect(() => {
+    const on = () => setOpen(true);
+    window.addEventListener(OPEN_ASK_EVENT, on);
+    return () => window.removeEventListener(OPEN_ASK_EVENT, on);
+  }, [setOpen]);
   return { open, setOpen };
 }
 
@@ -56,6 +63,11 @@ export function StrategistFab() {
   const [open, setOpen] = useState(false);
   const { sample, showcase, title, context } = useLauncherModel();
   const { pathname, search } = useLocation();
+  useEffect(() => {
+    const on = () => setOpen(true);
+    window.addEventListener(OPEN_ASK_EVENT, on);
+    return () => window.removeEventListener(OPEN_ASK_EVENT, on);
+  }, []);
   const lift = dockedInFooter(pathname, search) ? "bottom-[calc(4.5rem+env(safe-area-inset-bottom))] size-12 right-3"
     : hasStickyFooter(pathname) && pathname !== "/tours/board" ? "bottom-[calc(9.5rem+env(safe-area-inset-bottom))] size-14 right-4" : "bottom-[calc(5rem+env(safe-area-inset-bottom))] size-14 right-4";
   return (
