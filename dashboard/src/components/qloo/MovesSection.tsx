@@ -34,7 +34,7 @@ function Row({ move, reason, selected, hiddenOnPhone, onSelect }: { move: Move; 
         <span className="text-[13px] leading-tight text-canvas-text">
           {delta === 0 ? `holds #${fanRank}` : <>{`#${fanRank} on fan heat `}<span aria-hidden>→</span><span className="sr-only">to</span>{` #${winRank} on winnability`}</>}
         </span>
-        {reason !== "" && <span data-testid="move-reason" className="line-clamp-2 text-[12px] leading-[1.4] text-canvas-muted">{reason}</span>}
+        {reason !== "" && <span data-testid="move-reason" title={reason} className="line-clamp-2 text-[12px] leading-[1.4] text-canvas-muted">{reason}</span>}
       </button>
     </li>
   );

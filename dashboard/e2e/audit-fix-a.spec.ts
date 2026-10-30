@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { expect, type Page } from "@playwright/test";
 import { test, dismissTourPrompt, useSyntheticRecordings } from "./fixtures";
 
@@ -137,3 +138,22 @@ test("7. printing the Tour Book hides the app chrome", async ({ page }) => {
   });
   expect(shown, "app chrome visible in print").toEqual([]);
 });
+
+for (const url of ["/tours/board?sample=1", "/tours/board?sample=long", "/tours/board?showcase=1"]) {
+  test(`9. move reasons are never sliced mid-line (${url})`, async ({ page }, info) => {
+    // The real recording (read-only, local) has the longest reasons; fall back to the synthetic one when it is not on this machine.
+    const real = "/Users/prateeksrivastava/Documents/qloo/tour-intel-proof-publish/private-data/showcase.json";
+    if (url.includes("showcase") && fs.existsSync(real)) await page.route("**/api/recordings/showcase", (r) => r.fulfill({ path: real, contentType: "application/json" }));
+    await page.goto(url);
+    await expect(page.getByTestId("move-row").first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole("button", { name: "Stop" })).toHaveCount(0, { timeout: 30_000 });
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
+    const bad = await page.evaluate(() => [...document.querySelectorAll("[data-testid=move-reason]")].filter((e) => (e as HTMLElement).offsetParent !== null).flatMap((e) => {
+      const li = e.closest("li")!.getBoundingClientRect(), r = e.getBoundingClientRect();
+      const sliced = r.bottom > li.bottom + 0.5;
+      const truncated = e.scrollHeight > e.clientHeight + 1;
+      return sliced || (truncated && !e.getAttribute("title")) ? [`${(e.textContent ?? "").slice(0, 40)} sliced=${sliced} truncatedWithoutTitle=${truncated && !e.getAttribute("title")}`] : [];
+    }));
+    expect(bad, `${info.project.name}: reason text clipped`).toEqual([]);
+  });
+}
