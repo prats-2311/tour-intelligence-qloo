@@ -545,7 +545,7 @@ export default function TourBoard() {
   }
 
   return (
-    <div className="-mx-4 -mt-6 lg:-mx-8 lg:-my-8">
+    <div className="-mx-4 -mt-6 lg:-mx-8 lg:-mb-8 lg:-mt-3">
       {isSample && <SampleBanner source={state.source} />}
       <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_1fr]">
         <div className="lg:col-span-6 lg:col-start-7 lg:row-start-1 xl:col-span-5 xl:col-start-8">{header}</div>

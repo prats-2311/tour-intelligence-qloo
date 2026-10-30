@@ -101,3 +101,24 @@ test("6. budget inputs have a visible 1px border at 3:1 or more against the card
   });
   expect(bad).toEqual([]);
 });
+
+for (const width of [1440, 1280]) {
+  test(`10. the breadcrumb on the board is fully visible at ${width} (not under the top bar or the board)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/tours/board?sample=1");
+    await boardReady(page);
+    const r = await page.evaluate(() => {
+      const nav = document.querySelector("nav[aria-label=Breadcrumb]")!;
+      const bad: string[] = [];
+      for (const el of nav.querySelectorAll("a, span[aria-current]")) {
+        const b = el.getBoundingClientRect();
+        for (const [x, y] of [[b.left + 2, b.top + 2], [b.right - 2, b.bottom - 2]] as const) {
+          const hit = document.elementFromPoint(x, y);
+          if (!hit || !nav.contains(hit)) bad.push(`${el.textContent} covered by ${(hit as HTMLElement | null)?.tagName}.${String((hit as HTMLElement | null)?.className).slice(0, 40)}`);
+        }
+      }
+      return bad;
+    });
+    expect(r, "every breadcrumb corner is hit-testable").toEqual([]);
+  });
+}
