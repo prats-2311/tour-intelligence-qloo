@@ -43,7 +43,7 @@ export function NotesSheet({ open, onClose, title, threadKey }: { open: boolean;
   };
   return (
     <Sheet open={open} onClose={onClose} title={title}>
-      <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex flex-1 flex-col gap-3">
         {messages.some((m) => m.demo) && <p data-testid="demo-banner" className="rounded-[8px] bg-paper-raised px-3 py-2 text-[13px] text-canvas-text">{DEMO_BANNER}</p>}
         {thread?.resolved && (
           <p className="rounded-[8px] bg-paper-raised px-3 py-2 text-[13px] text-canvas-text">
@@ -51,7 +51,8 @@ export function NotesSheet({ open, onClose, title, threadKey }: { open: boolean;
           </p>
         )}
         {messages.length === 0 ? <p className="text-[14px] text-canvas-muted">No notes yet. Start the thread below.</p> : <ul aria-label="Notes" className="flex flex-col gap-2">{messages.map((m) => <MessageItem key={m.id} m={m} />)}</ul>}
-        <div className="flex flex-col gap-2">
+        {/* Sticky inside the sheet's scroll area: on a phone the thread can be long, and the box must stay in view. */}
+        <div data-testid="notes-composer" className="sticky bottom-0 z-10 -mx-4 mt-auto flex flex-col gap-2 border-t border-canvas-line bg-paper px-4 pb-3 pt-3 md:-mx-6 md:px-6">
           <textarea
             value={text} onChange={(e) => setText(e.target.value)} maxLength={LIMITS.text} rows={3} aria-label="Add a note"
             onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void send(); } }}

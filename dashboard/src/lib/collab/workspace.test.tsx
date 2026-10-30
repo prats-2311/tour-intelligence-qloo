@@ -119,6 +119,17 @@ describe("degrades without a gateway", () => {
 });
 
 describe("notes", () => {
+  it("keeps the composer pinned to the bottom of the sheet so it is never below the fold", async () => {
+    mount(); await ready();
+    fireEvent.click(screen.getByRole("button", { name: /Notes for Sponsors/ }));
+    const box = await screen.findByLabelText("Add a note");
+    const composer = box.closest("[data-testid='notes-composer']") as HTMLElement | null;
+    expect(composer).not.toBeNull();
+    expect(composer!.className).toContain("sticky");
+    expect(composer!.className).toContain("bottom-0");
+    expect(composer!.className).toContain("bg-paper");
+    expect(within(composer!).getByRole("button", { name: "Add note" })).toBeTruthy();
+  });
   it("asks who is writing on the first note, then renders plain text with @Role styling", async () => {
     localStorage.clear();
     mount(); await ready();
