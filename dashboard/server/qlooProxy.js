@@ -39,6 +39,8 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
         headers: {
           ...(dev ? {} : { authorization: `Bearer ${await getToken()}` }),
           "x-session-id": sessionId,
+          // Our own test traffic (e2e, smoke): the gateway keeps it out of the analytics.
+          ...(req.header("x-tiq-test") === "1" ? { "x-tiq-test": "1" } : {}),
           ...(body !== undefined ? { "content-type": "application/json" } : {}),
         },
         ...(body !== undefined ? { body: JSON.stringify(body) } : {}),

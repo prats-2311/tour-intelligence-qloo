@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
-import { qlooDataCalls, dismissTourPrompt, useSyntheticRecordings } from "./fixtures";
+import { expect } from "@playwright/test";
+import { test, qlooDataCalls, dismissTourPrompt, useSyntheticRecordings } from "./fixtures";
 
 // Runs against the synthetic backtest, served at /api/recordings/backtest exactly as the real one is (complete state).
 test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); await useSyntheticRecordings(page); await dismissTourPrompt(page); });

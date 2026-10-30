@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import path from "node:path";
-import { expect, test } from "@playwright/test";
-import { qlooDataCalls, dismissTourPrompt, useSyntheticRecordings } from "./fixtures";
+import { expect } from "@playwright/test";
+import { test, qlooDataCalls, dismissTourPrompt, useSyntheticRecordings } from "./fixtures";
 
 test.beforeEach(async ({ page }) => {
   await page.route(/tiles\.openfreemap\.org/, (route) => route.abort());

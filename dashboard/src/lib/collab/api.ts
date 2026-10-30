@@ -1,4 +1,4 @@
-import { getSessionId } from "../qloo/session";
+import { sessionHeaders } from "../qloo/session";
 import { isSnapshot, OP_PATH, WS_ID, type Op, type Snapshot } from "./types";
 
 export class CollabHttpError extends Error {
@@ -6,7 +6,7 @@ export class CollabHttpError extends Error {
   constructor(status: number, message: string) { super(message); this.status = status; }
 }
 type Opts = { fetchImpl?: typeof fetch; signal?: AbortSignal };
-const headers = () => ({ "content-type": "application/json", "x-session-id": getSessionId() });
+const headers = () => ({ "content-type": "application/json", ...sessionHeaders() });
 
 async function parse(res: Response): Promise<unknown> {
   let json: unknown = null;
@@ -34,7 +34,7 @@ export async function createWorkspace(seed?: Seed, opts: Opts = {}): Promise<Sna
 }
 
 export async function fetchWorkspace(ws: string, opts: Opts = {}): Promise<Snapshot> {
-  const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/ws/${ws}`, { signal: opts.signal, headers: { "x-session-id": getSessionId() } });
+  const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/ws/${ws}`, { signal: opts.signal, headers: { ...sessionHeaders() } });
   return snapshotOf(await parse(res));
 }
 

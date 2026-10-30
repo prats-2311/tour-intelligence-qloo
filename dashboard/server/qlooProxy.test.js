@@ -45,6 +45,18 @@ describe("qlooProxy", () => {
     expect(init.headers["x-session-id"]).toBe("s1");
     expect(JSON.parse(init.body)).toEqual({ artist: "A", regions: ["Mexico"], maxStops: 3 });
   });
+  it("forwards x-tiq-test: 1 to the gateway on every route kind, and nothing else unset", async () => {
+    const fetchImpl = vi.fn(async (url) => String(url).includes("/v1/tools/") ? new Response("{}", { status: 200, headers: { "content-type": "application/json" } }) : sse(["event: done\ndata: {}\n\n"]));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    await (await fetch(`${base}/api/qloo/city-playbook?artist=A&artistEntityId=E&city=Lima&country=PE`, { headers: { "x-session-id": "s", "x-tiq-test": "1" } })).text();
+    await (await fetch(`${base}/api/qloo/tools/qloo_compare_audiences`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s", "x-tiq-test": "1" }, body: "{}" })).text();
+    await (await fetch(`${base}/api/qloo/city-playbook?artist=A&artistEntityId=E&city=Lima&country=PE`, { headers: { "x-session-id": "s" } })).text();
+    await (await fetch(`${base}/api/qloo/city-playbook?artist=A&artistEntityId=E&city=Lima&country=PE`, { headers: { "x-session-id": "s", "x-tiq-test": "yes" } })).text();
+    expect(fetchImpl.mock.calls[0][1].headers["x-tiq-test"]).toBe("1");
+    expect(fetchImpl.mock.calls[1][1].headers["x-tiq-test"]).toBe("1");
+    expect(fetchImpl.mock.calls[2][1].headers).not.toHaveProperty("x-tiq-test");
+    expect(fetchImpl.mock.calls[3][1].headers).not.toHaveProperty("x-tiq-test");
+  });
   it("passes upstream JSON errors through with their status", async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ error: "bad brief" }), { status: 400, headers: { "content-type": "application/json" } }));
     const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });

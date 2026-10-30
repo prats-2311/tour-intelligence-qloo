@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSessionId } from "./session";
+import { sessionHeaders } from "./session";
 
 /** Live analytics from the gateway's optional BigQuery tables. `enabled:false` (or any failure) means the panels stay hidden. */
 export type StatsKind = "trust" | "team" | "v2";
@@ -54,7 +54,7 @@ export function parseStats<K extends StatsKind>(kind: K, raw: unknown): StatsOf<
 /** Never throws: any failure is `{enabled:false}`. */
 export async function fetchStats<K extends StatsKind>(kind: K, opts: { fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<StatsOf<K>> {
   try {
-    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/stats/${kind}`, { signal: opts.signal, headers: { "x-session-id": getSessionId() } });
+    const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/stats/${kind}`, { signal: opts.signal, headers: { ...sessionHeaders() } });
     if (!res.ok) return STATS_OFF as StatsOf<K>;
     return parseStats(kind, await res.json());
   } catch {
@@ -91,7 +91,7 @@ export function rememberTap(a: TapAction): void {
 /** True when the gateway counted the tap. Never throws. */
 export async function postV2Tap(action: TapAction, experience: string, opts: { fetchImpl?: typeof fetch } = {}): Promise<boolean> {
   try {
-    const res = await (opts.fetchImpl ?? fetch)("/api/qloo/v2/tap", { method: "POST", headers: { "content-type": "application/json", "x-session-id": getSessionId() }, body: JSON.stringify({ action, experience }) });
+    const res = await (opts.fetchImpl ?? fetch)("/api/qloo/v2/tap", { method: "POST", headers: { "content-type": "application/json", ...sessionHeaders() }, body: JSON.stringify({ action, experience }) });
     if (!res.ok) return false;
     return obj(await res.json()).ok === true;
   } catch { return false; }

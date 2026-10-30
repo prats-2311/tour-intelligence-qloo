@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { markTestTraffic, test } from "./fixtures";
 import { blockMapTiles, LIVE, LIVE_SKIP_REASON } from "./live";
 
 // Team workspace on the recorded example. Locally the BFF talks to the in-memory collab server (COLLAB_FAKE=1); the deployed site uses the
@@ -23,6 +24,7 @@ test("two visitors never share a workspace", async ({ browser }) => {
   const ids: string[] = [];
   for (let i = 0; i < 2; i += 1) {
     const ctx = await browser.newContext();
+    await markTestTraffic(ctx);
     const page = await ctx.newPage();
     await blockMapTiles(page);
     await page.goto(BOARD);

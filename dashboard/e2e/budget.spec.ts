@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
-import { dismissTourPrompt, useSyntheticRecordings } from "./fixtures";
+import { expect } from "@playwright/test";
+import { test, dismissTourPrompt, useSyntheticRecordings } from "./fixtures";
 
 test.beforeEach(async ({ page }) => { await page.route(/tiles\.openfreemap\.org/, (route) => route.abort()); await useSyntheticRecordings(page); await dismissTourPrompt(page); });
 

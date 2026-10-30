@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "./fixtures";
 import { blockMapTiles, LIVE, LIVE_SKIP_REASON } from "./live";
 
 // LIVE only: these use the deployed gateway's real Qloo, Open-Meteo/Nager and Gemini calls on the recorded Los Angeles example, so they spend

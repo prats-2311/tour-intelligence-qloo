@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "./fixtures";
 import { blockMapTiles } from "./live";
 
 // The recorded Los Angeles playbook (zero live calls): a sponsor row opens a one-page brief that prints without app chrome.
