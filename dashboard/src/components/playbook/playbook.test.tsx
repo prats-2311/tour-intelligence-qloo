@@ -37,7 +37,7 @@ describe("playbook cards", () => {
     let opened = false;
     render(<PlaybookCard accent="#ff00aa" meta="GDL · SPONSORS" title="Sponsors" claims={narrative.status === "ok" ? narrative.cards.sponsors : undefined} narrativeStatus="ok" refsCount={1} hasEvidence onAudit={() => { opened = true; }}><p>body</p></PlaybookCard>);
     expect(screen.getByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "2 verified · 1 removed" }));
+    fireEvent.click(screen.getByRole("button", { name: "See the 3 checked claims for Sponsors" }));
     expect(opened).toBe(true);
     expect(screen.getByText("Qloo · 1 request")).toBeTruthy();
   });
@@ -69,19 +69,22 @@ describe("playbook cards", () => {
     render(<PlaybookCard accent="#ff00aa" meta="m" title="This week" narrativeStatus="unavailable" refsCount={0} hasEvidence><p>web</p></PlaybookCard>);
     expect(screen.queryByText(/Qloo ·/)).toBeNull();
   });
-  it("badge is a 44px button only when something was removed", () => {
-    const { unmount } = render(<ClaimsBadge verified={3} removed={0} />);
-    expect(screen.queryByRole("button")).toBeNull();
+  it("badge is a 44px button whenever there are claims, and plain text when there are none", () => {
+    const { unmount } = render(<ClaimsBadge verified={3} removed={0} onClick={() => {}} label="See the 3 checked claims for Sponsors" />);
+    expect(screen.getByRole("button", { name: "See the 3 checked claims for Sponsors" }).className).toContain("min-h-11");
     expect(screen.getByText("3 verified · 0 removed")).toBeTruthy();
     unmount();
-    render(<ClaimsBadge verified={3} removed={2} onClick={() => {}} />);
-    expect(screen.getByRole("button", { name: "3 verified · 2 removed" }).className).toContain("min-h-11");
+    render(<ClaimsBadge verified={0} removed={0} onClick={() => {}} />);
+    expect(screen.queryByRole("button")).toBeNull();
   });
-  it("audit lists each removed claim with its plain-language reason", () => {
+  it("audit lists verified claims with where they matched, and removed claims struck through with the reason", () => {
     if (narrative.status !== "ok") throw new Error();
-    render(<ClaimsAudit claims={[{ card: "Sponsors", removed: narrative.cards.sponsors!.removed }, { card: "Venue fit", removed: narrative.cards.venue_fit!.removed }]} />);
-    expect(screen.getByText("Number 0.93 not in evidence")).toBeTruthy();
-    expect(screen.getByText("Entity 'Foro Alameda' not in any referenced result")).toBeTruthy();
+    render(<ClaimsAudit claims={[{ card: "Sponsors", verified: narrative.cards.sponsors!.verified, removed: narrative.cards.sponsors!.removed }, { card: "Venue fit", removed: narrative.cards.venue_fit!.removed }]} />);
+    expect(screen.getByText(/Every number and name in the write-up is checked/)).toBeTruthy();
+    expect(screen.getByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.").className).not.toContain("line-through");
+    expect(screen.getAllByText(/^Verified: .*found in this card's Qloo results$/).length).toBeGreaterThan(0);
+    expect(screen.getByText("Removed: Number 0.93 not in evidence")).toBeTruthy();
+    expect(screen.getByText("Removed: Entity 'Foro Alameda' not in any referenced result")).toBeTruthy();
     expect(screen.getByText("Foro Alameda is an alternative room.").className).toContain("line-through");
   });
   it("sponsors show the top five and a +N more line", () => {

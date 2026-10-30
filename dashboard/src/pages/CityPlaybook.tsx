@@ -202,7 +202,7 @@ function CityPlaybookPage() {
   const { verified, removed: removedCount } = narrative?.status === "ok" ? visibleClaimTotals(narrative.cards) : { verified: 0, removed: 0 };
   const claimsValue = narrative?.status === "ok" ? `${verified} verified · ${removedCount} removed` : narrative ? "Narrative unavailable" : "—";
   const audit = narrative?.status === "ok"
-    ? ([...ORDER, "talent"] as CardKind[]).map((k) => ({ card: CARD_TITLE[k], removed: narrative.cards[k]?.removed ?? [] }))
+    ? ([...ORDER, "talent"] as CardKind[]).map((k) => ({ card: CARD_TITLE[k], verified: narrative.cards[k]?.verified ?? [], removed: narrative.cards[k]?.removed ?? [] }))
     : [];
 
   // The shortlist when it holds another stop with coordinates; otherwise every city on the board.
@@ -334,7 +334,7 @@ function CityPlaybookPage() {
             { label: "TOP ZONE", value: zoneDisplayLabel(first(pb.cards, "promo_zones", "label"), shownCity.name) },
             { label: "BEST ROOM", value: first(pb.cards, "venue_fit", "name") },
             { label: "SUPPORT", value: first(pb.cards, "co_billing", "name") },
-            { label: "CLAIMS", value: claimsValue, tour: "claims-tile" },
+            { label: "CLAIMS", value: claimsValue, tour: "claims-tile", onClick: narrative?.status === "ok" && verified + removedCount > 0 ? () => setAuditOpen(true) : undefined, aria: `See the ${verified + removedCount} checked claims` },
           ]} />
           {narrative?.status === "unavailable" && <Notice>{narrative.message}</Notice>}
           {budget && (
@@ -402,7 +402,7 @@ function CityPlaybookPage() {
       )}
 
       <Sheet open={whyOpen} onClose={() => setWhyOpen(false)} title={`${shownCity.name} — why this score?`}><WhyThisScore city={shownCity} scoring={state.scoring} clockRule={!!window} /></Sheet>
-      <Sheet open={auditOpen} onClose={() => setAuditOpen(false)} title="Removed claims"><ClaimsAudit claims={audit} /></Sheet>
+      <Sheet open={auditOpen} onClose={() => setAuditOpen(false)} title="Checked claims"><ClaimsAudit claims={audit} /></Sheet>
       <Sheet open={logOpen} onClose={() => setLogOpen(false)} title="Agent log"><AgentLog events={pb.log} /></Sheet>
     </div>
   );

@@ -38,7 +38,7 @@ export function PlaybookCard({ accent, meta, title, claims: allClaims, narrative
         )}
         <div className="mt-4">{children}</div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3">
-          {narrativeStatus === "ok" && claims ? <ClaimsBadge verified={verified.length} removed={removed} onClick={removed > 0 ? onAudit : undefined} /> : <span />}
+          {narrativeStatus === "ok" && claims ? <ClaimsBadge verified={verified.length} removed={removed} onClick={onAudit} label={`See the ${verified.length + removed} checked claims for ${title}`} /> : <span />}
           {refsCount > 0 && (
             <span className="inline-flex h-6 items-center rounded-[4px] bg-paper-raised px-2 text-[12px] font-medium tabular-nums text-canvas-muted">
               Qloo · {refsCount} {refsCount === 1 ? "request" : "requests"}
