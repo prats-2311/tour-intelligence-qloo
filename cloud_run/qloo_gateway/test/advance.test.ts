@@ -3,7 +3,7 @@ import { BudgetGuard } from "../src/budget.js";
 import { MemoryCache } from "../src/cache.js";
 import type { GenerateFn } from "../src/narrative/gemini.js";
 import { MemoryUsageStore } from "../src/web/usage.js";
-import { advance, aggregateWeather, filterHolidays, resolveCountry, verifyAdvance, windowInYear, type AdvanceDeps } from "../src/web/advance.js";
+import { QUERY_VERSION, advance, aggregateWeather, filterHolidays, resolveCountry, verifyAdvance, windowInYear, type AdvanceDeps } from "../src/web/advance.js";
 
 const results = [
   { id: "w1", url: "https://a.example/visa", title: "Mexico work visa for musicians", content: "Foreign performers need a permit. Processing takes 30 days." },
@@ -167,5 +167,53 @@ describe("verifyAdvance", () => {
     expect(v.summary).toBe("");
     expect(v.leadTime).toBe("30 days");
     expect(verifyAdvance({ leadTime: "6 weeks", items: [] }, results).leadTime).toBeUndefined();
+  });
+});
+
+describe("destination-country filtering", () => {
+  const us = { city: "Los Angeles", country: "US", start: "2027-03-19", end: "2027-03-22", sessionId: "s" };
+  const mixed = [
+    { id: "w1", url: "https://uscis.gov/o1", title: "O-1 and P-1 visas for foreign performers - USCIS", content: "Foreign musicians performing in the United States need a P-1 or O-1 petition." },
+    { id: "w2", url: "https://example.ca/p2", title: "P2 Work Permits for Musicians - Legal Requirements - Canada", content: "The P2 Reciprocal Exchange fee is $510." },
+    { id: "w3", url: "https://immifrance.fr/touring", title: "Touring France - ImmiFrance", content: "Artists touring France need a declaration." },
+    { id: "w4", url: "https://alifvisa.example/x", title: "Alif Visa", content: "Apply for a visa online in 5 days." },
+  ];
+  it("queries with the full country name and keeps only destination-country sources in the prompt", async () => {
+    const search = vi.fn(async () => mixed);
+    const generate = vi.fn(reply({ summary: "x", items: [] }));
+    await advance(us, deps({ search, generate: generate as unknown as GenerateFn }));
+    expect(search.mock.calls.map((c) => String((c as unknown[])[0]))[0]).toContain("United States");
+    const prompts = generate.mock.calls.map((c) => JSON.stringify(c)).join("\n");
+    expect(prompts).toContain("uscis.gov/o1");
+    expect(prompts).not.toContain("example.ca");
+    expect(prompts).not.toContain("immifrance");
+    expect(prompts).not.toContain("alifvisa");
+    expect(prompts).toContain("IN United States");
+  });
+  it("never lists wrong-country sources or their items, for visa or equipment", async () => {
+    const generate: GenerateFn = reply({ summary: "s", items: [
+      { text: "P-1 petition needed", sourceUrl: "https://uscis.gov/o1" },
+      { text: "The P2 fee is $510", sourceUrl: "https://example.ca/p2" },
+    ] });
+    const r = await advance(us, deps({ search: vi.fn(async () => mixed), generate }));
+    for (const s of [r.visa, r.equipment]) {
+      if (s.status !== "ok") throw new Error("expected ok");
+      expect(s.items.map((i) => i.text)).toEqual(["P-1 petition needed"]);
+      expect(s.sources.map((x) => x.url)).toEqual(["https://uscis.gov/o1"]);
+    }
+  });
+  it("verifyAdvance drops items cited to a source for another country", () => {
+    const v = verifyAdvance({ items: [{ text: "P-1 petition needed", sourceUrl: "https://uscis.gov/o1" }, { text: "Fee is $510", sourceUrl: "https://example.ca/p2" }] }, mixed, "US");
+    expect(v.items.map((i) => i.text)).toEqual(["P-1 petition needed"]);
+    expect(v.removed[0]?.reason).toBe("source not in results");
+  });
+  it("uses aliases (MX: INM/México) and bumps the cache version", async () => {
+    const mx = [{ id: "a", url: "https://inm.gob.mx/x", title: "Permisos INM para artistas", content: "Artistas extranjeros." }, { id: "b", url: "https://x.example/b", title: "Brasil visto artista", content: "Brazil visa" }];
+    const generate = vi.fn(reply({ summary: "x", items: [] }));
+    await advance(input, deps({ search: vi.fn(async () => mx), generate: generate as unknown as GenerateFn }));
+    const p = generate.mock.calls.map((c) => JSON.stringify(c)).join("\n");
+    expect(p).toContain("inm.gob.mx");
+    expect(p).not.toContain("x.example/b");
+    expect(QUERY_VERSION).toBe("advance-v2");
   });
 });
