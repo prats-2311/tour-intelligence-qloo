@@ -78,6 +78,9 @@ export type GatewayEvent =
   | { type: "error"; code: string; message: string };
 
 export interface ChatMessage { role: "user" | "assistant"; text: string }
+/** A user's private document, as pages of text extracted in the browser. Lives only inside one strategist request. */
+export interface UserDocument { id: string; name: string; pages: Array<{ n: number; text: string }> }
+
 export interface StrategistContext {
   artist?: { name: string; entityId: string };
   regions?: string[];

@@ -1,4 +1,4 @@
-import type { ChatMessage, StrategistContext } from "../types.js";
+import type { ChatMessage, StrategistContext, UserDocument } from "../types.js";
 
 export const LIMITS = { messages: 12, messageChars: 1000, nameChars: 100, cities: 20, regions: 6 } as const;
 const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u2028\u2029\u202A-\u202E\u2066-\u2069]/g;
@@ -65,4 +65,36 @@ export function validateContext(input: unknown): { ok: true; context: Strategist
     ctx.focusCityId = c.focusCityId;
   }
   return { ok: true, context: ctx };
+}
+
+export const DOCUMENT_LIMITS = { docs: 3, pagesPerDoc: 40, totalChars: 60_000, nameChars: 120 } as const;
+const DOC_ID = /^[A-Za-z0-9_-]{1,40}$/;
+const TEXT_CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u2028\u2029\u202A-\u202E\u2066-\u2069]/g;
+
+/** Private documents sent with one strategist request. Text is cleaned of control characters and of look-alike citation markers so a page cannot forge a `[doc:x p.n]` source. */
+export function validateDocuments(input: unknown): { ok: true; documents: UserDocument[] } | { ok: false; error: string } {
+  if (input === undefined || input === null) return { ok: true, documents: [] };
+  if (!Array.isArray(input) || input.length > DOCUMENT_LIMITS.docs) return { ok: false, error: `documents must be an array of at most ${DOCUMENT_LIMITS.docs}` };
+  const seen = new Set<string>();
+  const out: UserDocument[] = [];
+  let total = 0;
+  for (const raw of input) {
+    const d = rec(raw);
+    if (!d || typeof d.id !== "string" || !DOC_ID.test(d.id) || seen.has(d.id)) return { ok: false, error: "each document needs a unique short id" };
+    seen.add(d.id);
+    const name = typeof d.name === "string" ? d.name.replace(TEXT_CONTROL, "").trim() : "";
+    if (name === "" || name.length > DOCUMENT_LIMITS.nameChars) return { ok: false, error: `document names must be 1-${DOCUMENT_LIMITS.nameChars} characters` };
+    if (!Array.isArray(d.pages) || d.pages.length < 1 || d.pages.length > DOCUMENT_LIMITS.pagesPerDoc) return { ok: false, error: `each document needs 1-${DOCUMENT_LIMITS.pagesPerDoc} pages` };
+    const pages: UserDocument["pages"] = [];
+    for (const rawPage of d.pages) {
+      const p = rec(rawPage);
+      if (!p || typeof p.n !== "number" || !Number.isInteger(p.n) || p.n < 1 || p.n > 9999 || typeof p.text !== "string") return { ok: false, error: "each page needs an integer number and text" };
+      const text = p.text.replace(TEXT_CONTROL, "").replace(/\[doc:/gi, "[ doc:");
+      total += text.length;
+      pages.push({ n: p.n, text });
+    }
+    out.push({ id: d.id, name, pages });
+  }
+  if (total > DOCUMENT_LIMITS.totalChars) return { ok: false, error: `documents may total at most ${DOCUMENT_LIMITS.totalChars} characters` };
+  return { ok: true, documents: out };
 }
