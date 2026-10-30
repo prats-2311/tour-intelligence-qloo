@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { ScrollRegion } from "@/components/ui/ScrollRegion";
 import { Link } from "react-router-dom";
 import { buildExampleReport } from "@/lib/agents/exampleReport";
 import { MCP_TOOLS } from "@/lib/agents/mcpTools";
@@ -117,7 +118,7 @@ export default function Agents() {
       </Section>
 
       <Section meta="3 · What your agent can call" title="Tools">
-        <div className="min-w-0 overflow-x-auto">
+        <ScrollRegion label="Public MCP tools">
           <table className="w-full min-w-[480px] border-collapse text-left text-[14px]">
             <caption className="sr-only">Public MCP tools</caption>
             <thead><tr className="text-[12px] text-canvas-muted"><th scope="col" className="py-1.5 pr-3 font-medium">Tool</th><th scope="col" className="py-1.5 font-medium">What you get</th></tr></thead>
@@ -130,7 +131,7 @@ export default function Agents() {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
         <P>Prompts: <Mono>plan_tour</Mono>, <Mono>brief_for_sponsor_meeting</Mono></P>
         <P>Resource: <Mono>tour-intel://about</Mono></P>
       </Section>

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { ScrollRegion } from "@/components/ui/ScrollRegion";
 import { isSampleMode } from "@/lib/qloo/client";
 import { postV2Tap, readTaps, rememberTap, useStats, type TapAction, type V2Stats } from "@/lib/qloo/stats";
 import { useTour } from "@/components/tour/tourContext";
@@ -174,7 +175,9 @@ function Act({ d }: { d: TasteLoopData }) {
 
 function Experiences({ d }: { d: TasteLoopData }) {
   const items = buildExperiences(d);
-  const [open, setOpen] = useState<string>(items[0]!.id);
+  // Several can stay open: opening a lower item must not close one above it and drag its own header up under the pointer.
+  const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set([items[0]!.id]));
+  const toggle = (id: string) => setOpen((o) => { const n = new Set(o); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const chip = d.real ? `Real Qloo data, recorded ${d.recordedOn}` : "";
   return (
     <Card tour="v2-experiences" meta="5 · Experiences" title="Experiences fans could book" tag={<Tag>Concept</Tag>}>
@@ -183,7 +186,7 @@ function Experiences({ d }: { d: TasteLoopData }) {
       </p>
       <ul className="mt-3 space-y-2">
         {items.map((x) => {
-          const isOpen = open === x.id;
+          const isOpen = open.has(x.id);
           return (
             <li key={x.id} data-testid="experience" className="rounded-[12px] bg-paper-raised">
               <h3>
@@ -192,7 +195,7 @@ function Experiences({ d }: { d: TasteLoopData }) {
                   id={`exp-btn-${x.id}`}
                   aria-expanded={isOpen}
                   aria-controls={`exp-panel-${x.id}`}
-                  onClick={() => setOpen(isOpen ? "" : x.id)}
+                  onClick={() => toggle(x.id)}
                   className="flex min-h-11 w-full items-center justify-between gap-3 rounded-[12px] px-3 py-2 text-left text-[15px] font-semibold text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
                 >
                   <span className="min-w-0 break-words">{x.name}</span>
@@ -259,7 +262,7 @@ function Rsvp({ live, onTap }: { live: boolean; onTap: (a: TapAction) => void })
   const [tapped, setTapped] = useState<TapAction[]>(() => readTaps());
   const [busy, setBusy] = useState<TapAction | null>(null);
   const [note, setNote] = useState("");
-  const btn = "inline-flex h-11 flex-1 items-center justify-center rounded-[10px] bg-paper-raised px-3 text-[14px] font-semibold text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:text-canvas-muted disabled:opacity-70";
+  const btn = "inline-flex min-h-11 shrink-0 items-center justify-center rounded-[10px] border border-canvas-muted/50 bg-paper-raised px-3 text-[14px] font-semibold text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:flex-1 disabled:cursor-not-allowed disabled:border-dashed disabled:text-canvas-muted disabled:opacity-90";
   const tap = async (action: TapAction) => {
     setBusy(action);
     setNote("");
@@ -278,9 +281,10 @@ function Rsvp({ live, onTap }: { live: boolean; onTap: (a: TapAction) => void })
         <p className="mt-0.5 text-[13px] text-canvas-muted">Date and place would appear here</p>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           {TAP_BUTTONS.map(({ action, label }) => (
-            <button key={action} type="button" disabled={!live || busy !== null || tapped.includes(action)} aria-pressed={live ? tapped.includes(action) : undefined} onClick={() => void tap(action)} className={btn}>{label}</button>
+            <button key={action} type="button" disabled={!live || busy !== null || tapped.includes(action)} aria-disabled={!live ? true : undefined} aria-describedby={!live ? "rsvp-off-note" : undefined} aria-pressed={live ? tapped.includes(action) : undefined} onClick={() => void tap(action)} className={btn}>{label}</button>
           ))}
         </div>
+        {!live && <p id="rsvp-off-note" className="mt-2 text-[13px] text-canvas-muted">Prototype buttons switch on when analytics is enabled</p>}
         <p role="status" className="mt-2 min-h-[1.25rem] text-[13px] text-canvas-muted">{note}</p>
       </div>
       {live
@@ -375,11 +379,11 @@ function Compare() {
     <section data-tour="v2-compare" aria-label="V1 today versus V2" className="scroll-mt-20 rounded-[18px] bg-paper p-4 md:p-5">
       <p className={META}>9 · V1 today vs V2</p>
       <h2 className="font-title mt-1 text-[22px] leading-tight text-canvas-text">What would change</h2>
-      <div className="mt-3 overflow-x-auto">
+      <div className="mt-3"><ScrollRegion label="V1 today versus V2">
         <table className="w-full min-w-[520px] border-collapse text-left text-[14px]">
           <thead>
             <tr className="text-[12px] text-canvas-muted">
-              <th scope="col" className="py-2 pr-3 font-medium"> </th>
+              <th scope="col" className="py-2 pr-3 font-medium"><span className="sr-only">Topic</span></th>
               <th scope="col" className="py-2 pr-3 font-medium">V1: today</th>
               <th scope="col" className="py-2 font-medium">V2: concept</th>
             </tr>
@@ -394,7 +398,7 @@ function Compare() {
             ))}
           </tbody>
         </table>
-      </div>
+      </ScrollRegion></div>
       <h3 className="font-title mt-5 text-[18px] text-canvas-text">Honest limits</h3>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-[15px] text-canvas-text">
         {HONEST_LIMITS.map((l) => <li key={l}>{l}</li>)}
