@@ -5,6 +5,7 @@ import type { Score, ScoredCity } from "@/lib/qloo/types";
 import { DataWarningBadge, warningLabel } from "./DataWarningBadge";
 import { CloseCallChip } from "./CloseCallChip";
 import { VerdictChip } from "./VerdictChip";
+import { CityStatusChip } from "@/components/collab/Status";
 
 /** Column template shared with the desktop header row in TourBoard. */
 export const ROW_COLS_LG = "lg:grid-cols-[minmax(0,1fr)_96px_140px_32px]";
@@ -47,6 +48,7 @@ export function CityRow({ city, selected, dimActivation, onOpen, openable = true
           <span data-testid="city-name" className="flex min-w-0 items-baseline gap-x-1.5">
             <span data-testid="city-name-text" className="font-title min-w-0 break-words text-[16px] leading-tight text-canvas-text">{city.name}</span>
             <span className="shrink-0 text-[12px] font-medium text-canvas-muted">{city.country}</span>
+            <CityStatusChip cityId={city.id} />
           </span>
           {hasNotes && (
             <span data-testid="row-notes" className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">

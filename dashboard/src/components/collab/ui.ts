@@ -1,0 +1,5 @@
+export const collabBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:opacity-50";
+export const collabTextBtn = "inline-flex min-h-11 items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:opacity-50";
+export const collabInput = "w-full rounded-[8px] border border-canvas-line bg-canvas px-3 py-2 text-[15px] text-canvas-text placeholder:text-canvas-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
+export const roleChip = "inline-flex h-5 items-center rounded-[4px] bg-paper-raised px-1.5 text-[11px] font-medium text-canvas-muted";
+export const demoChip = "inline-flex h-5 items-center rounded-[4px] border border-gold/50 px-1.5 text-[11px] font-medium text-gold";

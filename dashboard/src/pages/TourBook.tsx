@@ -11,6 +11,7 @@ import { CallsAppendix } from "@/components/book/CallsAppendix";
 import { ProvenanceAppendix } from "@/components/book/ProvenanceAppendix";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { Sheet } from "@/components/qloo/Sheet";
+import { TeamBar } from "@/components/collab/TeamBar";
 import { fetchThisWeek } from "@/lib/qloo/client";
 import { LONG_NAMES_BRIEF, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { toIcs } from "@/lib/qloo/ics";
@@ -271,6 +272,8 @@ function TourBookPage() {
           style={{ transform: "scaleX(0)", transition: reduce ? "none" : "transform 120ms linear" }}
         />
       </header>
+
+      <div data-noprint className="px-4 pt-3 empty:hidden lg:px-6"><TeamBar cities={state.cities} tourThread="tour:book" /></div>
 
       {usingDefault && <p data-noprint data-testid="default-shortlist-note" className="px-4 pt-3 text-[13px] text-canvas-muted lg:px-6">Showing the {picked.length} {picked.length === 1 ? "market" : "markets"} we'd hold by default: you haven't picked any yet.</p>}
 

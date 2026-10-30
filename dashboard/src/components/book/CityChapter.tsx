@@ -3,6 +3,7 @@ import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { Notice } from "@/components/qloo/Notice";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { VerdictClockLine } from "@/components/qloo/VerdictClockLine";
+import { ChapterTeam } from "@/components/collab/ChapterTeam";
 import { AdvanceSheet } from "@/components/playbook/AdvanceSheet";
 import { CardBody, ThisWeekBody, isEmptyWeek } from "@/components/playbook/cardBody";
 import { ClaimsBadge } from "@/components/playbook/ClaimsBadge";
@@ -70,11 +71,12 @@ export function CityChapter({ chapter, sample = false, showcase = false, artist,
           <VerdictClockLine window={window} />
           <RadiusNote city={city} pool={stops ?? []} />
         </div>
+        <ChapterTeam cityId={city.id} />
         {!ok ? (
           <Notice>Playbook incomplete — {chapter.incompleteReason ?? "Not loaded"}</Notice>
         ) : (
           <>
-            <AdvanceSheet rows={chapter.advance} />
+            <AdvanceSheet rows={chapter.advance} cityId={city.id} />
             {narrative?.status === "unavailable" && <Notice>{narrative.message}</Notice>}
             <div data-testid="chapter-sections" className="flex min-w-0 flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:gap-y-6">
             {ORDER.map((kind) => {

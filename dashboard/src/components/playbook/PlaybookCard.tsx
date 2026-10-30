@@ -4,9 +4,9 @@ import { visibleClaims } from "@/lib/qloo/doNotBook";
 import { ClaimsBadge } from "./ClaimsBadge";
 
 // DESIGN 4.2 CueCard for the playbook: perforated city-accent rail, no border, no shadow.
-export function PlaybookCard({ accent, meta, title, claims: allClaims, narrativeStatus, refsCount, onAudit, hasEvidence, children }: {
+export function PlaybookCard({ accent, meta, title, claims: allClaims, narrativeStatus, refsCount, onAudit, hasEvidence, notes, children }: {
   accent: string; meta: string; title: string; claims?: CardClaims;
-  narrativeStatus: "ok" | "unavailable" | "pending"; refsCount: number; onAudit?: () => void; hasEvidence: boolean; children: ReactNode;
+  narrativeStatus: "ok" | "unavailable" | "pending"; refsCount: number; onAudit?: () => void; hasEvidence: boolean; /** Team notes button, next to the claims badge. */ notes?: ReactNode; children: ReactNode;
 }) {
   const claims = visibleClaims(allClaims);
   const verified = claims?.verified ?? [];
@@ -38,7 +38,10 @@ export function PlaybookCard({ accent, meta, title, claims: allClaims, narrative
         )}
         <div className="mt-4">{children}</div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3">
-          {narrativeStatus === "ok" && claims ? <ClaimsBadge verified={verified.length} removed={removed} onClick={onAudit} label={`See the ${verified.length + removed} checked claims for ${title}`} /> : <span />}
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3">
+            {narrativeStatus === "ok" && claims ? <ClaimsBadge verified={verified.length} removed={removed} onClick={onAudit} label={`See the ${verified.length + removed} checked claims for ${title}`} /> : <span />}
+            {notes}
+          </div>
           {refsCount > 0 && (
             <span className="inline-flex h-6 items-center rounded-[4px] bg-paper-raised px-2 text-[12px] font-medium tabular-nums text-canvas-muted">
               Qloo · {refsCount} {refsCount === 1 ? "request" : "requests"}

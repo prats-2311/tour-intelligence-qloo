@@ -6,6 +6,7 @@ import { TasteInsightsSkeleton, TourBoardSkeleton, PlaybookSkeleton } from "./co
 import { QlooWebMcpTools } from "./components/QlooWebMcpTools";
 import { routeImports } from "./lib/routeImports";
 import { TourProvider } from "./components/tour/TourProvider";
+import { WorkspaceProvider } from "./lib/collab/WorkspaceProvider";
 
 // Landing and every route ship as separate chunks so the initial bundle stays small; each gets a fixed-height
 // skeleton fallback so a direct load never paints a blank page or jumps.
@@ -34,6 +35,7 @@ export default function App() {
   useShowcaseVariant();
   return (
     <TourProvider>
+      <WorkspaceProvider>
       <QlooWebMcpTools />
       <AppShell>
         {/* Every lazy route gets its own Suspense + matching skeleton. A bare
@@ -54,6 +56,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AppShell>
+      </WorkspaceProvider>
     </TourProvider>
   );
 }

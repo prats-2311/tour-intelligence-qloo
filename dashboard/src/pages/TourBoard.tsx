@@ -14,6 +14,7 @@ import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
 import { interruptedText, Notice, regionNoticeText } from "@/components/qloo/Notice";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { Sheet } from "@/components/qloo/Sheet";
+import { TeamBar } from "@/components/collab/TeamBar";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { VerdictGlyph } from "@/components/qloo/VerdictGlyph";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
@@ -468,6 +469,7 @@ export default function TourBoard() {
           <button type="button" onClick={replay} className={smallBtn}><RotateCcw size={12} aria-hidden />Replay the agent</button>
         )}
         <AgentLogChip events={state.log} onOpen={() => setLogOpen(true)} />
+        {state.cities.length > 0 && <TeamBar cities={state.cities} tourThread="tour:board" />}
       </div>
     </header>
   );
