@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
@@ -37,7 +37,7 @@ describe("AppShell", () => {
     const steps = Array.from(document.querySelectorAll("[data-step]")).map((li) => [li.getAttribute("data-step"), li.getAttribute("data-state")]);
     expect(steps).toEqual([["markets", "done"], ["decide", "done"], ["playbook", "current"], ["book", "todo"]]);
     expect(document.querySelector('[data-step="book"]')?.textContent).toContain("4");
-    expect(screen.getByRole("link", { name: /Playbook/ }).getAttribute("aria-current")).toBe("page");
+    expect(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: /Playbook/ }).getAttribute("aria-current")).toBe("page");
   });
   it("off the main path (Taste, Proof) nothing is current and nothing is marked done", () => {
     mm(true);

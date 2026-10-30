@@ -73,7 +73,7 @@ test("promoter judge path: landing → board → playbook → hold → book → 
   await expect(page).toHaveURL(/\/tours\/playbook\//);
   await expect(page.getByRole("heading", { name: cityName }).first()).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole("heading", { name: "Sponsors" }).first()).toBeVisible({ timeout: 20_000 });
-  const proofLink = page.getByRole("link", { name: /How we tested it/ }).first();
+  const proofLink = page.getByRole("main").getByRole("link", { name: /How we tested it/ }).first();
   await expect(proofLink).toHaveAttribute("href", "/proof");
   expect(await noOverflow(page), "playbook overflow").toBe(true);
   await expectNoSeriousA11y(page, "playbook");

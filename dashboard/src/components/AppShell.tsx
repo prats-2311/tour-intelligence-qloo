@@ -1,8 +1,17 @@
-import type { ReactNode } from "react";
+import { Menu } from "lucide-react";
+import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 import { StrategistDock, StrategistFab, StrategistToggle, showsStrategist, useStrategistDock } from "./strategist/StrategistLauncher";
 import { JourneyStepper } from "./JourneyStepper";
+import { ActivityPanel } from "./collab/TeamBar";
+import { Breadcrumbs } from "./nav/Breadcrumbs";
+import { DRAWER_ID, NavDrawer } from "./nav/NavDrawer";
+import { Sidebar } from "./nav/Sidebar";
+import { useWorkspace } from "@/lib/collab/workspaceContext";
+import type { NavActionId } from "@/lib/nav/navConfig";
+import { useNavCollapsed } from "@/lib/nav/useNavCollapsed";
+import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
@@ -10,6 +19,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   const dock = useStrategistDock();
   const strategistRoute = showsStrategist(location.pathname);
   const docked = isDesktop && strategistRoute && dock.open;
+  const landing = location.pathname === "/";
+  const showSidebar = isDesktop && !landing;
+  const { collapsed, toggle } = useNavCollapsed(showSidebar);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
+  const [shared, setShared] = useState<{ url: string | null; copied: boolean } | null>(null);
+  const hamburger = useRef<HTMLButtonElement>(null);
+  const workspace = useWorkspace();
+  const { state } = useTourBoard();
+  const onAction = (a: NavActionId) => {
+    if (a === "activity") setActivityOpen(true);
+    else void workspace.share().then(setShared);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
@@ -28,6 +50,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
       ) : (
+        <>
+        {!landing && (
+          <div data-mobile-bar className="flex h-11 shrink-0 items-center gap-1 bg-canvas-raised pr-2">
+            <button ref={hamburger} type="button" aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls={DRAWER_ID} onClick={() => setDrawerOpen(true)} className="inline-flex size-11 items-center justify-center rounded-[8px] text-bone outline-none focus-visible:ring-2 focus-visible:ring-gold">
+              <Menu size={20} aria-hidden />
+            </button>
+            <Breadcrumbs inline />
+          </div>
+        )}
         <nav
           data-app-shell
           aria-label="Primary"
@@ -35,11 +66,32 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <JourneyStepper variant="bottom" />
         </nav>
+        </>
       )}
 
-      <main className={`min-w-0 flex-1 px-4 py-6 lg:px-8 lg:py-8 ${isDesktop ? "" : "pb-[calc(5rem+env(safe-area-inset-bottom))]"} ${docked ? "lg:pr-[380px]" : ""}`}>
+      <div
+        data-nav-grid
+        style={showSidebar ? ({ "--nav-w": collapsed ? "64px" : "240px" } as CSSProperties) : undefined}
+        className={showSidebar ? "grid flex-1 grid-cols-[var(--nav-w)_minmax(0,1fr)] transition-[grid-template-columns] duration-200 motion-reduce:transition-none" : "flex flex-1 flex-col"}
+      >
+        {showSidebar && <Sidebar collapsed={collapsed} onToggle={toggle} onAction={onAction} />}
+        <div className="flex min-w-0 flex-1 flex-col">
+      {!landing && isDesktop && <Breadcrumbs />}
+      <main className={`min-w-0 flex-1 px-4 ${landing ? "pt-6 lg:pt-8" : "pt-2 lg:pt-3"} ${isDesktop ? "pb-8" : "pb-[calc(5rem+env(safe-area-inset-bottom))]"} lg:px-8 ${docked ? "lg:pr-[380px]" : ""}`}>
         {children}
       </main>
+        </div>
+      </div>
+
+      {!isDesktop && !landing && <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} returnFocusTo={hamburger} onAction={onAction} />}
+      {workspace.enabled && <ActivityPanel open={activityOpen} onClose={() => setActivityOpen(false)} cities={state.cities} />}
+      {shared && (
+        <div role="status" className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-4 z-[45] flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-[10px] bg-paper px-3 py-2 text-[13px] text-bone shadow-lg lg:bottom-4">
+          <span>{shared.copied ? "Link copied." : shared.url ? "Copy this link:" : workspace.error ?? "Could not create a link."}</span>
+          {shared.url && !shared.copied && <input readOnly value={shared.url} onFocus={(e) => e.currentTarget.select()} aria-label="Workspace link" className="w-56 rounded-[6px] border border-canvas-line bg-canvas px-2 py-1 text-[12px]" />}
+          <button type="button" onClick={() => setShared(null)} className="inline-flex min-h-11 items-center rounded-[6px] px-2 text-canvas-muted hover:text-bone focus-visible:outline-2 focus-visible:outline-gold">Dismiss</button>
+        </div>
+      )}
 
       {strategistRoute && !isDesktop && <StrategistFab />}
       {docked && <StrategistDock onClose={() => dock.setOpen(false)} />}

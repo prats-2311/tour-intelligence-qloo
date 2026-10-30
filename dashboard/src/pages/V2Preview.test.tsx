@@ -120,7 +120,7 @@ describe("/v2 concept preview", () => {
   it("has no active journey step", () => {
     const { container } = mount();
     expect(container.querySelectorAll("[data-step][data-state='current']")).toHaveLength(0);
-    expect(container.querySelectorAll("[aria-current='page']")).toHaveLength(0);
+    expect(container.querySelectorAll("[data-step] [aria-current='page']")).toHaveLength(0);
   });
 
   it("leaves every venue intent field blank for the venue to answer, never a made-up value", () => {

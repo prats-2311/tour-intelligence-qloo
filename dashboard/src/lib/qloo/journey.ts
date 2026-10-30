@@ -35,7 +35,8 @@ export type JourneyInput = {
   routing?: boolean;
 };
 
-const queryFor = (source: Source, sampleSet?: SampleSet, routing = false): string =>
+/** The query that keeps a run's data mode on links: ?showcase=1|routing, ?sample=1|long, or none for a live run. */
+export const journeyQuery = (source: Source, sampleSet?: SampleSet, routing = false): string =>
   source === "showcase" ? showcaseQuery(routing) : source === "sample" ? (sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
 
 const hasPlaybook = (source: Source, id: string, routing: boolean): boolean =>
@@ -54,7 +55,7 @@ export function journeyLinks(input: JourneyInput): Record<StepId, string> {
     shortlist = defaultShortlist(cities, source === "showcase" ? showcaseBrief(routing ? "routing" : "main").maxStops : 8);
     lastOpened = null;
   }
-  const q = queryFor(source, sampleSet, routing);
+  const q = journeyQuery(source, sampleSet, routing);
   const decide = `/tours/board${q}`;
   const byId = new Map(cities.map((c) => [c.id, c]));
   const candidates = [lastOpened, ...shortlist, ...sortCities(cities, "winnability").map((c) => c.id)];

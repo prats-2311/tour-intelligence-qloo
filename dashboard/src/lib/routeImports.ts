@@ -11,3 +11,7 @@ export const routeImports = {
   agents: () => import("../pages/Agents"),
 };
 export type RouteKey = keyof typeof routeImports;
+
+/** Every path App.tsx registers a page for (not the legacy redirects or the catch-all). The nav hides an item whose route is not listed,
+ *  so a branch that adds a route adds its path here and the item appears. App.shell.test.tsx checks this list against App.tsx. */
+export const REGISTERED_ROUTE_PATHS: readonly string[] = ["/", "/tours/board", "/tours/playbook/:cityId", "/tours/book", "/proof", "/insights", "/v2", "/agents"];
