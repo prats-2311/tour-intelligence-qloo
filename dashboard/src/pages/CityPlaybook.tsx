@@ -17,6 +17,11 @@ import { nearestStop } from "@/lib/qloo/radius";
 import { RadiusNote } from "@/components/qloo/RadiusNote";
 import { VerdictClockLine } from "@/components/qloo/VerdictClockLine";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
+import { NotesButton } from "@/components/collab/Notes";
+import { SponsorLeads } from "@/components/collab/SponsorLeads";
+import { StatusPicker } from "@/components/collab/Status";
+import { TeamBar } from "@/components/collab/TeamBar";
+import { cardThread, cityThread } from "@/lib/collab/types";
 import { AdvanceSheet } from "@/components/playbook/AdvanceSheet";
 import { CardBody, ThisWeekBody, isEmptyWeek } from "@/components/playbook/cardBody";
 import { ClaimsAudit } from "@/components/playbook/ClaimsAudit";
@@ -242,15 +247,17 @@ function CityPlaybookPage() {
         refsCount={card.refs.length}
         onAudit={() => setAuditOpen(true)}
         hasEvidence={card.status === "ok"}
+        notes={<NotesButton threadKey={cardThread(shownCity.id, kind)} title={CARD_TITLE[kind]} />}
       >
         <CardBody card={card} merch={merch} city={shownCity.name} country={shownCity.country} artist={artist?.name} venueName={firstOkName(pb.cards, "venue_fit") ?? undefined} />
+        {kind === "sponsors" && <SponsorLeads cityId={shownCity.id} />}
       </PlaybookCard>
     );
   };
   const cardFor = (id: CardId): ReactNode => {
     if (id === "this_week") {
       return (
-        <PlaybookCard accent={accent} meta={metaLine(code, "this_week")} title={CARD_TITLE.this_week} narrativeStatus="unavailable" refsCount={0} hasEvidence>
+        <PlaybookCard accent={accent} meta={metaLine(code, "this_week")} title={CARD_TITLE.this_week} narrativeStatus="unavailable" refsCount={0} hasEvidence notes={<NotesButton threadKey={cardThread(shownCity.id, "this_week")} title={CARD_TITLE.this_week} />}>
           <ThisWeekBody week={week.data} />
         </PlaybookCard>
       );
@@ -348,7 +355,12 @@ function CityPlaybookPage() {
           <RadiusNote city={shownCity} pool={radiusPool} />
           {!isDesktop && whyBtn}
           <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
-          <AdvanceSheet rows={[
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <StatusPicker cityId={shownCity.id} />
+            <NotesButton threadKey={cityThread(shownCity.id)} title={shownCity.name} label="City notes" />
+          </div>
+          <TeamBar cities={state.cities.length ? state.cities : [shownCity]} />
+          <AdvanceSheet cityId={shownCity.id} editable rows={[
             { label: "TOP ZONE", value: zoneDisplayLabel(first(pb.cards, "promo_zones", "label"), shownCity.name) },
             { label: "BEST ROOM", value: first(pb.cards, "venue_fit", "name") },
             { label: "SUPPORT", value: first(pb.cards, "co_billing", "name") },

@@ -1,5 +1,6 @@
 import express, { type NextFunction, type Request, type Response } from "express";
 import type { City } from "../geo/cities.js";
+import { mountCollab, type CollabDeps } from "../collab/routes.js";
 import { PUBLIC_SESSION_PREFIX } from "../budget.js";
 import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import type { SponsorCandidate, SponsorVerdicts } from "../pipeline/sponsorCheck.js";
@@ -30,7 +31,7 @@ async function streamSse(res: Response, gen: AsyncGenerator<GatewayEvent>, contr
   res.end();
 }
 
-export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; advance?: (input: AdvanceInput) => Promise<Advance>; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo> }) {
+export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; advance?: (input: AdvanceInput) => Promise<Advance>; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo>; collab?: CollabDeps }) {
   const app = express();
   app.use(express.json({ limit: "64kb" }));
 
@@ -164,6 +165,8 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
     const input: AdvanceInput = { city: String(city), country: String(country), start: String(start), end: String(end), sessionId, ...(typeof artistCountry === "string" && artistCountry.trim() ? { artistCountry: artistCountry.trim() } : {}), ...(lat !== undefined && lon !== undefined ? { lat: Number(lat), lon: Number(lon) } : {}) };
     try { res.json(await deps.advance(input)); } catch (err) { next(err); }
   });
+  // Team workspaces (/v1/ws): absent without a store, so the routes 404 and the dashboard hides collaboration.
+  if (deps.collab) mountCollab(app, deps.collab);
 
   app.use((err: { status?: number; statusCode?: number; message?: string }, _req: Request, res: Response, _next: NextFunction) => {
     if (res.headersSent) return void res.end();

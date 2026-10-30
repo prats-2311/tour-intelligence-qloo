@@ -1,10 +1,12 @@
 import { Readable } from "node:stream";
 
-export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch }) {
+export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, collabDevUrl }) {
   const notConfigured = (res) => res.status(503).json({ error: "Qloo gateway not configured" });
 
-  async function forward(req, res, { route, path, method, body, stream }) {
-    if (!gatewayUrl) return notConfigured(res);
+  async function forward(req, res, { route, path, method, body, stream, dev }) {
+    // dev: the COLLAB_FAKE in-memory server (never set in production): no gateway and no token needed.
+    const base = dev ? collabDevUrl : gatewayUrl;
+    if (!base) return notConfigured(res);
     const sessionId = req.header("x-session-id");
     if (!sessionId || sessionId.length > 128) {
       return res.status(400).json({ error: "x-session-id header required (1-128 chars)" });
@@ -17,11 +19,11 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch })
       else res.end();
     };
     try {
-      const upstream = await fetchImpl(`${gatewayUrl}${path}`, {
+      const upstream = await fetchImpl(`${base}${path}`, {
         method,
         signal: controller.signal,
         headers: {
-          authorization: `Bearer ${await getToken()}`,
+          ...(dev ? {} : { authorization: `Bearer ${await getToken()}` }),
           "x-session-id": sessionId,
           ...(body !== undefined ? { "content-type": "application/json" } : {}),
         },
@@ -111,4 +113,33 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch })
     }
     return forward(req, res, { route: "tools", path: `/v1/tools/${encodeURIComponent(req.params.name)}`, method: "POST", body, stream: false });
   });
+
+  // Team workspaces: small JSON bodies, ws id checked here, full validation at the gateway.
+  const MAX_WS_BYTES = 8 * 1024;
+  const MAX_WS_SEED_BYTES = 40 * 1024; // a create may carry the demo seed (about 60 short notes)
+  const WS_ID = /^[A-Za-z0-9_-]{10,64}$/;
+  const WS_OPS = ["status", "message", "resolve", "override", "override/clear", "lead", "lead/remove"];
+  const sized = (req, res, max = MAX_WS_BYTES) => {
+    const body = req.body ?? {};
+    if (Buffer.byteLength(JSON.stringify(body)) > max) { res.status(400).json({ error: "request too large" }); return null; }
+    return body;
+  };
+  const wsDev = Boolean(collabDevUrl);
+  app.post("/api/qloo/ws", (req, res) => {
+    const body = sized(req, res, MAX_WS_SEED_BYTES);
+    if (body === null) return undefined;
+    return forward(req, res, { route: "ws-create", path: "/v1/ws", method: "POST", body, dev: wsDev });
+  });
+  app.get("/api/qloo/ws/:ws", (req, res) => {
+    if (!WS_ID.test(req.params.ws)) return res.status(400).json({ error: "ws is invalid" });
+    return forward(req, res, { route: "ws-get", path: `/v1/ws/${req.params.ws}`, method: "GET", dev: wsDev });
+  });
+  for (const op of WS_OPS) {
+    app.post(`/api/qloo/ws/:ws/${op}`, (req, res) => {
+      if (!WS_ID.test(req.params.ws)) return res.status(400).json({ error: "ws is invalid" });
+      const body = sized(req, res);
+      if (body === null) return undefined;
+      return forward(req, res, { route: `ws-${op}`, path: `/v1/ws/${req.params.ws}/${op}`, method: "POST", body, dev: wsDev });
+    });
+  }
 }
