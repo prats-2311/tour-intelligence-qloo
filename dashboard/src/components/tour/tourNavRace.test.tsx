@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { Link, MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkspaceProvider } from "@/lib/collab/WorkspaceProvider";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
@@ -17,6 +17,7 @@ vi.mock("@/components/qloo/TourMap", () => ({ default: () => <div data-testid="m
 
 const Where = () => { const l = useLocation(); return <output data-testid="where">{l.pathname}{l.search}</output>; };
 const Starter = () => { const t = useTour(); return <button onClick={() => t?.startTour("plan")}>go</button>; };
+const Away = () => { const nav = useNavigate(); return (<><Link to="/proof">away</Link><button onClick={() => nav(-1)}>back</button></>); };
 const where = () => screen.getByTestId("where").textContent ?? "";
 
 /** The recorded board with a workspace create held open, so the test decides when it resolves relative to the tour start. */
@@ -34,7 +35,7 @@ function mount() {
         <MemoryRouter initialEntries={["/tours/board?showcase=1"]}>
           <WorkspaceProvider>
             <TourProvider>
-              <Starter />
+              <Starter /><Away />
               <Routes><Route path="*" element={<p>page</p>} /></Routes>
             </TourProvider>
           </WorkspaceProvider>
@@ -76,5 +77,38 @@ describe("tour navigation vs the workspace id arriving in the URL", () => {
     await act(async () => { screen.getByText("go").click(); });
     expect(where()).toMatch(/^\/tours\/insights\?/);
     expect(where()).toMatch(/ws=testws/);
+  });
+});
+
+describe("the tour never fights the user", () => {
+  const startAndReach = async () => {
+    const release = mount();
+    release();
+    await waitFor(() => expect(where()).toMatch(/ws=testws/));
+    await act(async () => { screen.getByText("go").click(); });
+    await waitFor(() => expect(screen.getByTestId("tour-popover").textContent).toContain("Age groups, city by city"));
+  };
+  it("a link click after the step's page was reached ends the tour and stays where the user went", async () => {
+    await startAndReach();
+    await act(async () => { screen.getByText("away").click(); });
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+    expect(where()).toMatch(/^\/proof/);
+    expect(screen.queryByTestId("tour-popover")).toBeNull();
+    expect(window.localStorage.getItem("tiq.tour.plan")).toBe("dismissed");
+  });
+  it("the back button mid-tour ends the tour", async () => {
+    await startAndReach();
+    await act(async () => { screen.getByText("back").click(); });
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+    expect(where()).toMatch(/^\/tours\/board/);
+    expect(screen.queryByTestId("tour-popover")).toBeNull();
+  });
+  it("a finished tour stays completed when the user walks away later", async () => {
+    window.localStorage.setItem("tiq.tour.plan", "completed");
+    await startAndReach();
+    await act(async () => { screen.getByText("away").click(); });
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+    expect(screen.queryByTestId("tour-popover")).toBeNull();
+    expect(window.localStorage.getItem("tiq.tour.plan")).toBe("completed");
   });
 });
