@@ -3,6 +3,7 @@ import type { City } from "../geo/cities.js";
 import { PUBLIC_SESSION_PREFIX } from "../budget.js";
 import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import type { SponsorCandidate, SponsorVerdicts } from "../pipeline/sponsorCheck.js";
+import { runSponsorSegments } from "../pipeline/sponsorSegments.js";
 import { MAX_ROUTING_CITIES } from "../pipeline/routing.js";
 import { runTourBoard } from "../pipeline/tourBoard.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
@@ -90,6 +91,28 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
     const hybrid = deps.localActs && narrative && !sessionId!.startsWith(PUBLIC_SESSION_PREFIX);
     await streamSse(res, runCityPlaybook({ artist: String(artist), artistEntityId: String(artistEntityId), city: { name: String(city), country: String(country), ...(typeof cityId === "string" && cityId ? { id: cityId } : {}), ...(latN !== undefined && lonN !== undefined ? { lat: latN, lon: lonN } : {}) }, sessionId: sessionId!, narrative, ...(popularityN !== undefined ? { artistPopularity: popularityN } : {}) },
       { qloo: deps.qloo, cities: deps.cities, signal: controller.signal, narrate: deps.narrate, ...(deps.sponsorCheck && narrative ? { sponsorCheck: deps.sponsorCheck } : {}), ...(hybrid ? { localActs: deps.localActs! } : {}) }), controller);
+  });
+
+  // Sponsors by age group: one demographics lookup, then per-band brand recommends. Budget stops answer 200 {status:"unavailable", reason:"budget"}, like this-week's unavailable shape.
+  app.get("/v1/sponsor-segments", async (req, res, next) => {
+    const sessionId = req.header("x-session-id");
+    const { artistId, city, country, cityId, lat, lon } = req.query;
+    if (!validSession(sessionId) || [artistId, city, country].some((v) => typeof v !== "string" || !v || v.length > 80)) {
+      return void res.status(400).json({ error: "x-session-id, artistId, city, country required" });
+    }
+    const coord = (v: unknown) => (typeof v === "string" && v !== "" ? Number(v) : undefined);
+    const [latN, lonN] = [coord(lat), coord(lon)];
+    if ((cityId !== undefined && (typeof cityId !== "string" || cityId.length > 32)) || [latN, lonN].some((n) => n !== undefined && !Number.isFinite(n))) {
+      return void res.status(400).json({ error: "cityId must be a short string; lat and lon must be numbers" });
+    }
+    const controller = new AbortController();
+    res.on("close", () => controller.abort());
+    try {
+      res.json(await runSponsorSegments(
+        { artistId: String(artistId), sessionId, city: { name: String(city), country: String(country), ...(typeof cityId === "string" && cityId ? { id: cityId } : {}), ...(latN !== undefined && lonN !== undefined ? { lat: latN, lon: lonN } : {}) } },
+        { qloo: deps.qloo, cities: deps.cities, signal: controller.signal, ...(deps.sponsorCheck ? { sponsorCheck: deps.sponsorCheck } : {}) },
+      ));
+    } catch (err) { next(err); }
   });
 
   app.post("/v1/tools/:name", async (req, res) => {
