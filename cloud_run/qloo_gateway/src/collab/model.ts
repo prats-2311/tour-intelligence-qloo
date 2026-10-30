@@ -7,7 +7,7 @@ export type Status = (typeof STATUSES)[number];
 export type Field = (typeof FIELDS)[number];
 
 export const LIMITS = {
-  messages: 500, activity: 200, leads: 100, threads: 200, statuses: 100, overrides: 300, seedMessages: 12, seedStatuses: 8, seedLeads: 6,
+  messages: 500, activity: 200, leads: 100, threads: 200, statuses: 100, overrides: 300, seedMessages: 80, seedThreads: 30, seedStatuses: 12, seedLeads: 8, seedOverrides: 8,
   text: 1000, name: 40, value: 120, lead: 200, activityText: 80, docBytes: 900_000,
 } as const;
 export const TTL_DAYS = 30;
@@ -16,7 +16,7 @@ export interface Actor { name: string; role: Role }
 export interface Message extends Actor { id: string; text: string; at: number; demo?: true }
 export interface Thread { resolved: boolean; resolvedBy?: Actor; resolvedAt?: number; messages: Message[] }
 export interface StatusEntry extends Actor { status: Status; at: number; demo?: true }
-export interface OverrideEntry extends Actor { value: string; original: string; at: number }
+export interface OverrideEntry extends Actor { value: string; original: string; at: number; demo?: true }
 export interface Lead extends Actor { id: string; text: string; at: number; demo?: true }
 export interface ActivityEvent extends Actor { id: string; type: "status" | "message" | "resolve" | "reopen" | "override" | "override_clear" | "lead" | "lead_remove"; cityId?: string; key?: string; text?: string; at: number; demo?: true }
 /** The stored document. `createdAt` and `expiresAt` are real dates so a Firestore TTL policy on `expiresAt` can delete it. */
@@ -39,7 +39,7 @@ const bad = (m: string): never => { throw new CollabError(400, m); };
 
 export const WS_ID = /^[A-Za-z0-9_-]{10,64}$/;
 const CITY_ID = /^[A-Za-z0-9_-]{1,32}$/;
-const THREAD_KEY = /^(city:[A-Za-z0-9_-]{1,32}|card:[A-Za-z0-9_-]{1,32}:[a-z_]{1,24})$/;
+const THREAD_KEY = /^(tour:[a-z_]{1,24}|city:[A-Za-z0-9_-]{1,32}|card:[A-Za-z0-9_-]{1,32}:[a-z_]{1,24})$/;
 // eslint-disable-next-line no-control-regex
 const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f‪-‮⁦-⁩]/;
 
@@ -119,7 +119,7 @@ export function applyOp(d: WorkspaceDoc, op: Op, body: Record<string, unknown>, 
       const cur = d.overrides[id]?.[body.field as Field];
       if (!cur && Object.values(d.overrides).reduce((n, o) => n + Object.keys(o).length, 0) >= LIMITS.overrides) return bad("too many overrides");
       // Qloo's own suggestion stays on record: re-editing keeps the first original.
-      (d.overrides[id] ??= {})[body.field as Field] = { value, original: cur?.original ?? original, ...who, at: now };
+      (d.overrides[id] ??= {})[body.field as Field] = { value, original: cur?.original ?? original, ...who, at: now, ...demo };
       log(d, { type: "override", cityId: id, key: body.field as string, text: trim(value, LIMITS.activityText), ...who }, now, opts.demo);
       break;
     }
@@ -171,15 +171,19 @@ export function seedDoc(seed: unknown, now: number): WorkspaceDoc {
   };
   const ago = (v: unknown) => now - Math.min(10_080, Math.max(0, Number.isFinite(v) ? Number(v) : 0)) * 60_000;
   const rows: Array<{ at: number; run: () => void }> = [];
-  for (const x of arr(s.statuses, LIMITS.seedStatuses, "statuses")) rows.push({ at: ago(x.agoMin), run: () => applyOp(d, "status", x, ago(x.agoMin), { demo: true }) });
-  for (const t of arr(s.threads, LIMITS.seedMessages, "threads")) {
+  const add = (at: number, op: Op, body: Record<string, unknown>) => rows.push({ at, run: () => void applyOp(d, op, body, at, { demo: true }) });
+  for (const x of arr(s.statuses, LIMITS.seedStatuses, "statuses")) add(ago(x.agoMin), "status", x);
+  for (const t of arr(s.threads, LIMITS.seedThreads, "threads")) {
     const ms = arr(t.messages, LIMITS.seedMessages, "messages");
-    ms.forEach((m) => rows.push({ at: ago(m.agoMin), run: () => applyOp(d, "message", { ...m, key: t.key }, ago(m.agoMin), { demo: true }) }));
-    if (t.resolved === true && ms.length) rows.push({ at: ago(ms[ms.length - 1]!.agoMin) + 1, run: () => applyOp(d, "resolve", { ...(t.resolvedBy ?? ms[0]), key: t.key, resolved: true }, ago(ms[ms.length - 1]!.agoMin) + 1, { demo: true }) });
+    ms.forEach((m) => add(ago(m.agoMin), "message", { ...m, key: t.key }));
+    const r = t.resolved;
+    if (r && typeof r === "object" && ms.length) { const o = r as Record<string, unknown>; add(ago(o.agoMin), "resolve", { ...o, key: t.key, resolved: true }); }
   }
-  for (const l of arr(s.leads, LIMITS.seedLeads, "leads")) rows.push({ at: ago(l.agoMin), run: () => applyOp(d, "lead", l, ago(l.agoMin), { demo: true }) });
+  for (const o of arr(s.overrides, LIMITS.seedOverrides, "overrides")) add(ago(o.agoMin), "override", o);
+  for (const l of arr(s.leads, LIMITS.seedLeads, "leads")) add(ago(l.agoMin), "lead", l);
+  if (rows.length > LIMITS.seedMessages + 40) bad("seed is too large");
+  // Oldest first, so the activity feed and every "reopened by a later note" rule play out in order.
   rows.sort((a, b) => a.at - b.at).forEach((r) => r.run());
-  if (rows.length > LIMITS.seedMessages + LIMITS.seedStatuses + LIMITS.seedLeads + 2) bad("seed is too large");
   return d;
 }
 

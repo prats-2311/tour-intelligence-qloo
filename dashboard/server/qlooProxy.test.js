@@ -225,7 +225,7 @@ describe("qlooProxy", () => {
     it("forwards create, snapshot and each write op with auth and the session header", async () => {
       const fetchImpl = vi.fn(async () => json({ ok: true }));
       const base = await start({ gatewayUrl: "https://gw", getToken: async () => "tok", fetchImpl });
-      await call(base, "", { method: "POST", body: JSON.stringify({ seed: {} }) });
+      await call(base, "", { method: "POST", body: JSON.stringify({ seed: { note: "x".repeat(20 * 1024) } }) }); // a create may carry a seed above 8 KB
       await call(base, `/${WS}`);
       for (const op of ["status", "message", "resolve", "override", "override/clear", "lead", "lead/remove"]) await call(base, `/${WS}/${op}`, { method: "POST", body: JSON.stringify({ a: 1 }) });
       const urls = fetchImpl.mock.calls.map((c) => `${c[1].method} ${c[0]}`);
@@ -241,7 +241,7 @@ describe("qlooProxy", () => {
       expect((await call(base, "/short")).status).toBe(400);
       expect((await call(base, "/..%2Fx/status", { method: "POST", body: "{}" })).status).toBe(400);
       expect((await call(base, `/${WS}/status`, { method: "POST", body: JSON.stringify({ text: "x".repeat(9 * 1024) }) })).status).toBe(400);
-      expect((await call(base, "", { method: "POST", body: JSON.stringify({ seed: "x".repeat(9 * 1024) }) })).status).toBe(400);
+      expect((await call(base, "", { method: "POST", body: JSON.stringify({ seed: "x".repeat(41 * 1024) }) })).status).toBe(400);
       expect((await fetch(`${base}/api/qloo/ws/${WS}`)).status).toBe(400);
       expect(fetchImpl).not.toHaveBeenCalled();
     });

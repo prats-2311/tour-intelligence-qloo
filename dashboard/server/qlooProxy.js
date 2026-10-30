@@ -93,16 +93,17 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
 
   // Team workspaces: small JSON bodies, ws id checked here, full validation at the gateway.
   const MAX_WS_BYTES = 8 * 1024;
+  const MAX_WS_SEED_BYTES = 40 * 1024; // a create may carry the demo seed (about 60 short notes)
   const WS_ID = /^[A-Za-z0-9_-]{10,64}$/;
   const WS_OPS = ["status", "message", "resolve", "override", "override/clear", "lead", "lead/remove"];
-  const sized = (req, res) => {
+  const sized = (req, res, max = MAX_WS_BYTES) => {
     const body = req.body ?? {};
-    if (Buffer.byteLength(JSON.stringify(body)) > MAX_WS_BYTES) { res.status(400).json({ error: "request too large" }); return null; }
+    if (Buffer.byteLength(JSON.stringify(body)) > max) { res.status(400).json({ error: "request too large" }); return null; }
     return body;
   };
   const wsDev = Boolean(collabDevUrl);
   app.post("/api/qloo/ws", (req, res) => {
-    const body = sized(req, res);
+    const body = sized(req, res, MAX_WS_SEED_BYTES);
     if (body === null) return undefined;
     return forward(req, res, { route: "ws-create", path: "/v1/ws", method: "POST", body, dev: wsDev });
   });

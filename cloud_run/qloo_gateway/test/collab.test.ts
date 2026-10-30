@@ -72,18 +72,32 @@ describe("collab model", () => {
     expect(d.leads).toEqual({});
     expect(() => applyOp(d, "lead_remove", { ...me, cityId: "1", id }, 3)).toThrow(/No such lead/);
   });
-  it("seed marks everything demo, orders by time and validates shape", () => {
+  it("seed marks everything demo, plays out in time order and validates shape", () => {
     const d = seedDoc({
-      statuses: [{ cityId: "1", status: "confirmed", name: "Demo manager", role: "Manager", agoMin: 60 }],
-      threads: [{ key: "city:1", resolved: true, messages: [{ name: "A", role: "Booking agent", text: "hold?", agoMin: 30 }] }],
-      leads: [{ cityId: "1", text: "X", name: "B", role: "Brand team", agoMin: 5 }],
+      statuses: [{ cityId: "1", status: "confirmed", name: "Maya", role: "Manager", agoMin: 60 }],
+      threads: [
+        { key: "city:1", resolved: { name: "Maya", role: "Manager", agoMin: 20 }, messages: [{ name: "Leo", role: "Booking agent", text: "hold?", agoMin: 30 }] },
+        { key: "tour:board", messages: [{ name: "Maya", role: "Manager", text: "hi", agoMin: 90 }] },
+      ],
+      overrides: [{ cityId: "1", field: "best_room", value: "B", original: "A", name: "Maya", role: "Manager", agoMin: 40 }],
+      leads: [{ cityId: "1", text: "X", name: "Priya", role: "Brand team", agoMin: 5 }],
     }, 1_000_000_000);
     expect(d.statuses["1"]!.demo).toBe(true);
     expect(d.threads["city:1"]).toMatchObject({ resolved: true });
     expect(d.threads["city:1"]!.messages[0]!.demo).toBe(true);
-    expect(toSnapshot("w", d).activity[0]!.at).toBeGreaterThanOrEqual(toSnapshot("w", d).activity[1]!.at);
+    expect(d.overrides["1"]!.best_room).toMatchObject({ value: "B", original: "A", demo: true });
+    expect(d.leads["1"]![0]!.demo).toBe(true);
+    const s = toSnapshot("w", d);
+    expect(s.activity.map((e) => e.type)).toEqual(["lead", "resolve", "message", "override", "status", "message"]);
+    expect(s.activity.every((e, i, a) => i === 0 || a[i - 1]!.at >= e.at)).toBe(true);
+    expect(s.activity.every((e) => e.demo)).toBe(true);
     expect(() => seedDoc({ threads: "x" }, 0)).toThrow(/seed\.threads/);
-    expect(() => seedDoc({ statuses: new Array(9).fill({ cityId: "1", status: "dropped", ...me }) }, 0)).toThrow(/at most/);
+    expect(() => seedDoc({ statuses: new Array(13).fill({ cityId: "1", status: "dropped", ...me }) }, 0)).toThrow(/at most/);
+  });
+  it("seeds a full demo discussion (tens of messages) under the document cap", () => {
+    const messages = Array.from({ length: 60 }, (_, i) => ({ name: "Leo", role: "Booking agent", text: "t".repeat(180), agoMin: 4000 - i * 10 }));
+    const d = seedDoc({ threads: [{ key: "tour:board", messages: messages.slice(0, 30) }, { key: "city:2", messages: messages.slice(30) }] }, 1_000_000_000);
+    expect(Object.values(d.threads).reduce((n, t) => n + t.messages.length, 0)).toBe(60);
   });
 });
 
