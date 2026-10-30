@@ -72,6 +72,7 @@ export function QuadrantChart({ cities, thresholds, hrefFor }: { cities: ScoredC
                 <span>Fan heat {rnd(tipPoint.x)}</span>
                 <span>Activation {rnd(tipPoint.y)}</span>
                 {tipPoint.winnability !== null && <span>Winnability {rnd(tipPoint.winnability)}</span>}
+                {hrefFor(tipPoint.id) === null && <span className="text-canvas-muted">No playbook for this city in this example</span>}
               </div>
             )}
           </div>

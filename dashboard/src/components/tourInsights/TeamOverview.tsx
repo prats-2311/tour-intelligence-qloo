@@ -18,15 +18,15 @@ export function TeamOverview({ cities, snapshot, hrefFor }: { cities: ScoredCity
       table={{ head: ["Status", "Cities"], rows: STATUSES.map((s) => [STATUS_LABEL[s], counts[s]]) }}
     >
       <div className="flex flex-col gap-4">
-        <ul role="img" aria-label={`Cities by team status: ${STATUSES.map((s) => `${STATUS_LABEL[s]} ${counts[s]}`).join(", ")}`} className="flex flex-col gap-2">
+        <div role="img" aria-label={`Cities by team status: ${STATUSES.map((s) => `${STATUS_LABEL[s]} ${counts[s]}`).join(", ")}`} className="flex flex-col gap-2">
           {STATUSES.map((s) => (
-            <li key={s} aria-hidden className="grid grid-cols-[96px_1fr_28px] items-center gap-2 text-[13px]">
+            <div key={s} aria-hidden className="grid grid-cols-[96px_1fr_28px] items-center gap-2 text-[13px]">
               <span className="text-canvas-muted">{STATUS_LABEL[s]}</span>
               <span className="h-3 rounded-full bg-canvas"><span className={`block h-full rounded-full ${DOT[s]}`} style={{ width: `${(counts[s] / max) * 100}%` }} /></span>
               <span data-testid={`status-count-${s}`} className="text-right font-mono font-bold text-canvas-text tabular">{counts[s]}</span>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
         <div className="flex flex-col gap-1">
           <h3 className="font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-canvas-muted">Open threads</h3>
           {threads.length === 0 ? <p className="text-[14px] text-canvas-muted">No open threads.</p> : (

@@ -252,3 +252,13 @@ test("13. chart scatter markers are at least 44x44", async ({ page }) => {
   expect(n, "scatter has markers").toBeGreaterThan(3);
   expect(await small(page, "[data-tour=quadrant] a.absolute, [data-tour=quadrant] button.absolute")).toEqual([]);
 });
+
+test("15. a chart marker with no playbook says so when pressed, and Reset filters is disabled with nothing to reset", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/tours/insights?sample=1");
+  await expect(page.getByRole("heading", { name: "Verdict mix" })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("button", { name: "Reset filters" })).toBeDisabled();
+  const marker = page.locator("[data-tour=quadrant] button.absolute").first();
+  await marker.click();
+  await expect(page.getByRole("tooltip")).toContainText(/No playbook/);
+});
