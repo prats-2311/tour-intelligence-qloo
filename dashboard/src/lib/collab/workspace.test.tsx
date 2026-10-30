@@ -7,6 +7,7 @@ import { NotesButton } from "@/components/collab/Notes";
 import { SponsorLeads } from "@/components/collab/SponsorLeads";
 import { CityStatusChip, StatusPicker } from "@/components/collab/Status";
 import { TeamBar } from "@/components/collab/TeamBar";
+import { ToastProvider } from "@/components/ui/Toast";
 import { AdvanceSheet } from "@/components/playbook/AdvanceSheet";
 import { fakeCollabBackend } from "@/test/fakeCollabBackend";
 import { LUMEN_VALE_SAMPLE } from "../qloo/fixtures/lumenVale";
@@ -42,7 +43,7 @@ function Harness() {
   );
 }
 function mount(path = "/tours/board?showcase=1") {
-  return render(<MemoryRouter initialEntries={[path]}><TourBoardProvider><WorkspaceProvider><Harness /></WorkspaceProvider></TourBoardProvider></MemoryRouter>);
+  return render(<MemoryRouter initialEntries={[path]}><TourBoardProvider><WorkspaceProvider><ToastProvider><Harness /></ToastProvider></WorkspaceProvider></TourBoardProvider></MemoryRouter>);
 }
 const where = () => screen.getByTestId("where").textContent ?? "";
 const ready = async () => { await waitFor(() => expect(where()).toMatch(/ws=testws/)); await waitFor(() => expect(screen.getByTestId("enabled").textContent).toBe("true")); };
@@ -288,13 +289,79 @@ describe("activity and sync", () => {
     expect(be.calls[0]).toMatchObject({ method: "POST", path: "" });
     expect(be.calls[0]!.body).toEqual({});
   });
-  it("the share button copies the link with ws", async () => {
+  it("the share button copies the link with ws and confirms in a toast, not inline", async () => {
     const writeText = vi.fn(async (..._a: string[]) => undefined);
     vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
     mount(); await ready();
+    const bar = screen.getByTestId("team-bar");
+    const before = bar.innerHTML;
     fireEvent.click(screen.getByRole("button", { name: "Share with your team" }));
     await waitFor(() => expect(writeText).toHaveBeenCalled());
     expect(String(writeText.mock.calls[0]![0])).toMatch(/ws=testws\d+/);
-    expect(await screen.findByText(/Link copied/)).toBeTruthy();
+    const toast = await toastText();
+    expect(toast).toContain("Link copied");
+    expect(toast).toContain("Don't post contracts, fees or personal details.");
+    expect(bar.innerHTML).toBe(before); // nothing inserted into the header row
+    expect(bar.querySelector("[role=status]")).toBeNull();
+  });
+  it("a clipboard failure is an error toast with the link selectable, and still nothing inline", async () => {
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText: vi.fn(async () => { throw new Error("denied"); }) } });
+    mount(); await ready();
+    const bar = screen.getByTestId("team-bar");
+    fireEvent.click(screen.getByRole("button", { name: "Share with your team" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Copy this link");
+    expect((within(alert).getByLabelText("Text to copy") as HTMLInputElement).value).toMatch(/ws=testws\d+/);
+    expect(bar.querySelector("input, [role=alert], [role=status]")).toBeNull();
+  });
+});
+
+const toastText = async () => (await waitFor(() => { const v = document.querySelector("[data-toast-viewport]"); expect(v?.textContent).toBeTruthy(); return v!; })).textContent ?? "";
+
+describe("saves confirm in toasts", () => {
+  it("note posted, resolved and reopened", async () => {
+    mount(); await ready();
+    fireEvent.click(screen.getByRole("button", { name: /Notes for Sponsors/ }));
+    fireEvent.change(await screen.findByLabelText("Add a note"), { target: { value: "Hello team" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    await waitFor(() => expect(within(document.querySelector("[data-toast-viewport]") as HTMLElement).getByText("Note posted.")).toBeTruthy());
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(await within(dialog).findByRole("button", { name: /Mark resolved/ }));
+    await waitFor(() => expect(document.querySelector("[data-toast-viewport]")!.textContent).toContain("Thread marked resolved."));
+    fireEvent.click(await within(dialog).findByRole("button", { name: "Reopen" }));
+    await waitFor(() => expect(document.querySelector("[data-toast-viewport]")!.textContent).toContain("Thread reopened."));
+  });
+  it("status changed", async () => {
+    mount(); await ready();
+    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "on_hold" } });
+    expect(await toastText()).toContain("Status set to On hold.");
+    expect(screen.getByTestId("status-picker").querySelector("[role=status]")).toBeNull();
+  });
+  it("override saved and reverted", async () => {
+    mount(); await ready();
+    fireEvent.click(screen.getByRole("button", { name: "Edit Top zone" }));
+    fireEvent.change(screen.getByLabelText("Team value for Top zone"), { target: { value: "Harbour" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(document.querySelector("[data-toast-viewport]")!.textContent).toContain("Team value saved."));
+    fireEvent.click(await screen.findByRole("button", { name: "Revert to Qloo" }));
+    await waitFor(() => expect(document.querySelector("[data-toast-viewport]")!.textContent).toContain("Back to Qloo's value."));
+  });
+  it("sponsor lead added and removed", async () => {
+    mount(); await ready();
+    fireEvent.click(screen.getByRole("button", { name: "+ Add a lead" }));
+    fireEvent.change(screen.getByLabelText("Sponsor lead"), { target: { value: "Harbour Coffee" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save lead" }));
+    await waitFor(() => expect(document.querySelector("[data-toast-viewport]")!.textContent).toContain("Sponsor lead added."));
+    fireEvent.click(await screen.findByRole("button", { name: "Remove lead Harbour Coffee" }));
+    await waitFor(() => expect(document.querySelector("[data-toast-viewport]")!.textContent).toContain("Sponsor lead removed."));
+  });
+  it("a failed write is an error toast, never a saved one", async () => {
+    mount(); await ready();
+    const real = be.fetchImpl.getMockImplementation()!;
+    be.fetchImpl.mockImplementation(async (i, init) => (String(i).endsWith("/status") ? new Response(JSON.stringify({ error: "nope" }), { status: 500, headers: { "content-type": "application/json" } }) : real(i, init)));
+    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "on_hold" } });
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Couldn't save that");
+    expect(document.querySelector("[data-toast-viewport]")!.textContent).not.toContain("Status set");
   });
 });
