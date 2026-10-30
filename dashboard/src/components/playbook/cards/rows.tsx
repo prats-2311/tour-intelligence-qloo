@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import { mapsSearchUrl, spotifySearchUrl } from "@/lib/mapsLink";
 
 
-export function Rows({ children, tour }: { children: ReactNode; /** `data-tour` value for the guided tour. */ tour?: string }) {
-  return <ul data-tour={tour} className="text-[15px]">{children}</ul>;
+export function Rows({ children, tour, className = "" }: { children: ReactNode; /** `data-tour` value for the guided tour. */ tour?: string; className?: string }) {
+  return <ul data-tour={tour} className={`text-[15px] ${className}`}>{children}</ul>;
 }
 
 /** Small muted outbound link; `data-noprint` hides it in the Tour Book print view. */

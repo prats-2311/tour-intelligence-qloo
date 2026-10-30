@@ -90,6 +90,18 @@ describe("playbook cards", () => {
     expect(screen.getByText("Removed: Entity 'Foro Alameda' not in any referenced result")).toBeTruthy();
     expect(screen.getByText("Foro Alameda is an alternative room.").className).toContain("line-through");
   });
+  it("the audit labels the sentence that was left out, in plain words", () => {
+    if (narrative.status !== "ok") throw new Error();
+    render(<ClaimsAudit claims={[{ card: "Venue fit", removed: narrative.cards.venue_fit!.removed }]} />);
+    expect(screen.getAllByText("Left out of the write-up:").length).toBeGreaterThan(0);
+  });
+  it("a card that lists its items below leads with one verified sentence instead of repeating the list", () => {
+    const claim = (text: string) => ({ text, entities: [], numbers: [], refs: [] }) as never;
+    render(<PlaybookCard accent="#ff00aa" meta="m" title="Sponsors" claims={{ verified: [claim("First sentence."), claim("Second sentence."), claim("Third sentence.")], removed: [] }} narrativeStatus="ok" refsCount={0} hasEvidence leadOnly><p>list</p></PlaybookCard>);
+    expect(screen.getByText("First sentence.")).toBeTruthy();
+    expect(screen.queryByText("Second sentence.")).toBeNull();
+    expect(screen.getByText("3 verified · 0 removed")).toBeTruthy();
+  });
   it("sponsors show the top five and a +N more line", () => {
     render(<CardBody card={card("sponsors")} city="Guadalajara" />);
     expect(screen.getByText("Cerro Alto Mezcal")).toBeTruthy();
@@ -275,8 +287,8 @@ describe("playbook cards", () => {
   it("local moment card is titled for fans, with the promo hint", () => {
     render(<CardBody card={card("local_moment")} city="Guadalajara" />);
     expect(screen.getByText(/rank highly in this city\. Use them for local promo/)).toBeTruthy();
-    expect(CARD_TITLE.local_moment).toBe("What these fans love here");
-    expect(metaLine("LA", "local_moment", card("local_moment"))).toMatch(/^LA · WHAT THESE FANS LOVE HERE · \d+ PICKS$/);
+    expect(CARD_TITLE.local_moment).toBe("Places, films and TV these fans love");
+    expect(metaLine("LA", "local_moment", card("local_moment"))).toMatch(/^LA · PLACES, FILMS AND TV THESE FANS LOVE · \d+ PICKS$/);
   });
   it("local moment labels entity types", () => {
     render(<CardBody card={card("local_moment")} city="Guadalajara" />);

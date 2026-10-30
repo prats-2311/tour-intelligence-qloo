@@ -283,6 +283,7 @@ function CityPlaybookPage() {
         onAudit={() => setAuditOpen(true)}
         hasEvidence={card.status === "ok"}
         notes={<NotesButton threadKey={cardThread(shownCity.id, kind)} title={CARD_TITLE[kind]} />}
+        leadOnly={kind === "sponsors" || kind === "venue_fit" || kind === "promo_zones" || kind === "co_billing"}
       >
         <CardBody card={card} merch={merch} city={shownCity.name} country={shownCity.country} artist={artist?.name} venueName={firstOkName(pb.cards, "venue_fit") ?? undefined} segments={segments} pitchCityId={shownCity.id} />
         {kind === "sponsors" && <SponsorLeads cityId={shownCity.id} />}
@@ -353,7 +354,7 @@ function CityPlaybookPage() {
     </>
   );
   const talentCard = cardOf("talent");
-  const talentPanel = noSample ? noSamplePanel : loading ? <div className="skeleton h-[280px] max-w-xl rounded-[18px]" aria-hidden /> : talentCard ? <div className="max-w-xl">{playbookCard("talent")}</div> : <p className="text-[13px] text-canvas-muted">Acts these fans love here are unavailable for {shownCity.name}</p>;
+  const talentPanel = noSample ? noSamplePanel : loading ? <div className="skeleton h-[280px] rounded-[18px]" aria-hidden /> : talentCard ? <div>{playbookCard("talent")}</div> : <p className="text-[13px] text-canvas-muted">Acts these fans love here are unavailable for {shownCity.name}</p>;
   const advanceNote = !window ? (sample ? "This example has no date window, so there are no dates to check." : "Add a date window to the brief to see weather, holidays, visas and customs for these dates.") : !advanceReady ? "Advance details are not available for this sample city." : undefined;
   const advancePanel = noSample ? noSamplePanel : (
     <div className="max-w-xl">

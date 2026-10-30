@@ -53,7 +53,7 @@ export function OverrideValue({ cityId, field, qloo, editable, why, onGoToCard, 
         </span>
       ) : <>{children}{why && <WhyLine why={why} onGo={onGoToCard} className="mt-0.5 block" />}</>}
       {editable && (
-        <span className="flex items-center gap-3">
+        <span className="flex flex-wrap items-center gap-x-3">
           <button ref={editBtn} type="button" onClick={() => { setText(o?.value ?? ""); setReason(o?.reason ?? ""); setEditing(true); }} aria-label={`Edit ${FIELD_LABEL[field]}`} className={link}>Edit</button>
           {o && <button type="button" onClick={() => void w.write("override_clear", { cityId, field })} className={link}>Revert to Qloo</button>}
         </span>

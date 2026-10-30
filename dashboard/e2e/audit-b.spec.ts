@@ -167,3 +167,15 @@ test("7+8 pitch sheet at phone width prints one page too", async ({ page }) => {
   const pdf = await page.pdf({ format: "A4", printBackground: true });
   expect((pdf.toString("latin1").match(/\/Type\s*\/Page\b(?!s)/g) ?? []).length).toBe(1);
 });
+
+test("lower: Acts tab uses the width, card renamed, claims panel names the sentence left out", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(LA);
+  await loaded(page);
+  await expect(page.getByRole("heading", { name: "Places, films and TV these fans love" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What these fans love here" })).toHaveCount(0);
+  await page.getByRole("tab", { name: "Acts fans love" }).click();
+  const card = page.locator("[role=tabpanel] article").first();
+  const main = await page.locator("main").boundingBox();
+  expect((await card.boundingBox())!.width, "Acts card width").toBeGreaterThan(main!.width * 0.7);
+});

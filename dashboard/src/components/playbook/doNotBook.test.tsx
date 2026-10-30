@@ -28,7 +28,7 @@ describe("do-not-book at display time (synthetic fixtures)", () => {
     const { container, rerender } = render(<CardBody card={lm} city="Testville" />);
     expect(container.textContent).not.toContain("Ariel Pink");
     expect(screen.getAllByText(NOTE)).toHaveLength(1);
-    expect(metaLine("TV", "local_moment", lm)).toBe("TV · WHAT THESE FANS LOVE HERE · 1 PICKS");
+    expect(metaLine("TV", "local_moment", lm)).toBe("TV · PLACES, FILMS AND TV THESE FANS LOVE · 1 PICKS");
     rerender(<CardBody card={card("talent", [{ name: "Ariel Pink", source: "suggested", affinity: 0.5 }, { name: "Synthetic Artist 09", source: "city_popular", affinity: 0.4 }])} city="Testville" />);
     expect(container.textContent).not.toContain("Ariel Pink");
     expect(screen.getAllByText(NOTE)).toHaveLength(1);

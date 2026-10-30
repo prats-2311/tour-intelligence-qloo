@@ -26,6 +26,7 @@ export function ClaimsAudit({ claims }: { claims: Array<{ card: string; verified
             ))}
             {g.removed.map((r, i) => (
               <li key={`r-${r.claim.text}-${i}`}>
+                <p className="text-[13px] font-medium text-canvas-text">Left out of the write-up:</p>
                 <p className="text-[15px] leading-[1.45] text-canvas-muted line-through">{r.claim.text}</p>
                 <p className="mt-0.5 text-[13px] font-medium text-state-stale">Removed: {removalText(r)}</p>
               </li>
