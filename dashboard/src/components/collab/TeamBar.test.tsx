@@ -24,7 +24,7 @@ describe("TeamBar at 1280px and wider", () => {
 });
 
 describe("TeamBar follows the room it is in, not only the viewport", () => {
-  const observe = (width: number) => vi.stubGlobal("ResizeObserver", class { constructor(private cb: (e: unknown[]) => void) {} observe() { this.cb([{ contentRect: { width } }]); } disconnect() {} unobserve() {} });
+  const observe = (width: number) => vi.stubGlobal("ResizeObserver", class { cb: (e: unknown[]) => void; constructor(cb: (e: unknown[]) => void) { this.cb = cb; } observe() { this.cb([{ contentRect: { width } }]); } disconnect() {} unobserve() {} });
   const inHeader = () => render(<MemoryRouter><ToastProvider><WorkspaceContext.Provider value={ws()}><header><TeamBar cities={[{ id: "1", name: "Home" }]} tourThread="tour:board" /></header></WorkspaceContext.Provider></ToastProvider></MemoryRouter>);
   it("a wide viewport with a narrow header (the board's list column) still groups into the menu", () => {
     wide(true); observe(600); inHeader();

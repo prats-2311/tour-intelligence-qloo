@@ -16,6 +16,8 @@ const box = async (page: Page, sel: string): Promise<Box> => {
 const same = (a: Box, b: Box, what: string) => {
   for (const k of ["x", "y", "width", "height"] as const) expect(Math.abs(a[k] - b[k]), `${what} ${k}: ${a[k]} -> ${b[k]}`).toBeLessThanOrEqual(1);
 };
+/** How many distinct lines the header's controls sit on. */
+const rowsOf = (page: Page, sel: string) => page.locator(`${sel} button:visible, ${sel} a:visible`).evaluateAll((els) => new Set(els.map((e) => Math.round(e.getBoundingClientRect().top))).size);
 const share = async (page: Page) => {
   const direct = page.getByRole("button", { name: "Share with your team" });
   if (!(await direct.isVisible())) { await page.getByRole("button", { name: "Team", exact: true }).click(); await page.getByRole("menuitem", { name: "Share with your team" }).click(); }
@@ -39,6 +41,7 @@ for (const width of WIDTHS) {
     const rowSel = '[data-testid="city-row"]', headSel = '[data-tour="board-header"]';
     const rowBefore = await box(page, rowSel), headBefore = await box(page, headSel);
     const barBefore = await box(page, '[data-testid="team-bar"]');
+    const rowsBefore = await rowsOf(page, headSel);
     await share(page);
     const toast = page.locator("[data-toast-viewport] [role=status]").filter({ hasText: "Link copied" });
     await expect(toast).toBeVisible();
@@ -48,11 +51,9 @@ for (const width of WIDTHS) {
     same(headBefore, await box(page, headSel), "header row");
     same(barBefore, await box(page, '[data-testid="team-bar"]'), "team bar");
     await expect(page.locator(headSel).getByRole("status")).toHaveCount(0); // nothing inline in the header
-    if (width >= 1280) {
-      // one row: every control in the header's action row sits on the same line
-      const ys = await page.locator(`${headSel} button:visible, ${headSel} a:visible`).evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
-      expect(new Set(ys.filter((y) => y > headBefore.y + 60)).size, "header controls on one row").toBeLessThanOrEqual(2);
-    }
+    // The board's header lives in the list column (about 460-690px), too narrow for six inline controls, so the team actions are one "Team" menu.
+    await expect(page.locator(headSel).getByRole("button", { name: "Team", exact: true })).toBeVisible();
+    expect(await rowsOf(page, headSel), "header control rows after Share").toBe(rowsBefore);
     // the toast sits at the bottom centre of the viewport
     const t = await toast.boundingBox();
     expect(Math.abs(t!.x + t!.width / 2 - width / 2)).toBeLessThanOrEqual(2);

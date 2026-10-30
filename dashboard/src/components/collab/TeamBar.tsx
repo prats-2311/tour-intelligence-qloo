@@ -101,16 +101,35 @@ function TeamMenu({ tourThread, onActivity, onShare }: { tourThread?: string; on
   );
 }
 
+/** Room (px) the inline row needs: below this the secondary actions share the Team menu. */
+const INLINE_MIN = 900;
+
+/** Width of the room the bar sits in (its header, else the page column). Null until measured, and in environments without ResizeObserver. */
+function useRoom(ref: React.RefObject<HTMLElement | null>, on: boolean): number | null {
+  const [w, setW] = useState<number | null>(null);
+  useEffect(() => {
+    const host = ref.current?.closest("header, main");
+    if (!host || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((es) => { const x = es[0]?.contentRect.width; if (x) setW(x); });
+    ro.observe(host);
+    return () => ro.disconnect();
+  }, [ref, on]);
+  return w;
+}
+
 /** Header controls: team activity, share link and who is writing. Hidden when collaboration is off. */
 export function TeamBar({ cities, tourThread }: { cities: Array<{ id: string; name: string }>; /** Thread key for whole-tour notes (the board and the book), shown as "Tour notes (N)". */ tourThread?: string }) {
   const w = useWorkspace();
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
-  const wide = useMediaQuery("(min-width: 1280px)");
+  const bar = useRef<HTMLDivElement>(null);
+  const room = useRoom(bar, w.enabled);
+  const viewportWide = useMediaQuery("(min-width: 1280px)");
+  const wide = room === null ? viewportWide : room >= INLINE_MIN;
   if (!w.enabled) return null;
   const share = () => void w.share().then((r) => toast(shareToast(r, w.error)));
   return (
-    <div data-testid="team-bar" className="relative flex min-w-0 flex-nowrap items-center gap-2">
+    <div ref={bar} data-testid="team-bar" className="relative flex min-w-0 flex-nowrap items-center gap-2">
       {wide ? (
         <>
           {tourThread && <NotesButton threadKey={tourThread} title="the whole tour" label="Tour notes" />}
