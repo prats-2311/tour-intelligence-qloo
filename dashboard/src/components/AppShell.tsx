@@ -53,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <>
         {!landing && (
           <div data-mobile-bar className="flex h-11 shrink-0 items-center gap-1 bg-canvas-raised pr-2">
-            <button ref={hamburger} type="button" aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls={DRAWER_ID} onClick={() => setDrawerOpen(true)} className="inline-flex size-11 items-center justify-center rounded-[8px] text-bone outline-none focus-visible:ring-2 focus-visible:ring-gold">
+            <button ref={hamburger} data-nav-toggle type="button" aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls={DRAWER_ID} onClick={() => setDrawerOpen(true)} className="inline-flex size-11 items-center justify-center rounded-[8px] text-bone outline-none focus-visible:ring-2 focus-visible:ring-gold">
               <Menu size={20} aria-hidden />
             </button>
             <Breadcrumbs inline />
@@ -80,6 +80,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className={`min-w-0 flex-1 px-4 ${landing ? "pt-6 lg:pt-8" : "pt-2 lg:pt-3"} ${isDesktop ? "pb-8" : "pb-[calc(5rem+env(safe-area-inset-bottom))]"} lg:px-8 ${docked ? "lg:pr-[380px]" : ""}`}>
         {children}
       </main>
+      {/* The first-visit tour prompt is a fixed bottom bar; it publishes its height here so it never covers the end of the page. */}
+      <div aria-hidden data-prompt-spacer className="shrink-0" style={{ height: "var(--tour-prompt-h, 0px)" }} />
         </div>
       </div>
 

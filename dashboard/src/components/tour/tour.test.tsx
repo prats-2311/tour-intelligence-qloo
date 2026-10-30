@@ -71,10 +71,27 @@ describe("first-visit prompt", () => {
   it("shows on the first visit, is not modal, and does not start the tour", async () => {
     mount("/");
     const prompt = screen.getByTestId("tour-prompt");
-    expect(prompt.textContent).toContain("New here? Take the 60-second tour");
+    expect(prompt.textContent).toContain("New here? Take the 2-minute tour");
+    expect(prompt.textContent).not.toContain("60-second");
     expect(screen.getByRole("button", { name: "Start tour" })).toBeTruthy();
     expect(prompt.getAttribute("aria-modal")).toBeNull();
     expect(screen.queryByTestId("tour-popover")).toBeNull();
+  });
+  it("is a bottom bar that reserves its own height instead of floating over body text", () => {
+    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(96);
+    mount("/");
+    const prompt = screen.getByTestId("tour-prompt");
+    expect(prompt.className).toContain("inset-x-0");
+    expect(prompt.className).not.toMatch(/lg:w-\[340px\]|lg:left-6/);
+    expect(document.documentElement.style.getPropertyValue("--tour-prompt-h")).toBe("96px");
+    fireEvent.click(screen.getByRole("button", { name: "No thanks" }));
+    expect(document.documentElement.style.getPropertyValue("--tour-prompt-h")).toBe("");
+  });
+  it("Escape inside the prompt dismisses it", () => {
+    mount("/");
+    fireEvent.keyDown(screen.getByRole("button", { name: "Start tour" }), { key: "Escape" });
+    expect(screen.queryByTestId("tour-prompt")).toBeNull();
+    expect(window.localStorage.getItem(TOUR_STORAGE_KEY)).toBe("dismissed");
   });
   it("No thanks dismisses it and stores the outcome; a later visit does not show it", () => {
     mount("/");
@@ -156,17 +173,17 @@ describe("the tour", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" })); await flush();
     expect(counter()).toBe("2 of 9");
     for (let i = 2; i < 6; i += 1) { fireEvent.click(screen.getByRole("button", { name: "Next" })); await flush(); }
-    expect(counter()).toBe("6 of 9");
+    expect(counter()).toBe("6 of 9"); // Ask about this tour: still on the playbook, no trip to the board and back
+    expect(where()).toMatch(/^\/tours\/playbook\/.+\?showcase=1$/);
+    fireEvent.click(screen.getByRole("button", { name: "Next" })); await flush();
+    expect(counter()).toBe("7 of 9");
     expect(where()).toBe("/tours/board?showcase=1");
     fireEvent.click(screen.getByRole("button", { name: "Next" })); await flush();
-    expect(counter()).toBe("7 of 9");
-    expect(where()).toBe("/tours/board?showcase=1&mode=without");
-    fireEvent.click(screen.getByRole("button", { name: "Next" })); await flush();
     expect(counter()).toBe("8 of 9");
-    expect(where()).toMatch(/^\/tours\/playbook\/.+\?showcase=1$/);
+    expect(where()).toBe("/tours/board?showcase=1&mode=without");
     fireEvent.click(screen.getByRole("button", { name: "Back" })); await flush();
     expect(counter()).toBe("7 of 9");
-    expect(where()).toBe("/tours/board?showcase=1&mode=without");
+    expect(where()).toBe("/tours/board?showcase=1");
   });
   it("highlights real elements by data-tour with a ring", async () => {
     await begin();
@@ -230,7 +247,7 @@ describe("the tour", () => {
   it("the placeholder showcase builds nine centred-safe steps without throwing", () => {
     const steps = buildTourSteps(parseShowcase(PLACEHOLDER_SHOWCASE));
     expect(steps).toHaveLength(TOUR_STEP_COUNT);
-    expect(steps.map((s) => s.id)).toEqual(["hook", "age", "pitch", "claims", "playbook", "board", "without", "ask", "book"]);
+    expect(steps.map((s) => s.id)).toEqual(["hook", "age", "pitch", "claims", "playbook", "ask", "board", "without", "book"]);
     const claims = steps.find((s) => s.id === "claims")!;
     const ask = steps.find((s) => s.id === "ask")!;
     expect(ask.targets).toEqual(["ask"]);
@@ -281,7 +298,7 @@ describe("copy is derived from the recording", () => {
   it("the board step quotes the mover's fan-heat and winnability ranks", () => {
     const s = show();
     const top = computeMoves(showcaseCities(s)).find((m) => m.delta > 0)!;
-    expect(buildTourSteps(s)[5]!.body).toContain(`${top.city.name} moves from #${top.fanRank} on fan heat to #${top.winRank} on winnability.`);
+    expect(buildTourSteps(s).find((x) => x.id === "board")!.body).toContain(`${top.city.name} moves from #${top.fanRank} on fan heat to #${top.winRank} on winnability.`);
   });
   it("the pitch and playbook steps quote the recorded venue and co-billing act", () => {
     const steps = buildTourSteps(show());

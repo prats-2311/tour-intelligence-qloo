@@ -103,16 +103,16 @@ export function buildTourSteps(show: Showcase): TourStep[] {
       body: `The rest of the playbook ranks venues by fit, support acts by shared taste and promo zones for local promotion. ${rest}`,
     },
     {
+      id: "ask", title: "Ask about this tour", route: playbookRoute, targets: ["ask"],
+      body: `A strategist agent answers questions about this tour with live Qloo lookups and shows its work log. ${f.question ? `Try \u201c${f.question}\u201d` : `Ask which brand to pitch in ${where}`} and every number in the answer comes from a Qloo result.`,
+    },
+    {
       id: "board", title: "The Tour Board", route: BOARD, targets: ["moves", "board-header"],
       body: `An LLM is good at picking big markets, so the board is context for winning each city, not a market pick. ${f.mover ? `${short(f.mover.city.name)} moves from #${f.mover.fanRank} on fan heat to #${f.mover.winRank} on winnability.` : "Each row scores how winnable the city is, beyond fan heat."}`,
     },
     {
       id: "without", title: "Without Qloo", route: `${BOARD}&mode=without`, targets: ["board-panel"],
       body: "The same cities ranked by a generic AI with no taste data. It is good at big markets and beat us there in our own test, but it can't say which brands or acts to pitch.",
-    },
-    {
-      id: "ask", title: "Ask about this tour", route: playbookRoute, targets: ["ask"],
-      body: `A strategist agent answers questions about this tour with live Qloo lookups and shows its work log. ${f.question ? `Try \u201c${f.question}\u201d` : `Ask which brand to pitch in ${where}`} and every number in the answer comes from a Qloo result.`,
     },
     {
       id: "book", title: "Tour Book", route: `/tours/book${showcaseQuery(false)}`, targets: ["book-cover"],
