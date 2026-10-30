@@ -8,6 +8,7 @@ import { createStats } from "../analytics/stats.js";
 import { WindowLimiter } from "../collab/limits.js";
 import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import type { SponsorCandidate, SponsorVerdicts } from "../pipeline/sponsorCheck.js";
+import type { SponsorsWithoutQloo, SponsorsWithoutQlooInput } from "../sponsorsWithoutQloo.js";
 import { runSponsorSegments } from "../pipeline/sponsorSegments.js";
 import { MAX_ROUTING_CITIES } from "../pipeline/routing.js";
 import { runTourBoard } from "../pipeline/tourBoard.js";
@@ -36,7 +37,7 @@ async function streamSse(res: Response, gen: AsyncGenerator<GatewayEvent>, contr
   res.end();
 }
 
-export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; advance?: (input: AdvanceInput) => Promise<Advance>; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo>; collab?: CollabDeps; analytics?: Analytics; sponsorSegmentsDeadlineMs?: number }) {
+export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; advance?: (input: AdvanceInput) => Promise<Advance>; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo>; collab?: CollabDeps; analytics?: Analytics; sponsorSegmentsDeadlineMs?: number; sponsorsWithoutQloo?: (input: SponsorsWithoutQlooInput, signal: AbortSignal) => Promise<SponsorsWithoutQloo> }) {
   const app = express();
   const analytics = deps.analytics ?? DISABLED_ANALYTICS;
   const stats = createStats(analytics);
@@ -173,6 +174,29 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
     if (!deps.withoutQloo) return void res.json({ status: "unavailable", reason: "disabled", message: "Generic ranking unavailable" });
     const clean = cities.map((c: { name: string; country: string }) => ({ name: c.name.trim(), country: c.country.trim() }));
     try { res.json(await deps.withoutQloo({ artist: artist.trim(), regions: regions.map((r: string) => r.trim()), cities: clean, sessionId })); } catch (err) { next(err); }
+  });
+
+  // Sponsors: the same model without Qloo. Gemini alone picks 5 brands; each is placed on Qloo's fan ranking for this city. Lazy, cached.
+  app.get("/v1/sponsors-without-qloo", async (req, res, next) => {
+    const sessionId = req.header("x-session-id");
+    const { artist, artistId, city, country, cityId, lat, lon } = req.query;
+    if (!validSession(sessionId) || ![artist, artistId, city, country].every((v) => isSafeContextText(v) && (v as string).length <= 80)) {
+      return void res.status(400).json({ error: "x-session-id, artist, artistId, city, country required" });
+    }
+    const coord = (v: unknown) => (typeof v === "string" && v !== "" ? Number(v) : undefined);
+    const [latN, lonN] = [coord(lat), coord(lon)];
+    if ((cityId !== undefined && (typeof cityId !== "string" || cityId.length > 32)) || [lat, lon].some((v) => v !== undefined && typeof v !== "string") || [latN, lonN].some((n) => n !== undefined && !Number.isFinite(n))) {
+      return void res.status(400).json({ error: "cityId must be a short string; lat and lon must be numbers" });
+    }
+    if (!deps.sponsorsWithoutQloo) return void res.json({ status: "unavailable", reason: "disabled", message: "Comparison unavailable" });
+    const controller = new AbortController();
+    res.on("close", () => controller.abort());
+    try {
+      res.json(await deps.sponsorsWithoutQloo({
+        artist: String(artist).trim(), artistId: String(artistId), sessionId,
+        city: { name: String(city), country: String(country), ...(typeof cityId === "string" && cityId ? { id: cityId } : {}), ...(latN !== undefined && lonN !== undefined ? { lat: latN, lon: lonN } : {}) },
+      }, controller.signal));
+    } catch (err) { next(err); }
   });
 
   const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
