@@ -297,3 +297,16 @@ body {
 @keyframes nav-drawer-in { from { transform: translateX(-100%); } to { transform: none; } }
 .nav-drawer-in { animation: nav-drawer-in 0.2s ease-out; }
 @media (prefers-reduced-motion: reduce) { .nav-drawer-in { animation: none; } }
+
+/* Sponsor pitch sheet: one clean page, white with black text, app chrome and the action bar hidden. */
+@page { margin: 12mm; }
+@media print {
+  body:has(.pitch-sheet), body:has(.pitch-sheet) #root > div { background: #fff !important; }
+  body:has(.pitch-sheet) [data-app-shell] { display: none !important; }
+  body:has(.pitch-sheet) main { padding: 0 !important; }
+  .pitch-sheet { margin: 0 !important; max-width: none !important; padding: 0 !important; font-size: 11pt; background: #fff !important; }
+  .pitch-sheet *:not(svg *) { color: #111 !important; background-color: transparent !important; box-shadow: none !important; }
+  .pitch-sheet [data-noprint] { display: none !important; }
+  .pitch-sheet section { break-inside: avoid; }
+  .pitch-sheet a[data-cite]::after { content: " (" attr(href) ")"; font-size: 9pt; }
+}

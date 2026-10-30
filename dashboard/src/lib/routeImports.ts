@@ -4,6 +4,7 @@ export const routeImports = {
   landing: () => import("../pages/Landing"),
   board: () => import("../pages/TourBoard"),
   playbook: () => import("../pages/CityPlaybook"),
+  pitch: () => import("../pages/PitchSheet"),
   book: () => import("../pages/TourBook"),
   budget: () => import("../pages/TourBudget"),
   proof: () => import("../pages/Proof"),
