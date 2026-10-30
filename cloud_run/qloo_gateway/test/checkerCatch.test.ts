@@ -90,12 +90,12 @@ describe("cli", () => {
     expect(() => parseArgs(["--out", "docs/x.json"])).toThrow(/private-data/);
     expect(parseArgs([]).out).toBe(resolve(REPO_ROOT, "private-data/backtest/proof-v3-checkers.json"));
   });
-  it("main logs one line per checker", async () => {
+  it("main logs one line per checker and the secondary condition", async () => {
     const lines: string[] = [];
     const out = resolve(REPO_ROOT, "private-data/backtest/_test-checkers.json");
     const code = await main(["--out", out], { log: (l) => lines.push(l), env: {}, makeClients: () => { throw new Error("no clients"); }, now: () => new Date("2026-10-30T00:00:00Z") });
     expect(code).toBe(0);
-    expect(lines.filter((l) => /caught \d+ of 20, false alarms \d+ of 20/.test(l))).toHaveLength(4);
+    expect(lines.filter((l) => /caught \d+ of 20, false alarms \d+ of 20/.test(l))).toHaveLength(5);
     const { rmSync } = await import("node:fs");
     rmSync(out, { force: true });
   });
