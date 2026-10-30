@@ -120,6 +120,15 @@ function CityPlaybookPage() {
   const setKey = `${wantSet}|${wantRouting ? "routing" : ""}`;
   const started = useRef<string | null>(null); // the sample set this page already asked the board for
   const [tab, setTab] = useState<Tab>("activate");
+  // Switching tabs swaps a tall panel for a short one; hold the old height so the page (and the reader's scroll position) does not jump.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelMin, setPanelMin] = useState(0);
+  const selectTab = (id: Tab) => {
+    const el = panelRef.current;
+    // Keep only as much height as the current scroll position needs (not the whole tall panel), so short tabs are not followed by a screen of blank page.
+    setPanelMin(el ? Math.min(el.offsetHeight, Math.max(0, Math.ceil(globalThis.scrollY + globalThis.innerHeight - (el.getBoundingClientRect().top + globalThis.scrollY)))) : 0);
+    setTab(id);
+  };
   const [whyOpen, setWhyOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
@@ -256,7 +265,7 @@ function CityPlaybookPage() {
     e.preventDefault();
     const at = TABS.findIndex((t) => t.id === tab);
     const next = TABS[(at + (e.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length]!;
-    setTab(next.id);
+    selectTab(next.id);
     document.getElementById(`${tabBase}-${next.id}`)?.focus();
   };
 
@@ -349,7 +358,7 @@ function CityPlaybookPage() {
   const advancePanel = noSample ? noSamplePanel : (
     <div className="max-w-xl">
       <PlaybookCard accent={accent} meta={`${code} · ADVANCE & RISKS`} title="Advance & risks" narrativeStatus="unavailable" refsCount={0} hasEvidence>
-        <AdvanceBody data={advance.data} loading={advance.isPending} {...(advanceNote ? { message: advanceNote } : {})} />
+        <AdvanceBody data={advance.data} loading={advance.isPending || advance.isFetching} onRetry={() => void advance.refetch()} {...(advanceNote ? { message: advanceNote } : {})} />
       </PlaybookCard>
     </div>
   );
@@ -441,7 +450,7 @@ function CityPlaybookPage() {
                 data-tour={`tab-${t.id}`}
                 aria-controls={`${tabBase}-panel`}
                 tabIndex={on ? 0 : -1}
-                onClick={() => setTab(t.id)}
+                onClick={() => selectTab(t.id)}
                 className={`min-h-11 flex-1 border-b-2 px-2 text-[14px] font-semibold focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-gold lg:flex-none lg:px-5 ${on ? "border-gold text-canvas-text" : "border-transparent text-canvas-muted hover:text-canvas-text"}`}
               >
                 {t.label}
@@ -452,7 +461,7 @@ function CityPlaybookPage() {
       </div>
 
       <NumberKey />
-      <div id={`${tabBase}-panel`} role="tabpanel" aria-labelledby={`${tabBase}-${tab}`} className="mt-4 min-w-0 px-4 lg:px-0">
+      <div id={`${tabBase}-panel`} ref={panelRef} style={panelMin ? { minHeight: panelMin } : undefined} role="tabpanel" aria-labelledby={`${tabBase}-${tab}`} className="mt-4 min-w-0 px-4 lg:px-0">
         {!sample && (pb.status === "idle" || pb.status === "streaming") && <p data-testid="live-run-line" className="mb-3 text-[12px] text-canvas-muted">{LIVE_RUN_LINE}</p>}
         {panels[tab]}
         <div className="mt-4 flex min-w-0 flex-col gap-3">

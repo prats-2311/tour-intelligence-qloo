@@ -121,3 +121,19 @@ test("4 numbers key: a small expandable key explains every term, and tied venues
   for (const t of ["Affinity", "Fan rank / city rank", "Venue fit", "Shared taste", "Share"]) await expect(page.locator("[data-number-key]").getByText(t, { exact: true })).toBeVisible();
   await expect(page.locator("[data-number-key]")).toContainText("not a share of fans");
 });
+
+test("6 advance tab: one clear unavailable panel with Retry, and switching tabs does not jump the page", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route("**/api/qloo/advance**", (r) => r.fulfill({ status: 503, contentType: "application/json", body: "{}" }));
+  await page.goto(LA);
+  await loaded(page);
+  await page.evaluate(() => window.scrollTo(0, 1500));
+  const before = await page.evaluate(() => window.scrollY);
+  expect(before).toBeGreaterThan(1000);
+  await page.getByRole("tab", { name: "Advance & risks" }).click();
+  await expect(page.getByText("Advance & risks needs the live service. Try again.")).toBeVisible();
+  await expect(page.getByText("Could not load this. Try again later.")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(1);
+  const after = await page.evaluate(() => window.scrollY);
+  expect(Math.abs(after - before), "scroll jump").toBeLessThanOrEqual(5);
+});
