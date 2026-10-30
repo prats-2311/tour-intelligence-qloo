@@ -6,6 +6,7 @@ import { createApp } from "./http/app.js";
 import { rankWithoutQloo } from "./withoutQloo.js";
 import { compareSponsorsWithoutQloo } from "./sponsorsWithoutQloo.js";
 import { thinkingBudgetFromEnv } from "./strategist/gemini-tools.js";
+import { strategistModelsFromEnv, strategistTimeoutFromEnv } from "./strategist/config.js";
 import { runStrategist } from "./strategist/run.js";
 import { QlooMcpClient, defaultFactory } from "./mcpClient.js";
 import { createQlooCaller } from "./qlooCall.js";
@@ -42,6 +43,10 @@ const auth = new GoogleAuth({ scopes: ["https://www.googleapis.com/auth/cloud-pl
 const geminiCeiling = Number(process.env.GEMINI_DAILY_CEILING);
 const selected = selectGenerate(process.env, { getToken: async () => String((await auth.getAccessToken()) ?? "") });
 const generate = selected.generate;
+const strategistModels = strategistModelsFromEnv(process.env);
+const strategistTimeoutMs = strategistTimeoutFromEnv(process.env.STRATEGIST_TIMEOUT_MS);
+const strategistGenerate = selectGenerate(process.env, { getToken: async () => String((await auth.getAccessToken()) ?? ""), timeoutMs: strategistTimeoutMs }).generate;
+console.log(`qloo_gateway strategist models: ${strategistModels.join(", ")} · timeout ${strategistTimeoutMs} ms`);
 for (const line of startupStatus(process.env, selected, { harnessFound: !!findOnPath(process.env.QLOO_BIN ?? "qloo", process.env.PATH) })) console.log(`qloo_gateway ${line}`);
 const narratorModels = [process.env.GEMINI_MODEL ?? "gemini-3.8-flash", process.env.GEMINI_FALLBACK_MODEL ?? "gemini-2.5-flash"];
 // Per-session limit is in memory; the daily count is persisted (gemini_usage/<YYYY-MM>) so restarts and extra instances share it.
@@ -71,7 +76,7 @@ const app = createApp({
   sponsorCheck: (candidates, sessionId) => classifySponsors(candidates, sessionId, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
   withoutQloo: (input) => rankWithoutQloo(input, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
   sponsorsWithoutQloo: (input, signal) => compareSponsorsWithoutQloo(input, { qloo: qlooCaller, cities, ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache, signal }),
-  strategist: (input, signal) => runStrategist(input, { generate, models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, qloo: qlooCaller, cities, signal, thinkingBudget: thinkingBudgetFromEnv(process.env.STRATEGIST_THINKING_BUDGET) }),
+  strategist: (input, signal) => runStrategist(input, { generate: strategistGenerate, models: strategistModels, ceiling: { ceiling: geminiBudget, dailyUsage }, qloo: qlooCaller, cities, signal, thinkingBudget: thinkingBudgetFromEnv(process.env.STRATEGIST_THINKING_BUDGET) }),
 });
 const port = Number(process.env.PORT ?? 8080);
 const server = app.listen(port, (err?: Error) => {

@@ -9,12 +9,12 @@ export type GeminiProvider = "vertex" | "aistudio" | "none";
  */
 export function selectGenerate(
   env: Record<string, string | undefined>,
-  deps: { getToken: () => Promise<string>; fetchImpl?: typeof fetch },
+  deps: { getToken: () => Promise<string>; fetchImpl?: typeof fetch; timeoutMs?: number },
 ): { generate?: GenerateFn; provider: GeminiProvider; note: string } {
   const key = env.GEMINI_API_KEY?.trim();
   const project = env.GOOGLE_CLOUD_PROJECT?.trim();
   const forced = env.GEMINI_PROVIDER?.trim().toLowerCase();
-  const fetchPart = deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {};
+  const fetchPart = { ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}), ...(deps.timeoutMs ? { timeoutMs: deps.timeoutMs } : {}) };
   if (forced === "vertex" || (!key && project && forced !== "aistudio")) {
     if (!project) return { provider: "none", note: "GEMINI_PROVIDER=vertex but GOOGLE_CLOUD_PROJECT is not set: Gemini features disabled (narration, local acts, strategist fall back to deterministic output)" };
     return { generate: createVertexGenerate({ project, getToken: deps.getToken, ...fetchPart }), provider: "vertex", note: `Gemini via Vertex AI (project ${project})` };
