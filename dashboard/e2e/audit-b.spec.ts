@@ -122,21 +122,62 @@ test("4 numbers key: a small expandable key explains every term, and tied venues
   await expect(page.locator("[data-number-key]")).toContainText("not a share of fans");
 });
 
-test("6 advance tab: one clear unavailable panel with Retry, and switching tabs does not jump the page", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.route("**/api/qloo/advance**", (r) => r.fulfill({ status: 503, contentType: "application/json", body: "{}" }));
-  await page.goto(LA);
-  await loaded(page);
-  await page.evaluate(() => window.scrollTo(0, 1500));
-  const before = await page.evaluate(() => window.scrollY);
-  expect(before).toBeGreaterThan(1000);
-  await page.getByRole("tab", { name: "Advance & risks" }).click();
-  await expect(page.getByText("Advance & risks needs the live service. Try again.")).toBeVisible();
-  await expect(page.getByText("Could not load this. Try again later.")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(1);
-  const after = await page.evaluate(() => window.scrollY);
-  expect(Math.abs(after - before), "scroll jump").toBeLessThanOrEqual(5);
-});
+const ADVANCE_DOWN_BODY = "{}";
+const item = (n: number) => ({ text: `Requirement ${n}: carry the signed contract, passport copies and the original invitation letter for the border officer.`, sourceUrl: `https://example.com/${n}` });
+const ADVANCE_LOADED = {
+  weather: { status: "ok", source: "Open-Meteo", sourceUrl: "https://open-meteo.com", years: [2024, 2025], days: 60, tempMaxC: { mean: 24, min: 18, max: 31 }, tempMinC: { mean: 14 }, rainDaysShare: 0.1, note: "Historical, not a forecast." },
+  holidays: { status: "ok", source: "Nager.Date", sourceUrl: "https://date.nager.at", items: Array.from({ length: 6 }, (_, i) => ({ date: `2026-11-0${i + 1}`, name: `Holiday ${i}`, localName: `Holiday ${i}`, near: false })) },
+  visa: { status: "ok", summary: "A work visa is needed.", leadTime: "8 weeks", items: Array.from({ length: 14 }, (_, i) => item(i)), sources: [{ title: "Gov", url: "https://example.com/g" }], cached: false },
+  equipment: { status: "ok", summary: "An ATA carnet is advised.", items: Array.from({ length: 14 }, (_, i) => item(i + 20)), sources: [{ title: "Customs", url: "https://example.com/c" }], cached: false },
+  generatedAt: "2026-10-31T00:00:00Z",
+};
+
+/**
+ * The team workspace (status line, notes count, teammates) arrives after the recording and grows the header above the tab bar (+120 to +230px on a
+ * phone). Where scroll anchoring exists the browser moves scrollY with it; that is a page-load shift, not a tab switch, so wait for it to land first.
+ */
+async function settled(page: Page) {
+  await page.waitForLoadState("networkidle").catch(() => undefined);
+  let last = -1, same = 0;
+  for (let i = 0; i < 40 && same < 4; i++) {
+    const h = await page.evaluate(() => document.documentElement.scrollHeight);
+    same = h === last ? same + 1 : 0;
+    last = h;
+    await page.waitForTimeout(250);
+  }
+}
+
+// Switching to the tall Advance tab (content loading in, or the unavailable panel) must not move the tab bar: the page's scroll position holds.
+for (const [name, mode] of [["unavailable (no gateway)", "down"], ["loaded (gateway answers)", "loaded"], ["whatever this environment returns", "env"]] as const) {
+  for (const [w, h] of [[390, 844], [1440, 900]] as const) {
+    test(`6 advance tab at ${w}px, ${name}: switching tabs does not jump the page`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      if (mode === "down") await page.route("**/api/qloo/advance**", (r) => r.fulfill({ status: 503, contentType: "application/json", body: ADVANCE_DOWN_BODY }));
+      // Answer after a beat, as the real lookups do, so the skeleton is on screen first and the panel grows when the content lands.
+      if (mode === "loaded") await page.route("**/api/qloo/advance**", async (r) => { await new Promise((ok) => setTimeout(ok, 700)); await r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(ADVANCE_LOADED) }); });
+      await page.goto(LA);
+      await loaded(page);
+      await settled(page);
+      await page.evaluate(() => window.scrollTo(0, 1500));
+      const before = await page.evaluate(() => window.scrollY);
+      expect(before).toBeGreaterThan(1000);
+      const tab = page.getByRole("tab", { name: "Advance & risks" });
+      const tabTop = () => tab.evaluate((e) => Math.round(e.getBoundingClientRect().top));
+      const top0 = await tabTop();
+      await tab.click();
+      if (mode === "down") {
+        await expect(page.getByText("Advance & risks needs the live service. Try again.")).toBeVisible();
+        await expect(page.getByText("Could not load this. Try again later.")).toHaveCount(0);
+        await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(1);
+      }
+      if (mode === "loaded") await expect(page.getByText("Requirement 0:").first()).toBeVisible({ timeout: 15_000 });
+      await settled(page); // late content (skeleton -> text) lands after the click
+      const after = await page.evaluate(() => window.scrollY);
+      expect(Math.abs(after - before), "scroll jump").toBeLessThanOrEqual(5);
+      expect(Math.abs((await tabTop()) - top0), "tab bar moved").toBeLessThanOrEqual(5);
+    });
+  }
+}
 
 test("7+8 pitch sheet: known breadcrumb, no chrome in print, no UI instruction printed, one A4 page", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });

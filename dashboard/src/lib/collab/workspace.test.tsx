@@ -130,14 +130,15 @@ describe("degrades without a gateway", () => {
 });
 
 describe("notes", () => {
-  it("keeps the composer pinned to the bottom of the sheet so it is never below the fold", async () => {
+  it("keeps the composer as a footer below the thread (never an overlay on the last note), with the thread scrolling above it", async () => {
     mount(); await ready();
     fireEvent.click(screen.getByRole("button", { name: /Notes for Sponsors/ }));
     const box = await screen.findByLabelText("Add a note");
     const composer = box.closest("[data-testid='notes-composer']") as HTMLElement | null;
     expect(composer).not.toBeNull();
-    expect(composer!.className).toContain("sticky");
-    expect(composer!.className).toContain("bottom-0");
+    expect(composer!.className).not.toContain("sticky");
+    expect(composer!.className).toContain("shrink-0");
+    expect(screen.getByRole("list", { name: "Notes" }).className).toContain("overflow-y-auto");
     expect(composer!.className).toContain("bg-paper");
     expect(within(composer!).getByRole("button", { name: "Add note" })).toBeTruthy();
   });

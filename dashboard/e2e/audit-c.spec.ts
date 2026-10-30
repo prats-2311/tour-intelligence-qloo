@@ -136,20 +136,26 @@ test("/proof at 390px: tables scroll inside a focusable region with a visible cu
   expect(bad.map((v) => v.id)).toEqual([]);
 });
 
-test("/v2 at 390px: RSVP buttons are 44px and look disabled when off, and opening a lower accordion item keeps its header put", async ({ page }) => {
+test("/v2 at 390px: RSVP buttons are 44px (disabled mock when analytics are off, enabled prototype when on), and opening a lower accordion item keeps its header put", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/v2");
   await expect(page.getByRole("heading", { level: 1, name: "Taste Loop: the next version" })).toBeVisible({ timeout: 20_000 });
   const rsvp = page.locator("[data-tour='v2-rsvp']");
+  // A site with analytics off shows the mock (aria-disabled buttons and an explanatory note); with analytics on it shows the labelled prototype
+  // with enabled buttons. Either way every button is a 44px target. Nothing is tapped: a tap would write to the site's analytics.
   const off = (await rsvp.getByText(/^Mock — not live$/).count()) > 0;
-  if (off) {
-    await expect(rsvp).toContainText("Prototype buttons switch on when analytics is enabled");
-    for (const name of ["Going", "Waitlist", "I was there"]) {
-      const b = rsvp.getByRole("button", { name });
-      await expect(b).toHaveAttribute("aria-disabled", "true");
-      expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
-      expect(await b.evaluate((el) => parseFloat(getComputedStyle(el).borderTopWidth))).toBeGreaterThan(0);
-    }
+  if (off) await expect(rsvp).toContainText("Prototype buttons switch on when analytics is enabled");
+  else {
+    await expect(rsvp.getByText(/^Prototype$/)).toBeVisible();
+    await expect(rsvp).toContainText("Prototype: taps from visitors of this page");
+    await expect(rsvp).not.toContainText("Prototype buttons switch on when analytics is enabled");
+  }
+  for (const name of ["Going", "Waitlist", "I was there"]) {
+    const b = rsvp.getByRole("button", { name });
+    expect((await b.boundingBox())!.height, `${name} height`).toBeGreaterThanOrEqual(43.5);
+    expect(await b.evaluate((el) => parseFloat(getComputedStyle(el).borderTopWidth))).toBeGreaterThan(0);
+    if (off) await expect(b).toHaveAttribute("aria-disabled", "true");
+    else { await expect(b).toBeEnabled(); await expect(b).not.toHaveAttribute("aria-disabled", "true"); }
   }
   const items = page.locator("[data-tour='v2-experiences'] h3 button");
   expect(await items.count()).toBeGreaterThan(3);

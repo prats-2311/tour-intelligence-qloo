@@ -1,5 +1,5 @@
 import { Check, MessageSquare } from "lucide-react";
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Sheet } from "@/components/qloo/Sheet";
 import { DEMO_BANNER, LIMITS, ROLES, SHARE_NOTICE, timeAgo, type Message } from "@/lib/collab/types";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
@@ -39,6 +39,9 @@ export function NotesSheet({ open, onClose, title, threadKey }: { open: boolean;
   // Asking who is writing happens inside this sheet (one dialog, the draft stays on screen), not in a second dialog that replaces it.
   const [askWho, setAskWho] = useState(false);
   const composer = useRef<HTMLTextAreaElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  // The composer grows upward into the thread (the name form), and a posted note lengthens it: keep the newest note in view in both cases.
+  useEffect(() => { const el = list.current; if (el) el.scrollTop = el.scrollHeight; }, [askWho, messages.length]);
   const send = async (identified = false) => {
     const t = text.trim();
     if (!t || busy) return;
@@ -51,16 +54,16 @@ export function NotesSheet({ open, onClose, title, threadKey }: { open: boolean;
   };
   return (
     <Sheet open={open} onClose={onClose} title={title}>
-      <div className="flex flex-1 flex-col gap-3">
-        {messages.some((m) => m.demo) && <p data-testid="demo-banner" className="rounded-[8px] bg-paper-raised px-3 py-2 text-[13px] text-canvas-text">{DEMO_BANNER}</p>}
+      <div className="flex min-h-0 flex-1 flex-col gap-3">
+        {messages.some((m) => m.demo) && <p data-testid="demo-banner" className="shrink-0 rounded-[8px] bg-paper-raised px-3 py-2 text-[13px] text-canvas-text">{DEMO_BANNER}</p>}
         {thread?.resolved && (
           <p className="rounded-[8px] bg-paper-raised px-3 py-2 text-[13px] text-canvas-text">
             Resolved{thread.resolvedBy ? ` by ${thread.resolvedBy.name}` : ""}{thread.resolvedAt ? ` · ${timeAgo(thread.resolvedAt)}` : ""}
           </p>
         )}
-        {messages.length === 0 ? <p className="text-[14px] text-canvas-muted">No notes yet. Start the thread below.</p> : <ul aria-label="Notes" className="flex flex-col gap-2">{messages.map((m) => <MessageItem key={m.id} m={m} />)}</ul>}
-        {/* Sticky inside the sheet's scroll area: on a phone the thread can be long, and the box must stay in view. */}
-        <div data-testid="notes-composer" className="sticky bottom-0 z-10 -mx-4 mt-auto flex flex-col gap-2 border-t border-canvas-line bg-paper px-4 pb-3 pt-3 md:-mx-6 md:px-6">
+        {messages.length === 0 ? <p className="text-[14px] text-canvas-muted">No notes yet. Start the thread below.</p> : <ul ref={list} aria-label="Notes" tabIndex={0} className="flex min-h-[7rem] flex-1 flex-col gap-2 overflow-y-auto">{messages.map((m) => <MessageItem key={m.id} m={m} />)}</ul>}
+        {/* A footer of the sheet, not an overlay: the thread scrolls in the space above it, so the composer (which grows when it asks who is writing) can never cover the last note. */}
+        <div data-testid="notes-composer" className="-mx-4 mt-auto flex max-h-[60%] shrink-0 flex-col gap-2 overflow-y-auto border-t border-canvas-line bg-paper px-4 pb-3 pt-3 md:-mx-6 md:px-6">
           {askWho && !w.identity && w.identify && (
             <div data-testid="inline-identity" className="flex flex-col gap-2 rounded-[10px] bg-canvas-raised p-3">
               <p className="text-[14px] font-semibold text-canvas-text">Who's writing?</p>

@@ -10,7 +10,19 @@ test.beforeEach(async ({ page }) => { await blockMapTiles(page); });
 test("Stüssy pitch sheet opens from the Sponsors card, reads from the recording, prints clean and goes back", async ({ page }) => {
   await page.goto(LA);
   await expect(page.getByText(/\d+ verified · \d+ removed/).first()).toBeVisible({ timeout: 20_000 });
-  await page.getByRole("link", { name: "Pitch sheet for Stüssy" }).click();
+  const pitch = page.getByRole("link", { name: "Pitch sheet for Stüssy" });
+  // Fixed chrome (journey stepper, first-visit tour prompt, sticky Add to tour bar, toasts) must not sit on the link where a scroll-into-view leaves it,
+  // and the team workspace arriving late must not move it under the finger: the link's centre point hits the link itself.
+  await pitch.evaluate((el) => el.scrollIntoView({ block: "end", inline: "center" })); // the worst case: bottom edge of the screen
+  await page.waitForLoadState("networkidle").catch(() => undefined);
+  await page.waitForTimeout(600);
+  const hit = await pitch.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return { ok: !!top && (top === el || el.contains(top)), over: top ? `${top.tagName}.${String(top.className).slice(0, 60)}` : "none", bottom: r.bottom, vh: innerHeight };
+  });
+  expect(hit.ok, `link is covered by ${hit.over} (bottom ${hit.bottom} of ${hit.vh})`).toBe(true);
+  await pitch.click();
   await expect(page).toHaveURL(/\/tours\/pitch\/5368361\/St%C3%BCssy\?showcase=1/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^Stüssy × .+ — Los Angeles$/, { timeout: 20_000 });
   const sheet = page.locator(".pitch-sheet");

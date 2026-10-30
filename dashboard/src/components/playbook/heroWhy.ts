@@ -34,10 +34,10 @@ export function heroWhys(cards: PlaybookCard[]): HeroWhys {
   return out;
 }
 
-/** Scrolls to a playbook card by its anchor id; the page overrides this when the card may be on another tab. */
+/** Scrolls to a playbook card by its anchor id, top edge just under the sticky tab bar (`scroll-margin-top` on `[data-card]`, see index.css); the page overrides this when the card may be on another tab. */
 export function scrollToCard(kind: CardKind): void {
   const el = document.getElementById(`card-${kind}`);
   if (!el) return;
   const calm = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  el.scrollIntoView?.({ behavior: calm ? "auto" : "smooth", block: "center", inline: "nearest" });
+  el.scrollIntoView?.({ behavior: calm ? "auto" : "smooth", block: "start", inline: "nearest" });
 }
