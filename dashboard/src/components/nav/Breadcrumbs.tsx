@@ -6,7 +6,7 @@ import { resolveTourNames } from "@/lib/nav/tourNames";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 
-const link = "inline-flex min-h-11 min-w-11 items-center justify-center rounded-[6px] px-1 text-canvas-muted outline-none hover:text-bone focus-visible:ring-2 focus-visible:ring-gold lg:-my-1.5 lg:min-h-11 lg:min-w-0";
+const link = "inline-flex min-h-11 min-w-11 items-center justify-center rounded-[6px] px-1 text-canvas-muted outline-none hover:text-bone focus-visible:ring-2 focus-visible:ring-gold lg:min-w-0";
 
 /** The trail under the header, on every page except the landing page. */
 export function Breadcrumbs({ inline = false }: { /** In the phone top bar next to the hamburger: no padding or own row. */ inline?: boolean }) {

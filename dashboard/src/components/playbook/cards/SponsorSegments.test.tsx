@@ -38,7 +38,8 @@ describe("age group lookups report back in a toast", () => {
     stubFetch({ error: "x" }, 502);
     body();
     await open();
-    expect((await screen.findAllByRole("alert")).some((a) => a.closest("[data-toast-viewport]") && /Couldn't load age groups/.test(a.textContent ?? ""))).toBe(true);
+    // The inline failure message (also an alert) lands first; the toast follows once the lookup settles.
+    await waitFor(() => expect(screen.getAllByRole("alert").some((a) => a.closest("[data-toast-viewport]") && /Couldn't load age groups/.test(a.textContent ?? ""))).toBe(true));
   });
 });
 

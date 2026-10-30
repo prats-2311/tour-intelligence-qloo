@@ -248,8 +248,8 @@ test("13. chart scatter markers are at least 44x44", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/tours/insights?sample=1");
   await expect(page.getByRole("heading", { name: "Verdict mix" })).toBeVisible({ timeout: 20_000 });
-  const n = await page.locator("[data-tour=quadrant] a.absolute, [data-tour=quadrant] button.absolute").count();
-  expect(n, "scatter has markers").toBeGreaterThan(3);
+  // Markers render after the heading; poll instead of counting once.
+  await expect.poll(() => page.locator("[data-tour=quadrant] a.absolute, [data-tour=quadrant] button.absolute").count(), { message: "scatter has markers" }).toBeGreaterThan(3);
   expect(await small(page, "[data-tour=quadrant] a.absolute, [data-tour=quadrant] button.absolute")).toEqual([]);
 });
 
