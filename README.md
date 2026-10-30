@@ -40,7 +40,10 @@ Also in the app:
 - **Advance & risks tab.** Weather history from Open-Meteo for the dates, labelled "not a forecast". Public holidays from Nager.Date. Visa and equipment notes from Tavily search plus Gemini, each with its sources and checked against them. Confirm these before you rely on them.
 - **Sponsors by age group.** Pick an age group to see brands that group's fans rank higher. It uses Qloo audience demographics and its demographic signal, on age only. Each group shows a signed index such as "+0.91 vs the average audience (not a share)". Groups that include under-21s carry a note to keep alcohol sponsors out.
 - **Team workspaces.** Share a link, no sign-in. A workspace holds status, notes, overrides, sponsor leads and an activity log, and shows the team's decisions in the Tour Book. Each visitor of the example gets a private copy with a seeded discussion between fictional teammates.
-- **Taste Loop concept page** at `/v2`. A fictional example artist with real LA data, no predicted numbers, its own short tour and an "Experiences fans could book" section.
+- **Taste Loop concept page** at `/v2`. A fictional example artist with real LA data, no predicted numbers, its own short tour and an "Experiences fans could book" section. When analytics are on, its RSVP-style buttons (going, waitlist, was there) are logged as anonymous prototype taps; otherwise they stay mock and disabled.
+- **For agents page** at `/agents`. Lists the 9 public MCP tools, the Claude Code plugin install and WebMCP, with an example tour report (fictional artist).
+- **11 WebMCP tools** registered by the dashboard in Chrome: `get_tour_board`, `get_city_playbook`, `open_city`, `set_comparison_mode`, `build_tour_from_shortlist`, `open_tour_book`, `get_sponsors_by_age`, `get_advance_risks`, `get_team_notes`, `add_team_note`, `set_city_status`.
+- **Live trust meter and team decisions on `/proof`.** When BigQuery analytics are enabled, `/proof` shows aggregate counts from real playbook runs (claims checked and removed, median latency, sponsors hidden) and how teams used workspaces (statuses, overrides of Qloo's pick, notes by role). With analytics off the panels do not appear.
 - **Not-found page**, a favicon and a link preview card.an "Ask live" suggestion. Then open `/proof`. ![Proof](docs/screens/06-proof-desktop.png)
 
 <!-- Screenshot list (one place to fix names): 01-landing, 02-board-winnability, 03-board-without-qloo, 04-playbook-*, 05-tour-book-cover, 06-proof; each in -desktop.png and -mobile.png under docs/screens/ -->
@@ -115,7 +118,7 @@ flowchart LR
   A[AI agents<br/>MCP clients] --> P
   D["Dashboard (Cloud Run)<br/>React SPA, Express BFF, WebMCP tools"] --> G
   D -.-> S[(Private GCS<br/>recorded example)]
-  P["Public MCP server<br/>5 tools, rate-limited"] --> G
+  P["Public MCP server<br/>9 tools, rate-limited"] --> G
   subgraph PRIV["IAM-private"]
     G["qloo_gateway (Cloud Run)<br/>Qloo caller with budget, scoring and lift,<br/>playbook builder, sponsor check, narrator,<br/>claim checker, strategist, this week,<br/>advance (new), workspaces (new)"]
     H["qloo mcp harness<br/>stdio child, 10 allowlisted tools"]
@@ -163,7 +166,14 @@ Decisions: [ADR 0001 Qloo through the harness gateway](docs/adr/0001-qloo-throug
 claude mcp add --transport http tour-intel https://tour-intel-mcp-public-602700957663.us-central1.run.app/mcp
 ```
 
-Five tools: `find_tour_markets`, `get_city_playbook`, `suggest_support_acts`, `rank_venues`, `get_local_moment`. Limit 30 requests per 10 minutes per IP, 2 regions and 3 stops per board, cached results, and a shared daily Qloo budget. Results are affinity signals from aggregate taste data, not ticket forecasts or claims about individuals.
+Nine tools: `find_tour_markets`, `get_city_playbook`, `suggest_support_acts`, `rank_venues`, `get_local_moment`, `get_sponsors_by_age`, `get_advance_risks`, `get_team_notes` (read-only, from a workspace link) and `get_tour_report` (board plus top playbooks in one call). The server also offers the prompts `plan_tour` and `brief_for_sponsor_meeting` and the resource `tour-intel://about`. Limit 30 requests per 10 minutes per IP, 2 regions and 3 stops per board, cached results, and a shared daily Qloo budget. Results are affinity signals from aggregate taste data, not ticket forecasts or claims about individuals.
+
+Claude Code plugin (the MCP server plus a `plan-tour` skill, no key needed):
+
+```
+/plugin marketplace add prats-2311/tour-intelligence-qloo
+/plugin install tour-intel@tour-intelligence-qloo
+```
 
 ## Run it
 
@@ -192,6 +202,8 @@ cd dashboard && RECORDINGS_DIR=<dir> npm run server & npm run dev
 - WebMCP tools need Chrome with the feature enabled.
 - A short do-not-book list (currently one act) is applied at display time; affected cards say so. Recorded data and proof results are unchanged.
 - Non-profit, advocacy, political and religious organisations are kept off the sponsor card by a model check (one batched Gemini call per playbook: could this brand sponsor a concert? Unanswered ids are hidden) plus a short disclosed name list, because Qloo brand entities carry no tag that identifies them. The card says how many were hidden, or that the check was unavailable. In live runs they are removed before ranking, so the remaining brands' ranks are among the brands shown; the recorded example uses the name list only.
+
+- Analytics are optional. The gateway writes to BigQuery only when `BQ_DATASET` and the project are set (tables created once by `cloud_run/qloo_gateway/scripts/bq_setup.sh`). Rows hold our own counts and metadata: city, verdict, claim and call counts, latency, team event types, anonymous hashed session or workspace ids. Never stored: Qloo results, note text, names of people or raw IPs. Logging is best effort and the stats routes answer "disabled" on any failure.
 
 ## Operations
 
