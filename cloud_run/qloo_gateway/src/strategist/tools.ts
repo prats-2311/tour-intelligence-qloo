@@ -1,5 +1,5 @@
 import { extractCandidates, extractSharedTaste, extractTrendPoints } from "../extract.js";
-import type { City } from "../geo/cities.js";
+import { metroAnchor, nearestCity, type City } from "../geo/cities.js";
 import { runCityPlaybook } from "../pipeline/cityPlaybook.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
 import { INSIGHTS_TYPES, SEARCH_TYPES } from "../validate.js";
@@ -106,6 +106,30 @@ export function compactResults(results: unknown, max = 8): unknown {
   return shared.value === null ? null : { sharedTaste: shared.value, sharedTags: shared.tags.slice(0, 3).map((t) => t.name) };
 }
 
+/** Nearest city within 80 km, then the most populous city within 30 km of that one (suburb -> tour city); null when nothing is in range. Reuses the board's own anchoring helpers. */
+function labelCity(p: { lat: number; lon: number }, cities: City[]): City | null {
+  const near = nearestCity(cities, p, { maxKm: 80, minPopulation: 20_000 });
+  return near ? metroAnchor(cities, near, { maxKm: 30, minPopulation: 20_000 }) ?? near : null;
+}
+
+/** Heat points as city labels for the model: no coordinates, a deduped city list (max affinity) on top. */
+export function cityHeatForModel(results: unknown, cities: City[], max = 10): { cities: Array<{ city: string; country: string; affinity: number; popularity?: number }>; points: Array<{ city: string | null; country?: string; affinity: number | null }> } {
+  const byCity = new Map<string, { city: string; country: string; affinity: number; popularity?: number }>();
+  const points: Array<{ city: string | null; country?: string; affinity: number | null }> = [];
+  for (const item of Array.isArray(results) ? results.slice(0, max) : []) {
+    const o = rec(item), loc = rec(o?.location), q = rec(o?.query);
+    const lat = Number(loc?.latitude), lon = Number(loc?.longitude);
+    const c = Number.isFinite(lat) && Number.isFinite(lon) && loc?.latitude !== null && loc?.longitude !== null ? labelCity({ lat, lon }, cities) : null;
+    const aff = typeof q?.affinity === "number" ? q.affinity : typeof o?.affinity === "number" ? o.affinity : null;
+    const pop = typeof q?.popularity === "number" ? q.popularity : typeof o?.popularity === "number" ? o.popularity : undefined;
+    points.push({ city: c?.name ?? null, ...(c ? { country: c.country } : {}), affinity: aff });
+    if (!c) continue;
+    const prev = byCity.get(c.id);
+    if (!prev || (aff ?? -Infinity) > prev.affinity) byCity.set(c.id, { city: c.name, country: c.country, affinity: aff ?? 0, ...(pop !== undefined ? { popularity: pop } : {}) });
+  }
+  return { cities: [...byCity.values()].sort((a, b) => b.affinity - a.affinity), points };
+}
+
 const rejected = (name: string, summary: string): ToolOutcome => ({ name, status: "rejected", summary, data: null });
 const failed = (name: string, err: unknown): ToolOutcome => ({ name, status: "error", summary: String((err as Error)?.message ?? err), data: null });
 
@@ -172,12 +196,15 @@ export async function executeTool(call: { name: string; args: Record<string, unk
     const e = r.envelope;
     const n = Array.isArray(e.results) ? e.results.length : 0;
     const resultCount = typeof e.result_count === "number" && Number.isFinite(e.result_count) ? e.result_count : n;
-    const raw = name === "qloo_trends" ? extractTrendPoints(e).slice(0, 8)
+    const heat = name === "qloo_where_popular" && e.status === "ok" ? cityHeatForModel(e.results, deps.cities) : null;
+    const raw = heat ? heat : name === "qloo_trends" ? extractTrendPoints(e).slice(0, 8)
       : e.status === "needs_input" ? extractCandidates(e).slice(0, 5) // F6: ids the model can retry with
       : compactResults(e.results);
     // Same display rules as the dashboard: no do-not-book acts; no non-sponsor organisations among brands.
     const brands = [args.target_type, args.entity_type, args.option_type].some((t) => t === "brand");
     const data = filterToolData(raw, { brands }).data;
+    const top = heat ? (rec(data)?.cities as Array<{ city: string }> | undefined)?.slice(0, 3).map((c) => c.city) ?? [] : [];
+    if (heat) return { name, status: e.status, summary: top.length ? `${n} points; Top: ${top.join(", ")}` : `${n} points, none near a listed city`, resultCount, data, cacheKey: r.cacheKey, cached: r.cached };
     return { name, status: e.status, summary: e.summary && !mentionsDoNotBook(e.summary) ? e.summary : `${n} results`, resultCount, data, cacheKey: r.cacheKey, cached: r.cached };
   } catch (err) {
     return err instanceof ValidationError ? rejected(name, err.message) : failed(name, err);
