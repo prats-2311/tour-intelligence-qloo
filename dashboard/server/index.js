@@ -3,7 +3,7 @@ import cors from "cors";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { mountQlooProxy } from "./qlooProxy.js";
+import { jsonExceptStrategist, mountQlooProxy } from "./qlooProxy.js";
 import { mountRecordings } from "./recordings.js";
 import { mountTours, statusFromCallTool } from "./tours.js";
 import { requireOrchestratorJob } from "./requireOrchestratorJob.js";
@@ -338,7 +338,7 @@ const app = express();
 app.use(cors());
 // Before the app-wide parser: /api/tours parses its own (larger) body.
 mountTours(app, { callTool: statusFromCallTool(callTool) });
-app.use(express.json());
+app.use(jsonExceptStrategist());
 app.use(requireTourDataApi(TOUR_DATA_API));
 
 app.get("/api/campaigns", async (req, res) => {
