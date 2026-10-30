@@ -10,7 +10,7 @@ describe("README leads with sponsor lift", () => {
   });
   it("orders Proof, honestly as Test B, claim checker, Test C, then Limits with Test A", () => {
     const proof = at("## Proof, honestly");
-    const order = ["- **Test B", "- **Claim checker", "- **Test C", "**Raters (Amendment 8):**", "### Limits", "- **Test A"].map((s) => readme.indexOf(s, proof));
+    const order = ["- **Test B", "- **Test B after the model's cutoff", "- **Claim checker", "- **Test C", "**Raters (Amendment 8):**", "### Limits", "- **Test A"].map((s) => readme.indexOf(s, proof));
     expect(order.every((i) => i > -1)).toBe(true);
     expect(order).toEqual([...order].sort((x, y) => x - y));
   });
@@ -24,10 +24,16 @@ describe("README leads with sponsor lift", () => {
     expect(readme).not.toMatch(/\b\d+ places higher/i);
     expect(readme).not.toMatch(/Test B[^\n]*city (ranking|picks)/i);
   });
-  it("frames Test B against chance, owns the weak popularity baseline, and counts 8 amendments", () => {
+  it("publishes Amendment 9's result exactly and no longer says pending", () => {
+    expect(readme).toContain("Mean reciprocal rank: Qloo rank 0.70, Gemini 0.88, popularity 0.10; chance level 0.29.");
+    expect(readme).toContain("Qloo rank beat popularity (p=0.016): 7 wins, 0 losses, 1 tie over 8 cases.");
+    expect(readme).toContain("(0.70 vs 0.88; p=0.625; 1 win, 3 losses, 4 ties)");
+    expect(readme).not.toContain("Pending (Amendment 9)");
+  });
+  it("frames Test B against chance, owns the weak popularity baseline, and counts 10 amendments", () => {
     expect(readme).toContain("### Limits\n\n- The popularity baseline is weak by construction: in 18 of 22 cases the real pick wasn't on the city's popularity list, so that arm ranked it last.\n");
     expect(readme).not.toMatch(/popularity baseline 17–1/);
     expect(readme).not.toMatch(/\b6 (dated )?amendments/);
-    expect(readme).toMatch(/8 dated amendments/);
+    expect(readme).toMatch(/10 dated amendments/);
   });
 });
