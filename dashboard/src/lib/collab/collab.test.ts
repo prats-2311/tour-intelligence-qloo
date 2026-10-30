@@ -3,8 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CollabHttpError, createWorkspace, fetchWorkspace, writeWorkspace } from "./api";
 import { loadIdentity, saveIdentity } from "./identity";
 import { applyLocal } from "./optimistic";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { cardThread, emptySnapshot, fieldOf, isSnapshot, timeAgo, WS_ID } from "./types";
 
 const who = { name: "Sam", role: "Manager" as const };
@@ -46,9 +44,8 @@ describe("optimistic apply", () => {
 });
 
 describe("workspace id", () => {
-  it("is the same pattern as the gateway's and has the same bounds and alphabet", () => {
-    const gw = readFileSync(resolve("../cloud_run/qloo_gateway/src/collab/model.ts"), "utf8");
-    expect(/export const WS_ID = (\/.*\/);/.exec(gw)![1]).toBe(String(WS_ID));
+  it("has the bounds and alphabet the gateway enforces", () => {
+    expect(String(WS_ID)).toBe("/^[A-Za-z0-9_-]{10,64}$/"); // test/collab.test.ts in the gateway pins this to its own pattern
     expect(WS_ID.test("a".repeat(10))).toBe(true);
     expect(WS_ID.test("a".repeat(64))).toBe(true);
     expect(WS_ID.test("a".repeat(9))).toBe(false);

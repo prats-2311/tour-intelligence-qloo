@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import express from "express";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
@@ -36,6 +37,10 @@ describe("collab model", () => {
     expect(WS_ID.test("a".repeat(65))).toBe(false);
     for (const bad of ["abcde.fghij", "abcde/fghij", "abcde%2Ffghij", "..abcdefghij", "abcdefghi\n"]) expect(WS_ID.test(bad), bad).toBe(false);
     expect(WS_ID.test("Ab_-0123456789")).toBe(true);
+  });
+  it("ws id pattern is identical to the dashboard's", () => {
+    const dash = readFileSync(new URL("../../../dashboard/src/lib/collab/types.ts", import.meta.url), "utf8");
+    expect(/export const WS_ID = (\/.*\/);/.exec(dash)![1]).toBe(String(WS_ID));
   });
   it("accepts text of exactly the cap and rejects one over", () => {
     const d = emptyDoc(0);
