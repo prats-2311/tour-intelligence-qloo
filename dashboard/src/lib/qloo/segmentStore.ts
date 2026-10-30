@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { fetchSponsorSegments } from "./client";
 import { SEGMENTS_ERROR, type SponsorSegments } from "./segments";
 
@@ -10,7 +10,8 @@ const IDLE: SegmentState = { status: "idle" };
 const states = new Map<string, SegmentState>();
 const inflight = new Map<string, Promise<SegmentState>>();
 const listeners = new Set<() => void>();
-const notify = () => listeners.forEach((l) => l());
+let version = 0;
+const notify = () => { version++; listeners.forEach((l) => l()); };
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
 
 export const segmentKey = (artistId: string, city: { id?: string; name: string; country: string }): string => `${artistId}|${city.id ?? city.name}|${city.country}`;
@@ -41,3 +42,11 @@ export function useSegments(key: string | null): SegmentState {
 
 /** Test seam: forget everything. */
 export function resetSegments(): void { states.clear(); inflight.clear(); notify(); }
+
+/** Subscribed read of several entries at once (same order as `keys`). Never triggers a load. */
+export function useSegmentsMany(keys: string[]): SegmentState[] {
+  const v = useSyncExternalStore(subscribe, () => version);
+  const joined = keys.join("\n");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => keys.map(getSegments), [v, joined]);
+}
