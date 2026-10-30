@@ -210,6 +210,24 @@ describe("qlooProxy", () => {
     expect((await fetch(`${base}/api/qloo/sponsor-segments?artistId=A1&city=G&country=US`)).status).toBe(400); // session header required
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
+  it("forwards only allowlisted sponsors-without-qloo params and rejects missing or long values", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ status: "ok", brands: [] }), { status: 200, headers: { "content-type": "application/json" } }));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const ok = await fetch(`${base}/api/qloo/sponsors-without-qloo?artist=Mac&artistId=A1&city=Los%20Angeles&country=US&cityId=7&lat=34&lon=-118&evil=1`, { headers: { "x-session-id": "s" } });
+    expect(await ok.json()).toEqual({ status: "ok", brands: [] });
+    expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/sponsors-without-qloo?artist=Mac&artistId=A1&city=Los+Angeles&country=US&cityId=7&lat=34&lon=-118");
+    for (const qs of [`artist=M&artistId=${"x".repeat(81)}&city=G&country=US`, "artist=M&artistId=A1&city=G", "artistId=A1&city=G&country=US"]) {
+      expect((await fetch(`${base}/api/qloo/sponsors-without-qloo?${qs}`, { headers: { "x-session-id": "s" } })).status).toBe(400);
+    }
+    expect((await fetch(`${base}/api/qloo/sponsors-without-qloo?artist=M&artistId=A1&city=G&country=US`)).status).toBe(400); // session header required
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+  it("sponsors-without-qloo gives up with 504 when the gateway hangs past the forward timeout", async () => {
+    const fetchImpl = vi.fn((_u, init) => new Promise((_res, rej) => init.signal.addEventListener("abort", () => rej(new Error("aborted")))));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl, segmentsTimeoutMs: 30 });
+    const res = await fetch(`${base}/api/qloo/sponsors-without-qloo?artist=M&artistId=A&city=LA&country=US`, { headers: { "x-session-id": "s1" } });
+    expect(res.status).toBe(504);
+  });
   it("forwards the narrative flag on city-playbook", async () => {
     const fetchImpl = vi.fn(async () => sse(["event: done\ndata: {}\n\n"]));
     const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
