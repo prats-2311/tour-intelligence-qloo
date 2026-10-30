@@ -13,7 +13,7 @@ import { VenueFit } from "./cards/VenueFit";
 
 export { ThisWeekBody, isEmptyWeek } from "./cards/ThisWeek";
 
-export function CardBody({ card: fullCard, merch, city, artist, venueName }: { card: PlaybookCard; merch?: MerchDirection | null; city: string; artist?: string; /** First ok venue_fit name of the same playbook, for the sponsor deal line. */ venueName?: string }) {
+export function CardBody({ card: fullCard, merch, city, country, artist, venueName }: { card: PlaybookCard; merch?: MerchDirection | null; city: string; country?: string; artist?: string; /** First ok venue_fit name of the same playbook, for the sponsor deal line. */ venueName?: string }) {
   const { card, hidden, hiddenOrgs } = applyDoNotBook(fullCard);
   const empty = card.status === "empty" && card.kind !== "promo_zones";
   let body;
@@ -30,9 +30,9 @@ export function CardBody({ card: fullCard, merch, city, artist, venueName }: { c
     switch (card.kind) {
       case "sponsors": body = <Sponsors card={card} city={city} venueName={venueName} />; break;
       case "merch": body = <Merch card={card} merch={merch} />; break;
-      case "promo_zones": body = <PromoZones card={card} city={city} />; break;
-      case "local_moment": body = <LocalMoment card={card} />; break;
-      case "venue_fit": body = <VenueFit card={card} />; break;
+      case "promo_zones": body = <PromoZones card={card} city={city} country={country} />; break;
+      case "local_moment": body = <LocalMoment card={card} city={city} country={country} />; break;
+      case "venue_fit": body = <VenueFit card={card} city={city} country={country} />; break;
       case "co_billing": body = <CoBilling card={card} />; break;
       case "talent": body = <Talent card={card} city={city} artist={artist} />; break;
     }

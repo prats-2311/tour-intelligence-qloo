@@ -1,13 +1,14 @@
 import type { PlaybookCard } from "@/lib/qloo/types";
 import { zoneDisplayLabel } from "@/lib/qloo/zones";
 import { pct } from "../format";
+import { ExtLink, mapsLink } from "./rows";
 import { num, str } from "./util";
 
 const HEXES: Array<[number, number]> = [[50, 30], [78, 30], [36, 54], [64, 54], [92, 54], [50, 78], [78, 78]];
 const hex = (cx: number, cy: number, r = 14) =>
   Array.from({ length: 6 }, (_, i) => `${(cx + r * Math.cos((Math.PI / 3) * i + Math.PI / 6)).toFixed(1)},${(cy + r * Math.sin((Math.PI / 3) * i + Math.PI / 6)).toFixed(1)}`).join(" ");
 
-export function PromoZones({ card, city }: { card: PlaybookCard; city: string }) {
+export function PromoZones({ card, city, country }: { card: PlaybookCard; city: string; country?: string }) {
   if (card.status === "empty" || card.items.length === 0) {
     return (
       <div className="flex items-center gap-4">
@@ -34,7 +35,10 @@ export function PromoZones({ card, city }: { card: PlaybookCard; city: string })
         <tbody /* taste-skill-ignore: real table rules */ className="divide-y divide-canvas-line">
           {rows.map((it, i) => (
             <tr key={i} className="h-11">
-              <td className="break-words pr-3 text-canvas-text">{zoneDisplayLabel(str(it.label), city)}</td>
+              <td className="break-words pr-3 text-canvas-text">
+                {zoneDisplayLabel(str(it.label), city)}
+                {str(it.label) && <span className="block"><ExtLink {...mapsLink(str(it.label), city, country)} /></span>}
+              </td>
               <td className="text-right tabular-nums text-canvas-text">{pct(num(it.share) ?? 0)}</td>
             </tr>
           ))}

@@ -1,6 +1,6 @@
 import type { PlaybookCard } from "@/lib/qloo/types";
 import { coBillLine, liftLine } from "../format";
-import { Caption, Row, Rows } from "./rows";
+import { Caption, Row, Rows, listenLink } from "./rows";
 import { num, str } from "./util";
 
 const tagsOf = (v: unknown): string[] => (Array.isArray(v) ? v.filter((t): t is string => typeof t === "string" && t !== "") : []);
@@ -20,7 +20,7 @@ export function CoBilling({ card }: { card: PlaybookCard }) {
       <Rows>
         {card.items.map((it, i) => {
           const s = num(it.sharedTaste), a = num(it.localAffinity), l = num(it.lift);
-          return <Row key={i} name={str(it.name)} chips={shared.length > 0 ? [] : tagsOf(it.sharedTags)} aside={s !== null && a !== null && l !== null ? <span title={liftLine(s, a, l)}>{coBillLine(s, a)}</span> : "—"} />;
+          return <Row key={i} name={str(it.name)} chips={shared.length > 0 ? [] : tagsOf(it.sharedTags)} link={str(it.name) ? listenLink(str(it.name)) : undefined} aside={s !== null && a !== null && l !== null ? <span title={liftLine(s, a, l)}>{coBillLine(s, a)}</span> : "—"} />;
         })}
       </Rows>
       {shared.length > 0 && <Caption>Shared taste: {shared.join(" · ")}</Caption>}

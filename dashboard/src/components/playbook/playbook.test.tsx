@@ -166,7 +166,7 @@ describe("playbook cards", () => {
   it("promo zones list the rows by share, strongest first", () => {
     const items = [{ label: "Small", share: 0.1 }, { label: "Central Guadalajara", share: 0.6 }, { label: "Mid", share: 0.3 }];
     render(<CardBody card={{ ...card("promo_zones"), items }} city="Guadalajara" />);
-    expect(screen.getAllByRole("row").slice(1).map((r) => r.textContent)).toEqual(["Central Guadalajara60%", "Mid30%", "Small10%"]);
+    expect(screen.getAllByRole("row").slice(1).map((r) => r.textContent?.replace("Google Maps ↗", ""))).toEqual(["Central Guadalajara60%", "Mid30%", "Small10%"]);
     expect(screen.getByText("Top 3 hold 100% of in-city heat")).toBeTruthy();
   });
   it("co-billing shows both lift factors", () => {

@@ -1,6 +1,6 @@
 import type { PlaybookCard } from "@/lib/qloo/types";
 import { fit } from "../format";
-import { Caption, Row, Rows, TagChips } from "./rows";
+import { Caption, Row, Rows, TagChips, listenLink } from "./rows";
 import { num, str } from "./util";
 
 const SOURCE_LABEL: Record<string, string> = { suggested: "Suggested · in Qloo", city_popular: "Popular in city" };
@@ -28,7 +28,7 @@ export function Talent({ card, city, artist }: { card: PlaybookCard; city: strin
         </p>
         {typeof sharedTaste === "number" && tags.length > 0 && <TagChips tags={tags} />}
       </div>
-      <Rows>{items.map((it, i) => <Row key={i} name={str(it.name)} sub={SOURCE_LABEL[str(it.source)]} aside={unranked ? null : fit(num(it.affinity))} />)}</Rows>
+      <Rows>{items.map((it, i) => <Row key={i} name={str(it.name)} sub={SOURCE_LABEL[str(it.source)]} aside={unranked ? null : fit(num(it.affinity))} link={str(it.name) ? listenLink(str(it.name)) : undefined} />)}</Rows>
       <Caption>{caption}</Caption>
       {typeof card.summary?.sizeNote === "string" && <p className="mt-1 text-[13px] text-canvas-muted">{card.summary.sizeNote}</p>}
       {unresolved > 0 && <p className="mt-1 text-[13px] text-canvas-muted">{unresolved === 1 ? "1 suggestion wasn't found in Qloo and is not shown." : `${unresolved} suggestions weren't found in Qloo and are not shown.`}</p>}

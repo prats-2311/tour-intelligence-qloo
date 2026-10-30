@@ -233,7 +233,7 @@ function CityPlaybookPage() {
         onAudit={() => setAuditOpen(true)}
         hasEvidence={card.status === "ok"}
       >
-        <CardBody card={card} merch={merch} city={shownCity.name} artist={artist?.name} venueName={firstOkName(pb.cards, "venue_fit") ?? undefined} />
+        <CardBody card={card} merch={merch} city={shownCity.name} country={shownCity.country} artist={artist?.name} venueName={firstOkName(pb.cards, "venue_fit") ?? undefined} />
       </PlaybookCard>
     );
   };

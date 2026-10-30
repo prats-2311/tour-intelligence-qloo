@@ -86,7 +86,7 @@ export function CityChapter({ chapter, sample = false, showcase = false, artist,
                   <h3 className={H3}>{TITLE[kind]}</h3>
                   {claims && claims.verified.map((c, i) => <p key={`${i}-${c.text}`} className="text-[15px] leading-[1.5] text-canvas-text">{c.text}</p>)}
                   {claims && card.status === "ok" && claims.verified.length === 0 && <p className="text-[13px] text-canvas-muted">Narrative removed: no claim passed verification.</p>}
-                  <CardBody card={card} merch={merch} city={city.name} artist={artist} venueName={firstOkName(playbook?.cards ?? [], "venue_fit") ?? undefined} />
+                  <CardBody card={card} merch={merch} city={city.name} country={city.country} artist={artist} venueName={firstOkName(playbook?.cards ?? [], "venue_fit") ?? undefined} />
                   <MarginNote requests={card.refs.length} claims={claims} />
                 </section>
               );
