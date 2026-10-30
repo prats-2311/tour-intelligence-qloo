@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css"><style>.tag{font-size:13.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}.tag.y{color:var(--accent)}.tag.b{color:var(--web)}</style></head><body><div id="c"></div>
+<script src="lib.js"></script><script>
+title("One city playbook, step by step", "Scores and lift are deterministic code. The model writes words only, and every claim it makes is checked.");
+const BW = 320, BH = 236, XS = [40, 400, 760, 1120];
+function step(i, x, y, tag, tcls, t, s, kind) {
+  const b = h(`<div class="tag ${tcls}">${tag}</div><div class="t">${t}</div><div class="s">${s}</div>`, "box " + kind, x, y, BW, BH);
+  b.style.justifyContent = "flex-start"; b.style.paddingTop = "40px";
+  num(x + 14, y - 15, i, tcls === "b" ? "" : "");
+}
+const y1 = 150, y2 = 470;
+step(1, XS[0], y1, "Qloo", "y", "Location check", "Asks where the artist is popular in the city. The 20 heat points must sit near the city (3 or more, median within 50 km). <b>If none of up to 3 place names pass, stop: no playbook.</b>", "qloo");
+step(2, XS[1], y1, "Qloo, cached", "y", "Qloo lookups", "Brands, places, films, TV, acts and the city's own top lists, all on the place that passed. Support acts must be smaller than the headliner.", "qloo");
+step(3, XS[2], y1, "Gemini, one call", "", "Sponsor check", "One batched question: could this brand sponsor a concert? Non-profits, advocacy, political and religious groups are removed <b>before ranking</b>.", "check");
+step(4, XS[3], y1, "Code", "", "Lift by rank", "Lift = how many places higher the fans rank a brand than the city does. No affinity maths: Qloo rescales each response.", "");
+step(5, XS[0], y2, "Code, streamed first", "", "Cards", "Sponsors, merch, promo zones, local moment, venues, co-billing, acts fans love here. They reach the browser before any narrative.", "");
+step(6, XS[1], y2, "Gemini", "", "Narrative", "Writes short claims, each listing the entities, numbers and Qloo evidence it relies on.", "");
+step(7, XS[2], y2, "Code", "y", "Claim checker", "Every number and every name must appear in the Qloo results the claim cites. A claim that fails is struck, never rewritten.", "check");
+step(8, XS[3], y2, "Browser", "", "Badge and panel", "Shows N verified, M removed, and a Checked-claims panel listing what was struck and why.", "");
+// arrows
+for (let i = 0; i < 3; i++) { arrow([[XS[i] + BW, y1 + BH / 2], [XS[i + 1], y1 + BH / 2]], {c: "t"}); arrow([[XS[i] + BW, y2 + BH / 2], [XS[i + 1], y2 + BH / 2]], {c: "t"}); }
+arrow([[XS[3] + BW / 2, y1 + BH], [XS[3] + BW / 2, 428], [XS[0] + BW / 2, 428], [XS[0] + BW / 2, y2]], {c: "t"});
+// bottom band
+zone(40, 750, 1400, 150, "", "grey");
+h("Where each part runs", "zlabel grey", 56, 760);
+h("<b style='color:#ffcc00'>Code, no model</b><br>Location check, lookups, lift, cards, claim checker and every score. No model decides a number.", "abs", 56, 795, 440).style.cssText += "font-size:15px;line-height:1.35;color:#a4a094";
+h("<b style='color:#f2f0ea'>Model, words only</b><br>Sponsor check and narrative. If Gemini is unavailable the cards still show; the narrative says so.", "abs", 520, 795, 440).style.cssText += "font-size:15px;line-height:1.35;color:#a4a094";
+h("<b style='color:#f2f0ea'>Checked, not trusted</b><br>The model's output is only kept where code can confirm it against the Qloo results.", "abs", 984, 795, 430).style.cssText += "font-size:15px;line-height:1.35;color:#a4a094";
+legend([["#ffcc00", "Qloo data and checks"], ["#4a473c", "Other steps", "border-style:solid"]]);
+finish();
+</script></body></html>

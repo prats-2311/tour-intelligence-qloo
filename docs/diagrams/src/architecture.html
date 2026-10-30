@@ -1,0 +1,59 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="base.css"></head><body><div id="c"></div>
+<script src="lib.js"></script><script>
+title("System architecture", "Who calls what. Only the gateway talks to Qloo, and only the dashboard and the MCP server can call the gateway.");
+// users
+box(40, 140, 210, 110, "People in a browser", "Managers, booking agents, promoters, brand teams");
+box(40, 270, 210, 110, "In-page agent", "WebMCP in Chrome: 11 tools, same session");
+box(40, 580, 210, 130, "AI agents", "Any MCP client, or the Claude Code plugin <span class='mono'>tour-intel</span>");
+// dashboard
+zone(320, 130, 270, 380, "", "grey"); h("Dashboard (Cloud Run)", "zlabel grey", 336, 140);
+box(336, 178, 238, 76, "React SPA", "Board, playbooks, Tour Book, chat");
+box(336, 272, 238, 76, "Express BFF", "Same-origin proxy, signs calls to the gateway");
+box(336, 380, 238, 110, "Private recordings bucket", "Recorded example and proof data. Never in the repo.", "dim");
+// MCP
+box(320, 580, 270, 130, "Public MCP server (Cloud Run)", "<b>9 tools, 2 prompts, 1 resource</b><br>30 requests per 10 min per client");
+// arrows users
+arrow([[250, 195], [336, 216]]); arrow([[250, 325], [336, 240]], {c: "m"});
+arrow([[250, 645], [320, 645]]);
+arrow([[455, 254], [455, 272]]); arrow([[455, 348], [455, 380]], {dash: true});
+// gateway zone
+zone(690, 110, 420, 790, "", ""); h("IAM-private: qloo_gateway (Cloud Run)", "zlabel", 706, 120);
+box(706, 160, 388, 92, "Qloo harness", "<span class='mono'>qloo mcp</span> child process over stdio. 10 allowlisted tools. Only place that holds the Qloo key.", "qloo");
+const L = 706, R = 903, W = 191, H = 84, G = 12; let Y = 270;
+const chips = [
+  ["Qloo caller + budgets", "validate, cache, budget", "qloo"],
+  ["Scoring + lift", "winnability and lift, in code", "qloo"],
+  ["Playbook", "location check, cards", "qloo"],
+  ["Sponsor check", "hides non-profits", "check"],
+  ["Sponsor segments", "sponsors by age group", "qloo"],
+  ["Sponsors without Qloo", "model memory only", ""],
+  ["Narrator + claim checker", "struck claims removed", "check"],
+  ["Strategist + answer check", "chat, documents, page cites", "check"],
+  ["This week", "web search, music filter", "web"],
+  ["Advance", "source and country checks", "web"],
+  ["Workspaces", "team notes, statuses, overrides", ""],
+  ["Analytics", "derived counts only", ""],
+];
+chips.forEach((c, i) => { const col = i % 2, row = Math.floor(i / 2); box(col ? R : L, Y + row * (H + G), W, H, c[0], c[1], c[2]); });
+// arrows into gateway
+arrow([[574, 310], [690, 310]], {c: "t"}); lbl(588, 282, "ID token", "");
+arrow([[590, 645], [640, 645], [640, 520], [690, 520]], {c: "t"}); lbl(595, 618, "ID token", "");
+// externals
+const X = 1190, EW = 270, EH = 96;
+const ex = [
+  [150, "Qloo API", "Taste graph: heat, brands, places, acts, demographics", "qloo"],
+  [266, "Gemini", "Vertex AI or Google AI Studio. Narrative, chat, checks", ""],
+  [382, "Tavily", "Web search for this week and Advance. 25 a day cap", "web"],
+  [498, "Open-Meteo + Nager.Date", "Weather history and public holidays", "web"],
+  [614, "Firestore", "Cache, usage counters, workspaces (30 days)", ""],
+  [730, "BigQuery", "Analytics: derived counts only", ""],
+];
+ex.forEach((e) => box(X, e[0], EW, EH, e[1], e[2], e[3]));
+arrow([[1094, 198], [X, 198]], {c: "y"});
+arrow([[1110, 314], [X, 314]]); arrow([[1110, 430], [X, 430]], {c: "b"}); arrow([[1110, 546], [X, 546]], {c: "b"});
+arrow([[1110, 662], [X, 662]]); arrow([[1110, 778], [X, 778]], {dash: true});
+// legend
+legend([["#ffcc00", "Qloo data and checks"], ["#6aa8ff", "External web sources"], ["#4a473c", "Other services", "border-style:solid"]]);
+h("Dashed arrow = optional or best effort", "legend", 700, 0).style.top = "auto";
+finish();
+</script></body></html>
