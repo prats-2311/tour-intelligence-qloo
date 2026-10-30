@@ -3,7 +3,7 @@ import { Sheet } from "@/components/qloo/Sheet";
 import { LIMITS, ROLES, SHARE_NOTICE, type Actor, type Role } from "@/lib/collab/types";
 import { collabInput } from "./ui";
 
-function Form({ current, onSave }: { current: Actor | null; onSave: (a: Actor) => void }) {
+export function IdentityForm({ current, onSave }: { current: Actor | null; onSave: (a: Actor) => void }) {
   const [name, setName] = useState(current?.name ?? "");
   const [role, setRole] = useState<Role | null>(current?.role ?? null);
   const ok = name.trim().length > 0 && role !== null;
@@ -34,7 +34,7 @@ function Form({ current, onSave }: { current: Actor | null; onSave: (a: Actor) =
 export function IdentityDialog({ open, current, onClose, onSave }: { open: boolean; current: Actor | null; onClose: () => void; onSave: (a: Actor) => void }) {
   return (
     <Sheet open={open} onClose={onClose} title={current ? "Change your name or role" : "Who's writing?"}>
-      <Form current={current} onSave={onSave} />
+      <IdentityForm current={current} onSave={onSave} />
     </Sheet>
   );
 }

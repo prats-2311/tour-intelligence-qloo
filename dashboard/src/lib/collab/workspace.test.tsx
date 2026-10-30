@@ -159,6 +159,32 @@ describe("notes", () => {
     expect(JSON.parse(localStorage.getItem("collabIdentity")!)).toEqual({ name: "Rae", role: "Promoter" });
     expect(be.calls.find((c) => c.path.endsWith("/message"))?.body).toMatchObject({ name: "Rae", role: "Promoter", key: cardThread(CITY, "sponsors") });
   });
+  it("asks who is writing inside the notes sheet (one dialog) and returns focus to the composer after Save", async () => {
+    localStorage.clear();
+    mount(); await ready();
+    fireEvent.click(screen.getByRole("button", { name: /Notes for Sponsors/ }));
+    const box = await screen.findByLabelText("Add a note");
+    fireEvent.change(box, { target: { value: "Draft kept" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    const name = await screen.findByLabelText("Your name");
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(within(screen.getByRole("dialog")).getByLabelText("Add a note")).toBeTruthy(); // the sheet is still there, with the draft
+    expect((screen.getByLabelText("Add a note") as HTMLTextAreaElement).value).toBe("Draft kept");
+    fireEvent.change(name, { target: { value: "Rae" } });
+    fireEvent.click(screen.getByLabelText("Promoter"));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(screen.getByText("Draft kept")).toBeTruthy());
+    expect(document.activeElement).toBe(screen.getByLabelText("Add a note"));
+    expect(screen.queryByLabelText("Your name")).toBeNull();
+  });
+  it("Escape cancels an inline override edit and puts focus back on Edit", async () => {
+    mount(); await ready();
+    fireEvent.click(screen.getByRole("button", { name: "Edit Top zone" }));
+    const input = screen.getByLabelText("Team value for Top zone");
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(screen.queryByLabelText("Team value for Top zone")).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit Top zone" }));
+  });
   it("shows the note at once (optimistic), resolves and reopens", async () => {
     be = fakeCollabBackend({ delayMs: 200 });
     vi.stubGlobal("fetch", be.fetchImpl);
