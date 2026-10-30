@@ -10,7 +10,7 @@ import {
 
 const META = "font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted tabular-nums";
 const FICTIONAL = "Fictional example";
-const ILLUSTRATIVE = "Illustrative";
+const ILLUSTRATIVE = "Unclaimed";
 
 function Tag({ children, tone = "muted" }: { children: ReactNode; tone?: "muted" | "gold" }) {
   return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[12px] font-medium ${tone === "gold" ? "bg-gold text-on-gold" : "bg-paper-raised text-canvas-muted"}`}>{children}</span>;
@@ -90,12 +90,12 @@ function Venues({ d }: { d: TasteLoopData }) {
                 <li>{v.room}</li>
                 <li>{v.freeNights}</li>
               </ul>
-              <p className="mt-2"><Tag>{ILLUSTRATIVE}: not the venue's answers</Tag></p>
+              <p className="mt-2"><Tag>Unclaimed: the venue fills this in</Tag></p>
             </li>
           ))}
         </ul>
       )}
-      <Caption>Venues would claim their own profile. These answers are invented for the example.</Caption>
+      <Caption>Venues would claim their own profile. The places are real; the answers are left blank because only the venue can give them.</Caption>
     </Card>
   );
 }

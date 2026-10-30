@@ -52,11 +52,9 @@ export interface TasteLoopData {
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
-/** Fictional intent fields cycled over the real venues. Labelled "Illustrative" wherever they are shown. */
+/** Real venues, blank intent fields: only the venue can answer these, so nothing is invented about a real business. */
 const ILLUSTRATIVE = [
-  { collabs: "Open to collabs", room: "Small room", freeNights: "Free most Mondays and Tuesdays" },
-  { collabs: "Open to collabs", room: "Mid-size room", freeNights: "Free some Thursdays" },
-  { collabs: "Not open to collabs yet", room: "Small room", freeNights: "Free one weekend a month" },
+  { collabs: "Open to collabs? (the venue answers)", room: "Room size? (the venue answers)", freeNights: "Free nights? (the venue answers)" },
 ] as const;
 
 const formatDate = (iso: string): string => {

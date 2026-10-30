@@ -15,7 +15,7 @@ export function buildV2TourSteps(show: Showcase): TourStep[] {
   return [
     mk("hero", "A concept, not a product", "This is a future version we haven't built. The artist below is a made-up example; the places and brands are real Qloo data."),
     mk("profile", "1. Profile", `The artist says what they play, who they sound like (${EXAMPLE_PROFILE.soundsLike}) and what they won't work with. Every field here is a fictional example.`),
-    mk("venues", "2. Venue profiles", `Venues would claim a profile: open to collabs, room size, free nights. The places are real LA venues from the recording; their answers are illustrative.`),
+    mk("venues", "2. Venue profiles", `Venues would claim a profile: open to collabs, room size, free nights. The places are real LA venues from the recording; their answers are left blank, since only a venue can give them.`),
     mk("match", "3. Match", `Real data: places and brands that fans of ${EXAMPLE_PROFILE.soundsLike} rank far above ${d.city}'s own list.${crossed ? ` ${crossed} is crossed out because it's on the artist's no-go list.` : ""}`),
     mk("act", "4. Act", `One suggestion built from the top match, ${place}, and ${brand}. The outreach text is a draft the manager edits and sends.`),
     mk("rsvp", "5. Fans prove it", "Fans would get one link with three taps: Going, Waitlist or I was there. No fan accounts. This card is a mock and does nothing."),
