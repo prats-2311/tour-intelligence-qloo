@@ -156,7 +156,7 @@ function testC(run: ProofV3Results, stopped: StoppedGroundRun[]): ProofV3Test {
     tables: [{ columns: ["Playbook", ...GROUND_CATEGORIES.map((c) => CAT_LABEL[c]), "Overall", "Can't tell"],
       rows: GROUND_ARMS.map((a) => [ARM_NAME[a], ...GROUND_CATEGORIES.map((c) => cell(g.byArm[a].byCategory[c])), cell(g.byArm[a].overall), String(g.byArm[a].overall.cantTell)]) }],
     signTests: [sign("Qloo vs LLM-only (per city)", g.signTest), sign("Qloo vs LLM-only, equal counts (secondary)", g.secondary.signTest)],
-    ...(() => { const sp = splitLines(summarise({ ...run, cityRank: undefined, fixedRank: undefined, catchRate: undefined })); return { claims: sp.claims, limits: [...groundRunLines(stopped), ...sp.limits, "The reviewer had seen the shipped showcase playbooks (Amendment 5)."] }; })(),
+    ...(() => { const sp = splitLines(summarise({ ...run, cityRank: undefined, fixedRank: undefined, catchRate: undefined })); return { claims: sp.claims, limits: [...groundRunLines(stopped), ...sp.limits, "The author, who rated 34 of the 182 rows, had seen the shipped showcase playbooks (Amendments 5 and 8)."] }; })(),
     // Aggregates only: shares per city, no venue, brand or act names.
     perUnit: { columns: ["City", "Qloo", "LLM-only"], rows: g.perCity.map((c) => [c.city, f2(c.qloo), f2(c.llm)]) },
   };
