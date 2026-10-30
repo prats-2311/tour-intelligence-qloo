@@ -29,6 +29,8 @@ export const UNDER_21_NOTE = "Includes under-21s: keep alcohol sponsors out of t
 
 const ERROR: SponsorSegments = { status: "unavailable", reason: "error", message: SEGMENT_UNAVAILABLE_COPY, indexes: {}, bands: [] };
 export const SEGMENTS_ERROR = ERROR;
+export const SEGMENT_TIMEOUT_COPY = "This took too long. Try again.";
+export const SEGMENTS_TIMEOUT: SponsorSegments = { status: "unavailable", reason: "timeout", message: SEGMENT_TIMEOUT_COPY, indexes: {}, bands: [] };
 
 const rec = (v: unknown): Record<string, unknown> | null => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null);
 const isBand = (v: unknown): v is AgeBand => typeof v === "string" && (AGE_BANDS as readonly string[]).includes(v);
