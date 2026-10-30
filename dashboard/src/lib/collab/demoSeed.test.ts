@@ -97,6 +97,24 @@ describe("demo seed", () => {
     expect(messages(noWithout).some((m) => /Without Qloo/.test(m.text))).toBe(false);
     expect(messages(noWithout).some((m) => m.key === "tour:board")).toBe(true);
   });
+  it("never quotes a do-not-book act or a hidden non-sponsor, even when the raw recording lists them first", () => {
+    const bad = (name: string) => ({ name, entityId: "x", affinity: 0.9, sharedTaste: 0.5, localAffinity: 0.5, category: "artist", source: "suggested" });
+    const base = rec();
+    const tampered = rec({
+      cards: (id) => base.cards(id)?.map((c) => (c.kind === "co_billing" || c.kind === "talent" ? { ...c, items: [bad("Ariel Pink"), ...c.items] } : c.kind === "sponsors" ? { ...c, items: [bad("Planned Parenthood"), ...c.items] } : c)) ?? null,
+      week: (id) => { const w = base.week(id); return w?.status === "ok" && w.items[0] ? { ...w, items: [{ ...w.items[0], text: "Ariel Pink plays a rival show that night." }, ...w.items.slice(1)] } : w; },
+    });
+    const all = messages(buildDemoSeed(tampered));
+    expect(all.length).toBeGreaterThan(20);
+    for (const m of all) { expect(m.text, m.text).not.toMatch(/ariel pink/i); expect(m.text, m.text).not.toMatch(/planned parenthood/i); }
+    expect(buildDemoSeed(tampered)!.leads!.some((l) => /planned parenthood/i.test(JSON.stringify(l)))).toBe(false);
+  });
+  it("seeded card threads use real card kinds and the card title Acts fans love, never Local acts", () => {
+    const s = buildDemoSeed(rec())!;
+    const kinds = new Set(["sponsors", "merch", "promo_zones", "local_moment", "venue_fit", "co_billing", "talent", "this_week"]);
+    for (const t of s.threads!) if (t.key.startsWith("card:")) expect(kinds.has(t.key.split(":")[2]!), t.key).toBe(true);
+    for (const m of messages(s)) expect(m.text).not.toMatch(/Local acts/);
+  });
   it("fits the API: valid thread keys, short notes, small body", () => {
     const s = buildDemoSeed(rec())!;
     for (const t of s.threads!) expect(t.key).toMatch(/^(tour:[a-z_]{1,24}|city:[A-Za-z0-9_-]{1,32}|card:[A-Za-z0-9_-]{1,32}:[a-z_]{1,24})$/);

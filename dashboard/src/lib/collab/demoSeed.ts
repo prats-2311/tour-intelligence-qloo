@@ -1,4 +1,5 @@
-import { applyDoNotBook, visibleClaimTotals } from "../qloo/doNotBook";
+import { applyDoNotBook, mentionsDoNotBook, visibleClaimTotals } from "../qloo/doNotBook";
+import { mentionsNonSponsor } from "../qloo/nonSponsors";
 import { VERDICT_LABEL } from "../qloo/labels";
 import { sortCities, summarize } from "../qloo/ranking";
 import { showcaseCities, showcasePlaybookEvents, showcaseThisWeek, showcaseWithoutQloo } from "../qloo/showcase";
@@ -69,7 +70,8 @@ export function buildDemoSeed(rec: Recording): Seed | null {
   const out: Required<Seed> = { statuses: [], threads: [], overrides: [], leads: [] };
   /** Adds a thread from lines that kept every fact; returns the minutes-ago of each kept note (empty when dropped). */
   const thread = (key: string, startAgo: number, lines: Line[], resolvedBy?: Who): number[] => {
-    const kept = lines.filter((l): l is [Who, string] => l[1] !== null);
+    // Never quote a listed act or a hidden non-sponsor, whichever recorded field the name came from.
+    const kept = lines.filter((l): l is [Who, string] => l[1] !== null && !mentionsDoNotBook(l[1]) && !mentionsNonSponsor(l[1]));
     if (kept.length === 0) return [];
     const times = kept.map((_, i) => startAgo - GAPS[i]!);
     out.threads.push({
@@ -161,7 +163,7 @@ export function buildDemoSeed(rec: Recording): Seed | null {
     const [n1, n2, n3] = tl.map((x) => str(x.name));
     const suggested = tl.some((x) => x.source === "suggested");
     thread(cardThread(lead.id, "talent"), 2300, [
-      ["Sam", n1 && n2 && n3 ? say`The Local acts card lists ${n1}, ${n2} and ${n3}. Anyone know these acts?` : null],
+      ["Sam", n1 && n2 && n3 ? say`The Acts fans love card lists ${n1}, ${n2} and ${n3}. Anyone know these acts?` : null],
       ["Leo", suggested ? say`The card says they're suggested or popular in the city, not confirmed locals. So we won't bill anyone as a local guest without checking.` : null],
       ["Sam", suggested ? say`Agreed. I'll check who is actually based here.` : null],
     ]);

@@ -262,7 +262,7 @@ describe("CityPlaybook Advance & risks tab", () => {
     withWindow({ start: "2027-03-12", end: "2027-03-15" });
     const spy = vi.spyOn(client, "fetchAdvance").mockResolvedValue(risks);
     renderAt(`/tours/playbook/${firstId()}?showcase=1`);
-    fireEvent.click(await screen.findByRole("tab", { name: "Local acts" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Acts fans love" }));
     await new Promise((r) => setTimeout(r, 50));
     expect(spy).not.toHaveBeenCalled();
   });
