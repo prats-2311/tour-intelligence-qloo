@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useToast } from "@/components/ui/Toast";
 import { isSampleMode } from "@/lib/qloo/client";
 import { postV2Tap, readTaps, rememberTap, useStats, type TapAction, type V2Stats } from "@/lib/qloo/stats";
 import { useTour } from "@/components/tour/tourContext";
@@ -258,17 +259,16 @@ const countsLine = (c: Counts) => `Going ${c.going} · Waitlist ${c.waitlist} ·
 function Rsvp({ live, onTap }: { live: boolean; onTap: (a: TapAction) => void }) {
   const [tapped, setTapped] = useState<TapAction[]>(() => readTaps());
   const [busy, setBusy] = useState<TapAction | null>(null);
-  const [note, setNote] = useState("");
+  const { toast } = useToast();
   const btn = "inline-flex h-11 flex-1 items-center justify-center rounded-[10px] bg-paper-raised px-3 text-[14px] font-semibold text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:text-canvas-muted disabled:opacity-70";
   const tap = async (action: TapAction) => {
     setBusy(action);
-    setNote("");
     const ok = await postV2Tap(action, RSVP_EXPERIENCE);
     setBusy(null);
-    if (!ok) return setNote("That tap did not go through. Try again in a moment.");
+    if (!ok) return toast({ message: "That tap did not go through. Try again in a moment.", tone: "error" });
     rememberTap(action);
     setTapped((t) => [...new Set([...t, action])]);
-    setNote("Counted. Thanks.");
+    toast({ message: "Counted. Thanks.", tone: "success" });
     onTap(action);
   };
   return (
@@ -281,7 +281,6 @@ function Rsvp({ live, onTap }: { live: boolean; onTap: (a: TapAction) => void })
             <button key={action} type="button" disabled={!live || busy !== null || tapped.includes(action)} aria-pressed={live ? tapped.includes(action) : undefined} onClick={() => void tap(action)} className={btn}>{label}</button>
           ))}
         </div>
-        <p role="status" className="mt-2 min-h-[1.25rem] text-[13px] text-canvas-muted">{note}</p>
       </div>
       {live
         ? <Caption>Prototype: taps from visitors of this page, not real fans. Stored as anonymous counts in BigQuery. Each action can be tapped once per browser.</Caption>

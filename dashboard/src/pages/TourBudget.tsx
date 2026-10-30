@@ -117,7 +117,7 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
   const copyCsv = async () => {
     try { await navigator.clipboard.writeText(csv()); toast({ message: "CSV copied.", tone: "success" }); } catch { toast({ message: "Couldn't copy the CSV. Your browser blocked the clipboard.", tone: "error" }); }
   };
-  const clear = () => { clearBudget(tourKey); setBudget(loadBudget("\u0000none", ids)); };
+  const clear = () => { clearBudget(tourKey); setBudget(loadBudget("\u0000none", ids)); toast({ message: "Budget cleared.", tone: "success" }); };
 
   return (
     <div className="mx-auto flex w-full min-w-0 max-w-5xl flex-col gap-4 pb-24">
@@ -136,7 +136,7 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
               {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
-          <button type="button" className={btn} onClick={() => update(() => exampleBudget(ids, legs.map((l) => l.key)))}><FlaskConical size={16} aria-hidden />Load example (fictional figures)</button>
+          <button type="button" className={btn} onClick={() => { update(() => exampleBudget(ids, legs.map((l) => l.key))); toast({ message: "Example budget loaded. The figures are fictional.", tone: "info" }); }}><FlaskConical size={16} aria-hidden />Load example (fictional figures)</button>
           <button type="button" className={btn} onClick={() => void copyCsv()}><Copy size={16} aria-hidden />Copy as CSV</button>
           <button type="button" className={btn} onClick={clear}><Eraser size={16} aria-hidden />Clear budget</button>
         </div>

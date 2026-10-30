@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
+import { useToast } from "@/components/ui/Toast";
 import { ArrowDown, ArrowRight, ArrowUp, BarChart3, CircleAlert, History, RotateCcw, Square } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
@@ -141,6 +142,7 @@ const smallBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-pap
 
 export default function TourBoard() {
   const { state, run, replay, abort, reset, shortlist, toggleShortlist } = useTourBoard();
+  const { toast } = useToast();
   const reduce = useReducedMotion();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -503,7 +505,7 @@ export default function TourBoard() {
                           checked={checked}
                           disabled={blocked}
                           aria-describedby={blocked ? "max-stops-hint" : undefined}
-                          onChange={() => toggleShortlist(c.id)}
+                          onChange={() => { toggleShortlist(c.id); toast({ message: checked ? `Removed ${c.name} from the tour.` : `Added ${c.name} to the tour.`, tone: checked ? "info" : "success" }); }}
                           className="size-5 accent-[#ffcc00]"
                         />
                         <span className="min-w-0 flex-1 truncate text-[15px] text-canvas-text">{c.name}</span>

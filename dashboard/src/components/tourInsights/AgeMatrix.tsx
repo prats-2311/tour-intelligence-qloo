@@ -1,9 +1,10 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useToast } from "@/components/ui/Toast";
 import { buildAgeMatrix, indexRangeText, matrixSummary, type AllFansBrand, type MatrixCell, type MatrixRow } from "@/lib/qloo/ageMatrix";
 import { loadAllSegments, MATRIX_MAX_CITIES } from "@/lib/qloo/ageMatrixLoader";
 import { BAND_LABEL, type AgeBand } from "@/lib/qloo/segments";
-import { loadSegments, segmentKey, useSegmentsMany, type SegmentRequest } from "@/lib/qloo/segmentStore";
+import { getSegments, loadSegments, segmentKey, useSegmentsMany, type SegmentRequest } from "@/lib/qloo/segmentStore";
 import type { ScoredCity } from "@/lib/qloo/types";
 
 export const MATRIX_TITLE = "Which brands each age group loves, city by city";
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function AgeMatrix({ cities, artist, allFansOf, hrefFor }: Props) {
+  const { toast } = useToast();
   const rows = useMemo(() => cities.slice(0, MATRIX_MAX_CITIES), [cities]);
   const requests = useMemo((): SegmentRequest[] => (artist ? rows.map((c) => ({ artistId: artist.entityId, artist: artist.name, city: { id: c.id, name: c.name, country: c.country, lat: c.lat, lon: c.lon } })) : []), [artist, rows]);
   const states = useSegmentsMany(requests.map((r) => segmentKey(r.artistId, r.city)));
@@ -39,7 +41,11 @@ export function AgeMatrix({ cities, artist, allFansOf, hrefFor }: Props) {
   const touched = states.some((s) => s.status !== "idle");
   const someIdle = states.some((s) => s.status === "idle");
   const running = progress !== null && progress.done < progress.total;
-  const run = () => { setProgress({ done: 0, total: requests.length }); void loadAllSegments(requests, { onProgress: (p) => setProgress({ done: p.done, total: p.total }) }); };
+  const run = () => { setProgress({ done: 0, total: requests.length }); void loadAllSegments(requests, { onProgress: (p) => setProgress({ done: p.done, total: p.total }) }).then(() => {
+    const ok = requests.filter((r) => { const s = getSegments(segmentKey(r.artistId, r.city)); return s.status === "done" && s.data.status !== "unavailable"; }).length;
+    const noun2 = requests.length === 1 ? "city" : "cities";
+    toast({ message: ok === requests.length ? `Age groups loaded for ${ok} ${noun2}.` : `Age groups loaded for ${ok} of ${requests.length} ${noun2}. Retry the rest in the table.`, tone: "success" });
+  }); };
   const summary = matrixSummary(matrix);
   const noun = rows.length === 1 ? "city" : "cities";
   const cellOf = open ? matrix.rows.find((r) => r.cityId === open.cityId)?.cells[open.band] : undefined;

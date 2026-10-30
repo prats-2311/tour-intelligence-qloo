@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useToast } from "@/components/ui/Toast";
 import { HIDDEN_ORGS_NOTE, SPONSOR_CHECK_UNAVAILABLE_NOTE } from "@/lib/qloo/nonSponsors";
 import { AGE_BANDS, BAND_LABEL, bandHeader, differLine, displayItems, NO_SKEW_COPY, SEGMENT_UNAVAILABLE_COPY, SEGMENT_TIMEOUT_COPY, showsUnder21Note, UNDER_21_NOTE, type AgeBand, type SegmentBand, type SponsorSegments as Segments } from "@/lib/qloo/segments";
 import { getSegments, loadSegments, segmentKey, useSegments, type SegmentRequest } from "@/lib/qloo/segmentStore";
@@ -63,6 +64,7 @@ export function LoadedBands({ data, country }: { data: Segments; country?: strin
 export function SegmentControl({ request, country, children }: { request: SegmentRequest; country: string; children: React.ReactNode }) {
   const key = segmentKey(request.artistId, request.city);
   const state = useSegments(key);
+  const { toast } = useToast();
   // "?band=25_to_29" (from the Charts page matrix) opens that age group, but only when its answer is already in the session: a link never starts a lookup.
   const [view, setView] = useState<"all" | AgeBand>(() => {
     const q = new URLSearchParams(window.location.search).get("band");
@@ -79,7 +81,11 @@ export function SegmentControl({ request, country, children }: { request: Segmen
   const showBands = bands.length > 0;
   const open = () => {
     setAsked(true);
-    void loadSegments(request).then((s) => { if (s.status === "done" && s.data.status === "ok" && s.data.bands[0]) setView((v) => (v === "all" ? s.data.bands[0]!.band : v)); });
+    void loadSegments(request).then((s) => {
+      if (s.status === "done" && s.data.status === "ok" && s.data.bands[0]) setView((v) => (v === "all" ? s.data.bands[0]!.band : v));
+      if (s.status === "done" && s.data.status === "ok") toast({ message: "Age groups are ready.", tone: "success" });
+      else if (s.status === "done" && s.data.status === "unavailable") toast({ message: "Couldn't load age groups. Try again from the sponsors card.", tone: "error" });
+    });
   };
   const current = bands.find((b) => b.band === view);
   return (
@@ -92,7 +98,7 @@ export function SegmentControl({ request, country, children }: { request: Segmen
       </div>
       {noSkew && <p data-testid="segment-no-skew" className="mb-2 text-[13px] text-canvas-muted">{NO_SKEW_COPY}</p>}
       {timedOut && (
-        <div data-testid="segment-timeout" role="alert" className="mb-2 flex flex-wrap items-center gap-2 text-[13px] text-canvas-muted">
+        <div data-testid="segment-timeout" className="mb-2 flex flex-wrap items-center gap-2 text-[13px] text-canvas-muted">
           <span>{SEGMENT_TIMEOUT_COPY}</span>
           <button type="button" onClick={open} className={chip(false)}>Try again</button>
         </div>

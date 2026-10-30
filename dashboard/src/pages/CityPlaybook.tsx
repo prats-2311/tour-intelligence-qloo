@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/Toast";
 import { ChevronLeft } from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -81,6 +82,7 @@ export default function CityPlaybook() {
 function CityPlaybookPage() {
   const { cityId = "" } = useParams();
   const { state, run, shortlist, toggleShortlist, accentOrder, setLastOpened } = useTourBoard();
+  const { toast } = useToast();
   const [params] = useSearchParams();
   const sampleParam = params.get("sample");
   const wantLong = sampleParam === "long";
@@ -277,10 +279,10 @@ function CityPlaybookPage() {
           <NextStepLink data-testid="primary-action" to={nextHeld ? `/tours/playbook/${nextHeld.id}${sampleQ}` : `/tours/book${sampleQ}`} className="btn-gold inline-flex min-h-12 min-w-0 items-center justify-center rounded-[10px] px-4 py-2 text-center text-[15px] font-semibold leading-tight lg:h-10 lg:min-h-0 lg:px-5">
             <span className="min-w-0 break-words">{nextHeld ? `Next: ${nextHeld.name}` : "Next: Tour Book"}</span>
           </NextStepLink>
-          <button type="button" onClick={() => toggleShortlist(shownCity.id)} className={removeBtn}>Remove from tour</button>
+          <button type="button" onClick={() => { toggleShortlist(shownCity.id); toast({ message: `Removed ${shownCity.name} from the tour.`, tone: "info" }); }} className={removeBtn}>Remove from tour</button>
         </div>
       ) : (
-        <button type="button" disabled={full} onClick={() => toggleShortlist(shownCity.id)} className={btnGold}>Add to tour</button>
+        <button type="button" disabled={full} onClick={() => { toggleShortlist(shownCity.id); toast({ message: `Added ${shownCity.name} to the tour.`, tone: "success" }); }} className={btnGold}>Add to tour</button>
       )}
       {full && <p className="text-[13px] text-canvas-muted">Max stops reached — raise it in the brief</p>}
     </div>
