@@ -12,7 +12,7 @@ export async function markTestTraffic(ctx: BrowserContext): Promise<void> {
   await ctx.addInitScript(() => { try { window.localStorage.setItem("tiq.test", "1"); } catch { /* storage blocked: the ?e2e=1 / session prefix paths still apply */ } });
 }
 export const test = base.extend({
-  context: async ({ context }, use) => { await markTestTraffic(context); await use(context); },
+  context: async ({ context }, provide) => { await markTestTraffic(context); await provide(context); },
 });
 
 /**
