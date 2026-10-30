@@ -1,3 +1,4 @@
+import { zoneDisplayLabel } from "@/lib/qloo/zones";
 import { showcaseCities, type Showcase } from "@/lib/qloo/showcase";
 import type { PlaybookCard } from "@/lib/qloo/types";
 
@@ -11,7 +12,7 @@ export const EXAMPLE_PROFILE = {
   name: "Example artist",
   genre: "Dreamy guitar pop",
   soundsLike: "Mac DeMarco",
-  loves: ["Record shops", "Small rooms", "Film screenings"],
+  loves: ["Record shops", "Small rooms", "Film screenings", "Tacos"],
   wontWorkWith: ["Luxury fashion"],
   datesInTown: "Two nights in town",
 } as const;
@@ -47,7 +48,18 @@ export interface TasteLoopData {
   venues: VenueProfile[];
   topPlace: MatchPlace | null;
   topBrand: MatchBrand | null;
+  /** First movie (else TV show) in "What these fans love here". */
+  film: { name: string; kind: "movie" | "tv_show" } | null;
+  /** First co-billing act. */
+  coBill: string | null;
+  /** First promo zone, shown the way the rest of the app shows it. */
+  zone: string | null;
+  /** First recorded place whose name reads as somewhere to eat. */
+  foodPlace: string | null;
 }
+
+/** Name heuristic only: a place is used for the fan dinner when its name says it serves food. */
+export const isFoodPlace = (name: string): boolean => /\b(taco|tacos|taqueria|taquer[ií]a|restaurant|cafe|caf[eé]|kitchen|grill|diner|bistro|eatery|pizz\w*|ramen|bakery|cantina)\b/i.test(name);
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
@@ -66,7 +78,7 @@ const formatDate = (iso: string): string => {
 export const isRecordShop = (name: string): boolean => /\b(records?|vinyl|music store)\b/i.test(name);
 
 export function loadTasteLoop(show: Showcase): TasteLoopData {
-  const empty: TasteLoopData = { real: false, city: "Los Angeles", artist: show.artist, recordedOn: "", brands: [], places: [], venues: [], topPlace: null, topBrand: null };
+  const empty: TasteLoopData = { real: false, city: "Los Angeles", artist: show.artist, recordedOn: "", brands: [], places: [], venues: [], topPlace: null, topBrand: null, film: null, coBill: null, zone: null, foodPlace: null };
   if (show.recordedAt === null) return empty;
   const cities = showcaseCities(show);
   const hasPb = (id: string) => (show.playbooks[id] ?? []).some((e) => e.type === "playbook");
@@ -90,6 +102,11 @@ export function loadTasteLoop(show: Showcase): TasteLoopData {
   okCard("venue_fit").forEach((it) => addPlace(it, "venue_fit"));
   okCard("local_moment").filter((it) => it.category === "place").forEach((it) => addPlace(it, "local_moment"));
 
+  const moments = okCard("local_moment");
+  const filmItem = moments.find((it) => it.category === "movie" && str(it.name)) ?? moments.find((it) => it.category === "tv_show" && str(it.name));
+  const coBill = okCard("co_billing").map((it) => str(it.name)).find((n) => n) ?? null;
+  const zoneLabel = okCard("promo_zones").map((it) => str(it.label)).find((n) => n);
+
   const venues: VenueProfile[] = places.slice(0, 3).map((p, i) => ({ name: p.name, ...ILLUSTRATIVE[i % ILLUSTRATIVE.length]! }));
   return {
     real: true,
@@ -101,6 +118,10 @@ export function loadTasteLoop(show: Showcase): TasteLoopData {
     venues,
     topPlace: places[0] ?? null,
     topBrand: brands.find((b) => !b.noGo) ?? null,
+    film: filmItem ? { name: str(filmItem.name), kind: filmItem.category === "movie" ? "movie" : "tv_show" } : null,
+    coBill,
+    zone: zoneLabel ? zoneDisplayLabel(zoneLabel, la.name) : null,
+    foodPlace: places.find((p) => isFoodPlace(p.name))?.name ?? null,
   };
 }
 

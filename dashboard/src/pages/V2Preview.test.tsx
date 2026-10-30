@@ -10,7 +10,8 @@ import { resetPlaybooks } from "@/lib/qloo/playbookStore";
 import { parseShowcase, setShowcase, SHOWCASE } from "@/lib/qloo/showcase";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import { TOUR_STORAGE_KEY } from "@/lib/tour/tourStorage";
-import { BRAND_CATEGORY, categoryOf, isNoGo } from "@/lib/v2/tasteLoop";
+import { BRAND_CATEGORY, categoryOf, isFoodPlace, isNoGo, loadTasteLoop } from "@/lib/v2/tasteLoop";
+import { buildExperiences } from "@/lib/v2/experiences";
 import { V2_TOUR_STEP_COUNT } from "@/lib/tour/v2TourSteps";
 import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
 import Landing from "./Landing";
@@ -94,7 +95,7 @@ describe("/v2 concept preview", () => {
     expect(within(row).getByText(/Artist's no-go list/)).toBeTruthy();
     expect(categoryOf(name)).toBe("Luxury fashion");
     // The match draws only on brands that are not crossed out for the suggestion.
-    expect(screen.getByRole("heading", { name: /Listening session at The Moroccan Lounge/ })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: /Listening session at The Moroccan Lounge/ })).toBeTruthy();
     expect(screen.getByTestId("outreach-draft").textContent).not.toContain("Off-white");
   });
 
@@ -118,7 +119,75 @@ describe("/v2 concept preview", () => {
 
   it("has every section the tour points at", () => {
     const { container } = mount();
-    for (const id of ["hero", "profile", "venues", "match", "act", "rsvp", "outcome", "loop", "compare"]) expect(container.querySelector(`[data-tour='v2-${id}']`)).toBeTruthy();
+    for (const id of ["hero", "profile", "venues", "match", "act", "experiences", "rsvp", "outcome", "loop", "compare"]) expect(container.querySelector(`[data-tour='v2-${id}']`)).toBeTruthy();
+  });
+});
+
+describe("Fan experiences section", () => {
+  const MONEY = /[$€£%]|R\$/;
+  it("renders after Act and before Fans prove it, with later sections renumbered", () => {
+    const { container } = mount();
+    const ids = [...container.querySelectorAll("[data-tour]")].map((e) => e.getAttribute("data-tour"));
+    expect(ids.indexOf("v2-experiences")).toBe(ids.indexOf("v2-act") + 1);
+    expect(ids.indexOf("v2-rsvp")).toBe(ids.indexOf("v2-experiences") + 1);
+    expect(screen.getByText("5 · Experiences")).toBeTruthy();
+    expect(screen.getByText("6 · Fans prove it")).toBeTruthy();
+    expect(screen.getByText("9 · V1 today vs V2")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Experiences fans could book" })).toBeTruthy();
+    expect(container.querySelector("[data-tour='v2-experiences']")!.textContent).toContain("Prices and capacity are set by the artist and the venue.");
+    expect(screen.getByTestId("how-selling-works").querySelectorAll("li")).toHaveLength(4);
+  });
+
+  it("lists seven types, opens one at a time by keyboard-reachable buttons, each with a 6-step ordered journey", () => {
+    const { container } = mount();
+    const section = container.querySelector("[data-tour='v2-experiences']") as HTMLElement;
+    const buttons = within(section).getAllByRole("button");
+    expect(buttons).toHaveLength(7);
+    buttons.forEach((b, i) => {
+      if (b.getAttribute("aria-expanded") !== "true") fireEvent.click(b);
+      expect(buttons.filter((x) => x.getAttribute("aria-expanded") === "true")).toHaveLength(1);
+      expect(b.getAttribute("aria-expanded")).toBe("true");
+      const panel = document.getElementById(b.getAttribute("aria-controls")!)!;
+      expect(panel.querySelector("ol")!.tagName).toBe("OL");
+      expect(within(panel).getAllByTestId("journey-step")).toHaveLength(6);
+      expect(panel.textContent).toMatch(/Free|Paid \(price set by artist and venue\)/);
+      expect(i).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  it("binds the real-data chips to items in the recording", () => {
+    const d = loadTasteLoop(SHOWCASE);
+    const cards = Object.values(SHOWCASE.playbooks).flat().flatMap((e) => (e.type === "playbook" ? e.playbook.cards : []));
+    const names = (k: string) => cards.filter((c) => c.kind === k).flatMap((c) => c.items.map((i) => String(i.name ?? i.label)));
+    const ex = Object.fromEntries(buildExperiences(d).map((x) => [x.id, x.example]));
+    expect(ex.listening).toBe("The Moroccan Lounge");
+    expect(names("venue_fit")).toContain(ex.listening);
+    expect(ex.popup).toBe("Stüssy");
+    expect(names("sponsors")).toContain(ex.popup);
+    expect(names("local_moment")).toContain(ex.film);
+    expect(ex.film).toMatch(/Movie/);
+    expect(names("co_billing")).toContain(ex.opener);
+    expect(names("promo_zones")).toContain(ex.walk);
+    expect(ex.soundcheck).toBeNull();
+    expect(ex.dinner).toBeNull();
+    const { container } = mount();
+    const chips = within(container.querySelector("[data-tour='v2-experiences']") as HTMLElement).getAllByText(/Real Qloo data, recorded 28 Oct 2026/);
+    expect(chips.length).toBeGreaterThan(0);
+  });
+
+  it("uses a real place for the dinner only when its name says food", () => {
+    expect(isFoodPlace("Guisados Tacos")).toBe(true);
+    expect(isFoodPlace("The Smell")).toBe(false);
+    const d = { ...loadTasteLoop(SHOWCASE), foodPlace: "Guisados Tacos" };
+    expect(buildExperiences(d).find((x) => x.id === "dinner")!.example).toBe("Guisados Tacos");
+  });
+
+  it("never shows a percent sign or currency symbol, in any experience", () => {
+    const { container } = mount();
+    expect(container.textContent).not.toMatch(MONEY);
+    const all = JSON.stringify(buildExperiences(loadTasteLoop(SHOWCASE)));
+    expect(all).not.toMatch(MONEY);
+    expect(JSON.stringify(buildExperiences({ ...loadTasteLoop(SHOWCASE), real: false, film: null, coBill: null, zone: null, topPlace: null, topBrand: null }))).not.toMatch(MONEY);
   });
 });
 

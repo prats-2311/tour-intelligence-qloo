@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useTour } from "@/components/tour/tourContext";
 import { SHOWCASE } from "@/lib/qloo/showcase";
 import { fanRankLine, fit, rankLine } from "@/components/playbook/format";
 import { Caption, Row, Rows, TagChips } from "@/components/playbook/cards/rows";
+import { JOURNEY_LABELS, buildExperiences } from "@/lib/v2/experiences";
 import {
   COMPARE_ROWS, EXAMPLE_PROFILE, HONEST_LIMITS, HYPOTHESES, OUTCOME_METRICS, isRecordShop, loadTasteLoop,
   type TasteLoopData,
@@ -164,10 +165,86 @@ function Act({ d }: { d: TasteLoopData }) {
   );
 }
 
+function Experiences({ d }: { d: TasteLoopData }) {
+  const items = buildExperiences(d);
+  const [open, setOpen] = useState<string>(items[0]!.id);
+  const chip = d.real ? `Real Qloo data, recorded ${d.recordedOn}` : "";
+  return (
+    <Card tour="v2-experiences" meta="5 · Experiences" title="Experiences fans could book" tag={<Tag>Concept</Tag>}>
+      <p className="max-w-[64ch] text-[15px] leading-[1.5] text-canvas-text">
+        Each experience starts from a Qloo signal — a place, brand, film or act these fans rank above the city — and is set up with venues that claim a profile. Prices and capacity are set by the artist and the venue.
+      </p>
+      <ul className="mt-3 space-y-2">
+        {items.map((x) => {
+          const isOpen = open === x.id;
+          return (
+            <li key={x.id} data-testid="experience" className="rounded-[12px] bg-paper-raised">
+              <h3>
+                <button
+                  type="button"
+                  id={`exp-btn-${x.id}`}
+                  aria-expanded={isOpen}
+                  aria-controls={`exp-panel-${x.id}`}
+                  onClick={() => setOpen(isOpen ? "" : x.id)}
+                  className="flex min-h-11 w-full items-center justify-between gap-3 rounded-[12px] px-3 py-2 text-left text-[15px] font-semibold text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                >
+                  <span className="min-w-0 break-words">{x.name}</span>
+                  <span className="flex shrink-0 items-center gap-2">
+                    <Tag>{x.cost === "Free" ? "Free" : "Paid"}</Tag>
+                    <span aria-hidden="true" className="text-canvas-muted">{isOpen ? "−" : "+"}</span>
+                  </span>
+                </button>
+              </h3>
+              <div id={`exp-panel-${x.id}`} role="region" aria-labelledby={`exp-btn-${x.id}`} hidden={!isOpen} className="px-3 pb-3">
+                {isOpen && (
+                  <>
+                    <dl className="grid gap-3 sm:grid-cols-2">
+                      <Field label="Starts from this Qloo signal">
+                        {x.signal}
+                        {x.example && (
+                          <span className="mt-1 flex flex-wrap items-center gap-2">
+                            <span data-testid="experience-example" className="font-medium">{x.example}</span>
+                            <Tag tone="gold">{chip}</Tag>
+                          </span>
+                        )}
+                      </Field>
+                      <Field label="Who it suits">{x.suits}</Field>
+                      <Field label="Free or paid">{x.cost}</Field>
+                    </dl>
+                    <h4 className="mt-4 text-[13px] font-semibold text-canvas-muted">Fan journey</h4>
+                    <ol className="mt-2 space-y-2">
+                      {x.journey.map((text, i) => (
+                        <li key={JOURNEY_LABELS[i]} data-testid="journey-step" className="flex gap-3 text-[14px] leading-[1.45] text-canvas-text">
+                          <span aria-hidden="true" className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gold text-[12px] font-semibold text-on-gold">{i + 1}</span>
+                          <span className="min-w-0 break-words"><span className="font-semibold">{JOURNEY_LABELS[i]}.</span> {text}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <div data-testid="how-selling-works" className="mt-4 rounded-[12px] bg-paper-raised p-3">
+        <h3 className="text-[13px] font-semibold text-canvas-muted">How selling works in v2</h3>
+        <ul className="mt-1 list-disc space-y-1 pl-5 text-[14px] text-canvas-text">
+          <li>Booking links live on the artist's channels.</li>
+          <li>Payment goes through the venue's or artist's own ticketing.</li>
+          <li>We never store card details or fan profiles.</li>
+          <li>Every booking and "I was there" tap feeds the results panel.</li>
+        </ul>
+      </div>
+      <Caption>These are ideas, not events. Nothing here has been offered to or agreed with any venue, brand or act named.</Caption>
+    </Card>
+  );
+}
+
 function Rsvp() {
   const btn = "inline-flex h-11 flex-1 items-center justify-center rounded-[10px] bg-paper-raised px-3 text-[14px] font-semibold text-canvas-muted opacity-70";
   return (
-    <Card tour="v2-rsvp" meta="5 · Fans prove it" title="One tap, no account" tag={<Tag>Mock — not live</Tag>}>
+    <Card tour="v2-rsvp" meta="6 · Fans prove it" title="One tap, no account" tag={<Tag>Mock — not live</Tag>}>
       <div aria-label="Mock RSVP card" className="max-w-[420px] rounded-[14px] bg-paper-raised p-4">
         <p className="text-[15px] font-semibold text-canvas-text">Listening session with Example artist</p>
         <p className="mt-0.5 text-[13px] text-canvas-muted">Date and place would appear here</p>
@@ -182,7 +259,7 @@ function Rsvp() {
 
 function Outcome() {
   return (
-    <Card tour="v2-outcome" meta="6 · Results" title="What v2 would measure" tag={<Tag>No data yet</Tag>}>
+    <Card tour="v2-outcome" meta="7 · Results" title="What v2 would measure" tag={<Tag>No data yet</Tag>}>
       <ul className="grid gap-3 sm:grid-cols-2">
         {OUTCOME_METRICS.map((m) => (
           <li key={m.id} data-testid="outcome-metric" className="rounded-[12px] bg-paper-raised p-3">
@@ -230,7 +307,7 @@ function CycleDiagram() {
 
 function Loop() {
   return (
-    <Card tour="v2-loop" meta="7 · Loop back" title="Results feed the next tour">
+    <Card tour="v2-loop" meta="8 · Loop back" title="Results feed the next tour">
       <div className="grid items-center gap-4 md:grid-cols-2">
         <CycleDiagram />
         <ol className="list-decimal space-y-2 pl-5 text-[15px] text-canvas-text">
@@ -246,7 +323,7 @@ function Loop() {
 function Compare() {
   return (
     <section data-tour="v2-compare" aria-label="V1 today versus V2" className="scroll-mt-20 rounded-[18px] bg-paper p-4 md:p-5">
-      <p className={META}>8 · V1 today vs V2</p>
+      <p className={META}>9 · V1 today vs V2</p>
       <h2 className="font-title mt-1 text-[22px] leading-tight text-canvas-text">What would change</h2>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[520px] border-collapse text-left text-[14px]">
@@ -286,6 +363,7 @@ export default function V2Preview() {
       <Venues d={d} />
       <Match d={d} />
       <Act d={d} />
+      <Experiences d={d} />
       <Rsvp />
       <Outcome />
       <Loop />
