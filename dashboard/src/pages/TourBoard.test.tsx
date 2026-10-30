@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/components/ui/Toast";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import * as client from "@/lib/qloo/client";
 import { SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
@@ -36,9 +37,9 @@ const PlaybookStub = () => <p>playbook {useParams().cityId}</p>;
 const Where = () => <span data-testid="search">{useLocation().search}</span>;
 const qc = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
 const wrap = (page: React.ReactNode, url: string) => (
-  <QueryClientProvider client={qc()}>
+  <ToastProvider><QueryClientProvider client={qc()}>
     <TourBoardProvider sampleDelayMs={0}><MemoryRouter initialEntries={[url]} key={url}>{page}<Where /></MemoryRouter></TourBoardProvider>
-  </QueryClientProvider>
+  </QueryClientProvider></ToastProvider>
 );
 const currentSearch = () => screen.getByTestId("search").textContent ?? "";
 const submitArtist = (name: string) => {
@@ -427,6 +428,17 @@ describe("TourBoard", () => {
     fireEvent.click(screen.getByRole("button", { name: "New brief" }));
     expect((await screen.findByLabelText("Artist") as HTMLInputElement).value).toBe("Lumen Vale");
     expect(screen.getByTestId("search").textContent).toBe("?new=1");
+  });
+  it("taking a city off or back onto the holds list confirms in a toast", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(10));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: /Review shortlist/ }));
+    const box = within(await screen.findByRole("dialog", { name: "Holds" })).getAllByRole("checkbox")[0]!;
+    fireEvent.click(box);
+    expect(document.querySelector("[data-toast-viewport]")?.textContent ?? "").toMatch(/Removed .+ from the tour\./);
+    fireEvent.click(box);
+    expect(document.querySelector("[data-toast-viewport]")?.textContent ?? "").toMatch(/Added .+ to the tour\./);
   });
   it("a new run clears the shortlist exclusions", async () => {
     renderPage();

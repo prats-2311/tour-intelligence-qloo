@@ -14,6 +14,7 @@ import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
 import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
 import { showcaseBrief } from "@/lib/qloo/showcase";
 import { getPlaybook, playbookKey, resetPlaybooks } from "@/lib/qloo/playbookStore";
+import { ToastProvider } from "@/components/ui/Toast";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import CityPlaybook from "./CityPlaybook";
 
@@ -47,7 +48,7 @@ function Switch({ to }: { to: string }) {
 
 const renderAt = (url: string, extra?: React.ReactNode) =>
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <ToastProvider><QueryClientProvider client={new QueryClient()}>
       <TourBoardProvider sampleDelayMs={0}>
         <MemoryRouter initialEntries={[url]}>
           <Routes>
@@ -57,7 +58,7 @@ const renderAt = (url: string, extra?: React.ReactNode) =>
           {extra}
         </MemoryRouter>
       </TourBoardProvider>
-    </QueryClientProvider>,
+    </QueryClientProvider></ToastProvider>,
   );
 
 function Opened() {
@@ -171,6 +172,9 @@ describe("CityPlaybook", () => {
     const add = await screen.findByRole("button", { name: "Add to tour" });
     fireEvent.click(add);
     expect(screen.getByRole("button", { name: "Remove from tour" })).toBeTruthy();
+    expect(document.querySelector("[data-toast-viewport]")?.textContent ?? "").toMatch(/^Added .+ to the tour\.$/);
+    fireEvent.click(screen.getByRole("button", { name: "Remove from tour" }));
+    expect(document.querySelector("[data-toast-viewport]")?.textContent ?? "").toMatch(/Removed .+ from the tour\./);
   });
   it("at the max-stops cap Add to tour is disabled with the reason (R8)", async () => {
     renderAt("/tours/playbook/3995465?sample=1", <FillShortlist except="3995465" />);

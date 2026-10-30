@@ -109,6 +109,7 @@ describe("Tour budget page", () => {
     await userEvent.click(screen.getByRole("button", { name: "Clear budget" }));
     expect((screen.getByLabelText("Artist fee, Guadalajara") as HTMLInputElement).value).toBe("");
     expect(localStorage.getItem(keys[0]!)).toBeNull();
+    expect(document.querySelector("[data-toast-viewport]")?.textContent ?? "").toContain("Budget cleared.");
   });
   it("Load example fills fictional figures and keeps a persistent banner, even after edits", async () => {
     renderAt("/tours/budget?sample=1");
@@ -117,6 +118,7 @@ describe("Tour budget page", () => {
     await userEvent.click(screen.getByRole("button", { name: "Load example (fictional figures)" }));
     expect(screen.getByText(EXAMPLE_BANNER)).toBeTruthy();
     expect((screen.getByLabelText("Artist fee, Guadalajara") as HTMLInputElement).value).toBe("10000");
+    expect(document.querySelector("[data-toast-viewport]")?.textContent ?? "").toContain("Example budget loaded. The figures are fictional.");
     await type("Artist fee, Guadalajara", "9000");
     expect(screen.getByText(EXAMPLE_BANNER)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Clear budget" }));
