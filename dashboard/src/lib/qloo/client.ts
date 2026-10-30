@@ -8,7 +8,6 @@ import { parseWithoutQloo } from "./withoutQloo";
 import type { ChatMessage, DateWindow, GatewayEvent, SampleSet, StrategistContext, ThisWeek, TourBrief, WithoutQloo } from "./types";
 
 export const SHOWCASE_STRATEGIST_NOTE = "The live strategist needs a live run";
-export const SHOWCASE_ASK_NOTE = "This example can replay the two recorded questions. Try your own artist to ask anything.";
 
 type StreamOpts = { signal?: AbortSignal; fetchImpl?: typeof fetch; sample?: boolean; sampleSet?: SampleSet; /** Which recording a showcase replay reads: "routing" for the recorded routing example. */ variant?: "routing"; delayMs?: number };
 
@@ -80,8 +79,10 @@ export function streamStrategist(body: { messages: ChatMessage[]; context: Strat
     const lastUser = [...body.messages].reverse().find((m) => m.role === "user");
     const rec = lastUser ? recordedQuestion(lastUser.text) : null;
     if (rec) return sample(rec.events.some((e) => e.type === "done") ? rec.events : [...rec.events, { type: "done", summary: {} }], opts);
+    // The example's context (artist, regions, scored cities) is all the live strategist needs, so a free-text question runs live.
+    if (hasRecorded) return liveStrategist(body, opts);
     return sample([
-      { type: "strategist_error", code: "UNAVAILABLE", message: hasRecorded ? SHOWCASE_ASK_NOTE : SHOWCASE_STRATEGIST_NOTE },
+      { type: "strategist_error", code: "UNAVAILABLE", message: SHOWCASE_STRATEGIST_NOTE },
       { type: "done", summary: {} },
     ], opts);
   }
@@ -89,6 +90,10 @@ export function streamStrategist(body: { messages: ChatMessage[]; context: Strat
     const lastUser = [...body.messages].reverse().find((m) => m.role === "user");
     return sample(sampleStrategistEvents(lastUser?.text ?? ""), opts);
   }
+  return liveStrategist(body, opts);
+}
+
+function liveStrategist(body: { messages: ChatMessage[]; context: StrategistContext }, opts: StreamOpts): AsyncGenerator<GatewayEvent> {
   return friendlyStrategistErrors(stream("/api/qloo/strategist", {
     method: "POST",
     headers: { "content-type": "application/json", "x-session-id": getSessionId() },

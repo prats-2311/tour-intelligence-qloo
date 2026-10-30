@@ -23,14 +23,30 @@ const recorded = () => setShowcase(parseShowcase({ ...PLACEHOLDER_SHOWCASE, stra
 afterEach(() => { cleanup(); setShowcase(original); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("Ask about this tour: showcase", () => {
-  it("shows the two recorded questions as chips and the one-line note, with no text input", () => {
+  it("shows the two recorded questions as chips and a labelled live free-text box", () => {
     recorded();
     render(<StrategistPanel context={{}} sample showcase title="t" />);
     expect(screen.getByRole("button", { name: Q1 })).toBeTruthy();
     expect(screen.getByRole("button", { name: Q2 })).toBeTruthy();
-    expect(screen.getByText("This example can replay the two recorded questions. Try your own artist to ask anything.")).toBeTruthy();
-    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.getByText("Ask your own question — runs live, about 30 seconds")).toBeTruthy();
+    expect(screen.getByRole("textbox")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Ask about this tour" })).toBeTruthy();
+  });
+  it("a typed question on the example goes to the live strategist with the board context; a recorded one never does", async () => {
+    recorded();
+    const fetchSpy = vi.fn(async () => new Response(`data: ${JSON.stringify({ type: "strategist_message", text: "Live one.", unsupportedNumbers: [], stoppedEarly: false, model: "m" })}\n\ndata: ${JSON.stringify({ type: "done", summary: {} })}\n\n`, { status: 200, headers: { "content-type": "text/event-stream" } }));
+    vi.stubGlobal("fetch", fetchSpy);
+    render(<StrategistPanel context={{ artist: { name: "Mac DeMarco", entityId: "e1" } }} sample showcase title="t" />);
+    fireEvent.click(screen.getByRole("button", { name: Q1 }));
+    await screen.findByText("Invented answer one.");
+    expect(fetchSpy).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(screen.getByRole("button", { name: "Send" })).toBeTruthy());
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "What about Berlin?" } });
+    await vi.waitFor(() => { fireEvent.click(screen.getByRole("button", { name: "Send" })); expect(fetchSpy).toHaveBeenCalledTimes(1); }, { timeout: 3000 });
+    const [url, init] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("/api/qloo/strategist");
+    expect(JSON.parse(String(init.body)).context.artist.name).toBe("Mac DeMarco");
+    expect(await screen.findByText("Live one.")).toBeTruthy();
   });
   it("replays a tapped question with the work log open: reasoning label, tool lines with counts, answer", async () => {
     recorded();

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { SHOWCASE_ASK_NOTE, SHOWCASE_STRATEGIST_NOTE, streamStrategist } from "./client";
+import { SHOWCASE_STRATEGIST_NOTE, streamStrategist } from "./client";
 import { PLACEHOLDER_SHOWCASE } from "./placeholderShowcase";
 import { normaliseQuestion, parseShowcase, recordedQuestion, SHOWCASE, setShowcase, showcaseStrategist } from "./showcase";
 import type { GatewayEvent } from "./types";
@@ -51,11 +51,14 @@ describe("streamStrategist in the showcase", () => {
     expect(out).toEqual(EVENTS);
     expect(fetchImpl).not.toHaveBeenCalled();
   });
-  it("an unrecorded question gets the replay note", async () => {
+  it("an unrecorded question runs live against the strategist endpoint with the example's context", async () => {
     setShowcase(parseShowcase({ ...PLACEHOLDER_SHOWCASE, strategist: REC }));
-    const out = await collect(streamStrategist({ messages: [{ role: "user", text: "Tell me a joke" }], context: {} }, { sample: true, sampleSet: "showcase", delayMs: 0 }));
-    expect(out[0]).toEqual({ type: "strategist_error", code: "UNAVAILABLE", message: SHOWCASE_ASK_NOTE });
-    expect(SHOWCASE_ASK_NOTE).toBe("This example can replay the two recorded questions. Try your own artist to ask anything.");
+    const sse = `data: ${JSON.stringify({ type: "strategist_message", text: "Live.", unsupportedNumbers: [], stoppedEarly: false, model: "m" })}\n\ndata: ${JSON.stringify({ type: "done", summary: {} })}\n\n`;
+    const fetchImpl = vi.fn(async (_url: string) => new Response(sse, { status: 200, headers: { "content-type": "text/event-stream" } }));
+    const out = await collect(streamStrategist({ messages: [{ role: "user", text: "Tell me a joke" }], context: { artist: { name: "Mac DeMarco", entityId: "e" } } }, { sample: true, sampleSet: "showcase", delayMs: 0, fetchImpl: fetchImpl as unknown as typeof fetch }));
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(String(fetchImpl.mock.calls[0]![0])).toBe("/api/qloo/strategist");
+    expect(out.map((e) => e.type)).toEqual(["strategist_message", "done"]);
   });
   it("without a strategist key the existing note stays", async () => {
     const out = await collect(streamStrategist({ messages: [{ role: "user", text: "anything" }], context: {} }, { sample: true, sampleSet: "showcase", delayMs: 0 }));
