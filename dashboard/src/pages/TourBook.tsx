@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useQueries } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/Toast";
 import { useReducedMotion } from "framer-motion";
@@ -30,6 +31,9 @@ import { effectiveRegions } from "@/lib/qloo/routing";
 import { isRoutingBrief, setShowcaseVariant, variantOfBrief, type ShowcaseVariant, showcaseAvailable, showcaseBannerText, showcaseBrief, showcaseParam, showcaseQuery, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
 import type { SampleSet, ThisWeek } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
+import { usePrinting } from "@/lib/usePrinting";
+import { PrintEdition } from "@/components/book/print/PrintEdition";
+import { SHOWCASE } from "@/lib/qloo/showcase";
 
 // Same pacing CityPlaybook uses so sample books do not feel slow.
 const SAMPLE_PLAYBOOK_DELAY_MS = 10;
@@ -70,6 +74,7 @@ function TourBookPage() {
   const bareExample = useWantsExample(!wantSample);
   useOpenExampleRun(bareExample);
   const isDesktop = useIsDesktop();
+  const printing = usePrinting();
   const reduce = useReducedMotion();
   const started = useRef<string | null>(null);
   const progressRef = useRef<HTMLDivElement>(null);
@@ -263,6 +268,8 @@ function TourBookPage() {
   ];
 
   return (
+    <>
+    {printing && createPortal(<PrintEdition book={book} artist={artist!.name} artistId={artist?.entityId} regions={effectiveRegions(state.brief!, state.cities)} window={dateWindow} now={new Date()} recordedAt={book.source === "showcase" ? SHOWCASE.recordedAt : null} />, document.body)}
     <div className="tour-book -mx-4 -mt-6 lg:mx-0 lg:mt-0">
       <header data-noprint className="sticky top-0 z-30 flex h-[52px] items-center gap-2 bg-canvas-raised px-2 lg:top-14 lg:px-6">
         <Link to={`/tours/board${sampleQ}`} aria-label="Close" className="inline-flex size-11 shrink-0 items-center justify-center rounded-[10px] text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"><X size={20} aria-hidden /></Link>
@@ -308,5 +315,6 @@ function TourBookPage() {
         <ChapterIndex items={items} onJump={jump} />
       </Sheet>
     </div>
+    </>
   );
 }
