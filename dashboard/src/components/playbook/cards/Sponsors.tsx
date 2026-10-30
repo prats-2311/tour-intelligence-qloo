@@ -28,14 +28,14 @@ export function Sponsors({ card, city, country, venueName, segments, pitchCityId
   const deal = top ? dealLine(str(top.name), num(top.artistRank)!, num(top.cityRank), city, venueName) : null;
   const list = (
     <>
-      <div data-tour="sponsors-top"><Rows>
+      <Rows tour="sponsors-top">
         {shown.map((it, i) => {
           const a = num(it.artistRank);
           const action = pitchCityId && str(it.name) ? <PitchLink cityId={pitchCityId} brand={str(it.name)} /> : undefined;
           if (a === null) return <Row key={i} name={str(it.name)} action={action} aside={fit(num(it.affinity))} />;
           return <Row key={i} name={str(it.name)} action={action} aside={allOffChart ? fanRankLine(a) : rankLine(a, num(it.cityRank))} />;
         })}
-      </Rows></div>
+      </Rows>
       {allOffChart && <Caption>{SPONSORS_NOT_MAINSTREAM_NOTE}</Caption>}
       {deal && <p data-testid="sponsor-deal" className="mt-2 text-[14px] font-medium text-canvas-text">{deal}</p>}
       {more > 0 && (
