@@ -57,3 +57,16 @@ describe("BriefForm date window", () => {
     expect((screen.getByLabelText("Window end") as HTMLInputElement).value).toBe("2027-04-18");
   });
 });
+
+describe("BriefForm artist home country", () => {
+  it("is optional and passed through trimmed when given", () => {
+    const onSubmit = vi.fn();
+    render(<BriefForm onSubmit={onSubmit} />);
+    fill();
+    submit();
+    expect(onSubmit.mock.calls[0]![0].artistCountry).toBeUndefined();
+    fireEvent.change(screen.getByLabelText("Artist’s home country (optional)"), { target: { value: " United Kingdom " } });
+    submit();
+    expect(onSubmit.mock.calls[1]![0].artistCountry).toBe("United Kingdom");
+  });
+});

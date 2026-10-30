@@ -186,6 +186,18 @@ describe("qlooProxy", () => {
     }
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
+  it("forwards advance params (artistCountry, lat, lon optional) and rejects bad ones", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ visa: {} }), { status: 200, headers: { "content-type": "application/json" } }));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const get = (qs) => fetch(`${base}/api/qloo/advance?${qs}`, { headers: { "x-session-id": "s" } });
+    const q = "city=Guadalajara&country=MX&start=2027-03-12&end=2027-03-15";
+    expect((await get(q)).status).toBe(200);
+    expect(fetchImpl.mock.calls[0][0]).toBe(`https://gw/v1/advance?${q}`);
+    expect((await get(`${q}&artistCountry=GB&lat=20.67&lon=-103.35&evil=1`)).status).toBe(200);
+    expect(fetchImpl.mock.calls[1][0]).toBe(`https://gw/v1/advance?${q}&artistCountry=GB&lat=20.67&lon=-103.35`);
+    for (const bad of ["city=G&country=MX&start=2027-03-12", `${q}&lat=20`, `${q}&lat=abc&lon=1`, `${q}&lat=95&lon=1`, `${q}&artistCountry=${"x".repeat(81)}`]) expect((await get(bad)).status).toBe(400);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
   it("forwards the narrative flag on city-playbook", async () => {
     const fetchImpl = vi.fn(async () => sse(["event: done\ndata: {}\n\n"]));
     const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });

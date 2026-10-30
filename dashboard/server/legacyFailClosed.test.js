@@ -56,4 +56,8 @@ describe("legacy proxy with no backend URLs configured", () => {
     const res = await fetch(`${base}/api/qloo/this-week`);
     expect(res.status).not.toBe(503);
   });
+  it("still routes /api/qloo/advance (not the legacy 503)", async () => {
+    const res = await fetch(`${base}/api/qloo/advance`);
+    expect(res.status).not.toBe(503);
+  });
 });
