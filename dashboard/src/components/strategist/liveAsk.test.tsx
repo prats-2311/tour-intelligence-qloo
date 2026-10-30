@@ -19,6 +19,13 @@ describe("Ask live suggestions", () => {
     expect(qs[1]).toMatch(/^Where in .+ are these fans concentrated\?$/);
     expect(qs[2]).toMatch(/^Rank .+ for this audience$/);
   });
+  it("never name a non-sponsor organisation, even when the recording lists it first", () => {
+    const raw = JSON.parse(JSON.stringify(syntheticShowcase)) as { playbooks: Record<string, Array<{ type: string; playbook?: { cards: Array<{ kind: string; status: string; items: Array<Record<string, unknown>> }> } }>> };
+    for (const events of Object.values(raw.playbooks)) for (const e of events) for (const c of e.playbook?.cards ?? []) if (c.kind === "sponsors" && c.status === "ok") c.items.unshift({ name: "UNICEF", affinity: 0.99 });
+    const rank = liveAskSuggestions(parseShowcase(raw)).find((q) => q.startsWith("Rank "));
+    expect(rank).toBeTruthy();
+    expect(rank).not.toMatch(/UNICEF/);
+  });
   it("are empty for the placeholder showcase", () => {
     expect(liveAskSuggestions(parseShowcase(PLACEHOLDER_SHOWCASE))).toEqual([]);
   });

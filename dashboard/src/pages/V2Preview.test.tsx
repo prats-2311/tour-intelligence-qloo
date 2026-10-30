@@ -123,6 +123,13 @@ describe("/v2 concept preview", () => {
     expect(container.querySelectorAll("[aria-current='page']")).toHaveLength(0);
   });
 
+  it("leaves every venue intent field blank for the venue to answer, never a made-up value", () => {
+    const { container } = mount();
+    const lines = [...container.querySelectorAll("[data-tour='v2-venues'] li")].map((li) => li.textContent ?? "").filter((t) => /^(Open to collabs|Room size|Free nights)/.test(t));
+    expect(lines).toHaveLength(VENUES.length * 3);
+    for (const t of lines) expect(t).toMatch(/\? \(the venue answers\)$/);
+  });
+
   it("has every section the tour points at", () => {
     const { container } = mount();
     for (const id of ["hero", "profile", "venues", "match", "act", "experiences", "rsvp", "outcome", "loop", "compare"]) expect(container.querySelector(`[data-tour='v2-${id}']`)).toBeTruthy();
@@ -271,6 +278,7 @@ describe("V2Preview prototype taps", () => {
     expect(screen.getAllByText("Mock — not live").length).toBeGreaterThan(0);
     expect(screen.getAllByText("No data yet — v2 collects this")).toHaveLength(4);
     expect(container.textContent).not.toContain("Prototype taps");
+    expect(container.textContent).toContain("Mock — not live. The buttons do nothing and nothing is sent.");
   });
 
   it("enables the buttons when stats are on, labels them as a prototype and posts once per action", async () => {

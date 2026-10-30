@@ -1,11 +1,15 @@
 import { ChevronDown } from "lucide-react";
 import { useId, useState } from "react";
+import { mentionsDoNotBook } from "@/lib/qloo/doNotBook";
+import { mentionsNonSponsor } from "@/lib/qloo/nonSponsors";
 
 /** Collapsible model reasoning summary for one strategist turn; same look as the playbook ReasoningSummary. */
 export function StrategistThinking({ summaries, defaultOpen = false }: { summaries: string[]; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   const id = useId();
-  if (summaries.length === 0) return null;
+  // Same rule as the playbook's reasoning summary: free text that names a listed act or a non-sponsor organisation is withheld, even collapsed.
+  const shown = summaries.filter((t) => !mentionsDoNotBook(t) && !mentionsNonSponsor(t));
+  if (shown.length === 0) return null;
   return (
     <div className="rounded-[14px] bg-canvas-raised px-4">
       <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen((o) => !o)} className="flex min-h-11 w-full items-center justify-between gap-2 text-left text-[15px] font-semibold text-canvas-text outline-none focus-visible:ring-2 focus-visible:ring-gold/50">
@@ -14,7 +18,7 @@ export function StrategistThinking({ summaries, defaultOpen = false }: { summari
       </button>
       <div id={id} hidden={!open} className="pb-4">
         <p className="mb-1 text-[12px] text-canvas-muted">Gemini's own summary of its reasoning</p>
-        <p className="max-h-64 overflow-y-auto whitespace-pre-wrap text-[14px] leading-[1.5] text-canvas-muted">{summaries.join("\n\n")}</p>
+        <p className="max-h-64 overflow-y-auto whitespace-pre-wrap text-[14px] leading-[1.5] text-canvas-muted">{shown.join("\n\n")}</p>
       </div>
     </div>
   );

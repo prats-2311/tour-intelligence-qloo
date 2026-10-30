@@ -93,6 +93,16 @@ describe("workspace on the recorded example", () => {
     await waitFor(() => expect(be.calls.some((c) => c.method === "GET" && c.path === `/${ws}`)).toBe(true));
     expect(be.calls.some((c) => c.method === "POST" && c.path === "")).toBe(false);
   });
+  it("ignores a malformed ws in the URL: never fetches it, starts a fresh workspace", async () => {
+    mount("/tours/board?showcase=1&ws=short");
+    await waitFor(() => expect(where()).toMatch(/ws=testws/));
+    expect(be.calls.some((c) => c.method === "GET" && c.path === "/short")).toBe(false);
+    be.calls.length = 0;
+    cleanup();
+    mount(`/tours/board?showcase=1&ws=${encodeURIComponent("abcde/../../x1")}`);
+    await waitFor(() => expect(where()).toMatch(/ws=testws/));
+    expect(be.calls.some((c) => c.method === "GET")).toBe(false);
+  });
   it("starts a fresh seeded workspace when the linked one has expired", async () => {
     mount("/tours/board?showcase=1&ws=expired0000001");
     await waitFor(() => expect(where()).toMatch(/ws=testws/));

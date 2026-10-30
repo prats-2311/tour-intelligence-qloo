@@ -6,7 +6,9 @@ import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as client from "@/lib/qloo/client";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
+import * as lumenPlaybooks from "@/lib/qloo/fixtures/lumenValePlaybooks";
 import { samplePlaybookEvents } from "@/lib/qloo/fixtures/lumenValePlaybooks";
+import { withArielPink } from "@/test/arielPink";
 import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
 import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
@@ -76,6 +78,13 @@ describe("CityPlaybook", () => {
     expect(screen.getByText("7 verified · 2 removed")).toBeTruthy();
     expect(screen.getByText("Colonia Americana", { selector: "dd" })).toBeTruthy();
     expect(screen.getByText("Affinity signal from aggregate taste data — not a ticket forecast or a claim about individuals.")).toBeTruthy();
+  });
+  it("shows no do-not-book act and counts only the claims it shows", async () => {
+    const real = lumenPlaybooks.samplePlaybookEvents;
+    vi.spyOn(lumenPlaybooks, "samplePlaybookEvents").mockImplementation((id, o) => { const ev = real(id, o); return ev && withArielPink(ev); });
+    renderAt("/tours/playbook/4005539?sample=1");
+    expect(await screen.findByText("7 verified · 2 removed")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/Ariel Pink/);
   });
   it("drops an empty This week card and its slot from the counter; a non-empty week keeps it", async () => {
     const real = await vi.importActual<typeof client>("@/lib/qloo/client");

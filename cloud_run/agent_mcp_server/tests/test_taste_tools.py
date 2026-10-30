@@ -196,3 +196,30 @@ def test_stripped_names_reach_the_outbound_request(monkeypatch):
     taste_tools.find_tour_markets("  Lumen Vale  ", [" Mexico "], 8, **KW)
     assert post.call_args_list[0].kwargs["json"]["entity"] == "Lumen Vale"
     assert post.call_args_list[1].kwargs["json"]["regions"] == ["Mexico"]
+
+
+# ------------------------------------------------------------ do-not-book in get_city_playbook / get_local_moment
+
+def _stub_playbook(monkeypatch, cards):
+    playbook = {"type": "playbook", "playbook": {"cards": cards}}
+    monkeypatch.setattr(taste_tools.requests, "post", MagicMock(return_value=_resp(payload=DESCRIBE)))
+    monkeypatch.setattr(taste_tools.requests, "get", MagicMock(return_value=_resp(lines=_sse(playbook, {"type": "done", "summary": {}}))))
+
+def test_get_city_playbook_never_lists_do_not_book_acts(monkeypatch):
+    _stub_playbook(monkeypatch, [
+        {"kind": "co_billing", "status": "ok", "items": [{"name": "Ariel Pink", "lift": 9}, {"name": "ARIEL  pínk", "lift": 8}, {"name": "Bruma", "lift": 0.2}]},
+        {"kind": "talent", "status": "ok", "items": [{"name": "Ariel Pink", "affinity": 0.9}, {"name": "Local Act", "affinity": 0.5}]},
+        {"kind": "local_moment", "status": "ok", "items": [{"name": "Ariel Pink", "category": "artist", "affinity": 0.9}, {"name": "Ariel Pink", "category": "place", "affinity": 0.4}]},
+    ])
+    out = taste_tools.get_city_playbook("Lumen Vale", "Guadalajara", "MX", **KW)
+    tops = {c["kind"]: [t["name"] for t in c["top"]] for c in out["cards"]}
+    assert tops["co_billing"] == ["Bruma"]
+    assert tops["talent"] == ["Local Act"]
+    assert tops["local_moment"] == ["Ariel Pink"]  # the place of the same name stays; only the artist is hidden
+    assert [t["affinity"] for c in out["cards"] if c["kind"] == "local_moment" for t in c["top"]] == [0.4]
+
+def test_get_local_moment_hides_artists_on_the_list_but_keeps_places(monkeypatch):
+    _stub_playbook(monkeypatch, [{"kind": "local_moment", "status": "ok", "items": [
+        {"name": "Ariel Pink", "category": "artist", "affinity": 0.9}, {"name": "Ariel Pink", "category": "place", "affinity": 0.4}, {"name": "Mariachi night", "category": "event", "affinity": 0.7}]}])
+    out = taste_tools.get_local_moment("Lumen Vale", "Guadalajara", "MX", **KW)
+    assert out["moments"] == [{"name": "Ariel Pink", "category": "place", "affinity": 0.4}, {"name": "Mariachi night", "category": "event", "affinity": 0.7}]

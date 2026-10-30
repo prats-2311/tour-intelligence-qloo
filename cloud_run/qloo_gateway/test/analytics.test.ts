@@ -37,6 +37,13 @@ describe("Analytics sink", () => {
     await a.flush();
     await expect(a.query("select 1")).rejects.toThrow();
   });
+  it("disabled track buffers nothing and schedules no timer", () => {
+    vi.useFakeTimers();
+    const a = createAnalytics({});
+    for (let i = 0; i < 25; i++) a.track("v2_outcome_taps", { action: "going" });
+    expect(vi.getTimerCount()).toBe(0);
+    expect((a as unknown as { buffers: Map<string, unknown[]> }).buffers.size).toBe(0);
+  });
   it("flushes at 20 rows", async () => {
     const c = fake();
     const a = enabled(c);
@@ -134,14 +141,20 @@ describe("observePlaybook", () => {
     expect(rows[1]!.claims_removed).toBeNull();
   });
   it("is a plain passthrough when analytics is off", async () => {
-    expect(await drain(observePlaybook(evs(stream), input, createAnalytics({})))).toEqual(stream);
+    const off = createAnalytics({});
+    const track = vi.spyOn(off, "track");
+    expect(await drain(observePlaybook(evs(stream), input, off))).toEqual(stream);
+    expect(track).not.toHaveBeenCalled();
   });
 });
 
 describe("stats", () => {
   it("answers {enabled:false} when disabled and runs no query", async () => {
-    const s = createStats(createAnalytics({}));
+    const off = createAnalytics({});
+    const query = vi.spyOn(off, "query");
+    const s = createStats(off);
     expect(await s.trust()).toEqual({ enabled: false });
+    expect(query).not.toHaveBeenCalled();
     expect(await s.team()).toEqual({ enabled: false });
     expect(await s.v2()).toEqual({ enabled: false });
   });

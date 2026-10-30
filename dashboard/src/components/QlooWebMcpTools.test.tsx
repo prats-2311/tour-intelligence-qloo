@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkspaceContext, OFF, type Workspace } from "../lib/collab/workspaceContext";
 import { emptySnapshot } from "../lib/collab/types";
 import * as client from "../lib/qloo/client";
+import * as lumenPlaybooks from "../lib/qloo/fixtures/lumenValePlaybooks";
+import { withArielPink } from "../test/arielPink";
 import * as segmentStore from "../lib/qloo/segmentStore";
 import { SAMPLE_BRIEF } from "../lib/qloo/fixtures/lumenVale";
 import { resetPlaybooks } from "../lib/qloo/playbookStore";
@@ -96,6 +98,14 @@ describe("QlooWebMcpTools", () => {
     expect(sponsors.top).toHaveLength(3);
     expect(sponsors.top[0]).toEqual({ name: "Cerro Alto Mezcal", value: 0.91 });
     expect(await out("get_city_playbook", { city_id: "nope" })).toEqual({ ok: false, error: "Unknown city" });
+  });
+  it("get_city_playbook never lists a do-not-book act and counts only shown claims", async () => {
+    const real = lumenPlaybooks.samplePlaybookEvents;
+    vi.spyOn(lumenPlaybooks, "samplePlaybookEvents").mockImplementation((id, o) => { const ev = real(id, o); return ev && withArielPink(ev); });
+    await withBoard("/tours/board?sample=1");
+    const res = await out("get_city_playbook", { city_id: "4005539" });
+    expect(res.claims).toEqual({ verified: 7, removed: 2 });
+    expect(JSON.stringify(res)).not.toMatch(/Ariel Pink/);
   });
   it("get_tour_board summarises cities and the shortlist", async () => {
     await withBoard("/tours/board?sample=1");
