@@ -84,7 +84,7 @@ export function SegmentControl({ request, country, children }: { request: Segmen
   const current = bands.find((b) => b.band === view);
   return (
     <>
-      <div role="group" aria-label="Age group" data-testid="segment-control" className="mb-2 flex flex-wrap gap-2" data-noprint>
+      <div role="group" aria-label="Age group" data-testid="segment-control" data-tour="sponsors-age" className="mb-2 flex flex-wrap gap-2" data-noprint>
         <button type="button" aria-pressed={view === "all"} onClick={() => setView("all")} className={chip(view === "all")}>All fans</button>
         {showBands
           ? bands.map((b) => <button key={b.band} type="button" aria-pressed={view === b.band} onClick={() => setView(b.band)} className={chip(view === b.band)}>{BAND_LABEL[b.band]}</button>)

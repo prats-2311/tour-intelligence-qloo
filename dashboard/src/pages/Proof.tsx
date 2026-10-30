@@ -199,7 +199,7 @@ function V3Test({ t }: { t: ProofV3Test }) {
   const sign: ProofTable = { columns: ["Comparison", "Wins", "Losses", "Ties", "Pairs", "p"], rows: t.signTests.map((s) => [s.label, String(s.wins), String(s.losses), String(s.ties), String(s.pairs), pText(s.p)]) };
   const unit = t.perUnit?.columns[0]?.toLowerCase();
   return (
-    <section aria-labelledby={id} data-testid="proof-v3-test" data-test-id={t.id} className="flex min-w-0 flex-col gap-4">
+    <section aria-labelledby={id} data-testid="proof-v3-test" data-tour="proof-test" data-test-id={t.id} className="flex min-w-0 flex-col gap-4">
       <h2 id={id} className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">{t.title}</h2>
       <p className="max-w-[68ch] text-[15px] leading-[1.5] text-canvas-text">{t.question}</p>
       <p className={eyebrow}>{t.status}</p>
@@ -264,7 +264,7 @@ function VerifiedClaims({ checkers }: { checkers: ProofCheckers | undefined }) {
   const id = useId();
   const cols = ["Checker", "What it guards", "Planted errors caught", "False alarms on clean controls", "Amendment"];
   return (
-    <section aria-labelledby={id} data-testid="proof-checkers" className="flex min-w-0 flex-col gap-4">
+    <section aria-labelledby={id} data-testid="proof-checkers" data-tour="proof-checkers" className="flex min-w-0 flex-col gap-4">
       <h2 id={id} className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">Verified claims, across the product</h2>
       {checkers ? (
         <>
@@ -307,7 +307,7 @@ function ProofV3View({ v3, children }: { v3: ProofV3; children?: ReactNode }) {
   const hasA9 = tests.some((x) => x.id === A9_TEST_ID);
   return (
     <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-10 pb-8">
-      <header className="flex flex-col gap-3">
+      <header data-tour="proof-top" className="flex flex-col gap-3">
         <p className={eyebrow}>PROOF · PRE-REGISTERED TESTS</p>
         <h1 className="font-title text-[32px] leading-[1.1] text-bone [text-wrap:balance] lg:text-[48px]">What we tested, and what held up</h1>
         <p className="max-w-[68ch] text-[16px] leading-[1.5] text-canvas-text">{V3_INTRO}</p>
@@ -391,7 +391,7 @@ function SponsorsWithoutQlooSection() {
 export function ProofView({ data }: { data: Backtest }) {
   const earlierId = useId();
   const header = (
-    <header className="flex flex-col gap-3">
+    <header data-tour="proof-top" className="flex flex-col gap-3">
       <p className={eyebrow}>PROOF · ACTIVATION BACKTEST</p>
       <h1 className="font-title text-[32px] leading-[1.1] text-bone [text-wrap:balance] lg:text-[48px]">{TITLE}</h1>
     </header>
@@ -488,7 +488,7 @@ export function LiveStats({ trust, team }: { trust: TrustStats | { enabled: fals
   if (!trust.enabled && !team.enabled) return null;
   const since = dateText((trust.enabled ? trust.since : null) ?? (team.enabled ? team.since : null));
   return (
-    <section aria-labelledby={id} data-testid="live-stats" className="mx-auto mb-10 flex w-full max-w-[1240px] flex-col gap-4">
+    <section aria-labelledby={id} data-testid="live-stats" data-tour="live-stats" className="mx-auto mb-10 flex w-full max-w-[1240px] flex-col gap-4">
       <h2 id={id} className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">{since ? `Live since ${since}` : "Live now"}</h2>
       <div className="grid gap-3 lg:grid-cols-2">
         {trust.enabled && <ClaimCheckerPanel t={trust} />}
@@ -516,7 +516,7 @@ export default function Proof() {
     <>
     <LiveStatsLoader />
     <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-4 pb-8">
-      <header className="flex flex-col gap-3">
+      <header data-tour="proof-top" className="flex flex-col gap-3">
         <p className={eyebrow}>PROOF · ACTIVATION BACKTEST</p>
         <h1 className="font-title text-[32px] leading-[1.1] text-bone [text-wrap:balance] lg:text-[48px]">{TITLE}</h1>
       </header>

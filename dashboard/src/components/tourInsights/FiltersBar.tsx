@@ -15,7 +15,7 @@ export function FiltersBar({ filters, onChange, cities, showStatus, shown }: { f
   const group = "flex flex-wrap items-center gap-2";
   const legend = "font-mono text-[11px] font-medium uppercase tracking-[0.1em] text-canvas-muted";
   return (
-    <section aria-label="Filters" className="flex min-w-0 flex-col gap-3 rounded-[14px] bg-paper p-3 lg:p-4">
+    <section aria-label="Filters" data-tour="charts-filters" className="flex min-w-0 flex-col gap-3 rounded-[14px] bg-paper p-3 lg:p-4">
       <div role="group" aria-label="Country" className="flex flex-col gap-1.5">
         <span className={legend}>Country</span>
         <div className={group}>

@@ -48,8 +48,7 @@ export function Composer({ docs, replay = false, busy, empty, sample, showcase =
       <div className="px-4 pb-4 pt-2">
         <SuggestionChips suggestions={showcaseStrategist().map((r) => r.question)} onPick={(q) => { if (!busy) onAsk(q); }} />
         <p className="mb-1.5 mt-3 text-[13px] font-medium text-canvas-text">{LIVE_ASK_LABEL}</p>
-        {draft}
-        {bar}
+        <div data-tour="chat-tools">{draft}{bar}</div>
         {form}
         {live.length > 0 && (
           <div className="mt-3">
@@ -63,8 +62,7 @@ export function Composer({ docs, replay = false, busy, empty, sample, showcase =
   return (
     <div className="px-4 pb-4 pt-2">
       {empty && <SuggestionChips suggestions={sample && !showcase ? [...SAMPLE_QUESTIONS] : liveSuggestions(context)} onPick={(q) => { if (!busy) onAsk(q); }} />}
-      {draft}
-      {bar}
+      <div data-tour="chat-tools">{draft}{bar}</div>
       {form}
     </div>
   );

@@ -95,6 +95,48 @@ function RunButtons() {
 }
 const withRunner = (path: string) => render(<MemoryRouter initialEntries={[path]}><TourBoardProvider sampleDelayMs={0}><RunButtons /><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
 
+describe("tour:open-ask (the guided tour opens the Ask panel)", () => {
+  it("opens the desktop dock", async () => {
+    mm(true);
+    shell("/tours/board?sample=1");
+    expect(screen.queryByRole("complementary", { name: "Ask about this tour" })).toBeNull();
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:open-ask")); });
+    expect(await screen.findByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
+  });
+  it("tour:close-ask puts the dock back as it was: closed stays closed, open stays open", async () => {
+    mm(true);
+    const { unmount } = shell("/tours/board?sample=1");
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:open-ask")); });
+    expect(await screen.findByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:close-ask")); });
+    expect(screen.queryByRole("complementary", { name: "Ask about this tour" })).toBeNull();
+    expect(localStorage.getItem("strategistOpen")).toBe("0");
+    unmount();
+    localStorage.setItem("strategistOpen", "1");
+    shell("/tours/board?sample=1");
+    expect(await screen.findByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:open-ask")); });
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:close-ask")); });
+    expect(screen.getByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
+  });
+  it("tour:close-ask closes the phone sheet", async () => {
+    mm(false);
+    shell("/tours/board?sample=1");
+    await screen.findByRole("button", { name: "Ask about this tour" });
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:open-ask")); });
+    expect(await screen.findByRole("dialog", { name: "Ask about this tour" })).toBeTruthy();
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:close-ask")); });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Ask about this tour" })).toBeNull());
+  });
+  it("opens the phone sheet", async () => {
+    mm(false);
+    shell("/tours/board?sample=1");
+    await screen.findByRole("button", { name: "Ask about this tour" });
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:open-ask")); });
+    expect(await screen.findByRole("dialog", { name: "Ask about this tour" })).toBeTruthy();
+  });
+});
+
 describe("launcher sample flag", () => {
   beforeEach(() => { panelProps.last = undefined; mm(false); });
   it("is true after a sample run, and the title names the artist", async () => {

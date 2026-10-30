@@ -1,5 +1,5 @@
 import { showcaseParam } from "@/lib/qloo/showcase";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, matchPath } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
 import { Sheet } from "@/components/qloo/Sheet";
@@ -10,6 +10,10 @@ import { StrategistPanel } from "./StrategistPanel";
 
 const STORAGE_KEY = "strategistOpen";
 export const DOCK_WIDTH = 380;
+/** The guided tour dispatches this on `window` to open the Ask panel (see TourProvider); the dock and the phone sheet both listen. */
+export const OPEN_ASK_EVENT = "tour:open-ask";
+/** The tour leaves the chat step: the panel goes back to how it was before the tour opened it. */
+export const CLOSE_ASK_EVENT = "tour:close-ask";
 const SHOWCASE_IDLE_HINT = "Tap a recorded question to replay how the agent answered it.";
 
 /** Tour routes and Taste only; the legacy campaign pages never get the launcher. */
@@ -33,6 +37,17 @@ function writeOpen(open: boolean) {
 export function useStrategistDock(): { open: boolean; setOpen(open: boolean): void } {
   const [open, setOpenState] = useState(readOpen);
   const setOpen = useCallback((v: boolean) => { setOpenState(v); writeOpen(v); }, []);
+  const openRef = useRef(open);
+  openRef.current = open;
+  // The tour opens the panel for its chat step and puts it back afterwards: closed stays closed, open stays open.
+  const before = useRef<boolean | null>(null);
+  useEffect(() => {
+    const on = () => { if (before.current === null) before.current = openRef.current; setOpen(true); };
+    const off = () => { if (before.current === false) setOpen(false); before.current = null; };
+    window.addEventListener(OPEN_ASK_EVENT, on);
+    window.addEventListener(CLOSE_ASK_EVENT, off);
+    return () => { window.removeEventListener(OPEN_ASK_EVENT, on); window.removeEventListener(CLOSE_ASK_EVENT, off); };
+  }, [setOpen]);
   return { open, setOpen };
 }
 
@@ -56,6 +71,13 @@ export function StrategistFab() {
   const [open, setOpen] = useState(false);
   const { sample, showcase, title, context } = useLauncherModel();
   const { pathname, search } = useLocation();
+  useEffect(() => {
+    const on = () => setOpen(true);
+    const off = () => setOpen(false);
+    window.addEventListener(OPEN_ASK_EVENT, on);
+    window.addEventListener(CLOSE_ASK_EVENT, off);
+    return () => { window.removeEventListener(OPEN_ASK_EVENT, on); window.removeEventListener(CLOSE_ASK_EVENT, off); };
+  }, []);
   const lift = dockedInFooter(pathname, search) ? "bottom-[calc(4.5rem+env(safe-area-inset-bottom))] size-12 right-3"
     : hasStickyFooter(pathname) && pathname !== "/tours/board" ? "bottom-[calc(9.5rem+env(safe-area-inset-bottom))] size-14 right-4" : "bottom-[calc(5rem+env(safe-area-inset-bottom))] size-14 right-4";
   return (

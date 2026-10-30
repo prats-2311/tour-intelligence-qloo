@@ -16,7 +16,7 @@ export function CityStatusChip({ cityId }: { cityId: string }) {
   if (!s) return null;
   const by = `${STATUS_LABEL[s.status]} by ${s.name} (${s.role}), ${timeAgo(s.at)}${s.demo ? ". Demo teammate" : ""}`;
   return (
-    <span data-testid="status-chip" title={by} className={`inline-flex h-6 shrink-0 items-center gap-1.5 self-center whitespace-nowrap rounded-[4px] border border-canvas-line px-2 text-[12px] font-medium ${TONE[s.status]}`}>
+    <span data-testid="status-chip" data-tour="status-chip" title={by} className={`inline-flex h-6 shrink-0 items-center gap-1.5 self-center whitespace-nowrap rounded-[4px] border border-canvas-line px-2 text-[12px] font-medium ${TONE[s.status]}`}>
       <span aria-hidden className={`size-1.5 rounded-full ${DOT[s.status]}`} />
       {STATUS_LABEL[s.status]}
       <span className="sr-only">. {by}</span>

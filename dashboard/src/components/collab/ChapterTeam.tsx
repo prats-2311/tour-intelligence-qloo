@@ -16,7 +16,7 @@ export function ChapterTeam({ cityId }: { cityId: string }) {
   const leads = snap.leads[cityId] ?? [];
   if (!status && decisions.length === 0 && leads.length === 0) return null;
   return (
-    <section data-testid="chapter-team" aria-label="Team" className="flex min-w-0 break-inside-avoid flex-col gap-2 rounded-[14px] bg-canvas-raised p-3 md:p-4">
+    <section data-testid="chapter-team" data-tour="chapter-team" aria-label="Team" className="flex min-w-0 break-inside-avoid flex-col gap-2 rounded-[14px] bg-canvas-raised p-3 md:p-4">
       <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-canvas-muted">Team</h3>
       {status && <p className="text-[15px] font-semibold text-canvas-text">{STATUS_LABEL[status.status]} <span className="text-[13px] font-normal text-canvas-muted">by {status.name} ({status.role}) · {timeAgo(status.at)}{status.demo ? " · Demo teammate" : ""}</span></p>}
       {decisions.length > 0 && (

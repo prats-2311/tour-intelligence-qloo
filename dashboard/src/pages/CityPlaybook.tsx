@@ -365,7 +365,7 @@ function CityPlaybookPage() {
           <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <StatusPicker cityId={shownCity.id} />
-            <NotesButton threadKey={cityThread(shownCity.id)} title={shownCity.name} label="City notes" />
+            <NotesButton threadKey={cityThread(shownCity.id)} title={shownCity.name} label="City notes" tour="city-notes" />
           </div>
           <TeamBar cities={state.cities.length ? state.cities : [shownCity]} />
           <AdvanceSheet cityId={shownCity.id} editable rows={[
@@ -414,6 +414,7 @@ function CityPlaybookPage() {
                 role="tab"
                 type="button"
                 aria-selected={on}
+                data-tour={`tab-${t.id}`}
                 aria-controls={`${tabBase}-panel`}
                 tabIndex={on ? 0 : -1}
                 onClick={() => setTab(t.id)}

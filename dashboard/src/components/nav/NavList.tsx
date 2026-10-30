@@ -1,9 +1,15 @@
-import { useId, type ReactNode } from "react";
+import { Fragment, useId, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { Compass } from "lucide-react";
 import type { NavActionId, NavGroup, NavItem } from "@/lib/nav/navConfig";
+
+export type NavTour = { id: string; title: string; minutes: number; done: boolean };
 
 type Props = {
   groups: NavGroup[];
+  /** The guided tours, listed as a "Tours" section after the first group; each starts that tour. Absent or empty: no section. */
+  tours?: NavTour[];
+  onStartTour?: (id: string) => void;
   pathname: string;
   /** Adds the preserved ?showcase / ?sample / ?ws query to a path (every link goes through it). */
   hrefFor: (path: string) => string;
@@ -55,12 +61,42 @@ function Row({ item, active, collapsed, href, onAction, onNavigate }: { item: Na
   return <li className="group/item relative">{body}{collapsed && <Tooltip>{tip}</Tooltip>}</li>;
 }
 
+function TourRow({ tour, collapsed, onStart }: { tour: NavTour; collapsed: boolean; onStart: () => void }) {
+  const label = `${tour.title}, ${tour.minutes} min${tour.done ? ", completed" : ""}`;
+  return (
+    <li className="group/item relative">
+      <button type="button" aria-label={label} onClick={onStart} className={row(collapsed, false)}>
+        <Compass size={20} aria-hidden className="shrink-0" />
+        <span className={collapsed ? "sr-only" : "flex min-w-0 flex-1 items-baseline justify-between gap-2"}>
+          <span className="truncate">{tour.title}</span>
+          <span aria-hidden className="shrink-0 text-[12px] font-normal tabular-nums text-canvas-muted">{tour.minutes} min{tour.done && <span className="ml-1.5 text-gold">{"\u2713"}</span>}</span>
+        </span>
+      </button>
+      {collapsed && <Tooltip>{label}</Tooltip>}
+    </li>
+  );
+}
+
+function ToursSection({ tours, collapsed, onStart }: { tours: NavTour[]; collapsed: boolean; onStart: (id: string) => void }) {
+  return (
+    <section aria-labelledby="nav-g-tours" className="flex flex-col gap-1">
+      {collapsed && <div aria-hidden className="mx-3 mb-1 h-px bg-canvas-line" />}
+      <h2 id="nav-g-tours" className={collapsed ? "sr-only" : "px-3 pb-1 font-display text-[11px] uppercase tracking-[0.08em] text-canvas-muted"}>Tours</h2>
+      <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+        {tours.map((t) => <TourRow key={t.id} tour={t} collapsed={collapsed} onStart={() => onStart(t.id)} />)}
+      </ul>
+    </section>
+  );
+}
+
 /** The grouped nav links shared by the desktop rail and the mobile drawer. */
-export function NavList({ groups, pathname, hrefFor, playbookHref, collapsed, onAction, onNavigate }: Props) {
+export function NavList({ groups, tours = [], onStartTour, pathname, hrefFor, playbookHref, collapsed, onAction, onNavigate }: Props) {
+  const toursSection = tours.length > 0 && onStartTour ? <ToursSection key="tours" tours={tours} collapsed={collapsed} onStart={(id) => { onNavigate?.(); onStartTour(id); }} /> : null;
   return (
     <nav aria-label="Sections" className="flex flex-col gap-4">
       {groups.map((g, gi) => (
-        <section key={g.id} aria-labelledby={`nav-g-${g.id}`} className="flex flex-col gap-1">
+        <Fragment key={g.id}>
+        <section aria-labelledby={`nav-g-${g.id}`} className="flex flex-col gap-1">
           {collapsed && gi > 0 && <div aria-hidden className="mx-3 mb-1 h-px bg-canvas-line" />}
           <h2 id={`nav-g-${g.id}`} className={collapsed ? "sr-only" : "px-3 pb-1 font-display text-[11px] uppercase tracking-[0.08em] text-canvas-muted"}>{g.label}</h2>
           <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
@@ -72,6 +108,8 @@ export function NavList({ groups, pathname, hrefFor, playbookHref, collapsed, on
             })}
           </ul>
         </section>
+        {gi === 0 && toursSection}
+        </Fragment>
       ))}
     </nav>
   );

@@ -143,7 +143,7 @@ function InsightsPage() {
       ) : (
         <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
           <div className="min-w-0 xl:col-span-2"><CityScoresChart cities={visible} hrefFor={hrefFor} /></div>
-          <div className="min-w-0"><QuadrantChart cities={visible} thresholds={thresholds} hrefFor={hrefFor} /></div>
+          <div data-tour="quadrant" className="min-w-0"><QuadrantChart cities={visible} thresholds={thresholds} hrefFor={hrefFor} /></div>
           <div className="flex min-w-0 flex-col gap-4">
             <VerdictMix cities={visible} />
             {snapshot && <TeamOverview cities={visible} snapshot={snapshot} hrefFor={hrefFor} />}
