@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { NotesButton } from "@/components/collab/Notes";
 import { NumField, Out, Section } from "@/components/budget/BudgetBits";
 import { btn, fmt } from "@/lib/budget/format";
+import { Sheet } from "@/components/qloo/Sheet";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
 import { EXAMPLE_BANNER, exampleBudget } from "@/lib/budget/example";
 import { budgetCsv } from "@/lib/budget/csv";
@@ -104,6 +105,8 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
   const ids = useMemo(() => stops.map((s) => s.id), [stops]);
   const [budget, setBudget] = useState<Budget>(() => loadBudget(tourKey, ids));
   const [copied, setCopied] = useState(false);
+  const [copiedAll, setCopiedAll] = useState<{ id: string; text: string } | null>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
   const stopList: Stop[] = stops;
   const legs = useMemo(() => buildLegs(stopList), [stopList]);
   const totals = legTotals(legs);
@@ -116,7 +119,13 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
   const copyCsv = async () => {
     try { await navigator.clipboard.writeText(csv()); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch { /* clipboard unavailable: nothing honest to confirm */ }
   };
-  const clear = () => { clearBudget(tourKey); setBudget(loadBudget("\u0000none", ids)); };
+  const clear = () => { clearBudget(tourKey); setBudget(loadBudget("\u0000none", ids)); setConfirmClear(false); };
+  const copyAll = (s: ScoredCity) => {
+    update((b) => copyCityToAll(b, s.id));
+    const n = stops.length - 1;
+    // toast: hook for the toast agent; until then this inline status in a reserved slot (no layout shift) confirms it.
+    setCopiedAll({ id: s.id, text: n > 0 ? `Copied ${s.name}'s values to ${n} other ${n === 1 ? "city" : "cities"}.` : `There are no other cities to copy ${s.name}'s values to.` });
+  };
 
   return (
     <div className="mx-auto flex w-full min-w-0 max-w-5xl flex-col gap-4 pb-24">
@@ -137,7 +146,7 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
           </label>
           <button type="button" className={btn} onClick={() => update(() => exampleBudget(ids, legs.map((l) => l.key)))}><FlaskConical size={16} aria-hidden />Load example (fictional figures)</button>
           <button type="button" className={btn} onClick={() => void copyCsv()}><Copy size={16} aria-hidden />Copy as CSV</button>
-          <button type="button" className={btn} onClick={clear}><Eraser size={16} aria-hidden />Clear budget</button>
+          <button type="button" className={btn} onClick={() => setConfirmClear(true)}><Eraser size={16} aria-hidden />Clear budget</button>
         </div>
         <p className="text-[12px] text-canvas-muted">One currency per budget. No conversion between currencies is done.</p>
         <div aria-live="polite" className="empty:hidden">{copied && <p role="status" className="text-[13px] text-canvas-text">CSV copied</p>}</div>
@@ -155,7 +164,7 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
                   <td className="py-2 pr-3 tabular-nums">{l.km === null ? "—" : fmt(Math.round(l.km))}</td>
                   <td className="py-2 pr-3">{l.mode ?? "—"}</td>
                   <td className="py-2 pr-3 tabular-nums">{l.days ?? "—"}</td>
-                  <td className="py-2"><input type="text" inputMode="decimal" autoComplete="off" aria-label={`Travel cost, ${l.fromName} to ${l.toName}`} value={budget.legs[l.key] ?? ""} onChange={(e) => update((b) => ({ ...b, legs: { ...b.legs, [l.key]: e.target.value } }))} className="h-11 w-32 rounded-[8px] bg-canvas px-3 text-[15px] tabular-nums text-canvas-text focus-visible:outline-2 focus-visible:outline-gold" /></td>
+                  <td className="py-2"><input type="text" inputMode="decimal" autoComplete="off" placeholder="e.g. 400" aria-label={`Travel cost, ${l.fromName} to ${l.toName}`} value={budget.legs[l.key] ?? ""} onChange={(e) => update((b) => ({ ...b, legs: { ...b.legs, [l.key]: e.target.value } }))} className="h-11 w-32 rounded-[8px] border border-field-border bg-canvas px-3 placeholder:text-canvas-muted text-[15px] tabular-nums text-canvas-text focus-visible:outline-2 focus-visible:outline-gold" /></td>
                 </tr>
               ))}
             </tbody>
@@ -172,8 +181,9 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
         return (
           <Section key={s.id} title={s.name} id={`city-${s.id}`}>
             <div className="flex flex-wrap items-center gap-2">
-              <button type="button" className={btn} onClick={() => update((b) => copyCityToAll(b, s.id))} aria-label={`Copy this city's values to all cities (${s.name})`}>Copy this city's values to all cities</button>
+              <button type="button" className={btn} onClick={() => copyAll(s)} aria-label={`Copy this city's values to all cities (${s.name})`}>Copy this city's values to all cities</button>
               <NotesButton threadKey={`city:${s.id}`} title={s.name} label="Discuss" />
+              <span role="status" aria-live="polite" data-testid={`copied-all-${s.id}`} className="min-w-0 text-[13px] text-canvas-text">{copiedAll?.id === s.id ? copiedAll.text : ""}</span>
             </div>
             {(notes[s.id] ?? []).length > 0 && (
               <ul data-testid={`advance-note-${s.id}`} aria-label={`Advance risks for ${s.name}`} className="flex flex-col gap-1 rounded-[10px] bg-paper-raised px-3 py-2 text-[13px] text-canvas-text">
@@ -182,20 +192,20 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
             )}
             <fieldset className="flex flex-col gap-2"><legend className="mb-1 text-[13px] font-semibold text-canvas-text">Costs ({budget.currency})</legend>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-                <NumField label="Artist fee" context={s.name} value={c.artistFee} onChange={f("artistFee")} />
-                <NumField label="Venue costs" context={s.name} value={c.venue} onChange={f("venue")} />
-                <NumField label="Production" context={s.name} value={c.production} onChange={f("production")} />
-                <NumField label="Local crew" context={s.name} value={c.crew} onChange={f("crew")} />
-                <NumField label="Marketing" context={s.name} value={c.marketing} onChange={f("marketing")} />
+                <NumField label="Artist fee" context={s.name} prefix={budget.currency} value={c.artistFee} onChange={f("artistFee")} />
+                <NumField label="Venue costs" context={s.name} prefix={budget.currency} value={c.venue} onChange={f("venue")} />
+                <NumField label="Production" context={s.name} prefix={budget.currency} value={c.production} onChange={f("production")} />
+                <NumField label="Local crew" context={s.name} prefix={budget.currency} value={c.crew} onChange={f("crew")} />
+                <NumField label="Marketing" context={s.name} prefix={budget.currency} value={c.marketing} onChange={f("marketing")} />
               </div>
             </fieldset>
             <fieldset className="flex flex-col gap-2"><legend className="mb-1 text-[13px] font-semibold text-canvas-text">Income</legend>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-                <NumField label="Ticket price" context={s.name} value={c.ticketPrice} onChange={f("ticketPrice")} suffix={budget.currency} />
-                <NumField label="Capacity" context={s.name} value={c.capacity} onChange={f("capacity")} mode="numeric" />
-                <NumField label="Sell-through %" context={s.name} value={c.sellThrough} onChange={f("sellThrough")} suffix="your estimate" />
-                <NumField label="Merch per head" context={s.name} value={c.merchPerHead} onChange={f("merchPerHead")} suffix={budget.currency} />
-                <NumField label="Sponsor contribution" context={s.name} value={c.sponsor} onChange={f("sponsor")} suffix={budget.currency} />
+                <NumField label="Ticket price" context={s.name} value={c.ticketPrice} onChange={f("ticketPrice")} prefix={budget.currency} placeholder="e.g. 45" />
+                <NumField label="Capacity" context={s.name} value={c.capacity} onChange={f("capacity")} mode="numeric" placeholder="e.g. 1,200" />
+                <NumField label="Sell-through %" context={s.name} value={c.sellThrough} onChange={f("sellThrough")} suffix="your estimate" prefix="%" placeholder="e.g. 80" />
+                <NumField label="Merch per head" context={s.name} value={c.merchPerHead} onChange={f("merchPerHead")} prefix={budget.currency} placeholder="e.g. 8" />
+                <NumField label="Sponsor contribution" context={s.name} value={c.sponsor} onChange={f("sponsor")} prefix={budget.currency} />
               </div>
               <div className="max-w-xs"><SponsorSelect city={s} artistId={artistId} sampleSet={sampleSet} variant={variant} value={c.sponsorName} onChange={f("sponsorName")} /></div>
             </fieldset>
@@ -213,10 +223,10 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
 
       <Section title="Crew and hotels" id="crew-h">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <NumField label="Crew per diem" suffix={`${budget.currency} per person per day`} value={budget.perDiem} onChange={(v) => set("perDiem", v)} />
-          <NumField label="Crew size" value={budget.crewSize} onChange={(v) => set("crewSize", v)} mode="numeric" />
-          <NumField label="Hotel per night" suffix={budget.currency} value={budget.hotel} onChange={(v) => set("hotel", v)} />
-          <NumField label="Rooms" value={budget.rooms} onChange={(v) => set("rooms", v)} mode="numeric" />
+          <NumField label="Crew per diem" suffix={`${budget.currency} per person per day`} value={budget.perDiem} onChange={(v) => set("perDiem", v)} prefix={budget.currency} placeholder="e.g. 50" />
+          <NumField label="Crew size" value={budget.crewSize} onChange={(v) => set("crewSize", v)} mode="numeric" placeholder="e.g. 6" />
+          <NumField label="Hotel per night" suffix={budget.currency} value={budget.hotel} onChange={(v) => set("hotel", v)} prefix={budget.currency} placeholder="e.g. 120" />
+          <NumField label="Rooms" value={budget.rooms} onChange={(v) => set("rooms", v)} mode="numeric" placeholder="e.g. 4" />
         </div>
         <p data-testid="nights" className="text-[13px] text-canvas-muted">Nights and per-diem days: {tour.nights} ({stops.length} show {stops.length === 1 ? "day" : "days"} + {totals.days} travel {totals.days === 1 ? "day" : "days"}).</p>
         <dl className="grid grid-cols-2 gap-3">
@@ -248,6 +258,13 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
         <p className="text-[12px] text-canvas-muted">Needs ticket price and capacity (and a cost) for a city; the tour total needs every city. Shared costs are included in the tour total.</p>
       </Section>
       <p className="text-[12px] text-canvas-muted">File name for the CSV: {slug(artist)}-budget.csv (paste into a sheet).</p>
+      <Sheet open={confirmClear} onClose={() => setConfirmClear(false)} title="Clear this budget?" side="bottom">
+        <p className="mb-3 text-[14px] text-canvas-text">This erases every figure you typed for this tour, in this browser. It can't be undone.</p>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className={btn} onClick={clear}>Yes, clear it</button>
+          <button type="button" className={btn} onClick={() => setConfirmClear(false)}>Cancel</button>
+        </div>
+      </Sheet>
     </div>
   );
 }

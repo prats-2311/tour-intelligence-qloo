@@ -78,3 +78,26 @@ test("5. replaying the agent keeps the page stable: focus on Stop, team bar stay
   expect(await navTop(), "sidebar items keep their position").toBe(before);
   await expect(page.getByRole("button", { name: /Board · \d+ Qloo calls/ })).toBeVisible({ timeout: 30_000 });
 });
+
+test("6. budget inputs have a visible 1px border at 3:1 or more against the card", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/tours/budget?sample=1");
+  const first = page.getByLabel("Artist fee, Guadalajara");
+  await expect(first).toBeVisible({ timeout: 20_000 });
+  const bad = await page.evaluate(() => {
+    const lum = (c: number[]) => { const f = (v: number) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]!) + 0.7152 * f(c[1]!) + 0.0722 * f(c[2]!); };
+    const rgb = (s: string) => (s.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+    const bgOf = (e: Element | null): number[] => { while (e) { const c = getComputedStyle(e).backgroundColor; if (c && !/rgba\(.*, 0\)|transparent/.test(c)) return rgb(c); e = e.parentElement; } return [0, 0, 0]; };
+    const out: string[] = [];
+    for (const el of document.querySelectorAll<HTMLInputElement>("section input[type=text]")) {
+      const cs = getComputedStyle(el);
+      const w = parseFloat(cs.borderTopWidth);
+      const b = rgb(cs.borderTopColor), card = bgOf(el.parentElement);
+      const l1 = lum(b), l2 = lum(card);
+      const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+      if (w < 1 || cs.borderTopStyle === "none" || ratio < 3) out.push(`${el.getAttribute("aria-label")}: ${w}px ${ratio.toFixed(2)}:1`);
+    }
+    return out;
+  });
+  expect(bad).toEqual([]);
+});

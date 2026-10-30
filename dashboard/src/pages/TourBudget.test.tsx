@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, configure, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -95,6 +95,33 @@ describe("Tour budget page", () => {
     await userEvent.click(screen.getByRole("button", { name: "Copy this city's values to all cities (Guadalajara)" }));
     expect((screen.getByLabelText("Artist fee, Curitiba") as HTMLInputElement).value).toBe("7000");
   });
+  it("copy-to-all confirms in a status line naming the city and how many cities got the values (audit A12)", async () => {
+    renderAt("/tours/budget?sample=1");
+    await ready();
+    await type("Artist fee, Guadalajara", "7000");
+    await userEvent.click(screen.getByRole("button", { name: "Copy this city's values to all cities (Guadalajara)" }));
+    expect((await screen.findAllByRole("status")).map((e) => e.textContent).join(" ")).toMatch(/Copied Guadalajara's values to \d+ other cit/);
+  });
+  it("Clear budget asks first in an accessible dialog; Cancel keeps every figure (audit A12)", async () => {
+    renderAt("/tours/budget?sample=1");
+    await ready();
+    await type("Artist fee, Guadalajara", "7000");
+    await userEvent.click(screen.getByRole("button", { name: "Clear budget" }));
+    const dlg = await screen.findByRole("dialog", { name: "Clear this budget?" });
+    expect(dlg.getAttribute("aria-modal")).toBe("true");
+    expect((screen.getByLabelText("Artist fee, Guadalajara") as HTMLInputElement).value).toBe("7000");
+    await userEvent.click(within(dlg).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Clear this budget?" })).toBeNull());
+    expect((screen.getByLabelText("Artist fee, Guadalajara") as HTMLInputElement).value).toBe("7000");
+  });
+  it("number fields carry a placeholder and money fields a currency prefix (audit A6)", async () => {
+    renderAt("/tours/budget?sample=1");
+    await ready();
+    const fee = screen.getByLabelText("Artist fee, Guadalajara") as HTMLInputElement;
+    expect(fee.placeholder).toMatch(/^e\.g\. /);
+    expect(fee.parentElement!.querySelector("[data-testid=field-prefix]")!.textContent).toBe("USD");
+    expect((screen.getByLabelText("Capacity, Guadalajara") as HTMLInputElement).placeholder).toMatch(/^e\.g\. /);
+  });
   it("saves per tour in localStorage and Clear budget empties it", async () => {
     const first = renderAt("/tours/budget?sample=1");
     await ready();
@@ -106,6 +133,7 @@ describe("Tour budget page", () => {
     await ready();
     expect((screen.getByLabelText("Artist fee, Guadalajara") as HTMLInputElement).value).toBe("7000");
     await userEvent.click(screen.getByRole("button", { name: "Clear budget" }));
+    await userEvent.click(within(await screen.findByRole("dialog", { name: "Clear this budget?" })).getByRole("button", { name: "Yes, clear it" }));
     expect((screen.getByLabelText("Artist fee, Guadalajara") as HTMLInputElement).value).toBe("");
     expect(localStorage.getItem(keys[0]!)).toBeNull();
   });
@@ -119,6 +147,7 @@ describe("Tour budget page", () => {
     await type("Artist fee, Guadalajara", "9000");
     expect(screen.getByText(EXAMPLE_BANNER)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Clear budget" }));
+    await userEvent.click(within(await screen.findByRole("dialog", { name: "Clear this budget?" })).getByRole("button", { name: "Yes, clear it" }));
     expect(screen.queryByText(EXAMPLE_BANNER)).toBeNull();
   });
   it("shows an Advance risk note only when that city's Advance data is already loaded", async () => {
@@ -163,7 +192,7 @@ describe("Tour budget page", () => {
     const csv = writeText.mock.calls[0]![0] as string;
     expect(csv.startsWith("City,Currency,Artist fee")).toBe(true);
     expect(csv).toContain("Guadalajara,USD,5000");
-    expect(await screen.findByRole("status")).toBeTruthy();
+    expect(await screen.findByText("CSV copied")).toBeTruthy();
   });
   it("makes no network call", async () => {
     const f = vi.fn();
@@ -172,6 +201,7 @@ describe("Tour budget page", () => {
     await ready();
     await userEvent.click(screen.getByRole("button", { name: "Load example (fictional figures)" }));
     await userEvent.click(screen.getByRole("button", { name: "Clear budget" }));
+    await userEvent.click(within(await screen.findByRole("dialog", { name: "Clear this budget?" })).getByRole("button", { name: "Yes, clear it" }));
     expect(f).not.toHaveBeenCalled();
   });
   it("keeps ?sample and ws on its links back to the board and the book", async () => {

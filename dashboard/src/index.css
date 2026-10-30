@@ -36,6 +36,8 @@
   --color-canvas-line: rgba(240, 238, 230, 0.09);
   --color-canvas-text: #f2f0ea;
   --color-canvas-muted: #a4a094;
+  /* Form field outline: about 4.6:1 on the raised card (WCAG 1.4.11 asks 3:1). */
+  --color-field-border: #8a877d;
 
   --color-paper: #282722;
   --color-paper-raised: #32312a;
