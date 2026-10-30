@@ -351,6 +351,13 @@ describe("playbook cards", () => {
     expect(screen.getByText("TOP ZONE")).toBeTruthy();
     expect(screen.getByText("Colonia Americana").getAttribute("title")).toBe("Colonia Americana");
   });
+  it("advance sheet values wrap instead of truncating, and a tile with an action becomes a button", () => {
+    let hit = false;
+    render(<AdvanceSheet rows={[{ label: "CLAIMS", value: "11 verified · 0 removed", onClick: () => { hit = true; }, aria: "See the 11 checked claims" }]} />);
+    expect(screen.getByTitle("11 verified · 0 removed").className).not.toContain("truncate");
+    fireEvent.click(screen.getByRole("button", { name: "See the 11 checked claims" }));
+    expect(hit).toBe(true);
+  });
   it("keeps organisations off the sponsor card, with a caption, a visible-only count and an ask that names a real brand", () => {
     const items = [
       { name: "Planned Parenthood", artistRank: 1, cityRank: null }, { name: "ACLU", artistRank: 2, cityRank: null }, { name: "Black Lives Matter", artistRank: 3, cityRank: null },
