@@ -4,6 +4,7 @@ import { Sheet } from "@/components/qloo/Sheet";
 import { DEMO_BANNER, LIMITS, ROLES, SHARE_NOTICE, timeAgo, type Message } from "@/lib/collab/types";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
 import { collabBtn, collabInput, demoChip, roleChip } from "./ui";
+import { useCollabWrite } from "./useCollabWrite";
 
 const MENTION = new RegExp(`(@(?:${ROLES.join("|")}))`, "g");
 
@@ -29,6 +30,7 @@ function MessageItem({ m }: { m: Message }) {
 /** A side sheet with one thread: messages, a box to add one, and resolve or reopen. */
 export function NotesSheet({ open, onClose, title, threadKey }: { open: boolean; onClose: () => void; title: string; threadKey: string }) {
   const w = useWorkspace();
+  const save = useCollabWrite();
   const thread = w.snapshot?.threads[threadKey];
   const messages = thread?.messages ?? [];
   const [text, setText] = useState("");
@@ -37,7 +39,7 @@ export function NotesSheet({ open, onClose, title, threadKey }: { open: boolean;
     const t = text.trim();
     if (!t || busy) return;
     setBusy(true);
-    const ok = await w.write("message", { key: threadKey, text: t });
+    const ok = await save("message", { key: threadKey, text: t }, "Note posted.", { quietFail: true });
     setBusy(false);
     if (ok) setText("");
   };
@@ -62,7 +64,7 @@ export function NotesSheet({ open, onClose, title, threadKey }: { open: boolean;
             <span className="text-[12px] tabular-nums text-canvas-muted">{text.length}/{LIMITS.text}</span>
             <div className="flex flex-wrap items-center gap-2">
               {messages.length > 0 && (
-                <button type="button" onClick={() => void w.write("resolve", { key: threadKey, resolved: !thread?.resolved })} className={collabBtn}>
+                <button type="button" onClick={() => void save("resolve", { key: threadKey, resolved: !thread?.resolved }, thread?.resolved ? "Thread reopened." : "Thread marked resolved.", { quietFail: true })} className={collabBtn}>
                   {thread?.resolved ? "Reopen" : <><Check size={14} aria-hidden />Mark resolved</>}
                 </button>
               )}
