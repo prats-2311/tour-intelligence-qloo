@@ -59,13 +59,23 @@ def test_sponsors_by_age_compact_bands(monkeypatch):
     out = insight_tools.get_sponsors_by_age("Lumen Vale", "Guadalajara", "MX", **KW)
     assert out["status"] == "ok" and out["age_only"] is True
     band = out["bands"][0]
-    assert band["band"] == "18-24" and band["index"] == 0.62 and "not a share" in band["index_note"]
+    assert band["band"] == "18–24" and band["index"] == 0.62 and "not a share" in band["index_note"]
     assert len(band["brands"]) == 5 and band["new_in_top5"] == 2
     assert band["brands"][0] == {"name": "Brand0", "fan_rank": 1, "city_rank": None, "lift": "fans rank it #1; not in the city's top 20"}
     assert band["brands"][1]["lift"] == "fans rank it #2; city rank #7"
     assert "not a ticket forecast" in out["integrity"]
     seg = next(c for c in calls if c[1].startswith("/v1/sponsor-segments"))
     assert seg[2] == {"artistId": "Q1", "city": "Guadalajara", "country": "MX"}
+
+
+def test_sponsors_by_age_human_band_labels(monkeypatch):
+    keys = ["24_and_younger", "25_to_29", "30_to_34", "35_to_44", "45_to_54", "55_and_older"]
+    bands = [{"band": k, "phrase": "55-64" if k == "55_and_older" else "x", "index": 1.2, "status": "ok", "lifted": True, "items": []} for k in keys]
+    # a band with no `band` key falls back to its phrase
+    bands.append({"phrase": "25-29", "index": 1.1, "status": "ok", "items": []})
+    _gateway(monkeypatch, {"/v1/tools/": lambda b: _resp(payload=DESCRIBE), "/v1/sponsor-segments": lambda p: _resp(payload={"status": "ok", "bands": bands})})
+    out = insight_tools.get_sponsors_by_age("Lumen Vale", "Guadalajara", "MX", **KW)
+    assert [b["band"] for b in out["bands"]] == ["18–24", "25–29", "30–34", "35–44", "45–54", "55+", "25–29"]
 
 
 def test_sponsors_by_age_unlifted_band_makes_no_lift_claim(monkeypatch):
