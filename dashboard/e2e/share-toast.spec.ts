@@ -93,3 +93,23 @@ test("a blocked clipboard shows an error toast with the link to select, and stil
   await expect(alert.getByLabel("Text to copy")).toHaveValue(/ws=/);
   same(before, await box(page, '[data-testid="city-row"]'), "first city row");
 });
+
+test("on a phone the toast sits above the bottom stepper and never covers it", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto(BOARD);
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+  await expect(page).toHaveURL(/[?&]ws=/, { timeout: 20_000 });
+  await page.waitForTimeout(500);
+  await page.getByRole("button", { name: "Team", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Share with your team" }).click();
+  const toast = page.locator("[data-toast-viewport] [role=status]").filter({ hasText: "Link copied" });
+  await expect(toast).toBeVisible();
+  const t = await toast.boundingBox();
+  const nav = await page.locator("nav[data-app-shell]").boundingBox();
+  expect(t!.y + t!.height).toBeLessThanOrEqual(nav!.y);
+  expect(t!.x).toBeGreaterThanOrEqual(0);
+  expect(t!.x + t!.width).toBeLessThanOrEqual(375);
+  const close = await page.locator("[data-toast-viewport]").getByRole("button", { name: "Dismiss notification" }).boundingBox();
+  expect(close!.width).toBeGreaterThanOrEqual(44);
+  expect(close!.height).toBeGreaterThanOrEqual(44);
+});
