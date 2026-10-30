@@ -94,3 +94,22 @@ test("the do-not-book act never appears: not in any tab, not in the claims panel
   if (await reasoning.count()) { await reasoning.click(); await everywhere(); }
   await expect(page.locator("body")).not.toContainText(/ariel pink/i);
 });
+
+test("Compare: the same model, without Qloo loads only on click, from a fake gateway answer", async ({ page }) => {
+  let calls = 0;
+  await page.route("**/api/qloo/sponsors-without-qloo*", async (route) => {
+    calls += 1;
+    await route.fulfill({ json: { status: "ok", model: "fake", prompt: "p", cached: false, note: "n", qlooTop: { name: "Stüssy", fanRank: 1, cityRank: null }, brands: [{ name: "Nike", fanRank: 14, cityRank: 2 }, { name: "Coca-Cola", fanRank: 2, cityRank: 5 }, { name: "Red Bull", fanRank: null, cityRank: null }, { name: "Red Cross", fanRank: null, cityRank: null, nonSponsor: true }, { name: "Visa", fanRank: 30, cityRank: null }] } });
+  });
+  await page.goto(LA);
+  await done(page);
+  const card = page.locator("[data-tour='card-sponsors']");
+  await expect(card.getByText("Live: asks Gemini once, cached after.")).toBeVisible();
+  expect(calls).toBe(0);
+  await card.getByRole("button", { name: "Compare: the same model, without Qloo" }).click();
+  await expect(card.getByTestId("compare-summary")).toHaveText("Gemini's picks average #15.3 with these fans; 1 of 4 aren't in their top 50.");
+  await expect(card.getByTestId("compare-note")).toContainText("not that the ranking is right.");
+  expect(calls).toBe(1);
+  await card.scrollIntoViewIfNeeded();
+  if (process.env.SWQ_SHOT) await card.screenshot({ path: `${process.env.SWQ_SHOT}-${test.info().project.name}.png` });
+});
