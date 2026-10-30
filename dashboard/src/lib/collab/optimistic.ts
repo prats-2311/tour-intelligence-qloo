@@ -31,7 +31,7 @@ export function applyLocal(s: Snapshot, op: Op, body: Record<string, unknown>, w
     case "override": {
       const f = body.field as Field;
       const cur = n.overrides[cityId]?.[f];
-      n.overrides[cityId] = { ...n.overrides[cityId], [f]: { value: String(body.value), original: cur?.original ?? String(body.original ?? ""), ...who, at: now } };
+      n.overrides[cityId] = { ...n.overrides[cityId], [f]: { value: String(body.value), original: cur?.original ?? String(body.original ?? ""), ...(typeof body.reason === "string" && body.reason.trim() ? { reason: body.reason.trim().slice(0, LIMITS.reason) } : {}), ...who, at: now } };
       ev("override", { cityId, key: f, text: trim(String(body.value), 80) });
       break;
     }

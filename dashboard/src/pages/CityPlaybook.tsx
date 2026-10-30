@@ -23,6 +23,7 @@ import { StatusPicker } from "@/components/collab/Status";
 import { TeamBar } from "@/components/collab/TeamBar";
 import { cardThread, cityThread } from "@/lib/collab/types";
 import { AdvanceSheet } from "@/components/playbook/AdvanceSheet";
+import { heroWhys, scrollToCard } from "@/components/playbook/heroWhy";
 import { CardBody, ThisWeekBody, isEmptyWeek } from "@/components/playbook/cardBody";
 import { ClaimsAudit } from "@/components/playbook/ClaimsAudit";
 import { CARD_TITLE, cityCode, metaLine } from "@/components/playbook/format";
@@ -167,6 +168,9 @@ function CityPlaybookPage() {
   const weekIds: CardId[] = isEmptyWeek(week.data) ? [] : ["this_week"];
   const activateIds: CardId[] = loading ? [...ORDER, ...weekIds] : [...ORDER.filter((k) => cardOf(k)), ...weekIds];
   const idsKey = activateIds.join("|");
+  const why = heroWhys(pb.cards);
+  // The three cards a why line points at live on "How to win"; open that tab first, then scroll once it has rendered.
+  const goToCard = (kind: CardKind) => { setTab("activate"); setTimeout(() => scrollToCard(kind), 0); };
   const shownIdx = Math.min(counterIdx, activateIds.length - 1);
 
   useEffect(() => {
@@ -304,7 +308,7 @@ function CityPlaybookPage() {
       <div className="relative -mx-4 lg:mx-0">
         <div ref={scrollerRef} tabIndex={0} role="region" aria-label="Playbook cards" className="flex snap-x focus-visible:outline-2 focus-visible:outline-gold snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 lg:grid lg:grid-cols-12 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0">
           {activateIds.map((id) => (
-            <div key={id} data-card={id} data-tour={`card-${id}`} className={`w-[88%] shrink-0 snap-start lg:w-auto ${PLACE[id]}`}>{cardFor(id)}{id === "sponsors" && <p data-testid="sponsor-assumption" className="mt-2 text-[13px] text-canvas-muted">{SPONSOR_ASSUMPTION}</p>}</div>
+            <div key={id} id={`card-${id}`} data-card={id} data-tour={`card-${id}`} className={`w-[88%] shrink-0 snap-start lg:w-auto ${PLACE[id]}`}>{cardFor(id)}{id === "sponsors" && <p data-testid="sponsor-assumption" className="mt-2 text-[13px] text-canvas-muted">{SPONSOR_ASSUMPTION}</p>}</div>
           ))}
         </div>
         {shownIdx < activateIds.length - 1 && <span aria-hidden data-testid="swipe-fade" className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-canvas to-transparent lg:hidden" />}
@@ -368,10 +372,10 @@ function CityPlaybookPage() {
             <NotesButton threadKey={cityThread(shownCity.id)} title={shownCity.name} label="City notes" />
           </div>
           <TeamBar cities={state.cities.length ? state.cities : [shownCity]} />
-          <AdvanceSheet cityId={shownCity.id} editable rows={[
-            { label: "TOP ZONE", value: zoneDisplayLabel(first(pb.cards, "promo_zones", "label"), shownCity.name) },
-            { label: "BEST ROOM", value: first(pb.cards, "venue_fit", "name") },
-            { label: "SUPPORT", value: first(pb.cards, "co_billing", "name") },
+          <AdvanceSheet cityId={shownCity.id} editable onGoToCard={goToCard} rows={[
+            { label: "TOP ZONE", value: zoneDisplayLabel(first(pb.cards, "promo_zones", "label"), shownCity.name), why: why.top_zone },
+            { label: "BEST ROOM", value: first(pb.cards, "venue_fit", "name"), why: why.best_room },
+            { label: "SUPPORT", value: first(pb.cards, "co_billing", "name"), why: why.support },
             { label: "CLAIMS", value: claimsValue, tour: "claims-tile", onClick: narrative?.status === "ok" && verified + removedCount > 0 ? () => setAuditOpen(true) : undefined, aria: `See the ${verified + removedCount} checked claims` },
           ]} />
           {narrative?.status === "unavailable" && <Notice>{narrative.message}</Notice>}

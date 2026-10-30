@@ -302,6 +302,13 @@ describe("qlooProxy", () => {
       expect(urls).toHaveLength(9);
       expect(fetchImpl.mock.calls[2][1].headers).toMatchObject({ authorization: "Bearer tok", "x-session-id": "s" });
     });
+    it("passes an override's optional reason through to the gateway unchanged", async () => {
+      const fetchImpl = vi.fn(async () => json({ ok: true }));
+      const base = await start({ gatewayUrl: "https://gw", getToken: async () => "tok", fetchImpl });
+      const body = { name: "Sam", role: "Manager", cityId: "1", field: "best_room", value: "B", original: "A", reason: "Smaller room suits a presale night" };
+      await call(base, `/${WS}/override`, { method: "POST", body: JSON.stringify(body) });
+      expect(JSON.parse(fetchImpl.mock.calls[0][1].body)).toEqual(body);
+    });
     it("rejects a bad ws id, a missing session and bodies over 8 KB before forwarding", async () => {
       const fetchImpl = vi.fn(async () => json({}));
       const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });

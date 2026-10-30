@@ -28,6 +28,12 @@ describe("optimistic apply", () => {
     s = applyLocal(s, "resolve", { key: "city:1", resolved: false }, who, 5, "e");
     expect(s.threads["city:1"]!.resolved).toBe(false);
   });
+  it("override carries an optional reason; a re-edit without one drops it", () => {
+    let s = applyLocal(base, "override", { cityId: "1", field: "best_room", value: "B", original: "A", reason: "  Presale night " }, who, 1, "o");
+    expect(s.overrides["1"]!.best_room).toMatchObject({ value: "B", reason: "Presale night" });
+    s = applyLocal(s, "override", { cityId: "1", field: "best_room", value: "C", original: "B" }, who, 2, "p");
+    expect(s.overrides["1"]!.best_room).not.toHaveProperty("reason");
+  });
   it("override keeps the first Qloo value; clear drops it; leads add and remove; activity capped at 200", () => {
     let s = applyLocal(base, "override", { cityId: "1", field: "best_room", value: "B", original: "A" }, who, 1, "o");
     s = applyLocal(s, "override", { cityId: "1", field: "best_room", value: "C", original: "B" }, who, 2, "p");

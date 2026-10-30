@@ -349,6 +349,18 @@ describe("playbook cards", () => {
       unmount();
     }
   });
+  it("reasoning summary removes only the offending sentences and says how many", () => {
+    const ok = narrative as Extract<typeof narrative, { status: "ok" }>;
+    const { container } = render(<ReasoningSummary narrative={{ ...ok, thoughtSummary: "Sponsor fit is high. Fans also rank Ariel Pink highly. UNICEF is big here! The room is small." }} />);
+    expect(container.textContent).not.toContain("Ariel Pink");
+    expect(container.textContent).not.toContain("UNICEF");
+    expect(container.textContent).toContain("Sponsor fit is high. The room is small.");
+    expect(screen.getByText("2 sentences removed (do-not-book list or not a sponsor)")).toBeTruthy();
+  });
+  it("reasoning summary shows no removal note when nothing was removed", () => {
+    render(<ReasoningSummary narrative={narrative} />);
+    expect(screen.queryByText(/removed \(do-not-book/)).toBeNull();
+  });
   it("reasoning summary renders nothing when unavailable or null", () => {
     const { container } = render(<ReasoningSummary narrative={{ status: "unavailable", reason: "error", message: "x" }} />);
     expect(container.innerHTML).toBe("");
@@ -369,6 +381,15 @@ describe("playbook cards", () => {
     render(<AdvanceSheet rows={[{ label: "TOP ZONE", value: "Colonia Americana" }, { label: "CLAIMS", value: "7 verified" }]} />);
     expect(screen.getByText("TOP ZONE")).toBeTruthy();
     expect(screen.getByText("Colonia Americana").getAttribute("title")).toBe("Colonia Americana");
+  });
+  it("advance sheet shows a muted why under a tile, linking to its card", () => {
+    let went = "";
+    render(<AdvanceSheet onGoToCard={(k) => { went = k; }} rows={[{ label: "TOP ZONE", value: "Colonia Americana", why: { text: "31% of in-city fan heat (#1 of 3 zones)", card: "promo_zones" } }, { label: "BEST ROOM", value: "Room" }]} />);
+    const a = screen.getByRole("link", { name: "31% of in-city fan heat (#1 of 3 zones)" });
+    expect(a.getAttribute("href")).toBe("#card-promo_zones");
+    fireEvent.click(a);
+    expect(went).toBe("promo_zones");
+    expect(screen.getAllByRole("link")).toHaveLength(1); // no why, no link
   });
   it("advance sheet values wrap instead of truncating, and a tile with an action becomes a button", () => {
     let hit = false;

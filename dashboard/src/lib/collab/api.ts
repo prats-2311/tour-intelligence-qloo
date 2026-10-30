@@ -21,7 +21,7 @@ export interface SeedActor { name: string; role: string; agoMin: number }
 export interface Seed {
   statuses?: Array<SeedActor & { cityId: string; status: string }>;
   threads?: Array<{ key: string; resolved?: SeedActor; messages: Array<SeedActor & { text: string }> }>;
-  overrides?: Array<SeedActor & { cityId: string; field: string; value: string; original: string }>;
+  overrides?: Array<SeedActor & { cityId: string; field: string; value: string; original: string; reason?: string }>;
   leads?: Array<SeedActor & { cityId: string; text: string }>;
 }
 

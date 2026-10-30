@@ -32,7 +32,7 @@ function Harness() {
       <CityStatusChip cityId={CITY} />
       <NotesButton threadKey={cardThread(CITY, "sponsors")} title="Sponsors" />
       <NotesButton threadKey={cityThread(CITY)} title="Home" label="City notes" />
-      <AdvanceSheet cityId={CITY} editable rows={[{ label: "TOP ZONE", value: "Old Quarter" }, { label: "CLAIMS", value: "3 verified" }]} />
+      <AdvanceSheet cityId={CITY} editable rows={[{ label: "TOP ZONE", value: "Old Quarter", why: { text: "31% of in-city fan heat (#1 of 3 zones)", card: "promo_zones" } }, { label: "CLAIMS", value: "3 verified" }]} />
       <SponsorLeads cityId={CITY} />
       <ChapterTeam cityId={CITY} />
       <Link to="/tours/book?showcase=1">book</Link>
@@ -201,11 +201,29 @@ describe("status, overrides and leads", () => {
     fireEvent.change(screen.getByLabelText("Team value for Top zone"), { target: { value: "Harbour" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(screen.getByTestId("team-value").textContent).toBe("Harbour"));
-    expect(screen.getByTestId("qloo-suggested").textContent).toBe("Qloo suggested: Old Quarter");
+    expect(screen.getByTestId("qloo-suggested").textContent).toBe("Qloo suggested: Old Quarter — 31% of in-city fan heat (#1 of 3 zones)");
+    expect(within(screen.getByTestId("qloo-suggested")).getByRole("link").getAttribute("href")).toBe("#card-promo_zones");
     fireEvent.click(screen.getByRole("button", { name: "Revert to Qloo" }));
     await waitFor(() => expect(screen.queryByTestId("team-value")).toBeNull());
     expect(screen.getByText("Old Quarter")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Edit Support" })).toBeNull(); // only the three tiles are editable
+  });
+  it("an override can carry a short reason, shown as Team value · name — reason", async () => {
+    mount(); await ready();
+    fireEvent.click(screen.getByRole("button", { name: "Edit Top zone" }));
+    const why = screen.getByLabelText("Why? (optional)") as HTMLInputElement;
+    expect(why.maxLength).toBe(200);
+    fireEvent.change(screen.getByLabelText("Team value for Top zone"), { target: { value: "Harbour" } });
+    fireEvent.change(why, { target: { value: "Closer to the venue" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(screen.getByTestId("team-value").textContent).toBe("Harbour"));
+    expect(screen.getByTestId("team-line").textContent).toMatch(/^Team value · Sam — Closer to the venue/);
+    // no reason, no dash
+    fireEvent.click(screen.getByRole("button", { name: "Edit Top zone" }));
+    expect((screen.getByLabelText("Why? (optional)") as HTMLInputElement).value).toBe("Closer to the venue");
+    fireEvent.change(screen.getByLabelText("Why? (optional)"), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(screen.getByTestId("team-line").textContent).not.toContain("—"));
   });
   it("adds and removes a sponsor lead labelled as added by the team", async () => {
     mount(); await ready();

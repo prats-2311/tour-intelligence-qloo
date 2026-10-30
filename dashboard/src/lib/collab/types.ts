@@ -10,7 +10,7 @@ export type Field = (typeof FIELDS)[number];
 export const fieldOf = (label: string): Field | undefined => ({ "top zone": "top_zone", "best room": "best_room", support: "support" } as Record<string, Field>)[label.toLowerCase()];
 export const FIELD_LABEL: Record<Field, string> = { top_zone: "Top zone", best_room: "Best room", support: "Support" };
 
-export const LIMITS = { text: 1000, name: 40, value: 120, lead: 200, pollMs: 10_000 } as const;
+export const LIMITS = { text: 1000, name: 40, value: 120, reason: 200, lead: 200, pollMs: 10_000 } as const;
 export const DEMO_BANNER = "Demo discussion between fictional teammates, seeded so you can see collaboration. Add your own note. Only you can see this copy.";
 export const SHARE_NOTICE = "Anyone with this link can see and add notes. Don't post contracts, fees or personal details.";
 
@@ -18,7 +18,7 @@ export interface Actor { name: string; role: Role }
 export interface Message extends Actor { id: string; text: string; at: number; demo?: true }
 export interface Thread { resolved: boolean; resolvedBy?: Actor; resolvedAt?: number; messages: Message[] }
 export interface StatusEntry extends Actor { status: CityStatus; at: number; demo?: true }
-export interface OverrideEntry extends Actor { value: string; original: string; at: number; demo?: true }
+export interface OverrideEntry extends Actor { value: string; original: string; reason?: string; at: number; demo?: true }
 export interface Lead extends Actor { id: string; text: string; at: number; demo?: true }
 export type ActivityType = "status" | "message" | "resolve" | "reopen" | "override" | "override_clear" | "lead" | "lead_remove";
 export interface ActivityEvent extends Actor { id: string; type: ActivityType; cityId?: string; key?: string; text?: string; at: number; demo?: true }

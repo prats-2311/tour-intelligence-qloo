@@ -148,7 +148,7 @@ export function buildDemoSeed(rec: Recording): Seed | null {
       ["Maya", v2 ? say`I'm setting Best room to ${v2} for now, since the presale comes first. Qloo's pick stays visible under it.` : null],
       ["Leo", v2 ? say`Works for me. We should check both rooms before we commit to either.` : null],
     ]);
-    if (v1 && v2 && t.length >= 3) out.overrides.push({ cityId: lead.id, field: "best_room", value: v2, original: v1, name: "Maya", role: CAST.Maya, agoMin: t[2]! - 1 });
+    if (v1 && v2 && t.length >= 3) out.overrides.push({ cityId: lead.id, field: "best_room", value: v2, original: v1, reason: "Smaller room suits a presale night (team call)", name: "Maya", role: CAST.Maya, agoMin: t[2]! - 1 });
   }
   {
     const a = items(lead, "co_billing");

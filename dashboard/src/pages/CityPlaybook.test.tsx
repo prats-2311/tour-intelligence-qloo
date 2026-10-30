@@ -314,6 +314,18 @@ describe("CityPlaybook naming and SUPPORT rule", () => {
     expect(await screen.findByRole("heading", { name: "Acts these fans love here" })).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/Talent/);
   });
+  it("hero tiles carry a why line from the loaded cards, linking to the card, even from another tab", async () => {
+    renderAt("/tours/playbook/4005539?sample=1");
+    await screen.findByText("SUPPORT");
+    const zone = await screen.findByRole("link", { name: /of in-city fan heat \(#1 of \d+ zones\)/ });
+    expect(zone.getAttribute("href")).toBe("#card-promo_zones");
+    expect(screen.getByRole("link", { name: /^venue fit \d\.\d\d, #\d+ of \d+ rooms$/ }).getAttribute("href")).toBe("#card-venue_fit");
+    expect(screen.getByRole("link", { name: /^fans share taste \d+% · the city likes them \d+%$/ }).getAttribute("href")).toBe("#card-co_billing");
+    expect(document.getElementById("card-promo_zones")).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Acts fans love" }));
+    fireEvent.click(zone);
+    await waitFor(() => expect(screen.getByRole("tab", { name: "How to win" }).getAttribute("aria-selected")).toBe("true"));
+  });
   it("SUPPORT shows a dash for a co-billing card that is not ok, even if it carries items (same rule as the landing)", async () => {
     vi.spyOn(client, "streamCityPlaybook").mockImplementation(async function* () {
       for (const e of samplePlaybookEvents("4005539")!) {
