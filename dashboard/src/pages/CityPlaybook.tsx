@@ -305,9 +305,9 @@ function CityPlaybookPage() {
   // toast: the toast agent hooks the "Removed from tour / Added to tour" message into `toggle`.
   const toggle = () => { refocusToggle.current = true; toggleShortlist(shownCity.id); };
   const addToTour = (
-    <div className="flex min-w-0 flex-1 flex-col justify-end gap-1 max-lg:min-h-[94px] lg:flex-none lg:items-start">
+    <div className="flex min-w-0 flex-1 flex-col justify-end gap-1 max-lg:min-h-12 lg:flex-none lg:items-start">
       {inTour ? (
-        <div className="flex min-w-0 flex-1 flex-col items-stretch gap-0.5 lg:flex-none lg:flex-row lg:items-center lg:gap-2">
+        <div className="flex min-w-0 flex-1 flex-row items-center gap-2 lg:flex-none">
           <button ref={toggleRef} type="button" onClick={toggle} className={removeBtn}>Remove from tour</button>
           <NextStepLink data-testid="primary-action" to={nextHeld ? `/tours/playbook/${nextHeld.id}${sampleQ}` : `/tours/book${sampleQ}`} className="btn-gold inline-flex min-h-12 min-w-0 items-center justify-center rounded-[10px] px-4 py-2 text-center text-[15px] font-semibold leading-tight lg:h-11 lg:min-h-0 lg:px-5">
             <span className="min-w-0 break-words">{nextHeld ? `Next: ${nextHeld.name}` : "Next: Tour Book"}</span>
