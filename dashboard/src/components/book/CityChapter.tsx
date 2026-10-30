@@ -4,6 +4,9 @@ import { Notice } from "@/components/qloo/Notice";
 import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { VerdictClockLine } from "@/components/qloo/VerdictClockLine";
 import { ChapterTeam } from "@/components/collab/ChapterTeam";
+import { ChapterBudget } from "@/components/budget/ChapterBudget";
+import { hasBudget } from "@/lib/budget/format";
+import type { Budget } from "@/lib/budget/math";
 import { AdvanceSheet } from "@/components/playbook/AdvanceSheet";
 import { CardBody, ThisWeekBody, isEmptyWeek } from "@/components/playbook/cardBody";
 import { ClaimsBadge } from "@/components/playbook/ClaimsBadge";
@@ -42,7 +45,7 @@ function MarginNote({ requests, claims }: { requests: number; claims?: CardClaim
 
 const H3 = "font-title text-[20px] leading-tight text-canvas-text";
 
-export function CityChapter({ chapter, sample = false, showcase = false, artist, artistId, window, stops }: { chapter: BookCityChapter; sample?: boolean; showcase?: boolean; artist?: string; /** The artist's Qloo entity id: lets the chapter show age groups already loaded in this session (never loads them). */ artistId?: string; window?: DateWindow; /** The other cities on the tour, for the nearest-stop note. */ stops?: ScoredCity[] }) {
+export function CityChapter({ chapter, sample = false, showcase = false, artist, artistId, window, stops, budget }: { chapter: BookCityChapter; sample?: boolean; showcase?: boolean; artist?: string; /** The artist's Qloo entity id: lets the chapter show age groups already loaded in this session (never loads them). */ artistId?: string; window?: DateWindow; /** The other cities on the tour, for the nearest-stop note. */ stops?: ScoredCity[]; /** The user's saved budget for this tour (browser storage), when there is one. */ budget?: Budget }) {
   const { city, accent, playbook, week } = chapter;
   const narrative = playbook?.narrative;
   const segments = useSegments(artistId ? segmentKey(artistId, city) : null);
@@ -75,6 +78,7 @@ export function CityChapter({ chapter, sample = false, showcase = false, artist,
           <RadiusNote city={city} pool={stops ?? []} />
         </div>
         <ChapterTeam cityId={city.id} />
+        {budget && hasBudget(budget.cities[city.id]) && <ChapterBudget cityId={city.id} inputs={budget.cities[city.id]!} currency={budget.currency} />}
         {!ok ? (
           <Notice>Playbook incomplete — {chapter.incompleteReason ?? "Not loaded"}</Notice>
         ) : (

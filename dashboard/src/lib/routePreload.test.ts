@@ -12,6 +12,7 @@ describe("routeKey", () => {
   it("maps a path (query ignored) to its lazy route", () => {
     expect(routeKey("/")).toBe("landing");
     expect(routeKey("/tours/board?showcase=1")).toBe("board");
+    expect(routeKey("/tours/budget?showcase=1&ws=abc")).toBe("budget");
     expect(routeKey("/tours/playbook/abc?sample=1")).toBe("playbook");
     expect(routeKey("/tours/book")).toBe("book");
     expect(routeKey("/proof")).toBe("proof");

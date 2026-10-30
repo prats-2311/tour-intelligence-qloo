@@ -433,6 +433,7 @@ export default function TourBoard() {
             <div className="flex flex-wrap items-center gap-x-4">
               <button type="button" onClick={newBrief} className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">New brief</button>
               <Link to="/insights" className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">Taste profile</Link>
+              <Link to={`/tours/budget${sampleQ}`} className="inline-flex min-h-11 w-fit items-center px-1 text-[13px] font-medium text-canvas-text underline-offset-[0.18em] hover:underline">Tour budget</Link>
             </div>
           )}
         </div>

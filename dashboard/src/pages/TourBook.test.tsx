@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, configure, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, configure, fireEvent, render, screen, within } from "@testing-library/react";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -63,6 +63,41 @@ const renderAt = (url: string, extra?: React.ReactNode) =>
       </TourBoardProvider>
     </QueryClientProvider>,
   );
+
+const BUDGET_KEY = "tiq.budget.sample|default|Lumen Vale";
+describe("TourBook budget", () => {
+  it("links to the Tour budget and shows no Budget section when nothing was filled in", async () => {
+    localStorage.clear();
+    renderAt("/tours/book?sample=1");
+    await screen.findByRole("heading", { name: "Curitiba", level: 2 });
+    expect(screen.getByRole("link", { name: "Tour budget" }).getAttribute("href")).toBe("/tours/budget?sample=1");
+    expect(screen.queryByTestId("chapter-budget-4005539")).toBeNull();
+  });
+  it("shows each chapter's computed numbers from the saved budget, only those the user has filled in", async () => {
+    const gdl = { artistFee: "10000", venue: "2000", production: "", crew: "", marketing: "", ticketPrice: "50", capacity: "400", sellThrough: "80", merchPerHead: "", sponsor: "", sponsorName: "" };
+    localStorage.setItem(BUDGET_KEY, JSON.stringify({ currency: "MXN", cities: { "4005539": gdl }, legs: {}, perDiem: "", crewSize: "", hotel: "", rooms: "", example: false }));
+    const fetchSpy = vi.fn(); vi.stubGlobal("fetch", fetchSpy);
+    renderAt("/tours/book?sample=1");
+    await screen.findByRole("heading", { name: "Curitiba", level: 2 });
+    const sec = screen.getByTestId("chapter-budget-4005539");
+    expect(within(sec).getByRole("heading", { name: "Budget", level: 3 })).toBeTruthy();
+    expect(sec.textContent).toContain("Cost 12,000 MXN");
+    expect(sec.textContent).toContain("Income 16,000 MXN");
+    expect(sec.textContent).toContain("Margin 4,000 MXN");
+    expect(sec.textContent).toContain("Break-even 240 tickets");
+    expect(screen.queryByTestId("chapter-budget-3530597")).toBeNull(); // Mexico City: nothing filled in
+    localStorage.clear();
+  });
+  it("leaves out numbers it cannot work out instead of showing a dash or zero", async () => {
+    localStorage.setItem(BUDGET_KEY, JSON.stringify({ currency: "USD", cities: { "4005539": { artistFee: "10000" } }, legs: {}, perDiem: "", crewSize: "", hotel: "", rooms: "", example: false }));
+    renderAt("/tours/book?sample=1");
+    await screen.findByRole("heading", { name: "Curitiba", level: 2 });
+    const sec = screen.getByTestId("chapter-budget-4005539");
+    expect(sec.textContent).toContain("Cost 10,000 USD");
+    expect(sec.textContent).not.toMatch(/Income|Margin|Break-even|—|NaN/);
+    localStorage.clear();
+  });
+});
 
 describe("TourBook", () => {
   it("hides Save as campaign in sample mode", async () => {

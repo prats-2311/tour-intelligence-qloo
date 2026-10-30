@@ -16,6 +16,7 @@ function LandingSkeleton() {
 const Landing = lazy(routeImports.landing);
 const TourBoard = lazy(routeImports.board);
 const CityPlaybook = lazy(routeImports.playbook);
+const TourBudget = lazy(routeImports.budget);
 const Proof = lazy(routeImports.proof);
 const TourBook = lazy(routeImports.book);
 const TasteInsights = lazy(routeImports.insights);
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/tours/board" element={<Suspense fallback={<TourBoardSkeleton />}><TourBoard /></Suspense>} />
           <Route path="/tours/playbook/:cityId" element={<Suspense fallback={<PlaybookSkeleton />}><CityPlaybook /></Suspense>} />
           <Route path="/tours/book" element={<Suspense fallback={<PlaybookSkeleton />}><TourBook /></Suspense>} />
+          <Route path="/tours/budget" element={<Suspense fallback={<PlaybookSkeleton />}><TourBudget /></Suspense>} />
           <Route path="/proof" element={<Suspense fallback={<PlaybookSkeleton />}><Proof /></Suspense>} />
           <Route path="/tours/insights" element={<Suspense fallback={<TasteInsightsSkeleton />}><TourInsights /></Suspense>} />
           <Route path="/insights" element={<Suspense fallback={<TasteInsightsSkeleton />}><TasteInsights /></Suspense>} />
