@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from "react";
+import { isSampleMode } from "@/lib/qloo/client";
+import { postV2Tap, readTaps, rememberTap, useStats, type TapAction, type V2Stats } from "@/lib/qloo/stats";
 import { useTour } from "@/components/tour/tourContext";
 import { SHOWCASE } from "@/lib/qloo/showcase";
 import { fanRankLine, fit, rankLine } from "@/components/playbook/format";
@@ -8,6 +10,11 @@ import {
   COMPARE_ROWS, EXAMPLE_PROFILE, HONEST_LIMITS, HYPOTHESES, OUTCOME_METRICS, isRecordShop, loadTasteLoop,
   type TasteLoopData,
 } from "@/lib/v2/tasteLoop";
+
+/** Skipped in sample mode (no gateway); never blocks the page. */
+function useV2Stats() {
+  return useStats("v2", !isSampleMode());
+}
 
 const META = "font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted tabular-nums";
 const FICTIONAL = "Fictional example";
@@ -241,34 +248,77 @@ function Experiences({ d }: { d: TasteLoopData }) {
   );
 }
 
-function Rsvp() {
-  const btn = "inline-flex h-11 flex-1 items-center justify-center rounded-[10px] bg-paper-raised px-3 text-[14px] font-semibold text-canvas-muted opacity-70";
+type Counts = V2Stats["byAction"];
+const RSVP_EXPERIENCE = "listening";
+const TAP_BUTTONS: ReadonlyArray<{ action: TapAction; label: string }> = [{ action: "going", label: "Going" }, { action: "waitlist", label: "Waitlist" }, { action: "was_there", label: "I was there" }];
+const NO_PROTOTYPE_DATA = "No data yet — v2 collects this";
+const PROTOTYPE_LABEL = "Prototype taps, not real fans";
+const countsLine = (c: Counts) => `Going ${c.going} · Waitlist ${c.waitlist} · I was there ${c.was_there}`;
+
+function Rsvp({ live, onTap }: { live: boolean; onTap: (a: TapAction) => void }) {
+  const [tapped, setTapped] = useState<TapAction[]>(() => readTaps());
+  const [busy, setBusy] = useState<TapAction | null>(null);
+  const [note, setNote] = useState("");
+  const btn = "inline-flex h-11 flex-1 items-center justify-center rounded-[10px] bg-paper-raised px-3 text-[14px] font-semibold text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:text-canvas-muted disabled:opacity-70";
+  const tap = async (action: TapAction) => {
+    setBusy(action);
+    setNote("");
+    const ok = await postV2Tap(action, RSVP_EXPERIENCE);
+    setBusy(null);
+    if (!ok) return setNote("That tap did not go through. Try again in a moment.");
+    rememberTap(action);
+    setTapped((t) => [...new Set([...t, action])]);
+    setNote("Counted. Thanks.");
+    onTap(action);
+  };
   return (
-    <Card tour="v2-rsvp" meta="6 · Fans prove it" title="One tap, no account" tag={<Tag>Mock — not live</Tag>}>
-      <div aria-label="Mock RSVP card" className="max-w-[420px] rounded-[14px] bg-paper-raised p-4">
+    <Card tour="v2-rsvp" meta="6 · Fans prove it" title="One tap, no account" tag={<Tag>{live ? "Prototype" : "Mock — not live"}</Tag>}>
+      <div aria-label={live ? "Prototype RSVP card" : "Mock RSVP card"} className="max-w-[420px] rounded-[14px] bg-paper-raised p-4">
         <p className="text-[15px] font-semibold text-canvas-text">Listening session with Example artist</p>
         <p className="mt-0.5 text-[13px] text-canvas-muted">Date and place would appear here</p>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          {["Going", "Waitlist", "I was there"].map((t) => <button key={t} type="button" disabled className={btn}>{t}</button>)}
+          {TAP_BUTTONS.map(({ action, label }) => (
+            <button key={action} type="button" disabled={!live || busy !== null || tapped.includes(action)} aria-pressed={live ? tapped.includes(action) : undefined} onClick={() => void tap(action)} className={btn}>{label}</button>
+          ))}
         </div>
+        <p role="status" className="mt-2 min-h-[1.25rem] text-[13px] text-canvas-muted">{note}</p>
       </div>
-      <Caption>Mock — not live. The buttons do nothing and nothing is sent. Fans would not need an account, and we would not keep fan profiles.</Caption>
+      {live
+        ? <Caption>Prototype: taps from visitors of this page, not real fans. Stored as anonymous counts in BigQuery. Each action can be tapped once per browser.</Caption>
+        : <Caption>Mock — not live. The buttons do nothing and nothing is sent. Fans would not need an account, and we would not keep fan profiles.</Caption>}
     </Card>
   );
 }
 
-function Outcome() {
+function Outcome({ counts }: { counts: Counts | null }) {
+  const taps = counts ? counts.going + counts.waitlist + counts.was_there : 0;
+  const rsvp = counts ? counts.going + counts.waitlist : 0;
+  const prototype = (id: string): string | null => {
+    if (!counts || taps === 0) return null;
+    if (id === "rsvp") return `${counts.going} of ${rsvp} RSVP taps were Going`;
+    if (id === "showup") return `${counts.was_there} I was there taps for ${counts.going} Going`;
+    return null;
+  };
   return (
-    <Card tour="v2-outcome" meta="7 · Results" title="What v2 would measure" tag={<Tag>No data yet</Tag>}>
+    <Card tour="v2-outcome" meta="7 · Results" title="What v2 would measure" tag={<Tag>{counts ? "Prototype taps" : "No data yet"}</Tag>}>
       <ul className="grid gap-3 sm:grid-cols-2">
-        {OUTCOME_METRICS.map((m) => (
-          <li key={m.id} data-testid="outcome-metric" className="rounded-[12px] bg-paper-raised p-3">
-            <p className="text-[15px] font-medium text-canvas-text">{m.label}</p>
-            <p className="mt-0.5 text-[13px] text-canvas-muted">{m.who}</p>
-            <p className="mt-2 text-[14px] font-semibold text-canvas-text">No data yet — v2 collects this</p>
-          </li>
-        ))}
+        {OUTCOME_METRICS.map((m) => {
+          const proto = prototype(m.id);
+          const tapMetric = m.id === "rsvp" || m.id === "showup";
+          return (
+            <li key={m.id} data-testid="outcome-metric" className="rounded-[12px] bg-paper-raised p-3">
+              <p className="text-[15px] font-medium text-canvas-text">{m.label}</p>
+              <p className="mt-0.5 text-[13px] text-canvas-muted">{m.who}</p>
+              {counts && tapMetric
+                ? (proto
+                  ? <><p className="mt-2 text-[14px] font-semibold text-canvas-text">{proto}</p><p className="mt-0.5 text-[12px] text-canvas-muted">{PROTOTYPE_LABEL}</p></>
+                  : <p className="mt-2 text-[14px] font-semibold text-canvas-text">No taps yet</p>)
+                : <p className="mt-2 text-[14px] font-semibold text-canvas-text">{counts ? "No data yet — needs real venues and artists" : NO_PROTOTYPE_DATA}</p>}
+            </li>
+          );
+        })}
       </ul>
+      {counts && <p data-testid="prototype-counts" className="mt-3 text-[13px] text-canvas-muted">{countsLine(counts)} · {PROTOTYPE_LABEL}</p>}
       <h3 className="mt-4 text-[13px] font-semibold text-canvas-muted">Three things to test</h3>
       <ol className="mt-1 list-decimal space-y-1 pl-5 text-[15px] text-canvas-text">
         {HYPOTHESES.map((h) => <li key={h}>{h}</li>)}
@@ -356,6 +406,13 @@ function Compare() {
 export default function V2Preview() {
   const tour = useTour();
   const d = loadTasteLoop(SHOWCASE);
+  return <V2Body d={d} tour={tour} />;
+}
+
+function V2Body({ d, tour }: { d: TasteLoopData; tour: ReturnType<typeof useTour> }) {
+  const stats = useV2Stats();
+  const [bumps, setBumps] = useState<Counts>({ going: 0, waitlist: 0, was_there: 0 });
+  const counts: Counts | null = stats?.enabled ? { going: stats.byAction.going + bumps.going, waitlist: stats.byAction.waitlist + bumps.waitlist, was_there: stats.byAction.was_there + bumps.was_there } : null;
   return (
     <div className="mx-auto flex w-full max-w-[1000px] min-w-0 flex-col gap-5 pb-10">
       <Hero onTour={() => tour?.startV2()} canTour={!!tour} />
@@ -364,8 +421,8 @@ export default function V2Preview() {
       <Match d={d} />
       <Act d={d} />
       <Experiences d={d} />
-      <Rsvp />
-      <Outcome />
+      <Rsvp live={!!counts} onTap={(a) => setBumps((b) => ({ ...b, [a]: b[a] + 1 }))} />
+      <Outcome counts={counts} />
       <Loop />
       <Compare />
     </div>

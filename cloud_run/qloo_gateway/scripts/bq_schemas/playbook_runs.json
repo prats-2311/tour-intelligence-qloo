@@ -1,0 +1,92 @@
+[
+  {
+    "name": "ts",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "session_hash",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "source",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "city_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "city",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "country",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "verdict",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "cards_ok",
+    "type": "INT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "cards_empty",
+    "type": "INT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "claims_verified",
+    "type": "INT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "claims_removed",
+    "type": "INT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "sponsors_hidden",
+    "type": "INT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "qloo_calls",
+    "type": "INT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "cache_hits",
+    "type": "INT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "gemini_calls",
+    "type": "INT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "latency_ms",
+    "type": "INT64",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "narrative_status",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "error",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }
+]

@@ -117,6 +117,19 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
     }
     return forward(req, res, { route: "sponsor-segments", path: `/v1/sponsor-segments?${params}`, method: "GET" });
   });
+  // Optional BigQuery analytics: read-only stats (answer {enabled:false} when the gateway has it off) and the /v2 prototype tap.
+  for (const name of ["trust", "team", "v2"]) {
+    app.get(`/api/qloo/stats/${name}`, (req, res) => forward(req, res, { route: `stats-${name}`, path: `/v1/stats/${name}`, method: "GET" }));
+  }
+  const MAX_TAP_BYTES = 1024;
+  const TAP_ACTIONS = new Set(["going", "waitlist", "was_there"]);
+  app.post("/api/qloo/v2/tap", (req, res) => {
+    const body = req.body ?? {};
+    if (Buffer.byteLength(JSON.stringify(body)) > MAX_TAP_BYTES) return res.status(400).json({ error: "request too large" });
+    if (typeof body.action !== "string" || !TAP_ACTIONS.has(body.action)) return res.status(400).json({ error: "action must be going, waitlist or was_there" });
+    if (body.experience !== undefined && (typeof body.experience !== "string" || !/^[a-z0-9_]{1,40}$/.test(body.experience))) return res.status(400).json({ error: "experience must be a short id" });
+    return forward(req, res, { route: "v2-tap", path: "/v1/v2/tap", method: "POST", body: { action: body.action, ...(body.experience !== undefined ? { experience: body.experience } : {}) } });
+  });
   // Spec §8: raw Qloo tools are never exposed publicly — only the compare panel's tool is reachable.
   const PUBLIC_TOOLS = new Set(["qloo_compare_audiences"]);
   const MAX_GROUP = 3;

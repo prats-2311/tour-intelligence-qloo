@@ -1,0 +1,22 @@
+[
+  {
+    "name": "ts",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED"
+  },
+  {
+    "name": "session_hash",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "experience",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "action",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }
+]

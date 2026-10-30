@@ -3,6 +3,8 @@ import type { Express, Request, Response } from "express";
 import { applyOp, CollabError, emptyDoc, seedDoc, toSnapshot, WS_ID, type Op } from "./model.js";
 import { WindowLimiter } from "./limits.js";
 import type { CollabStore } from "./store.js";
+import { DISABLED_ANALYTICS, sha256, type Analytics } from "../analytics/bigquery.js";
+import { teamEventRow } from "../analytics/teamLog.js";
 
 export interface CollabDeps {
   store: CollabStore;
@@ -14,6 +16,10 @@ export interface CollabDeps {
   /** Workspaces created per session per hour (default 10). */
   createsPerHour?: number;
   newId?: () => string;
+  /** Optional BigQuery analytics: one counts-only row per real write. Absent or disabled means nothing is logged. */
+  analytics?: Analytics;
+  /** City id to display name and country, for the analytics row only. */
+  cityOf?: (id: string) => { name: string; country: string } | undefined;
 }
 
 const OP_PATHS: Record<string, Op> = { status: "status", message: "message", resolve: "resolve", override: "override", "override/clear": "override_clear", lead: "lead", "lead/remove": "lead_remove" };
@@ -24,6 +30,7 @@ export function mountCollab(app: Express, deps: CollabDeps): void {
   const wsLimit = new WindowLimiter(deps.wsWritesPerMin ?? 30, 60_000, now);
   const sessionLimit = new WindowLimiter(deps.sessionWritesPerMin ?? 40, 60_000, now);
   const createLimit = new WindowLimiter(deps.createsPerHour ?? 10, 3_600_000, now);
+  const analytics = deps.analytics ?? DISABLED_ANALYTICS;
   const newId = deps.newId ?? (() => randomBytes(12).toString("base64url"));
   const session = (req: Request) => { const s = req.header("x-session-id"); return s && s.length <= 128 ? s : null; };
   const fail = (res: Response, err: unknown) => {
@@ -72,6 +79,13 @@ export function mountCollab(app: Express, deps: CollabDeps): void {
         const t = now();
         const doc = await deps.store.update(ws, (d) => applyOp(d, op, body as Record<string, unknown>, t), t);
         if (!doc) return void res.status(404).json({ error: "Workspace not found or expired" });
+        // Real writes only: the demo seed is applied by `POST /v1/ws` and never reaches this handler. Fire and forget; a logging problem never touches the response.
+        if (analytics.enabled) {
+          try {
+            const row = teamEventRow(op, body as Record<string, unknown>, doc, deps.cityOf);
+            if (row) analytics.track("team_events", { ws_hash: sha256(ws), ...row });
+          } catch { /* analytics must never affect a write */ }
+        }
         res.set("cache-control", "no-store").json(toSnapshot(ws, doc));
       } catch (err) { fail(res, err); }
     });

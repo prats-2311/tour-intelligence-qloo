@@ -65,4 +65,14 @@ describe("legacy proxy with no backend URLs configured", () => {
     const res = await fetch(`${base}/api/qloo/sponsor-segments?artistId=A&city=C&country=US`, { headers: { "x-session-id": "s" } });
     expect(await res.json()).toEqual({ error: "Qloo gateway not configured" });
   });
+  it("lets the analytics routes through the guard (validated, then the gateway's own 503 when unset)", async () => {
+    const h = { "x-session-id": "s" };
+    for (const name of ["trust", "team", "v2"]) {
+      const res = await fetch(`${base}/api/qloo/stats/${name}`, { headers: h });
+      expect(await res.json()).toEqual({ error: "Qloo gateway not configured" });
+    }
+    expect((await post("/api/qloo/v2/tap")).status).toBe(400);
+    const tap = await fetch(`${base}/api/qloo/v2/tap`, { method: "POST", headers: { "content-type": "application/json", ...h }, body: JSON.stringify({ action: "going" }) });
+    expect(await tap.json()).toEqual({ error: "Qloo gateway not configured" });
+  });
 });
