@@ -102,6 +102,26 @@ describe("TourBoard", () => {
     expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
   });
 
+  it("the generic ranking arriving (or failing) is announced by a toast, because it is a live lookup", async () => {
+    const spy = vi.spyOn(client, "fetchWithoutQloo").mockResolvedValue({ status: "ok", ranked: [{ name: "Mexico City", country: "MX" }], model: "m", cached: false });
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield cityEvent(0); yield { type: "done", summary: {} }; });
+    renderPage("/tours/board");
+    submitArtist("Ada");
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    fireEvent.click(await screen.findByRole("tab", { name: "Without Qloo" }));
+    await waitFor(() => expect(spy).toHaveBeenCalled());
+    await waitFor(() => expect(document.querySelector("[data-toast-viewport]")?.textContent).toContain("Generic ranking is ready."));
+  });
+  it("a thrown generic-ranking fetch is also an alert toast", async () => {
+    vi.spyOn(client, "fetchWithoutQloo").mockRejectedValue(new Error("boom"));
+    vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () { yield cityEvent(0); yield { type: "done", summary: {} }; });
+    renderPage("/tours/board");
+    submitArtist("Ada");
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Stop" })).toBeNull());
+    fireEvent.click(await screen.findByRole("tab", { name: "Without Qloo" }));
+    const alert = await screen.findByText("Couldn't get the generic ranking.");
+    expect(alert.closest("[data-toast-viewport]")).not.toBeNull();
+  });
   it("Without Qloo sends the resolved artist name, not the raw brief text", async () => {
     const spy = vi.spyOn(client, "fetchWithoutQloo").mockResolvedValue({ status: "unavailable", reason: "error", message: "Generic ranking unavailable" });
     vi.spyOn(client, "streamTourBoard").mockImplementation(async function* () {
