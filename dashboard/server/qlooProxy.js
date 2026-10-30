@@ -159,7 +159,7 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
   });
   // Optional BigQuery analytics: read-only stats (answer {enabled:false} when the gateway has it off) and the /v2 prototype tap.
   for (const name of ["trust", "team", "v2"]) {
-    app.get(`/api/qloo/stats/${name}`, (req, res) => forward(req, res, { route: `stats-${name}`, path: `/v1/stats/${name}`, method: "GET" }));
+    app.get(`/api/qloo/stats/${name}`, (req, res) => !gatewayUrl && req.header("x-session-id") ? res.json({ enabled: false }) : forward(req, res, { route: `stats-${name}`, path: `/v1/stats/${name}`, method: "GET" }));
   }
   const MAX_TAP_BYTES = 1024;
   const TAP_ACTIONS = new Set(["going", "waitlist", "was_there"]);

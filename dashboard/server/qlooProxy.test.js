@@ -384,7 +384,10 @@ describe("qlooProxy", () => {
       const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl: vi.fn() });
       expect((await fetch(`${base}/api/qloo/stats/trust`)).status).toBe(400);
       const off = await start({ gatewayUrl: undefined, getToken: async () => "t" });
-      expect((await fetch(`${off}/api/qloo/stats/trust`, { headers: { "x-session-id": "s" } })).status).toBe(503);
+      // Analytics are optional: unset gateway means "off" (200 {enabled:false}), not a red 503 in every visitor's console.
+      const r = await fetch(`${off}/api/qloo/stats/trust`, { headers: { "x-session-id": "s" } });
+      expect(r.status).toBe(200);
+      expect(await r.json()).toEqual({ enabled: false });
     });
     it("forwards a valid tap with only the allowed fields", async () => {
       const fetchImpl = vi.fn(async () => json({ enabled: true, ok: true }));
