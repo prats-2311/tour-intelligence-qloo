@@ -1,4 +1,5 @@
 import { Copy, Eraser, FlaskConical } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { NotesButton } from "@/components/collab/Notes";
@@ -103,7 +104,7 @@ function SponsorSelect({ city, artistId, sampleSet, variant, value, onChange }: 
 function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, boardHref, bookHref }: { tourKey: string; stops: ScoredCity[]; artist: string; artistId: string; sampleSet?: SampleSet; variant?: "routing"; boardHref: string; bookHref: string }) {
   const ids = useMemo(() => stops.map((s) => s.id), [stops]);
   const [budget, setBudget] = useState<Budget>(() => loadBudget(tourKey, ids));
-  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
   const stopList: Stop[] = stops;
   const legs = useMemo(() => buildLegs(stopList), [stopList]);
   const totals = legTotals(legs);
@@ -114,7 +115,7 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
   const set = (k: "perDiem" | "crewSize" | "hotel" | "rooms", v: string) => update((b) => ({ ...b, [k]: v }));
   const csv = () => budgetCsv(budget, stopList);
   const copyCsv = async () => {
-    try { await navigator.clipboard.writeText(csv()); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch { /* clipboard unavailable: nothing honest to confirm */ }
+    try { await navigator.clipboard.writeText(csv()); toast({ message: "CSV copied.", tone: "success" }); } catch { toast({ message: "Couldn't copy the CSV. Your browser blocked the clipboard.", tone: "error" }); }
   };
   const clear = () => { clearBudget(tourKey); setBudget(loadBudget("\u0000none", ids)); };
 
@@ -140,7 +141,6 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
           <button type="button" className={btn} onClick={clear}><Eraser size={16} aria-hidden />Clear budget</button>
         </div>
         <p className="text-[12px] text-canvas-muted">One currency per budget. No conversion between currencies is done.</p>
-        <div aria-live="polite" className="empty:hidden">{copied && <p role="status" className="text-[13px] text-canvas-text">CSV copied</p>}</div>
       </header>
 
       <Section title="Routing legs" id="legs-h">

@@ -1,4 +1,5 @@
 import { useQueries } from "@tanstack/react-query";
+import { useToast } from "@/components/ui/Toast";
 import { useReducedMotion } from "framer-motion";
 import { CalendarPlus, Printer, Share2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -76,8 +77,7 @@ function TourBookPage() {
   const [preparedKey, setPreparedKey] = useState<string | null>(null);
   const [chaptersOpen, setChaptersOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [calendarDone, setCalendarDone] = useState(false);
+  const { toast } = useToast();
   const [current, setCurrent] = useState("market");
 
   // ?sample=1 starts the showcase unless the board already holds a sample run (same guard as the playbook page).
@@ -225,9 +225,8 @@ function TourBookPage() {
     }
     try {
       await navigator.clipboard.writeText(location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch { /* clipboard unavailable: nothing honest to confirm */ }
+      toast({ message: "Link copied.", tone: "success" });
+    } catch { toast({ message: "Couldn't copy automatically. Copy this link.", tone: "error", selectable: location.href, duration: 15000 }); }
   };
   const downloadIcs = () => {
     if (!dateWindow) return;
@@ -240,8 +239,7 @@ function TourBookPage() {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    setCalendarDone(true);
-    setTimeout(() => setCalendarDone(false), 4000);
+    toast({ message: "Calendar file downloaded.", tone: "success" });
   };
 
   const actions = (
@@ -253,8 +251,6 @@ function TourBookPage() {
   );
   const notes = (
     <>
-      {copied && <p role="status" className="text-[13px] text-canvas-muted">Link copied</p>}
-      <div aria-live="polite" className="empty:hidden">{calendarDone && <p role="status" className="text-[13px] text-canvas-text">Calendar file downloaded</p>}</div>
       {!dateWindow && <p id="ics-hint" className="text-[13px] text-canvas-muted">Add a date window to export holds</p>}
     </>
   );

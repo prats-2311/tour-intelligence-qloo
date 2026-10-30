@@ -166,7 +166,8 @@ describe("TourBook", () => {
     fireEvent.click(screen.getByRole("button", { name: "Calendar" }));
     expect(click).toHaveBeenCalled();
     expect(await readBlob(created[0]!)).toContain("SUMMARY:Hold — Guadalajara\\, MX");
-    const toast = await screen.findByText("Calendar file downloaded");
+    const toast = await screen.findByText("Calendar file downloaded.");
+    expect(toast.closest("[data-toast-viewport]")).not.toBeNull();
     expect(toast.closest("[aria-live]")?.getAttribute("aria-live")).toBe("polite");
   });
   it("Share uses the Web Share API when available, else copies the link", async () => {

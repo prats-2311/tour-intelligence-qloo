@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useToast } from "@/components/ui/Toast";
 import { Link } from "react-router-dom";
 import { buildExampleReport } from "@/lib/agents/exampleReport";
 import { SHOWCASE } from "@/lib/qloo/showcase";
@@ -69,9 +70,12 @@ export async function copyText(text: string): Promise<boolean> {
 }
 
 function CodeBlock({ code, label }: { code: string; label: string }) {
+  const { toast } = useToast();
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const copy = async () => {
-    setState((await copyText(code)) ? "copied" : "failed");
+    const ok = await copyText(code);
+    toast(ok ? { message: "Copied to clipboard.", tone: "success" } : { message: "Couldn't copy. Select the text below and copy it by hand.", tone: "error", selectable: code });
+    setState(ok ? "copied" : "failed");
     setTimeout(() => setState("idle"), 2000);
   };
   return (
@@ -83,7 +87,7 @@ function CodeBlock({ code, label }: { code: string; label: string }) {
         aria-label={`Copy: ${label}`}
         className="absolute right-1.5 top-1.5 inline-flex h-9 min-w-[4.5rem] items-center justify-center rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
       >
-        <span aria-live="polite">{state === "copied" ? "Copied" : state === "failed" ? "Copy failed" : "Copy"}</span>
+        <span>{state === "copied" ? "Copied" : state === "failed" ? "Copy failed" : "Copy"}</span>
       </button>
     </div>
   );

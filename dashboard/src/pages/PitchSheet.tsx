@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useToast } from "@/components/ui/Toast";
+import { useMemo } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { PlaybookSkeleton } from "@/components/ui/Skeletons";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
@@ -105,16 +106,17 @@ function Plain({ children }: { children: React.ReactNode }) {
 }
 
 function Sheet({ sheet, back }: { sheet: PitchSheetOk; back: React.ReactNode }) {
-  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
   const copy = async () => {
-    try { await navigator.clipboard.writeText(pitchSheetText(sheet)); setCopied(true); window.setTimeout(() => setCopied(false), 2500); } catch { setCopied(false); }
+    const text = pitchSheetText(sheet);
+    try { await navigator.clipboard.writeText(text); toast({ message: "Pitch sheet copied as text.", tone: "success" }); } catch { toast({ message: "Couldn't copy the pitch sheet. Your browser blocked the clipboard.", tone: "error" }); }
   };
   return (
     <article className="pitch-sheet mx-auto flex w-full max-w-[820px] flex-col gap-5 rounded-[18px] bg-paper p-5 pb-8 md:p-8">
       <div data-pitch-actions data-noprint className="flex flex-wrap items-center gap-2">
         {back}
         <button type="button" onClick={() => window.print()} className={btn}>Print / Save as PDF</button>
-        <button type="button" onClick={() => void copy()} className={btn}>{copied ? "Copied" : "Copy as text"}</button>
+        <button type="button" onClick={() => void copy()} className={btn}>Copy as text</button>
       </div>
       <header className="flex flex-col gap-1">
         <h1 className="font-title break-words text-[30px] leading-[1.1] text-canvas-text">{sheet.title}</h1>

@@ -77,9 +77,8 @@ describe("Save to team notes", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save to team notes" }));
     fireEvent.click(screen.getByRole("button", { name: "Save to notes" }));
     await waitFor(() => expect(w.write).toHaveBeenCalledWith("message", { key: cityThread("c-la"), text: "Answer one." }));
-    const toast = await screen.findByRole("status");
-    expect(toast.textContent).toContain("Saved to team notes.");
-    expect(toast.closest("[data-toast-viewport]")).not.toBeNull(); // a toast, not inline text under the answer
+    await waitFor(() => expect(document.querySelector("[data-toast-viewport]")?.textContent).toContain("Saved to team notes."));
+    expect(screen.queryByText("Saved to team notes.", { selector: "p:not([data-toast-viewport] *)" })).toBeNull(); // nothing inline under the answer
   });
   it("truncates to 1000 characters with an ellipsis and writes file names instead of ids", async () => {
     stubStrategist(`Austin [doc:d1 p.2] ${"x".repeat(1200)}`);
