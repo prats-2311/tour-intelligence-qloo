@@ -37,7 +37,7 @@ export interface StoppedGroundRun {
 const f2 = (v: number | null): string => (v === null ? "n/a" : v.toFixed(2));
 const sign = (label: string, s: SignRow): SignLine => ({ label, wins: s.wins, losses: s.losses, ties: s.ties, pairs: s.pairs, p: s.p });
 const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;
-const isLimitLine = (l: string): boolean => /^(Method|Disclosure):|^False alarms|^The checker missed/.test(l);
+const isLimitLine = (l: string): boolean => /^(Method|Disclosure|Raters)[:\s(]|^False alarms|^The checker missed/.test(l);
 const splitLines = (lines: string[]): { claims: string[]; limits: string[] } => ({ claims: lines.filter((l) => !isLimitLine(l)), limits: lines.filter(isLimitLine) });
 
 // Test A -----------------------------------------------------------------------------------------------------------------------

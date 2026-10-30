@@ -133,6 +133,8 @@ describe("buildProofV3: the other tests", () => {
     expect(c.perUnit!.columns).toEqual(["City", "Qloo", "LLM-only"]);
     expect(c.claims.join("\n")).toMatch(/Share of Qloo names rated as existing in the city/);
     expect(c.limits.join("\n")).toMatch(/Disclosure/);
+    expect(c.limits.join("\n")).toContain("Raters (Amendment 8): 148 of 182 rows rated by blinded AI agents");
+    expect(c.limits.join("\n")).not.toMatch(/one reviewer/);
   });
   it("Test C's limits carry the stopped-run disclosure (from the stopped items file) and the author's prior exposure", () => {
     const stopped = { callCounts: { qloo: 198, gemini: 16, qlooErrors: 0, geminiErrors: 0 }, stop: { status: "stopped" as const, reason: "Qloo call ceiling of 198 reached" }, cities: new Array(9).fill({}), notRun: [{}] };
