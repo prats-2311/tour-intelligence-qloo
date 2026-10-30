@@ -255,8 +255,9 @@ export function groundingSummary(g: GroundingSection, stopNote = ""): string[] {
   for (const c of g.llmNoAnswer) out.push(`The LLM-only playbook gave no valid answer for ${c}, so it is unpaired.`);
   if (g.cityDifference.missing.length || g.cityDifference.extra.length) out.push(`The recorded board differs from the protocol's expected city list (missing: ${g.cityDifference.missing.join(", ") || "none"}; extra: ${g.cityDifference.extra.join(", ") || "none"}); the recorded board was used.`);
   out.push("Method: the Qloo playbook runs with narrative off. This matches the shipped hybrid local-acts path but not the narrative text, which plays no part in Test C.");
-  out.push("Disclosure: the reviewer had seen the shipped showcase playbooks for these cities. The sheet carries no arm information (rows unlabelled and shuffled), but the rating is not fully blind to prior exposure.");
-  out.push("Method: one reviewer; ratings follow the per-category definitions of Amendment 5 (a brand is 'in this city' if it operates in the city's country; a local act only if based in or from the city or its metro); a name both playbooks gave counts for both; ratings are published in aggregate only because the names stay private.");
+  out.push("Disclosure: the author had seen the shipped showcase playbooks for these cities, so the author's 34 ratings are not fully blind to prior exposure. The sheet carries no arm information (rows unlabelled and shuffled). The AI raters had no arm information and did not see the playbooks.");
+  out.push("Raters (Amendment 8): 148 of 182 rows rated by blinded AI agents (Claude Sonnet), every local-act row and every uncertain row re-checked against a fetched page; the author rated 34 rows and agreed with the agents on 28 (82%); the 6 disagreements were adjudicated by the author against the fetched evidence.");
+  out.push("Method: ratings follow the per-category definitions of Amendment 5 (a brand is 'in this city' if it operates in the city's country; a local act only if based in or from the city or its metro); a name both playbooks gave counts for both; ratings are published in aggregate only because the names stay private.");
   return out;
 }
 

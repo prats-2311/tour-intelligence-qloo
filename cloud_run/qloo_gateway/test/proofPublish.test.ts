@@ -133,12 +133,14 @@ describe("buildProofV3: the other tests", () => {
     expect(c.perUnit!.columns).toEqual(["City", "Qloo", "LLM-only"]);
     expect(c.claims.join("\n")).toMatch(/Share of Qloo names rated as existing in the city/);
     expect(c.limits.join("\n")).toMatch(/Disclosure/);
+    expect(c.limits.join("\n")).toContain("Raters (Amendment 8): 148 of 182 rows rated by blinded AI agents");
+    expect(c.limits.join("\n")).not.toMatch(/one reviewer/);
   });
-  it("Test C's limits carry the stopped-run disclosure (from the stopped items file) and the reviewer's prior exposure", () => {
+  it("Test C's limits carry the stopped-run disclosure (from the stopped items file) and the author's prior exposure", () => {
     const stopped = { callCounts: { qloo: 198, gemini: 16, qlooErrors: 0, geminiErrors: 0 }, stop: { status: "stopped" as const, reason: "Qloo call ceiling of 198 reached" }, cities: new Array(9).fill({}), notRun: [{}] };
     const c = test(buildProofV3(inputs({ grounding: groundRun, groundingStopped: [stopped] })), "C");
     expect(c.limits).toContain("Run 1 stopped at the runner's 198-call ceiling after 8 of 9 cities (0 errors); per Amendment 6 the ceiling was raised and Test C re-run from the start before any rating.");
-    expect(c.limits).toContain("The reviewer had seen the shipped showcase playbooks (Amendment 5).");
+    expect(c.limits).toContain("The author, who rated 34 of the 182 rows, had seen the shipped showcase playbooks (Amendments 5 and 8).");
     expect(test(buildProofV3(inputs({ grounding: groundRun })), "C").limits.join("\n")).not.toMatch(/Run 1 stopped/);
   });
   it("adds amendments and the protocol commit", () => {
