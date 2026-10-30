@@ -299,13 +299,13 @@ Counts at this commit. The Vitest, pytest and script suites were run on a clean 
 
 | Suite | Command | Result |
 |---|---|---|
-| Dashboard (Vitest) | `cd dashboard && npm test` | 1,738 tests in 145 files, all passing |
+| Dashboard (Vitest) | `cd dashboard && npm test` | 1,811 tests in 153 files, all passing |
 | Gateway (Vitest) | `cd cloud_run/qloo_gateway && npm test` | 1,073 passing, 2 skipped (they need private calibration files), in 73 files |
-| Python (pytest) | `.venv/bin/pytest` | 563 passing |
+| Public MCP server (pytest) | `pytest cloud_run/agent_mcp_server/tests` | 107 passing (the archived Agentic Cinema Python tests are not counted) |
 | Script guards (node:test) | `npm run test:scripts` | 10 passing |
-| End-to-end (Playwright) | `cd dashboard && npm run e2e` | 85 test definitions in 14 spec files, each run at phone and desktop width (counted, not re-run for this table) |
+| End-to-end (Playwright) | `cd dashboard && npm run e2e` | 155 tests in 16 spec files, each run at phone and desktop width (310 runs) |
 
-That is 3,374 automated tests across the three main suites. The end-to-end specs run against the dev server with fixtures (or a deployed site through `E2E_BASE_URL`) and are not part of `./run_tests.sh`. The key rules were mutation-checked: a rule was broken on purpose to see whether a test failed, and the commits named "mutation gaps" record the tests added where none did. The numbers shown on `/proof` are fixed when that page is edited and may lag these.
+That is 2,991 automated unit and integration tests across the three product suites, plus 310 end-to-end runs. The end-to-end specs run against the dev server with fixtures (or a deployed site through `E2E_BASE_URL`) and are not part of `./run_tests.sh`. The key rules were mutation-checked: a rule was broken on purpose to see whether a test failed, and the commits named "mutation gaps" record the tests added where none did. The numbers shown on `/proof` are fixed when that page is edited and may lag these.
 
 ```bash
 npm run test:scripts                                  # dev:all and .env.example guards
@@ -366,7 +366,7 @@ During judging, the dashboard (`tour-intel-qloo`) and the gateway (`qloo-gateway
 
 ## Built during the hackathon
 
-Forked from the author's Agentic Cinema (Google Cloud) entry, which supplies the legacy `tour_data_api`, Dialogflow agents and delight-card renderer (see [`archive/`](archive)). The Qloo work began on 2026-10-16: the gateway, scoring, Tour Board, playbooks, Tour Book, strategist, MCP tools, proof and calibration, then Advance, age groups, workspaces, charts, budget, documents and analytics. At the time of writing, 551 commits since 16 Oct 2026 (`git rev-list --count --since="2026-10-16 00:00" HEAD`; `node scripts/readme-numbers.mjs` prints the figures used here).
+Forked from the author's Agentic Cinema (Google Cloud) entry, which supplies the legacy `tour_data_api`, Dialogflow agents and delight-card renderer (see [`archive/`](archive)). The Qloo work began on 2026-10-16: the gateway, scoring, Tour Board, playbooks, Tour Book, strategist, MCP tools, proof and calibration, then Advance, age groups, workspaces, charts, budget, documents and analytics. At the time of writing, 579 commits since 16 Oct 2026 (`git rev-list --count --since="2026-10-16 00:00" HEAD`; `node scripts/readme-numbers.mjs` prints the figures used here).
 
 ### What's next (not built)
 
