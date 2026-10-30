@@ -95,6 +95,7 @@ describe("Tour budget page", () => {
     await type("Artist fee, Guadalajara", "7000");
     await userEvent.click(screen.getByRole("button", { name: "Copy this city's values to all cities (Guadalajara)" }));
     expect((screen.getByLabelText("Artist fee, Curitiba") as HTMLInputElement).value).toBe("7000");
+    expect(document.querySelector("[data-toast-viewport]")?.textContent).toContain("Copied Guadalajara's values to every city.");
   });
   it("saves per tour in localStorage and Clear budget empties it", async () => {
     const first = renderAt("/tours/budget?sample=1");

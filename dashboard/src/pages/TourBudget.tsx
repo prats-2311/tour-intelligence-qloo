@@ -172,7 +172,7 @@ function BudgetEditor({ tourKey, stops, artist, artistId, sampleSet, variant, bo
         return (
           <Section key={s.id} title={s.name} id={`city-${s.id}`}>
             <div className="flex flex-wrap items-center gap-2">
-              <button type="button" className={btn} onClick={() => update((b) => copyCityToAll(b, s.id))} aria-label={`Copy this city's values to all cities (${s.name})`}>Copy this city's values to all cities</button>
+              <button type="button" className={btn} onClick={() => { update((b) => copyCityToAll(b, s.id)); toast({ message: `Copied ${s.name}'s values to every city.`, tone: "success" }); }} aria-label={`Copy this city's values to all cities (${s.name})`}>Copy this city's values to all cities</button>
               <NotesButton threadKey={`city:${s.id}`} title={s.name} label="Discuss" />
             </div>
             {(notes[s.id] ?? []).length > 0 && (
