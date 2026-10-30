@@ -301,8 +301,8 @@ body {
   .tour-book .slope-chart line[data-highlight] { stroke: #111 !important; stroke-width: 3 !important; }
   .tour-book a[data-cite]::after { content: " (" attr(href) ")"; }
   .tour-book tr, .tour-book dl > div { break-inside: avoid; }
-  /* Sample books carry the label on every printed page. */
-  .tour-book .print-footer { display: block; position: fixed; bottom: 0; left: 0; right: 0; padding: 4px 0; text-align: center; font-size: 11px; }
+  /* Fallback only (the print edition, src/components/book/print, replaces this view while printing): the label closes the document in flow, never positioned over body text. */
+  .tour-book .print-footer { display: block; margin-top: 16px; padding: 4px 0; text-align: center; font-size: 11px; }
 }
 
 /* Mobile nav drawer slides in from the left; no motion when the user asks for less. */

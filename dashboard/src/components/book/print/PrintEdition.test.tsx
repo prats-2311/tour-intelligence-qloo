@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SAMPLE_ACCENT_ORDER } from "@/lib/qloo/cityAccent";
 import { LUMEN_VALE_SAMPLE, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { samplePlaybookEvents, sampleThisWeek } from "@/lib/qloo/fixtures/lumenValePlaybooks";
@@ -8,9 +8,13 @@ import { initialPlaybook, playbookReducer, type PlaybookState } from "@/lib/qloo
 import { buildTourBook } from "@/lib/qloo/tourBook";
 import { INTEGRITY_LINE } from "@/lib/qloo/labels";
 import { PrintEdition } from "./PrintEdition";
+import { OFF, WorkspaceContext } from "@/lib/collab/workspaceContext";
+import { emptySnapshot } from "@/lib/collab/types";
 import { editionLabel } from "@/lib/qloo/printEdition";
 
-afterEach(cleanup);
+// jsdom cannot parse CSS page-margin boxes (@top-right ...) in the injected @page rules and logs it; Chrome reads them fine.
+beforeEach(() => { vi.spyOn(console, "error").mockImplementation(() => undefined); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 const done = (id: string): PlaybookState => samplePlaybookEvents(id)!.reduce((s, event) => playbookReducer(s, { type: "event", event }), playbookReducer(initialPlaybook, { type: "start", source: "sample" }));
 const ids = ["3530597", "3448439", "4005539", "3464975"];
@@ -75,5 +79,20 @@ describe("print edition", () => {
     const cards = ch.playbook!.cards.map((c) => (c.kind === "sponsors" ? { ...c, items: [{ name: "Brand A", artistRank: 2, cityRank: null }, ...c.items] } : c));
     const { container } = render(<PrintEdition {...props} book={{ ...book, chapters: [{ ...ch, playbook: { ...ch.playbook!, cards } }] }} />);
     expect(container.textContent).toMatch(/Brand A is #2 with fans and not in Guadalajara's top 20\. Suggested ask: presale access or a co-branded night at /);
+  });
+  it("shows a team override as the team value with Qloo's suggestion under it, plus decisions and leads", () => {
+    const ch = book.chapters[2]!;
+    const snap = emptySnapshot("abcdefghij12");
+    snap.overrides[ch.city.id] = { best_room: { name: "Ana", role: "Promoter", value: "Teatro Diana", original: "C3 Stage", reason: "holds 1,200", at: 1 } };
+    snap.leads[ch.city.id] = [{ id: "l1", name: "Ana", role: "Promoter", text: "Tecate: ask for Maria", at: 1 }];
+    snap.threads[`city:${ch.city.id}`] = { resolved: true, messages: [{ id: "m1", name: "Ben", role: "Manager", text: "Hold 14 Mar", at: 1 }] };
+    const { container } = render(<WorkspaceContext.Provider value={{ ...OFF, enabled: true, snapshot: snap }}><PrintEdition {...props} /></WorkspaceContext.Provider>);
+    const sec = container.querySelector(`#print-${ch.city.id}`)!;
+    expect(sec.textContent).toContain("Teatro Diana");
+    expect(sec.textContent).toMatch(/Team value · Ana, holds 1,200/);
+    expect(sec.textContent).toMatch(/Qloo suggested: C3 Stage/);
+    expect(sec.textContent).toContain("Tecate: ask for Maria");
+    expect(sec.textContent).toContain("Hold 14 Mar");
+    expect(container.querySelectorAll("button")).toHaveLength(0);
   });
 });
