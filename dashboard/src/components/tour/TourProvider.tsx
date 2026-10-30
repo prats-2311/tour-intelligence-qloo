@@ -57,7 +57,9 @@ export function TourProvider({ children }: { children: ReactNode }) {
     setRunning(null);
     const el = returnFocus.current;
     returnFocus.current = null;
-    if (el && el.isConnected) el.focus();
+    // Started from the phone drawer, the button that was focused is gone by now: the hamburger that opened the drawer is the next best place.
+    const target = el && el.isConnected ? el : document.querySelector<HTMLElement>("[data-nav-toggle]");
+    target?.focus();
   }, [running]);
 
   const available = useCallback((t: { requires?: "workspace" }) => t.requires !== "workspace" || workspace.enabled, [workspace.enabled]);

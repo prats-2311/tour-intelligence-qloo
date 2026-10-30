@@ -15,7 +15,7 @@ export interface TourDef {
 }
 
 export const TOURS: readonly TourDef[] = [
-  { id: "essentials", title: "The essentials", minutes: 1, steps: buildTourSteps },
+  { id: "essentials", title: "The essentials", minutes: 2, steps: buildTourSteps },
   { id: "plan", title: "Plan the tour", minutes: 2, steps: planTourSteps },
   { id: "team", title: "Work as a team", minutes: 2, steps: teamTourSteps, requires: "workspace" },
   { id: "trust", title: "Trust and agents", minutes: 1, steps: trustTourSteps },

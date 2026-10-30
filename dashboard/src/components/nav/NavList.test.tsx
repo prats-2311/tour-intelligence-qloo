@@ -62,9 +62,25 @@ describe("NavList", () => {
     mount({ collapsed: true });
     const link = screen.getByRole("link", { name: "Tour Board" });
     expect(within(link).getByText("Tour Board").className).toContain("sr-only");
-    expect(link.querySelector('[role="tooltip"]')).toBeNull();
-    expect(link.parentElement!.querySelector("[data-tooltip]")?.textContent).toBe("Tour Board");
+    expect(document.querySelector('[role="tooltip"]')).toBeNull(); // only while hovered or focused
+    const li = link.closest("li")!;
+    fireEvent.mouseEnter(li);
+    expect(screen.getByRole("tooltip").textContent).toBe("Tour Board");
+    fireEvent.mouseLeave(li);
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    fireEvent.focus(link);
+    expect(screen.getByRole("tooltip").textContent).toBe("Tour Board");
+    fireEvent.keyDown(link, { key: "Escape" });
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    fireEvent.focus(link);
+    fireEvent.blur(link);
+    expect(screen.queryByRole("tooltip")).toBeNull();
     expect(document.querySelectorAll("h2.sr-only")).toHaveLength(3);
+  });
+  it("the tooltip is fixed-positioned beside the row, so a scrolling rail cannot clip it", () => {
+    mount({ collapsed: true });
+    fireEvent.mouseEnter(screen.getByRole("link", { name: "Tour Board" }).closest("li")!);
+    expect(screen.getByRole("tooltip").style.position).toBe("fixed");
   });
   it("expanded: labels are visible and there are no tooltips", () => {
     mount();

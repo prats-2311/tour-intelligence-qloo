@@ -84,7 +84,7 @@ describe("Proof", () => {
   it("links sources safely by hostname and flags unresolved entities", () => {
     view(oneRunFixture);
     const links = screen.getAllByRole("link").filter((l) => l.getAttribute("href")?.startsWith("https://"));
-    expect(links.length).toBe(7);
+    expect(links.length).toBe(6); // each case is listed once (inside "Every case"), not again under "Where we lost"
     for (const a of links) {
       expect(a.getAttribute("target")).toBe("_blank");
       expect(a.getAttribute("rel")).toBe("noopener noreferrer");
@@ -208,20 +208,17 @@ describe("Proof v3", () => {
     expect(link.getAttribute("href")).toBe("https://github.com/prats-2311/tour-intelligence-qloo/blob/master/docs/qloo/proof-v3-protocol.md");
     expect(link.getAttribute("rel")).toBe("noopener noreferrer");
   });
-  it("renders tests in the order B, catch, C, F, A", () => {
+  it("renders tests in the order catch, B, C, A, F (scoreboard and checkers first)", () => {
     view(v3Backtest);
-    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "C", "A", "F"]);
+    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["catch", "B", "C", "A", "F"]);
   });
-  it("puts Test A and the fusion test (F) under a visible Limits heading, after C", () => {
+  it("has no empty Limits divider heading; A and F follow C", () => {
     view(v3Backtest);
-    const h = screen.getByRole("heading", { level: 2, name: "Limits: where Qloo-backed ranking lost" });
+    expect(screen.queryByRole("heading", { level: 2, name: "Limits: where Qloo-backed ranking lost" })).toBeNull();
     const [, , c, a, f] = sections();
     const before = (x: Node, y: Node) => !!(x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING);
     expect(c!.getAttribute("data-test-id")).toBe("C");
-    expect(before(c!, h)).toBe(true);
-    expect(before(h, a!)).toBe(true);
-    expect(a!.getAttribute("data-test-id")).toBe("A");
-    expect(f!.getAttribute("data-test-id")).toBe("F");
+    expect(before(c!, a!)).toBe(true);
     expect(before(a!, f!)).toBe(true);
   });
   it("each test shows title, question, status, an arm table, verbatim claims and limits", () => {
@@ -244,7 +241,7 @@ describe("Proof v3", () => {
     expect(within(d).getByText("no answer")).toBeTruthy();
     const b = screen.getByRole("region", { name: "Test B: picking the real activation among 10 candidates" });
     expect(within(within(b).getByText("Per case").closest("details")!).getByText("synth-a")).toBeTruthy();
-    expect(within(screen.getByRole("region", { name: /Claim checker/ })).queryByText(/^Per /)).toBeNull();
+    expect(within(screen.getByRole("region", { name: /^Claim checker: does it remove planted false claims\?$/ })).queryByText(/^Per /)).toBeNull();
   });
   it("tables scroll inside their own focusable container", () => {
     view(v3Backtest);
@@ -265,16 +262,16 @@ describe("Proof v3", () => {
   it("Test C absent from the data shows a pending section in C's slot; a real C replaces it", () => {
     const v3 = (v3Backtest as { proofV3: { tests: Array<{ id: string }> } }).proofV3;
     view({ ...v3Backtest, proofV3: { ...v3, tests: v3.tests.filter((t) => t.id !== "C") } });
-    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "A", "F"]);
+    expect(sections().map((s) => s.getAttribute("data-test-id"))).toEqual(["catch", "B", "A", "F"]);
     const pending = screen.getByRole("region", { name: "Test C: are the picks real places in the city?" });
     expect(pending.getAttribute("data-test-id")).toBe("C-pending");
     expect(within(pending).getByText("Run complete; human rating in progress. The result will be published here whatever it shows.")).toBeTruthy();
     const link = within(pending).getByRole("link", { name: /amendments 4.6/i });
     expect(link.getAttribute("href")).toBe("https://github.com/prats-2311/tour-intelligence-qloo/blob/master/docs/qloo/proof-v3-protocol.md");
-    // after the claim checker, before the Limits heading
+    // after Test B, before Test A
     const before = (x: Node, y: Node) => !!(x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING);
     expect(before(sections()[1]!, pending)).toBe(true);
-    expect(before(pending, screen.getByRole("heading", { level: 2, name: "Limits: where Qloo-backed ranking lost" }))).toBe(true);
+    expect(before(pending, sections()[2]!)).toBe(true);
     cleanup();
     view(v3Backtest);
     expect(screen.queryByText(/human rating in progress/)).toBeNull();
@@ -410,12 +407,12 @@ describe("Proof: verified claims across the product (Amendment 10) and Amendment
     expect(within(section()).getByText(/not published yet/i)).toBeTruthy();
     expect(within(section()).getByText(/Engineering checks:/)).toBeTruthy();
   });
-  it("sits after the claim-checker test and before Test C", () => {
+  it("sits right after the claim-checker test, before Test B", () => {
     view(withCheckers());
     const html = document.body.innerHTML;
     expect(html.indexOf('data-test-id="catch"')).toBeLessThan(html.indexOf("Verified claims, across the product"));
-    expect(html.indexOf("Verified claims, across the product")).toBeLessThan(html.indexOf('data-test-id="C"'));
-    expect(screen.getAllByRole("region").filter((r) => r.getAttribute("data-testid") === "proof-v3-test").map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "C", "A", "F"]);
+    expect(html.indexOf("Verified claims, across the product")).toBeLessThan(html.indexOf('data-test-id="B"'));
+    expect(screen.getAllByRole("region").filter((r) => r.getAttribute("data-testid") === "proof-v3-test").map((s) => s.getAttribute("data-test-id"))).toEqual(["catch", "B", "C", "A", "F"]);
   });
   it("tolerates a malformed checkers block (dropped, page still renders)", () => {
     const bad = { ...(v3Backtest as { proofV3: object }), proofV3: { ...(v3Backtest as { proofV3: object }).proofV3, checkers: { rows: [{ id: 1 }] } } };
@@ -431,7 +428,7 @@ describe("Proof: verified claims across the product (Amendment 10) and Amendment
     expect(within(p).getByText("Running — results will be published here whatever they show.")).toBeTruthy();
     expect(within(p).getByRole("link", { name: /Amendment 9/ }).getAttribute("href")).toContain("#amendment-9-test-b-on-cases-after-the-models-training-cutoff");
     const order = screen.getAllByTestId(/proof-v3-(test|a9-pending)/).map((e) => e.getAttribute("data-test-id"));
-    expect(order.slice(0, 3)).toEqual(["B", "B_post_cutoff-pending", "catch"]);
+    expect(order.slice(0, 3)).toEqual(["catch", "B", "B_post_cutoff-pending"]);
   });
   it("Amendment 9: with results present it renders them in Test B's table shape and no placeholder", () => {
     const base = v3Backtest as { proofV3: { tests: Array<{ id: string }> } };
@@ -441,7 +438,7 @@ describe("Proof: verified claims across the product (Amendment 10) and Amendment
     expect(placeholder()).toBeNull();
     expect(screen.queryByText(/Running — results will be published/)).toBeNull();
     const ids = screen.getAllByRole("region").filter((r) => r.getAttribute("data-testid") === "proof-v3-test").map((s) => s.getAttribute("data-test-id"));
-    expect(ids.slice(0, 3)).toEqual(["B", A9_TEST_ID, "catch"]);
+    expect(ids.slice(0, 3)).toEqual(["catch", "B", A9_TEST_ID]);
     const sec = screen.getAllByRole("region").find((r) => r.getAttribute("data-test-id") === A9_TEST_ID)!;
     expect(within(sec).getByText("Complete: 31 cases")).toBeTruthy();
     expect(within(sec).getAllByRole("table").length).toBeGreaterThan(0);

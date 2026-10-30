@@ -22,7 +22,17 @@ describe("tour registry", () => {
   });
   it("the essentials lead with the sponsor story, not the board", () => {
     const ids = tourById("essentials")!.steps(show()).map((s) => s.id);
-    expect(ids).toEqual(["hook", "age", "pitch", "claims", "playbook", "board", "without", "ask", "book"]);
+    expect(ids).toEqual(["hook", "age", "pitch", "claims", "playbook", "ask", "board", "without", "book"]);
+  });
+  it("never goes back to a page it has left: playbook steps are consecutive, then the board, then the book", () => {
+    const paths = tourById("essentials")!.steps(show()).map((s) => s.route.split("?")[0]!.replace(/\/playbook\/.*/, "/playbook"));
+    const visits = paths.filter((p, i) => i === 0 || p !== paths[i - 1]);
+    expect(new Set(visits).size).toBe(visits.length);
+    expect(visits).toEqual(["/tours/playbook", "/tours/board", "/tours/book"]);
+    expect(tourById("essentials")!.steps(show())[0]!.id).toBe("hook");
+  });
+  it("the essentials are listed as a 2-minute tour (nine steps)", () => {
+    expect(tourById("essentials")!.minutes).toBe(2);
   });
   it("every step has a unique id, title, route, at least one target and at most two short sentences", () => {
     for (const t of TOURS) {
@@ -71,7 +81,7 @@ describe("tour registry", () => {
     expect(age.targets[0]).toBe("sponsors-age");
   });
   it("the board step says plainly that an LLM is good at picking big markets", () => {
-    const board = tourById("essentials")!.steps(show())[5]!;
+    const board = tourById("essentials")!.steps(show()).find((x) => x.id === "board")!;
     expect(board.body).toMatch(/LLM is good at picking big markets/);
     expect(board.body).toMatch(/context for winning each city/);
   });

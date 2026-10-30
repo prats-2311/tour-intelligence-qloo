@@ -127,6 +127,12 @@ describe("Agents page", () => {
     expect(r.markdown).toContain("| City | Verdict | Fan heat | Activation | Winnability |");
   });
 
+  it("the tools table scrolls inside a focusable named region", () => {
+    mount();
+    const r = screen.getByRole("table", { name: "Public MCP tools" }).closest('[role="region"]') as HTMLElement;
+    expect(r.getAttribute("tabindex")).toBe("0");
+    expect(r.getAttribute("aria-label")).toMatch(/scrolls sideways/);
+  });
   it("is not a journey step", () => { expect(stepOf("/agents")).toBeNull(); });
 });
 

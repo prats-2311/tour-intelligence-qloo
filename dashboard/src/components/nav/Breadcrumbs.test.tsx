@@ -25,6 +25,13 @@ describe("Breadcrumbs", () => {
     mount("/");
     expect(screen.queryByRole("navigation", { name: "Breadcrumb" })).toBeNull();
   });
+  it("the trail lines up with the page's content column (1240 px, centred) so it does not drift left on wide screens", () => {
+    mount("/tours/board?showcase=1");
+    const ol = screen.getByRole("navigation", { name: "Breadcrumb" }).querySelector("ol")!;
+    const col = ol.parentElement!;
+    expect(col.className).toContain("max-w-[1240px]");
+    expect(col.className).toContain("mx-auto");
+  });
   it("board: artist from the recording, ordered list, last item is the current page", () => {
     mount("/tours/board?showcase=1");
     const nav = screen.getByRole("navigation", { name: "Breadcrumb" });

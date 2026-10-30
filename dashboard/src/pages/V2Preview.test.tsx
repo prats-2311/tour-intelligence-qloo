@@ -117,6 +117,27 @@ describe("/v2 concept preview", () => {
     for (const t of ["Going", "Waitlist", "I was there"]) expect((screen.getByRole("button", { name: t }) as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it("disabled RSVP buttons look disabled (border, aria-disabled, 44px) and say when they switch on", () => {
+    mount();
+    const note = screen.getByText("Prototype buttons switch on when analytics is enabled");
+    for (const t of ["Going", "Waitlist", "I was there"]) {
+      const b = screen.getByRole("button", { name: t });
+      expect(b.getAttribute("aria-disabled")).toBe("true");
+      expect(b.className).toMatch(/\bborder\b/);
+      expect(b.className).toContain("min-h-11");
+      expect(b.className).not.toMatch(/opacity-(?:[0-6]\d|70)\b/); // label stays at least 3:1 on the card
+      expect(b.getAttribute("aria-describedby")).toBe(note.id);
+    }
+  });
+
+  it("scrolling tables on this page are focusable named regions", () => {
+    const { container } = mount();
+    const table = container.querySelector("table")!;
+    const r = table.closest('[role="region"]') as HTMLElement;
+    expect(r.getAttribute("tabindex")).toBe("0");
+    expect(r.getAttribute("aria-label")).toMatch(/scrolls sideways/);
+  });
+
   it("has no active journey step", () => {
     const { container } = mount();
     expect(container.querySelectorAll("[data-step][data-state='current']")).toHaveLength(0);
@@ -151,14 +172,15 @@ describe("Fan experiences section", () => {
     expect(screen.getByTestId("how-selling-works").querySelectorAll("li")).toHaveLength(4);
   });
 
-  it("lists seven types, opens one at a time by keyboard-reachable buttons, each with a 6-step ordered journey", () => {
+  it("lists seven types, opens each by keyboard-reachable buttons (several can stay open, so a header never jumps under the pointer), each with a 6-step ordered journey", () => {
     const { container } = mount();
     const section = container.querySelector("[data-tour='v2-experiences']") as HTMLElement;
     const buttons = within(section).getAllByRole("button");
     expect(buttons).toHaveLength(7);
     buttons.forEach((b, i) => {
       if (b.getAttribute("aria-expanded") !== "true") fireEvent.click(b);
-      expect(buttons.filter((x) => x.getAttribute("aria-expanded") === "true")).toHaveLength(1);
+      expect(buttons.filter((x) => x.getAttribute("aria-expanded") === "true")).toHaveLength(i + 1);
+      expect(buttons[0]!.getAttribute("aria-expanded")).toBe("true");
       expect(b.getAttribute("aria-expanded")).toBe("true");
       const panel = document.getElementById(b.getAttribute("aria-controls")!)!;
       expect(panel.querySelector("ol")!.tagName).toBe("OL");

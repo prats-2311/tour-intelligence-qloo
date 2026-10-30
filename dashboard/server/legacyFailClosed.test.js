@@ -74,7 +74,8 @@ describe("legacy proxy with no backend URLs configured", () => {
     const h = { "x-session-id": "s" };
     for (const name of ["trust", "team", "v2"]) {
       const res = await fetch(`${base}/api/qloo/stats/${name}`, { headers: h });
-      expect(await res.json()).toEqual({ error: "Qloo gateway not configured" });
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ enabled: false });
     }
     expect((await post("/api/qloo/v2/tap")).status).toBe(400);
     const tap = await fetch(`${base}/api/qloo/v2/tap`, { method: "POST", headers: { "content-type": "application/json", ...h }, body: JSON.stringify({ action: "going" }) });

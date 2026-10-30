@@ -6,16 +6,20 @@ import { getBacktest, METHODS, METHOD_LABEL, hitLine, rankText, type Backtest, t
 import { loadRecordings } from "@/lib/qloo/recordings";
 import { isSampleMode } from "@/lib/qloo/client";
 import { useStats, type TeamStats, type TrustStats } from "@/lib/qloo/stats";
+import { ScrollRegion } from "@/components/ui/ScrollRegion";
+import { buildScoreboard, splitClaims, type ScoreEntry } from "@/lib/qloo/proofScoreboard";
 
 /** The public repo is created later: change the URL here only. */
 export const PROTOCOL_URL = "https://github.com/prats-2311/tour-intelligence-qloo/blob/master/docs/qloo/proof-v3-protocol.md";
 const V3_INTRO = "We pre-registered every test before running it and publish all of it, including where Qloo-backed ranking lost.";
-/** Sponsor lift first (B), then the claim checker (catch) and grounding (C); Test A, where the LLM won, and the Gemini + Qloo fusion (F), which did not beat Gemini, sit last under a Limits heading. Tests not listed come after, in file order. */
-const V3_ORDER = ["B", "B_post_cutoff", "catch", "C", "A", "F"];
+/** Scoreboard first, then the claim checker and the product checkers (the clean wins), then Test B and its post-cutoff run, grounding (C), and last Test A, where the LLM won, and the Gemini + Qloo fusion (F). Tests not listed come after, in file order. */
+const V3_ORDER = ["catch", "B", "B_post_cutoff", "C", "A", "F"];
 /** Amendment 9's Test B on cases after the model's cutoff: the id the publish step gives it (same table shape as Test B). */
 export const A9_TEST_ID = "B_post_cutoff";
 /** The protocol's heading anchors on GitHub. */
 const AMENDMENT_9_ANCHOR = "amendment-9-test-b-on-cases-after-the-models-training-cutoff-2026-10-30-before-any-case-for-it-was-collected";
+/** Commits live in the public repo. */
+export const COMMIT_URL = "https://github.com/prats-2311/tour-intelligence-qloo/commit/";
 const AMENDMENT_10_ANCHOR = "amendment-10-catch-rates-for-the-products-other-checkers-2026-10-30-before-any-of-these-was-run";
 /** Update by hand when the suites change (not computed at build). 30 Oct 2026: dashboard vitest 1,280 + gateway vitest 1,032 passing + Python test functions 486 (counted statically; no venv offline) = 2,798. */
 export const ENGINEERING_TESTS = 2798;
@@ -60,10 +64,10 @@ function RankCell({ r }: { r: MethodResult }) {
   );
 }
 
-function CaseCard({ c }: { c: CaseResult }) {
+function CaseCard({ c, lost = false }: { c: CaseResult; lost?: boolean }) {
   return (
     <article aria-label={`${c.realEntity.name}, ${c.artist} in ${c.city}`} className="flex min-w-0 flex-col gap-3 rounded-[18px] bg-paper p-4">
-      <p className={eyebrow}>{c.decision}</p>
+      <p className={eyebrow}>{c.decision}{lost ? " · LOST" : ""}</p>
       <div className="min-w-0">
         <p className="text-[13px] text-canvas-muted">{c.artist} · {c.city}</p>
         <h3 className="mt-1 break-words text-[17px] font-semibold leading-snug text-canvas-text">{c.realEntity.name}</h3>
@@ -114,11 +118,18 @@ function Lost({ run, label, as }: { run: BacktestRun; label: string; as?: "h2" |
   const id = useId();
   const lost = run.lost.map((x) => run.cases.find((c) => c.id === x)).filter((c): c is CaseResult => !!c);
   return (
-    <section aria-labelledby={id} className="flex flex-col gap-4">
+    <section aria-labelledby={id} className="flex flex-col gap-3">
       <Heading id={id} as={as}>{label}</Heading>
       {lost.length === 0
         ? <p className="text-[15px] text-canvas-text">No case where a baseline ranked the real entity above the playbook.</p>
-        : <div className="grid gap-3 lg:grid-cols-2">{lost.map((c) => <CaseCard key={c.id} c={c} />)}</div>}
+        : (
+          <>
+            <p className="max-w-[68ch] text-[15px] leading-[1.5] text-canvas-text">{`In ${lost.length} of ${run.cases.length} cases a baseline ranked the real pick above the playbook:`}</p>
+            <ul className="m-0 flex max-w-[68ch] list-disc flex-col gap-1 pl-5 text-[15px] leading-[1.45] text-canvas-text">
+              {lost.map((c) => <li key={c.id} className="break-words"><span className="font-semibold">{c.realEntity.name}</span> · {c.artist}, {c.city}</li>)}
+            </ul>
+          </>
+        )}
     </section>
   );
 }
@@ -171,24 +182,28 @@ function Limitations({ run }: { run: BacktestRun }) {
   );
 }
 
+const NUMERIC = /^[\s\d.,%<>=+\u2212-]+(?: of [\d.,]+)?(?: \([\d.,%]+\))?$/;
+
 function TableView({ t, label }: { t: ProofTable; label: string }) {
+  // A column is right-aligned only when every cell is a number; text columns (arm names, test names) stay left.
+  const right = t.columns.map((_, k) => k > 0 && t.rows.length > 0 && t.rows.every((r) => NUMERIC.test(r[k] ?? "")));
   return (
-    <div className="max-w-full overflow-x-auto rounded-[12px] bg-paper" tabIndex={0} role="group" aria-label={`${label}, scrolls sideways`}>
+    <ScrollRegion label={label} className="rounded-[12px] bg-paper">
       <table aria-label={label} className="w-full min-w-max border-collapse text-left text-[13px] text-canvas-text">
         <thead>
-          <tr>{t.columns.map((c, k) => <th key={`${k}-${c}`} scope="col" className={`px-3 py-2 font-mono text-[11px] font-normal uppercase tracking-[0.06em] text-canvas-muted ${k > 0 ? "text-right" : ""}`}>{c}</th>)}</tr>
+          <tr>{t.columns.map((c, k) => <th key={`${k}-${c}`} scope="col" className={`px-3 py-2 font-mono text-[11px] font-normal uppercase tracking-[0.06em] text-canvas-muted ${right[k] ? "text-right" : ""}`}>{c}</th>)}</tr>
         </thead>
         <tbody>
           {t.rows.map((r, ri) => (
             <tr key={`${ri}-${r[0]}`} className="border-t border-canvas-muted/20">
               {r.map((c, k) => k === 0
                 ? <th key={k} scope="row" className="max-w-[28ch] break-words px-3 py-2 font-normal">{c}</th>
-                : <td key={k} className="px-3 py-2 text-right font-mono tabular whitespace-nowrap">{c}</td>)}
+                : <td key={k} className={`px-3 py-2 font-mono tabular whitespace-nowrap ${right[k] ? "text-right" : ""}`}>{c}</td>)}
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 
@@ -198,8 +213,9 @@ function V3Test({ t }: { t: ProofV3Test }) {
   const id = useId();
   const sign: ProofTable = { columns: ["Comparison", "Wins", "Losses", "Ties", "Pairs", "p"], rows: t.signTests.map((s) => [s.label, String(s.wins), String(s.losses), String(s.ties), String(s.pairs), pText(s.p)]) };
   const unit = t.perUnit?.columns[0]?.toLowerCase();
+  const { headline, detail } = splitClaims(t.claims);
   return (
-    <section aria-labelledby={id} data-testid="proof-v3-test" data-tour="proof-test" data-test-id={t.id} className="flex min-w-0 flex-col gap-4">
+    <section id={`proof-test-${t.id}`} aria-labelledby={id} data-testid="proof-v3-test" data-tour="proof-test" data-test-id={t.id} className="flex min-w-0 scroll-mt-24 flex-col gap-4">
       <h2 id={id} className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">{t.title}</h2>
       <p className="max-w-[68ch] text-[15px] leading-[1.5] text-canvas-text">{t.question}</p>
       <p className={eyebrow}>{t.status}</p>
@@ -211,8 +227,16 @@ function V3Test({ t }: { t: ProofV3Test }) {
       {t.tables.map((tb, k) => <TableView key={k} t={tb} label={`${t.title}: ${tb.columns[1] ?? "results"}`} />)}
       {t.signTests.length > 0 && <TableView t={sign} label={`${t.title}: sign tests`} />}
       <ul className="m-0 flex max-w-[68ch] list-disc flex-col gap-2 pl-5 text-[15px] leading-[1.5] text-canvas-text">
-        {t.claims.map((c, k) => <li key={`${k}-${c}`} className="break-words">{c}</li>)}
+        {headline.map((c, k) => <li key={`${k}-${c}`} className="break-words">{c}</li>)}
       </ul>
+      {detail.length > 0 && (
+        <details className="group flex flex-col gap-3">
+          <summary className="inline-flex min-h-11 w-fit cursor-pointer items-center text-[14px] font-semibold text-canvas-text underline decoration-canvas-muted underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{`Per-case details (${detail.length})`}</summary>
+          <ul className="m-0 mt-3 flex max-w-[68ch] list-disc flex-col gap-2 pl-5 text-[14px] leading-[1.45] text-canvas-muted">
+            {detail.map((c, k) => <li key={`${k}-${c}`} className="break-words">{c}</li>)}
+          </ul>
+        </details>
+      )}
       {t.limits.length > 0 && (
         <div className="flex flex-col gap-2">
           <h3 className={eyebrow}>Limits</h3>
@@ -264,12 +288,12 @@ function VerifiedClaims({ checkers }: { checkers: ProofCheckers | undefined }) {
   const id = useId();
   const cols = ["Checker", "What it guards", "Planted errors caught", "False alarms on clean controls", "Amendment"];
   return (
-    <section aria-labelledby={id} data-testid="proof-checkers" data-tour="proof-checkers" className="flex min-w-0 flex-col gap-4">
+    <section id="proof-checkers" aria-labelledby={id} data-testid="proof-checkers" data-tour="proof-checkers" className="flex min-w-0 scroll-mt-24 flex-col gap-4">
       <h2 id={id} className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">Verified claims, across the product</h2>
       {checkers ? (
         <>
           <p className="max-w-[68ch] text-[15px] leading-[1.5] text-canvas-text">Each checker was given 20 planted errors and 20 clean controls, from fixed, synthetic generators written down in Amendment {checkers.amendment} before any was run. These are checks, not comparisons: no significance test.</p>
-          <div className="max-w-full overflow-x-auto rounded-[12px] bg-paper" tabIndex={0} role="group" aria-label="Verified claims, across the product, scrolls sideways">
+          <ScrollRegion label="Verified claims, across the product" className="rounded-[12px] bg-paper">
             <table aria-label="Verified claims, across the product" className="w-full min-w-max border-collapse text-left text-[13px] text-canvas-text">
               <thead><tr>{cols.map((c, k) => <th key={c} scope="col" className={`px-3 py-2 font-mono text-[11px] font-normal uppercase tracking-[0.06em] text-canvas-muted ${k >= 2 && k <= 3 ? "text-right" : ""}`}>{c}</th>)}</tr></thead>
               <tbody>
@@ -284,7 +308,7 @@ function VerifiedClaims({ checkers }: { checkers: ProofCheckers | undefined }) {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollRegion>
           <ul className="m-0 flex max-w-[68ch] list-disc flex-col gap-2 pl-5 text-[14px] leading-[1.45] text-canvas-muted">
             {checkers.rows.map((r) => <li key={r.id} className="break-words">{r.note}</li>)}
             {checkers.nameRuleOnly && <li className="break-words">{`With the sponsor classifier unavailable, the name rule alone caught ${checkers.nameRuleOnly.caught} of ${checkers.nameRuleOnly.planted}, with ${checkers.nameRuleOnly.falseAlarms} of ${checkers.nameRuleOnly.controls} false alarms.`}</li>}
@@ -298,7 +322,73 @@ function VerifiedClaims({ checkers }: { checkers: ProofCheckers | undefined }) {
   );
 }
 
-function ProofV3View({ v3, children }: { v3: ProofV3; children?: ReactNode }) {
+const GLOSSARY: Array<[string, string]> = [
+  ["MRR", "Mean reciprocal rank: 1 means the real pick was ranked first, 0.5 means second, 0.1 means tenth; higher is better."],
+  ["R-precision", "Of the cities a tour really played, the share that appear in the top spots of a ranking; higher is better."],
+  ["winnability", "Our score for how likely a city is to be a good market for an artist, built from fan heat and local factors."],
+  ["sign test", "A fair-coin check on head-to-head results: it counts how often each side was ahead and ignores ties."],
+  ["p", "How surprising the result would be if the two sides were equal; below 0.05 we call it significant, above it we say not significant."],
+  ["pairs", "The number of cases or artists where both sides gave an answer, so they could be compared."],
+  ["ties", "Pairs where the two sides did equally well; they do not count for either side."],
+];
+
+function Glossary() {
+  return (
+    <details className="group flex flex-col gap-3">
+      <summary className="inline-flex min-h-11 w-fit cursor-pointer items-center text-[14px] font-semibold text-canvas-text underline decoration-canvas-muted underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">How to read this</summary>
+      <dl className="m-0 mt-3 grid max-w-[68ch] gap-3 text-[14px] leading-[1.45] text-canvas-text">
+        {GLOSSARY.map(([k, v]) => <div key={k}><dt className="font-mono text-[12px] uppercase tracking-[0.06em] text-canvas-muted">{k}</dt><dd className="m-0">{v}</dd></div>)}
+      </dl>
+    </details>
+  );
+}
+
+function ScoreList({ items, empty }: { items: ScoreEntry[]; empty: string }) {
+  if (items.length === 0) return <p className="m-0 text-[14px] text-canvas-muted">{empty}</p>;
+  return (
+    <ul className="m-0 flex list-none flex-col gap-3 p-0">
+      {items.map((e) => (
+        <li key={`${e.anchor}-${e.text}`} className="flex flex-col gap-1 text-[15px] leading-[1.45] text-canvas-text">
+          <span className="break-words">{e.text}</span>
+          <a href={`#${e.anchor}`} className="inline-flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4">See the evidence</a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** The headline of the page, computed from the published sign tests and checker counts (proofScoreboard.ts). */
+function Scoreboard({ v3 }: { v3: ProofV3 }) {
+  const id = useId();
+  const s = buildScoreboard(v3);
+  if (s.qloo.length + s.llm.length + s.even.length + s.notWins.length === 0) return null;
+  return (
+    <section aria-labelledby={id} data-testid="proof-scoreboard" className="flex flex-col gap-4 rounded-[18px] bg-paper p-4 lg:p-6">
+      <h2 id={id} className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">At a glance</h2>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-3">
+          <h3 className={`${eyebrow} !text-gold`}>Where Qloo wins</h3>
+          <ScoreList items={[...s.qloo, ...s.notWins]} empty="No head-to-head win to report yet." />
+        </div>
+        <div className="flex min-w-0 flex-col gap-3">
+          <h3 className={eyebrow}>Where a plain LLM wins</h3>
+          <ScoreList items={[...s.llm, ...s.even]} empty="No test where a plain LLM was ahead." />
+        </div>
+      </div>
+      <p className="m-0 max-w-[80ch] text-[15px] leading-[1.5] text-canvas-text"><strong className="font-semibold">What this means</strong> <span>Qloo adds taste data an LLM can&apos;t produce or verify; we don&apos;t claim it picks cities better than an LLM.</span></p>
+    </section>
+  );
+}
+
+/** Amendments are written in markdown: `code` and *emphasis* render, the markers never show. */
+export function Inline({ text }: { text: string }) {
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g).filter((x) => x !== "");
+  return <>{parts.map((p, i) => p.startsWith("`") && p.endsWith("`") && p.length > 2 ? <code key={i} className="font-mono text-[13px]">{p.slice(1, -1)}</code>
+    : p.startsWith("**") && p.endsWith("**") && p.length > 4 ? <strong key={i}>{p.slice(2, -2)}</strong>
+    : p.startsWith("*") && p.endsWith("*") && p.length > 2 ? <em key={i}>{p.slice(1, -1)}</em> : <Fragment key={i}>{p}</Fragment>)}</>;
+}
+
+function ProofV3View({ v3, live, children }: { v3: ProofV3; live?: ReactNode; children?: ReactNode }) {
   const tests = [...v3.tests].sort((a, b) => { const ra = V3_ORDER.indexOf(a.id), rb = V3_ORDER.indexOf(b.id); return (ra < 0 ? 99 : ra) - (rb < 0 ? 99 : rb); });
   // Test C's slot: before the first test ranked after it (or at the end), only while the data has no C.
   const cRank = V3_ORDER.indexOf("C");
@@ -315,10 +405,12 @@ function ProofV3View({ v3, children }: { v3: ProofV3; children?: ReactNode }) {
           <a href={PROTOCOL_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-canvas-text underline decoration-canvas-muted underline-offset-4">Read the protocol and its amendments on GitHub</a>
         </p>
       </header>
+      <Scoreboard v3={v3} />
+      {live}
+      <Glossary />
       {tests.map((t, i) => (
         <Fragment key={t.id}>
           {pendingAt === i && <TestCPending />}
-          {t.id === "A" && <h2 className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">Limits: where Qloo-backed ranking lost</h2>}
           <V3Test t={t} />
           {t.id === "B" && !hasA9 && <A9Pending />}
           {t.id === "catch" && <VerifiedClaims checkers={v3.checkers} />}
@@ -330,7 +422,7 @@ function ProofV3View({ v3, children }: { v3: ProofV3; children?: ReactNode }) {
         <section aria-label="Amendments" className="flex flex-col gap-3">
           <h2 className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">Amendments</h2>
           <ul className="m-0 flex max-w-[68ch] list-none flex-col gap-2 p-0 text-[14px] leading-[1.45] text-canvas-text">
-            {v3.amendments.map((a) => <li key={a.n} className="break-words">Amendment {a.n} · <span className="font-mono">{a.commit.slice(0, 7)}</span> · {a.summary}</li>)}
+            {v3.amendments.map((a) => <li key={a.n} className="flex flex-wrap items-center gap-x-1 break-words">Amendment {a.n} · {/^[0-9a-f]{7,40}$/.test(a.commit) ? <a href={`${COMMIT_URL}${a.commit}`} target="_blank" rel="noopener noreferrer" aria-label={`Amendment ${a.n} commit ${a.commit.slice(0, 7)} on GitHub`} className="inline-flex min-h-11 items-center font-mono underline decoration-canvas-muted underline-offset-4">{a.commit.slice(0, 7)}</a> : <span className="font-mono">{a.commit.slice(0, 7)}</span>} · <Inline text={a.summary} /></li>)}
           </ul>
         </section>
       )}
@@ -357,7 +449,10 @@ function LegacyRuns({ data, header }: { data: Extract<Backtest, { status: "compl
       <Lost run={run} label="Where we lost" />
       <section aria-labelledby={everyId} className="flex flex-col gap-4">
         <Heading id={everyId}>Every case</Heading>
-        <div className="grid gap-3 lg:grid-cols-2">{run.cases.map((c) => <CaseCard key={c.id} c={c} />)}</div>
+        <details className="group flex flex-col gap-3">
+          <summary className="inline-flex min-h-11 w-fit cursor-pointer items-center text-[14px] font-semibold text-canvas-text underline decoration-canvas-muted underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{`Every case (${run.cases.length})`}</summary>
+          <div className="mt-3 grid gap-3 lg:grid-cols-2">{[...run.cases].sort((a, b) => Number(run.lost.includes(b.id)) - Number(run.lost.includes(a.id))).map((c) => <CaseCard key={c.id} c={c} lost={run.lost.includes(c.id)} />)}</div>
+        </details>
       </section>
       {data.runs.length >= 2 && <HowWeGotHere run={first} />}
       <Limitations run={run} />
@@ -388,7 +483,7 @@ function SponsorsWithoutQlooSection() {
   );
 }
 
-export function ProofView({ data }: { data: Backtest }) {
+export function ProofView({ data, live }: { data: Backtest; live?: ReactNode }) {
   const earlierId = useId();
   const header = (
     <header data-tour="proof-top" className="flex flex-col gap-3">
@@ -406,7 +501,7 @@ export function ProofView({ data }: { data: Backtest }) {
   }
   if (data.proofV3) {
     return (
-      <ProofV3View v3={data.proofV3}>
+      <ProofV3View v3={data.proofV3} live={live}>
         <SponsorsWithoutQlooSection />
         {data.runs.length > 0 && (
           <section aria-labelledby={earlierId} className="flex flex-col gap-10 border-t border-canvas-muted/20 pt-10">
@@ -419,6 +514,7 @@ export function ProofView({ data }: { data: Backtest }) {
   }
   return (
     <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-10 pb-8">
+      {live}
       <LegacyRuns data={data} header={header} />
       <SponsorsWithoutQlooSection />
     </div>
@@ -510,7 +606,7 @@ export default function Proof() {
   const [, setTick] = useState(0);
   const [retrying, setRetrying] = useState(false);
   const data = getBacktest();
-  if (data) return <><LiveStatsLoader /><ProofView data={data} /></>;
+  if (data) return <ProofView data={data} live={<LiveStatsLoader />} />;
   const retry = () => { setRetrying(true); void loadRecordings().finally(() => { setRetrying(false); setTick((n) => n + 1); }); };
   return (
     <>
