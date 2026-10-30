@@ -281,6 +281,16 @@ def test_tour_report_caps_cities_by_max_stops(monkeypatch):
     assert [c[2]["maxStops"] for c in calls if c[1] == "/v1/tour-board"] == [1]
 
 
+def test_tour_report_never_exceeds_max_cities_whatever_max_stops_asks(monkeypatch):
+    board = _sse(*[_city(f"City{i}", "MX", "play") for i in range(5)], {"type": "done"})
+    calls = _gateway(monkeypatch, {"/v1/tools/": lambda b: _resp(payload=DESCRIBE), "/v1/tour-board": lambda b: _resp(lines=board),
+                                   "/v1/city-playbook": lambda p: _resp(lines=_playbook(p["city"]))})
+    out = insight_tools.get_tour_report("Lumen Vale", ["Mexico"], 10, max_cities=3, **KW)
+    assert [c[2]["maxStops"] for c in calls if c[1] == "/v1/tour-board"] == [3]
+    assert len(out["cities"]) == 3
+    assert len([c for c in calls if c[1] == "/v1/city-playbook"]) == 3
+
+
 def test_tour_report_returns_partial_when_a_city_fails(monkeypatch):
     _report_routes(monkeypatch, fail_city="Monterrey")
     out = insight_tools.get_tour_report("Lumen Vale", ["Mexico"], 3, **KW)
