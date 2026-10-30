@@ -26,6 +26,23 @@ const open = async () => { fireEvent.click(screen.getByRole("button", { name: "B
 const body = (r: SegmentRequest = req()) => render(<CardBody card={card()} city={r.city.name} country={r.city.country} segments={r} />);
 
 describe("sponsors by age group on the sponsors card", () => {
+  it("makes no lift claim for a band with lifted:false: no city-rank caption, every row reads Fans rank it #N", async () => {
+    stubFetch(answer({ bands: [band({ lifted: false, items: [{ name: "Off-white", entityId: "1", artistRank: 1, cityRank: 4 }, { name: "OBEY", entityId: "2", artistRank: 2, cityRank: 5 }] })] }));
+    const { container } = body();
+    await open();
+    await waitFor(() => expect(screen.getByTestId("segment-band")).toBeTruthy());
+    expect(container.textContent).not.toContain("City ranks are for fans of the same age group.");
+    expect(screen.getByText("Fans rank it #1")).toBeTruthy();
+    expect(container.textContent).not.toMatch(/city #\d/);
+  });
+  it("makes the city-rank claim only for a lifted band", async () => {
+    stubFetch(answer());
+    const { container } = body();
+    await open();
+    await waitFor(() => expect(screen.getByTestId("segment-band")).toBeTruthy());
+    expect(container.textContent).toContain("City ranks are for fans of the same age group.");
+    expect(screen.getByText("Fans #2 · city #5")).toBeTruthy();
+  });
   it("does not fetch on render; the all-fans list is unchanged and the first click loads once", async () => {
     const f = stubFetch(answer());
     body();

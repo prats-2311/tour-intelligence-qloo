@@ -76,7 +76,7 @@ describe("segment requests", () => {
     const r = await run({ seg: { "55-64": needs } }).p;
     expect(r.status).toBe("ok");
     expect(r.bands[0]!.status).toBe("ok");
-    expect(r.bands[1]).toMatchObject({ band: "55_and_older", status: "unavailable", items: [], newInTop5: null });
+    expect(r.bands[1]).toMatchObject({ band: "55_and_older", status: "unavailable", items: [], newInTop5: null, lifted: false });
   });
   it("an empty segment answer is empty, not unavailable", async () => {
     const r = await run({ seg: { "25-29": { operation: "recommend", status: "empty", results: [] } } }).p;
