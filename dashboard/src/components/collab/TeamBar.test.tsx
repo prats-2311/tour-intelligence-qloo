@@ -23,6 +23,20 @@ describe("TeamBar at 1280px and wider", () => {
   });
 });
 
+describe("TeamBar follows the room it is in, not only the viewport", () => {
+  const observe = (width: number) => vi.stubGlobal("ResizeObserver", class { constructor(private cb: (e: unknown[]) => void) {} observe() { this.cb([{ contentRect: { width } }]); } disconnect() {} unobserve() {} });
+  const inHeader = () => render(<MemoryRouter><ToastProvider><WorkspaceContext.Provider value={ws()}><header><TeamBar cities={[{ id: "1", name: "Home" }]} tourThread="tour:board" /></header></WorkspaceContext.Provider></ToastProvider></MemoryRouter>);
+  it("a wide viewport with a narrow header (the board's list column) still groups into the menu", () => {
+    wide(true); observe(600); inHeader();
+    expect(screen.getByRole("button", { name: "Team" }).getAttribute("aria-haspopup")).toBe("menu");
+  });
+  it("a roomy header keeps everything inline", () => {
+    wide(false); observe(1000); inHeader();
+    expect(screen.getByRole("button", { name: "Share with your team" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Team" })).toBeNull();
+  });
+});
+
 describe("TeamBar below 1280px", () => {
   it("groups Tour notes, Team activity and Share into one Team menu button", () => {
     wide(false); mount();
