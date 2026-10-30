@@ -339,6 +339,13 @@ describe("playbook cards", () => {
     expect(screen.getByText(/Sponsor fit is high and concentrated/)).toBeTruthy();
     expect(screen.getByText(/^Model: /)).toBeTruthy();
   });
+  it("reasoning summary never carries a do-not-book act or a non-sponsor organisation, even collapsed", () => {
+    for (const named of ["Ariel Pink", "UNICEF"]) {
+      const { container, unmount } = render(<ReasoningSummary narrative={{ ...(narrative as Extract<typeof narrative, { status: "ok" }>), thoughtSummary: `Fans also rank ${named} highly in this city.` }} />);
+      expect(container.textContent, named).not.toContain(named);
+      unmount();
+    }
+  });
   it("reasoning summary renders nothing when unavailable or null", () => {
     const { container } = render(<ReasoningSummary narrative={{ status: "unavailable", reason: "error", message: "x" }} />);
     expect(container.innerHTML).toBe("");
