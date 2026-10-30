@@ -211,7 +211,8 @@ test("mobile: the held playbook's primary action is never clipped, even for a lo
     expect(await noOverflow(page)).toBe(true);
   }
   await page.goto("/tours/playbook/4005539?sample=long");
-  expect(await page.getByTestId("primary-action").textContent()).toContain("San Juan de los Lagos");
+  // The next city is named once the run settles (it first reads "Next: Tour Book"), so wait for it instead of sampling once.
+  await expect(page.getByTestId("primary-action")).toContainText("San Juan de los Lagos", { timeout: 20_000 });
 });
 
 test("mobile: without a sticky footer (?mode=without) the strategist button leaves the last row readable", async ({ page }, info) => {
