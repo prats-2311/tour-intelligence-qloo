@@ -312,3 +312,38 @@ describe("buildProofV3: checkers (Amendment 10)", () => {
     expect(out.proofV3.checkers.rows).toHaveLength(4);
   });
 });
+
+describe("buildProofV3: Test B after the model's cutoff (Amendment 9)", () => {
+  const pc = [fixedCase("post-a", 1, 2, 9), fixedCase("post-b", 3, 1, 8), fixedCase("post-c", 1, 1, 10)];
+  const postRun: ProofV3Results = { ...base("dddddd"), fixedRank: { plannedCases: 5, cases: pc, excluded: [{ id: "post-d", reason: "real pick unresolved" }, { id: "post-e", reason: "real pick unresolved" }], notRun: [], stats: computeFixedStats(pc) } };
+  const p = buildProofV3(inputs({ fixedPostCutoff: postRun }));
+  const t = test(p, "B_post_cutoff");
+  it("is absent without the file, and B is unchanged by it", () => {
+    expect(buildProofV3(inputs()).tests.map((x) => x.id)).not.toContain("B_post_cutoff");
+    expect(test(p, "B")).toEqual(test(buildProofV3(inputs()), "B"));
+  });
+  it("has the Amendment 9 title, MRR per arm, both sign tests and per-case rows", () => {
+    expect(t.title).toBe("Test B after the model's cutoff (Amendment 9)");
+    expect(t.n).toBe(3);
+    expect(t.tables[0]!.rows.map((r) => r[0])).toEqual(["Qloo rank", "Gemini", "Popularity", "Chance level"]);
+    expect(t.signTests.map((s) => s.label)).toEqual(["Qloo rank vs Gemini", "Qloo rank vs popularity"]);
+    expect(t.perUnit!.rows[0]).toEqual(["post-a", "#1", "#2", "#9"]);
+  });
+  it("limits: n of n collected, exclusions with ids and reasons, AI-agents-no-human-review, small sample", () => {
+    const l = t.limits.join("\n");
+    expect(l).toContain("Sample size: 3 of 5 cases collected were scored, a small sample.");
+    expect(l).toContain("2 cases excluded: post-d (real pick unresolved in Qloo); post-e (real pick unresolved in Qloo).");
+    expect(l).toContain("Cases were collected and verified by AI agents, with no human review (Amendment 9).");
+  });
+  it("the CLI reads proof-v3-fixed-post-cutoff.json when present", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "proof-publish-"));
+    mkdirSync(join(dir, "backtest"));
+    const w = (name: string, v: unknown) => writeFileSync(join(dir, "backtest", name), JSON.stringify(v));
+    w("proof-v3-city-batch1.json", b1); w("proof-v3-city-batch2.json", b2); w("proof-v3-fixed.json", fixed); w("proof-v3-catch.json", catchRun); w("proof-v3-fixed-post-cutoff.json", postRun);
+    const lines: string[] = [];
+    const io: CliIo = { log: (l) => lines.push(l), env: {}, makeClients: () => { throw new Error("no network"); }, now: () => new Date("2026-10-28T00:00:00Z") };
+    await publishCli.main(["--dir", dir], io, { amendments: () => [], protocolCommit: () => "c" });
+    const out = JSON.parse(readFileSync(join(dir, "backtest.json"), "utf8"));
+    expect(out.proofV3.tests.map((x: { id: string }) => x.id)).toContain("B_post_cutoff");
+  });
+});

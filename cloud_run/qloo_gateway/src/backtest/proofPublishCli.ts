@@ -41,7 +41,7 @@ export async function main(argv: string[], io: CliIo = defaultIo(), deps: Deps =
   for (let n = 1; existsSync(bt(`proof-v3-ground-items.stopped-${n}.json`)); n += 1) groundStopped.push(JSON.parse(readFileSync(bt(`proof-v3-ground-items.stopped-${n}.json`), "utf8")) as StoppedGroundRun);
   const proofV3 = buildProofV3({
     protocolCommit: deps.protocolCommit(), amendments: deps.amendments(), batches: [need("proof-v3-city-batch1.json"), need("proof-v3-city-batch2.json")],
-    fixed: need("proof-v3-fixed.json"), fixedStopped: stopped, catchRate: need("proof-v3-catch.json"), grounding: readIf(bt("proof-v3-ground.json")), groundingStopped: groundStopped, fusion: existsSync(bt("proof-v3-fusion.json")) ? (JSON.parse(readFileSync(bt("proof-v3-fusion.json"), "utf8")) as FusionFile) : undefined, checkers: existsSync(bt("proof-v3-checkers.json")) ? (JSON.parse(readFileSync(bt("proof-v3-checkers.json"), "utf8")) as CheckersFile) : undefined, now: io.now(),
+    fixed: need("proof-v3-fixed.json"), fixedPostCutoff: readIf(bt("proof-v3-fixed-post-cutoff.json")), fixedStopped: stopped, catchRate: need("proof-v3-catch.json"), grounding: readIf(bt("proof-v3-ground.json")), groundingStopped: groundStopped, fusion: existsSync(bt("proof-v3-fusion.json")) ? (JSON.parse(readFileSync(bt("proof-v3-fusion.json"), "utf8")) as FusionFile) : undefined, checkers: existsSync(bt("proof-v3-checkers.json")) ? (JSON.parse(readFileSync(bt("proof-v3-checkers.json"), "utf8")) as CheckersFile) : undefined, now: io.now(),
   });
   const existing = existsSync(out) ? (JSON.parse(readFileSync(out, "utf8")) as Record<string, unknown>) : {};
   writeJson(out, { ...existing, proofV3 });

@@ -13,7 +13,7 @@ export interface Table { columns: string[]; rows: string[][] }
 export interface SignLine { label: string; wins: number; losses: number; ties: number; pairs: number; p: number }
 export interface RunLine { label: string; commit: string; status: "complete" | "stopped"; note: string }
 export interface ProofV3Test {
-  id: "A" | "B" | "C" | "F" | "catch"; title: string; question: string; status: string; n: number;
+  id: "A" | "B" | "B_post_cutoff" | "C" | "F" | "catch"; title: string; question: string; status: string; n: number;
   /** Arm table first (R-precision, MRR, catch counts, in-city shares). */
   tables: Table[]; signTests: SignLine[]; claims: string[]; limits: string[]; runs?: RunLine[];
   /** The "Per artist/case" disclosure; null when a test has no per-unit rows. */
@@ -29,7 +29,7 @@ export interface PublishInputs {
   protocolCommit: string; amendments: Amendment[];
   /** Test A batches, in order. */
   batches: ProofV3Results[];
-  fixed?: ProofV3Results; /** Earlier stopped runs of Test B, oldest first. */ fixedStopped?: ProofV3Results[];
+  fixed?: ProofV3Results; /** Amendment 9: Test B on cases after the model's cutoff (`proof-v3-fixed-post-cutoff.json`), when present. */ fixedPostCutoff?: ProofV3Results; /** Earlier stopped runs of Test B, oldest first. */ fixedStopped?: ProofV3Results[];
   catchRate?: ProofV3Results; grounding?: ProofV3Results; /** Test C's stopped runs (the `proof-v3-ground-items.stopped-N.json` files), oldest first. */ groundingStopped?: StoppedGroundRun[]; /** Amendment 7: the offline fusion results, when computed. */ fusion?: FusionFile; /** Amendment 10: the offline checker catch rates (`proof-v3-checkers.json`), when computed. */ checkers?: CheckersFile; now: Date;
 }
 /** The few facts read from a stopped Test C items file; its names stay private. */
@@ -117,6 +117,25 @@ function testB(fixed: ProofV3Results, earlier: ProofV3Results[]): ProofV3Test {
     ],
     runs,
     perUnit: { columns: ["Case", ...FIXED_ARMS.map((a) => FIXED_LABEL[a])], rows: f.cases.map((c) => [c.id, ...FIXED_ARMS.map((a) => rankText(c, a))]) },
+  };
+}
+
+/** Amendment 9: the same Test B builder and claim rule, on the post-cutoff cases. */
+function testBPostCutoff(run: ProofV3Results): ProofV3Test {
+  const f = run.fixedRank!;
+  const base = testB(run, []);
+  const why = (r: string): string => (r === "real pick unresolved" ? `${r} in Qloo` : r);
+  return {
+    ...base, id: "B_post_cutoff", title: "Test B after the model's cutoff (Amendment 9)",
+    question: "On cases collected after the answering model's training cutoff, does Qloo rank place the real pick higher among 10 candidates than Gemini or popularity?",
+    status: `${run.stop.status === "stopped" ? "Stopped early" : "Complete"}: ${f.cases.length} of ${f.plannedCases} cases scored.`,
+    limits: [
+      "Each case has the real pick plus 9 decoys from the city's popularity list, so the test asks whether a method puts the real pick first among plausible options.",
+      `Sample size: ${f.cases.length} of ${f.plannedCases} cases collected were scored, a small sample.`,
+      ...(f.excluded.length ? [`${plural(f.excluded.length, "case")} excluded: ${f.excluded.map((e) => `${e.id} (${why(e.reason)})`).join("; ")}.`] : []),
+      "Cases were collected and verified by AI agents, with no human review (Amendment 9).",
+    ],
+    runs: [{ label: "Run 1", commit: run.protocol.commit, status: run.stop.status === "stopped" ? "stopped" : "complete", note: `${plural(f.cases.length, "case")} scored of ${f.plannedCases}` }],
   };
 }
 
@@ -243,6 +262,7 @@ export function buildProofV3(i: PublishInputs): ProofV3Published {
   const tests: ProofV3Test[] = [];
   if (i.batches.length) tests.push(testA(i.batches));
   if (i.fixed?.fixedRank) tests.push(testB(i.fixed, i.fixedStopped ?? []));
+  if (i.fixedPostCutoff?.fixedRank) tests.push(testBPostCutoff(i.fixedPostCutoff));
   if (i.catchRate?.catchRate) tests.push(testCatch(i.catchRate));
   if (i.grounding?.grounding) tests.push(testC(i.grounding, i.groundingStopped ?? []));
   if (i.fusion) tests.push(testF(i.fusion));
