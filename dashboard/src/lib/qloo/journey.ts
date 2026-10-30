@@ -14,7 +14,7 @@ export const STEPS: ReadonlyArray<{ id: StepId; label: string }> = [
 ];
 
 export function stepOf(pathname: string): StepId | null {
-  if (pathname === "/") return "markets";
+  // Landing ("/") is the doorway, not a step: nothing is active there. "Markets" reads as done once the board is open.
   if (pathname === "/tours/board") return "decide";
   if (pathname.startsWith("/tours/playbook/")) return "playbook";
   if (pathname === "/tours/book") return "book";

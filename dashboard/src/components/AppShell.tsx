@@ -16,7 +16,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       {isDesktop ? (
         <header data-app-shell className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-canvas-raised px-8">
           <div className="flex items-center gap-8">
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-center gap-2">
+              <img src="/favicon.svg" alt="" width={20} height={20} className="size-5 shrink-0 self-center" />
               <span className="font-title text-[18px] font-semibold text-bone">Tour Intelligence</span>
               <span className="font-sans text-[13px] font-medium text-canvas-muted">× Qloo</span>
             </div>

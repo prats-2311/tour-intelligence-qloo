@@ -10,7 +10,7 @@ import { parseShowcase, setShowcase, setShowcaseVariant, showcaseCities, showcas
 describe("stepOf", () => {
   it("maps the four journey routes and nothing else", () => {
     expect(STEPS.map((s) => s.label)).toEqual(["Markets", "Decide", "Playbook", "Tour Book"]);
-    expect(stepOf("/")).toBe("markets");
+    expect(stepOf("/")).toBeNull();
     expect(stepOf("/tours/board")).toBe("decide");
     expect(stepOf("/tours/playbook/123")).toBe("playbook");
     expect(stepOf("/tours/book")).toBe("book");

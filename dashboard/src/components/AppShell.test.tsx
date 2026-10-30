@@ -24,6 +24,9 @@ describe("AppShell", () => {
     mm(true);
     render(<MemoryRouter initialEntries={["/"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
     expect(screen.getByText("Tour Intelligence")).toBeTruthy();
+    const mark = document.querySelector('header img[src="/favicon.svg"]');
+    expect(mark?.getAttribute("alt")).toBe("");
+    expect(mark?.nextElementSibling?.textContent).toBe("Tour Intelligence");
     const nav = screen.getByRole("navigation", { name: "Primary" });
     expect(Array.from(nav.querySelectorAll("a")).map((a) => a.getAttribute("href"))).toEqual(["/", "/tours/board?sample=1", expect.stringMatching(/^\/tours\/playbook\/\d+\?sample=1$/), "/tours/book?sample=1"]);
     expect(screen.queryByRole("link", { name: "Taste" })).toBeNull();
@@ -40,6 +43,12 @@ describe("AppShell", () => {
     mm(true);
     render(<MemoryRouter initialEntries={["/insights"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
     expect(Array.from(document.querySelectorAll("[data-step]")).map((li) => li.getAttribute("data-state"))).toEqual(["todo", "todo", "todo", "todo"]);
+  });
+  it("on the landing route no step is active, current or done", () => {
+    mm(true);
+    render(<MemoryRouter initialEntries={["/"]}><TourBoardProvider><AppShell><p>child</p></AppShell></TourBoardProvider></MemoryRouter>);
+    expect(Array.from(document.querySelectorAll("[data-step]")).map((li) => li.getAttribute("data-state"))).toEqual(["todo", "todo", "todo", "todo"]);
+    expect(document.querySelector('[aria-current="page"]')).toBeNull();
   });
   it("primary nav shows only the four steps and no campaign controls", () => {
     mm(true);
