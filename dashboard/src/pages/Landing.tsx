@@ -141,6 +141,7 @@ export default function Landing() {
           </>
         )}
         <Link to="/proof" className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{PROOF_LINK_TEXT} →</Link>
+        <Link to="/v2" className="flex min-h-11 w-fit items-center text-[13px] text-canvas-muted underline decoration-canvas-line underline-offset-4 outline-none hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Preview: what's next (concept) →</Link>
       </div>
       <Story />
       <div className="flex flex-col gap-6 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">

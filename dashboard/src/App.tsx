@@ -18,6 +18,7 @@ const CityPlaybook = lazy(routeImports.playbook);
 const Proof = lazy(routeImports.proof);
 const TourBook = lazy(routeImports.book);
 const TasteInsights = lazy(routeImports.insights);
+const V2Preview = lazy(routeImports.v2);
 
 function NotFound() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/tours/book" element={<Suspense fallback={<PlaybookSkeleton />}><TourBook /></Suspense>} />
           <Route path="/proof" element={<Suspense fallback={<PlaybookSkeleton />}><Proof /></Suspense>} />
           <Route path="/insights" element={<Suspense fallback={<TasteInsightsSkeleton />}><TasteInsights /></Suspense>} />
+          <Route path="/v2" element={<Suspense fallback={<PlaybookSkeleton />}><V2Preview /></Suspense>} />
           {/* Legacy campaign screens are gone; old links land on the board. */}
           {["/campaign", "/city/:cityId", "/compare", "/campaigns/new", "/cities/add"].map((path) => (
             <Route key={path} path={path} element={<Navigate to="/tours/board" replace />} />

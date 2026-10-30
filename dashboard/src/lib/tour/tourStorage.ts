@@ -18,3 +18,14 @@ export function writeTourOutcome(outcome: TourOutcome): void {
     /* the tour still works; the prompt may come back next visit */
   }
 }
+
+/** The v2 concept tour keeps its own key; the v1 key above is never read or written for it. */
+export const V2_TOUR_STORAGE_KEY = "tiq.tour.v2";
+
+export function writeV2TourOutcome(outcome: TourOutcome): void {
+  try {
+    window.localStorage.setItem(V2_TOUR_STORAGE_KEY, outcome);
+  } catch {
+    /* nothing depends on it */
+  }
+}

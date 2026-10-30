@@ -7,5 +7,6 @@ export const routeImports = {
   book: () => import("../pages/TourBook"),
   proof: () => import("../pages/Proof"),
   insights: () => import("../pages/TasteInsights"),
+  v2: () => import("../pages/V2Preview"),
 };
 export type RouteKey = keyof typeof routeImports;
