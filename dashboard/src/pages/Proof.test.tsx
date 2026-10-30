@@ -308,6 +308,10 @@ describe("Proof live numbers", () => {
     const { container } = render(<LiveStats trust={off} team={off} />);
     expect(container.innerHTML).toBe("");
   });
+  it("uses the singular for one write-up", () => {
+    render(<LiveStats trust={{ ...trust, narratedPlaybooks: 1, claimsChecked: 7, claimsRemoved: 0 }} team={off} />);
+    expect(screen.getByText("Claims checked in 1 write-up: 7, removed 0 (0 of 7)")).toBeTruthy();
+  });
   it("renders both panels from fake data", () => {
     render(<LiveStats trust={trust} team={team} />);
     expect(screen.getByRole("heading", { level: 2, name: "Live since Oct 30, 2026" })).toBeTruthy();

@@ -354,7 +354,7 @@ function ClaimCheckerPanel({ t }: { t: TrustStats }) {
       <h3 className={eyebrow}>Claim checker, live</h3>
       <p className="m-0 mt-3 break-words text-[15px] text-canvas-text">{`Playbooks built: ${t.playbooks} (${t.bySource.live} in the app, ${t.bySource.mcp_public} by AI agents via MCP)`}</p>
       {t.narratedPlaybooks > 0
-        ? <p className="m-0 mt-2 break-words text-[15px] text-canvas-text">{`Claims checked in ${t.narratedPlaybooks} write-ups: ${t.claimsChecked}, removed ${t.claimsRemoved} (${t.claimsRemoved} of ${t.claimsChecked})`}</p>
+        ? <p className="m-0 mt-2 break-words text-[15px] text-canvas-text">{`Claims checked in ${t.narratedPlaybooks} write-up${t.narratedPlaybooks === 1 ? "" : "s"}: ${t.claimsChecked}, removed ${t.claimsRemoved} (${t.claimsRemoved} of ${t.claimsChecked})`}</p>
         : <p className="m-0 mt-2 break-words text-[15px] text-canvas-text">{`Claims are checked whenever a playbook write-up is generated in the app; none yet since ${dateText(t.since)}.`}</p>}
       <dl className="m-0 mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
         <Stat label="Median build time" value={seconds(t.medianLatencyMs)} />
