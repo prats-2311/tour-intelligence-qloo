@@ -7,7 +7,7 @@ import type { TourStep } from "@/lib/tour/tourSteps";
 import { nextTour, TOURS, tourById, tourStorageKey, type TourId } from "@/lib/tour/tours";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
 import { buildV2TourSteps } from "@/lib/tour/v2TourSteps";
-import { OPEN_ASK_EVENT } from "@/components/strategist/StrategistLauncher";
+import { CLOSE_ASK_EVENT, OPEN_ASK_EVENT } from "@/components/strategist/StrategistLauncher";
 import { TourOverlay } from "./TourOverlay";
 import { TourPrompt } from "./TourPrompt";
 import { TourContext, type TourApi } from "./tourContext";
@@ -27,10 +27,13 @@ export function TourProvider({ children }: { children: ReactNode }) {
   // Which tour is running: an id for the registry tours, "v2" for the /v2 page tour (its own storage), null when idle.
   const [running, setRunning] = useState<TourId | "v2" | null>(null);
 
+  // True while the tour has the Ask panel open for a step; it is closed again on the next step that does not need it, or when the tour ends.
+  const askOpened = useRef(false);
   const go = useCallback((list: TourStep[], i: number) => {
     setIndex(i);
     const step = list[i]!;
-    if (step.opens === "ask") window.dispatchEvent(new CustomEvent(OPEN_ASK_EVENT));
+    if (step.opens === "ask") { askOpened.current = true; window.dispatchEvent(new CustomEvent(OPEN_ASK_EVENT)); }
+    else if (askOpened.current) { askOpened.current = false; window.dispatchEvent(new CustomEvent(CLOSE_ASK_EVENT)); }
     navigate(step.route);
   }, [navigate]);
 
@@ -48,6 +51,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
   const finish = useCallback((result: TourOutcome) => {
     setSteps(null);
+    if (askOpened.current) { askOpened.current = false; window.dispatchEvent(new CustomEvent(CLOSE_ASK_EVENT)); }
     if (running === "v2") writeV2TourOutcome(result);
     else if (running) { setOutcomes((o) => ({ ...o, [running]: result })); writeOutcomeAt(tourStorageKey(running), result); }
     setRunning(null);

@@ -353,6 +353,28 @@ describe("the four tours", () => {
     expect(heard).toHaveBeenCalledTimes(1);
     window.removeEventListener("tour:open-ask", heard);
   });
+  it("leaving the chat step, or ending the tour there, asks the Ask panel to close again", async () => {
+    const closed = vi.fn();
+    window.addEventListener("tour:close-ask", closed);
+    mountPlan();
+    fireEvent.click(screen.getByRole("button", { name: "go plan" }));
+    await flush();
+    await walk(4);
+    expect(counter()).toBe("5 of 6");
+    expect(closed).not.toHaveBeenCalled();
+    await walk(1);
+    expect(counter()).toBe("6 of 6");
+    expect(closed).toHaveBeenCalledTimes(1);
+    cleanup();
+    closed.mockClear();
+    mountPlan();
+    fireEvent.click(screen.getByRole("button", { name: "go plan" }));
+    await flush();
+    await walk(4);
+    fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+    expect(closed).toHaveBeenCalledTimes(1);
+    window.removeEventListener("tour:close-ask", closed);
+  });
   it("the last tour offers no successor", async () => {
     const Last = () => { const t = useTour()!; return <button type="button" onClick={() => t.startTour("trust")}>go trust</button>; };
     mount("/tours/board?showcase=1", <><Route path="/tours/board" element={<Last />} /><Route path="/proof" element={<p>p</p>} /><Route path="/agents" element={<p>a</p>} /><Route path="/v2" element={<p>v</p>} /></>);

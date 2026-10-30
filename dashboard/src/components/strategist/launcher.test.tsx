@@ -103,6 +103,31 @@ describe("tour:open-ask (the guided tour opens the Ask panel)", () => {
     await act(async () => { window.dispatchEvent(new CustomEvent("tour:open-ask")); });
     expect(await screen.findByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
   });
+  it("tour:close-ask puts the dock back as it was: closed stays closed, open stays open", async () => {
+    mm(true);
+    const { unmount } = shell("/tours/board?sample=1");
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:open-ask")); });
+    expect(await screen.findByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:close-ask")); });
+    expect(screen.queryByRole("complementary", { name: "Ask about this tour" })).toBeNull();
+    expect(localStorage.getItem("strategistOpen")).toBe("0");
+    unmount();
+    localStorage.setItem("strategistOpen", "1");
+    shell("/tours/board?sample=1");
+    expect(await screen.findByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:open-ask")); });
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:close-ask")); });
+    expect(screen.getByRole("complementary", { name: "Ask about this tour" })).toBeTruthy();
+  });
+  it("tour:close-ask closes the phone sheet", async () => {
+    mm(false);
+    shell("/tours/board?sample=1");
+    await screen.findByRole("button", { name: "Ask about this tour" });
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:open-ask")); });
+    expect(await screen.findByRole("dialog", { name: "Ask about this tour" })).toBeTruthy();
+    await act(async () => { window.dispatchEvent(new CustomEvent("tour:close-ask")); });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Ask about this tour" })).toBeNull());
+  });
   it("opens the phone sheet", async () => {
     mm(false);
     shell("/tours/board?sample=1");
