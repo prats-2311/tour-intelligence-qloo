@@ -25,18 +25,23 @@ export async function generateTurn(
 ): Promise<TurnResult> {
   // No declarations means a forced text answer: omit tools (Vertex may reject an empty list) and set mode NONE.
   const forceText = req.tools.length === 0;
-  const bodyFor = (model: string) => ({
+  const bodyFor = (model: string, lowThinking = true) => ({
     systemInstruction: { parts: [{ text: req.system }] },
     contents: req.contents,
     ...(forceText ? {} : { tools: [{ functionDeclarations: req.tools }] }),
     toolConfig: { functionCallingConfig: { mode: forceText ? "NONE" : "AUTO" } },
-    generationConfig: { temperature: 0.3, thinkingConfig: thinkingConfigFor(model, opts.thinkingBudget ?? DEFAULT_THINKING_BUDGET) },
+    generationConfig: { temperature: 0.3, thinkingConfig: lowThinking ? thinkingConfigFor(model, opts.thinkingBudget ?? DEFAULT_THINKING_BUDGET) : { includeThoughts: true } },
   });
   let last: unknown = new Error("no model configured");
   for (const model of models) {
     await opts.beforeAttempt?.();
     let parts: GeminiPart[];
-    try { parts = (await generate(model, bodyFor(model))).candidates?.[0]?.content?.parts ?? []; } catch (err) { last = err; continue; }
+    try { parts = (await generate(model, bodyFor(model))).candidates?.[0]?.content?.parts ?? []; } catch (err) {
+      last = err;
+      // If the API rejects the low-thinking fields (a 400-style payload error), try the same model once with the plain config before moving on.
+      if (!/\b400\b|INVALID_ARGUMENT|Invalid JSON payload|Unknown name|thinking/i.test(String((err as Error)?.message ?? err))) continue;
+      try { await opts.beforeAttempt?.(); parts = (await generate(model, bodyFor(model, false))).candidates?.[0]?.content?.parts ?? []; } catch (err2) { last = err2; continue; }
+    }
     const thoughts = parts.filter((p) => p.thought && p.text).map((p) => p.text!.trim());
     return {
       model, parts,
