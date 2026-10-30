@@ -163,14 +163,14 @@ describe("CityPlaybook", () => {
     expect(await screen.findByText("Max stops reached — raise it in the brief")).toBeTruthy();
     expect((screen.getByRole("button", { name: "Add to tour" }) as HTMLButtonElement).disabled).toBe(true);
   });
-  it("has only the two promoter tabs, How to win and Local acts, and Local acts shows the talent card", async () => {
+  it("has only the two promoter tabs, How to win and Acts fans love, and Acts fans love shows the talent card", async () => {
     renderAt("/tours/playbook/4005539?sample=1");
     const first = await screen.findByRole("tab", { name: "How to win" });
-    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["How to win", "Local acts"]);
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["How to win", "Acts fans love"]);
     expect(screen.queryByRole("tab", { name: /Culture|Delight|Activate|Talent/ })).toBeNull();
     first.focus();
     fireEvent.keyDown(first, { key: "ArrowLeft" });
-    expect(screen.getByRole("tab", { name: "Local acts" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("tab", { name: "Acts fans love" }).getAttribute("aria-selected")).toBe("true");
     expect(await screen.findByText(/Shared taste with Guadalajara's mainstream/, undefined, { timeout: 3000 })).toBeTruthy();
   });
   it("never mentions the campaign flow", async () => {
@@ -255,10 +255,10 @@ describe("CityPlaybook reached without the showcase flag in the URL", () => {
 });
 
 describe("CityPlaybook naming and SUPPORT rule", () => {
-  it("the Local acts tab card, fallback and chapter use Local acts, never Talent", async () => {
+  it("the Acts fans love tab card, fallback and chapter use the acts title, never Talent", async () => {
     renderAt("/tours/playbook/4005539?sample=1");
-    fireEvent.click(await screen.findByRole("tab", { name: "Local acts" }));
-    expect(await screen.findByRole("heading", { name: "Local acts" })).toBeTruthy();
+    fireEvent.click(await screen.findByRole("tab", { name: "Acts fans love" }));
+    expect(await screen.findByRole("heading", { name: "Acts these fans love here" })).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/Talent/);
   });
   it("SUPPORT shows a dash for a co-billing card that is not ok, even if it carries items (same rule as the landing)", async () => {

@@ -162,7 +162,7 @@ describe("playbook cards", () => {
     expect(screen.queryByText(/vs city/)).toBeNull();
     expect(screen.getByText("0.80")).toBeTruthy();
   });
-  it("co-billing and local acts show the support-scale copy when empty", () => {
+  it("co-billing and the acts card show the support-scale copy when empty", () => {
     const copy = "Every Qloo match is bigger than Lumen Vale, so no support pick here.";
     const { unmount } = render(<CardBody card={{ ...card("co_billing"), status: "empty", items: [], summary: { biggerThanHeadliner: 3, popularityUnknown: 0, emptyCopy: copy } }} city="Guadalajara" />);
     expect(screen.getByText(copy)).toBeTruthy();
@@ -213,30 +213,31 @@ describe("playbook cards", () => {
     render(<CardBody card={card("talent")} city="Guadalajara" />);
     expect(screen.getByText("Shared taste with Guadalajara's mainstream: 0.12")).toBeTruthy();
     expect(screen.getByText("dream pop")).toBeTruthy();
-    expect(screen.getByText("Local acts: popular in the city, each found in Qloo and ranked by taste fit with the headliner.")).toBeTruthy();
+    expect(screen.getByText("Acts fans rank highly here: popular in the city, each found in Qloo and ranked by taste fit with the headliner.")).toBeTruthy();
+    expect(screen.getByText("Not all are from the city — check before billing as a local guest.")).toBeTruthy();
     expect(screen.queryByText(/Gemini/)).toBeNull(); // the sample carries no suggested item
     expect(screen.queryByText(/without the artist signal/)).toBeNull();
   });
   it("talent caption names the artist when known", () => {
     render(<CardBody card={card("talent")} city="Guadalajara" artist="Lumen Vale" />);
-    expect(screen.getByText("Local acts: popular in the city, each found in Qloo and ranked by taste fit with Lumen Vale.")).toBeTruthy();
+    expect(screen.getByText("Acts fans rank highly here: popular in the city, each found in Qloo and ranked by taste fit with Lumen Vale.")).toBeTruthy();
   });
   it("talent caption mentions Gemini only when an item was suggested", () => {
     const base = card("talent");
     render(<CardBody card={{ ...base, items: [{ name: "Drake", entityId: "e1", affinity: 0.9, source: "suggested" }] }} city="Toronto" artist="Lumen Vale" />);
-    expect(screen.getByText("Local acts: candidates suggested by Gemini or popular in the city, each found in Qloo and ranked by taste fit with Lumen Vale.")).toBeTruthy();
+    expect(screen.getByText("Acts fans rank highly here: candidates suggested by Gemini or popular in the city, each found in Qloo and ranked by taste fit with Lumen Vale.")).toBeTruthy();
   });
   it("talent says the list is unranked and shows no fit value when ranking was unavailable", () => {
     const base = card("talent");
     const items = [{ name: "Drake", entityId: "e1", affinity: 0.91, source: "suggested" }, { name: "Local Band", entityId: "e2", affinity: 0.55, source: "city_popular" }];
     render(<CardBody card={{ ...base, items, summary: { ...base.summary, rankUnavailable: true } }} city="Toronto" artist="Lumen Vale" />);
-    expect(screen.getByText("Local acts: candidates suggested by Gemini or popular in the city, each found in Qloo. Taste ranking was unavailable, so they are not ranked.")).toBeTruthy();
+    expect(screen.getByText("Acts fans rank highly here: candidates suggested by Gemini or popular in the city, each found in Qloo. Taste ranking was unavailable, so they are not ranked.")).toBeTruthy();
     expect(screen.queryByText(/ranked by taste fit/)).toBeNull();
     expect(screen.queryByText("0.91")).toBeNull();
     expect(screen.queryByText("0.55")).toBeNull();
     cleanup();
     render(<CardBody card={{ ...base, items: [{ name: "Local Band", entityId: "e2", affinity: 0.55, source: "city_popular" }], summary: { ...base.summary, rankUnavailable: true } }} city="Toronto" />);
-    expect(screen.getByText("Local acts: popular in the city, each found in Qloo. Taste ranking was unavailable, so they are not ranked.")).toBeTruthy();
+    expect(screen.getByText("Acts fans rank highly here: popular in the city, each found in Qloo. Taste ranking was unavailable, so they are not ranked.")).toBeTruthy();
   });
   it("talent rows carry a text source label and an unresolved note only when some suggestions were not found", () => {
     const base = card("talent");

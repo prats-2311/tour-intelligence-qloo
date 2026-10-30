@@ -41,7 +41,7 @@ import { useIsDesktop } from "@/lib/useMediaQuery";
 
 // The Culture and Delight briefs belong to the legacy campaign flow, which is off the promoter path.
 type Tab = "activate" | "talent";
-const TABS: Array<{ id: Tab; label: string }> = [{ id: "activate", label: "How to win" }, { id: "talent", label: "Local acts" }];
+const TABS: Array<{ id: Tab; label: string }> = [{ id: "activate", label: "How to win" }, { id: "talent", label: "Acts fans love" }];
 const ORDER: CardKind[] = ["sponsors", "merch", "promo_zones", "local_moment", "venue_fit", "co_billing"];
 type CardId = CardKind | "this_week";
 // Desktop (lg) grid placement, brief 3b. On phones every card is a snap-scroller item.
@@ -298,7 +298,7 @@ function CityPlaybookPage() {
     </>
   );
   const talentCard = cardOf("talent");
-  const talentPanel = noSample ? noSamplePanel : loading ? <div className="skeleton h-[280px] max-w-xl rounded-[18px]" aria-hidden /> : talentCard ? <div className="max-w-xl">{playbookCard("talent")}</div> : <p className="text-[13px] text-canvas-muted">Local acts unavailable for {shownCity.name}</p>;
+  const talentPanel = noSample ? noSamplePanel : loading ? <div className="skeleton h-[280px] max-w-xl rounded-[18px]" aria-hidden /> : talentCard ? <div className="max-w-xl">{playbookCard("talent")}</div> : <p className="text-[13px] text-canvas-muted">Acts these fans love here are unavailable for {shownCity.name}</p>;
   const panels: Record<Tab, ReactNode> = { activate: activatePanel, talent: talentPanel };
 
   return (

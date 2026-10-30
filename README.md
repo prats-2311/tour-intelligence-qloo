@@ -28,7 +28,7 @@ New here? "Take the tour" on the landing page walks through these steps in 8 sho
 
 1. **Markets** (opens on the example): fan heat per city, with "Try a routing" to replay a recorded run where a tour's cities were pasted, scored and ordered. To paste your own cities, use "Try your own artist". ![Landing](docs/screens/01-landing-desktop.png)
 2. **Decide:** winnability per city, and the "where fan heat and winnability disagree" section, described as "worth a second look" rather than a ranking claim. ![Decide](docs/screens/02-board-winnability-desktop.png) Compare with the same cities as a generic LLM ranks them, without Qloo: ![Without Qloo](docs/screens/03-board-without-qloo-desktop.png)
-3. **Playbook:** open a city for sponsors (with lift versus the city), local guests, venues, support acts, verified claims and verdict clocks. ![Playbook](docs/screens/04-playbook-desktop.png)
+3. **Playbook:** open a city for sponsors (with lift versus the city), acts these fans love in the city, venues, support acts, verified claims and verdict clocks. ![Playbook](docs/screens/04-playbook-desktop.png)
 4. **Tour Book:** the printable document with a chapter per city. ![Tour Book](docs/screens/05-tour-book-cover-desktop.png)
 5. **Ask about this tour:** a recorded Q&A in which the strategist answers with its work log visible. Then open `/proof`. ![Proof](docs/screens/06-proof-desktop.png)
 
@@ -46,8 +46,8 @@ Every Qloo call goes through one service, [`qloo_gateway`](cloud_run/qloo_gatewa
 | `qloo_entity_tags` | Taste tags that drive sponsor fit and local hooks |
 | `qloo_trends` | Trend window for the artist in the city (7-day cache) |
 | `qloo_recommend` | Sponsor brands, real music venues, local acts, film and TV hooks |
-| `qloo_rank` | Rank a fixed candidate list by taste fit (venues, local guests, sponsor candidates) |
-| `qloo_compare_audiences` | Shared taste between the headliner and a support act or local guest |
+| `qloo_rank` | Rank a fixed candidate list by taste fit (venues, acts fans love, sponsor candidates) |
+| `qloo_compare_audiences` | Shared taste between the headliner and a support act or a city act |
 | `qloo_find_tags` | Used once, offline, to fix the 4 venue-category tag ids; not called at runtime |
 | `qloo_capabilities` | Gateway health check (is the harness connected and ready); plumbing, not a product screen |
 

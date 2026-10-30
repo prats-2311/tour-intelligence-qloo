@@ -15,7 +15,7 @@ export function callPurpose(tool: string, args: Record<string, unknown>): string
     case "qloo_rank": return "venues";
     case "qloo_compare_audiences": return "support acts";
     case "qloo_entity_tags": return "merch";
-    case "qloo_describe": return "local acts";
+    case "qloo_describe": return "acts fans love";
     case "qloo_trends": return "momentum";
     case "qloo_audience_demographics": return "audience profile";
     default: return "other lookups";

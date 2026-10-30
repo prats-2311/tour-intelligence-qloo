@@ -16,7 +16,7 @@ describe("callPurpose", () => {
     expect(callPurpose("qloo_rank", {})).toBe("venues");
     expect(callPurpose("qloo_compare_audiences", {})).toBe("support acts");
     expect(callPurpose("qloo_entity_tags", {})).toBe("merch");
-    expect(callPurpose("qloo_describe", {})).toBe("local acts");
+    expect(callPurpose("qloo_describe", {})).toBe("acts fans love");
     expect(callPurpose("qloo_trends", {})).toBe("momentum");
   });
 });

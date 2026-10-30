@@ -18,8 +18,8 @@ export function Talent({ card, city, artist }: { card: PlaybookCard; city: strin
   const unranked = card.summary?.rankUnavailable === true;
   const who = suggestedAny ? "candidates suggested by Gemini or popular in the city" : "popular in the city";
   const caption = unranked
-    ? `Local acts: ${who}, each found in Qloo. Taste ranking was unavailable, so they are not ranked.`
-    : `Local acts: ${who}, each found in Qloo and ranked by taste fit with ${artist || "the headliner"}.`;
+    ? `Acts fans rank highly here: ${who}, each found in Qloo. Taste ranking was unavailable, so they are not ranked.`
+    : `Acts fans rank highly here: ${who}, each found in Qloo and ranked by taste fit with ${artist || "the headliner"}.`;
   return (
     <>
       <div className="mb-2">
@@ -30,6 +30,7 @@ export function Talent({ card, city, artist }: { card: PlaybookCard; city: strin
       </div>
       <Rows>{items.map((it, i) => <Row key={i} name={str(it.name)} sub={SOURCE_LABEL[str(it.source)]} aside={unranked ? null : fit(num(it.affinity))} link={str(it.name) ? listenLink(str(it.name)) : undefined} />)}</Rows>
       <Caption>{caption}</Caption>
+      <p className="mt-1 text-[13px] text-canvas-muted">Not all are from the city — check before billing as a local guest.</p>
       {typeof card.summary?.sizeNote === "string" && <p className="mt-1 text-[13px] text-canvas-muted">{card.summary.sizeNote}</p>}
       {unresolved > 0 && <p className="mt-1 text-[13px] text-canvas-muted">{unresolved === 1 ? "1 suggestion wasn't found in Qloo and is not shown." : `${unresolved} suggestions weren't found in Qloo and are not shown.`}</p>}
       {skipped > 0 && <p className="mt-1 text-[13px] text-canvas-muted">{skipped === 1 ? "1 more wasn't checked (lookup limit)." : `${skipped} more weren't checked (lookup limit).`}</p>}
