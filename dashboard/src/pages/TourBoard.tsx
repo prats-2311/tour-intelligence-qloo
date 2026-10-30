@@ -35,11 +35,16 @@ import type { TourBrief, Verdict } from "@/lib/qloo/types";
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));
 
 type Mode = "winnability" | "density" | "without";
-const MODES: Array<{ id: Mode; label: string }> = [
+const MODES: Array<{ id: Mode; label: string; hint?: string }> = [
   { id: "winnability", label: "Winnability" },
-  { id: "density", label: "Density-only" },
-  { id: "without", label: "Without Qloo" },
+  { id: "density", label: "Density-only", hint: "Density-only: the same cities sorted by fan heat alone, the way a tool that only counts fans would rank them." },
+  { id: "without", label: "Without Qloo", hint: "Without Qloo: a generic AI model's city order with no taste data, shown for comparison." },
 ];
+export const BOARD_LEGEND = [
+  { term: "Fan heat", def: "how much this artist's fans over-index here", bar: "fanheat" },
+  { term: "Activation", def: "sponsor, venue and local fit", bar: "activation" },
+  { term: "Winnability", def: "50/50 of the two" },
+] as const;
 const MODE_NOTE: Record<Exclude<Mode, "without">, string> = {
   winnability: "Ranked by winnability: fan heat and how winnable the city is, 50/50.",
   density: "Same scores, sorted by fan heat only — the order a density-only tool would give.",
@@ -71,6 +76,7 @@ function SegmentedControl({ mode, onChange }: { mode: Mode; onChange: (m: Mode) 
             role="tab"
             type="button"
             aria-selected={on}
+            title={m.hint}
             tabIndex={on ? 0 : -1}
             onClick={() => onChange(m.id)}
             className={`relative flex-1 rounded-[8px] text-[13px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${on ? "text-canvas-text" : "text-canvas-muted hover:text-canvas-text"}`}
@@ -377,6 +383,17 @@ export default function TourBoard() {
           <p data-testid="mode-note" className={`min-w-0 text-[12px] leading-[1.4] text-canvas-muted lg:text-[13px] ${withoutMode ? "min-h-[5.5rem] lg:min-h-[3.5rem]" : "min-h-[2.1rem] lg:min-h-[1.1rem]"}`}>
             {withoutMode ? (agrees ? `${WITHOUT_NOTE} ${WITHOUT_AGREES}` : WITHOUT_NOTE) : MODE_NOTE[mode]}
           </p>
+          {!withoutMode && (
+            <p data-testid="board-legend" className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12px] leading-[1.4] text-canvas-muted">
+              {BOARD_LEGEND.map((l, i) => (
+                <span key={l.term} className="inline-flex flex-wrap items-center gap-x-1">
+                  {i > 0 && <span aria-hidden className="mr-0.5">·</span>}
+                  {"bar" in l && <span aria-hidden data-bar-key={l.bar} className="inline-block h-1 w-3 rounded-[2px]" style={{ background: l.bar === "fanheat" ? "var(--color-bone)" : "var(--color-gold)" }} />}
+                  <span className="font-medium text-canvas-text">{l.term}:</span> {l.def}
+                </span>
+              ))}
+            </p>
+          )}
           <p data-testid="board-summary" className="min-h-[2.1rem] min-w-0 text-[12px] leading-[1.4] text-canvas-muted lg:min-h-[1.1rem] lg:text-[13px]">
             {scored}{!withoutMode && verdictBits.map((b, i) => <span key={i}>{" · "}{b}</span>)}
             {streaming && " · still scoring"}

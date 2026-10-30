@@ -157,3 +157,18 @@ for (const url of ["/tours/board?sample=1", "/tours/board?sample=long", "/tours/
     expect(bad, `${info.project.name}: reason text clipped`).toEqual([]);
   });
 }
+
+test("8. the board defines its terms: legend row, labelled bars, tab definitions", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/tours/board?sample=1");
+  await boardReady(page);
+  const legend = page.getByTestId("board-legend");
+  await expect(legend).toBeVisible();
+  const text = (await legend.innerText()).replace(/\s+/g, " ");
+  expect(text).toContain("Fan heat: how much this artist's fans over-index here");
+  expect(text).toContain("Activation: sponsor, venue and local fit");
+  expect(text).toContain("Winnability: 50/50 of the two");
+  await expect(legend.locator("[data-bar-key=fanheat]")).toBeVisible();
+  await expect(legend.locator("[data-bar-key=activation]")).toBeVisible();
+  for (const name of ["Density-only", "Without Qloo"]) expect(await page.getByRole("tab", { name }).getAttribute("title"), `${name} tab definition`).toMatch(/^[^:]+: .{20,}/);
+});
