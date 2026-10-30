@@ -352,14 +352,15 @@ function ClaimCheckerPanel({ t }: { t: TrustStats }) {
   return (
     <section aria-label="Claim checker, live" data-testid="live-claims" className="min-w-0 rounded-[18px] bg-paper p-4">
       <h3 className={eyebrow}>Claim checker, live</h3>
+      <p className="m-0 mt-3 break-words text-[15px] text-canvas-text">{`Playbooks built: ${t.playbooks} (${t.bySource.live} in the app, ${t.bySource.mcp_public} by AI agents via MCP)`}</p>
+      {t.narratedPlaybooks > 0
+        ? <p className="m-0 mt-2 break-words text-[15px] text-canvas-text">{`Claims checked in ${t.narratedPlaybooks} write-ups: ${t.claimsChecked}, removed ${t.claimsRemoved} (${t.claimsRemoved} of ${t.claimsChecked})`}</p>
+        : <p className="m-0 mt-2 break-words text-[15px] text-canvas-text">{`Claims are checked whenever a playbook write-up is generated in the app; none yet since ${dateText(t.since)}.`}</p>}
       <dl className="m-0 mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-        <Stat label="Playbooks built" value={String(t.playbooks)} />
-        <Stat label="Claims checked" value={String(t.claimsChecked)} />
-        <Stat label="Claims removed" value={`${t.claimsRemoved} of ${t.claimsChecked}`} />
         <Stat label="Median build time" value={seconds(t.medianLatencyMs)} />
         <Stat label="Sponsors hidden" value={String(t.sponsorsHidden)} />
       </dl>
-      <p className="mt-3 text-[13px] leading-[1.45] text-canvas-muted">Counts every playbook built since {dateText(t.since)}. Derived numbers only; no Qloo data is stored.</p>
+      <p className="mt-3 text-[13px] leading-[1.45] text-canvas-muted">Since {dateText(t.since)}. Derived numbers only; no Qloo data is stored.</p>
     </section>
   );
 }

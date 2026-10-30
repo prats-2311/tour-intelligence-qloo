@@ -147,13 +147,14 @@ describe("stats", () => {
   });
   it("trust: shapes one aggregate row, filters to the last 90 days and caches for 60 s", async () => {
     let t = 0;
-    const c = fake({ query: async () => [{ since: { value: "2026-10-30T10:00:00.000Z" }, playbooks: 12, claims_checked: 100, claims_removed: 8, median_latency_ms: 4200, sponsors_hidden: 5, cities: 7, p24: 3, c24: 25 }] });
+    const c = fake({ query: async () => [{ since: { value: "2026-10-30T10:00:00.000Z" }, playbooks: 12, claims_checked: 100, claims_removed: 8, median_latency_ms: 4200, sponsors_hidden: 5, cities: 7, p24: 3, c24: 25, narrated: 9, p_live: 10, p_mcp: 2 }] });
     const s = createStats(enabled(c), () => t);
     const r = await s.trust();
-    expect(r).toEqual({ enabled: true, since: "2026-10-30T10:00:00.000Z", playbooks: 12, claimsChecked: 100, claimsRemoved: 8, removedRate: 0.08, medianLatencyMs: 4200, sponsorsHidden: 5, cities: 7, last24h: { playbooks: 3, claimsChecked: 25 } });
+    expect(r).toEqual({ enabled: true, since: "2026-10-30T10:00:00.000Z", playbooks: 12, narratedPlaybooks: 9, bySource: { live: 10, mcp_public: 2 }, claimsChecked: 100, claimsRemoved: 8, removedRate: 0.08, medianLatencyMs: 4200, sponsorsHidden: 5, cities: 7, last24h: { playbooks: 3, claimsChecked: 25 } });
     expect(c.queries).toHaveLength(1);
     expect(c.queries[0]).toContain("INTERVAL 90 DAY");
     expect(c.queries[0]).toContain("`p.d.playbook_runs`");
+    expect(c.queries[0]).toContain("narrative_status IN ('ok', 'cached')");
     t = 59_000; await s.trust();
     expect(c.queries).toHaveLength(1);
     t = 61_000; await s.trust();
@@ -162,6 +163,10 @@ describe("stats", () => {
   it("trust with no rows: zeros and null rates", async () => {
     const s = createStats(enabled(fake({ query: async () => [{ since: null, playbooks: 0, claims_checked: null, claims_removed: null, median_latency_ms: null }] })));
     expect(await s.trust()).toMatchObject({ enabled: true, since: null, playbooks: 0, claimsChecked: 0, removedRate: null, medianLatencyMs: null });
+  });
+  it("trust with only MCP playbooks (no narrated rows): playbooks count, claims stay zero, source split kept", async () => {
+    const s = createStats(enabled(fake({ query: async () => [{ since: "2026-10-30T14:24:13Z", playbooks: 1, claims_checked: null, claims_removed: null, narrated: 0, p_live: 0, p_mcp: 1, median_latency_ms: 3000 }] })));
+    expect(await s.trust()).toMatchObject({ enabled: true, playbooks: 1, narratedPlaybooks: 0, bySource: { live: 0, mcp_public: 1 }, claimsChecked: 0, claimsRemoved: 0, removedRate: null });
   });
   it("a failing query answers {enabled:false}", async () => {
     const s = createStats(enabled(fake({ query: async () => { throw new Error("denied"); } }), { log: () => {} }));

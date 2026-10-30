@@ -12,7 +12,9 @@ const iso = (v: unknown): string | null => {
 };
 
 export interface TrustStats {
-  enabled: true; since: string | null; playbooks: number; claimsChecked: number; claimsRemoved: number; removedRate: number | null;
+  enabled: true; since: string | null; playbooks: number;
+  /** Playbooks whose write-up ran (narrative ok/cached); only these have claims to check. MCP playbooks request narrative=0. */
+  narratedPlaybooks: number; bySource: { live: number; mcp_public: number }; claimsChecked: number; claimsRemoved: number; removedRate: number | null;
   medianLatencyMs: number | null; sponsorsHidden: number; cities: number; last24h: { playbooks: number; claimsChecked: number };
 }
 export const STATUS_LABELS = { considering: "Considering", confirmed: "Confirmed", on_hold: "On hold", dropped: "Dropped" } as const;
@@ -49,8 +51,11 @@ export function createStats(a: Analytics, now: () => number = Date.now) {
   const trust = () => cached<TrustStats>("trust", async () => {
     const t = a.tableRef("playbook_runs");
     const day = "ts >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 24 HOUR)";
-    const checked = "IFNULL(claims_verified, 0) + IFNULL(claims_removed, 0)";
-    const [r] = await a.query(`SELECT MIN(ts) AS since, COUNT(*) AS playbooks, SUM(${checked}) AS claims_checked, SUM(IFNULL(claims_removed, 0)) AS claims_removed,
+    const narrated = "narrative_status IN ('ok', 'cached')";
+    const checked = `IF(${narrated}, IFNULL(claims_verified, 0) + IFNULL(claims_removed, 0), 0)`;
+    const [r] = await a.query(`SELECT MIN(ts) AS since, COUNT(*) AS playbooks, COUNTIF(${narrated}) AS narrated,
+      COUNTIF(source = 'live') AS p_live, COUNTIF(source = 'mcp_public') AS p_mcp,
+      SUM(${checked}) AS claims_checked, SUM(IF(${narrated}, IFNULL(claims_removed, 0), 0)) AS claims_removed,
       APPROX_QUANTILES(latency_ms, 2)[OFFSET(1)] AS median_latency_ms, SUM(IFNULL(sponsors_hidden, 0)) AS sponsors_hidden,
       COUNT(DISTINCT COALESCE(city_id, CONCAT(IFNULL(city, ''), '|', IFNULL(country, '')))) AS cities,
       COUNTIF(${day}) AS p24, SUM(IF(${day}, ${checked}, 0)) AS c24
@@ -58,7 +63,7 @@ export function createStats(a: Analytics, now: () => number = Date.now) {
     const row = r ?? {};
     const claimsChecked = n(row.claims_checked), claimsRemoved = n(row.claims_removed), playbooks = n(row.playbooks);
     return {
-      enabled: true as const, since: iso(row.since), playbooks, claimsChecked, claimsRemoved,
+      enabled: true as const, since: iso(row.since), playbooks, narratedPlaybooks: n(row.narrated), bySource: { live: n(row.p_live), mcp_public: n(row.p_mcp) }, claimsChecked, claimsRemoved,
       removedRate: claimsChecked > 0 ? claimsRemoved / claimsChecked : null,
       medianLatencyMs: playbooks > 0 && row.median_latency_ms != null ? n(row.median_latency_ms) : null,
       sponsorsHidden: n(row.sponsors_hidden), cities: n(row.cities), last24h: { playbooks: n(row.p24), claimsChecked: n(row.c24) },

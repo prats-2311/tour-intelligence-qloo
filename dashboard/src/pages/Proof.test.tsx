@@ -296,7 +296,7 @@ describe("Proof v3", () => {
 });
 
 describe("Proof live numbers", () => {
-  const trust = { enabled: true as const, since: "2026-10-30T09:00:00.000Z", playbooks: 12, claimsChecked: 100, claimsRemoved: 8, removedRate: 0.08, medianLatencyMs: 4200, sponsorsHidden: 5, cities: 7, last24h: { playbooks: 3, claimsChecked: 25 } };
+  const trust = { enabled: true as const, since: "2026-10-30T09:00:00.000Z", playbooks: 12, narratedPlaybooks: 9, bySource: { live: 10, mcp_public: 2 }, claimsChecked: 100, claimsRemoved: 8, removedRate: 0.08, medianLatencyMs: 4200, sponsorsHidden: 5, cities: 7, last24h: { playbooks: 3, claimsChecked: 25 } };
   const team = { enabled: true as const, since: "2026-10-29T09:00:00.000Z", workspaces: 4, events: 30, overridesByField: { top_zone: 3, best_room: 0, support: 1 }, overrideRate: 1, statusCounts: { Considering: 1, Confirmed: 5, "On hold": 2, Dropped: 0 }, notesByRole: { Manager: 7, Promoter: 2, Other: 0 } };
   const off = { enabled: false as const };
 
@@ -312,15 +312,24 @@ describe("Proof live numbers", () => {
     render(<LiveStats trust={trust} team={team} />);
     expect(screen.getByRole("heading", { level: 2, name: "Live since Oct 30, 2026" })).toBeTruthy();
     const c = screen.getByRole("region", { name: "Claim checker, live" });
-    expect(within(c).getByText("12")).toBeTruthy();
-    expect(within(c).getByText("8 of 100")).toBeTruthy();
+    expect(within(c).getByText("Playbooks built: 12 (10 in the app, 2 by AI agents via MCP)")).toBeTruthy();
+    expect(within(c).getByText("Claims checked in 9 write-ups: 100, removed 8 (8 of 100)")).toBeTruthy();
     expect(within(c).getByText("4.2 s")).toBeTruthy();
-    expect(within(c).getByText("Counts every playbook built since Oct 30, 2026. Derived numbers only; no Qloo data is stored.")).toBeTruthy();
+    expect(within(c).getByText(/Derived numbers only; no Qloo data is stored\./)).toBeTruthy();
     const t = screen.getByRole("region", { name: "Team decisions, live" });
     expect(within(t).getByText(/Confirmed 5/)).toBeTruthy();
     expect(within(t).getByText("Overrides by field: Top zone 3 · Best room 0 · Support 1")).toBeTruthy();
     expect(within(t).getByText("Notes by role: Manager 7 · Promoter 2")).toBeTruthy();
     expect(within(t).getByText("Excludes the seeded demo discussion.")).toBeTruthy();
+  });
+  it("with only MCP playbooks, explains there are no claims yet instead of showing 0 checked", () => {
+    render(<LiveStats trust={{ ...trust, playbooks: 1, narratedPlaybooks: 0, bySource: { live: 0, mcp_public: 1 }, claimsChecked: 0, claimsRemoved: 0, removedRate: null }} team={off} />);
+    const c = screen.getByRole("region", { name: "Claim checker, live" });
+    expect(within(c).getByText("Playbooks built: 1 (0 in the app, 1 by AI agents via MCP)")).toBeTruthy();
+    expect(within(c).getByText("Claims are checked whenever a playbook write-up is generated in the app; none yet since Oct 30, 2026.")).toBeTruthy();
+    expect(within(c).queryByText(/Claims checked in/)).toBeNull();
+    expect(within(c).queryByText(/0 claims/)).toBeNull();
+    expect(within(c).getByText(/Derived numbers only; no Qloo data is stored\./)).toBeTruthy();
   });
   it("shows only the panel that is enabled", () => {
     render(<LiveStats trust={trust} team={off} />);
