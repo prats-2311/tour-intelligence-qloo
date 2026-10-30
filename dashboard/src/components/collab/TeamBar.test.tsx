@@ -18,7 +18,7 @@ describe("TeamBar at 1280px and wider", () => {
     wide(true); mount();
     for (const n of ["Team activity", "Share with your team"]) expect(screen.getByRole("button", { name: n })).toBeTruthy();
     expect(screen.getByRole("button", { name: /Tour notes for the whole tour/ })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /^Team/ , description: undefined } as never)?.getAttribute("aria-haspopup") ?? null).toBeNull();
+    expect(screen.queryByRole("button", { name: "Team" })).toBeNull();
     expect(screen.getByTestId("team-bar").className).toMatch(/flex-nowrap/);
   });
 });
