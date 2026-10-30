@@ -255,3 +255,17 @@ Test B is re-run from the start under this amendment. Test A batch 1 had no stop
 - A script computes both parts from the stored files and writes the results into `backtest.json` (`proofV3.fusion`).
 - The README proof section and `/proof` publish whatever comes out.
 - If fusion meets the claim rule on Test B, the line reads: "Gemini + Qloo ranked the real tour's pick better than Gemini alone (…)". If not, the result is stated plainly. Tests A and B keep their published wording.
+
+## Amendment 8: Test C rater change, AI-assisted rating with human cross-check (2026-10-30, before any Test C score was computed)
+**What happened:** the reviewer (Prateek) rated 34 of the 182 blinded rows before stopping; rating all rows by hand was not feasible before the deadline. No Test C score, share or sign test had been computed, and nobody had opened `proof-v3-ground-key.json`, when this amendment was written.
+
+**Change (rater only; arms, rows, definitions, metric and claim rule are unchanged):**
+- **AI raters, blinded.** Claude Sonnet agents rated all 182 rows from a copy of the sheet's visible fields only (row id, category, city, country, name), using the Amendment 5 definitions verbatim. They were told not to open the key or items files and had no arm information.
+  - **Pass 1:** all 182 rows, in 4 batches. Each rating has a source URL and a confidence level. Most pass-1 ratings drew on the model's own knowledge with a cited source, not on a fetched page.
+  - **Pass 2, evidence-required:** every Local act row (50) plus every pass-1 row that was not "in this city, high confidence" (11): 61 rows. Each rating had to rest on a page fetched in that run, with a supporting quote; otherwise "Can't tell". Where the passes disagree, pass 2 is used.
+  - Two pass-2 outputs contradicted their own quoted evidence (r094, r181) and were corrected to match the quote before scoring.
+- **Human cross-check.** On the 34 rows rated by both, the human and the final AI rating agreed on 28 (82%). All 6 disagreements were reviewed by the reviewer against the fetched evidence, and the reviewer's final decision is recorded (row ids only, because names are Qloo data): r005 → Can't tell, r007 → Exists in this city, r008 → Exists in another city, r019 → Exists in another city, r033 → Can't tell, r034 → Exists in this city. Three pass-2 judgement calls were settled by the reviewer under the "based in or from" definition: r030 → in this city, r081 → in this city, r094 → in another city.
+- **Primary result:** the reviewer's rating wherever the reviewer rated a row (after adjudication), the final AI rating elsewhere.
+- **Also reported:** the result using AI ratings only, and the agreement figure above.
+
+**Disclosure:** 148 of 182 rows were rated by an AI model, not a person. An AI rater may share blind spots with the LLM-only arm it is judging. Brands and venues rated "in this city, high confidence" in pass 1 (121 rows) were not re-checked against a fetched page. Rows stay private (Qloo-returned names are Qloo data); only aggregates are published.
