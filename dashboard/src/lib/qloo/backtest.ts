@@ -30,7 +30,10 @@ export interface ProofV3Test {
   id: string; title: string; question: string; status: string; n: number;
   tables: ProofTable[]; signTests: ProofSignLine[]; claims: string[]; limits: string[]; runs: ProofRunLine[]; perUnit: ProofTable | null;
 }
-export interface ProofV3 { protocolCommit: string; generatedAt: string; amendments: Array<{ n: number; commit: string; summary: string }>; tests: ProofV3Test[] }
+/** Amendment 10: counts per product checker (no case text), mirrored from proofPublish.ts. */
+export interface ProofChecker { id: string; checker: string; guards: string; caught: number; planted: number; falseAlarms: number; controls: number; claim: string; anchor: string; note: string }
+export interface ProofCheckers { amendment: number; rows: ProofChecker[]; nameRuleOnly?: { caught: number; planted: number; falseAlarms: number; controls: number } }
+export interface ProofV3 { protocolCommit: string; generatedAt: string; amendments: Array<{ n: number; commit: string; summary: string }>; tests: ProofV3Test[]; checkers?: ProofCheckers }
 export type Backtest = { status: "pending" } | { status: "complete"; runs: BacktestRun[]; proofV3?: ProofV3 };
 export type BacktestRuns = Extract<Backtest, { status: "complete" }>;
 
@@ -88,6 +91,17 @@ function parseTest(t: unknown): ProofV3Test | null {
   if (x.perUnit !== null && x.perUnit !== undefined && !validTable(x.perUnit)) return null;
   return { ...(x as ProofV3Test), runs: x.runs ?? [], perUnit: x.perUnit ?? null };
 }
+const validChecker = (r: unknown): r is ProofChecker => {
+  const x = r as Partial<ProofChecker> | null;
+  return !!x && isStr(x.id) && isStr(x.checker) && isStr(x.guards) && num(x.caught) && num(x.planted) && num(x.falseAlarms) && num(x.controls) && isStr(x.anchor) && isStr(x.note) && isStr(x.claim);
+};
+function parseCheckers(c: unknown): ProofCheckers | undefined {
+  const x = c as Partial<ProofCheckers> | null;
+  if (!x || !Array.isArray(x.rows) || x.rows.length === 0 || !x.rows.every(validChecker)) return undefined;
+  const n = x.nameRuleOnly;
+  const nameRuleOnly = n && num(n.caught) && num(n.planted) && num(n.falseAlarms) && num(n.controls) ? { caught: n.caught, planted: n.planted, falseAlarms: n.falseAlarms, controls: n.controls } : undefined;
+  return { amendment: num(x.amendment) ? x.amendment : 10, rows: x.rows, ...(nameRuleOnly ? { nameRuleOnly } : {}) };
+}
 /** Optional and back-compatible: a malformed test is dropped, the rest still show. */
 function parseProofV3(input: unknown): ProofV3 | undefined {
   const d = input as Partial<ProofV3> | null;
@@ -95,7 +109,8 @@ function parseProofV3(input: unknown): ProofV3 | undefined {
   const tests = d.tests.map(parseTest).filter((t): t is ProofV3Test => t !== null);
   if (tests.length === 0) return undefined;
   const amendments = Array.isArray(d.amendments) ? d.amendments.filter((a) => !!a && num(a.n) && isStr(a.commit) && isStr(a.summary)) : [];
-  return { protocolCommit: isStr(d.protocolCommit) ? d.protocolCommit : "", generatedAt: isStr(d.generatedAt) ? d.generatedAt : "", amendments, tests };
+  const checkers = parseCheckers(d.checkers);
+  return { protocolCommit: isStr(d.protocolCommit) ? d.protocolCommit : "", generatedAt: isStr(d.generatedAt) ? d.generatedAt : "", amendments, tests, ...(checkers ? { checkers } : {}) };
 }
 
 export function parseBacktest(input: unknown): Backtest {

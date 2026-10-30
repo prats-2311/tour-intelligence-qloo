@@ -94,6 +94,19 @@ Everything below is from [Proof v3](docs/qloo/proof-v3-protocol.md): a protocol 
 - **Claim checker** ([protocol](docs/qloo/proof-v3-protocol.md)): it removed 10 of 10 planted false claims (5 plausible wrong numbers, 4 absent numbers, 1 swapped name).
 - **Test C, grounding** ([protocol, Amendments 4–6 and 8](docs/qloo/proof-v3-protocol.md)): this is a loss for Qloo. We asked whether the names each playbook returns exist in the city. Share rated as existing in the city: venues 1.00 (27/27) for Qloo against 1.00 (36/36) for the LLM-only playbook; brands 1.00 (31/31) against 1.00 (36/36); local acts 0.48 (13/27) against 1.00 (27/27); overall 0.84 against 1.00. The LLM-only playbook beat Qloo in 7 cities, Qloo won none and 2 tied (p=0.016). The secondary analysis (each playbook cut to the smaller of the two counts per city and category) reaches the same conclusion. Qloo's local-act names were often real acts that are not from the city, so the playbook card is now called "Acts these fans love here" and carries a warning that some acts may not be local. **Raters (Amendment 8):** 148 of 182 rows were rated by blinded AI agents (Claude Sonnet), with every local-act row and every uncertain row re-checked against a fetched page. The author rated 34 rows and agreed with the agents on 28 (82%); the author adjudicated the 6 disagreements against the fetched evidence. The author had seen the showcase playbooks, so those 34 ratings are not fully blind to prior exposure. Names stay private; only aggregates are published.
 
+**Verified claims, across the product** ([Amendment 10](docs/qloo/proof-v3-protocol.md), written 30 Oct before any of it was run). The claim checker above is one of five checks that stop a wrong number or name reaching the user. Each of the others was given 20 planted errors and 20 clean controls, from fixed, deterministic generators written into the protocol (run offline: no Qloo or Gemini call). These are checks, not comparisons, so there is no significance test.
+
+| Checker | What it guards | Planted errors caught | False alarms on clean controls |
+|---|---|---|---|
+| Strategist answer check | Numbers in the strategist's answers that appear in no tool result | 20 of 20 | 0 of 20 |
+| Document citation check | Numbers cited to a page of your document that do not contain them | 20 of 20 | 0 of 20 |
+| Advance source and number filter | Visa and customs notes from another country's pages, or with numbers not in their source | 20 of 20 | 0 of 20 |
+| Sponsor check | Non-profits, advocacy, political and religious groups listed as sponsors | 18 of 20 | 3 of 20 |
+
+The planted errors are synthetic and the fixtures small. The sponsor row measures the rule given a fixed fake classifier output (including made-up wrong and missing answers), not the live model; with the classifier unavailable, the name rule alone caught 12 of 20 with 0 of 20 false alarms. The 2 misses are classifier answers that wrongly said "yes"; the 3 false alarms are brands the made-up classifier wrongly said "no" or did not answer for. Counts of automated tests, rule mutation checks and end-to-end specs are on `/proof`.
+
+**Pending (Amendment 9):** Test B on cases dated after the answering model's training cutoff (1 Apr to 29 Oct 2026) is being collected. Its cases and claim rule were fixed before any case was collected, and the result will be published on `/proof` and here whatever it shows.
+
 ### Limits
 
 - The popularity baseline is weak by construction: in 18 of 22 cases the real pick wasn't on the city's popularity list, so that arm ranked it last.

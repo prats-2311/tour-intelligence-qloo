@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import ProofRoute, { LiveStats, ProofView } from "./Proof";
+import ProofRoute, { A9_TEST_ID, ENGINEERING_TESTS, LiveStats, ProofView } from "./Proof";
 import syntheticBacktest from "@/test/fixtures/backtest.synthetic.json";
 import v3Backtest from "@/test/fixtures/backtest.v3.synthetic.json";
 import { getBacktest, parseBacktest, setBacktest } from "@/lib/qloo/backtest";
@@ -356,5 +356,80 @@ describe("Proof live numbers", () => {
     expect(await screen.findByRole("region", { name: "Claim checker, live" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "Team decisions, live" })).toBeTruthy();
     vi.unstubAllGlobals();
+  });
+});
+
+describe("Proof: verified claims across the product (Amendment 10) and Amendment 9 placeholder", () => {
+  const row = (id: string, checker: string, caught: number, falseAlarms: number, anchor: string) => ({ id, checker, guards: `Guards ${id}`, caught, planted: 20, falseAlarms, controls: 20, claim: `caught ${caught} of 20, false alarms ${falseAlarms} of 20`, anchor, note: `Note ${id}` });
+  const checkers = { amendment: 10, nameRuleOnly: { caught: 12, planted: 20, falseAlarms: 0, controls: 20 }, rows: [
+    row("answer", "Strategist answer check", 20, 0, "10a-strategist-answer-check"), row("document", "Document citation check", 20, 0, "10b-document-citation-check"),
+    row("advance", "Advance source and number filter", 19, 1, "10c-advance-source-and-number-filter"), row("sponsor", "Sponsor check", 18, 3, "10d-sponsor-check"),
+  ] };
+  const withCheckers = () => ({ ...(v3Backtest as { proofV3: object }), proofV3: { ...(v3Backtest as { proofV3: object }).proofV3, checkers } });
+  const section = () => screen.getByRole("region", { name: "Verified claims, across the product" });
+
+  it("shows a table: checker, what it guards, planted errors caught, false alarms, and a link to the amendment", () => {
+    view(withCheckers());
+    const t = within(section()).getByRole("table", { name: /Verified claims/ });
+    expect(within(t).getAllByRole("columnheader").map((h) => h.textContent)).toEqual(["Checker", "What it guards", "Planted errors caught", "False alarms on clean controls", "Amendment"]);
+    const rows = within(t).getAllByRole("row").slice(1);
+    expect(rows).toHaveLength(4);
+    expect(within(rows[2]!).getByText("Advance source and number filter")).toBeTruthy();
+    expect(within(rows[2]!).getByText("19 of 20")).toBeTruthy();
+    expect(within(rows[2]!).getByText("1 of 20")).toBeTruthy();
+    const link = within(rows[3]!).getByRole("link", { name: /Amendment 10.*Sponsor check/ });
+    expect(link.getAttribute("href")).toBe("https://github.com/prats-2311/tour-intelligence-qloo/blob/master/docs/qloo/proof-v3-protocol.md#10d-sponsor-check");
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+  it("states that the planted errors are fixed and synthetic, and the sponsor row that the live classifier is not tested", () => {
+    view(withCheckers());
+    expect(within(section()).getByText(/synthetic/i)).toBeTruthy();
+    expect(within(section()).getByText("Note sponsor")).toBeTruthy();
+  });
+  it("shows the engineering line with the as-of date", () => {
+    view(withCheckers());
+    expect(within(section()).getByText(new RegExp(`Engineering checks: ${ENGINEERING_TESTS.toLocaleString("en-US")} automated tests, the key rules mutation-checked, end-to-end specs on the live site\\. As of 30 Oct 2026\\.`))).toBeTruthy();
+  });
+  it("without checker data the section says so, with no numbers, and still shows the engineering line", () => {
+    view(v3Backtest);
+    expect(within(section()).queryByRole("table")).toBeNull();
+    expect(within(section()).getByText(/not published yet/i)).toBeTruthy();
+    expect(within(section()).getByText(/Engineering checks:/)).toBeTruthy();
+  });
+  it("sits after the claim-checker test and before Test C", () => {
+    view(withCheckers());
+    const html = document.body.innerHTML;
+    expect(html.indexOf('data-test-id="catch"')).toBeLessThan(html.indexOf("Verified claims, across the product"));
+    expect(html.indexOf("Verified claims, across the product")).toBeLessThan(html.indexOf('data-test-id="C"'));
+    expect(screen.getAllByRole("region").filter((r) => r.getAttribute("data-testid") === "proof-v3-test").map((s) => s.getAttribute("data-test-id"))).toEqual(["B", "catch", "C", "A", "F"]);
+  });
+  it("tolerates a malformed checkers block (dropped, page still renders)", () => {
+    const bad = { ...(v3Backtest as { proofV3: object }), proofV3: { ...(v3Backtest as { proofV3: object }).proofV3, checkers: { rows: [{ id: 1 }] } } };
+    view(bad);
+    expect(within(section()).queryByRole("table")).toBeNull();
+  });
+
+  const placeholder = () => screen.queryByTestId("proof-v3-a9-pending");
+  it("Amendment 9: with no post-cutoff test in the data, a placeholder in the Test B area says it is running", () => {
+    view(v3Backtest);
+    const p = placeholder()!;
+    expect(within(p).getByRole("heading", { level: 2, name: "Test B after the model's cutoff" })).toBeTruthy();
+    expect(within(p).getByText("Running — results will be published here whatever they show.")).toBeTruthy();
+    expect(within(p).getByRole("link", { name: /Amendment 9/ }).getAttribute("href")).toContain("#amendment-9-test-b-on-cases-after-the-models-training-cutoff");
+    const order = screen.getAllByTestId(/proof-v3-(test|a9-pending)/).map((e) => e.getAttribute("data-test-id"));
+    expect(order.slice(0, 3)).toEqual(["B", "B_post_cutoff-pending", "catch"]);
+  });
+  it("Amendment 9: with results present it renders them in Test B's table shape and no placeholder", () => {
+    const base = v3Backtest as { proofV3: { tests: Array<{ id: string }> } };
+    const b = base.proofV3.tests.find((t) => t.id === "B")!;
+    const post = { ...b, id: A9_TEST_ID, title: "Test B after the model's cutoff", status: "Complete: 31 cases" };
+    view({ ...base, proofV3: { ...base.proofV3, tests: [...base.proofV3.tests, post] } });
+    expect(placeholder()).toBeNull();
+    expect(screen.queryByText(/Running — results will be published/)).toBeNull();
+    const ids = screen.getAllByRole("region").filter((r) => r.getAttribute("data-testid") === "proof-v3-test").map((s) => s.getAttribute("data-test-id"));
+    expect(ids.slice(0, 3)).toEqual(["B", A9_TEST_ID, "catch"]);
+    const sec = screen.getAllByRole("region").find((r) => r.getAttribute("data-test-id") === A9_TEST_ID)!;
+    expect(within(sec).getByText("Complete: 31 cases")).toBeTruthy();
+    expect(within(sec).getAllByRole("table").length).toBeGreaterThan(0);
   });
 });

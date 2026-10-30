@@ -2,6 +2,7 @@ import {
   ARMS, ARM_LABEL, DISCLOSURES, FIXED_ARMS, FIXED_LABEL, GROUND_ARMS, GROUND_CATEGORIES, PLANT_KINDS, N, compare, computeCityRankStats, stopCode, summarise,
   type CatchRateSection, type CityRankArtist, type CityRankSection, type FixedCaseResult, type GroundingSection, type PlantKind, type ProofV3Results, type Name, type SignRow,
 } from "./proofResults.js";
+import type { CheckersResult } from "./checkerCatch.js";
 import { claimMet, type FusionFile, type FusionSummary, type Subset } from "./fusion.js";
 
 /**
@@ -19,14 +20,17 @@ export interface ProofV3Test {
   perUnit: Table | null;
 }
 export interface Amendment { n: number; commit: string; summary: string }
-export interface ProofV3Published { protocolCommit: string; generatedAt: string; amendments: Amendment[]; tests: ProofV3Test[] }
+/** Amendment 10: one row per product checker, counts only (no case text). `claim` uses the claim checker's wording. */
+export interface CheckerRow { id: string; checker: string; guards: string; caught: number; planted: number; falseAlarms: number; controls: number; claim: string; anchor: string; note: string }
+export interface ProofV3Checkers { amendment: 10; rows: CheckerRow[]; nameRuleOnly: { caught: number; planted: number; falseAlarms: number; controls: number } }
+export interface ProofV3Published { protocolCommit: string; generatedAt: string; amendments: Amendment[]; tests: ProofV3Test[]; checkers?: ProofV3Checkers }
 
 export interface PublishInputs {
   protocolCommit: string; amendments: Amendment[];
   /** Test A batches, in order. */
   batches: ProofV3Results[];
   fixed?: ProofV3Results; /** Earlier stopped runs of Test B, oldest first. */ fixedStopped?: ProofV3Results[];
-  catchRate?: ProofV3Results; grounding?: ProofV3Results; /** Test C's stopped runs (the `proof-v3-ground-items.stopped-N.json` files), oldest first. */ groundingStopped?: StoppedGroundRun[]; /** Amendment 7: the offline fusion results, when computed. */ fusion?: FusionFile; now: Date;
+  catchRate?: ProofV3Results; grounding?: ProofV3Results; /** Test C's stopped runs (the `proof-v3-ground-items.stopped-N.json` files), oldest first. */ groundingStopped?: StoppedGroundRun[]; /** Amendment 7: the offline fusion results, when computed. */ fusion?: FusionFile; /** Amendment 10: the offline checker catch rates (`proof-v3-checkers.json`), when computed. */ checkers?: CheckersFile; now: Date;
 }
 /** The few facts read from a stopped Test C items file; its names stay private. */
 export interface StoppedGroundRun {
@@ -213,6 +217,28 @@ function testF(fu: FusionFile): ProofV3Test {
   };
 }
 
+/** The checkers file as the CLI wrote it; only the counts are read. */
+export type CheckersFile = Pick<CheckersResult, "checkers" | "sponsorNameRuleOnly">;
+const CHECKER_ANCHOR: Record<string, string> = { answer: "10a-strategist-answer-check", document: "10b-document-citation-check", advance: "10c-advance-source-and-number-filter", sponsor: "10d-sponsor-check" };
+const CHECKER_NOTE: Record<string, string> = {
+  answer: "Planted errors are fixed, synthetic answers; the controls include numbers with a dropped minus sign.",
+  document: "Planted errors are fixed, synthetic citations to one 10-page document.",
+  advance: "Planted errors are 10 results about another country (5 of them naming the destination only in the body) and 10 numbers absent from their own source.",
+  sponsor: "Measures the rule given a fixed fake classifier output, not the live model.",
+};
+const claimOf = (c: { caught: number; planted: number; falseAlarms: number; controls: number }): string => `caught ${c.caught} of ${c.planted}, false alarms ${c.falseAlarms} of ${c.controls}`;
+function publishCheckers(f: CheckersFile): ProofV3Checkers {
+  const n = f.sponsorNameRuleOnly;
+  return {
+    amendment: 10,
+    rows: f.checkers.map((c) => ({
+      id: c.id, checker: c.checker, guards: c.guards, caught: c.caught, planted: c.planted, falseAlarms: c.falseAlarms, controls: c.controls,
+      claim: claimOf(c), anchor: CHECKER_ANCHOR[c.id] ?? "", note: CHECKER_NOTE[c.id] ?? "",
+    })),
+    nameRuleOnly: { caught: n.caught, planted: n.planted, falseAlarms: n.falseAlarms, controls: n.controls },
+  };
+}
+
 export function buildProofV3(i: PublishInputs): ProofV3Published {
   const tests: ProofV3Test[] = [];
   if (i.batches.length) tests.push(testA(i.batches));
@@ -220,7 +246,7 @@ export function buildProofV3(i: PublishInputs): ProofV3Published {
   if (i.catchRate?.catchRate) tests.push(testCatch(i.catchRate));
   if (i.grounding?.grounding) tests.push(testC(i.grounding, i.groundingStopped ?? []));
   if (i.fusion) tests.push(testF(i.fusion));
-  return { protocolCommit: i.protocolCommit, generatedAt: i.now.toISOString(), amendments: i.amendments, tests };
+  return { protocolCommit: i.protocolCommit, generatedAt: i.now.toISOString(), amendments: i.amendments, tests, ...(i.checkers ? { checkers: publishCheckers(i.checkers) } : {}) };
 }
 
 /** "## Amendment N ..." sections of the protocol, each reduced to the first sentence of its Why / What happened / Question line. */

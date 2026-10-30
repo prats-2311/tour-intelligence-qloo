@@ -282,3 +282,33 @@ describe("proofPublishCli main with the fusion file", () => {
     expect(JSON.parse(readFileSync(join(dir, "backtest.json"), "utf8")).proofV3.tests.map((t: { id: string }) => t.id)).toContain("F");
   });
 });
+
+describe("buildProofV3: checkers (Amendment 10)", () => {
+  const cs = (id: string, caught: number, falseAlarms: number) => ({ id, checker: `Checker ${id}`, guards: `Guards ${id}`, planted: 20, caught, controls: 20, falseAlarms, groups: [], cases: [] });
+  const file = { checkers: [cs("answer", 20, 0), cs("document", 20, 0), cs("advance", 19, 1), cs("sponsor", 18, 3)], sponsorNameRuleOnly: cs("sponsor", 12, 0) };
+  it("is omitted when the checkers file is absent", () => {
+    expect(buildProofV3(inputs()).checkers).toBeUndefined();
+  });
+  it("publishes one row per checker with counts, a protocol anchor and the claim wording", () => {
+    const c = buildProofV3(inputs({ checkers: file })).checkers!;
+    expect(c.rows.map((r) => [r.id, r.caught, r.planted, r.falseAlarms, r.controls])).toEqual([["answer", 20, 20, 0, 20], ["document", 20, 20, 0, 20], ["advance", 19, 20, 1, 20], ["sponsor", 18, 20, 3, 20]]);
+    expect(c.rows[2]!.claim).toBe("caught 19 of 20, false alarms 1 of 20");
+    expect(c.rows.map((r) => r.anchor)).toEqual(["10a-strategist-answer-check", "10b-document-citation-check", "10c-advance-source-and-number-filter", "10d-sponsor-check"]);
+    expect(c.rows[3]!.note).toMatch(/not the live model/);
+    expect(c.amendment).toBe(10);
+  });
+  it("carries no case text, only counts", () => {
+    expect(JSON.stringify(buildProofV3(inputs({ checkers: file })).checkers)).not.toMatch(/"cases"/);
+  });
+  it("the CLI includes proof-v3-checkers.json when it exists", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "proof-publish-"));
+    mkdirSync(join(dir, "backtest"));
+    const w = (name: string, v: unknown) => writeFileSync(join(dir, "backtest", name), JSON.stringify(v));
+    w("proof-v3-city-batch1.json", b1); w("proof-v3-city-batch2.json", b2); w("proof-v3-fixed.json", fixed); w("proof-v3-catch.json", catchRun); w("proof-v3-checkers.json", file);
+    const lines: string[] = [];
+    const io: CliIo = { log: (l) => lines.push(l), env: {}, makeClients: () => { throw new Error("no network"); }, now: () => new Date("2026-10-30T00:00:00Z") };
+    await publishCli.main(["--dir", dir], io, { amendments: () => [], protocolCommit: () => "ccccccc" });
+    const out = JSON.parse(readFileSync(join(dir, "backtest.json"), "utf8"));
+    expect(out.proofV3.checkers.rows).toHaveLength(4);
+  });
+});
