@@ -74,7 +74,7 @@ describe("Test A CLI", () => {
     expect(text).toContain("over the last 20 Qloo calls (evaluated once 10 are seen");
     expect(text).toContain("Queens -> New York City"); // re-anchored played cities are listed up front
     expect(text).toContain("Vallejo -> Concord");
-    expect(text).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}/); // no Qloo ids
+    expect(text.split(process.cwd()).join("<cwd>").replace(/\/(private\/)?tmp\/\S*/g, "<tmp>")).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}/); // no Qloo ids (clone paths excluded)
   });
 
   it("a 429 on the first call exits non-zero and writes partial results naming the dropped and not-run artists", async () => {

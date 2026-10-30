@@ -8,6 +8,11 @@ export function jsonExceptStrategist() {
   return (req, res, next) => (req.path === STRATEGIST_PATH ? next() : parseDefault(req, res, next));
 }
 
+/** A gateway on this machine (npm run dev:all) needs no Google identity token; never reach for gcloud or the metadata server for it. */
+export function isLoopbackUrl(url) {
+  try { return ["localhost", "127.0.0.1", "[::1]"].includes(new URL(url).hostname); } catch { return false; }
+}
+
 export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, collabDevUrl, segmentsTimeoutMs = 55000 }) {
   const notConfigured = (res) => res.status(503).json({ error: "Qloo gateway not configured" });
 
@@ -15,6 +20,7 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
     // dev: the COLLAB_FAKE in-memory server (never set in production): no gateway and no token needed.
     const base = dev ? collabDevUrl : gatewayUrl;
     if (!base) return notConfigured(res);
+    const local = dev || isLoopbackUrl(base);
     const sessionId = req.header("x-session-id");
     if (!sessionId || sessionId.length > 128) {
       return res.status(400).json({ error: "x-session-id header required (1-128 chars)" });
@@ -37,7 +43,7 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
         method,
         signal: controller.signal,
         headers: {
-          ...(dev ? {} : { authorization: `Bearer ${await getToken()}` }),
+          ...(local ? {} : { authorization: `Bearer ${await getToken()}` }),
           "x-session-id": sessionId,
           ...(body !== undefined ? { "content-type": "application/json" } : {}),
         },

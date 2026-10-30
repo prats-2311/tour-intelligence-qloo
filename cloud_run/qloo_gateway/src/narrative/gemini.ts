@@ -17,6 +17,22 @@ export function createVertexGenerate(opts: { project: string; getToken: () => Pr
   };
 }
 
+/** Google AI Studio (Gemini Developer API) with an API key: same generateContent body as Vertex, key sent in a header (never the URL). */
+export function createAiStudioGenerate(opts: { apiKey: string; fetchImpl?: typeof fetch; timeoutMs?: number }): GenerateFn {
+  const fetchImpl = opts.fetchImpl ?? fetch;
+  return async (model, body) => {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+    const res = await fetchImpl(url, {
+      method: "POST",
+      headers: { "x-goog-api-key": opts.apiKey, "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(opts.timeoutMs ?? 30_000),
+    });
+    if (!res.ok) throw new Error(`AI Studio ${res.status}`);
+    return (await res.json()) as GeminiResponse;
+  };
+}
+
 export function splitResponse(r: GeminiResponse): { thoughtSummary: string | null; text: string } {
   const parts = r.candidates?.[0]?.content?.parts ?? [];
   const thoughts = parts.filter((p) => p.thought && p.text).map((p) => p.text!.trim());

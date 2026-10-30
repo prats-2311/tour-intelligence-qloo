@@ -9,7 +9,6 @@ import { runStrategist } from "./strategist/run.js";
 import { QlooMcpClient, defaultFactory } from "./mcpClient.js";
 import { createQlooCaller } from "./qlooCall.js";
 import { GoogleAuth } from "google-auth-library";
-import { createVertexGenerate } from "./narrative/gemini.js";
 import { createNarrator } from "./narrative/narrate.js";
 import { createTavilySearch } from "./web/tavily.js";
 import { FirestoreUsageStore, MemoryUsageStore } from "./web/usage.js";
@@ -19,6 +18,8 @@ import { advance } from "./web/advance.js";
 import { thisWeek } from "./web/thisWeek.js";
 import { FirestoreCollabStore, MemoryCollabStore } from "./collab/store.js";
 import { logQlooBaseUrl } from "./startupLog.js";
+import { selectGenerate } from "./narrative/provider.js";
+import { findOnPath, startupStatus } from "./startupStatus.js";
 import { createAnalytics } from "./analytics/bigquery.js";
 
 logQlooBaseUrl(process.env);
@@ -36,12 +37,11 @@ const budget = new BudgetGuard({
   perSession: SESSION_QLOO_BUDGET, perDay: Number.isFinite(ceiling) && ceiling > 0 ? ceiling : 2000,
   ...(Number.isFinite(publicCeiling) && publicCeiling > 0 ? { publicPerDay: publicCeiling } : {}),
 });
-const project = process.env.GOOGLE_CLOUD_PROJECT;
 const auth = new GoogleAuth({ scopes: ["https://www.googleapis.com/auth/cloud-platform"] });
 const geminiCeiling = Number(process.env.GEMINI_DAILY_CEILING);
-const generate = project
-  ? createVertexGenerate({ project, getToken: async () => String((await auth.getAccessToken()) ?? "") })
-  : undefined;
+const selected = selectGenerate(process.env, { getToken: async () => String((await auth.getAccessToken()) ?? "") });
+const generate = selected.generate;
+for (const line of startupStatus(process.env, selected, { harnessFound: !!findOnPath(process.env.QLOO_BIN ?? "qloo", process.env.PATH) })) console.log(`qloo_gateway ${line}`);
 const narratorModels = [process.env.GEMINI_MODEL ?? "gemini-3.8-flash", process.env.GEMINI_FALLBACK_MODEL ?? "gemini-2.5-flash"];
 // Per-session limit is in memory; the daily count is persisted (gemini_usage/<YYYY-MM>) so restarts and extra instances share it.
 const geminiBudget = new BudgetGuard({ perSession: 20, perDay: Number.MAX_SAFE_INTEGER });

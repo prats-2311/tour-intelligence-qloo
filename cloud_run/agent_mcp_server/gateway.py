@@ -29,7 +29,19 @@ class GatewayNotFound(GatewayError):
     """The gateway answered 404 (for example an unknown or expired workspace)."""
 
 
+def _is_loopback(url: str) -> bool:
+    from urllib.parse import urlparse
+
+    try:
+        return urlparse(url).hostname in ("localhost", "127.0.0.1", "::1")
+    except ValueError:
+        return False
+
+
 def _headers(session_id: str, token_fn) -> dict:
+    # A gateway on this machine (npm run dev:all) needs no Google identity token; never call gcloud for it.
+    if _is_loopback(os.environ.get("QLOO_GATEWAY_URL", "")):
+        return {"x-session-id": session_id}
     try:
         token = token_fn()
     except Exception:

@@ -1,0 +1,11 @@
+{
+  "name": "tour-intel-qloo",
+  "private": true,
+  "description": "Convenience scripts for a local run. The gateway and dashboard are separate packages with their own package.json.",
+  "engines": { "node": ">=22.19.0" },
+  "scripts": {
+    "setup": "npm --prefix cloud_run/qloo_gateway ci && npm --prefix dashboard ci",
+    "dev:all": "node scripts/dev-all.mjs",
+    "test:scripts": "node --test scripts/dev-all.test.mjs scripts/envExample.test.mjs"
+  }
+}
