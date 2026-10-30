@@ -168,4 +168,19 @@ describe("verifyAdvance", () => {
     expect(v.leadTime).toBe("30 days");
     expect(verifyAdvance({ leadTime: "6 weeks", items: [] }, results).leadTime).toBeUndefined();
   });
+  it("checks an item's numbers against its own source, not any other result", () => {
+    // 12 appears in the carnet result only; claiming it from the visa result must fail.
+    const v = verifyAdvance({ items: [{ text: "Permit takes 12 months", sourceUrl: "https://a.example/visa" }] }, results);
+    expect(v.items).toEqual([]);
+    expect(v.removed.map((r) => r.reason)).toEqual(["number not in source"]);
+  });
+  it("keeps at most 4 items", () => {
+    const items = Array.from({ length: 6 }, (_, i) => ({ text: `Note ${i}`, sourceUrl: "https://a.example/visa" }));
+    expect(verifyAdvance({ items }, results).items).toHaveLength(4);
+  });
+  it("removes items with blank or non-string text as malformed", () => {
+    const v = verifyAdvance({ items: [{ text: "   ", sourceUrl: "https://a.example/visa" }, { text: 5, sourceUrl: "https://a.example/visa" }, null] }, results);
+    expect(v.items).toEqual([]);
+    expect(v.removed.map((r) => r.reason)).toEqual(["malformed", "malformed", "malformed"]);
+  });
 });
