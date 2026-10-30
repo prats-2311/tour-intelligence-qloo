@@ -1,5 +1,5 @@
 import { numberTokens, tokenSupported } from "../claims/verify.js";
-import type { StrategistContext } from "../types.js";
+import type { StrategistContext, UserDocument } from "../types.js";
 
 // Values under these keys are 0-1 scores or signed over/under-index values (shared taste, demographics): never percentages.
 const SCORE_KEYS = new Set(["sharedTaste", "age", "gender"]);
@@ -15,14 +15,36 @@ const LIST_MARKER = /^[ \t]*(?:[-*+][ \t]+)?\**\d{1,2}[.)]\**(?=[ \t])/gm;
 const STEP_ORDINAL = /\bsteps?\s+\d{1,2}\b/gi;
 const stripStructure = (answer: string): string => answer.replace(LIST_MARKER, " ").replace(STEP_ORDINAL, " ");
 
-/** Raw number tokens in the answer that appear in no tool result and no board-context score (same match rules as verifyClaims). */
-export function unsupportedNumbers(answer: string, toolData: unknown[], context: StrategistContext): string[] {
+const CITE = /\[doc:([A-Za-z0-9_-]{1,40}) p\.(\d{1,4})\]/g;
+// A sentence ends at . ! ? or a line break; a citation right after the full stop still belongs to that sentence.
+const SENTENCES = /\n|(?<=[.!?])[ \t]+(?!\[doc:)/;
+
+function pageNumbers(documents: UserDocument[], id: string, n: number): number[] {
+  const page = documents.find((d) => d.id === id)?.pages.find((p) => p.n === n);
+  const vals = page ? numberTokens(page.text).map((t) => t.value) : [];
+  return [...vals, ...vals.map((v) => -v)];
+}
+
+/**
+ * Raw number tokens in the answer that are unsupported (same match rules as verifyClaims).
+ * A sentence that cites `[doc:id p.n]` is checked only against the numbers on those pages of the user's documents; every other sentence only against tool results and board-context scores. Neither source ever vouches for the other.
+ */
+export function unsupportedNumbers(answer: string, toolData: unknown[], context: StrategistContext, documents: UserDocument[] = []): string[] {
   const pool: number[] = [];
   const scores: number[] = [];
   collect(toolData, pool, scores);
   // Prose drops the minus sign of coordinates (-118.26 -> "118.26"), so non-score negatives also match by absolute value.
   for (const v of [...pool]) if (v < 0) pool.push(-v);
   for (const c of context.cities ?? []) collect([c.fanHeat, c.activation, c.winnability], pool);
-  // A percent rendering is only supported by non-score values; plain numbers by any value.
-  return numberTokens(stripStructure(answer)).filter((t) => !tokenSupported(t, t.percent ? pool : [...pool, ...scores])).map((t) => t.raw);
+  const flagged: string[] = [];
+  for (const sentence of stripStructure(answer).split(SENTENCES)) {
+    const cites = [...sentence.matchAll(CITE)];
+    const text = sentence.replace(CITE, " ");
+    // A percent rendering is only supported by non-score values; plain numbers by any value.
+    const evidence = cites.length > 0 ? cites.flatMap((c) => pageNumbers(documents, c[1]!, Number(c[2]))) : null;
+    for (const t of numberTokens(text)) {
+      if (!tokenSupported(t, evidence ?? (t.percent ? pool : [...pool, ...scores]))) flagged.push(t.raw);
+    }
+  }
+  return flagged;
 }

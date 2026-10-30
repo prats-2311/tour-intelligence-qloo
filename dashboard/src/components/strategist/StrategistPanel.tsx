@@ -1,13 +1,16 @@
 import { X } from "lucide-react";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { showcaseStrategist } from "@/lib/qloo/showcase";
+import { useDocuments } from "@/lib/docs/useDocuments";
+import { cityThread } from "@/lib/collab/types";
 import { useStrategist } from "@/lib/qloo/useStrategist";
 import type { StrategistContext } from "@/lib/qloo/types";
 import { Composer } from "./Composer";
 import { MessageList } from "./MessageList";
 
 export function StrategistPanel({ context, sample, showcase = false, title, onClose, hideHeading }: { context: StrategistContext; sample: boolean; showcase?: boolean; title: string; onClose?: () => void; hideHeading?: boolean }) {
-  const { state, ask, stop, busy } = useStrategist(context, { sample, showcase });
+  const docs = useDocuments();
+  const { state, ask, stop, busy } = useStrategist(context, { sample, showcase, documents: docs.docs });
   // A showcase with recorded Q&As replays them (chips, no typing); without any it keeps the plain composer and its note.
   const replay = showcase && showcaseStrategist().length > 0;
   return (
@@ -24,8 +27,8 @@ export function StrategistPanel({ context, sample, showcase = false, title, onCl
         )}
       </header>
       {sample && <div className="px-4 pt-2"><SampleBanner compact source={showcase ? "showcase" : "sample"} /></div>}
-      <MessageList turns={state.turns} onRetry={ask} busy={busy} replay={replay} />
-      <Composer replay={replay} busy={busy} empty={state.turns.length === 0} sample={sample} showcase={showcase} context={context} onAsk={ask} onStop={stop} />
+      <MessageList notesKey={context.focusCityId ? cityThread(context.focusCityId) : "tour:board"} documentNames={docs.names} turns={state.turns} onRetry={ask} busy={busy} replay={replay} />
+      <Composer docs={docs} replay={replay} busy={busy} empty={state.turns.length === 0} sample={sample} showcase={showcase} context={context} onAsk={ask} onStop={stop} />
     </section>
   );
 }

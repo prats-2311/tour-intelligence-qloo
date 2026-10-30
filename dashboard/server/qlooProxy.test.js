@@ -1,11 +1,12 @@
 import express from "express";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mountQlooProxy } from "./qlooProxy.js";
+import { jsonExceptStrategist, mountQlooProxy } from "./qlooProxy.js";
 
 let server;
 async function start(opts) {
   const app = express();
-  app.use(express.json());
+  // The same app-wide parser the real server uses: the strategist route parses its own larger body.
+  app.use(jsonExceptStrategist());
   mountQlooProxy(app, opts);
   await new Promise((r) => { server = app.listen(0, "127.0.0.1", r); });
   return `http://127.0.0.1:${server.address().port}`;
@@ -246,6 +247,30 @@ describe("qlooProxy", () => {
     expect(ok.headers.get("content-type")).toContain("text/event-stream");
     await ok.text();
     expect(fetchImpl.mock.calls[0][0]).toBe("https://gw/v1/strategist");
+  });
+  it("lets /api/qloo/strategist carry documents up to 150 KB, and keeps 64 KB without them", async () => {
+    const fetchImpl = vi.fn(async () => sse(["event: done\ndata: {}\n\n"]));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const post = (body) => fetch(`${base}/api/qloo/strategist`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify(body) });
+    const docs = (chars) => [{ id: "d1", name: "a.txt", pages: [{ n: 1, text: "x".repeat(chars) }] }];
+    const messages = [{ role: "user", text: "hi" }];
+    const ok = await post({ messages, documents: docs(120_000) });
+    expect(ok.status).toBe(200);
+    await ok.text();
+    expect(JSON.parse(fetchImpl.mock.calls[0][1].body).documents[0].pages[0].text).toHaveLength(120_000);
+    const before = fetchImpl.mock.calls.length;
+    expect((await post({ messages, documents: docs(160_000) })).status).toBe(400);
+    expect((await post({ messages: [{ role: "user", text: "x".repeat(70_000) }] })).status).toBe(400);
+    expect(fetchImpl.mock.calls.length).toBe(before);
+  });
+  it("logs no document text when the gateway is unreachable", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const fetchImpl = vi.fn(async () => { throw new Error("connect ECONNREFUSED"); });
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const res = await fetch(`${base}/api/qloo/strategist`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s" }, body: JSON.stringify({ messages: [{ role: "user", text: "hi" }], documents: [{ id: "d1", name: "a.txt", pages: [{ n: 1, text: "PRIVATE-TEXT" }] }] }) });
+    expect(res.status).toBe(502);
+    expect(JSON.stringify(err.mock.calls)).not.toContain("PRIVATE-TEXT");
+    expect(await res.text()).not.toContain("PRIVATE-TEXT");
   });
   it("forwards /api/qloo/without-qloo as JSON and rejects bodies over 16 KB", async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ status: "ok", ranked: [] }), { status: 200, headers: { "content-type": "application/json" } }));

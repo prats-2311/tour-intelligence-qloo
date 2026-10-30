@@ -1,4 +1,12 @@
+import express from "express";
 import { Readable } from "node:stream";
+
+const STRATEGIST_PATH = "/api/qloo/strategist";
+const parseDefault = express.json();
+/** The app-wide JSON parser, except for the strategist route, which parses its own larger body (private documents travel in it). */
+export function jsonExceptStrategist() {
+  return (req, res, next) => (req.path === STRATEGIST_PATH ? next() : parseDefault(req, res, next));
+}
 
 export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, collabDevUrl, segmentsTimeoutMs = 55000 }) {
   const notConfigured = (res) => res.status(503).json({ error: "Qloo gateway not configured" });
@@ -55,11 +63,14 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
 
   app.post("/api/qloo/tour-board", (req, res) => forward(req, res, { route: "tour-board", path: "/v1/tour-board", method: "POST", body: req.body ?? {}, stream: true }));
   // Strategist chat: cheap shape checks here, full validation at the gateway.
+  // Private documents (text only, up to 60,000 characters) make a larger body legitimate for this route alone.
   const MAX_STRATEGIST_BYTES = 64 * 1024;
-  app.post("/api/qloo/strategist", (req, res) => {
+  const MAX_STRATEGIST_DOCS_BYTES = 150 * 1024;
+  app.post(STRATEGIST_PATH, express.json({ limit: "200kb" }), (req, res) => {
     const body = req.body ?? {};
     if (!Array.isArray(body.messages) || body.messages.length > 12) return res.status(400).json({ error: "messages must be an array of at most 12" });
-    if (Buffer.byteLength(JSON.stringify(body)) > MAX_STRATEGIST_BYTES) return res.status(400).json({ error: "request too large" });
+    const max = Array.isArray(body.documents) && body.documents.length > 0 ? MAX_STRATEGIST_DOCS_BYTES : MAX_STRATEGIST_BYTES;
+    if (Buffer.byteLength(JSON.stringify(body)) > max) return res.status(400).json({ error: "request too large" });
     return forward(req, res, { route: "strategist", path: "/v1/strategist", method: "POST", body, stream: true });
   });
   // Without-Qloo generic ranking: small JSON body, full validation at the gateway.

@@ -1,0 +1,26 @@
+Fictional sample for this demo — not real data
+
+EXAMPLE ARTIST - 2024 TOUR RECAP (internal, made up)
+
+This file is invented so you can try the strategist with a document. Every name, venue, brand and number below is fictional.
+
+Overview
+Example artist played 5 cities in 2024, all in clubs and small theatres. Total paid attendance was 3,990 across the run. The average ticket was 34 dollars and the run grossed about 135,000 dollars before costs.
+
+City results
+1. Los Angeles - a 900-capacity theatre, sold out, 900 paid. Merch spend per head was 14 dollars, the highest of the run.
+2. Mexico City - a 1,500-capacity hall, 1,180 paid (79% of capacity). The presale opened 8 weeks out and sold 640 tickets in the first 48 hours, then stalled; the rest sold in the final two weeks.
+3. Austin - a 600-capacity club, sold out at 600 paid. A last-minute second show was added and sold 410 tickets in a day. The team's note: the small room felt like an event and beat the bigger rooms on energy and on merch sell-through.
+4. Chicago - a 1,100-capacity ballroom, 520 paid (47%). Weeknight date, little local press.
+5. Seattle - a 790-capacity theatre, 790 paid.
+
+Presale result
+The Mexico City presale used a fan-club code and a 20% early-bird discount. 640 tickets sold in 48 hours. The same offer in Chicago sold 90 tickets in its first 48 hours.
+
+Sponsor notes
+A regional beverage brand paid 12,000 dollars to be the presenting sponsor in Chicago and Seattle. Chicago activation was a sampling table in the lobby; it drew little interest and the sponsor said it would not renew. A craft-coffee roaster sponsored the Austin pop-up for 3,000 dollars and reported strong foot traffic.
+
+Lessons
+- The best room was the smallest: the 600-capacity club in Austin sold out twice.
+- Weeknight dates in large rooms without local press underperformed.
+- Early-bird codes work when they are tied to a fan-club moment, not run alone.
