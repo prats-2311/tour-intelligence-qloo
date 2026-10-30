@@ -15,6 +15,7 @@ venv/
 # Env / secrets
 .env
 .env.*
+!.env.example
 *.pem
 *credential*.json
 *service-account*.json

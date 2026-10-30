@@ -7,6 +7,7 @@ import { jsonExceptStrategist, mountQlooProxy } from "./qlooProxy.js";
 import { mountRecordings } from "./recordings.js";
 import { mountTours, statusFromCallTool } from "./tours.js";
 import { requireOrchestratorJob } from "./requireOrchestratorJob.js";
+import { bffStatus } from "./startupStatus.js";
 import { NOT_CONFIGURED, requireTourDataApi } from "./requireTourDataApi.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -1102,4 +1103,5 @@ app.get(/(.*)/, (_req, res) => {
 
 app.listen(PORT, () => {
   console.log(`BFF listening on :${PORT}, proxying to ${TOUR_DATA_API || "(TOUR_DATA_API_URL unset)"}`);
+  for (const line of bffStatus(process.env)) console.log(`BFF ${line}`);
 });

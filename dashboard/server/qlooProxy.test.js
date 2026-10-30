@@ -57,6 +57,23 @@ describe("qlooProxy", () => {
     expect(fetchImpl.mock.calls[2][1].headers).not.toHaveProperty("x-tiq-test");
     expect(fetchImpl.mock.calls[3][1].headers).not.toHaveProperty("x-tiq-test");
   });
+  it.each(["http://localhost:8080", "http://127.0.0.1:8080", "http://[::1]:8080"])("a loopback gateway (%s) gets no identity token: getToken is never called and no authorization is sent", async (gw) => {
+    const fetchImpl = vi.fn(async () => sse(['event: done\ndata: {"type":"done"}\n\n']));
+    const getToken = vi.fn(async () => { throw new Error("must not fetch a Google identity token for a local gateway"); });
+    const base = await start({ gatewayUrl: gw, getToken, fetchImpl });
+    const res = await fetch(`${base}/api/qloo/tour-board`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s1" }, body: JSON.stringify({ artist: "A", regions: ["Mexico"], maxStops: 3 }) });
+    expect(res.status).toBe(200);
+    await res.text();
+    expect(getToken).not.toHaveBeenCalled();
+    expect(fetchImpl.mock.calls[0][1].headers.authorization).toBeUndefined();
+  });
+  it("a remote gateway whose host merely starts with localhost still gets a token", async () => {
+    const fetchImpl = vi.fn(async () => sse(['event: done\ndata: {"type":"done"}\n\n']));
+    const base = await start({ gatewayUrl: "https://localhost.evil.example", getToken: async () => "tok", fetchImpl });
+    const res = await fetch(`${base}/api/qloo/tour-board`, { method: "POST", headers: { "content-type": "application/json", "x-session-id": "s1" }, body: JSON.stringify({ artist: "A", regions: ["Mexico"], maxStops: 3 }) });
+    await res.text();
+    expect(fetchImpl.mock.calls[0][1].headers.authorization).toBe("Bearer tok");
+  });
   it("passes upstream JSON errors through with their status", async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ error: "bad brief" }), { status: 400, headers: { "content-type": "application/json" } }));
     const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
