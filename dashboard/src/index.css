@@ -292,3 +292,16 @@ body {
   /* Sample books carry the label on every printed page. */
   .tour-book .print-footer { display: block; position: fixed; bottom: 0; left: 0; right: 0; padding: 4px 0; text-align: center; font-size: 11px; }
 }
+
+/* Sponsor pitch sheet: one clean page, white with black text, app chrome and the action bar hidden. */
+@page { margin: 12mm; }
+@media print {
+  body:has(.pitch-sheet), body:has(.pitch-sheet) #root > div { background: #fff !important; }
+  body:has(.pitch-sheet) [data-app-shell] { display: none !important; }
+  body:has(.pitch-sheet) main { padding: 0 !important; }
+  .pitch-sheet { margin: 0 !important; max-width: none !important; padding: 0 !important; font-size: 11pt; background: #fff !important; }
+  .pitch-sheet *:not(svg *) { color: #111 !important; background-color: transparent !important; box-shadow: none !important; }
+  .pitch-sheet [data-noprint] { display: none !important; }
+  .pitch-sheet section { break-inside: avoid; }
+  .pitch-sheet a[data-cite]::after { content: " (" attr(href) ")"; font-size: 9pt; }
+}

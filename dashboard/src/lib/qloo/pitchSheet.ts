@@ -50,7 +50,10 @@ export const DRAFT_FOOTER = "Draft for discussion — not an offer or agreement.
 export type PitchSheet = PitchSheetOk | { status: "unavailable"; message: string };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const dayText = (d: Date): string => `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+/** Local calendar day ("30 Oct 2026"). */
+const dayText = (d: Date): string => `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+/** The recording's calendar day as written in its ISO stamp, whatever the viewer's time zone. */
+const isoDayText = (iso: string): string => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso); return m ? `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}` : iso; };
 const fold = (s: string): string => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 const weekDay = (iso: string | null): string | null => {
   const m = iso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(iso) : null;
@@ -104,7 +107,7 @@ function claimsOf(n: Narrative | undefined): string | null {
 
 function evidenceOf(i: PitchInput): string {
   const lead = i.source === "live" ? "Every number above comes from Qloo results recorded today (live run)."
-    : i.source === "showcase" && i.recordedAt ? `Every number above comes from Qloo results recorded on ${dayText(new Date(i.recordedAt))} (recorded example).`
+    : i.source === "showcase" && i.recordedAt ? `Every number above comes from Qloo results recorded on ${isoDayText(i.recordedAt)} (recorded example).`
     : "Every number above comes from invented sample data, not from Qloo (sample example).";
   return `${lead} ${INTEGRITY_LINE}`;
 }

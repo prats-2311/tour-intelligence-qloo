@@ -30,6 +30,11 @@ describe("shell: legacy campaign routes redirect to the board", () => {
     mount(path);
     await waitFor(() => expect(screen.getByTestId("where").textContent).toBe("/tours/board"));
   });
+  it("/tours/pitch/:cityId/:brand is a real route (lazy), not the not-found page, and keeps the example query", async () => {
+    mount("/tours/pitch/4005539/Cerro%20Alto%20Mezcal?sample=1");
+    expect(await screen.findByRole("heading", { level: 1, name: /Cerro Alto Mezcal × Lumen Vale — Guadalajara/ })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Page not found" })).toBeNull();
+  });
   it("an unknown route shows a not-found page with a way back", async () => {
     mount("/nope");
     expect(await screen.findByRole("heading", { name: "Page not found" })).toBeTruthy();
