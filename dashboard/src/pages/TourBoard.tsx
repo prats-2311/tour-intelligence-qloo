@@ -230,6 +230,15 @@ export default function TourBoard() {
     staleTime: Infinity,
     retry: false,
   });
+  // A live lookup: say when it lands (or fails) in case the reader scrolled away. The result itself still renders in place.
+  const withoutWasFetching = useRef(false);
+  useEffect(() => {
+    if (withoutLive.isFetching) { withoutWasFetching.current = true; return; }
+    if (!withoutWasFetching.current) return;
+    withoutWasFetching.current = false;
+    if (withoutLive.isError || withoutLive.data?.status === "unavailable") toast({ message: "Couldn't get the generic ranking.", tone: "error" });
+    else if (withoutLive.data) toast({ message: "Generic ranking is ready.", tone: "success" });
+  }, [withoutLive.isFetching, withoutLive.isError, withoutLive.data, toast]);
   const withoutResult = state.source === "showcase"
     ? showcaseWithoutQloo(variant)
     : isSample
