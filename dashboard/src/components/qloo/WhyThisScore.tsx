@@ -13,6 +13,7 @@ export function WhyThisScore({ city, scoring, clockRule = false }: { city: Score
   const w = city.winnability.value;
   const unplaced = city.insufficientReason === "location_unresolved";
   const comps = city.activation.components ?? {};
+  const dropped = weightRows(cfg).some((r) => r.key === "fan_concentration" && r.dropped);
   const seen = new Set<string>();
   const unique = [...city.fanHeat.refs, ...city.activation.refs, ...city.winnability.refs].filter((r) => {
     const k = `${r.tool}|${r.cacheKey}`;
@@ -53,13 +54,16 @@ export function WhyThisScore({ city, scoring, clockRule = false }: { city: Score
                 {dropped ? (
                   <td className="py-1.5 text-right text-[12px] text-canvas-muted">dropped — cities barely differ on this</td>
                 ) : (
-                  <td className="py-1.5 text-right font-mono tabular">{typeof v === "number" && Number.isFinite(v) ? v.toFixed(2) : "—"}</td>
+                  <td className="py-1.5 text-right font-mono tabular">{typeof v === "number" && Number.isFinite(v) ? (v > 0 && v < 0.005 ? "<0.01" : v.toFixed(2)) : "—"}</td>
                 )}
               </tr>
             );
           })}
         </tbody>
       </table>
+      {!dropped && typeof comps.fan_concentration === "number" && comps.fan_concentration < 0.05 && (
+        <p className="text-[12px] text-canvas-muted">Fan concentration measures how bunched up the artist's fans are in a few zones. A low value means fans are spread evenly across the city, so it can be near zero even when fan heat is high.</p>
+      )}
       <p className="text-[12px] text-canvas-muted">Weights are rescaled over the components that returned data.</p>
       {floored && (
         <p className="text-[13px] text-canvas-muted">

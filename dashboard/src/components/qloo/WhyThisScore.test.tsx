@@ -25,6 +25,12 @@ describe("WhyThisScore scoring display", () => {
     expect(screen.getByText(/dropped — cities barely differ on this/i)).toBeTruthy();
     expect(screen.getByText(/rescaled between the lowest score we count and 1/i)).toBeTruthy();
   });
+  it("a near-zero fan concentration reads <0.01 with a plain-English explanation, not a bare 0.00", () => {
+    const low = { ...city, activation: { ...city.activation, components: { ...(city.activation.components ?? {}), fan_concentration: 0.0004 } } };
+    render(<WhyThisScore city={low} />);
+    expect(screen.getByText("<0.01")).toBeTruthy();
+    expect(screen.getByText(/spread evenly across the city, so it can be near zero even when fan heat is high/)).toBeTruthy();
+  });
   it("states the 6-week on-sale rule only when the clocks are shown", () => {
     const { rerender } = render(<WhyThisScore city={city} clockRule />);
     expect(screen.getByTestId("clock-rule").textContent).toBe("Dates assume a 6-week on-sale lead before the first show; change the window in the brief.");
