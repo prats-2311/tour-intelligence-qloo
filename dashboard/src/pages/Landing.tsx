@@ -23,7 +23,7 @@ export const TRY_ROUTING_LINE = "Replays a recorded run where a tour's cities we
 export const MAP_LEGEND_ITEMS: Array<{ verdict: Verdict; label: string }> = [
   { verdict: "play", label: "Play" }, { verdict: "hidden_goldmine", label: "Under the radar" }, { verdict: "de_risk", label: "De-risk" }, { verdict: "consider", label: "Consider" }, { verdict: "skip", label: "Skip" },
 ];
-export const MAP_LEGEND_NOTE = "Shape is the verdict; top picks are named.";
+export const MAP_LEGEND_NOTE = "Shape is the verdict, size is fan heat; top picks are named.";
 export const PROTAGONIST = "The scenario: venues are holding dates until Friday. Pick which 2 of 5 smaller markets to confirm.";
 
 const TourMap = lazy(() => import("@/components/qloo/TourMap"));

@@ -16,14 +16,35 @@ const SPEC: Record<Verdict, { size: number; color: string; opacity: number }> = 
   insufficient_data: { size: 8, color: "#a4a094", opacity: 0.5 },
 };
 
+/**
+ * Marker size = fan heat. The verdict's base size (SPEC above) is multiplied by a factor that runs linearly from `low` at fan heat 0
+ * to `high` at fan heat 100, then rounded and bounded to [minSize, maxSize] px (the glyph only; the hit area stays 44px).
+ * Missing or non-finite fan heat keeps the base size. The shape and colour still carry the verdict, never the size.
+ */
+export const MARKER_SCALE = { low: 0.8, high: 1.5, minSize: 6, maxSize: 18 } as const;
+
+export function markerSize(verdict: Verdict, fanHeat: number | null | undefined): number {
+  const base = SPEC[verdict].size;
+  if (fanHeat === null || fanHeat === undefined || !Number.isFinite(fanHeat)) return base;
+  const t = Math.min(100, Math.max(0, fanHeat)) / 100;
+  const size = Math.round(base * (MARKER_SCALE.low + (MARKER_SCALE.high - MARKER_SCALE.low) * t));
+  return Math.min(MARKER_SCALE.maxSize, Math.max(MARKER_SCALE.minSize, size));
+}
+
+/** What the marker tooltip shows. Scores are 0-100 (null: not enough data); `status` is a team status label when a workspace has one. */
+export interface MarkerDetails { fanHeat: number | null; activation: number | null; winnability: number | null; status?: string | null }
+
+const scoreText = (label: string, v: number | null): string => (v === null || !Number.isFinite(v) ? `${label} not enough data` : `${label} ${Math.round(v)}`);
+
 function svgEl(name: string, attrs: Record<string, string | number>): SVGElement {
   const el = document.createElementNS(NS, name);
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
   return el;
 }
 
-function glyph(verdict: Verdict, neutral = false): SVGElement {
-  const { size, color, opacity } = SPEC[neutral ? "insufficient_data" : verdict];
+function glyph(verdict: Verdict, neutral = false, sizeOverride?: number): SVGElement {
+  const { size: baseSize, color, opacity } = SPEC[neutral ? "insufficient_data" : verdict];
+  const size = sizeOverride ?? baseSize;
   const shape = neutral ? "circle" : VERDICT_SHAPE[verdict];
   const box = size + PAD * 2, c = box / 2, h = size / 2;
   const svg = svgEl("svg", { width: box, height: box, viewBox: `0 0 ${box} ${box}`, "aria-hidden": "true", "data-shape": shape });
@@ -58,10 +79,12 @@ export interface MarkerOptions {
   reduce?: boolean;
   /** One neutral circle, no verdict shape, label or interaction (the "Without Qloo" view). */
   neutral?: boolean;
+  /** Scores and team status for the size scaling and the hover/focus tooltip. Absent: base size, no tooltip. */
+  details?: MarkerDetails;
 }
 
 /** A focusable 44px button wrapping a small verdict-shaped glyph. Shape, not colour, carries the verdict. */
-export function markerElement({ verdict, city, label, selected, onSelect, reduce = false, neutral = false }: MarkerOptions): HTMLButtonElement {
+export function markerElement({ verdict, city, label, selected, onSelect, reduce = false, neutral = false, details }: MarkerOptions): HTMLButtonElement {
   if (neutral) return neutralMarker(city);
   const el = document.createElement("button");
   el.type = "button";
@@ -79,7 +102,9 @@ export function markerElement({ verdict, city, label, selected, onSelect, reduce
     display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
     transition: reduce ? "none" : "transform 120ms ease-out",
   });
-  inner.append(glyph(verdict));
+  const size = markerSize(verdict, details?.fanHeat);
+  el.dataset.size = String(size);
+  inner.append(glyph(verdict, false, size));
   el.append(inner);
   setMarkerSelected(el, selected);
 
@@ -94,6 +119,7 @@ export function markerElement({ verdict, city, label, selected, onSelect, reduce
     el.append(text);
   }
 
+  if (details) attachTooltip(el, city, verdict, details);
   el.addEventListener("click", onSelect);
   el.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -102,6 +128,42 @@ export function markerElement({ verdict, city, label, selected, onSelect, reduce
     }
   });
   return el;
+}
+
+let tipSeq = 0;
+
+/** A hover/focus tooltip (role="tooltip", described-by the button). Escape closes it; it never takes focus. */
+function attachTooltip(el: HTMLButtonElement, city: string, verdict: Verdict, d: MarkerDetails): void {
+  const tip = document.createElement("span");
+  tip.id = `marker-tip-${++tipSeq}`;
+  tip.setAttribute("role", "tooltip");
+  tip.hidden = true;
+  Object.assign(tip.style, {
+    position: "absolute", bottom: "100%", left: "50%", transform: "translateX(-50%)", zIndex: "5", pointerEvents: "none",
+    display: "none", flexDirection: "column", gap: "2px", minWidth: "150px", padding: "8px 10px", borderRadius: "8px",
+    background: "#2a2924", color: "#e9e4d6", fontSize: "12px", lineHeight: "1.35", textAlign: "left", whiteSpace: "nowrap",
+    fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif', boxShadow: "0 0 0 1px #3a382f",
+  });
+  const head = document.createElement("strong");
+  head.textContent = city;
+  head.style.fontSize = "13px";
+  const line = (text: string) => { const s = document.createElement("span"); s.textContent = text; return s; };
+  tip.append(head, line(VERDICT_LABEL[verdict]), line(scoreText("Fan heat", d.fanHeat)), line(scoreText("Activation", d.activation)), line(scoreText("Winnability", d.winnability)));
+  if (d.status) {
+    const chip = document.createElement("span");
+    chip.dataset.statusChip = "true";
+    chip.textContent = d.status;
+    Object.assign(chip.style, { alignSelf: "flex-start", marginTop: "2px", padding: "1px 8px", borderRadius: "999px", background: "#3a3932", fontSize: "11px", fontWeight: "600" });
+    tip.append(chip);
+  }
+  const show = (on: boolean) => { tip.hidden = !on; tip.style.display = on ? "flex" : "none"; };
+  el.append(tip);
+  el.setAttribute("aria-describedby", tip.id);
+  el.addEventListener("mouseenter", () => show(true));
+  el.addEventListener("mouseleave", () => show(false));
+  el.addEventListener("focus", () => show(true));
+  el.addEventListener("blur", () => show(false));
+  el.addEventListener("keydown", (e) => { if (e.key === "Escape") show(false); });
 }
 
 function neutralMarker(city: string): HTMLButtonElement {
@@ -144,6 +206,7 @@ export function setMarkerSelected(el: HTMLElement, selected: boolean): void {
 }
 
 /** Identity of everything a marker renders; a change means the marker must be rebuilt. */
-export function markerSignature(c: { id: string; name: string; verdict: Verdict; label: string | null }, neutral = false): string {
-  return neutral ? [c.id, "neutral", c.name].join("|") : [c.id, c.verdict, c.name, c.label ?? ""].join("|");
+export function markerSignature(c: { id: string; name: string; verdict: Verdict; label: string | null; details?: MarkerDetails }, neutral = false): string {
+  const d = c.details;
+  return neutral ? [c.id, "neutral", c.name].join("|") : [c.id, c.verdict, c.name, c.label ?? "", d ? [d.fanHeat, d.activation, d.winnability, d.status ?? ""].join(",") : ""].join("|");
 }

@@ -48,6 +48,26 @@ describe("TourMap", () => {
     }
     expect(onSelect).not.toHaveBeenCalled();
   });
+  it("markers carry a size scaled by fan heat and a tooltip with the city's scores", async () => {
+    const { default: TourMap } = await import("./TourMap");
+    const { markerSize } = await import("./mapMarker");
+    const cities = SAMPLE_CITIES.slice(0, 3);
+    render(<TourMap cities={cities} onSelect={() => {}} />);
+    for (const c of cities) {
+      const el = document.querySelector<HTMLButtonElement>(`button[aria-label^="${c.name},"]`)!;
+      expect(el.dataset.size).toBe(String(markerSize(c.verdict, c.fanHeat.value)));
+      const tip = el.querySelector('[role="tooltip"]')!;
+      expect(tip.textContent).toContain(c.name);
+      expect(tip.textContent).toContain(`Fan heat ${Math.round(c.fanHeat.value!)}`);
+    }
+  });
+  it("shows the team status chip when statusOf supplies one", async () => {
+    const { default: TourMap } = await import("./TourMap");
+    const cities = SAMPLE_CITIES.slice(0, 2);
+    render(<TourMap cities={cities} onSelect={() => {}} statusOf={(id) => (id === cities[0]!.id ? "Confirmed" : null)} />);
+    expect(document.querySelectorAll("[data-status-chip]")).toHaveLength(1);
+    expect(document.querySelector("[data-status-chip]")!.textContent).toBe("Confirmed");
+  });
   it("exposes data-map-ready only while the map is idle, for screenshot tooling", async () => {
     const { default: TourMap } = await import("./TourMap");
     const { container } = render(<TourMap cities={SAMPLE_CITIES.slice(0, 2)} onSelect={() => {}} />);

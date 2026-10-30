@@ -105,7 +105,7 @@ describe("Landing", () => {
     vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
     render(<MemoryRouter><Landing /></MemoryRouter>);
     const legend = screen.getByTestId("map-legend");
-    expect(legend.textContent).toBe("PlayUnder the radarDe-riskConsiderSkipShape is the verdict; top picks are named.");
+    expect(legend.textContent).toBe("PlayUnder the radarDe-riskConsiderSkipShape is the verdict, size is fan heat; top picks are named.");
     const marks = [...legend.querySelectorAll("[data-shape]")];
     expect(marks.map((m) => m.getAttribute("data-shape"))).toEqual(["circle", "diamond", "triangle", "ring", "x"].map((x) => x));
     const paint = (m: Element) => m.getAttribute("fill") !== "none" ? m.getAttribute("fill") : m.getAttribute("stroke");
