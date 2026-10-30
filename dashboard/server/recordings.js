@@ -27,10 +27,11 @@ export function mountRecordings(
       let body;
       if (localDir) body = await readFile(`${localDir}/${name}.json`, "utf8");
       else if (bucket) {
-        const r = await fetchImpl(
-          `https://storage.googleapis.com/storage/v1/b/${encodeURIComponent(bucket)}/o/${encodeURIComponent(`${name}.json`)}?alt=media`,
-          { headers: { authorization: `Bearer ${await getAccessToken()}` }, signal: AbortSignal.timeout(5000) },
-        );
+        const url = `https://storage.googleapis.com/storage/v1/b/${encodeURIComponent(bucket)}/o/${encodeURIComponent(`${name}.json`)}?alt=media`;
+        const get = async (token) => fetchImpl(url, { headers: { authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(5000) });
+        let r = await get(await getAccessToken());
+        // A cached token can expire before its cache entry does: refresh once and retry.
+        if (r.status === 401 || r.status === 403) r = await get(await getAccessToken({ force: true }));
         if (!r.ok) throw new Error(`storage returned ${r.status}`);
         body = await r.text();
       } else throw new Error("no recordings source configured");
