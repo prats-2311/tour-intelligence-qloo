@@ -10,6 +10,7 @@ export function routeKey(path: string): RouteKey | null {
   if (p === "/tours/book") return "book";
   if (p === "/proof") return "proof";
   if (p === "/insights") return "insights";
+  if (p === "/tours/insights") return "tourInsights";
   return null;
 }
 

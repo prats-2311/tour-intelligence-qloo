@@ -69,6 +69,11 @@ const renderWithRun = (brief: TourBrief) =>
 
 
 describe("TourBoard", () => {
+  it("the header links to the charts page, keeping the sample query", async () => {
+    renderPage("/tours/board?sample=1");
+    const link = await screen.findByRole("link", { name: "Charts" });
+    expect(link.getAttribute("href")).toBe("/tours/insights?sample=1");
+  });
   it("Without Qloo keeps the map legend, score sheet and bars off, but keeps the next step", async () => {
     renderPage("/tours/board?sample=1&mode=without");
     await screen.findByRole("list", { name: "Generic ranking" });

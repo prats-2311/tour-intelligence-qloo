@@ -3,12 +3,13 @@ import type { PlaybookCard, ScoredCity } from "@/lib/qloo/types";
 import { ChartFrame } from "./ChartFrame";
 
 /** Top sponsors by fan rank for one city, with the city's own rank for each (or "not in the city's top 20"). Rank-based, so no amounts. */
-export function SponsorLiftChart({ city, card, status }: { city: ScoredCity; card: PlaybookCard | null; status: "ready" | "loading" | "none" }) {
+export function SponsorLiftChart({ city, card, status }: { city: ScoredCity; card: PlaybookCard | null; status: "ready" | "loading" | "none" | "unloaded" }) {
   const rows = status === "ready" ? sponsorLiftRows(card ?? undefined) : [];
   const axis = Math.max(20, ...rows.map((r) => r.fanRank), ...rows.map((r) => r.cityRank ?? 0));
   const at = (rank: number): string => `${(Math.min(rank, axis) / axis) * 100}%`;
   const message =
     status === "loading" ? <p role="status" className="text-[14px] text-canvas-muted">Loading the playbook for {city.name}…</p>
+    : status === "unloaded" ? <p className="text-[14px] text-canvas-muted">Open the {city.name} playbook first; this page only shows sponsor ranks that are already loaded and never starts a lookup.</p>
     : status === "none" ? <p className="text-[14px] text-canvas-muted">No recorded playbook for {city.name}, so there are no sponsor ranks to chart.</p>
     : rows.length === 0 ? <p className="text-[14px] text-canvas-muted">No sponsor ranks in this playbook.</p> : undefined;
   return (

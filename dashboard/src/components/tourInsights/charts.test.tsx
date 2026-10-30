@@ -47,7 +47,7 @@ describe("CityScoresChart", () => {
     expect(screen.getByRole("link").getAttribute("href")).toBe("/tours/playbook/3530597?showcase=1");
   });
   it("a missing score reads 'not enough data' in the label and draws no bar", () => {
-    const c = { ...cities[0]!, fanHeat: { value: null, refs: [] } };
+    const c = { ...cities[0]!, fanHeat: { value: null, reason: "insufficient_data" as const, refs: [] } };
     wrap(<CityScoresChart cities={[c]} hrefFor={href} />);
     expect(screen.getByRole("img", { name: /fan heat not enough data/ })).toBeTruthy();
     expect(screen.queryByTestId("bar-fan")).toBeNull();
@@ -110,7 +110,7 @@ describe("QuadrantChart", () => {
     expect(screen.queryByRole("tooltip")).toBeNull();
   });
   it("a city without both scores is left off the chart and counted", () => {
-    const c = { ...cities[0]!, id: "n", name: "Nullville", activation: { value: null, refs: [] } };
+    const c = { ...cities[0]!, id: "n", name: "Nullville", activation: { value: null, reason: "insufficient_data" as const, refs: [] } };
     wrap(<QuadrantChart cities={[...cities, c]} thresholds={t} hrefFor={href} />);
     expect(screen.getAllByTestId("quad-point")).toHaveLength(cities.length);
     expect(screen.getByText("1 city not plotted (a score is missing).")).toBeTruthy();
@@ -150,6 +150,13 @@ describe("SponsorLiftChart", () => {
     expect(screen.getByRole("status").textContent).toMatch(/Loading/);
     rerender(<MemoryRouter><SponsorLiftChart city={city} card={sponsorCard([{ name: "X", affinity: 0.4 }])} status="ready" /></MemoryRouter>);
     expect(screen.getByText(/No sponsor ranks/)).toBeTruthy();
+  });
+});
+
+describe("SponsorLiftChart live runs", () => {
+  it("never starts a lookup: an unloaded live playbook asks the user to open it first", () => {
+    wrap(<SponsorLiftChart city={cities[0]!} card={null} status="unloaded" />);
+    expect(screen.getByText(/Open the Mexico City playbook first/)).toBeTruthy();
   });
 });
 

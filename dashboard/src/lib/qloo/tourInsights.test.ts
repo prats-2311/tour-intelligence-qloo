@@ -63,7 +63,7 @@ describe("applyTourFilters", () => {
     expect(names(out).sort()).toEqual(["Los Angeles", "Mexico City", "São Paulo"]);
   });
   it("min winnability keeps cities at or above it; a null winnability never passes a positive minimum", () => {
-    const withNull: ScoredCity = { ...SAMPLE_CITIES[0]!, id: "n", name: "Nullville", winnability: { value: null, refs: [] } };
+    const withNull: ScoredCity = { ...SAMPLE_CITIES[0]!, id: "n", name: "Nullville", winnability: { value: null, reason: "insufficient_data" as const, refs: [] } };
     const out = applyTourFilters([...SAMPLE_CITIES, withNull], { ...f, minWinnability: 72 }, none);
     expect(names(out)).toEqual(["Mexico City", "São Paulo", "Guadalajara"]);
     expect(applyTourFilters([withNull], f, none)).toHaveLength(1);
@@ -84,7 +84,7 @@ describe("applyTourFilters", () => {
     expect(names(applyTourFilters(SAMPLE_CITIES, { ...f, sort: "activation" }, none)).slice(0, 2)).toEqual(["Guadalajara", "Curitiba"]);
     const byName = names(applyTourFilters(SAMPLE_CITIES, { ...f, sort: "name" }, none));
     expect(byName).toEqual([...byName].sort((a, b) => a.localeCompare(b)));
-    const nullAct: ScoredCity = { ...SAMPLE_CITIES[0]!, id: "n", name: "Nullville", activation: { value: null, refs: [] } };
+    const nullAct: ScoredCity = { ...SAMPLE_CITIES[0]!, id: "n", name: "Nullville", activation: { value: null, reason: "insufficient_data" as const, refs: [] } };
     expect(names(applyTourFilters([nullAct, SAMPLE_CITIES[1]!], { ...f, sort: "activation" }, none))).toEqual(["São Paulo", "Nullville"]);
   });
   it("does not mutate its input", () => {
@@ -102,12 +102,12 @@ describe("chart data from the board", () => {
   it("cityScoreRows: one row per city, three metrics, verdict kept, null scores stay null", () => {
     const rows = cityScoreRows(SAMPLE_CITIES.slice(0, 2));
     expect(rows[0]).toMatchObject({ id: "3530597", name: "Mexico City", verdict: "play", fanHeat: 91, activation: 77, winnability: 84 });
-    const n = cityScoreRows([{ ...SAMPLE_CITIES[0]!, fanHeat: { value: null, refs: [] } }]);
+    const n = cityScoreRows([{ ...SAMPLE_CITIES[0]!, fanHeat: { value: null, reason: "insufficient_data" as const, refs: [] } }]);
     expect(n[0]!.fanHeat).toBeNull();
   });
   it("buildQuadrant: only cities with both scores become points; guides come from the thresholds", () => {
     const t = DEFAULT_SCORING_DISPLAY.thresholds;
-    const noAct: ScoredCity = { ...SAMPLE_CITIES[0]!, id: "n", name: "N", activation: { value: null, refs: [] } };
+    const noAct: ScoredCity = { ...SAMPLE_CITIES[0]!, id: "n", name: "N", activation: { value: null, reason: "insufficient_data" as const, refs: [] } };
     const q = buildQuadrant([...SAMPLE_CITIES, noAct], t);
     expect(q.points).toHaveLength(SAMPLE_CITIES.filter((c) => c.activation.value !== null && c.fanHeat.value !== null).length);
     expect(q.points.find((p) => p.id === "3530597")).toMatchObject({ x: 91, y: 77, verdict: "play" });

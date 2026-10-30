@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowDown, ArrowRight, ArrowUp, CircleAlert, History, RotateCcw, Square } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, BarChart3, CircleAlert, History, RotateCcw, Square } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -469,6 +469,7 @@ export default function TourBoard() {
           <button type="button" onClick={replay} className={smallBtn}><RotateCcw size={12} aria-hidden />Replay the agent</button>
         )}
         <AgentLogChip events={state.log} onOpen={() => setLogOpen(true)} />
+        {state.cities.length > 0 && <Link to={`/tours/insights${sampleQ}`} className={smallBtn}><BarChart3 size={12} aria-hidden />Charts</Link>}
         {state.cities.length > 0 && <TeamBar cities={state.cities} tourThread="tour:board" />}
       </div>
     </header>
