@@ -71,8 +71,10 @@ const renderWithRun = (brief: TourBrief) =>
 describe("TourBoard", () => {
   it("the header links to the charts page, keeping the sample query", async () => {
     renderPage("/tours/board?sample=1");
-    const link = await screen.findByRole("link", { name: "Charts" });
-    expect(link.getAttribute("href")).toBe("/tours/insights?sample=1");
+    // One in the header (desktop) and one in the quiet link row (phones); CSS shows exactly one per width.
+    const links = await screen.findAllByRole("link", { name: "Charts" });
+    expect(links).toHaveLength(2);
+    for (const link of links) expect(link.getAttribute("href")).toBe("/tours/insights?sample=1");
   });
   it("Without Qloo keeps the map legend, score sheet and bars off, but keeps the next step", async () => {
     renderPage("/tours/board?sample=1&mode=without");
