@@ -1,0 +1,427 @@
+[
+ {
+  "id": "shakira-rio-de-janeiro-anitta",
+  "artist": "Shakira",
+  "city": "Rio de Janeiro",
+  "country": "Brazil",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "Anitta",
+   "aliases": [
+    "Larissa de Macedo Machado"
+   ]
+  },
+  "date": "2026-05-02",
+  "sources": [
+   "https://istoe.com.br/shakira-agradecimento-todo-mundo-no-rio",
+   "https://www.cnnbrasil.com.br/pop/shakira-canta-em-portugues-com-anitta-caetano-bethania-e-ivete-no-rio/"
+  ],
+  "summary": "Anitta joined Shakira on stage at her free Copacabana show (Todo Mundo no Rio) in Rio de Janeiro on 2 May 2026 and sang the new collaboration Choka Choka.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-A+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": "https://en.wikipedia.org/wiki/Anitta_(singer)"
+ },
+ {
+  "id": "martin-garrix-buenos-aires-cocho",
+  "artist": "Martin Garrix",
+  "city": "Buenos Aires",
+  "country": "Argentina",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "Cocho",
+   "aliases": [
+    "Marcos Gari"
+   ]
+  },
+  "date": "2026-05-16",
+  "sources": [
+   "https://www.perfil.com/noticias/cultura/martin-garrix-desato-una-tormenta-de-beats-fuego-y-euforia-en-el-movistar-arena.phtml",
+   "https://www.canal12misiones.com/?p=702477",
+   "https://theneedledrop.com/news/martin-garrix-is-looking-for-local-djs-to-open-for-him-on-tour/"
+  ],
+  "summary": "Buenos Aires DJ Cocho opened Martin Garrix's sold-out Movistar Arena show in Buenos Aires on 16 May 2026, one of the local DJs chosen (must live within 100 miles of the venue) for Garrix's Americas Tour.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-A+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": "https://electronicgroove.com/eg-artists/eg-895-cocho/"
+ },
+ {
+  "id": "dermot-kennedy-dublin-aaron-rowe",
+  "artist": "Dermot Kennedy",
+  "city": "Dublin",
+  "country": "Ireland",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "Aaron Rowe"
+  },
+  "date": "2026-07-11",
+  "sources": [
+   "https://www.waterford-news.ie/amble-and-aaron-rowe-announced-as-support-acts-for-dermot-kennedys-aviva-stadium-shows_arid-84958.html"
+  ],
+  "summary": "Folk trio Amble and Dublin musician Aaron Rowe were announced as support acts for Dermot Kennedy's Aviva Stadium shows on 11 and 12 July 2026; Rowe is described as based in Dublin.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-B+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": [
+   "https://www.waterford-news.ie/amble-and-aaron-rowe-announced-as-support-acts-for-dermot-kennedys-aviva-stadium-shows_arid-84958.html"
+  ]
+ },
+ {
+  "id": "superheaven-perth-gloam",
+  "artist": "Superheaven",
+  "city": "Perth",
+  "country": "Australia",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "Gloam"
+  },
+  "date": "2026-05-06",
+  "sources": [
+   "https://www.thenote.com.au/news/superheaven-reveals-local-support-for-australian-tour-2026",
+   "https://xpressmag.com.au/review-superheaven-at-magnet-house/"
+  ],
+  "summary": "Gloam were the local support for Superheaven (with Angel Du$t) at Magnet House, Perth on Wednesday 6 May 2026; the Perth review calls them 'Local band Gloam'.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-B+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": [
+   "https://xpressmag.com.au/review-superheaven-at-magnet-house/"
+  ]
+ },
+ {
+  "id": "superheaven-melbourne-garage-sale",
+  "artist": "Superheaven",
+  "city": "Melbourne",
+  "country": "Australia",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "Garage Sale"
+  },
+  "date": "2026-05-01",
+  "sources": [
+   "https://www.thenote.com.au/news/superheaven-reveals-local-support-for-australian-tour-2026"
+  ],
+  "summary": "Garage Sale were the local support for Superheaven at Prince Bandroom, Melbourne on Friday 1 May 2026 (and 2 May at 170 Russell).",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-B+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": [
+   "https://www.destroyalllines.com/blog/garage-sale-announced-to-join-tigers-jaw-on-tour-as-melbourne-nears-sell-out"
+  ]
+ },
+ {
+  "id": "fear-factory-hobart-psycroptic",
+  "artist": "Fear Factory",
+  "city": "Hobart",
+  "country": "Australia",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "Psycroptic"
+  },
+  "date": "2026-05-29",
+  "sources": [
+   "https://www.thenote.com.au/news/local-supports-revealed-for-fear-factorys-australian-and-new-zealand-tour-2026"
+  ],
+  "summary": "Local support revealed for Fear Factory's Australian and New Zealand tour 2026: Psycroptic at Odeon, Hobart on Friday 29 May 2026.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-B+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": [
+   "https://en.wikipedia.org/wiki/Psycroptic"
+  ]
+ },
+ {
+  "id": "fear-factory-perth-vanta",
+  "artist": "Fear Factory",
+  "city": "Perth",
+  "country": "Australia",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "Vanta"
+  },
+  "date": "2026-05-19",
+  "sources": [
+   "https://www.thenote.com.au/news/local-supports-revealed-for-fear-factorys-australian-and-new-zealand-tour-2026"
+  ],
+  "summary": "Local support revealed for Fear Factory's Australian and New Zealand tour 2026: Vanta at Metropolis Fremantle, Perth on Tuesday 19 May 2026.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-B+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": [
+   "https://vantametalofficial.bandcamp.com"
+  ]
+ },
+ {
+  "id": "gaerea-melbourne-ghostseeker",
+  "artist": "Gaerea",
+  "city": "Melbourne",
+  "country": "Australia",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "Ghostseeker",
+   "aliases": [
+    "GhostSeeker"
+   ]
+  },
+  "date": "2026-07-10",
+  "sources": [
+   "https://www.thenote.com.au/news/gaerea-reveal-national-and-local-support-for-upcoming-tour"
+  ],
+  "summary": "Gaerea's first Australian tour: Ghostseeker named as local support at Max Watts, Melbourne on 10 July 2026.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-B+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": [
+   "https://www.everblack.com.au/?p=9223"
+  ]
+ },
+ {
+  "id": "teddy-swims-exeter-tk-maxx",
+  "artist": "Teddy Swims",
+  "city": "Exeter",
+  "country": "United Kingdom",
+  "activationType": "sponsor",
+  "realEntity": {
+   "name": "TK Maxx",
+   "aliases": [
+    "TK Maxx presents",
+    "TKMaxx"
+   ]
+  },
+  "date": "2026-06-25",
+  "sources": [
+   "https://www.visitdevon.co.uk/blog/post/teddy-swims-announces-huge-headline-show-at-tk-maxx-presents-live-at-powderham/"
+  ],
+  "summary": "Teddy Swims plays TK Maxx Presents Live at Powderham (Powderham Castle, Exeter, Devon) on Thursday 25 June 2026; TK Maxx sponsors the series.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-B+agent-verifier",
+   "at": "2026-10-30"
+  }
+ },
+ {
+  "id": "tom-grennan-lincoln-tk-maxx",
+  "artist": "Tom Grennan",
+  "city": "Lincoln",
+  "country": "United Kingdom",
+  "activationType": "sponsor",
+  "realEntity": {
+   "name": "TK Maxx",
+   "aliases": [
+    "TK Maxx presents",
+    "TKMaxx"
+   ]
+  },
+  "date": "2026-06-21",
+  "sources": [
+   "https://www.lincolnshire.gov.uk/news/article/2511/tom-grennan-announces-lincoln-date-as-part-of-summer-2026-headline-tour"
+  ],
+  "summary": "Tom Grennan's Lincoln date on his summer 2026 headline tour is TK Maxx presents Live at Lincoln Castle on Sunday 21 June 2026; TK Maxx is title sponsor of the series.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-B+agent-verifier",
+   "at": "2026-10-30"
+  }
+ },
+ {
+  "id": "alanis-morissette-exeter-tk-maxx",
+  "artist": "Alanis Morissette",
+  "city": "Exeter",
+  "country": "United Kingdom",
+  "activationType": "sponsor",
+  "realEntity": {
+   "name": "TK Maxx",
+   "aliases": [
+    "TK Maxx presents",
+    "TKMaxx"
+   ]
+  },
+  "date": "2026-06-26",
+  "sources": [
+   "https://www.visitdevon.co.uk/blog/post/alanis-morissette-announced-as-latest-act-for-tk-maxx-presents-live-at-powderham-2026/"
+  ],
+  "summary": "Alanis Morissette headlines TK Maxx presents Live at Powderham (Powderham Castle near Exeter) on Friday 26 June 2026, one of a handful of UK headline shows.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-B+agent-verifier",
+   "at": "2026-10-30"
+  }
+ },
+ {
+  "id": "bastille-cardiff-tk-maxx",
+  "artist": "Bastille",
+  "city": "Cardiff",
+  "country": "United Kingdom",
+  "activationType": "sponsor",
+  "realEntity": {
+   "name": "TK Maxx",
+   "aliases": [
+    "TK Maxx presents",
+    "TKMaxx"
+   ]
+  },
+  "date": "2026-07-10",
+  "sources": [
+   "https://nation.cymru/culture/pete-tong-brings-ibiza-classics-to-depot-live-at-cardiff-castle/"
+  ],
+  "summary": "Bastille are listed for 10 July 2026 at TK Maxx presents Depot Live at Cardiff Castle, the summer 2026 headline concert series sponsored by TK Maxx.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-B+agent-verifier",
+   "at": "2026-10-30"
+  }
+ },
+ {
+  "id": "asap-rocky-manchester-manchester-city",
+  "artist": "A$AP Rocky",
+  "city": "Manchester",
+  "country": "United Kingdom",
+  "activationType": "merch_collab",
+  "realEntity": {
+   "name": "Manchester City",
+   "aliases": [
+    "Man City",
+    "Manchester City FC"
+   ]
+  },
+  "date": "2026-09-05",
+  "sources": [
+   "https://bookingagentinfo.com/news/aap-rocky-teams-up-with-puma-and-manchester-city-for-limited-edition-jerseys/"
+  ],
+  "summary": "A$AP Rocky, PUMA and Manchester City released a limited-edition jersey capsule exclusively in Manchester on 4-5 September 2026 (Black Milk pop-up, Etihad Stadium Store), tied to his Co-op Live show on 5 September 2026.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-B+agent-verifier",
+   "at": "2026-10-30"
+  }
+ },
+ {
+  "id": "bikini-kill-los-angeles-alice-bag",
+  "artist": "Bikini Kill",
+  "city": "Los Angeles",
+  "country": "United States",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "Alice Bag",
+   "aliases": []
+  },
+  "date": "2026-09-09",
+  "sources": [
+   "https://www.melodicmag.com/news/bikini-kill-announce-2026-tour-support/"
+  ],
+  "summary": "The Bikini Kill 2026 tour listing shows Alice Bag as the support act for the 9 September 2026 show at The Wiltern in Los Angeles.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-C+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": "https://en.wikipedia.org/wiki/Alice_Bag"
+ },
+ {
+  "id": "hands-like-houses-brisbane-the-local-romance",
+  "artist": "Hands Like Houses",
+  "city": "Brisbane",
+  "country": "Australia",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "The Local Romance",
+   "aliases": []
+  },
+  "date": "2026-04-18",
+  "sources": [
+   "https://www.theaureview.com/music/hands-like-houses-princess-theatre-18-04-26/"
+  ],
+  "summary": "The Local Romance, described as a Brisbane alt-metal act, supported Hands Like Houses at the Princess Theatre in Brisbane on 18 April 2026 as one of the local supports chosen from each city.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-C+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": "https://www.starvingkids.com.au/post/the-local-romance-share-electrifying-new-track-valentine"
+ },
+ {
+  "id": "turnstile-toronto-saya-gray",
+  "artist": "Turnstile",
+  "city": "Toronto",
+  "country": "Canada",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "Saya Gray",
+   "aliases": []
+  },
+  "date": "2026-09-12",
+  "sources": [
+   "https://concerts.consequence.net/articles/turnstile-fall-2026-north-american-tour"
+  ],
+  "summary": "The Turnstile fall 2026 tour listing shows Saya Gray among the openers for the 12 September 2026 show at Woodbine Park in Toronto.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-C+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": "https://en.wikipedia.org/wiki/Saya_Gray"
+ },
+ {
+  "id": "slow-pulp-los-angeles-goon",
+  "artist": "Slow Pulp",
+  "city": "Los Angeles",
+  "country": "United States",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "Goon",
+   "aliases": []
+  },
+  "date": "2026-10-29",
+  "sources": [
+   "https://www.vice.com/en/via/slow-pulp-just-announced-a-2026-north-american-tour/"
+  ],
+  "summary": "The Slow Pulp 2026 tour listing shows Goon as the support act for the 29 October 2026 show at The Wiltern in Los Angeles.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-C+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": "https://blurredculture.com/with-their-debut-album-slated-for-release-in-early-2019-its-time-to-get-to-know-goon/"
+ },
+ {
+  "id": "guns-n-roses-pasadena-ice-cube",
+  "artist": "Guns N' Roses",
+  "city": "Pasadena",
+  "country": "United States",
+  "activationType": "local_artist",
+  "realEntity": {
+   "name": "Ice Cube",
+   "aliases": [
+    "O'Shea Jackson"
+   ]
+  },
+  "date": "2026-09-05",
+  "sources": [
+   "https://knotfest.com/blogs/news/ice-cube-public-enemy-the-black-crowes-and-more-set-to-support-guns-n-roses"
+  ],
+  "summary": "Ice Cube is listed as support for the Guns N' Roses show at the Rose Bowl Stadium in Pasadena, California on 5 September 2026.",
+  "review": {
+   "status": "accepted",
+   "by": "agent-collector-C+agent-verifier",
+   "at": "2026-10-30"
+  },
+  "localEvidence": "https://en.wikipedia.org/wiki/Ice_Cube"
+ }
+]
