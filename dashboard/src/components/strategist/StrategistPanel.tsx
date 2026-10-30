@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { SampleBanner } from "@/components/qloo/SampleBanner";
 import { showcaseStrategist } from "@/lib/qloo/showcase";
 import { useDocuments } from "@/lib/docs/useDocuments";
+import { cityThread } from "@/lib/collab/types";
 import { useStrategist } from "@/lib/qloo/useStrategist";
 import type { StrategistContext } from "@/lib/qloo/types";
 import { Composer } from "./Composer";
@@ -26,7 +27,7 @@ export function StrategistPanel({ context, sample, showcase = false, title, onCl
         )}
       </header>
       {sample && <div className="px-4 pt-2"><SampleBanner compact source={showcase ? "showcase" : "sample"} /></div>}
-      <MessageList documentNames={docs.names} turns={state.turns} onRetry={ask} busy={busy} replay={replay} />
+      <MessageList notesKey={context.focusCityId ? cityThread(context.focusCityId) : "tour:board"} documentNames={docs.names} turns={state.turns} onRetry={ask} busy={busy} replay={replay} />
       <Composer docs={docs} replay={replay} busy={busy} empty={state.turns.length === 0} sample={sample} showcase={showcase} context={context} onAsk={ask} onStop={stop} />
     </section>
   );
