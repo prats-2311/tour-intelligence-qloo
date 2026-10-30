@@ -5,6 +5,7 @@ import * as client from "@/lib/qloo/client";
 import { cityThread } from "@/lib/collab/types";
 import { OFF, WorkspaceContext, type Workspace } from "@/lib/collab/workspaceContext";
 import type { GatewayEvent } from "@/lib/qloo/types";
+import { ToastProvider } from "@/components/ui/Toast";
 import { StrategistPanel } from "./StrategistPanel";
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
@@ -15,7 +16,7 @@ function stubStrategist(text: string) {
   return vi.spyOn(client, "streamStrategist").mockImplementation(async function* () { yield* reply(text); });
 }
 const ws = (over: Partial<Workspace> = {}): Workspace => ({ ...OFF, enabled: true, ws: "testws12345", write: vi.fn(async () => true), ...over });
-const panel = (context = CONTEXT, workspace: Workspace = OFF) => render(<WorkspaceContext.Provider value={workspace}><StrategistPanel context={context} sample={false} title="t" /></WorkspaceContext.Provider>);
+const panel = (context = CONTEXT, workspace: Workspace = OFF) => render(<ToastProvider><WorkspaceContext.Provider value={workspace}><StrategistPanel context={context} sample={false} title="t" /></WorkspaceContext.Provider></ToastProvider>);
 
 describe("Draft a city plan", () => {
   it("is offered when a city is open, and sends a fixed one-page-plan prompt for that city", async () => {
@@ -76,7 +77,9 @@ describe("Save to team notes", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save to team notes" }));
     fireEvent.click(screen.getByRole("button", { name: "Save to notes" }));
     await waitFor(() => expect(w.write).toHaveBeenCalledWith("message", { key: cityThread("c-la"), text: "Answer one." }));
-    expect(await screen.findByText("Saved to team notes.")).toBeTruthy();
+    const toast = await screen.findByRole("status");
+    expect(toast.textContent).toContain("Saved to team notes.");
+    expect(toast.closest("[data-toast-viewport]")).not.toBeNull(); // a toast, not inline text under the answer
   });
   it("truncates to 1000 characters with an ellipsis and writes file names instead of ids", async () => {
     stubStrategist(`Austin [doc:d1 p.2] ${"x".repeat(1200)}`);

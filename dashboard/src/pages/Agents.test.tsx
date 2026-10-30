@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/components/ui/Toast";
 import { buildExampleReport } from "@/lib/agents/exampleReport";
 import { stepOf } from "@/lib/qloo/journey";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
@@ -30,7 +31,7 @@ function laShowcase() {
   return raw;
 }
 
-const mount = () => render(<MemoryRouter initialEntries={["/agents"]}><Routes><Route path="/agents" element={<Agents />} /></Routes></MemoryRouter>);
+const mount = () => render(<ToastProvider><MemoryRouter initialEntries={["/agents"]}><Routes><Route path="/agents" element={<Agents />} /></Routes></MemoryRouter></ToastProvider>);
 
 beforeEach(() => { setShowcase(parseShowcase(laShowcase())); });
 afterEach(() => { cleanup(); setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE)); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
@@ -82,6 +83,17 @@ describe("Agents page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy: Install the plugin" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(PLUGIN_INSTALL));
     await waitFor(() => expect(screen.getByText("Copied")).toBeTruthy());
+    expect((await screen.findByRole("status")).textContent).toContain("Copied to clipboard.");
+    expect(document.querySelector("pre + button [aria-live]")).toBeNull(); // the toast announces; the label does not
+  });
+
+  it("reports a blocked clipboard in an error toast, with the code selectable", async () => {
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText: vi.fn(async () => { throw new Error("no"); }) } });
+    (document as unknown as { execCommand: unknown }).execCommand = vi.fn(() => false);
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: "Copy: Install the plugin" }));
+    const alert = await screen.findByRole("alert");
+    expect((within(alert).getByLabelText("Text to copy") as HTMLInputElement).value).toBe(PLUGIN_INSTALL);
   });
 
   it("falls back to execCommand when the clipboard API is missing", async () => {

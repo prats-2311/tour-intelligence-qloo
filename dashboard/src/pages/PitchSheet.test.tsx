@@ -11,6 +11,7 @@ import { resetPlaybooks } from "@/lib/qloo/playbookStore";
 import { loadSegments, resetSegments } from "@/lib/qloo/segmentStore";
 import type { SponsorSegments } from "@/lib/qloo/segments";
 import { parseShowcase, setShowcase, showcasePlaybookCities, showcasePlaybookEvents } from "@/lib/qloo/showcase";
+import { ToastProvider } from "@/components/ui/Toast";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import type { GatewayEvent } from "@/lib/qloo/types";
 import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
@@ -22,7 +23,7 @@ afterEach(() => { setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE)); cleanup(); r
 
 const renderAt = (url: string, ws?: Parameters<typeof WorkspaceContext.Provider>[0]["value"]) =>
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <ToastProvider><QueryClientProvider client={new QueryClient()}>
       <WorkspaceContext.Provider value={ws ?? OFF}>
         <TourBoardProvider sampleDelayMs={0}>
           <MemoryRouter initialEntries={[url]}>
@@ -33,7 +34,7 @@ const renderAt = (url: string, ws?: Parameters<typeof WorkspaceContext.Provider>
           </MemoryRouter>
         </TourBoardProvider>
       </WorkspaceContext.Provider>
-    </QueryClientProvider>,
+    </QueryClientProvider></ToastProvider>,
   );
 const stubFetch = (body: unknown = {}) => { const f = vi.fn(async () => new Response(JSON.stringify(body))); vi.stubGlobal("fetch", f); return f; };
 
@@ -124,7 +125,10 @@ describe("pitch sheet page", () => {
     const text = (writeText.mock.calls[0] as unknown as [string])[0];
     expect(text).toContain("Cerro Alto Mezcal × Lumen Vale — Guadalajara");
     expect(text).toContain("Draft for discussion — not an offer or agreement.");
-    expect(await screen.findByRole("button", { name: "Copied" })).toBeTruthy();
+    const toast = await screen.findByRole("status");
+    expect(toast.textContent).toContain("Pitch sheet copied as text.");
+    expect(screen.queryByRole("button", { name: "Copied" })).toBeNull(); // the button label never changes width
+    expect(screen.getByRole("button", { name: "Copy as text" })).toBeTruthy();
     expect(within(document.body).queryByText(/Ariel Pink/)).toBeNull();
   });
 });
