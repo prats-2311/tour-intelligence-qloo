@@ -39,3 +39,46 @@ describe("pitch sheet: header and why this brand", () => {
     expect(buildPitchSheet(base({ brand: "Nobody Co" })).status).toBe("unavailable");
   });
 });
+
+import type { SegmentBand, SponsorSegments } from "./segments";
+import type { ThisWeek } from "./types";
+
+const band = (over: Partial<SegmentBand> = {}): SegmentBand => ({ band: "25_to_29", phrase: "25-29", index: 0.91, status: "ok", hiddenCount: 0, newInTop5: 2, lifted: true, items: [{ name: "Stüssy", entityId: "1", artistRank: 3, cityRank: null }], ...over });
+const segs = (bands: SegmentBand[], status: SponsorSegments["status"] = "ok"): SponsorSegments => ({ status, indexes: {}, bands });
+const week: ThisWeek = { status: "ok", window: { start: "2026-11-01", end: "2026-11-07" }, items: [{ text: "Street fair on Sunset", date: "2026-11-03", entities: [], citations: ["a", "zz"] }, { text: "No cited item", date: null, entities: [], citations: [] }], removed: [], citations: [{ id: "a", url: "https://example.com/fair", title: "Fair" }], summarised: true, cached: false };
+
+describe("pitch sheet: age bands, zones, the night", () => {
+  it("lists age bands where the brand is in the top 10, with rank and the signed index (not a share)", () => {
+    const s = ok(base({ segments: segs([band(), band({ band: "30_to_34", index: -0.2, items: [{ name: "Stüssy", entityId: "1", artistRank: 11, cityRank: null }] }), band({ band: "35_to_44", index: 0.4, items: [{ name: "HUF", entityId: "2", artistRank: 1, cityRank: 3 }] })]) }));
+    expect(s.segments).toEqual({ state: "bands", lines: ["Aged 25–29: #3 in this band, index +0.91 vs the average audience, not a share."], note: null });
+  });
+  it("adds the under-21 note for a US 18-24 band", () => {
+    const s = ok(base({ segments: segs([band({ band: "24_and_younger", phrase: "18-24" })]) }));
+    expect(s.segments.state === "bands" && s.segments.note).toBe("Includes under-21s: keep alcohol sponsors out of this segment.");
+  });
+  it("says the brand is in no band's top 10 when bands are loaded but none holds it", () => {
+    const s = ok(base({ segments: segs([band({ items: [{ name: "HUF", entityId: "2", artistRank: 1, cityRank: 3 }] })]) }));
+    expect(s.segments).toEqual({ state: "none", message: "Not in the top 10 of any age group." });
+  });
+  it("shows the muted prompt when the store has nothing (or an unavailable answer)", () => {
+    const want = { state: "missing", message: "Open 'By age group' on the playbook to add the age breakdown." };
+    expect(ok(base()).segments).toEqual(want);
+    expect(ok(base({ segments: null })).segments).toEqual(want);
+    expect(ok(base({ segments: segs([], "unavailable") })).segments).toEqual(want);
+  });
+  it("lists the top 3 promo zones by share, naming the city's own label Central", () => {
+    expect(ok(base()).zones).toEqual([{ label: "Echo Park", share: "31%" }, { label: "Central Los Angeles", share: "20%" }, { label: "Silver Lake", share: "12%" }]);
+  });
+  it("names the best room with its fit score and the opener, skipping the do-not-book act", () => {
+    const s = ok(base());
+    expect(s.room).toEqual({ name: "The Echo", fit: "0.91" });
+    expect(s.opener).toBe("Mild High Club");
+    expect(JSON.stringify(s)).not.toMatch(/Ariel Pink/);
+  });
+  it("carries this-week items with their source links, only for items that have them", () => {
+    const s = ok(base({ week }));
+    expect(s.week).toEqual([{ text: "Street fair on Sunset", date: "3 Nov", links: [{ n: 1, href: "https://example.com/fair" }] }, { text: "No cited item", date: null, links: [] }]);
+    expect(ok(base()).week).toEqual([]);
+    expect(ok(base({ week: { status: "unavailable", reason: "error", message: "x" } as ThisWeek })).week).toEqual([]);
+  });
+});
