@@ -8,5 +8,6 @@ export const routeImports = {
   proof: () => import("../pages/Proof"),
   insights: () => import("../pages/TasteInsights"),
   v2: () => import("../pages/V2Preview"),
+  agents: () => import("../pages/Agents"),
 };
 export type RouteKey = keyof typeof routeImports;
