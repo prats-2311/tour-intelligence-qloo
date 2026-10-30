@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { HIDDEN_ORGS_NOTE, SPONSOR_CHECK_UNAVAILABLE_NOTE } from "@/lib/qloo/nonSponsors";
-import { BAND_LABEL, bandHeader, differLine, displayItems, NO_SKEW_COPY, SEGMENT_UNAVAILABLE_COPY, SEGMENT_TIMEOUT_COPY, showsUnder21Note, UNDER_21_NOTE, type AgeBand, type SegmentBand, type SponsorSegments as Segments } from "@/lib/qloo/segments";
-import { loadSegments, segmentKey, useSegments, type SegmentRequest } from "@/lib/qloo/segmentStore";
+import { AGE_BANDS, BAND_LABEL, bandHeader, differLine, displayItems, NO_SKEW_COPY, SEGMENT_UNAVAILABLE_COPY, SEGMENT_TIMEOUT_COPY, showsUnder21Note, UNDER_21_NOTE, type AgeBand, type SegmentBand, type SponsorSegments as Segments } from "@/lib/qloo/segments";
+import { getSegments, loadSegments, segmentKey, useSegments, type SegmentRequest } from "@/lib/qloo/segmentStore";
 import { fanRankLine, rankLine } from "../format";
 import { Caption, Row, Rows } from "./rows";
 
@@ -63,7 +63,12 @@ export function LoadedBands({ data, country }: { data: Segments; country?: strin
 export function SegmentControl({ request, country, children }: { request: SegmentRequest; country: string; children: React.ReactNode }) {
   const key = segmentKey(request.artistId, request.city);
   const state = useSegments(key);
-  const [view, setView] = useState<"all" | AgeBand>("all");
+  // "?band=25_to_29" (from the Charts page matrix) opens that age group, but only when its answer is already in the session: a link never starts a lookup.
+  const [view, setView] = useState<"all" | AgeBand>(() => {
+    const q = new URLSearchParams(window.location.search).get("band");
+    const have = getSegments(key);
+    return have.status === "done" && have.data.status === "ok" && AGE_BANDS.some((b) => b === q) && have.data.bands.some((b) => b.band === q) ? (q as AgeBand) : "all";
+  });
   const [asked, setAsked] = useState(false);
   const data = state.status === "done" ? state.data : null;
   const bands = data?.status === "ok" ? data.bands : [];

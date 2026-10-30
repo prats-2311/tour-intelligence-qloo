@@ -4,7 +4,10 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { ScoredCity, Zone } from "@/lib/qloo/types";
 import { boundsFor, cityMarkers, MAP_STYLE_URL, shouldRefit, warmTint } from "@/lib/qloo/geometry";
 import { useIsDesktop, useMediaQuery } from "@/lib/useMediaQuery";
-import { markerElement, markerSignature, setMarkerSelected } from "./mapMarker";
+import { markerElement, markerSignature, setMarkerSelected, type MarkerDetails } from "./mapMarker";
+
+const detailsFor = (c: ScoredCity | undefined, status: ((id: string) => string | null) | undefined): MarkerDetails | undefined =>
+  c ? { fanHeat: c.fanHeat.value, activation: c.activation.value, winnability: c.winnability.value, status: status?.(c.id) ?? null } : undefined;
 
 interface Props {
   cities: ScoredCity[];
@@ -13,6 +16,8 @@ interface Props {
   zones?: Zone[];
   /** Markers carry no verdict (shape, colour or label) and are not interactive. */
   neutral?: boolean;
+  /** Team status label for a city (shown as a chip in the marker tooltip); null or absent for none. */
+  statusOf?: (cityId: string) => string | null;
 }
 
 const ZONES = "zones";
@@ -30,7 +35,7 @@ function zoneData(zones: Zone[] | undefined) {
   };
 }
 
-export default function TourMap({ cities, selectedId, onSelect, zones, neutral = false }: Props) {
+export default function TourMap({ cities, selectedId, onSelect, zones, neutral = false, statusOf }: Props) {
   const isDesktop = useIsDesktop();
   const [tilesFailed, setTilesFailed] = useState(false);
   const reduce = useMediaQuery("(prefers-reduced-motion: reduce)");
@@ -46,6 +51,8 @@ export default function TourMap({ cities, selectedId, onSelect, zones, neutral =
   const reduceRef = useRef(reduce);
   const neutralRef = useRef(neutral);
   neutralRef.current = neutral;
+  const statusOfRef = useRef(statusOf);
+  statusOfRef.current = statusOf;
   onSelectRef.current = onSelect;
   zonesRef.current = zones;
   citiesRef.current = cities;
@@ -54,8 +61,8 @@ export default function TourMap({ cities, selectedId, onSelect, zones, neutral =
 
   const idKey = useMemo(() => cities.map((c) => c.id).sort().join("|"), [cities]);
   const sigKey = useMemo(
-    () => cityMarkers(cities).map((m, i) => markerSignature({ ...m, name: cities.find((c) => c.id === m.id)?.name ?? String(i) }, neutral)).sort().join("\n"),
-    [cities, neutral],
+    () => cityMarkers(cities).map((m, i) => { const c = cities.find((x) => x.id === m.id); return markerSignature({ ...m, name: c?.name ?? String(i), details: detailsFor(c, statusOf) }, neutral); }).sort().join("\n"),
+    [cities, neutral, statusOf],
   );
 
   const applyZones = (map: maplibregl.Map) => {
@@ -167,7 +174,8 @@ export default function TourMap({ cities, selectedId, onSelect, zones, neutral =
     const byId = new Map(citiesRef.current.map((c) => [c.id, c]));
     const wanted = cityMarkers(citiesRef.current).map((m) => {
       const name = byId.get(m.id)!.name;
-      return { ...m, name, sig: markerSignature({ ...m, name }, neutralRef.current) };
+      const details = detailsFor(byId.get(m.id), statusOfRef.current);
+      return { ...m, name, details, sig: markerSignature({ ...m, name, details }, neutralRef.current) };
     });
     const keep = new Map(wanted.map((m) => [m.id, m.sig]));
     for (const [id, entry] of markers.current) {
@@ -185,6 +193,7 @@ export default function TourMap({ cities, selectedId, onSelect, zones, neutral =
         selected: m.id === selectedRef.current,
         reduce: reduceRef.current,
         neutral: neutralRef.current,
+        details: m.details,
         onSelect: () => onSelectRef.current(m.id),
       });
       markers.current.set(m.id, { marker: new maplibregl.Marker({ element }).setLngLat(m.lngLat).addTo(map), element, sig: m.sig });

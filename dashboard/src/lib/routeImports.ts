@@ -7,6 +7,7 @@ export const routeImports = {
   book: () => import("../pages/TourBook"),
   proof: () => import("../pages/Proof"),
   insights: () => import("../pages/TasteInsights"),
+  tourInsights: () => import("../pages/TourInsights"),
   v2: () => import("../pages/V2Preview"),
   agents: () => import("../pages/Agents"),
 };

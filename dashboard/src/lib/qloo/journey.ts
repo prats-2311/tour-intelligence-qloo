@@ -39,7 +39,11 @@ export type JourneyInput = {
 export const journeyQuery = (source: Source, sampleSet?: SampleSet, routing = false): string =>
   source === "showcase" ? showcaseQuery(routing) : source === "sample" ? (sampleSet === "long" ? "?sample=long" : "?sample=1") : "";
 
-const hasPlaybook = (source: Source, id: string, routing: boolean): boolean =>
+/** Alias kept for the Charts page. */
+export const sourceQuery = journeyQuery;
+
+/** Whether a playbook exists to open for this city in this run (a recorded or sample run holds only a few; live opens any). */
+export const cityHasPlaybook = (source: Source, id: string, routing: boolean): boolean =>
   source === "showcase" ? showcasePlaybookEvents(id, routing ? "routing" : "main") !== null : source === "sample" ? (SAMPLE_PLAYBOOK_CITY_IDS as readonly string[]).includes(id) : true;
 
 /** Where each journey step leads right now. With no run it always leads into the showcase example (or the sample when no recording loaded). */
@@ -59,6 +63,6 @@ export function journeyLinks(input: JourneyInput): Record<StepId, string> {
   const decide = `/tours/board${q}`;
   const byId = new Map(cities.map((c) => [c.id, c]));
   const candidates = [lastOpened, ...shortlist, ...sortCities(cities, "winnability").map((c) => c.id)];
-  const target = candidates.find((id): id is string => !!id && byId.has(id) && hasPlaybook(source, id, routing));
+  const target = candidates.find((id): id is string => !!id && byId.has(id) && cityHasPlaybook(source, id, routing));
   return { markets: "/", decide, playbook: target ? `/tours/playbook/${target}${q}` : decide, book: `/tours/book${q}` };
 }

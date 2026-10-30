@@ -3,7 +3,7 @@ import { renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { routeKey, usePreloadWhenVisible } from "./routePreload";
 
-const loaders = vi.hoisted(() => ({ board: vi.fn(async () => ({})), book: vi.fn(async () => ({})), playbook: vi.fn(async () => ({})), landing: vi.fn(async () => ({})), proof: vi.fn(async () => ({})), insights: vi.fn(async () => ({})) }));
+const loaders = vi.hoisted(() => ({ board: vi.fn(async () => ({})), book: vi.fn(async () => ({})), playbook: vi.fn(async () => ({})), landing: vi.fn(async () => ({})), proof: vi.fn(async () => ({})), insights: vi.fn(async () => ({})), tourInsights: vi.fn(async () => ({})) }));
 vi.mock("./routeImports", () => ({ routeImports: loaders }));
 
 afterEach(() => { vi.unstubAllGlobals(); Object.values(loaders).forEach((f) => f.mockClear()); });
@@ -16,6 +16,7 @@ describe("routeKey", () => {
     expect(routeKey("/tours/book")).toBe("book");
     expect(routeKey("/proof")).toBe("proof");
     expect(routeKey("/insights")).toBe("insights");
+    expect(routeKey("/tours/insights?showcase=1")).toBe("tourInsights");
     expect(routeKey("/nowhere")).toBeNull();
   });
 });

@@ -4,11 +4,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PlaybookCard } from "@/lib/qloo/types";
 import type { SegmentBand, SponsorSegments } from "@/lib/qloo/segments";
 import { bandHeader, showsUnder21Note, signedIndex, UNDER_21_NOTE } from "@/lib/qloo/segments";
-import { resetSegments, type SegmentRequest } from "@/lib/qloo/segmentStore";
+import { loadSegments, resetSegments, type SegmentRequest } from "@/lib/qloo/segmentStore";
 import { CardBody } from "../cardBody";
 import { LoadedBands } from "./SponsorSegments";
 
-afterEach(() => { cleanup(); resetSegments(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => { window.history.replaceState(null, "", "/"); cleanup(); resetSegments(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 const card = (): PlaybookCard => ({ kind: "sponsors", status: "ok", refs: [], warnings: [], items: [{ name: "Stüssy", artistRank: 1, cityRank: null }, { name: "HUF", artistRank: 2, cityRank: 4 }] }) as PlaybookCard;
 const req = (country = "US"): SegmentRequest => ({ artistId: "ART-1", artist: "Mac DeMarco", city: { id: "9", name: "Los Angeles", country, lat: 34, lon: -118 } });
@@ -209,5 +209,25 @@ describe("Tour Book band lists", () => {
     stubFetch(answer());
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(screen.getByTestId("segment-band")).toBeTruthy());
+  });
+});
+
+describe("?band= preselects the age group", () => {
+  it("opens on that band when the age groups are already in the session (no click, no extra fetch)", async () => {
+    const f = stubFetch(answer({ indexes: { "25_to_29": 0.91, "55_and_older": 0.78 }, bands: [band(), band({ band: "55_and_older", phrase: "55-64", index: 0.78 })] }));
+    await loadSegments(req());
+    f.mockClear();
+    window.history.replaceState(null, "", "/tours/playbook/9?showcase=1&band=55_and_older");
+    body();
+    expect(screen.getByTestId("segment-header").textContent).toContain("Fans aged 55+");
+    expect(screen.getByRole("button", { name: "55+" }).getAttribute("aria-pressed")).toBe("true");
+    expect(f).not.toHaveBeenCalled();
+  });
+  it("ignores an unknown band and keeps All fans", async () => {
+    stubFetch(answer());
+    await loadSegments(req());
+    window.history.replaceState(null, "", "/tours/playbook/9?band=bogus");
+    body();
+    expect(screen.getByRole("button", { name: "All fans" }).getAttribute("aria-pressed")).toBe("true");
   });
 });

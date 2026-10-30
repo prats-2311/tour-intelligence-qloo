@@ -341,9 +341,12 @@ function CityPlaybookPage() {
           </div>
         )}
         <div className="flex min-w-0 flex-col gap-3 px-4 lg:order-1 lg:col-span-5 lg:px-0">
-          <Link to={`/tours/board${sampleQ}`} aria-label="Back to Tour Board" className="-mx-2 inline-flex min-h-11 w-fit items-center gap-1 rounded-[10px] px-2 text-[13px] font-medium text-canvas-muted hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
-            <ChevronLeft size={18} aria-hidden />Tour Board
-          </Link>
+          <div className="flex flex-wrap items-center justify-between gap-x-4">
+            <Link to={`/tours/board${sampleQ}`} aria-label="Back to Tour Board" className="-mx-2 inline-flex min-h-11 w-fit items-center gap-1 rounded-[10px] px-2 text-[13px] font-medium text-canvas-muted hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
+              <ChevronLeft size={18} aria-hidden />Tour Board
+            </Link>
+            <Link to={`/tours/insights${sampleQ}`} className={textBtn}>Charts</Link>
+          </div>
           <div className="min-w-0">
             <h1 className="font-title break-words text-[24px] leading-tight text-canvas-text lg:text-[40px] lg:leading-[1.1]">{shownCity.name}</h1>
             <p className="text-[13px] text-canvas-muted">{shownCity.country}</p>

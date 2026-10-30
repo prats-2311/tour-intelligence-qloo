@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import App from "./App";
 
+vi.mock("./pages/TourInsights", () => ({ default: () => <p>insights page</p> }));
 vi.mock("./pages/TourBoard", () => ({ TourBoard: () => <p>board page</p>, default: () => <p>board page</p> }));
 
 const mm = () => vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
@@ -24,6 +25,14 @@ function mount(path: string) {
     <QueryClientProvider client={qc}><MemoryRouter initialEntries={[path]}><TourBoardProvider><App /><Where /></TourBoardProvider></MemoryRouter></QueryClientProvider>,
   );
 }
+
+describe("shell: the Insights route", () => {
+  it("/tours/insights is a lazy route of its own, and the taste page keeps /insights", async () => {
+    mount("/tours/insights?showcase=1");
+    expect(await screen.findByText("insights page")).toBeTruthy();
+    expect(screen.getByTestId("where").textContent).toBe("/tours/insights");
+  });
+});
 
 describe("shell: legacy campaign routes redirect to the board", () => {
   it.each(["/campaign", "/city/mumbai", "/compare", "/campaigns/new", "/cities/add"])("%s redirects to the board", async (path) => {

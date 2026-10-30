@@ -65,6 +65,11 @@ function Opened() {
 }
 
 describe("CityPlaybook", () => {
+  it("the header links to the charts page, keeping the sample query", async () => {
+    renderAt("/tours/playbook/4005539?sample=1");
+    const link = await screen.findByRole("link", { name: "Charts" });
+    expect(link.getAttribute("href")).toBe("/tours/insights?sample=1");
+  });
   it("records the opened city in the run so the Playbook step returns to it", async () => {
     renderAt("/tours/playbook/4005539?sample=1", <Opened />);
     await screen.findByRole("heading", { name: "Guadalajara" });
