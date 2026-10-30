@@ -32,6 +32,7 @@ import { SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks
 import { INTEGRITY_LINE, LIVE_RUN_LINE, LOCATION_UNRESOLVED_NOTE, recordedPlaybooksLine } from "@/lib/qloo/labels";
 import { firstOkName } from "@/lib/qloo/playbookFacts";
 import { loadPlaybook, usePlaybook, type PlaybookRequest } from "@/lib/qloo/playbookStore";
+import type { SegmentRequest } from "@/lib/qloo/segmentStore";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
 import { isRoutingBrief, setShowcaseVariant, variantOfBrief, type ShowcaseVariant, showcaseAvailable, showcaseBrief, showcaseCities, showcaseParam, showcasePlaybookCities, showcasePlaybookEvents, showcaseQuery, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
@@ -134,6 +135,10 @@ function CityPlaybookPage() {
     retry: false,
   });
 
+  // Age groups are always a live gateway read made on click, so they exist for live runs and the recorded example, never for the invented sample set.
+  const segments: SegmentRequest | undefined = shownCity && artist && (!sample || state.sampleSet === "showcase") && !unrecorded
+    ? { artistId: artist.entityId, artist: artist.name, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country, lat: shownCity.lat, lon: shownCity.lon } }
+    : undefined;
   const narrative = pb.narrative;
   const noSample = pb.status === "error" && pb.error?.code === "NO_SAMPLE";
   const budget = pb.status === "error" && pb.error?.code === "BUDGET";
@@ -233,7 +238,7 @@ function CityPlaybookPage() {
         onAudit={() => setAuditOpen(true)}
         hasEvidence={card.status === "ok"}
       >
-        <CardBody card={card} merch={merch} city={shownCity.name} country={shownCity.country} artist={artist?.name} venueName={firstOkName(pb.cards, "venue_fit") ?? undefined} />
+        <CardBody card={card} merch={merch} city={shownCity.name} country={shownCity.country} artist={artist?.name} venueName={firstOkName(pb.cards, "venue_fit") ?? undefined} segments={segments} />
       </PlaybookCard>
     );
   };
