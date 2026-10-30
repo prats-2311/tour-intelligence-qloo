@@ -1,8 +1,11 @@
 import { OverrideValue } from "@/components/collab/Overrides";
 import { fieldOf } from "@/lib/collab/types";
+import type { CardKind } from "@/lib/qloo/types";
+import type { HeroWhy } from "./heroWhy";
+import { WhyLine } from "./WhyLine";
 
 /** `cityId` turns on team overrides for the Top zone, Best room and Support tiles; `editable` (the playbook, not the book) shows the Edit control. */
-export function AdvanceSheet({ rows, cityId, editable = false }: { rows: Array<{ label: string; value: string; tour?: string; onClick?: () => void; aria?: string }>; cityId?: string; editable?: boolean }) {
+export function AdvanceSheet({ rows, cityId, editable = false, onGoToCard }: { rows: Array<{ label: string; value: string; tour?: string; onClick?: () => void; aria?: string; why?: HeroWhy }>; cityId?: string; editable?: boolean; onGoToCard?: (kind: CardKind) => void }) {
   return (
     <dl data-tour="advance-tiles" className="grid grid-cols-2 gap-2">
       {rows.map((r) => {
@@ -12,7 +15,7 @@ export function AdvanceSheet({ rows, cityId, editable = false }: { rows: Array<{
           <div key={r.label} data-tour={r.tour} className="min-w-0 rounded-[14px] bg-canvas-raised p-3 md:p-4">
             <dt /* taste-skill-ignore: DESIGN 3.1 advance-sheet field label */ className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-canvas-muted">{r.label}</dt>
             <dd title={r.value} className="mt-1 break-words text-[15px] font-semibold text-canvas-text">
-              {field && cityId ? <OverrideValue cityId={cityId} field={field} qloo={r.value} editable={editable}>{value}</OverrideValue> : value}
+              {field && cityId ? <OverrideValue cityId={cityId} field={field} qloo={r.value} editable={editable} why={r.why} onGoToCard={onGoToCard}>{value}</OverrideValue> : <>{value}{r.why && <WhyLine why={r.why} onGo={onGoToCard} className="mt-0.5 block" />}</>}
             </dd>
           </div>
         );

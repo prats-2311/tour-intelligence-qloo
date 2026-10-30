@@ -82,6 +82,17 @@ test('"+N more" expands the sponsors list and "Show fewer" collapses it', async 
   await expect(rows).toHaveCount(5);
 });
 
+test("hero tiles explain each Qloo pick and the why links to its card", async ({ page }) => {
+  await page.goto(LA);
+  await done(page);
+  await expect(page.getByRole("link", { name: /of in-city fan heat \(#1 of \d+ zones\)/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^fans share taste \d+% · the city likes them \d+%$/ })).toBeVisible();
+  await page.getByRole("tab", { name: "Acts fans love" }).click();
+  await page.getByRole("link", { name: /of in-city fan heat/ }).click();
+  await expect(page.getByRole("tab", { name: "How to win" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("#card-promo_zones")).toBeInViewport();
+});
+
 test("the do-not-book act never appears: not in any tab, not in the claims panel, not in the model reasoning summary", async ({ page }) => {
   await page.goto(LA);
   await done(page);

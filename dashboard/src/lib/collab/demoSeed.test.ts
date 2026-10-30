@@ -58,6 +58,12 @@ describe("demo seed", () => {
     expect(s.overrides).toHaveLength(1);
     expect(s.leads).toHaveLength(1);
   });
+  it("the seeded override carries a reason that quotes nothing the recording does not hold", () => {
+    const o = buildDemoSeed(rec())!.overrides![0]! as { reason?: string; value: string };
+    expect(o.reason).toBe("Smaller room suits a presale night (team call)");
+    expect(o.reason!.length).toBeLessThanOrEqual(200);
+    expect(o.reason).not.toContain(o.value);
+  });
   it("only the five fictional teammates write, with their roles, and every timestamp is within three days", () => {
     const s = buildDemoSeed(rec())!;
     const roles: Record<string, string> = { Maya: "Manager", Leo: "Booking agent", Priya: "Brand team", Sam: "Promoter", Ana: "Promoter" };

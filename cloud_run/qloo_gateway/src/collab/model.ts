@@ -8,7 +8,7 @@ export type Field = (typeof FIELDS)[number];
 
 export const LIMITS = {
   messages: 500, activity: 200, leads: 100, threads: 200, statuses: 100, overrides: 300, seedMessages: 80, seedThreads: 30, seedStatuses: 12, seedLeads: 8, seedOverrides: 8,
-  text: 1000, name: 40, value: 120, lead: 200, activityText: 80, docBytes: 900_000,
+  text: 1000, name: 40, value: 120, reason: 200, lead: 200, activityText: 80, docBytes: 900_000,
 } as const;
 export const TTL_DAYS = 30;
 
@@ -16,7 +16,7 @@ export interface Actor { name: string; role: Role }
 export interface Message extends Actor { id: string; text: string; at: number; demo?: true }
 export interface Thread { resolved: boolean; resolvedBy?: Actor; resolvedAt?: number; messages: Message[] }
 export interface StatusEntry extends Actor { status: Status; at: number; demo?: true }
-export interface OverrideEntry extends Actor { value: string; original: string; at: number; demo?: true }
+export interface OverrideEntry extends Actor { value: string; original: string; reason?: string; at: number; demo?: true }
 export interface Lead extends Actor { id: string; text: string; at: number; demo?: true }
 export interface ActivityEvent extends Actor { id: string; type: "status" | "message" | "resolve" | "reopen" | "override" | "override_clear" | "lead" | "lead_remove"; cityId?: string; key?: string; text?: string; at: number; demo?: true }
 /** The stored document. `createdAt` and `expiresAt` are real dates so a Firestore TTL policy on `expiresAt` can delete it. */
@@ -116,10 +116,13 @@ export function applyOp(d: WorkspaceDoc, op: Op, body: Record<string, unknown>, 
       if (!FIELDS.includes(body.field as Field)) return bad("field is invalid");
       const value = cleanText(body.value, LIMITS.value, "value");
       const original = typeof body.original === "string" ? trim(body.original.trim(), LIMITS.value) : "";
+      // Optional "Why?": absent or blank means none (a re-edit without one clears the old reason).
+      const rawReason = typeof body.reason === "string" && !body.reason.trim() ? undefined : body.reason;
+      const reason = rawReason === undefined || rawReason === null ? undefined : cleanText(rawReason, LIMITS.reason, "reason");
       const cur = d.overrides[id]?.[body.field as Field];
       if (!cur && Object.values(d.overrides).reduce((n, o) => n + Object.keys(o).length, 0) >= LIMITS.overrides) return bad("too many overrides");
       // Qloo's own suggestion stays on record: re-editing keeps the first original.
-      (d.overrides[id] ??= {})[body.field as Field] = { value, original: cur?.original ?? original, ...who, at: now, ...demo };
+      (d.overrides[id] ??= {})[body.field as Field] = { value, original: cur?.original ?? original, ...(reason ? { reason } : {}), ...who, at: now, ...demo };
       log(d, { type: "override", cityId: id, key: body.field as string, text: trim(value, LIMITS.activityText), ...who }, now, opts.demo);
       break;
     }

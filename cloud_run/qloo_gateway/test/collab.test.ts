@@ -90,6 +90,25 @@ describe("collab model", () => {
     expect(d.leads).toEqual({});
     expect(() => applyOp(d, "lead_remove", { ...me, cityId: "1", id }, 3)).toThrow(/No such lead/);
   });
+  it("override takes an optional reason (trimmed, at most 200 characters); a re-edit without one drops it", () => {
+    const base = { ...me, cityId: "1", field: "best_room", value: "B", original: "A" };
+    let d = applyOp(emptyDoc(0), "override", base, 1);
+    expect(d.overrides["1"]!.best_room).not.toHaveProperty("reason");
+    d = applyOp(d, "override", { ...base, reason: "  Smaller room suits a presale night  " }, 2);
+    expect(d.overrides["1"]!.best_room).toMatchObject({ value: "B", original: "A", reason: "Smaller room suits a presale night" });
+    expect(applyOp(d, "override", { ...base, reason: "x".repeat(LIMITS.reason) }, 3).overrides["1"]!.best_room!.reason).toHaveLength(200);
+    expect(() => applyOp(d, "override", { ...base, reason: "x".repeat(201) }, 3)).toThrow(/reason is over 200/);
+    expect(() => applyOp(d, "override", { ...base, reason: 5 }, 3)).toThrow(/reason must be text/);
+    expect(() => applyOp(d, "override", { ...base, reason: "a\u0007b" }, 3)).toThrow(/control characters/);
+    d = applyOp(d, "override", { ...base, reason: "   " }, 4);
+    expect(d.overrides["1"]!.best_room).not.toHaveProperty("reason");
+    d = applyOp(d, "override", base, 5);
+    expect(d.overrides["1"]!.best_room).not.toHaveProperty("reason");
+  });
+  it("a seeded override keeps its reason", () => {
+    const d = seedDoc({ overrides: [{ cityId: "1", field: "best_room", value: "B", original: "A", reason: "Presale night (team call)", name: "Maya", role: "Manager", agoMin: 40 }] }, 1_000_000_000);
+    expect(d.overrides["1"]!.best_room).toMatchObject({ reason: "Presale night (team call)", demo: true });
+  });
   it("seed marks everything demo, plays out in time order and validates shape", () => {
     const d = seedDoc({
       statuses: [{ cityId: "1", status: "confirmed", name: "Maya", role: "Manager", agoMin: 60 }],
