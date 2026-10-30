@@ -175,7 +175,7 @@ describe("verifyAdvance", () => {
     expect(v.removed.map((r) => r.reason)).toEqual(["number not in source"]);
   });
   it("keeps at most 4 items", () => {
-    const items = Array.from({ length: 6 }, (_, i) => ({ text: `Note ${i}`, sourceUrl: "https://a.example/visa" }));
+    const items = Array.from({ length: 6 }, (_, i) => ({ text: `Note ${"abcdef"[i]}`, sourceUrl: "https://a.example/visa" }));
     expect(verifyAdvance({ items }, results).items).toHaveLength(4);
   });
   it("removes items with blank or non-string text as malformed", () => {
