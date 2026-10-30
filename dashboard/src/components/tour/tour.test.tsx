@@ -63,7 +63,7 @@ const mount = (url = "/", routes?: React.ReactNode) => render(
 );
 const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 0)); });
 const popover = () => screen.getByTestId("tour-popover");
-const counter = () => screen.getByText(/^\d of 8$/).textContent;
+const counter = () => screen.getByText(/^\d of 9$/).textContent;
 
 describe("first-visit prompt", () => {
   it("shows on the first visit, is not modal, and does not start the tour", async () => {
@@ -115,7 +115,7 @@ describe("persistent entry", () => {
     expect(screen.queryByTestId("tour-prompt")).toBeNull();
     fireEvent.click(screen.getByTestId("take-tour"));
     await flush();
-    expect(counter()).toBe("1 of 8");
+    expect(counter()).toBe("1 of 9");
     expect(screen.getByTestId("where").textContent).toBe("/tours/board?showcase=1");
   });
   it("sits directly under the two main buttons, before Try a routing", () => {
@@ -141,7 +141,7 @@ describe("the tour", () => {
     expect(pop.getAttribute("role")).toBe("dialog");
     expect(pop.getAttribute("aria-modal")).toBe("false");
     expect(document.getElementById(pop.getAttribute("aria-labelledby")!)!.textContent).toBe("Markets");
-    expect(counter()).toBe("1 of 8");
+    expect(counter()).toBe("1 of 9");
     expect((screen.getByRole("button", { name: "Back" }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByRole("button", { name: "Next" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Skip" })).toBeTruthy();
@@ -151,16 +151,16 @@ describe("the tour", () => {
     await begin();
     const where = () => screen.getByTestId("where").textContent;
     fireEvent.click(screen.getByRole("button", { name: "Next" })); await flush();
-    expect(counter()).toBe("2 of 8");
+    expect(counter()).toBe("2 of 9");
     fireEvent.click(screen.getByRole("button", { name: "Next" })); await flush();
     fireEvent.click(screen.getByRole("button", { name: "Next" })); await flush();
-    expect(counter()).toBe("4 of 8");
+    expect(counter()).toBe("4 of 9");
     expect(where()).toBe("/tours/board?showcase=1&mode=without");
     fireEvent.click(screen.getByRole("button", { name: "Next" })); await flush();
-    expect(counter()).toBe("5 of 8");
+    expect(counter()).toBe("5 of 9");
     expect(where()).toMatch(/^\/tours\/playbook\/.+\?showcase=1$/);
     fireEvent.click(screen.getByRole("button", { name: "Back" })); await flush();
-    expect(counter()).toBe("4 of 8");
+    expect(counter()).toBe("4 of 9");
     expect(where()).toBe("/tours/board?showcase=1&mode=without");
   });
   it("highlights real elements by data-tour with a ring", async () => {
@@ -172,7 +172,7 @@ describe("the tour", () => {
   it("walks every step to Done, the last Next reads Done and completion is stored", async () => {
     await begin();
     for (let i = 1; i < TOUR_STEP_COUNT; i++) { fireEvent.click(screen.getByRole("button", { name: "Next" })); await flush(); }
-    expect(counter()).toBe("8 of 8");
+    expect(counter()).toBe("9 of 9");
     expect(screen.getByTestId("where").textContent).toBe("/tours/book?showcase=1");
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(screen.queryByTestId("tour-popover")).toBeNull();
@@ -187,9 +187,9 @@ describe("the tour", () => {
   it("Esc skips; arrow keys move; Tab stays inside the popover", async () => {
     await begin();
     fireEvent.keyDown(document, { key: "ArrowRight" }); await flush();
-    expect(counter()).toBe("2 of 8");
+    expect(counter()).toBe("2 of 9");
     fireEvent.keyDown(document, { key: "ArrowLeft" }); await flush();
-    expect(counter()).toBe("1 of 8");
+    expect(counter()).toBe("1 of 9");
     const skip = screen.getByRole("button", { name: "Skip" });
     skip.focus();
     fireEvent.keyDown(document, { key: "Tab" });
@@ -222,9 +222,16 @@ describe("the tour", () => {
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(screen.queryByTestId("tour-popover")).toBeNull();
   });
-  it("the placeholder showcase builds eight centred-safe steps without throwing", () => {
+  it("the placeholder showcase builds nine centred-safe steps without throwing", () => {
     const steps = buildTourSteps(parseShowcase(PLACEHOLDER_SHOWCASE));
     expect(steps).toHaveLength(TOUR_STEP_COUNT);
+    expect(steps.map((s) => s.id)).toEqual(["markets", "hook", "decide", "without", "sponsors", "rest", "claims", "ask", "book"]);
+    const claims = steps.find((s) => s.id === "claims")!;
+    const ask = steps.find((s) => s.id === "ask")!;
+    expect(claims.body.endsWith("Click any badge to see every checked claim.")).toBe(true);
+    expect(ask.targets).toEqual(["ask"]);
+    expect(ask.route).toBe(claims.route);
+    expect(ask.body).toContain("Who should open in Austin?");
     expect(steps.every((s) => s.body.length > 0 && s.route.startsWith("/"))).toBe(true);
   });
 });

@@ -13,7 +13,7 @@ export interface TourStep {
   targets: string[];
 }
 
-export const TOUR_STEP_COUNT = 8;
+export const TOUR_STEP_COUNT = 9;
 const BOARD = `/tours/board${showcaseQuery(false)}`;
 
 const joinList = (xs: string[]): string => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
@@ -104,7 +104,11 @@ export function buildTourSteps(show: Showcase): TourStep[] {
     },
     {
       id: "claims", title: "Verified claims", route: playbookRoute, targets: ["claims-badge", "claims-tile"],
-      body: "Gemini writes the summaries, then every number and name is checked against the Qloo data. Anything that doesn't match is struck out, and this badge shows the count.",
+      body: "Gemini writes the summaries, then every number and name is checked against the Qloo data. Anything that doesn't match is struck out, and this badge shows the count. Click any badge to see every checked claim.",
+    },
+    {
+      id: "ask", title: "Ask about this tour", route: playbookRoute, targets: ["ask"],
+      body: "A strategist agent answers questions about this tour with live Qloo lookups and shows its work log. Try “Who should open in Austin?” — every number it gives comes from a Qloo result.",
     },
     {
       id: "book", title: "Tour Book and Proof", route: `/tours/book${showcaseQuery(false)}`, targets: ["book-cover"],

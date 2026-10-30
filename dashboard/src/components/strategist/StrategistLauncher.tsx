@@ -63,6 +63,7 @@ export function StrategistFab() {
       <button
         type="button"
         aria-label="Ask about this tour"
+        data-tour="ask"
         onClick={() => setOpen(true)}
         className={`btn-gold fixed z-30 flex items-center justify-center rounded-full ${lift} outline-none focus-visible:ring-2 focus-visible:ring-bone`}
       >
@@ -83,6 +84,7 @@ export function StrategistToggle({ open, onToggle }: { open: boolean; onToggle()
     <button
       type="button"
       aria-pressed={open}
+      data-tour="ask"
       onClick={onToggle}
       className={`flex min-h-11 items-center gap-1.5 rounded-lg px-2 font-sans text-[13px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold ${open ? "text-gold" : "text-canvas-muted hover:text-bone"}`}
     >
