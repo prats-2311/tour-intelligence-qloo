@@ -33,6 +33,7 @@ function laShowcase() {
       const proto = c.items[0] ?? {};
       if (c.kind === "sponsors") c.items = SPONSORS.map((name, i) => ({ ...proto, name, artistRank: i + 1, cityRank: null }));
       if (c.kind === "venue_fit") c.items = VENUES.map((name, i) => ({ ...proto, name, category: "place", affinity: 0.94 - i / 100 }));
+      if (c.kind === "co_billing" && c.items.length) c.items = [{ ...c.items[0], name: "Ariel Pink" }, ...c.items];
     }
   }
   raw.artist = "Mac DeMarco";
@@ -75,6 +76,11 @@ const mount = (url = "/v2") => render(
 );
 
 describe("/v2 concept preview", () => {
+  it("never offers an act on the do-not-book list", () => {
+    mount();
+    expect(document.body.textContent).not.toMatch(/Ariel Pink/);
+  });
+
   it("is labelled as a concept and the profile as fictional", () => {
     mount();
     expect(screen.getByText("Concept preview — not built yet")).toBeTruthy();

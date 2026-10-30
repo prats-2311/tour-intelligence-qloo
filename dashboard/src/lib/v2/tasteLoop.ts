@@ -1,6 +1,7 @@
 import { zoneDisplayLabel } from "@/lib/qloo/zones";
 import { showcaseCities, type Showcase } from "@/lib/qloo/showcase";
 import type { PlaybookCard } from "@/lib/qloo/types";
+import { isHiddenItem } from "@/lib/qloo/doNotBook";
 
 /**
  * Data behind the /v2 "Taste Loop" concept preview. Everything about the artist and the venues' intent is a fictional or
@@ -85,7 +86,8 @@ export function loadTasteLoop(show: Showcase): TasteLoopData {
   const la = cities.find((c) => c.name === "Los Angeles" && hasPb(c.id)) ?? cities.find((c) => hasPb(c.id));
   if (!la) return empty;
   const cards: PlaybookCard[] = (show.playbooks[la.id] ?? []).flatMap((e) => (e.type === "playbook" ? e.playbook.cards : []));
-  const okCard = (k: PlaybookCard["kind"]) => cards.find((c) => c.kind === k && c.status === "ok")?.items ?? [];
+  // Same display rule as the playbook: do-not-book acts and non-sponsor organisations never reach the concept page.
+  const okCard = (k: PlaybookCard["kind"]) => (cards.find((c) => c.kind === k && c.status === "ok")?.items ?? []).filter((it) => !isHiddenItem(k, it));
 
   const brands: MatchBrand[] = okCard("sponsors").flatMap((it) => {
     const name = str(it.name);
