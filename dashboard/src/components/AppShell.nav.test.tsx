@@ -48,11 +48,12 @@ describe("desktop sidebar", () => {
     expect(side.getByRole("link", { name: "Tour Book" }).getAttribute("href")).toBe("/tours/book?showcase=1&ws=w1");
     expect(side.getByRole("link", { name: "How we tested it" }).getAttribute("href")).toBe("/proof?showcase=1&ws=w1");
   });
-  it("hides Insights and Budget here (their routes are not registered) and has no Team group without a workspace", () => {
+  it("lists Charts and Budget (their routes are registered) and has no Team group without a workspace", () => {
     mount("/tours/board?showcase=1");
     const side = within(sidebar()!);
+    expect(side.getByRole("link", { name: "Charts" }).getAttribute("href")).toBe("/tours/insights?showcase=1");
+    expect(side.getByRole("link", { name: "Budget" }).getAttribute("href")).toBe("/tours/budget?showcase=1");
     expect(side.queryByRole("link", { name: "Insights" })).toBeNull();
-    expect(side.queryByRole("link", { name: "Budget" })).toBeNull();
     expect(side.queryByText("Team")).toBeNull();
   });
   it("starts expanded at 240px with a toggle wired by aria-expanded and aria-controls", () => {

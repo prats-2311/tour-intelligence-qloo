@@ -8,7 +8,7 @@ const ROUTES = ["/", "/tours/board", "/tours/playbook/:cityId", "/tours/book", "
 describe("nav config", () => {
   it("has the three groups in order with the requested items", () => {
     expect(NAV_GROUPS.map((g) => [g.label, g.items.map((i) => i.label)])).toEqual([
-      ["Plan", ["Overview", "Tour Board", "Playbooks", "Tour Book", "Insights", "Budget"]],
+      ["Plan", ["Overview", "Tour Board", "Playbooks", "Tour Book", "Charts", "Budget"]],
       ["Team", ["Team activity", "Share link"]],
       ["More", ["How we tested it", "Use from your AI agent", "What's next"]],
     ]);
@@ -49,12 +49,12 @@ describe("route availability gating", () => {
     expect(isRouteAvailable("/tours/insights", ROUTES)).toBe(false);
     expect(isRouteAvailable("/tours/budget", ROUTES)).toBe(false);
   });
-  it("hides insights and budget until their routes are registered, then shows them", () => {
+  it("hides charts and budget until their routes are registered, then shows them", () => {
     const labels = (routes: string[]) => visibleNavGroups({ routes, hasWorkspace: true }).flatMap((g) => g.items.map((i) => i.label));
-    expect(labels(ROUTES)).not.toContain("Insights");
+    expect(labels(ROUTES)).not.toContain("Charts");
     expect(labels(ROUTES)).not.toContain("Budget");
     const merged = labels([...ROUTES, "/tours/insights", "/tours/budget"]);
-    expect(merged).toContain("Insights");
+    expect(merged).toContain("Charts");
     expect(merged).toContain("Budget");
   });
   it("hides the Team group entirely without a workspace", () => {

@@ -1,6 +1,6 @@
 export type Crumb = { label: string; /** Plain path; callers add the preserved query. Absent for text-only crumbs and the current page. */ href?: string; current?: boolean };
 
-const TOUR_PAGES: Record<string, string> = { "/tours/book": "Tour Book", "/tours/insights": "Insights", "/insights": "Insights", "/tours/budget": "Budget" };
+const TOUR_PAGES: Record<string, string> = { "/tours/book": "Tour Book", "/tours/insights": "Charts", "/insights": "Charts", "/tours/budget": "Budget" };
 const STANDALONE: Record<string, string> = { "/proof": "How we tested it", "/agents": "Use from your AI agent", "/v2": "What's next" };
 
 /** The trail under the header. The tour segment is the artist; the city comes from the playbook route. Empty on the landing page. */

@@ -52,7 +52,7 @@ describe("Breadcrumbs", () => {
     expect(trail()[1]).toBe("Lumen Vale tour");
     expect(trail()[3]).toBe(c.name);
   });
-  it.each([["/tours/book", "Tour Book"], ["/insights", "Insights"], ["/tours/insights", "Insights"], ["/tours/budget", "Budget"]])("%s ends in %s", (path, last) => {
+  it.each([["/tours/book", "Tour Book"], ["/insights", "Charts"], ["/tours/insights", "Charts"], ["/tours/budget", "Budget"]])("%s ends in %s", (path, last) => {
     mount(`${path}?showcase=1`);
     expect(trail().at(-1)).toBe(last);
   });

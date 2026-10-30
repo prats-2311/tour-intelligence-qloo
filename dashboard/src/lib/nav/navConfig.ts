@@ -28,7 +28,7 @@ export const NAV_GROUPS: NavGroup[] = [
       route("board", "Tour Board", LayoutList, "/tours/board", exact("/tours/board")),
       route("playbooks", "Playbooks", ClipboardList, null, (p) => p.startsWith("/tours/playbook/"), "Open a city on the Tour Board first"),
       route("book", "Tour Book", BookOpen, "/tours/book", exact("/tours/book")),
-      route("insights", "Insights", Lightbulb, "/tours/insights", (p) => p === "/tours/insights" || p === "/insights"),
+      route("insights", "Charts", Lightbulb, "/tours/insights", (p) => p === "/tours/insights" || p === "/insights"),
       route("budget", "Budget", Wallet, "/tours/budget", exact("/tours/budget")),
     ],
   },

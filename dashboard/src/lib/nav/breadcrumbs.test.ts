@@ -10,8 +10,8 @@ describe("buildCrumbs", () => {
   it("playbook includes the city name", () => expect(labels("/tours/playbook/42")).toEqual(["Overview", "Mac DeMarco tour", "Tour Board", "Los Angeles", "Playbook"]));
   it("book", () => expect(labels("/tours/book")).toEqual(["Overview", "Mac DeMarco tour", "Tour Book"]));
   it("insights, new and legacy paths", () => {
-    expect(labels("/tours/insights")).toEqual(["Overview", "Mac DeMarco tour", "Insights"]);
-    expect(labels("/insights")).toEqual(["Overview", "Mac DeMarco tour", "Insights"]);
+    expect(labels("/tours/insights")).toEqual(["Overview", "Mac DeMarco tour", "Charts"]);
+    expect(labels("/insights")).toEqual(["Overview", "Mac DeMarco tour", "Charts"]);
   });
   it("budget", () => expect(labels("/tours/budget")).toEqual(["Overview", "Mac DeMarco tour", "Budget"]));
   it("proof, agents and v2 are not under a tour", () => {
