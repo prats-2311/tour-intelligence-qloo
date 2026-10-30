@@ -21,8 +21,12 @@ test("gateway port is configurable and the BFF follows it", () => {
   assert.equal(plan.services[1].env.QLOO_GATEWAY_URL, "http://127.0.0.1:9090");
 });
 test("a .env at the repo root is loaded only when it exists, via node's --env-file-if-exists", () => {
-  const plan = buildPlan({ root, env: {} });
+  const plan = buildPlan({ root, env: {}, exists: () => true });
   for (const s of plan.services.slice(0, 2)) assert.ok(s.args.includes("--env-file-if-exists=/repo/.env"), s.name);
+});
+test("with no .env the flag is omitted so node prints no 'not found' noise", () => {
+  const plan = buildPlan({ root, env: {}, exists: () => false });
+  for (const s of plan.services) assert.ok(!s.args.some((a) => a.startsWith("--env-file")), s.name);
 });
 test("the plan never carries secret values, and forces memory backends even if the shell asked for Firestore", () => {
   const plan = buildPlan({ root, env: { QLOO_API_KEY: "SECRETVAL", QLOO_CACHE_BACKEND: "firestore" } });

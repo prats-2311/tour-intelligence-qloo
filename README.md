@@ -200,7 +200,7 @@ npm run dev:all      # gateway :8080 + dashboard server :8787 + Vite :5173, all 
 
 Open <http://localhost:5173/?sample=1>. `dev:all` prints one line per optional service that is off and what still works. Ctrl+C stops all three.
 
-The real recorded Mac DeMarco example is private under Qloo's data terms and is not in this repo, so a local run uses the synthetic "Lumen Vale" sample instead (the landing page's "See the example tour" says the recording is unavailable and links to the sample; two 503s on `/api/recordings/*` in the browser console are expected).
+The real recorded Mac DeMarco example is private under Qloo's data terms and is not in this repo, so a local run uses the synthetic "Lumen Vale" sample instead (the landing page's "See the example tour" says the recording is unavailable and links to the sample; two 503s on `/api/recordings/*` in the browser console are expected). `/proof` loads the private backtest recording, so locally it shows "Proof results are unavailable right now"; the measured results and the scripts that produce them are in this README and `cloud_run/qloo_gateway`.
 
 ### Three levels
 

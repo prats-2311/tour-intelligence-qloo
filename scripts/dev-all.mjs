@@ -6,15 +6,15 @@ import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export function buildPlan({ root, env }) {
+export function buildPlan({ root, env, exists = existsSync }) {
   const gatewayPort = String(env.GATEWAY_PORT || "8080");
-  const envFile = `--env-file-if-exists=${join(root, ".env")}`;
+  const envArgs = exists(join(root, ".env")) ? [`--env-file-if-exists=${join(root, '.env')}`] : [];
   return {
     gatewayPort: Number(gatewayPort),
     services: [
-      { name: "gateway", cwd: join(root, "cloud_run/qloo_gateway"), cmd: process.execPath, args: [envFile, "dist/server.js"],
+      { name: "gateway", cwd: join(root, "cloud_run/qloo_gateway"), cmd: process.execPath, args: [...envArgs, "dist/server.js"],
         env: { PORT: gatewayPort, QLOO_CACHE_BACKEND: "memory", QLOO_USAGE_BACKEND: "memory" } },
-      { name: "bff", cwd: join(root, "dashboard"), cmd: process.execPath, args: [envFile, "server/index.js"],
+      { name: "bff", cwd: join(root, "dashboard"), cmd: process.execPath, args: [...envArgs, "server/index.js"],
         env: { PORT: "8787", QLOO_GATEWAY_URL: `http://127.0.0.1:${gatewayPort}` } },
       { name: "vite", cwd: join(root, "dashboard"), cmd: process.execPath, args: ["node_modules/vite/bin/vite.js"], env: {} },
     ],
