@@ -16,8 +16,8 @@ async function workspaceWithStatuses(page: Page, statuses: Record<string, "confi
   await page.route("**/api/qloo/ws", (r) => r.fulfill({ json: { ws: snapshot.ws, snapshot } }));
   await page.route("**/api/qloo/ws/**", (r) => r.fulfill({ json: snapshot }));
 }
-const boardReady = async (page: Page) => {
-  await expect(page.getByTestId("city-row")).toHaveCount(10, { timeout: 20_000 });
+const boardReady = async (page: Page, rows = 10) => {
+  await expect(page.getByTestId("city-row")).toHaveCount(rows, { timeout: 20_000 });
   await expect(page.getByRole("button", { name: "Stop" })).toHaveCount(0, { timeout: 30_000 });
   await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
 };
@@ -58,4 +58,23 @@ test("2. every keyboard focus stop on the landing page shows a 2px outline", asy
   }
   expect(seen.size, "tabbed through several controls").toBeGreaterThan(5);
   expect(lacking, "focused controls without a visible indicator").toEqual([]);
+});
+
+test("5. replaying the agent keeps the page stable: focus on Stop, team bar stays, nav does not shift, counter says replaying", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await workspaceWithStatuses(page, {});
+  await page.goto("/tours/board?showcase=1");
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("button", { name: "Stop" })).toHaveCount(0, { timeout: 30_000 });
+  await expect(page.getByTestId("team-bar")).toBeVisible();
+  const navTop = () => page.evaluate(() => [...document.querySelectorAll("aside a, nav a")].filter((a) => /Tour Book|Charts|Budget/.test(a.textContent ?? "")).map((a) => Math.round(a.getBoundingClientRect().top)).join(","));
+  const before = await navTop();
+  await page.getByRole("button", { name: "Replay the agent" }).click();
+  const stop = page.getByRole("button", { name: "Stop" });
+  await expect(stop).toBeVisible();
+  await expect(stop, "keyboard focus moves to Stop instead of falling to the body").toBeFocused();
+  await expect(page.getByTestId("team-bar"), "team bar stays during the replay").toBeVisible();
+  await expect(page.getByRole("button", { name: /Board · replaying/ }), "counter must not show a misleading number").toBeVisible();
+  expect(await navTop(), "sidebar items keep their position").toBe(before);
+  await expect(page.getByRole("button", { name: /Board · \d+ Qloo calls/ })).toBeVisible({ timeout: 30_000 });
 });

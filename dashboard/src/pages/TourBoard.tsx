@@ -141,6 +141,16 @@ const smallBtn = "inline-flex min-h-11 items-center gap-1.5 rounded-[8px] bg-pap
 
 export default function TourBoard() {
   const { state, run, replay, abort, reset, shortlist, toggleShortlist } = useTourBoard();
+  const streaming = state.status === "streaming";
+  // The Replay button is swapped for Stop while it runs: carry keyboard focus across both swaps so it never falls to the page body.
+  const stopRef = useRef<HTMLButtonElement>(null);
+  const replayRef = useRef<HTMLButtonElement>(null);
+  const replayFocus = useRef(false);
+  useEffect(() => {
+    if (!replayFocus.current) return;
+    if (streaming) stopRef.current?.focus();
+    else { replayFocus.current = false; if (!document.activeElement || document.activeElement === document.body) replayRef.current?.focus(); }
+  }, [streaming]);
   const reduce = useReducedMotion();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -292,8 +302,8 @@ export default function TourBoard() {
     );
   }
 
-  const streaming = state.status === "streaming";
   const hasMap = state.cities.length > 0 || streaming;
+  const replaying = streaming && state.source === "showcase";
   const artistName = state.artist?.name ?? state.brief?.artist ?? "Tour Board";
   // Pasted run: the cities that matched (the scored ones once done), never the pasted lines that matched nothing.
   const matchedCount = state.status === "done" ? state.cities.length : Math.max(0, (state.brief?.cities?.length ?? 0) - state.routingUnmatched.length);
@@ -465,14 +475,14 @@ export default function TourBoard() {
       <Link to="/proof" className="order-last inline-flex min-h-11 basis-full items-center font-mono text-[12px] text-canvas-muted underline-offset-4 hover:text-canvas-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:order-none lg:basis-auto lg:flex-1">{PROOF_LINK_TEXT} →</Link>
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         {streaming && (
-          <button type="button" onClick={abort} className={smallBtn}><Square size={12} aria-hidden />Stop</button>
+          <button ref={stopRef} type="button" onClick={abort} className={smallBtn}><Square size={12} aria-hidden />Stop</button>
         )}
         {state.source === "showcase" && !streaming && (
-          <button type="button" onClick={replay} className={smallBtn}><RotateCcw size={12} aria-hidden />Replay the agent</button>
+          <button ref={replayRef} type="button" onClick={() => { replayFocus.current = true; replay(); }} className={smallBtn}><RotateCcw size={12} aria-hidden />Replay the agent</button>
         )}
-        <AgentLogChip events={state.log} onOpen={() => setLogOpen(true)} />
+        <AgentLogChip events={state.log} replaying={replaying} onOpen={() => setLogOpen(true)} />
         {state.cities.length > 0 && <Link to={`/tours/insights${sampleQ}`} className={`${smallBtn} max-lg:hidden`}><BarChart3 size={12} aria-hidden />Charts</Link>}
-        {state.cities.length > 0 && <TeamBar cities={state.cities} tourThread="tour:board" />}
+        {(state.cities.length > 0 || replaying) && <TeamBar cities={state.cities} tourThread="tour:board" />}
       </div>
     </header>
   );
