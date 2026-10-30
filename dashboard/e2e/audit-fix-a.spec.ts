@@ -172,3 +172,63 @@ test("8. the board defines its terms: legend row, labelled bars, tab definitions
   await expect(legend.locator("[data-bar-key=activation]")).toBeVisible();
   for (const name of ["Density-only", "Without Qloo"]) expect(await page.getByRole("tab", { name }).getAttribute("title"), `${name} tab definition`).toMatch(/^[^:]+: .{20,}/);
 });
+
+/** Text contrast (WCAG 1.4.3) of every visible text node against its effective background; returns the elements below AA. */
+const lowContrast = (page: Page) => page.evaluate(() => {
+  const parse = (c: string): number[] | null => {
+    const m = c.match(/rgba?\(([^)]+)\)/);
+    if (m) { const p = m[1]!.split(/[ ,/]+/).map(Number); return [p[0]!, p[1]!, p[2]!, p[3] === undefined ? 1 : p[3]]; }
+    const mm = c.match(/color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?/);
+    return mm ? [+mm[1]! * 255, +mm[2]! * 255, +mm[3]! * 255, mm[4] === undefined ? 1 : +mm[4]] : null;
+  };
+  const over = (f: number[], b: number[]) => [f[0]! * f[3]! + b[0]! * (1 - f[3]!), f[1]! * f[3]! + b[1]! * (1 - f[3]!), f[2]! * f[3]! + b[2]! * (1 - f[3]!), 1];
+  const lum = (c: number[]) => { const f = (v: number) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]!) + 0.7152 * f(c[1]!) + 0.0722 * f(c[2]!); };
+  const bgOf = (e: Element): number[] | null => {
+    const layers: number[][] = [];
+    let n: Element | null = e;
+    while (n) {
+      const cs = getComputedStyle(n);
+      if (cs.backgroundImage !== "none" && n !== document.body) return null;
+      const c = parse(cs.backgroundColor);
+      if (c && c[3]! > 0) { layers.push(c); if (c[3]! >= 1) break; }
+      n = n.parentElement;
+    }
+    let b = [28, 27, 24, 1];
+    if (layers.length && layers[layers.length - 1]![3]! >= 1) b = layers.pop()!;
+    while (layers.length) b = over(layers.pop()!, b);
+    return b;
+  };
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const e of document.body.querySelectorAll("*")) {
+    const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+    if (r.width <= 0 || r.height <= 0 || cs.visibility === "hidden" || cs.display === "none" || e.closest(".maplibregl-map, .sr-only") || /\bsr-only\b/.test(String((e as HTMLElement).className))) continue;
+    if (![...e.childNodes].some((x) => x.nodeType === 3 && (x.textContent ?? "").trim())) continue;
+    const fg = parse(cs.color), bg = bgOf(e);
+    if (!fg || !bg) continue;
+    let eo = 1; for (let n: Element | null = e; n && n !== document.body; n = n.parentElement) eo *= +getComputedStyle(n).opacity;
+    if (eo < 0.05) continue; // fully transparent (tooltips before hover)
+    const f = over([fg[0]!, fg[1]!, fg[2]!, fg[3]! * eo], bg);
+    const L1 = lum(f), L2 = lum(bg), ratio = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+    const fs = parseFloat(cs.fontSize), large = fs >= 24 || (fs >= 18.66 && +cs.fontWeight >= 700);
+    if (ratio < (large ? 3 : 4.5)) {
+      const k = `${e.tagName}${(e.textContent ?? "").trim().slice(0, 30)}`;
+      if (!seen.has(k)) { seen.add(k); out.push(`${ratio.toFixed(2)}:1 "${(e.textContent ?? "").trim().slice(0, 30)}" (${e.tagName.toLowerCase()}${(e as HTMLElement).dataset.testid ? `[${(e as HTMLElement).dataset.testid}]` : ""})`); }
+    }
+  }
+  return out;
+});
+
+for (const [name, url] of [["landing", "/"], ["board", "/tours/board?sample=1"], ["charts", "/tours/insights?sample=1&ws=e2eWorkspace0001"], ["budget", "/tours/budget?sample=1"], ["book", "/tours/book?sample=1"]] as const) {
+  test(`11. text contrast is at least AA on ${name}`, async ({ page }) => {
+    await workspaceWithStatuses(page, { "5368361": "confirmed", "4671654": "on_hold", "3530597": "dropped" });
+    await page.goto(url);
+    if (name === "board") await boardReady(page);
+    else if (name === "charts") await expect(page.getByRole("heading", { name: "Verdict mix" })).toBeVisible({ timeout: 20_000 });
+    else if (name === "book") await expect(page.getByRole("heading", { name: "Market selection" })).toBeVisible({ timeout: 30_000 });
+    else if (name === "budget") await expect(page.getByLabel("Artist fee, Guadalajara")).toBeVisible({ timeout: 20_000 });
+    else await expect(page.getByRole("link", { name: "See the example tour" })).toBeVisible();
+    await page.waitForTimeout(500);
+    expect(await lowContrast(page)).toEqual([]);
+  });
+}

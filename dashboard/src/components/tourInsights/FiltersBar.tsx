@@ -47,7 +47,7 @@ export function FiltersBar({ filters, onChange, cities, showStatus, shown }: { f
             {SORT_KEYS.map((k) => <option key={k} value={k}>{SORT_LABEL[k]}</option>)}
           </select>
         </label>
-        <button type="button" onClick={() => onChange(defaultTourFilters())} disabled={!hasActiveFilters(filters) && filters.sort === "winnability"} className={`inline-flex min-h-11 items-center rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] disabled:opacity-50 ${FOCUS}`}>Reset filters</button>
+        <button type="button" onClick={() => onChange(defaultTourFilters())} disabled={!hasActiveFilters(filters) && filters.sort === "winnability"} className={`inline-flex min-h-11 items-center rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] disabled:cursor-not-allowed disabled:text-canvas-muted ${FOCUS}`}>Reset filters</button>
       </div>
       <p role="status" className="text-[12px] text-canvas-muted">Showing {shown} of {cities.length} {cities.length === 1 ? "city" : "cities"}</p>
     </section>
