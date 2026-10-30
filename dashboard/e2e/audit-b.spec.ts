@@ -49,3 +49,52 @@ test("2 chat error: plain language, readable at 390, with Retry", async ({ page 
   expect(b!.x + b!.width).toBeLessThanOrEqual(390);
   await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
 });
+
+test("3 hero: no decorative blank art over 400px wide, hero uses both columns", async ({ page }) => {
+  for (const [w, h] of [[1440, 900], [1280, 800]] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto(LA);
+    await loaded(page);
+    const big = await page.locator("header").filter({ has: page.locator("h1") }).first().evaluate((hd) => [...hd.querySelectorAll("[aria-hidden='true']")]
+      .filter((el) => el.getBoundingClientRect().width > 400 && !(el.textContent ?? "").trim()).map((el) => el.tagName));
+    expect(big, `aria-hidden empty art at ${w}`).toEqual([]);
+    // Right half is used: the advance tiles sit in the right column.
+    const tile = await page.getByText("TOP ZONE", { exact: true }).first().boundingBox();
+    expect(tile!.x, "tiles in the right half").toBeGreaterThan(w * 0.4);
+  }
+});
+
+test("5 remove from tour: focus stays on the toggled button and the footer does not jump", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(LA);
+  await loaded(page);
+  const footer = page.locator("div.sticky.z-20").filter({ has: page.getByRole("button", { name: /Remove from tour|Add to tour/ }) }).last();
+  const remove = page.getByRole("button", { name: "Remove from tour" });
+  const before = (await footer.boundingBox())!.height;
+  await remove.click();
+  const add = page.getByRole("button", { name: "Add to tour" });
+  await expect(add).toBeVisible();
+  await expect(add).toBeFocused();
+  expect(Math.abs((await footer.boundingBox())!.height - before), "footer height change").toBeLessThanOrEqual(1);
+});
+
+test("12 keyboard: skip link first, Remove precedes Next, card DOM order matches the visual grid", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(LA);
+  await loaded(page);
+  await page.keyboard.press("Tab");
+  const skip = page.getByRole("link", { name: "Skip to main content" });
+  await expect(skip).toBeFocused();
+  await expect(skip).toBeVisible();
+  await page.keyboard.press("Enter");
+  expect(await page.evaluate(() => document.activeElement?.closest("main") !== null || document.activeElement?.tagName === "MAIN")).toBe(true);
+  const order = await page.evaluate(() => {
+    const idx = (q: string) => { const els = [...document.querySelectorAll("button, a")]; return els.findIndex((e) => new RegExp(q).test(e.textContent ?? "")); };
+    return { remove: idx("^Remove from tour$"), next: idx("^Next: ") };
+  });
+  expect(order.remove).toBeGreaterThan(-1);
+  expect(order.remove).toBeLessThan(order.next);
+  const cards = await page.locator("[data-card]").evaluateAll((els) => els.map((e) => ({ id: e.getAttribute("data-card")!, y: Math.round(e.getBoundingClientRect().top), x: Math.round(e.getBoundingClientRect().left) })));
+  const visual = [...cards].sort((a, b) => a.y - b.y || a.x - b.x).map((c) => c.id);
+  expect(cards.map((c) => c.id)).toEqual(visual);
+});

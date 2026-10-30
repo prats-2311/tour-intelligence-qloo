@@ -50,7 +50,8 @@ import { useIsDesktop } from "@/lib/useMediaQuery";
 // The Culture and Delight briefs belong to the legacy campaign flow, which is off the promoter path.
 type Tab = "activate" | "talent" | "advance";
 const TABS: Array<{ id: Tab; label: string }> = [{ id: "activate", label: "How to win" }, { id: "talent", label: "Acts fans love" }, { id: "advance", label: "Advance & risks" }];
-const ORDER: CardKind[] = ["sponsors", "merch", "promo_zones", "local_moment", "venue_fit", "co_billing"];
+// DOM order = the desktop grid order (row by row), so keyboard order matches what is seen.
+const ORDER: CardKind[] = ["sponsors", "promo_zones", "venue_fit", "co_billing", "local_moment", "merch"];
 type CardId = CardKind | "this_week";
 // Desktop (lg) grid placement, brief 3b. On phones every card is a snap-scroller item.
 const PLACE: Record<CardId, string> = {
@@ -82,6 +83,9 @@ export default function CityPlaybook() {
 function CityPlaybookPage() {
   const { cityId = "" } = useParams();
   const { state, run, shortlist, toggleShortlist, accentOrder, setLastOpened } = useTourBoard();
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const refocusToggle = useRef(false);
+  useEffect(() => { if (refocusToggle.current) { refocusToggle.current = false; toggleRef.current?.focus(); } }, [shortlist]);
   const [params] = useSearchParams();
   const sampleParam = params.get("sample");
   const wantLong = sampleParam === "long";
@@ -274,17 +278,20 @@ function CityPlaybookPage() {
     return loading ? <div className="skeleton h-[280px] rounded-[18px]" aria-hidden /> : playbookCard(id);
   };
 
+  // Remove/Add swaps the button for its twin; keep keyboard focus on whichever one now stands in its place.
+  // toast: the toast agent hooks the "Removed from tour / Added to tour" message into `toggle`.
+  const toggle = () => { refocusToggle.current = true; toggleShortlist(shownCity.id); };
   const addToTour = (
-    <div className="flex min-w-0 flex-1 flex-col gap-1 lg:flex-none lg:items-start">
+    <div className="flex min-w-0 flex-1 flex-col justify-end gap-1 max-lg:min-h-[94px] lg:flex-none lg:items-start">
       {inTour ? (
-        <div className="flex min-w-0 flex-1 flex-col items-stretch gap-0.5 lg:flex-none lg:flex-row-reverse lg:items-center lg:gap-2">
+        <div className="flex min-w-0 flex-1 flex-col items-stretch gap-0.5 lg:flex-none lg:flex-row lg:items-center lg:gap-2">
+          <button ref={toggleRef} type="button" onClick={toggle} className={removeBtn}>Remove from tour</button>
           <NextStepLink data-testid="primary-action" to={nextHeld ? `/tours/playbook/${nextHeld.id}${sampleQ}` : `/tours/book${sampleQ}`} className="btn-gold inline-flex min-h-12 min-w-0 items-center justify-center rounded-[10px] px-4 py-2 text-center text-[15px] font-semibold leading-tight lg:h-10 lg:min-h-0 lg:px-5">
             <span className="min-w-0 break-words">{nextHeld ? `Next: ${nextHeld.name}` : "Next: Tour Book"}</span>
           </NextStepLink>
-          <button type="button" onClick={() => toggleShortlist(shownCity.id)} className={removeBtn}>Remove from tour</button>
         </div>
       ) : (
-        <button type="button" disabled={full} onClick={() => toggleShortlist(shownCity.id)} className={btnGold}>Add to tour</button>
+        <button ref={toggleRef} type="button" disabled={full} onClick={toggle} className={btnGold}>Add to tour</button>
       )}
       {full && <p className="text-[13px] text-canvas-muted">Max stops reached — raise it in the brief</p>}
     </div>
@@ -339,12 +346,9 @@ function CityPlaybookPage() {
     <div className="-mx-4 -mt-6 lg:mx-0 lg:mt-0">
       {(sample || wantSample) && <SampleBanner source={wantShowcase || state.source === "showcase" ? "showcase" : "sample"} />}
       <header className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-x-8 lg:pt-4">
-        {isDesktop && (
-          <div aria-hidden className="lg:order-2 lg:col-span-7 [&_svg]:rounded-[18px]">
-            <KeyArtPoster city={shownCity.name} accent={accent} ratio="16:9" decorative />
-          </div>
-        )}
-        <div className="flex min-w-0 flex-col gap-3 px-4 lg:order-1 lg:col-span-5 lg:px-0">
+        <div className="flex min-w-0 flex-col gap-3 px-4 lg:col-span-12 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-8 lg:px-0">
+          {/* Phones stack both groups; from lg they are two balanced columns (the old decorative poster is gone). */}
+          <div className="contents lg:col-span-6 lg:flex lg:min-w-0 lg:flex-col lg:gap-3">
           <div className="flex flex-wrap items-center justify-between gap-x-4">
             <Link to={`/tours/board${sampleQ}`} aria-label="Back to Tour Board" className="-mx-2 inline-flex min-h-11 w-fit items-center gap-1 rounded-[10px] px-2 text-[13px] font-medium text-canvas-muted hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
               <ChevronLeft size={18} aria-hidden />Tour Board
@@ -367,6 +371,9 @@ function CityPlaybookPage() {
           <RadiusNote city={shownCity} pool={radiusPool} />
           {!isDesktop && whyBtn}
           <p className="text-[12px] text-canvas-muted">{INTEGRITY_LINE}</p>
+          {isDesktop && <div className="flex flex-wrap items-center gap-3">{addToTour}{whyBtn}</div>}
+          </div>
+          <div className="contents lg:col-span-6 lg:flex lg:min-w-0 lg:flex-col lg:gap-3">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <StatusPicker cityId={shownCity.id} />
             <NotesButton threadKey={cityThread(shownCity.id)} title={shownCity.name} label="City notes" tour="city-notes" />
@@ -398,12 +405,12 @@ function CityPlaybookPage() {
               <Link to="/tours/board?showcase=1" className={smallBtn}>See the example tour</Link>
             </Notice>
           )}
-          {isDesktop && <div className="flex flex-wrap items-center gap-3">{addToTour}{whyBtn}</div>}
           {!isDesktop && (
             <div data-testid="poster-strip" aria-hidden className="overflow-hidden rounded-[14px] [&_svg]:rounded-[14px]">
               <KeyArtPoster city={shownCity.name} accent={accent} ratio="strip" decorative />
             </div>
           )}
+          </div>
         </div>
       </header>
 

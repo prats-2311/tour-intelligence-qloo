@@ -35,6 +35,11 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
+      <a
+        href="#main-content"
+        onClick={(e) => { e.preventDefault(); const m = document.getElementById("main-content"); m?.focus(); m?.scrollIntoView?.({ block: "start" }); }}
+        className="fixed left-2 top-2 z-[60] -translate-y-[200%] rounded-[8px] bg-gold px-4 py-3 text-[14px] font-semibold text-on-gold outline-none focus:translate-y-0 focus-visible:ring-2 focus-visible:ring-bone print:hidden"
+      >Skip to main content</a>
       {isDesktop ? (
         <header data-app-shell className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-canvas-raised px-8">
           <div className="flex items-center gap-8">
@@ -77,7 +82,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {showSidebar && <Sidebar collapsed={collapsed} onToggle={toggle} onAction={onAction} />}
         <div className="flex min-w-0 flex-1 flex-col">
       {!landing && isDesktop && <Breadcrumbs />}
-      <main className={`min-w-0 flex-1 px-4 ${landing ? "pt-6 lg:pt-8" : "pt-2 lg:pt-3"} ${isDesktop ? "pb-8" : "pb-[calc(5rem+env(safe-area-inset-bottom))]"} lg:px-8 ${docked ? "lg:pr-[380px]" : ""}`}>
+      <main id="main-content" tabIndex={-1} className={`min-w-0 flex-1 outline-none px-4 ${landing ? "pt-6 lg:pt-8" : "pt-2 lg:pt-3"} ${isDesktop ? "pb-8" : "pb-[calc(5rem+env(safe-area-inset-bottom))]"} lg:px-8 ${docked ? "lg:pr-[380px]" : ""}`}>
         {children}
       </main>
         </div>
