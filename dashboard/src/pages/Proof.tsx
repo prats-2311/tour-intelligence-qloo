@@ -3,6 +3,8 @@ import { Fragment, useId, useState } from "react";
 import { getBacktest, METHODS, METHOD_LABEL, hitLine, rankText, type Backtest, type BacktestRun, type CaseResult, type MethodResult, type ProofTable, type ProofV3, type ProofV3Test } from "@/lib/qloo/backtest";
 
 import { loadRecordings } from "@/lib/qloo/recordings";
+import { isSampleMode } from "@/lib/qloo/client";
+import { useStats, type TeamStats, type TrustStats } from "@/lib/qloo/stats";
 
 /** The public repo is created later: change the URL here only. */
 export const PROTOCOL_URL = "https://github.com/prats-2311/tour-intelligence-qloo/blob/master/docs/qloo/proof-v3-protocol.md";
@@ -334,13 +336,95 @@ export function ProofView({ data }: { data: Backtest }) {
   );
 }
 
+const dateText = (iso: string | null): string => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "");
+const seconds = (ms: number | null): string => (ms === null ? "n/a" : `${(ms / 1000).toFixed(1)} s`);
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[12px] text-canvas-muted">{label}</dt>
+      <dd className="m-0 mt-0.5 break-words font-mono text-[18px] font-bold leading-snug text-canvas-text tabular">{value}</dd>
+    </div>
+  );
+}
+
+function ClaimCheckerPanel({ t }: { t: TrustStats }) {
+  return (
+    <section aria-label="Claim checker, live" data-testid="live-claims" className="min-w-0 rounded-[18px] bg-paper p-4">
+      <h3 className={eyebrow}>Claim checker, live</h3>
+      <dl className="m-0 mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+        <Stat label="Playbooks built" value={String(t.playbooks)} />
+        <Stat label="Claims checked" value={String(t.claimsChecked)} />
+        <Stat label="Claims removed" value={`${t.claimsRemoved} of ${t.claimsChecked}`} />
+        <Stat label="Median build time" value={seconds(t.medianLatencyMs)} />
+        <Stat label="Sponsors hidden" value={String(t.sponsorsHidden)} />
+      </dl>
+      <p className="mt-3 text-[13px] leading-[1.45] text-canvas-muted">Counts every playbook built since {dateText(t.since)}. Derived numbers only; no Qloo data is stored.</p>
+    </section>
+  );
+}
+
+function TeamPanel({ t }: { t: TeamStats }) {
+  const o = t.overridesByField;
+  const roles = Object.entries(t.notesByRole).filter(([, n]) => n > 0);
+  return (
+    <section aria-label="Team decisions, live" data-testid="live-team" className="min-w-0 rounded-[18px] bg-paper p-4">
+      <h3 className={eyebrow}>Team decisions, live</h3>
+      <dl className="m-0 mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+        <Stat label="Workspaces" value={String(t.workspaces)} />
+        <Stat label="Status changes" value={Object.values(t.statusCounts).reduce((a, b) => a + b, 0).toString()} />
+      </dl>
+      <p className="mt-3 break-words text-[14px] text-canvas-text">Statuses: {Object.entries(t.statusCounts).map(([k, n]) => `${k} ${n}`).join(" · ")}</p>
+      <p className="mt-1 break-words text-[14px] text-canvas-text">Overrides by field: Top zone {o.top_zone} · Best room {o.best_room} · Support {o.support}</p>
+      <p className="mt-1 break-words text-[14px] text-canvas-text">Notes by role: {roles.length ? roles.map(([k, n]) => `${k} ${n}`).join(" · ") : "none yet"}</p>
+      <p className="mt-3 text-[13px] leading-[1.45] text-canvas-muted">Excludes the seeded demo discussion.</p>
+    </section>
+  );
+}
+
+/** Live numbers from the optional analytics tables. Hidden when they are off; a skeleton while loading; never blocks the page. */
+export function LiveStats({ trust, team }: { trust: TrustStats | { enabled: false } | null; team: TeamStats | { enabled: false } | null }) {
+  const id = useId();
+  if (trust === null || team === null) {
+    return (
+      <section aria-labelledby={id} aria-busy="true" data-testid="live-skeleton" className="mx-auto mb-10 flex w-full max-w-[1240px] flex-col gap-4">
+        <h2 id={id} className="sr-only">Live numbers, loading</h2>
+        <div className="grid gap-3 lg:grid-cols-2" aria-hidden="true">
+          {[0, 1].map((i) => <div key={i} className="h-[190px] animate-pulse rounded-[18px] bg-paper" />)}
+        </div>
+      </section>
+    );
+  }
+  if (!trust.enabled && !team.enabled) return null;
+  const since = dateText((trust.enabled ? trust.since : null) ?? (team.enabled ? team.since : null));
+  return (
+    <section aria-labelledby={id} data-testid="live-stats" className="mx-auto mb-10 flex w-full max-w-[1240px] flex-col gap-4">
+      <h2 id={id} className="font-title text-[22px] leading-tight text-bone lg:text-[26px]">{since ? `Live since ${since}` : "Live now"}</h2>
+      <div className="grid gap-3 lg:grid-cols-2">
+        {trust.enabled && <ClaimCheckerPanel t={trust} />}
+        {team.enabled && <TeamPanel t={team} />}
+      </div>
+    </section>
+  );
+}
+
+function LiveStatsLoader() {
+  const off = isSampleMode();
+  const trust = useStats("trust", !off);
+  const team = useStats("team", !off);
+  if (off) return null;
+  return <LiveStats trust={trust} team={team} />;
+}
+
 export default function Proof() {
   const [, setTick] = useState(0);
   const [retrying, setRetrying] = useState(false);
   const data = getBacktest();
-  if (data) return <ProofView data={data} />;
+  if (data) return <><LiveStatsLoader /><ProofView data={data} /></>;
   const retry = () => { setRetrying(true); void loadRecordings().finally(() => { setRetrying(false); setTick((n) => n + 1); }); };
   return (
+    <>
+    <LiveStatsLoader />
     <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-4 pb-8">
       <header className="flex flex-col gap-3">
         <p className={eyebrow}>PROOF · ACTIVATION BACKTEST</p>
@@ -349,5 +433,6 @@ export default function Proof() {
       <p className="text-[16px] text-canvas-muted">Proof results are unavailable right now.</p>
       <button type="button" onClick={retry} disabled={retrying} className="inline-flex min-h-12 w-fit items-center rounded-[10px] bg-paper-raised px-5 text-[15px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:opacity-60">Retry</button>
     </div>
+    </>
   );
 }

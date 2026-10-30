@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import ProofRoute, { ProofView } from "./Proof";
+import ProofRoute, { LiveStats, ProofView } from "./Proof";
 import syntheticBacktest from "@/test/fixtures/backtest.synthetic.json";
 import v3Backtest from "@/test/fixtures/backtest.v3.synthetic.json";
 import { getBacktest, parseBacktest, setBacktest } from "@/lib/qloo/backtest";
@@ -291,6 +291,57 @@ describe("Proof v3", () => {
     expect(levels[0]).toBe(1);
     levels.forEach((l, i) => { if (i > 0) expect(l).toBeLessThanOrEqual(levels[i - 1]! + 1); });
     expect(spy).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("Proof live numbers", () => {
+  const trust = { enabled: true as const, since: "2026-10-30T09:00:00.000Z", playbooks: 12, claimsChecked: 100, claimsRemoved: 8, removedRate: 0.08, medianLatencyMs: 4200, sponsorsHidden: 5, cities: 7, last24h: { playbooks: 3, claimsChecked: 25 } };
+  const team = { enabled: true as const, since: "2026-10-29T09:00:00.000Z", workspaces: 4, events: 30, overridesByField: { top_zone: 3, best_room: 0, support: 1 }, overrideRate: 1, statusCounts: { Considering: 1, Confirmed: 5, "On hold": 2, Dropped: 0 }, notesByRole: { Manager: 7, Promoter: 2, Other: 0 } };
+  const off = { enabled: false as const };
+
+  it("shows a skeleton while loading", () => {
+    render(<LiveStats trust={null} team={null} />);
+    expect(screen.getByTestId("live-skeleton").getAttribute("aria-busy")).toBe("true");
+  });
+  it("renders nothing when both are disabled", () => {
+    const { container } = render(<LiveStats trust={off} team={off} />);
+    expect(container.innerHTML).toBe("");
+  });
+  it("renders both panels from fake data", () => {
+    render(<LiveStats trust={trust} team={team} />);
+    expect(screen.getByRole("heading", { level: 2, name: "Live since Oct 30, 2026" })).toBeTruthy();
+    const c = screen.getByRole("region", { name: "Claim checker, live" });
+    expect(within(c).getByText("12")).toBeTruthy();
+    expect(within(c).getByText("8 of 100")).toBeTruthy();
+    expect(within(c).getByText("4.2 s")).toBeTruthy();
+    expect(within(c).getByText("Counts every playbook built since Oct 30, 2026. Derived numbers only; no Qloo data is stored.")).toBeTruthy();
+    const t = screen.getByRole("region", { name: "Team decisions, live" });
+    expect(within(t).getByText(/Confirmed 5/)).toBeTruthy();
+    expect(within(t).getByText("Overrides by field: Top zone 3 · Best room 0 · Support 1")).toBeTruthy();
+    expect(within(t).getByText("Notes by role: Manager 7 · Promoter 2")).toBeTruthy();
+    expect(within(t).getByText("Excludes the seeded demo discussion.")).toBeTruthy();
+  });
+  it("shows only the panel that is enabled", () => {
+    render(<LiveStats trust={trust} team={off} />);
+    expect(screen.getByRole("region", { name: "Claim checker, live" })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Team decisions, live" })).toBeNull();
+  });
+  it("the page loads both stats, never blocks on them and hides the panels when off", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ enabled: false }), { status: 200, headers: { "content-type": "application/json" } })));
+    setBacktest(parseBacktest(syntheticBacktest));
+    render(<MemoryRouter><ProofRoute /></MemoryRouter>);
+    expect(screen.getByRole("heading", { level: 1 })).toBeTruthy();
+    await waitFor(() => expect(screen.queryByTestId("live-skeleton")).toBeNull());
+    expect(screen.queryByTestId("live-stats")).toBeNull();
+    vi.unstubAllGlobals();
+  });
+  it("the page shows the panels when the gateway answers", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (u: string) => new Response(JSON.stringify(String(u).includes("trust") ? trust : team), { status: 200, headers: { "content-type": "application/json" } })));
+    setBacktest(parseBacktest(syntheticBacktest));
+    render(<MemoryRouter><ProofRoute /></MemoryRouter>);
+    expect(await screen.findByRole("region", { name: "Claim checker, live" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Team decisions, live" })).toBeTruthy();
     vi.unstubAllGlobals();
   });
 });

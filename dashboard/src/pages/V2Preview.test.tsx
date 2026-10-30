@@ -246,3 +246,85 @@ describe("landing link", () => {
     expect(link.getAttribute("href")).toBe("/v2");
   });
 });
+
+describe("V2Preview prototype taps", () => {
+  const stats = (over: object = {}) => ({ enabled: true, since: "2026-10-30T00:00:00.000Z", taps: 20, byAction: { going: 12, waitlist: 3, was_there: 5 }, byExperience: {}, ...over });
+  const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json" } });
+  function stubGateway(statsBody: unknown) {
+    const f = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      const u = String(url);
+      if (u.includes("/api/qloo/stats/v2")) return json(statsBody);
+      if (u.includes("/api/qloo/v2/tap")) return json({ enabled: true, ok: true }, 202);
+      void init;
+      return json({}, 404);
+    });
+    vi.stubGlobal("fetch", f);
+    return f;
+  }
+  const taps = (f: ReturnType<typeof vi.fn>) => f.mock.calls.filter((c) => String(c[0]).includes("/v2/tap"));
+
+  it("keeps the mock, disabled buttons and No data yet everywhere when stats are off", async () => {
+    stubGateway({ enabled: false });
+    const { container } = mount();
+    await act(async () => { await Promise.resolve(); });
+    for (const t of ["Going", "Waitlist", "I was there"]) expect((screen.getByRole("button", { name: t }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getAllByText("Mock — not live").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("No data yet — v2 collects this")).toHaveLength(4);
+    expect(container.textContent).not.toContain("Prototype taps");
+  });
+
+  it("enables the buttons when stats are on, labels them as a prototype and posts once per action", async () => {
+    const f = stubGateway(stats());
+    const { container } = mount();
+    const going = await screen.findByRole("button", { name: "Going" }) as HTMLButtonElement;
+    await vi.waitFor(() => expect(going.disabled).toBe(false));
+    expect(container.textContent).toContain("Prototype: taps from visitors of this page, not real fans. Stored as anonymous counts in BigQuery.");
+    await act(async () => { fireEvent.click(going); });
+    await vi.waitFor(() => expect(going.disabled).toBe(true));
+    fireEvent.click(going);
+    expect(taps(f)).toHaveLength(1);
+    expect(JSON.parse(String((taps(f)[0]![1] as RequestInit).body))).toEqual({ action: "going", experience: "listening" });
+    expect(JSON.parse(window.localStorage.getItem("tiq.v2.taps")!)).toEqual(["going"]);
+    expect((screen.getByRole("button", { name: "Waitlist" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("starts with an action already tapped in this browser disabled", async () => {
+    window.localStorage.setItem("tiq.v2.taps", JSON.stringify(["waitlist"]));
+    stubGateway(stats());
+    mount();
+    await vi.waitFor(() => expect((screen.getByRole("button", { name: "Going" }) as HTMLButtonElement).disabled).toBe(false));
+    expect((screen.getByRole("button", { name: "Waitlist" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("shows prototype ratios as 'N of M' with raw counts and the label, and never a percent sign", async () => {
+    stubGateway(stats());
+    const { container } = mount();
+    await screen.findByTestId("prototype-counts");
+    const out = container.querySelector("[data-tour='v2-outcome']")!;
+    expect(screen.getByTestId("prototype-counts").textContent).toContain("Going 12 · Waitlist 3 · I was there 5");
+    expect(out.textContent).toContain("12 of 15 RSVP taps were Going");
+    expect(out.textContent).toContain("5 I was there taps for 12 Going");
+    expect(out.textContent).toContain("Prototype taps, not real fans");
+    expect(screen.getAllByText("No data yet — needs real venues and artists")).toHaveLength(2);
+    expect(container.textContent).not.toContain("%");
+  });
+
+  it("says no taps yet when enabled with zero taps", async () => {
+    stubGateway(stats({ taps: 0, byAction: { going: 0, waitlist: 0, was_there: 0 } }));
+    mount();
+    await screen.findByTestId("prototype-counts");
+    expect(screen.getAllByText("No taps yet")).toHaveLength(2);
+  });
+
+  it("a failed tap says so and can be retried", async () => {
+    const f = vi.fn(async (url: string | URL | Request) => (String(url).includes("stats/v2") ? json(stats()) : json({ error: "x" }, 502)));
+    vi.stubGlobal("fetch", f);
+    mount();
+    const going = await screen.findByRole("button", { name: "Going" }) as HTMLButtonElement;
+    await vi.waitFor(() => expect(going.disabled).toBe(false));
+    await act(async () => { fireEvent.click(going); });
+    await screen.findByText(/did not go through/);
+    expect(going.disabled).toBe(false);
+    expect(window.localStorage.getItem("tiq.v2.taps")).toBeNull();
+  });
+});
