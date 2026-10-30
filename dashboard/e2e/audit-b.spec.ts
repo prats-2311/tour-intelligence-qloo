@@ -137,3 +137,33 @@ test("6 advance tab: one clear unavailable panel with Retry, and switching tabs 
   const after = await page.evaluate(() => window.scrollY);
   expect(Math.abs(after - before), "scroll jump").toBeLessThanOrEqual(5);
 });
+
+test("7+8 pitch sheet: known breadcrumb, no chrome in print, no UI instruction printed, one A4 page", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/tours/pitch/5368361/St%C3%BCssy?showcase=1");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^Stüssy × .+ — Los Angeles$/, { timeout: 20_000 });
+  const crumbs = page.locator("nav[aria-label='Breadcrumb']");
+  await expect(crumbs).toContainText("Pitch sheet · Stüssy");
+  await expect(crumbs).not.toContainText("Page not found");
+  await page.emulateMedia({ media: "print" });
+  for (const sel of ["nav[aria-label='Breadcrumb']", "[data-mobile-bar]", "[data-app-shell]", "aside[aria-label='Site sections']", "button[aria-label='Ask about this tour']", "a[href='#main-content']"]) {
+    await expect(page.locator(sel).first(), sel).toBeHidden();
+  }
+  expect(await page.locator(".pitch-sheet").innerText()).not.toMatch(/By age group/);
+  const pdf = await page.pdf({ format: "A4", printBackground: true });
+  const pages = (pdf.toString("latin1").match(/\/Type\s*\/Page\b(?!s)/g) ?? []).length;
+  expect(pages, "PDF pages").toBe(1);
+  await page.emulateMedia({ media: "screen" });
+  await expect(page.locator(".pitch-sheet")).toContainText("Open 'By age group' on the playbook");
+});
+
+test("7+8 pitch sheet at phone width prints one page too", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/tours/pitch/5368361/St%C3%BCssy?showcase=1");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^Stüssy × .+ — Los Angeles$/, { timeout: 20_000 });
+  await page.emulateMedia({ media: "print" });
+  await expect(page.locator("[data-mobile-bar]")).toBeHidden();
+  await expect(page.locator("button[aria-label='Ask about this tour']")).toBeHidden();
+  const pdf = await page.pdf({ format: "A4", printBackground: true });
+  expect((pdf.toString("latin1").match(/\/Type\s*\/Page\b(?!s)/g) ?? []).length).toBe(1);
+});

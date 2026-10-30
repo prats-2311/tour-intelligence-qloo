@@ -124,14 +124,15 @@ function Sheet({ sheet, back }: { sheet: PitchSheetOk; back: React.ReactNode }) 
         <h2 id="ps-why" className={H2}>Why this brand</h2>
         <p className="text-[17px] leading-[1.45] text-canvas-text">{sheet.why}</p>
       </section>
-      <section aria-labelledby="ps-who" className="flex flex-col gap-1">
+      {/* With no age data the section is a screen-only hint (data-noprint): an instruction never belongs on the printed leave-behind. */}
+      <section aria-labelledby="ps-who" {...(sheet.segments.state === "missing" ? { "data-noprint": true } : {})} className="flex flex-col gap-1">
         <h2 id="ps-who" className={H2}>Who loves it most</h2>
         {sheet.segments.state === "bands" ? (
           <>
             <ul className="text-[15px] text-canvas-text">{sheet.segments.lines.map((l) => <li key={l}>{l}</li>)}</ul>
             {sheet.segments.note && <p className={muted}>{sheet.segments.note}</p>}
           </>
-        ) : <p className={muted}>{sheet.segments.message}</p>}
+        ) : <p className={sheet.segments.state === "missing" ? "text-[12px] text-canvas-muted" : muted}>{sheet.segments.message}</p>}
       </section>
       <section aria-labelledby="ps-where" className="flex flex-col gap-1">
         <h2 id="ps-where" className={H2}>Where the fans are</h2>

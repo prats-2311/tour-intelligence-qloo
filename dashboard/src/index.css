@@ -302,9 +302,14 @@ body {
 @page { margin: 12mm; }
 @media print {
   body:has(.pitch-sheet), body:has(.pitch-sheet) #root > div { background: #fff !important; }
-  body:has(.pitch-sheet) [data-app-shell] { display: none !important; }
+  body:has(.pitch-sheet) [data-app-shell], body:has(.pitch-sheet) [data-breadcrumbs], body:has(.pitch-sheet) [data-mobile-bar],
+  body:has(.pitch-sheet) [data-nav-grid] > aside, body:has(.pitch-sheet) [data-tour="ask"], body:has(.pitch-sheet) a[href="#main-content"] { display: none !important; }
+  body:has(.pitch-sheet) #root > div { min-height: 0 !important; }
+  body:has(.pitch-sheet) [data-nav-grid] { display: block !important; }
   body:has(.pitch-sheet) main { padding: 0 !important; }
-  .pitch-sheet { margin: 0 !important; max-width: none !important; padding: 0 !important; font-size: 11pt; background: #fff !important; }
+  .pitch-sheet { margin: 0 !important; max-width: none !important; padding: 0 !important; font-size: 10pt; line-height: 1.35; gap: 9pt !important; background: #fff !important; }
+  .pitch-sheet h1 { font-size: 20pt !important; }
+  .pitch-sheet p, .pitch-sheet li { font-size: 10pt !important; line-height: 1.35 !important; }
   .pitch-sheet *:not(svg *) { color: #111 !important; background-color: transparent !important; box-shadow: none !important; }
   .pitch-sheet [data-noprint] { display: none !important; }
   .pitch-sheet section { break-inside: avoid; }

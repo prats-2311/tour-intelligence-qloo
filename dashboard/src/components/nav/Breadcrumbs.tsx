@@ -15,7 +15,7 @@ export function Breadcrumbs({ inline = false }: { /** In the phone top bar next 
   const href = useNavHref();
   const narrow = useMediaQuery("(max-width: 639px)");
   const [expanded, setExpanded] = useState(false);
-  const cityId = matchPath("/tours/playbook/:cityId", pathname)?.params.cityId ?? null;
+  const cityId = (matchPath("/tours/playbook/:cityId", pathname) ?? matchPath("/tours/pitch/:cityId/:brand", pathname))?.params.cityId ?? null;
   const { artist, cityName } = resolveTourNames({ stateArtist: state.brief?.artist ?? state.artist?.name, stateCities: state.cities, search, cityId });
   const crumbs = buildCrumbs({ pathname, artist, cityName });
   if (crumbs.length === 0) return null;
