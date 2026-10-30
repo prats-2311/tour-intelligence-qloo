@@ -188,6 +188,11 @@ body {
   color: var(--color-canvas-text);
 }
 
+/* Visible keyboard focus everywhere (audit A2). Unlayered on purpose: Tailwind's `outline-none` (layered) used to leave links with no indicator because
+   `focus-visible:outline-2` only sets a width. Style, width and colour are global; the offset sits in the base layer so a component's own offset utility wins. */
+@layer base { :focus-visible { outline-offset: 2px; } }
+:focus-visible { outline: 2px solid var(--color-gold); }
+
 ::selection {
   background: var(--color-gold);
   color: var(--color-on-gold);

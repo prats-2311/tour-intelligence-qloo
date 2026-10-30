@@ -38,3 +38,24 @@ for (const width of [1440, 1280]) {
     expect(bad, "no city name is squeezed into a narrow column").toEqual([]);
   });
 }
+
+test("2. every keyboard focus stop on the landing page shows a 2px outline", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: "See the example tour" })).toBeVisible();
+  const lacking: string[] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < 25; i++) {
+    await page.keyboard.press("Tab");
+    const r = await page.evaluate(() => {
+      const e = document.activeElement as HTMLElement | null;
+      if (!e || e === document.body) return null;
+      const cs = getComputedStyle(e);
+      return { id: `${e.tagName} ${(e.textContent ?? e.getAttribute("aria-label") ?? "").trim().slice(0, 30)}`, style: cs.outlineStyle, width: parseFloat(cs.outlineWidth), shadow: cs.boxShadow, focusVisible: e.matches(":focus-visible") };
+    });
+    if (!r || seen.has(r.id)) continue;
+    seen.add(r.id);
+    if (r.focusVisible && !((r.style !== "none" && r.width >= 2) || (r.shadow !== "none" && /\d+px/.test(r.shadow)))) lacking.push(`${r.id}: outline ${r.style} ${r.width}px`);
+  }
+  expect(seen.size, "tabbed through several controls").toBeGreaterThan(5);
+  expect(lacking, "focused controls without a visible indicator").toEqual([]);
+});
