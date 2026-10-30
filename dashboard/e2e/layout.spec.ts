@@ -69,7 +69,7 @@ test("no horizontal scroll at 360px with long names on every screen (Review Focu
   await page.setViewportSize({ width: 360, height: 780 });
   await page.goto("/tours/board?sample=long");
   await boardDone(page);
-  await expect(page.getByText("Santiago de Querétaro").first()).toBeVisible();
+  await expect(page.getByTestId("city-row").getByText("Santiago de Querétaro").first()).toBeVisible(); // not the map marker label, which stays hidden until hover
   await noHorizontalScroll(page);
   await page.getByTestId("city-row").getByText("Santiago de Querétaro").first().click();
   await expect(page).toHaveURL(/\/tours\/playbook\/3995465\?sample=long/);
