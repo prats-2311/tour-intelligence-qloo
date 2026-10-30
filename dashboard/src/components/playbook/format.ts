@@ -3,7 +3,8 @@ import type { CardKind, PlaybookCard, RemovalReason } from "@/lib/qloo/types";
 
 export const fit = (v: unknown): string => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(2) : "—");
 /** Where fans and the city overall rank an item: "Fans #3 · city #12" or "Fans #3 · not in the city's top 20". */
-export const rankLine = (artistRank: number, cityRank: number | null): string => `Fans #${artistRank} · ${cityRank === null ? "not in the city's top 20" : `city #${cityRank}`}`;
+export const NOT_IN_CITY_TOP_20 = "not in the city's top 20";
+export const rankLine = (artistRank: number, cityRank: number | null): string => `Fans #${artistRank} · ${cityRank === null ? NOT_IN_CITY_TOP_20 : `city #${cityRank}`}`;
 export const fanRankLine = (artistRank: number): string => `Fans rank it #${artistRank}`;
 export const SPONSORS_NOT_MAINSTREAM_NOTE = "None of these brands is in the city's top 20, so they set this audience apart.";
 /** One deal line for the top sponsor: the lift in words (never an exact "N places higher") plus a suggested ask. Null when there is no lift. */
