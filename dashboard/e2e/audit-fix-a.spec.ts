@@ -122,3 +122,18 @@ for (const width of [1440, 1280]) {
     expect(r, "every breadcrumb corner is hit-testable").toEqual([]);
   });
 }
+
+test("7. printing the Tour Book hides the app chrome", async ({ page }) => {
+  await page.goto("/tours/book?sample=1");
+  await expect(page.getByRole("heading", { name: "Market selection" })).toBeVisible({ timeout: 30_000 });
+  await page.emulateMedia({ media: "print" });
+  const shown = await page.evaluate(() => {
+    const vis = (e: Element) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.display !== "none" && cs.visibility !== "hidden"; };
+    const q: Record<string, string> = {
+      "hamburger bar": "[data-mobile-bar]", breadcrumbs: "nav[aria-label=Breadcrumb]", "recorded/sample banner": "[data-app-chrome]",
+      "ask FAB": 'button[aria-label="Ask about this tour"], button[aria-label="Ask the strategist"]', sidebar: "aside[aria-label='Site sections']", "top bar": "header[data-app-shell]", toasts: "[role=status].fixed",
+    };
+    return Object.entries(q).filter(([, sel]) => [...document.querySelectorAll(sel)].some(vis)).map(([k]) => k);
+  });
+  expect(shown, "app chrome visible in print").toEqual([]);
+});

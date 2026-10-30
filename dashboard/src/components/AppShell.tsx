@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       ) : (
         <>
         {!landing && (
-          <div data-mobile-bar className="flex h-11 shrink-0 items-center gap-1 bg-canvas-raised pr-2">
+          <div data-mobile-bar data-app-chrome className="flex h-11 shrink-0 items-center gap-1 bg-canvas-raised pr-2">
             <button ref={hamburger} type="button" aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls={DRAWER_ID} onClick={() => setDrawerOpen(true)} className="inline-flex size-11 items-center justify-center rounded-[8px] text-bone outline-none focus-visible:ring-2 focus-visible:ring-gold">
               <Menu size={20} aria-hidden />
             </button>
@@ -86,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {!isDesktop && !landing && <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} returnFocusTo={hamburger} onAction={onAction} />}
       {workspace.enabled && <ActivityPanel open={activityOpen} onClose={() => setActivityOpen(false)} cities={state.cities} />}
       {shared && (
-        <div role="status" className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-4 z-[45] flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-[10px] bg-paper px-3 py-2 text-[13px] text-bone shadow-lg lg:bottom-4">
+        <div role="status" data-app-chrome className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-4 z-[45] flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-[10px] bg-paper px-3 py-2 text-[13px] text-bone shadow-lg lg:bottom-4">
           <span>{shared.copied ? "Link copied." : shared.url ? "Copy this link:" : workspace.error ?? "Could not create a link."}</span>
           {shared.url && !shared.copied && <input readOnly value={shared.url} onFocus={(e) => e.currentTarget.select()} aria-label="Workspace link" className="w-56 rounded-[6px] border border-canvas-line bg-canvas px-2 py-1 text-[12px]" />}
           <button type="button" onClick={() => setShared(null)} className="inline-flex min-h-11 items-center rounded-[6px] px-2 text-canvas-muted hover:text-bone focus-visible:outline-2 focus-visible:outline-gold">Dismiss</button>

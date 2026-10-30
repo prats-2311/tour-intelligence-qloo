@@ -283,6 +283,9 @@ body {
 @media print {
   body:has(.tour-book), body:has(.tour-book) #root > div { background: #fff !important; }
   body:has(.tour-book) [data-app-shell] { display: none !important; }
+  /* Everything that is app chrome rather than book: phone bar, breadcrumb, sample banner, sidebar, Ask button and dock, toasts (audit A7). */
+  body:has(.tour-book) [data-app-chrome], body:has(.pitch-sheet) [data-app-chrome] { display: none !important; }
+  body:has(.tour-book) [data-nav-grid] { display: block !important; }
   body:has(.tour-book) main { padding: 0 !important; }
   .tour-book { margin: 0 !important; background: #fff; color: #111; }
   .tour-book *:not(svg *):not([data-print-keep]) { color: #111 !important; background-color: transparent !important; box-shadow: none !important; }

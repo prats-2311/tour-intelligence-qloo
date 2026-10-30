@@ -86,6 +86,7 @@ export function StrategistFab() {
         type="button"
         aria-label="Ask about this tour"
         data-tour="ask"
+        data-app-chrome
         onClick={() => setOpen(true)}
         className={`btn-gold fixed z-30 flex items-center justify-center rounded-full ${lift} outline-none focus-visible:ring-2 focus-visible:ring-bone`}
       >
@@ -119,7 +120,7 @@ export function StrategistToggle({ open, onToggle }: { open: boolean; onToggle()
 export function StrategistDock({ onClose }: { onClose(): void }) {
   const { sample, showcase, title, context } = useLauncherModel();
   return (
-    <aside aria-label="Ask about this tour" style={{ width: DOCK_WIDTH }} className="fixed bottom-0 right-0 top-14 z-20 border-l border-canvas-line bg-canvas">
+    <aside aria-label="Ask about this tour" data-app-chrome style={{ width: DOCK_WIDTH }} className="fixed bottom-0 right-0 top-14 z-20 border-l border-canvas-line bg-canvas">
       <StrategistPanel context={context} sample={sample} showcase={showcase} title={title} onClose={onClose} />
     </aside>
   );
