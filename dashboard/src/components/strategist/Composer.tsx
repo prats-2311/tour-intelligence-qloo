@@ -1,15 +1,17 @@
 import { Send, Square } from "lucide-react";
 import { useState } from "react";
+import type { useDocuments } from "@/lib/docs/useDocuments";
 import { SAMPLE_QUESTIONS } from "@/lib/qloo/fixtures/strategistSample";
 import { liveAskSuggestions } from "@/lib/qloo/liveAskSuggestions";
 import { SHOWCASE, showcaseStrategist } from "@/lib/qloo/showcase";
 import { liveSuggestions } from "@/lib/qloo/strategistSuggestions";
 import type { StrategistContext } from "@/lib/qloo/types";
+import { DocumentsBar } from "./DocumentsBar";
 import { CHAT_INPUT_CLASS, CHAT_SEND_CLASS, MicButton, SuggestionChips } from "@/components/ui/ChatBits";
 
 export const LIVE_ASK_LABEL = "Ask your own question — runs live, about 30 seconds";
 
-export function Composer({ replay = false, busy, empty, sample, showcase = false, context, onAsk, onStop }: { replay?: boolean; busy: boolean; empty: boolean; sample: boolean; showcase?: boolean; context: StrategistContext; onAsk: (q: string) => void; onStop: () => void }) {
+export function Composer({ docs, replay = false, busy, empty, sample, showcase = false, context, onAsk, onStop }: { docs?: ReturnType<typeof useDocuments>; replay?: boolean; busy: boolean; empty: boolean; sample: boolean; showcase?: boolean; context: StrategistContext; onAsk: (q: string) => void; onStop: () => void }) {
   const [text, setText] = useState("");
   function send() {
     const q = text.trim();
@@ -31,6 +33,8 @@ export function Composer({ replay = false, busy, empty, sample, showcase = false
       </button>
     </form>
   );
+  // Documents only make sense where answers are live; the scripted sample board ignores them.
+  const bar = docs && (!sample || showcase) ? <DocumentsBar docs={docs} /> : null;
   if (replay) {
     const live = liveAskSuggestions(SHOWCASE);
     // Showcase: the recorded questions replay for free; a typed one runs live against the example's own context.
@@ -38,6 +42,7 @@ export function Composer({ replay = false, busy, empty, sample, showcase = false
       <div className="px-4 pb-4 pt-2">
         <SuggestionChips suggestions={showcaseStrategist().map((r) => r.question)} onPick={(q) => { if (!busy) onAsk(q); }} />
         <p className="mb-1.5 mt-3 text-[13px] font-medium text-canvas-text">{LIVE_ASK_LABEL}</p>
+        {bar}
         {form}
         {live.length > 0 && (
           <div className="mt-3">
@@ -51,6 +56,7 @@ export function Composer({ replay = false, busy, empty, sample, showcase = false
   return (
     <div className="px-4 pb-4 pt-2">
       {empty && <SuggestionChips suggestions={sample && !showcase ? [...SAMPLE_QUESTIONS] : liveSuggestions(context)} onPick={(q) => { if (!busy) onAsk(q); }} />}
+      {bar}
       {form}
     </div>
   );
