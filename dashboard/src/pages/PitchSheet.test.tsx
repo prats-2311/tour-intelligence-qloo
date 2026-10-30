@@ -110,7 +110,9 @@ describe("pitch sheet page", () => {
     expect(container.querySelector("[data-pitch-actions]")?.hasAttribute("data-noprint")).toBe(true);
     const css = indexCss;
     const printCss = css.slice(css.lastIndexOf("@media print"));
-    expect(printCss).toMatch(/body:has\(\.pitch-sheet\) \[data-app-shell\]\s*\{\s*display: none/);
+    expect(printCss).toMatch(/body:has\(\.pitch-sheet\) \[data-app-shell\]/);
+    for (const chrome of ["[data-breadcrumbs]", "[data-mobile-bar]", '[data-tour="ask"]']) expect(printCss).toContain(`body:has(.pitch-sheet) ${chrome}`);
+    expect(printCss).toMatch(/body:has\(\.pitch-sheet\) \[data-app-shell\][^{]*\{[^}]*display: none/);
     expect(printCss).toMatch(/\.pitch-sheet \[data-noprint\]/);
     expect(css).toMatch(/@page\s*\{[^}]*margin/);
   });
