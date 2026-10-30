@@ -37,7 +37,7 @@ describe("playbook cards", () => {
     let opened = false;
     render(<PlaybookCard accent="#ff00aa" meta="GDL · SPONSORS" title="Sponsors" claims={narrative.status === "ok" ? narrative.cards.sponsors : undefined} narrativeStatus="ok" refsCount={1} hasEvidence onAudit={() => { opened = true; }}><p>body</p></PlaybookCard>);
     expect(screen.getByText("Cerro Alto Mezcal is the strongest sponsor fit at 0.91.")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "See the 3 checked claims for Sponsors" }));
+    fireEvent.click(screen.getByRole("button", { name: /^\d+ verified · \d+ removed\. See the \d+ checked claims for Sponsors$/ }));
     expect(opened).toBe(true);
     expect(screen.getByText("Qloo · 1 request")).toBeTruthy();
   });
@@ -71,7 +71,10 @@ describe("playbook cards", () => {
   });
   it("badge is a 44px button whenever there are claims, and plain text when there are none", () => {
     const { unmount } = render(<ClaimsBadge verified={3} removed={0} onClick={() => {}} label="See the 3 checked claims for Sponsors" />);
-    expect(screen.getByRole("button", { name: "See the 3 checked claims for Sponsors" }).className).toContain("min-h-11");
+    const badge = screen.getByRole("button", { name: "3 verified · 0 removed. See the 3 checked claims for Sponsors" });
+    expect(badge.className).toContain("min-h-11");
+    // WCAG 2.5.3: the accessible name starts with the visible text, so voice control ("click 3 verified") works.
+    expect(badge.getAttribute("aria-label")!.startsWith(badge.textContent!)).toBe(true);
     expect(screen.getByText("3 verified · 0 removed")).toBeTruthy();
     unmount();
     render(<ClaimsBadge verified={0} removed={0} onClick={() => {}} />);
@@ -371,7 +374,7 @@ describe("playbook cards", () => {
     let hit = false;
     render(<AdvanceSheet rows={[{ label: "CLAIMS", value: "11 verified · 0 removed", onClick: () => { hit = true; }, aria: "See the 11 checked claims" }]} />);
     expect(screen.getByTitle("11 verified · 0 removed").className).not.toContain("truncate");
-    fireEvent.click(screen.getByRole("button", { name: "See the 11 checked claims" }));
+    fireEvent.click(screen.getByRole("button", { name: "11 verified · 0 removed. See the 11 checked claims" }));
     expect(hit).toBe(true);
   });
   it("keeps organisations off the sponsor card, with a caption, a visible-only count and an ask that names a real brand", () => {

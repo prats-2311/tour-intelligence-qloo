@@ -3,7 +3,7 @@ import { FIELD_LABEL, LIMITS, timeAgo, type Field } from "@/lib/collab/types";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
 import { collabInput } from "./ui";
 
-const link = "inline-flex min-h-11 items-center text-[12px] font-medium text-canvas-muted underline-offset-4 hover:text-canvas-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
+const link = "inline-flex min-h-11 min-w-11 items-center justify-center text-[12px] font-medium text-canvas-muted underline-offset-4 hover:text-canvas-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold";
 
 /**
  * The value inside a hero tile when the team can override Qloo's suggestion. The team value is shown first and Qloo's own

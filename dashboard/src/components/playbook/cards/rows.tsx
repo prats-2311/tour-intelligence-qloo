@@ -8,11 +8,11 @@ export function Rows({ children }: { children: ReactNode }) {
 
 /** Small muted outbound link; `data-noprint` hides it in the Tour Book print view. */
 export function ExtLink({ href, text, label }: { href: string; text: string; label: string }) {
-  return <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label} data-noprint className="inline-flex min-h-11 items-center text-[13px] text-canvas-muted underline decoration-canvas-line underline-offset-4 outline-none hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:min-h-0">{text} ↗</a>;
+  return <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label} data-noprint className="inline-flex min-h-11 items-center text-[13px] text-canvas-muted underline decoration-canvas-line underline-offset-4 outline-none hover:text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:min-h-0">{text} <span aria-hidden>↗</span></a>;
 }
 
 export const mapsLink = (name: string, city: string, country?: string) => ({ href: mapsSearchUrl(name, city, country), text: "Google Maps", label: `Open ${name} in Google Maps (new tab)` });
-export const listenLink = (name: string) => ({ href: spotifySearchUrl(name), text: "Listen", label: `Search ${name} on Spotify (new tab)` });
+export const listenLink = (name: string) => ({ href: spotifySearchUrl(name), text: "Listen", label: `Listen to ${name} on Spotify (new tab)` });
 
 export function Row({ name, aside, sub, chips, link }: { name: string; aside: ReactNode; sub?: string; chips?: string[]; link?: { href: string; text: string; label: string } }) {
   return (

@@ -37,10 +37,14 @@ describe("outbound links on rows", () => {
   });
   it("talent and co-billing acts link to a Spotify search; sponsors get none", () => {
     render(<CardBody card={card("talent", [{ name: "Bruma & Co", affinity: 0.5, source: "suggested" }])} city="Lima" />);
-    expect(screen.getByRole("link", { name: "Search Bruma & Co on Spotify (new tab)" }).getAttribute("href")).toBe("https://open.spotify.com/search/Bruma%20%26%20Co");
+    const listen = screen.getByRole("link", { name: "Listen to Bruma & Co on Spotify (new tab)" });
+    // WCAG 2.5.3: the visible words ("Listen") are inside the accessible name; the arrow is decoration.
+    expect(listen.getAttribute("aria-label")).toContain("Listen");
+    expect(listen.querySelector("[aria-hidden]")?.textContent).toBe("↗");
+    expect(listen.getAttribute("href")).toBe("https://open.spotify.com/search/Bruma%20%26%20Co");
     cleanup();
     render(<CardBody card={card("co_billing", [{ name: "Stüssy Sound", sharedTaste: 0.5, localAffinity: 0.5, lift: 1 }])} city="Lima" />);
-    expect(screen.getByRole("link", { name: "Search Stüssy Sound on Spotify (new tab)" }).getAttribute("href")).toBe("https://open.spotify.com/search/St%C3%BCssy%20Sound");
+    expect(screen.getByRole("link", { name: "Listen to Stüssy Sound on Spotify (new tab)" }).getAttribute("href")).toBe("https://open.spotify.com/search/St%C3%BCssy%20Sound");
     cleanup();
     render(<CardBody card={card("sponsors", [{ name: "Cerro Alto Mezcal", category: "brand", affinity: 0.9 }])} city="Lima" />);
     expect(screen.queryByRole("link")).toBeNull();
