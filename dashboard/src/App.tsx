@@ -1,6 +1,6 @@
 import { useShowcaseVariant } from "@/lib/qloo/useShowcaseVariant";
 import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Link } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { TasteInsightsSkeleton, TourBoardSkeleton, PlaybookSkeleton } from "./components/ui/Skeletons";
 import { QlooWebMcpTools } from "./components/QlooWebMcpTools";
@@ -18,6 +18,16 @@ const CityPlaybook = lazy(routeImports.playbook);
 const Proof = lazy(routeImports.proof);
 const TourBook = lazy(routeImports.book);
 const TasteInsights = lazy(routeImports.insights);
+
+function NotFound() {
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-col items-start gap-3 py-10">
+      <h1 className="font-title text-[24px] leading-tight text-canvas-text">Page not found</h1>
+      <p className="text-[13px] text-canvas-muted">That address doesn't lead anywhere. The example tour is a good place to start.</p>
+      <Link to="/" className="inline-flex h-12 min-h-11 items-center rounded-[8px] bg-paper-raised px-3 text-[13px] font-semibold text-canvas-text hover:bg-[#3a3932] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Back to the example tour</Link>
+    </div>
+  );
+}
 
 export default function App() {
   useShowcaseVariant();
@@ -39,6 +49,7 @@ export default function App() {
           {["/campaign", "/city/:cityId", "/compare", "/campaigns/new", "/cities/add"].map((path) => (
             <Route key={path} path={path} element={<Navigate to="/tours/board" replace />} />
           ))}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AppShell>
     </TourProvider>

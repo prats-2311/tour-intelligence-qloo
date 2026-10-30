@@ -30,6 +30,11 @@ describe("shell: legacy campaign routes redirect to the board", () => {
     mount(path);
     await waitFor(() => expect(screen.getByTestId("where").textContent).toBe("/tours/board"));
   });
+  it("an unknown route shows a not-found page with a way back", async () => {
+    mount("/nope");
+    expect(await screen.findByRole("heading", { name: "Page not found" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Back to the example tour" }).getAttribute("href")).toBe("/");
+  });
   it("no page load fetches /api/campaigns", async () => {
     mount("/tours/board");
     await screen.findByText("board page");
