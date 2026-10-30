@@ -33,7 +33,7 @@ export function SponsorLiftChart({ city, card, status }: { city: ScoredCity; car
                   <span data-testid="lift-city-marker" data-rank={r.cityRank} className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-2 border-canvas bg-gold" style={{ left: at(r.cityRank) }} />
                 )}
               </div>
-              <span className="text-[12px] text-canvas-muted">{r.cityRank === null ? r.cityText : r.cityText}</span>
+              <span className="text-[12px] text-canvas-muted">{r.cityText}</span>
             </div>
           ))}
         </div>
