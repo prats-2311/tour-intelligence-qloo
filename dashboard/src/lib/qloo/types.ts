@@ -109,6 +109,9 @@ export interface RoutingCity { name: string; country?: string }
 /** `cities` set means "paste your cities" mode: the board scores only those (at most 8), and `regions` only help match names without a country. */
 export interface TourBrief { artist: string; /** Where the artist is from (optional); sharpens the visa lookup in Advance & risks. */ artistCountry?: string; artistEntityId?: string; regions: string[]; maxStops: number; dateWindow?: DateWindow; cities?: RoutingCity[] }
 export interface ChatMessage { role: "user" | "assistant"; text: string }
+/** A private document as sent with a strategist request: text extracted in the browser, never stored. */
+export interface StrategistDocument { id: string; name: string; pages: Array<{ n: number; text: string }> }
+
 export interface StrategistContext {
   artist?: { name: string; entityId: string };
   regions?: string[];
