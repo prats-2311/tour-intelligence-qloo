@@ -5,6 +5,7 @@ import { SAMPLE_PLAYBOOK_CITY_IDS, samplePlaybookEvents, sampleThisWeek } from "
 import { pct } from "@/components/playbook/format";
 import type { GatewayEvent, PlaybookCard, ScoredCity } from "../qloo/types";
 import { buildDemoSeed, type Recording } from "./demoSeed";
+import { sortCities } from "../qloo/ranking";
 import { WS_ID } from "./types";
 
 const cities = LUMEN_VALE_SAMPLE.flatMap((e) => (e.type === "city_scored" ? [e.city] : []));
@@ -96,6 +97,37 @@ describe("demo seed", () => {
     const noWithout = buildDemoSeed(rec({ without: { status: "unavailable", reason: "error", message: "x" } }))!;
     expect(messages(noWithout).some((m) => /Without Qloo/.test(m.text))).toBe(false);
     expect(messages(noWithout).some((m) => m.key === "tour:board")).toBe(true);
+  });
+  it("quotes each figure exactly as the recording gives it", () => {
+    const r = rec();
+    const s = buildDemoSeed(r)!;
+    const all = messages(s);
+    expect(all.find((m) => m.key === "tour:board")!.text).toContain(`${r.cities.length} markets scored`);
+    const first = all.find((m) => m.key.startsWith("city:") && /on winnability at/.test(m.text))!;
+    const lead = r.cities.find((c) => `city:${c.id}` === first.key)!;
+    const win = sortCities(r.cities, "winnability").findIndex((c) => c.id === lead.id) + 1;
+    const den = sortCities(r.cities, "density").findIndex((c) => c.id === lead.id) + 1;
+    expect(first.text).toContain(`#${win} on winnability at ${Math.round(lead.winnability.value!)}, up from #${den} on fan heat`);
+    const cards = r.cards(lead.id)!;
+    const co = cards.find((c) => c.kind === "co_billing")!.items[0]!;
+    const support = all.find((m) => m.key === `card:${lead.id}:co_billing`)!.text;
+    expect(support).toContain(`fans share taste ${Math.round((co.sharedTaste as number) * 100)}% and the city likes them ${Math.round((co.localAffinity as number) * 100)}%`);
+    const nar = r.narrative(lead.id);
+    if (nar?.status !== "ok") throw new Error("expected a narrative");
+    const cc = Object.values(nar.cards);
+    const verified = cc.reduce((n, c) => n + (c?.verified.length ?? 0), 0), removed = cc.reduce((n, c) => n + (c?.removed.length ?? 0), 0);
+    const line = removed === 0 ? `all ${verified} claims verified, none removed` : `${verified} verified, ${removed} removed`;
+    expect(all.find((m) => m.key === `card:${lead.id}:sponsors` && /Checked claims/.test(m.text))!.text).toContain(line);
+  });
+  it("drops every note whose figure is missing: no note ever prints null, undefined or NaN", () => {
+    const base = rec();
+    const strip = (it: Record<string, unknown>) => Object.fromEntries(Object.entries(it).filter(([k]) => !["affinity", "sharedTaste", "localAffinity", "share", "artistRank", "cityRank"].includes(k)));
+    const bare = rec({ cards: (id) => base.cards(id)?.map((c) => ({ ...c, items: c.items.map(strip) })) ?? null });
+    const withFigures = messages(buildDemoSeed(base)).length;
+    const seed = buildDemoSeed(bare);
+    const kept = messages(seed);
+    expect(kept.length).toBeLessThan(withFigures);
+    for (const m of kept) expect(m.text, m.text).not.toMatch(/\b(null|undefined|NaN)\b|#\s|%\s*and the city likes them %/);
   });
   it("never quotes a do-not-book act or a hidden non-sponsor, even when the raw recording lists them first", () => {
     const bad = (name: string) => ({ name, entityId: "x", affinity: 0.9, sharedTaste: 0.5, localAffinity: 0.5, category: "artist", source: "suggested" });
