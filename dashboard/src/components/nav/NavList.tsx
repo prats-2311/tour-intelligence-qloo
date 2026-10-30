@@ -1,4 +1,4 @@
-import { Fragment, useId, type ReactNode } from "react";
+import { Fragment, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Compass } from "lucide-react";
 import type { NavActionId, NavGroup, NavItem } from "@/lib/nav/navConfig";
@@ -27,11 +27,22 @@ const row = (collapsed: boolean, active: boolean) =>
     ? "bg-canvas-line text-bone before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-gold before:content-['']"
     : "text-canvas-muted hover:bg-canvas-line hover:text-bone");
 
-function Tooltip({ children }: { children: ReactNode }) {
+/**
+ * Rail tooltip: shown on hover and keyboard focus, dismissed with Escape or when the pointer or focus leaves. It is position:fixed beside the row,
+ * so the rail can scroll (overflow-y:auto clips anything absolutely positioned outside it) without cutting it off. Only used when collapsed.
+ */
+export function Tipped({ tip, collapsed, className = "", as: Tag = "li", children }: { tip: string; collapsed: boolean; className?: string; as?: "li" | "div"; children: ReactNode }) {
+  const ref = useRef<HTMLLIElement & HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const show = () => { const r = ref.current?.getBoundingClientRect(); if (collapsed && r) setPos({ top: r.top + r.height / 2, left: r.right + 8 }); };
+  const hide = () => setPos(null);
   return (
-    <span data-tooltip aria-hidden className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-[8px] bg-paper px-2.5 py-1.5 text-[12px] font-medium text-bone opacity-0 shadow-lg transition-opacity motion-reduce:transition-none group-focus-within/item:opacity-100 group-hover/item:opacity-100">
+    <Tag ref={ref} className={`relative ${className}`} onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide} onKeyDown={(e: KeyboardEvent<HTMLElement>) => { if (e.key === "Escape" && pos) { e.stopPropagation(); hide(); } }}>
       {children}
-    </span>
+      {collapsed && pos && (
+        <span data-tooltip role="tooltip" style={{ position: "fixed", top: pos.top, left: pos.left, transform: "translateY(-50%)" }} className="pointer-events-none z-50 whitespace-nowrap rounded-[8px] bg-paper px-2.5 py-1.5 text-[12px] font-medium text-bone shadow-lg">{tip}</span>
+      )}
+    </Tag>
   );
 }
 
@@ -58,13 +69,13 @@ function Row({ item, active, collapsed, href, onAction, onNavigate }: { item: Na
   } else {
     body = <Link to={href} aria-current={active ? "page" : undefined} onClick={onNavigate} className={row(collapsed, active)}>{icon}{label}</Link>;
   }
-  return <li className="group/item relative">{body}{collapsed && <Tooltip>{tip}</Tooltip>}</li>;
+  return <Tipped tip={tip} collapsed={collapsed}>{body}</Tipped>;
 }
 
 function TourRow({ tour, collapsed, onStart }: { tour: NavTour; collapsed: boolean; onStart: () => void }) {
   const label = `${tour.title}, ${tour.minutes} min${tour.done ? ", completed" : ""}`;
   return (
-    <li className="group/item relative">
+    <Tipped tip={label} collapsed={collapsed}>
       <button type="button" aria-label={label} onClick={onStart} className={row(collapsed, false)}>
         <Compass size={20} aria-hidden className="shrink-0" />
         <span className={collapsed ? "sr-only" : "flex min-w-0 flex-1 items-baseline justify-between gap-2"}>
@@ -72,8 +83,7 @@ function TourRow({ tour, collapsed, onStart }: { tour: NavTour; collapsed: boole
           <span aria-hidden className="shrink-0 text-[12px] font-normal tabular-nums text-canvas-muted">{tour.minutes} min{tour.done && <span className="ml-1.5 text-gold">{"\u2713"}</span>}</span>
         </span>
       </button>
-      {collapsed && <Tooltip>{label}</Tooltip>}
-    </li>
+    </Tipped>
   );
 }
 

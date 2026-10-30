@@ -51,14 +51,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
       ) : (
         <>
-        {!landing && (
           <div data-mobile-bar className="flex h-11 shrink-0 items-center gap-1 bg-canvas-raised pr-2">
             <button ref={hamburger} data-nav-toggle type="button" aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls={DRAWER_ID} onClick={() => setDrawerOpen(true)} className="inline-flex size-11 items-center justify-center rounded-[8px] text-bone outline-none focus-visible:ring-2 focus-visible:ring-gold">
               <Menu size={20} aria-hidden />
             </button>
             <Breadcrumbs inline />
           </div>
-        )}
         <nav
           data-app-shell
           aria-label="Primary"
@@ -85,7 +83,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      {!isDesktop && !landing && <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} returnFocusTo={hamburger} onAction={onAction} />}
+      {!isDesktop && <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} returnFocusTo={hamburger} onAction={onAction} />}
       {workspace.enabled && <ActivityPanel open={activityOpen} onClose={() => setActivityOpen(false)} cities={state.cities} />}
       {shared && (
         <div role="status" className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-4 z-[45] flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-[10px] bg-paper px-3 py-2 text-[13px] text-bone shadow-lg lg:bottom-4">

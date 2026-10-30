@@ -80,6 +80,18 @@ describe("desktop sidebar", () => {
     mount("/tours/board?showcase=1");
     expect(sidebar()!.dataset.collapsed).toBe("true");
   });
+  it("the rail scrolls (so every row is reachable on a short screen) and the toggle is pinned first, at the top", () => {
+    mount("/tours/board?showcase=1");
+    for (const collapsed of [false, true]) {
+      if (collapsed) fireEvent.click(toggle());
+      const aside = sidebar()!;
+      expect(aside.className).toContain("overflow-y-auto");
+      const first = aside.querySelector("button, a")!;
+      expect(first).toBe(toggle());
+      expect(toggle().parentElement!.className).toMatch(/sticky/);
+      expect(toggle().parentElement!.className).toContain("top-0");
+    }
+  });
   it("the [ key toggles it", () => {
     mount("/tours/board?showcase=1");
     fireEvent.keyDown(document.body, { key: "[" });
@@ -99,10 +111,30 @@ describe("desktop sidebar", () => {
 
 describe("tablet and mobile drawer", () => {
   beforeEach(() => { desktop = false; });
-  it("has no rail; the landing page has no hamburger either", () => {
+  it("has no rail; the landing page has the hamburger too, so Tours and Team are reachable from home", () => {
     mount("/");
     expect(sidebar()).toBeNull();
-    expect(screen.queryByRole("button", { name: "Open navigation" })).toBeNull();
+    const h = screen.getByRole("button", { name: "Open navigation" });
+    expect(h.closest("[data-mobile-bar]")).toBeTruthy();
+    expect(screen.queryByRole("navigation", { name: "Breadcrumb" })).toBeNull();
+    fireEvent.click(h);
+    expect(within(screen.getByRole("dialog", { name: "Site navigation" })).getByRole("navigation", { name: "Sections" })).toBeTruthy();
+  });
+  it("the drawer shows a scroll hint while rows are hidden below, and reserves bottom padding", () => {
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(900);
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(500);
+    mount("/tours/board?showcase=1");
+    fireEvent.click(screen.getByRole("button", { name: "Open navigation" }));
+    expect(screen.getByTestId("drawer-scroll-hint").textContent).toMatch(/Scroll for more/);
+    vi.restoreAllMocks();
+  });
+  it("no scroll hint when everything fits", () => {
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(400);
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(500);
+    mount("/tours/board?showcase=1");
+    fireEvent.click(screen.getByRole("button", { name: "Open navigation" }));
+    expect(screen.queryByTestId("drawer-scroll-hint")).toBeNull();
+    vi.restoreAllMocks();
   });
   it("keeps the bottom stepper and adds a hamburger in the top bar", () => {
     mount("/tours/board?showcase=1");
