@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampRing, scrollDelta, sheetTopOf } from "./placement";
+import { bestCorner, clampRing, scrollDelta, sheetTopOf } from "./placement";
 
 const view = { topLimit: 72, bottomLimit: 553 }; // phone: header band above, sheet top at 565 minus a 12 px gap
 
@@ -55,5 +55,24 @@ describe("sheetTopOf", () => {
   it("uses the sheet's own top on phones and the viewport bottom otherwise", () => {
     expect(sheetTopOf(565, 844)).toBe(565);
     expect(sheetTopOf(null, 900)).toBe(900);
+  });
+});
+
+describe("bestCorner", () => {
+  const dims = { popW: 360, popH: 200, vw: 1440, vh: 900, header: 72, margin: 24 };
+  it("takes the corner the target overlaps least", () => {
+    // a target hugging the bottom right leaves the top right and the left corners free
+    const c = bestCorner({ top: 500, left: 800, width: 600, height: 380 }, dims);
+    expect(c.left + 360 <= 800 || c.top + 200 <= 500).toBe(true);
+  });
+  it("prefers bottom right when nothing overlaps", () => {
+    expect(bestCorner({ top: 100, left: 100, width: 200, height: 100 }, dims)).toEqual({ top: 900 - 200 - 24, left: 1440 - 360 - 24 });
+  });
+  it("never leaves the viewport or the header", () => {
+    const c = bestCorner({ top: 0, left: 0, width: 1440, height: 2000 }, dims);
+    expect(c.top).toBeGreaterThanOrEqual(72);
+    expect(c.left).toBeGreaterThanOrEqual(0);
+    expect(c.left + 360).toBeLessThanOrEqual(1440);
+    expect(c.top + 200).toBeLessThanOrEqual(900);
   });
 });

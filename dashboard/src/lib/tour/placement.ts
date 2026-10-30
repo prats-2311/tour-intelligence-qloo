@@ -33,3 +33,15 @@ export function clampRing(b: Rect, { vw, topLimit, bottomLimit }: { vw: number; 
 
 /** The top edge of whatever covers the bottom of the screen: the phone sheet, or the viewport bottom when nothing does. */
 export const sheetTopOf = (sheetTop: number | null, vh: number): number => sheetTop ?? vh;
+
+/** Where a popover goes when it cannot sit beside, below or above its target: the screen corner the target overlaps least (bottom right wins ties). */
+export function bestCorner(b: Rect, { popW, popH, vw, vh, header, margin }: { popW: number; popH: number; vw: number; vh: number; header: number; margin: number }): { top: number; left: number } {
+  const corners = [
+    { top: vh - popH - margin, left: vw - popW - margin },
+    { top: vh - popH - margin, left: margin },
+    { top: header + margin, left: vw - popW - margin },
+    { top: header + margin, left: margin },
+  ].map((c) => ({ top: Math.max(header, c.top), left: Math.max(0, c.left) }));
+  const overlap = (c: { top: number; left: number }) => Math.max(0, Math.min(b.left + b.width, c.left + popW) - Math.max(b.left, c.left)) * Math.max(0, Math.min(b.top + b.height, c.top + popH) - Math.max(b.top, c.top));
+  return corners.reduce((best, c) => (overlap(c) < overlap(best) ? c : best));
+}

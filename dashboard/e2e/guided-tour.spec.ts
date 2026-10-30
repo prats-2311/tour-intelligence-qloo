@@ -1,7 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 import { test } from "./fixtures";
 import { blockMapTiles } from "./live";
-import { ringOnTarget, visibleTarget } from "./tourHelpers";
+import { ringOnTarget, targetFit, visibleTarget } from "./tourHelpers";
 
 // The four guided tours (src/lib/tour/tours.ts) on the recorded example. Runs on whatever recording the server serves, against a built
 // dashboard (see dashboard/CLAUDE.md); no live Qloo, Gemini or web call is made, and a spec below proves the tours themselves fetch nothing.
@@ -11,15 +11,15 @@ interface TourSpec { id: string; title: string; minutes: number; key: string; st
 
 const TOURS: TourSpec[] = [
   {
-    id: "essentials", title: "The essentials", minutes: 1, key: "tiq.tour.v1", steps: [
+    id: "essentials", title: "The essentials", minutes: 2, key: "tiq.tour.v1", steps: [
       { title: "The hook", targets: ["sponsors-top", "card-sponsors"], strict: true },
       { title: "By age group", targets: ["sponsors-age", "card-sponsors"], strict: true },
       { title: "Pitch sheet", targets: ["sponsors-pitch", "card-sponsors"], strict: true },
       { title: "Checked claims", targets: ["claims-badge", "claims-tile"] },
       { title: "Acts, venues and promo zones", targets: ["card-co_billing", "card-venue_fit", "card-promo_zones"], strict: true },
+      { title: "Ask about this tour", targets: ["ask"], strict: true },
       { title: "The Tour Board", targets: ["moves", "board-header"], strict: true },
       { title: "Without Qloo", targets: ["board-panel"], strict: true },
-      { title: "Ask about this tour", targets: ["ask"], strict: true },
       { title: "Tour Book", targets: ["book-cover"], strict: true },
     ],
   },
@@ -113,7 +113,7 @@ for (const tour of TOURS) {
 
 test("the essentials start from the first-visit prompt, lead with the sponsor story and keep tiq.tour.v1", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByTestId("tour-prompt")).toContainText("Take the 60-second tour");
+  await expect(page.getByTestId("tour-prompt")).toContainText("Take the 2-minute tour");
   await page.getByRole("button", { name: "Start tour" }).click();
   await expect(popover(page).getByRole("heading", { name: "The hook" })).toBeVisible();
   await expect(page).toHaveURL(/\/tours\/playbook\/.+showcase=1/);
@@ -123,7 +123,7 @@ test("the essentials start from the first-visit prompt, lead with the sponsor st
   expect(await stored(page, "tiq.tour.v1")).toBe("dismissed");
 });
 
-test("How it works (60 s) on the landing starts The essentials, even after the prompt was dismissed", async ({ page }) => {
+test("How it works on the landing starts The essentials, even after the prompt was dismissed", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "No thanks" }).click();
   await page.getByTestId("take-tour").click();
@@ -208,4 +208,76 @@ test("Skip persists: the tour is dismissed now and the prompt stays away after a
   await page.goto(BOARD);
   await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
   await expect(page.getByTestId("tour-prompt")).toHaveCount(0);
+});
+
+// Audit C 5: every step's target is on screen (not under the popover or the bars) at the two sizes the audit used.
+for (const vp of [{ w: 390, h: 844 }, { w: 1440, h: 900 }]) {
+  for (const tour of TOURS) {
+    test(`${tour.title} at ${vp.w}px: each step's target is at least 80% visible and not covered by the popover`, async ({ page }) => {
+      test.setTimeout(180_000);
+      await page.setViewportSize({ width: vp.w, height: vp.h });
+      await startFromNav(page, tour);
+      for (let i = 1; i <= tour.steps.length; i += 1) {
+        const step = tour.steps[i - 1]!;
+        const where = `${tour.id} step ${i} (${step.title}) at ${vp.w}`;
+        await expect(popover(page)).toContainText(`${i} of ${tour.steps.length}`);
+        await expect.poll(() => visibleTarget(page, step.strict ? [step.targets[0]!] : step.targets), { timeout: 25_000, message: `${where}: target on screen` }).not.toBeNull();
+        // The scroll settles over a few frames (smooth scroll, lazy cards): wait for the fit rather than a fixed delay.
+        await expect.poll(async () => {
+          const f = await targetFit(page, step.targets, vp.w <= 500);
+          return f ? `${f.visible >= 0.8 && f.covered <= 0.05 ? "ok" : `visible ${(f.visible * 100).toFixed(0)}% covered ${(f.covered * 100).toFixed(0)}%`}` : "no target";
+        }, { timeout: 15_000, message: `${where}: at least 80% visible and not covered by the popover` }).toBe("ok");
+        await expect.poll(async () => {
+          const ring = await page.getByTestId("tour-ring").boundingBox();
+          return !ring || (ring.x >= -0.5 && ring.x + ring.width <= vp.w + 0.5 && ring.y >= -0.5 && ring.y + ring.height <= vp.h + 0.5);
+        }, { timeout: 10_000, message: `${where}: ring inside the viewport` }).toBe(true);
+        if (i < tour.steps.length) await popover(page).getByRole("button", { name: "Next", exact: true }).click();
+      }
+    });
+  }
+}
+
+test("The essentials never leave a page they have left: playbook steps, then the board, then the book", async ({ page }) => {
+  test.setTimeout(120_000);
+  await startFromNav(page, TOURS[0]!);
+  const paths: string[] = [];
+  for (let i = 1; i <= 9; i += 1) {
+    await expect(popover(page)).toContainText(`${i} of 9`);
+    paths.push(new URL(page.url()).pathname.replace(/\/playbook\/.*/, "/playbook"));
+    if (i < 9) await advance(page);
+  }
+  const visits = paths.filter((p, i) => i === 0 || p !== paths[i - 1]);
+  expect(visits).toEqual(["/tours/playbook", "/tours/board", "/tours/book"]);
+});
+
+test("the first-visit prompt never covers body text or links, on the landing page at 390 and 1440", async ({ page }) => {
+  for (const vp of [{ w: 390, h: 844 }, { w: 1440, h: 900 }]) {
+    await page.setViewportSize({ width: vp.w, height: vp.h });
+    await page.goto("/");
+    const prompt = page.getByTestId("tour-prompt");
+    await expect(prompt).toBeVisible();
+    // Scroll to the very end: nothing the user can read or click may sit under the prompt (the page reserves its height).
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    const box = (await prompt.boundingBox())!;
+    const covered = await page.evaluate((b) => {
+      const hits: string[] = [];
+      for (const el of document.querySelectorAll<HTMLElement>("main a[href], main button, main p, main li, main h1, main h2")) {
+        if (el.closest("[data-testid='tour-prompt']")) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        const ox = Math.min(r.right, b.x + b.width) - Math.max(r.left, b.x), oy = Math.min(r.bottom, b.y + b.height) - Math.max(r.top, b.y);
+        if (ox > 2 && oy > 2) hits.push(`${el.tagName.toLowerCase()} ${(el.textContent ?? "").trim().slice(0, 30)}`);
+      }
+      return hits;
+    }, box);
+    expect(covered, `under the prompt at ${vp.w}`).toEqual([]);
+  }
+});
+
+test("after a tour started from the phone drawer ends, focus returns to the drawer toggle", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await startFromNav(page, TOURS[3]!);
+  await popover(page).getByRole("button", { name: "Skip" }).click();
+  await expect(popover(page)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Open navigation" })).toBeFocused();
 });
