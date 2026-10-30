@@ -45,8 +45,8 @@ export function CityRow({ city, selected, dimActivation, onOpen, openable = true
   const rowBody = (
     <>
         <span className="col-start-1 row-start-1 flex min-w-0 flex-col gap-0.5">
-          <span data-testid="city-name" className="flex min-w-0 items-baseline gap-x-1.5">
-            <span data-testid="city-name-text" className="font-title min-w-0 break-words text-[16px] leading-tight text-canvas-text">{city.name}</span>
+          <span data-testid="city-name" className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-1">
+            <span data-testid="city-name-text" className="font-title max-w-full break-words text-[16px] leading-tight text-canvas-text">{city.name}</span>
             <span className="shrink-0 text-[12px] font-medium text-canvas-muted">{city.country}</span>
             <CityStatusChip cityId={city.id} />
           </span>
