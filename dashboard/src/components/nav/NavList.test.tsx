@@ -77,4 +77,36 @@ describe("NavList", () => {
     fireEvent.click(screen.getByRole("link", { name: "Tour Book" }));
     expect(onNavigate).toHaveBeenCalledTimes(1);
   });
+
+  describe("Tours section", () => {
+    const tours = [
+      { id: "essentials", title: "The essentials", minutes: 1, done: true },
+      { id: "plan", title: "Plan the tour", minutes: 2, done: false },
+    ];
+    it("lists each tour with its minutes and a tick only for completed ones", () => {
+      mount({ tours, onStartTour: () => {} });
+      const nav = screen.getByRole("navigation", { name: "Sections" });
+      expect(Array.from(nav.querySelectorAll("h2")).map((h) => h.textContent)).toEqual(["Plan", "Tours", "Team", "More"]);
+      const a = screen.getByRole("button", { name: /^The essentials/ });
+      const b = screen.getByRole("button", { name: /^Plan the tour/ });
+      expect(a.textContent).toContain("1 min");
+      expect(b.textContent).toContain("2 min");
+      expect(within(a).getByText("\u2713")).toBeTruthy();
+      expect(a.getAttribute("aria-label")).toBe("The essentials, 1 min, completed");
+      expect(within(b).queryByText("\u2713")).toBeNull();
+      expect(b.getAttribute("aria-label")).toBe("Plan the tour, 2 min");
+    });
+    it("a click starts that tour and closes the drawer", () => {
+      const onStartTour = vi.fn();
+      const onNavigate = vi.fn();
+      mount({ tours, onStartTour, onNavigate });
+      fireEvent.click(screen.getByRole("button", { name: /^Plan the tour/ }));
+      expect(onStartTour).toHaveBeenCalledWith("plan");
+      expect(onNavigate).toHaveBeenCalled();
+    });
+    it("no section without tours", () => {
+      mount({ tours: [] });
+      expect(screen.queryByText("Tours")).toBeNull();
+    });
+  });
 });
