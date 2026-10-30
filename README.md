@@ -4,6 +4,8 @@
 
 **Route with anything. Win every city with this.**
 
+Sponsor lift by city and by age group, checked against the data, for every stop on a tour.
+
 For each city on a tour, Tour Intelligence shows the brands, venues and support acts the artist's fans rank far above the city as a whole. In Los Angeles, Mac DeMarco's fans rank Stüssy #1; it isn't in LA's overall top 20. That gap is the sponsor pitch. It comes from Qloo's taste graph, it is checked against the city's own baseline, and every written claim is verified against the Qloo results it cites (claims that fail are struck).
 
 Among 10 candidates per case, Qloo put the real tour's pick at mean reciprocal rank 0.47, against 0.29 for a random order and 0.13 for the city's popularity list, which usually didn't contain the pick at all (Qloo ahead in 17 of 22 cases, p<0.001). Gemini alone did better still (0.57; not significant), and the claim checker caught 10 of 10 planted false claims. Where an LLM did better, we say so under Limits.
@@ -17,36 +19,64 @@ Who pays and why: promoters and agencies pay per tour; the return comes from spo
 - Public MCP server (rate-limited demo, no auth): <https://tour-intel-mcp-public-602700957663.us-central1.run.app/mcp>
 - Licence: [MIT](LICENSE)
 - Proof protocol, with its 10 dated amendments: [docs/qloo/proof-v3-protocol.md](docs/qloo/proof-v3-protocol.md)
+- Decisions: [ADRs 0001 to 0008](docs/adr)
+
+**Contents:** [Try it in 2 minutes](#try-it-in-2-minutes) · [What it does](#what-it-does) · [How it uses Qloo](#how-it-uses-qloo) · [How scores work](#how-scores-work) · [Proof, honestly](#proof-honestly) · [Architecture](#architecture) · [Connect an AI agent](#connect-an-ai-agent) · [Run it locally](#run-it-locally) · [Tests](#tests) · [Analytics](#analytics) · [Privacy](#privacy) · [Limitations](#limitations)
 
 ## The problem
 
 Sponsorship is the highest-margin business in live music: Live Nation's sponsorship and advertising arm made [$1.3B in 2025 at a 64% margin](https://news.livenationentertainment.com/news/live-nation-entertainment-full-year-and-fourth-quarter-2025-results), and over 70% of 2026 commitments were already booked by February. Market choice still runs on instinct ("[their gut is a combination of hundreds of internalized pieces of data](https://www.waterandmusic.com/how-booking-agents-use-and-dont-use-data)", a Paradigm agent told Water & Music in 2021). Soft markets are costly: [one 2025 tour was cancelled](https://www.complex.com/music/a/alex-ocho/bobby-shmurda-addresses-tour-canceled-booking-agent-claims-low-ticket-sales) at about 10 tickets per city, by its booking agent's account, and Hypebot [reported](https://www.hypebot.com/what-is-blue-dot-fever-the-rising-tide-of-tour-cancellations-in-2026.md) at least 10 major artists postponing or cancelling dates in 2026. Top-100 tour [tickets fell 3.7% to 67.3M in 2025](https://news.pollstar.com/2025/12/12/year-end-business-analysis-a-return-to-earth-2025-grosses-ticket-sales-drop-averages-increase-beyonce-oasis-coldplay-have-top-tours-venues-stadiums-rock/) (Pollstar). Merch adds about [$10.29 per head](https://www.atvenu.com/post/an-updated-look-at-artist-merch-trends) (atVenu). These figures describe the industry, not this tool's results.
 
-## The 2-minute judge path
+## Try it in 2 minutes
 
-New here? "Take the tour" on the landing page walks through these steps in 9 short stops, the last one in the chat on the recorded example (Back, Next, Skip; it never starts on its own).
+Open <https://tour-intel-qloo.web.app>. It opens on a recorded example, so there is nothing to type. The landing page also offers "Take the 2-minute tour" (Back, Next, Skip; it never starts on its own, and there are four short tours). To do it by hand:
 
-1. **Markets** (opens on the example): fan heat per city, with "Try a routing" to replay a recorded run where a tour's cities were pasted, scored and ordered. To paste your own cities, use "Try your own artist". ![Landing](docs/screens/01-landing-desktop.png)
-2. **Decide:** winnability per city, and the "where fan heat and winnability disagree" section, described as "worth a second look" rather than a ranking claim. ![Decide](docs/screens/02-board-winnability-desktop.png) Compare with the same cities as a generic LLM ranks them, without Qloo: ![Without Qloo](docs/screens/03-board-without-qloo-desktop.png)
-3. **Playbook:** open a city for sponsors (with lift versus the city), acts these fans love in the city, venues, support acts, verified claims and verdict clocks. ![Playbook](docs/screens/04-playbook-desktop.png)
-4. **Tour Book:** the printable document with a chapter per city. ![Tour Book](docs/screens/05-tour-book-cover-desktop.png)
-5. **Ask about this tour:** a recorded Q&A in which the strategist answers with its work log visible. On the example you can also type a free-text question, or pick 
+1. **Landing.** Fan heat per city on the recorded tour. ![Landing](docs/screens/01-landing-desktop.png)
+2. **Los Angeles playbook, sponsor hook.** Open Los Angeles. The Sponsors card ranks brands by how much higher the fans rank them than the city does, which is the hook above. ![Playbook](docs/screens/04-playbook-desktop.png)
+3. **By age group.** On the Sponsors card, pick an age group to see brands that group's fans rank higher.
+4. **Pitch sheet.** Open a sponsor's pitch sheet: one page, print-ready.
+5. **Claims.** Open a claim badge to see the Checked-claims panel: what was verified against the cited Qloo results, and what was struck.
+6. **/proof, "At a glance".** The scoreboard of what Qloo won and what a plain LLM won. ![Proof](docs/screens/06-proof-desktop.png)
+7. **/agents.** The nine public MCP tools, the plugin and WebMCP, with an example tour report for a fictional artist.
 
-Also in the app:
-
-- **Links on rows.** Place rows open a Google Maps search for the name in that city. Act rows open a Spotify search for the name.
-- **Checked-claims panel.** Open it from any claim badge. It lists what was verified against the cited Qloo results and what was removed.
-- **Acts these fans love here.** The card was called "local acts" until Test C. It can include acts that are not from the city (see Proof), so the name and a warning say so.
-- **Advance & risks tab.** Weather history from Open-Meteo for the dates, labelled "not a forecast". Public holidays from Nager.Date. Visa and equipment notes from Tavily search plus Gemini, each with its sources and checked against them. Confirm these before you rely on them.
-- **Sponsors by age group.** Pick an age group to see brands that group's fans rank higher. It uses Qloo audience demographics and its demographic signal, on age only. Each group shows a signed index such as "+0.91 vs the average audience (not a share)". Groups that include under-21s carry a note to keep alcohol sponsors out.
-- **Team workspaces.** Share a link, no sign-in. A workspace holds status, notes, overrides, sponsor leads and an activity log, and shows the team's decisions in the Tour Book. Each visitor of the example gets a private copy with a seeded discussion between fictional teammates.
-- **Taste Loop concept page** at `/v2`. A fictional example artist with real LA data, no predicted numbers, its own short tour and an "Experiences fans could book" section. When analytics are on, its RSVP-style buttons (going, waitlist, was there) are logged as anonymous prototype taps; otherwise they stay mock and disabled.
-- **For agents page** at `/agents`. Lists the 9 public MCP tools, the Claude Code plugin install and WebMCP, with an example tour report (fictional artist).
-- **11 WebMCP tools** registered by the dashboard in Chrome: `get_tour_board`, `get_city_playbook`, `open_city`, `set_comparison_mode`, `build_tour_from_shortlist`, `open_tour_book`, `get_sponsors_by_age`, `get_advance_risks`, `get_team_notes`, `add_team_note`, `set_city_status`.
-- **Live trust meter and team decisions on `/proof`.** When BigQuery analytics are enabled, `/proof` shows aggregate counts from real playbook runs (claims checked and removed, median latency, sponsors hidden) and how teams used workspaces (statuses, overrides of Qloo's pick, notes by role). With analytics off the panels do not appear.
-- **Not-found page**, a favicon and a link preview card.an "Ask live" suggestion. Then open `/proof`. ![Proof](docs/screens/06-proof-desktop.png)
+Also worth a look: the board's winnability view ![Decide](docs/screens/02-board-winnability-desktop.png) and the same cities as a generic LLM ranks them, without Qloo ![Without Qloo](docs/screens/03-board-without-qloo-desktop.png), and the printable Tour Book ![Tour Book](docs/screens/05-tour-book-cover-desktop.png).
 
 <!-- Screenshot list (one place to fix names): 01-landing, 02-board-winnability, 03-board-without-qloo, 04-playbook-*, 05-tour-book-cover, 06-proof; each in -desktop.png and -mobile.png under docs/screens/ -->
+
+## What it does
+
+### Plan
+
+- **Tour Board.** Winnability per city, which is 0.5 x fan heat + 0.5 x activation, with a verdict (Play, Hidden goldmine, De-risk, Consider, Skip, or Not enough data). "Try a routing" scores cities you paste. A "Without Qloo" view shows the same cities as a generic LLM ranks them. A "where fan heat and winnability disagree" section is "worth a second look", not a ranking claim.
+- **City playbooks.** One per city, built from the artist's fans:
+  - **Sponsors** with rank-based lift versus the city, and a **By age group** view that uses Qloo audience demographics and its demographic signal, on age only. Each group shows a signed index such as "+0.91 vs the average audience (not a share)". Groups that include under-21s carry a note to keep alcohol sponsors out.
+  - **Pitch sheet** per sponsor: one page that prints.
+  - **Compare: the same model without Qloo.** Gemini lists five brands from memory; the card shows where Qloo's own fan and city rankings place them. It shows how far a model's memory strays from these fans' taste, not that Qloo's ranking is right.
+  - **Venues** (music venues in the city only), **promo zones**, **co-billing** (support acts smaller than the headliner), **Acts these fans love here** (some may not be local, see Proof) and **Places, films and TV these fans love**.
+  - **Advance & risks.** Weather history from Open-Meteo for the dates (labelled not a forecast), public holidays from Nager.Date, and visa and equipment notes from Tavily search plus Gemini. Every web source is checked against the destination country, and every number in a note must appear in its own source.
+  - **Checked-claims panel** from any claim badge, and a "How to read these numbers" key.
+- **Charts** (`/tours/insights`). An age matrix by city, a fan heat versus activation quadrant with the verdict guide lines, and filters.
+- **Budget** (`/tours/budget`). Your own figures per city and per leg, totals, CSV export. It stays in your browser and nothing is estimated for you.
+- **Tour Book.** The printable document with a chapter per city, `.ics` dates, sharing, and your team's decisions.
+- **Taste Loop concept** at `/v2`. A fictional artist with real LA data, no predicted numbers, a short tour and "Experiences fans could book". Its RSVP-style buttons are logged as anonymous prototype taps when analytics are on, and stay disabled otherwise.
+
+### Prove
+
+- **/proof.** An "At a glance" scoreboard, each pre-registered test with its losses, the checker catch rates, and (when analytics are on) live panels from real use. See [Proof, honestly](#proof-honestly).
+- **Checks in the product.** Claim checker, strategist answer check, document citation check, Advance source and number filter, sponsor check, and a short do-not-book list ([diagram](docs/diagrams/trust-layers.png)).
+
+### Team
+
+- **Strategist chat.** Ask about the tour with its work log visible. On the recorded example you can pick an "Ask live" suggestion or type a question. Add up to 3 private documents (PDF, text, Markdown or CSV) and get answers with page citations that are checked. "Draft a city plan" writes a one-page plan with fixed sections. "Save to team notes" files an answer in the workspace after you confirm.
+- **Team workspaces.** Share a link, no sign-in. A workspace holds city statuses, notes on cities and cards, overrides of Qloo's pick (each with a reason), sponsor leads and an activity log, and shows the decisions in the Tour Book. Each visitor of the recorded example gets a private copy with a seeded discussion between fictional teammates.
+- **Guided tours.** Four short ones: The essentials, Plan the tour, Work as a team (offered when workspaces are on), Trust and agents.
+- **Shell.** Sidebar with breadcrumbs and tooltips, toasts for saves and shares, a skip link, a not-found page, a favicon and a link preview card. Place rows open a Google Maps search; act rows open a Spotify search.
+
+### Agents
+
+- **Public MCP server and Claude Code plugin.** See [Connect an AI agent](#connect-an-ai-agent).
+- **WebMCP.** The dashboard registers 11 tools in Chrome: `get_tour_board`, `get_city_playbook`, `open_city`, `set_comparison_mode`, `build_tour_from_shortlist`, `open_tour_book`, `get_sponsors_by_age`, `get_advance_risks`, `get_team_notes`, `add_team_note`, `set_city_status`.
+- **/agents.** Lists the tools, the install lines and an example report.
 
 ## How it uses Qloo
 
@@ -90,6 +120,18 @@ Scores are deterministic code, never LLM output; missing data gives `insufficien
 
 Everything below is from [Proof v3](docs/qloo/proof-v3-protocol.md): a protocol committed before any Qloo or Gemini call, with 10 amendments, each committed before the call it affected. We publish whatever came out, including losses. The full tables are at [/proof](https://tour-intel-qloo.web.app/proof). Raw results stay private (Qloo's data policy).
 
+### Scoreboard
+
+| Where Qloo wins | Where a plain LLM wins or nothing separates |
+|---|---|
+| Test B: beat the city popularity list, 17 wins, 1 loss, 4 ties over 22 cases, p<0.001, mean reciprocal rank 0.47 vs 0.13 | Test A: a generic LLM beat winnability on cities played, R-precision 0.82 vs 0.66, p=0.031 (10 artists) |
+| Test B after the model's cutoff (Amendment 9): beat popularity, 0.70 vs 0.10, p=0.016, 7 wins, 0 losses, 1 tie over 8 cases | Test B: Qloo trails Gemini, 0.47 vs 0.57, p=0.118, not significant |
+| Claim checker: removed 10 of 10 planted false claims | Amendment 9: Qloo trails Gemini, 0.70 vs 0.88, p=0.625, not significant (1 win, 3 losses, 4 ties; 8 of 18 cases scored, 10 excluded because the real pick could not be resolved in Qloo) |
+| | Test C: the LLM-only playbook beat Qloo on names that exist in the city, overall 1.00 vs 0.84, p=0.016; local acts 0.48 vs 1.00 |
+| | Fusion (Amendment 7): Qloo ranking fused into Gemini's did not beat Gemini alone |
+
+The cases in Amendment 9 were collected and verified by AI agents, with no human review. Most of Test C was rated by AI agents (see below). The same scoreboard is the first thing on [/proof](https://tour-intel-qloo.web.app/proof) ("At a glance"), computed from the published results.
+
 - **Test B, fixed candidates, 22 of 27 reviewed cases** ([protocol](docs/qloo/proof-v3-protocol.md)): Qloo rank beat popularity (p<0.001): mean reciprocal rank 0.47 vs 0.13, 17 wins, 1 loss, 4 ties over 22 cases. Not significant at this sample size: Qloo rank trails Gemini (0.47 vs 0.57; p=0.118; 4 wins, 11 losses, 7 ties).
 - **Test B after the model's cutoff** ([Amendment 9](docs/qloo/proof-v3-protocol.md), cases dated 1 Apr to 29 Oct 2026, fixed before any case was collected): 8 of 18 collected cases were scored. Mean reciprocal rank: Qloo rank 0.70, Gemini 0.88, popularity 0.10; chance level 0.29. Qloo rank beat popularity (p=0.016): 7 wins, 0 losses, 1 tie over 8 cases. Not significant at this sample size: Qloo rank trails Gemini (0.70 vs 0.88; p=0.625; 1 win, 3 losses, 4 ties). 10 cases were excluded because the real pick could not be resolved in Qloo. The cases were collected and verified by AI agents, with no human review, and the sample is small.
 - **Claim checker** ([protocol](docs/qloo/proof-v3-protocol.md)): it removed 10 of 10 planted false claims (5 plausible wrong numbers, 4 absent numbers, 1 swapped name).
@@ -106,6 +148,8 @@ Everything below is from [Proof v3](docs/qloo/proof-v3-protocol.md): a protocol 
 
 The planted errors are synthetic and the fixtures small. The sponsor row measures the rule given a fixed fake classifier output (including made-up wrong and missing answers), not the live model; with the classifier unavailable, the name rule alone caught 12 of 20 with 0 of 20 false alarms. The 2 misses are classifier answers that wrongly said "yes"; the 3 false alarms are brands the made-up classifier wrongly said "no" or did not answer for. Counts of automated tests, rule mutation checks and end-to-end specs are on `/proof`.
 
+![The checks stacked: claim checker, strategist answer check, document citation check, Advance filter, sponsor check, do-not-book list and the pre-registered tests, with their measured catch and false-alarm counts.](docs/diagrams/trust-layers.png)
+
 ### Limits
 
 - The popularity baseline is weak by construction: in 18 of 22 cases the real pick wasn't on the city's popularity list, so that arm ranked it last.
@@ -116,30 +160,31 @@ The planted errors are synthetic and the fixtures small. The sponsor row measure
 
 ## Architecture
 
-![System architecture: browser and MCP clients reach the dashboard and public MCP server, which call the IAM-private qloo_gateway; the gateway calls the Qloo harness, Vertex Gemini, Tavily, Open-Meteo and Nager.Date, and Firestore.](docs/screens/architecture.png)
+![System architecture: people in a browser and AI agents reach the dashboard and the public MCP server, which call the IAM-private qloo_gateway; the gateway calls the Qloo harness and API, Gemini, Tavily, Open-Meteo and Nager.Date, Firestore and BigQuery.](docs/diagrams/architecture.png)
 
 One city playbook, step by step:
 
-![Sequence for one city playbook: location check, up to 22 Qloo lookups, a batched sponsor check, streamed cards, then the narrative with claim checking.](docs/screens/playbook-flow.png)
+![The playbook pipeline in eight numbered steps: location check, Qloo lookups, sponsor check, lift by rank, cards, narrative, claim checker, badge and panel.](docs/diagrams/playbook-flow.png)
 
 <details><summary>Mermaid source</summary>
 
 ```mermaid
 flowchart LR
-  U[Manager or agent<br/>browser] --> D
-  A[AI agents<br/>MCP clients] --> P
+  U[People<br/>browser] --> D
+  A[AI agents<br/>MCP clients and plugin] --> P
   D["Dashboard (Cloud Run)<br/>React SPA, Express BFF, WebMCP tools"] --> G
   D -.-> S[(Private GCS<br/>recorded example)]
   P["Public MCP server<br/>9 tools, rate-limited"] --> G
   subgraph PRIV["IAM-private"]
-    G["qloo_gateway (Cloud Run)<br/>Qloo caller with budget, scoring and lift,<br/>playbook builder, sponsor check, narrator,<br/>claim checker, strategist, this week,<br/>advance (new), workspaces (new)"]
+    G["qloo_gateway (Cloud Run)<br/>Qloo caller with budgets, scoring and lift,<br/>playbook, sponsor check, sponsor segments,<br/>sponsors without Qloo, narrator and claim checker,<br/>strategist and answer check (documents),<br/>this week, advance, workspaces, analytics"]
     H["qloo mcp harness<br/>stdio child, 10 allowlisted tools"]
   end
   G --> H --> Q[(Qloo API)]
-  G --> V[Vertex Gemini<br/>narrative, strategist, sponsor check]
-  G --> T[Tavily<br/>web search, 25/day]
-  G --> W["Open-Meteo and Nager.Date (new)<br/>weather, holidays"]
-  G --> F[(Firestore<br/>cache, usage counters, workspaces)]
+  G --> V[Gemini<br/>Vertex AI or AI Studio]
+  G --> T[Tavily<br/>web search, 25 a day]
+  G --> W["Open-Meteo and Nager.Date<br/>weather, holidays"]
+  G --> F[(Firestore<br/>cache, usage, workspaces)]
+  G -.-> B[(BigQuery<br/>derived counts)]
   classDef qloo stroke:#ffcc00,stroke-width:2px;
   classDef web stroke:#6aa8ff,stroke-width:2px;
   class H,Q qloo;
@@ -156,7 +201,7 @@ sequenceDiagram
   UI->>GW: city playbook for artist and city
   GW->>Q: where popular (location check)
   Q-->>GW: city placed, or stop
-  GW->>Q: up to 22 lookups: brands, places, films, TV, acts, city baselines
+  GW->>Q: lookups: brands, places, films, TV, acts, city baselines
   Q-->>GW: results
   GW->>GM: sponsor check (one batched call)
   GM-->>GW: yes or no per brand
@@ -170,24 +215,49 @@ sequenceDiagram
 
 </details>
 
-Decisions: [ADR 0001 Qloo through the harness gateway](docs/adr/0001-qloo-through-harness-gateway.md), [ADR 0002 winning a city, not choosing it](docs/adr/0002-winning-a-city-not-choosing-it.md), [ADR 0003 recordings private, synthetic tests](docs/adr/0003-recordings-private-synthetic-tests.md). The design spec is [docs/superpowers/specs/2026-10-16-tour-intelligence-qloo-design.md](docs/superpowers/specs/2026-10-16-tour-intelligence-qloo-design.md).
+Decisions, each with context and consequences:
 
-### Connect an MCP client
+- [ADR 0001 Qloo through the harness gateway](docs/adr/0001-qloo-through-harness-gateway.md)
+- [ADR 0002 winning a city, not choosing it](docs/adr/0002-winning-a-city-not-choosing-it.md)
+- [ADR 0003 recordings private, synthetic tests](docs/adr/0003-recordings-private-synthetic-tests.md)
+- [ADR 0004 private document context](docs/adr/0004-private-document-context.md)
+- [ADR 0005 BigQuery analytics](docs/adr/0005-bigquery-analytics.md)
+- [ADR 0006 team workspaces as capability links](docs/adr/0006-workspaces-capability-links.md)
+- [ADR 0007 public MCP server and plugin](docs/adr/0007-public-mcp-and-plugin.md)
+- [ADR 0008 honest proof](docs/adr/0008-honest-proof.md)
 
-```bash
-claude mcp add --transport http tour-intel https://tour-intel-mcp-public-602700957663.us-central1.run.app/mcp
-```
+The design spec is [docs/superpowers/specs/2026-10-16-tour-intelligence-qloo-design.md](docs/superpowers/specs/2026-10-16-tour-intelligence-qloo-design.md).
 
-Nine tools: `find_tour_markets`, `get_city_playbook`, `suggest_support_acts`, `rank_venues`, `get_local_moment`, `get_sponsors_by_age`, `get_advance_risks`, `get_team_notes` (read-only, from a workspace link) and `get_tour_report` (board plus top playbooks in one call). The server also offers the prompts `plan_tour` and `brief_for_sponsor_meeting` and the resource `tour-intel://about`. Limit 30 requests per 10 minutes per IP, 2 regions and 3 stops per board, cached results, and a shared daily Qloo budget. Results are affinity signals from aggregate taste data, not ticket forecasts or claims about individuals.
+## Connect an AI agent
 
-Claude Code plugin (the MCP server plus a `plan-tour` skill, no key needed):
+Claude Code plugin (the MCP server plus a `plan-tour` skill that tells the agent how to present results honestly; no key needed):
 
 ```
 /plugin marketplace add prats-2311/tour-intelligence-qloo
 /plugin install tour-intel@tour-intelligence-qloo
 ```
 
-## Run it
+Or add the MCP server to any client:
+
+```bash
+claude mcp add --transport http tour-intel https://tour-intel-mcp-public-602700957663.us-central1.run.app/mcp
+```
+
+| Tool | Use it to |
+|---|---|
+| `find_tour_markets` | Score and rank touring markets |
+| `get_city_playbook` | Compact playbook for one artist in one city |
+| `suggest_support_acts` | Co-billing acts with shared taste and local affinity |
+| `rank_venues` | Rank up to 10 venues by taste fit |
+| `get_local_moment` | Local events, scenes and places that fit the audience |
+| `get_sponsors_by_age` | Brands by age group |
+| `get_advance_risks` | Typical weather, holidays, visa and equipment notes with sources |
+| `get_team_notes` | Read a team workspace from its share link (read-only) |
+| `get_tour_report` | Board plus top playbooks in one call |
+
+The server also offers the prompts `plan_tour` and `brief_for_sponsor_meeting` and the resource `tour-intel://about`. All tools are read-only. Limits: 30 requests per 10 minutes per client (`get_tour_report` counts as 3 and takes 1 to 3 minutes on a cold cache), 2 regions and 3 stops per call, cached results, and a shared daily Qloo budget. Results are affinity signals from aggregate taste data, not ticket forecasts or claims about individuals. More in [ADR 0007](docs/adr/0007-public-mcp-and-plugin.md) and [`plugins/tour-intel`](plugins/tour-intel/README.md).
+
+## Run it locally
 
 Needs Node 22 (22.19 or newer) and git. Nothing else: no keys, no Google Cloud account, no Firestore.
 
@@ -223,7 +293,19 @@ Names only; copy [`.env.example`](.env.example) to `.env` (git-ignored; loaded b
 
 Other names (`QLOO_BASE_URL`, `QLOO_TRUSTED_BASE_URL`, `QLOO_BIN`, daily ceilings, model names, `QLOO_CACHE_BACKEND`, `QLOO_USAGE_BACKEND`, deployment-only URLs) are documented in `.env.example`. The gateway keeps its cache, usage counts and team workspaces in memory unless `QLOO_*_BACKEND=firestore`, which needs Google ADC.
 
-### Tests
+## Tests
+
+Counts at this commit. The Vitest, pytest and script suites were run on a clean `npm ci`:
+
+| Suite | Command | Result |
+|---|---|---|
+| Dashboard (Vitest) | `cd dashboard && npm test` | 1,738 tests in 145 files, all passing |
+| Gateway (Vitest) | `cd cloud_run/qloo_gateway && npm test` | 1,073 passing, 2 skipped (they need private calibration files), in 73 files |
+| Python (pytest) | `.venv/bin/pytest` | 563 passing |
+| Script guards (node:test) | `npm run test:scripts` | 10 passing |
+| End-to-end (Playwright) | `cd dashboard && npm run e2e` | 85 test definitions in 14 spec files, each run at phone and desktop width (counted, not re-run for this table) |
+
+That is 3,374 automated tests across the three main suites. The end-to-end specs run against the dev server with fixtures (or a deployed site through `E2E_BASE_URL`) and are not part of `./run_tests.sh`. The key rules were mutation-checked: a rule was broken on purpose to see whether a test failed, and the commits named "mutation gaps" record the tests added where none did. The numbers shown on `/proof` are fixed when that page is edited and may lag these.
 
 ```bash
 npm run test:scripts                                  # dev:all and .env.example guards
@@ -231,6 +313,35 @@ cd cloud_run/qloo_gateway && npm test                 # gateway
 cd dashboard && npm test && npm run lint              # dashboard
 ./run_tests.sh                                        # everything, needs a Python .venv (see requirements-dev.txt)
 ```
+
+Tests never call Qloo or Google Cloud; they use fakes and synthetic fixtures.
+
+## Analytics
+
+Optional and off by default. The gateway writes to BigQuery only when `BQ_DATASET` and the project are set (tables are created once by `cloud_run/qloo_gateway/scripts/bq_setup.sh`). It powers two live panels on `/proof`: the trust meter (claims checked and removed, median latency, sponsors hidden) and team decisions (statuses, overrides of Qloo's pick, notes by role).
+
+![What goes to BigQuery: playbook runs, team events and v2 taps pass through a buffer into three tables; only counts, labels, hashed ids and a test flag are written; Qloo results, note text, names and document text never are.](docs/diagrams/analytics-flow.png)
+
+- **Written:** counts (cards, claims verified and removed, sponsors hidden, Qloo calls and cache hits), latency, narrative status, the city and country as typed, card kinds, team event types and roles, and sha256 hashes of session and workspace ids.
+- **Never written:** Qloo results (names, affinities, items), note or lead text, people's names, the artist name, document text, raw ids or IP addresses.
+- **Test traffic is excluded.** Our own e2e runs and smoke checks carry a test flag, and the stats leave those rows out.
+- **Fail-safe.** Logging is a best-effort buffer that never blocks a request. If analytics are off or a query fails, the panels do not appear.
+- The `/v2` taps are taps on a prototype, not real fans.
+
+Details: [ADR 0005](docs/adr/0005-bigquery-analytics.md).
+
+## Privacy
+
+- **Documents you add to the chat** are read in your browser. Only their text goes, inside the strategist request, to the model (Google's Gemini) with your question. It is never sent to Qloo and never stored, cached or logged. It is gone when you close the tab. The chat says this next to the upload control.
+
+![What happens to a document: read in the tab, sent as text in one request to Gemini, checked against the cited page; never to Qloo, cache, database or logs.](docs/diagrams/documents-privacy.png)
+
+- **The budget** stays in your browser's storage.
+- **Workspaces** are capability links: anyone with the link can read and write, and there is no sign-in. They expire after 30 days. Do not put anything there you would not give to everyone holding the link. See [ADR 0006](docs/adr/0006-workspaces-capability-links.md).
+- **Qloo data policy.** No Qloo response data is committed here. Real recordings are served from private storage by the dashboard server; tests use synthetic fixtures; `scripts/check-public-data.sh` guards the public clone. Only artist, city, venue and brand names go to Qloo, never personal data. See [ADR 0003](docs/adr/0003-recordings-private-synthetic-tests.md).
+- **Public MCP.** No sign-in; your IP is hashed to scope the rate limit and budget.
+
+More: [ADR 0004](docs/adr/0004-private-document-context.md).
 
 ## Limitations
 
@@ -245,20 +356,17 @@ cd dashboard && npm test && npm run lint              # dashboard
 - WebMCP tools need Chrome with the feature enabled.
 - A short do-not-book list (currently one act) is applied at display time; affected cards say so. Recorded data and proof results are unchanged.
 - Non-profit, advocacy, political and religious organisations are kept off the sponsor card by a model check (one batched Gemini call per playbook: could this brand sponsor a concert? Unanswered ids are hidden) plus a short disclosed name list, because Qloo brand entities carry no tag that identifies them. The card says how many were hidden, or that the check was unavailable. In live runs they are removed before ranking, so the remaining brands' ranks are among the brands shown; the recorded example uses the name list only.
-
-- Analytics are optional. The gateway writes to BigQuery only when `BQ_DATASET` and the project are set (tables created once by `cloud_run/qloo_gateway/scripts/bq_setup.sh`). Rows hold our own counts and metadata: city, verdict, claim and call counts, latency, team event types, anonymous hashed session or workspace ids. Never stored: Qloo results, note text, names of people or raw IPs. Logging is best effort and the stats routes answer "disabled" on any failure.
+- Documents: PDF, text, Markdown and CSV only; 3 files, 40 pages and 60,000 characters in total. A scanned PDF with no text layer gives no text. The check covers numbers, not claims in words.
+- Analytics counts are indicative: logging is best effort and can lose rows.
+- Checker rates come from planted errors on synthetic fixtures, not from live traffic.
 
 ## Operations
 
 During judging, the dashboard (`tour-intel-qloo`) and the gateway (`qloo-gateway`) each keep one warm instance (`--min-instances 1`; a cold start took about 2.8 s against 0.4 s warm). After judging, and no later than 13 Nov 2026, set both back to 0: `gcloud run services update tour-intel-qloo --min-instances 0` and the same for `qloo-gateway` (and `MIN_INSTANCES=0` for later dashboard deploys).
 
-## Data policy
+## Built during the hackathon
 
-No Qloo response data is committed here. Real recordings are served from private storage by the dashboard server; tests use synthetic fixtures; `scripts/check-public-data.sh` guards the public clone. Only artist, city, venue and brand names go to Qloo, never personal data. See [ADR 0003](docs/adr/0003-recordings-private-synthetic-tests.md).
-
-## New versus existing project
-
-Forked from the author's Agentic Cinema (Google Cloud) entry, which supplies the legacy `tour_data_api`, Dialogflow agents and delight-card renderer (see [`archive/`](archive)). The Qloo work began on 2026-10-16: the gateway, scoring, Tour Board, playbooks, Tour Book, strategist, MCP tools, proof and calibration. At the time of writing, 415 commits since 16 Oct 2026 (`git rev-list --count --since="2026-10-16 00:00" HEAD`; `node scripts/readme-numbers.mjs` prints the figures used here).
+Forked from the author's Agentic Cinema (Google Cloud) entry, which supplies the legacy `tour_data_api`, Dialogflow agents and delight-card renderer (see [`archive/`](archive)). The Qloo work began on 2026-10-16: the gateway, scoring, Tour Board, playbooks, Tour Book, strategist, MCP tools, proof and calibration, then Advance, age groups, workspaces, charts, budget, documents and analytics. At the time of writing, 551 commits since 16 Oct 2026 (`git rev-list --count --since="2026-10-16 00:00" HEAD`; `node scripts/readme-numbers.mjs` prints the figures used here).
 
 ### What's next (not built)
 
