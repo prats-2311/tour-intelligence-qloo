@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 import type { StrategistTurn } from "@/lib/qloo/strategistReducer";
-import { ChatBubble, TypingIndicator } from "@/components/ui/ChatBits";
+import { ChatBubble } from "@/components/ui/ChatBits";
+import { redactAnswer } from "@/lib/qloo/redactAnswer";
+import { REDACTION_NOTE } from "@/lib/qloo/redactSummary";
+import { stageLabel } from "@/lib/qloo/strategistStage";
 import { strategistErrorCopy } from "@/lib/qloo/strategistErrorCopy";
 import { AnswerText, realUnsupportedNumbers } from "./AnswerText";
 import { SaveToNotes } from "./SaveToNotes";
@@ -14,21 +17,30 @@ function Turn({ turn, onRetry, retryDisabled, logOpen, documentNames, notesKey }
   const { answer } = turn;
   const failure = turn.status === "error" && turn.error ? strategistErrorCopy(turn.error.code, turn.error.message) : turn.status === "done" && !answer ? "No answer came back — try again" : undefined;
   // Recorded answers carry the gateway's flag as it was then; list markers and step ordinals it counted are dropped here.
-  const unsupported = answer ? realUnsupportedNumbers(answer.text, answer.unsupportedNumbers) : [];
+  // Belt and braces: the gateway already removes sentences naming a listed act or non-sponsor; recorded replays and older gateways do not.
+  const guarded = answer ? redactAnswer(answer.text) : null;
+  const shownText = guarded?.text ?? "";
+  const removedCount = (guarded?.removed ?? 0) + (answer?.redactedSentences ?? 0);
+  const unsupported = answer ? realUnsupportedNumbers(shownText, answer.unsupportedNumbers) : [];
   return (
     <li className="flex flex-col gap-2">
       <ChatBubble role="user">{turn.question}</ChatBubble>
       {!answer && <WorkLog turn={turn} defaultOpen={logOpen} />}
       {answer && (
         <div data-answer className="flex flex-col gap-1.5">
-          <ChatBubble role="assistant"><AnswerText text={answer.text} {...(documentNames ? { documentNames } : {})} /></ChatBubble>
-          {unsupported.length > 0 && <p className="text-[13px] text-state-stale">{numbersNote(unsupported, /\[doc:[A-Za-z0-9_-]+ p\.\d+\]/.test(answer.text))}</p>}
-          {notesKey && <SaveToNotes answer={answer.text} names={documentNames ?? {}} threadKey={notesKey} />}
+          <ChatBubble role="assistant"><AnswerText text={shownText} {...(documentNames ? { documentNames } : {})} /></ChatBubble>
+          {unsupported.length > 0 && <p className="text-[13px] text-state-stale">{numbersNote(unsupported, /\[doc:[A-Za-z0-9_-]+ p\.\d+\]/.test(shownText))}</p>}
+          {removedCount > 0 && <p className="text-[13px] text-canvas-muted">{REDACTION_NOTE(removedCount)}</p>}
+          {notesKey && <SaveToNotes answer={shownText} names={documentNames ?? {}} threadKey={notesKey} />}
           {answer.stoppedEarly && <p className="text-[13px] text-state-stale">Stopped after the tool limit</p>}
         </div>
       )}
       {answer && <WorkLog turn={turn} defaultOpen={logOpen} />}
-      {turn.status === "streaming" && !answer && <TypingIndicator label="Strategist is typing" />}
+      {turn.status === "streaming" && !answer && (
+        <p role="status" aria-live="polite" data-stage className="flex w-fit items-center gap-2 rounded-lg border border-white/[0.07] bg-paper-raised px-3 py-2 text-[13px] text-canvas-muted">
+          <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-ink/30 motion-reduce:animate-none" />{stageLabel(turn)}
+        </p>
+      )}
       {turn.status === "interrupted" && <p className="text-[13px] text-canvas-muted">{turn.note}</p>}
       {failure && (
         <div className="flex flex-wrap items-center gap-3 rounded-[14px] bg-state-error-bg px-4 py-2 text-[14px] text-state-error">

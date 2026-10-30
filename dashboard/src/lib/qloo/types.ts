@@ -97,10 +97,11 @@ export type GatewayEvent =
   | { type: "city_scored"; city: ScoredCity }
   | { type: "playbook"; playbook: { city: { name: string; country: string }; cards: PlaybookCard[] } }
   | { type: "narrative"; narrative: Narrative }
+  | { type: "strategist_stage"; stage: "thinking" | "writing" }
   | { type: "strategist_thinking"; summary: string }
   | { type: "strategist_tool_call"; id: string; name: string; args: Record<string, unknown> }
   | { type: "strategist_tool_result"; id: string; name: string; status: StrategistToolStatus; summary: string; /** Results or cards the tool returned; older recordings lack it. */ resultCount?: number; cached: boolean }
-  | { type: "strategist_message"; text: string; unsupportedNumbers: string[]; stoppedEarly: boolean; model: string }
+  | { type: "strategist_message"; text: string; unsupportedNumbers: string[]; stoppedEarly: boolean; model: string; /** Sentences the gateway removed (do-not-book act or non-sponsor); older recordings lack it. */ redactedSentences?: number }
   | { type: "strategist_error"; code: "CAPPED" | "UNAVAILABLE" | "ABORTED" | "INTERNAL"; message: string }
   | { type: "done"; summary: unknown }
   | { type: "error"; code: string; message: string };
