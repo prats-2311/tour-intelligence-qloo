@@ -15,8 +15,14 @@ export interface ToursDeps {
   now?: () => number;
   newId?: () => string;
   newToken?: () => string;
-  /** Owners created per x-session-id (or client address) per hour (default 20). */
+  /** Owners created per client per hour (default 30). The client is the BFF-forwarded `x-tiq-client` (browser address), else the request ip. */
   ownersPerHour?: number;
+  /** Owners created per instance per hour, across all clients (default 600). */
+  ownersGlobalPerHour?: number;
+  /** Saves (POST, PATCH with a run) per owner per hour (default 60). */
+  writesPerHour?: number;
+  /** Total serialized run chars across one owner's live tours (default 40,000,000). */
+  ownerBytesCap?: number;
 }
 
 /**
@@ -28,7 +34,10 @@ export function mountTours(app: Express, deps: ToursDeps): void {
   const now = deps.now ?? Date.now;
   const newId = deps.newId ?? (() => randomBytes(12).toString("base64url"));
   const newToken = deps.newToken ?? (() => randomBytes(32).toString("base64url"));
-  const ownerLimit = new WindowLimiter(deps.ownersPerHour ?? 20, HOUR, now);
+  const ownerLimit = new WindowLimiter(deps.ownersPerHour ?? 30, HOUR, now);
+  const ownerGlobalLimit = new WindowLimiter(deps.ownersGlobalPerHour ?? 600, HOUR, now);
+  const writeLimit = new WindowLimiter(deps.writesPerHour ?? 60, HOUR, now);
+  const bytesCap = deps.ownerBytesCap ?? 40_000_000;
   const fail = (res: Response, err: unknown) => {
     if (err instanceof ToursError) return void res.status(err.status).json({ error: err.message });
     console.error("[tours]", err instanceof Error ? err.message : String(err));
@@ -68,7 +77,10 @@ export function mountTours(app: Express, deps: ToursDeps): void {
 
   app.post("/v1/owners", async (req, res) => {
     try {
-      if (!ownerLimit.take(sid(req) ?? `ip:${req.ip ?? "?"}`)) return void res.status(429).json({ error: "Too many requests, try again later" });
+      // The gateway only sees the BFF, so the BFF forwards the browser address as x-tiq-client (never trusted from the session id, which is free to rotate).
+      const client = req.header("x-tiq-client");
+      const key = client && client.length <= 128 ? `c:${client}` : `ip:${req.ip ?? "?"}`;
+      if (!ownerLimit.take(key) || !ownerGlobalLimit.take("*")) return void res.status(429).json({ error: "Too many requests, try again later" });
       const token = newToken();
       const at = new Date(now());
       await store.createOwner(sha256(token), { createdAt: at, lastSeenAt: at, expiresAt: new Date(at.getTime() + OWNER_TTL_DAYS * DAY), ...(isTest(req) ? { test: true as const } : {}) });
@@ -80,12 +92,16 @@ export function mountTours(app: Express, deps: ToursDeps): void {
     try {
       const hash = await auth(req, res);
       if (!hash) return;
+      if (!writeLimit.take(hash)) return void res.status(429).json({ error: "too many saves, try again later" });
       const b = jsonBody(req);
       const summary = parseSummary(b.summary);
       const title = b.title === undefined ? defaultTitle(summary) : parseTitle(b.title);
       const status = b.status === undefined ? "draft" : parseStatus(b.status);
       const run = serializedRun(b.run);
-      if ((await store.listTours(hash)).length >= MAX_TOURS_PER_OWNER) return void res.status(409).json({ error: `tour limit reached (${MAX_TOURS_PER_OWNER})` });
+      // Soft caps: concurrent saves can overshoot slightly (no transaction across the owner's tours).
+      const mine = (await store.listTours(hash)).filter((t) => t.expiresAt.getTime() > now());
+      if (mine.length >= MAX_TOURS_PER_OWNER) return void res.status(409).json({ error: `tour limit reached (${MAX_TOURS_PER_OWNER})` });
+      if (mine.reduce((n, t) => n + t.runBytes, 0) + run.length > bytesCap) return void res.status(413).json({ error: "saved tours are full; delete some to save more" });
       const chunks = chunkString(run);
       const at = new Date(now());
       const doc: TourDoc = { ownerHash: hash, title, status, artist: summary.artist, artistLower: foldText(summary.artist), regions: summary.regions, cities: summary.cities, search: searchText(title, summary), createdAt: at, updatedAt: at, expiresAt: new Date(at.getTime() + TOUR_TTL_DAYS * DAY), runBytes: run.length, chunkCount: chunks.length, ...(isTest(req) ? { test: true as const } : {}) };
@@ -135,6 +151,7 @@ export function mountTours(app: Express, deps: ToursDeps): void {
       const id = idOf(req, res);
       if (!id) return;
       const b = jsonBody(req);
+      if (b.run !== undefined && !writeLimit.take(hash)) return void res.status(429).json({ error: "too many saves, try again later" });
       const newSummary = b.summary !== undefined ? parseSummary(b.summary) : undefined;
       const newTitle = b.title !== undefined ? parseTitle(b.title) : undefined;
       const newStatus = b.status !== undefined ? parseStatus(b.status) : undefined;
@@ -147,7 +164,9 @@ export function mountTours(app: Express, deps: ToursDeps): void {
       if (newTitle !== undefined) next.title = newTitle;
       if (newStatus !== undefined) next.status = newStatus;
       let chunks: string[] | undefined;
-      if (run !== undefined) { chunks = chunkString(run); next.runBytes = run.length; next.chunkCount = chunks.length; }
+      if (run !== undefined) {
+        const others = (await store.listTours(hash)).filter((t) => t.id !== id && t.expiresAt.getTime() > now());
+        if (others.reduce((n, t) => n + t.runBytes, 0) + run.length > bytesCap) return void res.status(413).json({ error: "saved tours are full; delete some to save more" }); chunks = chunkString(run); next.runBytes = run.length; next.chunkCount = chunks.length; }
       next.search = searchText(next.title, summary);
       next.updatedAt = new Date(now());
       next.expiresAt = new Date(next.updatedAt.getTime() + TOUR_TTL_DAYS * DAY);

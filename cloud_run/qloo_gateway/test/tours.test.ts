@@ -43,13 +43,24 @@ describe("owners", () => {
     const bad = await request(app).get("/v1/tours").set("x-tiq-owner", "nope");
     expect(bad.status).toBe(401);
   });
-  it("429 after 20 owners per session per hour; other sessions unaffected", async () => {
+  it("429 after 30 owners per client (x-tiq-client) per hour; other clients unaffected; the session id is not the key", async () => {
     const { app, advance } = setup();
-    for (let i = 0; i < 20; i++) expect((await request(app).post("/v1/owners").set(SID).send({})).status).toBe(201);
-    expect((await request(app).post("/v1/owners").set(SID).send({})).status).toBe(429);
-    expect((await request(app).post("/v1/owners").set("x-session-id", "s2").send({})).status).toBe(201);
+    const mk = (client: string, sid = "s1") => request(app).post("/v1/owners").set("x-session-id", sid).set("x-tiq-client", client).send({});
+    for (let i = 0; i < 30; i++) expect((await mk("1.2.3.4", `rot${i}`)).status).toBe(201);
+    expect((await mk("1.2.3.4", "fresh")).status).toBe(429);
+    expect((await mk("5.6.7.8")).status).toBe(201);
     advance(3_600_001);
-    expect((await request(app).post("/v1/owners").set(SID).send({})).status).toBe(201);
+    expect((await mk("1.2.3.4")).status).toBe(201);
+  });
+  it("without x-tiq-client the key is the request ip", async () => {
+    const { app } = setup();
+    for (let i = 0; i < 30; i++) expect((await request(app).post("/v1/owners").set("x-session-id", `r${i}`).send({})).status).toBe(201);
+    expect((await request(app).post("/v1/owners").set("x-session-id", "z").send({})).status).toBe(429);
+  });
+  it("a global per-instance cap of 600 owners per hour holds across clients", async () => {
+    const { app } = setup({ ownersGlobalPerHour: 5, ownersPerHour: 100 });
+    for (let i = 0; i < 5; i++) expect((await request(app).post("/v1/owners").set("x-tiq-client", `c${i}`).send({})).status).toBe(201);
+    expect((await request(app).post("/v1/owners").set("x-tiq-client", "c9").send({})).status).toBe(429);
   });
   it("lastSeenAt is refreshed at most once per hour", async () => {
     const { app, store, advance, now } = setup();
@@ -173,6 +184,41 @@ describe("tours CRUD", () => {
     expect(r51.status).toBe(409);
     expect(r51.body).toEqual({ error: "tour limit reached (50)" });
     await request(app).delete(`/v1/tours/${first}`).set("x-tiq-owner", tok);
+    expect((await create(app, tok)).status).toBe(201);
+  });
+  it("tour count cap ignores expired tours", async () => {
+    const { app, advance } = setup();
+    const tok = await owner(app);
+    for (let i = 0; i < 50; i++) expect((await create(app, tok)).status).toBe(201);
+    expect((await create(app, tok)).status).toBe(409);
+    advance(46 * DAY);
+    expect((await create(app, tok)).status).toBe(201);
+  });
+  it("429 after 60 saves (POST or PATCH with run) per owner per hour; PATCH without run and other owners are unaffected", async () => {
+    const { app, advance } = setup();
+    const tok = await owner(app), other = await owner(app, "s2");
+    const id = (await create(app, tok)).body.id;
+    for (let i = 0; i < 59; i++) expect((await request(app).patch(`/v1/tours/${id}`).set("x-tiq-owner", tok).send({ run: { i } })).status).toBe(200);
+    const r = await create(app, tok);
+    expect(r.status).toBe(429);
+    expect(r.body).toEqual({ error: "too many saves, try again later" });
+    expect((await request(app).patch(`/v1/tours/${id}`).set("x-tiq-owner", tok).send({ run: { x: 1 } })).status).toBe(429);
+    expect((await request(app).patch(`/v1/tours/${id}`).set("x-tiq-owner", tok).send({ title: "ok" })).status).toBe(200);
+    expect((await create(app, other)).status).toBe(201);
+    advance(3_600_001);
+    expect((await create(app, tok)).status).toBe(201);
+  });
+  it("413 when an owner's live tours would exceed 40,000,000 run chars; replacing a tour's own run counts net", async () => {
+    const { app } = setup({ writesPerHour: 1000 });
+    const tok = await owner(app);
+    const big = { b: "x".repeat(4_000_000 - 8) };
+    const ids: string[] = [];
+    for (let i = 0; i < 10; i++) { const r = await create(app, tok, { run: big }); expect(r.status).toBe(201); ids.push(r.body.id); }
+    const full = await create(app, tok);
+    expect(full.status).toBe(413);
+    expect(full.body).toEqual({ error: "saved tours are full; delete some to save more" });
+    expect((await request(app).patch(`/v1/tours/${ids[0]}`).set("x-tiq-owner", tok).send({ run: big })).status).toBe(200);
+    await request(app).delete(`/v1/tours/${ids[1]}`).set("x-tiq-owner", tok);
     expect((await create(app, tok)).status).toBe(201);
   });
   it("another owner's GET / PATCH / DELETE are 404 and change nothing; their list is empty", async () => {
