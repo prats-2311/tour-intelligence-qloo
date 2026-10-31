@@ -1,6 +1,6 @@
 import { isTestTraffic } from "@/lib/qloo/session";
 
-/** Saved tours: the browser's side of the BFF contract (`/api/owners`, `/api/tours*`). The owner token is the only credential; it lives in localStorage. */
+/** Saved tours (times are epoch ms): the browser's side of the BFF contract (`/api/owners`, `/api/tours*`). The owner token is the only credential; it lives in localStorage. */
 export const OWNER_KEY = "tiq.owner";
 export const LIMIT_MESSAGE = "You have 50 saved tours; delete one to save more.";
 
@@ -14,7 +14,7 @@ export class ToursError extends Error {
 export type TourStatus = "draft" | "final";
 export interface TourSummaryCity { id: string; name: string; country: string; verdict?: string; score?: number | null }
 export interface TourSummary { artist: string; regions?: string[]; cities: TourSummaryCity[] }
-export interface TourListItem { id: string; title: string; status: TourStatus; artist: string; regions: string[]; cities: TourSummaryCity[]; createdAt: string; updatedAt: string; runBytes: number }
+export interface TourListItem { id: string; title: string; status: TourStatus; artist: string; regions: string[]; cities: TourSummaryCity[]; createdAt: number; updatedAt: number; runBytes: number }
 export interface SavedTour extends Partial<TourListItem> { id: string; run: unknown }
 export interface SaveBody { title?: string; status?: TourStatus; summary: TourSummary; run: unknown }
 export type PatchBody = Partial<SaveBody>;
@@ -79,11 +79,11 @@ async function request(path: string, init: { method?: string; body?: unknown }, 
   throw new ToursError("server", "Saved tours are unavailable right now. Try again in a moment.", res.status);
 }
 
-export async function saveTour(body: SaveBody, opts: Opts = {}): Promise<{ id: string; updatedAt: string }> {
-  return (await (await request("/api/tours", { method: "POST", body }, opts)).json()) as { id: string; updatedAt: string };
+export async function saveTour(body: SaveBody, opts: Opts = {}): Promise<{ id: string; updatedAt: number }> {
+  return (await (await request("/api/tours", { method: "POST", body }, opts)).json()) as { id: string; updatedAt: number };
 }
-export async function patchTour(id: string, body: PatchBody, opts: Opts = {}): Promise<{ id: string; updatedAt: string }> {
-  return (await (await request(`/api/tours/${encodeURIComponent(id)}`, { method: "PATCH", body }, opts)).json()) as { id: string; updatedAt: string };
+export async function patchTour(id: string, body: PatchBody, opts: Opts = {}): Promise<{ id: string; updatedAt: number }> {
+  return (await (await request(`/api/tours/${encodeURIComponent(id)}`, { method: "PATCH", body }, opts)).json()) as { id: string; updatedAt: number };
 }
 export async function listTours({ q = "", status = "all" }: { q?: string; status?: "all" | TourStatus }, opts: Opts = {}): Promise<TourListItem[]> {
   const p = new URLSearchParams();
