@@ -1,8 +1,8 @@
 import brandMark from "../../public/brand-mark.svg?raw";
 import favicon from "../../public/favicon.svg?raw";
 // @vitest-environment jsdom
-import { render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TourBoardProvider } from "@/lib/qloo/TourBoardProvider";
 import { AppShell } from "./AppShell";
@@ -36,6 +36,16 @@ describe("AppShell", () => {
     const nav = screen.getByRole("navigation", { name: "Primary" });
     expect(Array.from(nav.querySelectorAll("a")).map((a) => a.getAttribute("href"))).toEqual(["/", "/tours/board?sample=1", expect.stringMatching(/^\/tours\/playbook\/\d+\?sample=1$/), "/tours/book?sample=1"]);
     expect(screen.queryByRole("link", { name: "Taste" })).toBeNull();
+  });
+  it("the brand is a keyboard-focusable link home", () => {
+    mm(true);
+    const Where = () => <output data-testid="where">{useLocation().pathname}</output>;
+    render(<MemoryRouter initialEntries={["/tours/board"]}><TourBoardProvider><AppShell><p>child</p></AppShell><Where /></TourBoardProvider></MemoryRouter>);
+    const home = screen.getByRole("link", { name: "Tour Intelligence home" });
+    expect(home.getAttribute("href")).toBe("/");
+    expect(home.getAttribute("tabindex")).not.toBe("-1");
+    fireEvent.click(home);
+    expect(screen.getByTestId("where").textContent).toBe("/");
   });
   it("numbers the steps, marks the current one and the steps before it as done", () => {
     mm(true);

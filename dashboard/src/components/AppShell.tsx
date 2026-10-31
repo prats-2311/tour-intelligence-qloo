@@ -1,6 +1,6 @@
 import { Menu } from "lucide-react";
 import { useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 import { StrategistDock, StrategistFab, StrategistToggle, showsStrategist, useDockEscape, useStrategistDock } from "./strategist/StrategistLauncher";
 import { JourneyStepper } from "./JourneyStepper";
@@ -52,11 +52,11 @@ function Shell({ children }: { children: ReactNode }) {
       {isDesktop ? (
         <header data-app-shell className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-canvas-raised px-8">
           <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2">
+            <Link to="/" aria-label="Tour Intelligence home" className="flex items-center gap-2 rounded-[6px] no-underline outline-none focus-visible:ring-2 focus-visible:ring-gold">
               <img src="/brand-mark.svg" alt="" width={20} height={20} className="size-5 shrink-0 self-center" />
               <span className="font-title text-[18px] font-semibold text-bone">Tour Intelligence</span>
               <span className="font-sans text-[13px] font-medium text-canvas-muted">× Qloo</span>
-            </div>
+            </Link>
             <nav aria-label="Primary"><JourneyStepper variant="top" /></nav>
           </div>
           <div className="flex items-center gap-2">
