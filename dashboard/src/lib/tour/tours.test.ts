@@ -17,8 +17,15 @@ describe("tour registry", () => {
       expect(typeof t.steps).toBe("function");
     }
   });
-  it("has 9, 6, 6 and 4 steps", () => {
-    expect(TOURS.map((t) => t.steps(show()).length)).toEqual([9, 6, 6, 4]);
+  it("has 9, 7, 6 and 4 steps", () => {
+    expect(TOURS.map((t) => t.steps(show()).length)).toEqual([9, 7, 6, 4]);
+  });
+  it("the plan tour ends by pointing at My tours in the sidebar", () => {
+    const steps = tourById("plan")!.steps(show());
+    const last = steps[steps.length - 1]!;
+    expect(last.id).toBe("saved");
+    expect(last.targets).toEqual(["nav-mine"]);
+    expect(last.body).toMatch(/saved here as a draft/);
   });
   it("the essentials lead with the sponsor story, not the board", () => {
     const ids = tourById("essentials")!.steps(show()).map((s) => s.id);

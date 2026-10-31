@@ -316,7 +316,7 @@ describe("the four tours", () => {
     mountPlan();
     fireEvent.click(screen.getByRole("button", { name: "go plan" }));
     await flush();
-    expect(counter()).toBe("1 of 6");
+    expect(counter()).toBe("1 of 7");
     expect(screen.getByRole("heading", { name: "Age groups, city by city" })).toBeTruthy();
     expect(screen.getByTestId("where").textContent).toBe("/tours/insights?showcase=1");
   });
@@ -325,7 +325,7 @@ describe("the four tours", () => {
     fireEvent.click(screen.getByRole("button", { name: "Start tour" }));
     await flush();
     await walk(TOUR_STEP_COUNT - 1);
-    expect(screen.getByRole("button", { name: "Next: Plan the tour (6 steps)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Next: Plan the tour (7 steps)" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Done" })).toBeTruthy();
   });
   it("taking the offer completes this tour and starts the next one at step 1", async () => {
@@ -333,18 +333,18 @@ describe("the four tours", () => {
     fireEvent.click(screen.getByRole("button", { name: "Start tour" }));
     await flush();
     await walk(TOUR_STEP_COUNT - 1);
-    fireEvent.click(screen.getByRole("button", { name: "Next: Plan the tour (6 steps)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next: Plan the tour (7 steps)" }));
     await flush();
     expect(window.localStorage.getItem(TOUR_STORAGE_KEY)).toBe("completed");
-    expect(counter()).toBe("1 of 6");
+    expect(counter()).toBe("1 of 7");
     expect(screen.getByTestId("where").textContent).toBe("/tours/insights?showcase=1");
   });
   it("finishing a follow-on tour stores tiq.tour.<id> and leaves tiq.tour.v1 alone", async () => {
     mountPlan();
     fireEvent.click(screen.getByRole("button", { name: "go plan" }));
     await flush();
-    await walk(5);
-    expect(counter()).toBe("6 of 6");
+    await walk(6);
+    expect(counter()).toBe("7 of 7");
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(window.localStorage.getItem(tourStorageKey("plan"))).toBe("completed");
     expect(window.localStorage.getItem(TOUR_STORAGE_KEY)).toBeNull();
@@ -366,7 +366,7 @@ describe("the four tours", () => {
     await walk(3);
     expect(heard).not.toHaveBeenCalled();
     await walk(1);
-    expect(counter()).toBe("5 of 6");
+    expect(counter()).toBe("5 of 7");
     expect(heard).toHaveBeenCalledTimes(1);
     window.removeEventListener("tour:open-ask", heard);
   });
@@ -377,10 +377,10 @@ describe("the four tours", () => {
     fireEvent.click(screen.getByRole("button", { name: "go plan" }));
     await flush();
     await walk(4);
-    expect(counter()).toBe("5 of 6");
+    expect(counter()).toBe("5 of 7");
     expect(closed).not.toHaveBeenCalled();
     await walk(1);
-    expect(counter()).toBe("6 of 6");
+    expect(counter()).toBe("6 of 7");
     expect(closed).toHaveBeenCalledTimes(1);
     cleanup();
     closed.mockClear();

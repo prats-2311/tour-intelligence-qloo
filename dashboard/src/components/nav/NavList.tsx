@@ -67,7 +67,7 @@ function Row({ item, active, collapsed, href, onAction, onNavigate }: { item: Na
       </a>
     );
   } else {
-    body = <Link to={href} aria-current={active ? "page" : undefined} onClick={onNavigate} className={row(collapsed, active)}>{icon}{label}</Link>;
+    body = <Link to={href} data-tour={item.id === "mine" ? "nav-mine" : undefined} aria-current={active ? "page" : undefined} onClick={onNavigate} className={row(collapsed, active)}>{icon}{label}</Link>;
   }
   return <Tipped tip={tip} collapsed={collapsed} className={item.kind === "route" && item.hint && !collapsed ? "min-h-[3.75rem]" : ""}>{body}</Tipped>;
 }

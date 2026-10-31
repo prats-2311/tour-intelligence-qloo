@@ -58,7 +58,7 @@ describe("Tours in the sidebar", () => {
     fireEvent.click(side().getByRole("button", { name: /^Plan the tour/ }));
     await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
     expect(screen.getByTestId("tour-popover")).toBeTruthy();
-    expect(screen.getByText("1 of 6")).toBeTruthy();
+    expect(screen.getByText("1 of 7")).toBeTruthy();
   });
   it("a tour started from the phone drawer returns focus to the hamburger when it ends", async () => {
     desktop = false;

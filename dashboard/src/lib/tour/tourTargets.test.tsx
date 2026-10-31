@@ -79,7 +79,7 @@ function mountRoute(route: string) {
 const PRIMARY: Record<string, string> = {
   "essentials/hook": "sponsors-top", "essentials/age": "sponsors-age", "essentials/pitch": "sponsors-pitch",
   "essentials/ask": "ask", "plan/age-matrix": "age-matrix", "plan/filters": "charts-filters", "plan/advance": "tab-advance",
-  "plan/budget": "budget-header", "plan/chat": "chat-tools", "plan/compare": "sponsors-compare",
+  "plan/budget": "budget-header", "plan/chat": "chat-tools", "plan/compare": "sponsors-compare", "plan/saved": "nav-mine",
   "team/workspace": "team-bar", "team/status": "status-chip", "team/notes": "city-notes", "team/override": "override-team", "team/share": "team-share", "team/decisions": "chapter-team",
   "trust/agents": "agents-top", "trust/v2": "v2-hero",
 };
