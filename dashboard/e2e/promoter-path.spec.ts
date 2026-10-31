@@ -446,7 +446,7 @@ test("Try a routing replays the recorded routing: tagged cities, unmatched banne
   const shot = async (name: string) => { const dir = process.env.SHOT_DIR; if (dir) await page.screenshot({ path: path.join(dir, `${name}-${info.project.name.includes("mobile") ? "375" : "1280"}.png`), fullPage: true }); };
 
   await page.goto("/");
-  const link = page.getByRole("link", { name: "Try a routing" });
+  const link = page.getByRole("link", { name: "Watch a recorded routing run" });
   test.skip(LIVE && (await link.count()) === 0, "the deployed recording has no routing yet");
   await expect(link).toBeVisible();
   expect(await noOverflow(page), "landing overflow").toBe(true);

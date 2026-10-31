@@ -34,7 +34,7 @@ describe("Landing", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
     expect(screen.getByText("Type any artist, or paste your own cities; we build fresh city playbooks on the spot.")).toBeTruthy();
     expect(screen.getByText("Replays a recorded run where a tour's cities were pasted, scored and ordered.")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Try a routing" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Watch a recorded routing run" })).toBeTruthy();
     setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
   });
   it("states the approved pitch copy verbatim", () => {
@@ -148,7 +148,7 @@ describe("Landing story beats (spec 1.2b rule 1: every number comes from the rec
     setShowcase(parseShowcase(syntheticShowcase));
     const beats = storyBeats(SHOWCASE)!;
     expect(beats.plan.sponsor).not.toBeNull();
-    const [hold, mover, plan] = renderBeats().map((li) => li.textContent!);
+    const [plan, hold, mover] = renderBeats().map((li) => li.textContent!);
     expect(hold).toContain(`${beats.decision.markets} markets`);
     expect(mover).toContain("Worth a second look");
     expect(mover).toContain(`${beats.mover.city} moves #${beats.mover.fanRank} → #${beats.mover.winRank} when you add winnability`);
@@ -157,31 +157,35 @@ describe("Landing story beats (spec 1.2b rule 1: every number comes from the rec
     expect(beats.plan.coBill).not.toBeNull();
     expect(plan).toContain(`put ${beats.plan.coBill} on the bill`);
   });
+  it("orders the beats: how you win it, the hold, then the winnability mover last", () => {
+    setShowcase(parseShowcase(syntheticShowcase));
+    expect(renderBeats().map((li) => li.querySelector("span")!.textContent)).toEqual(["How you win it", "The hold", "Worth a second look"]);
+  });
   it("degrades to the generic playbook line when the city has no playbook", () => {
     const copy = parseShowcase(JSON.parse(JSON.stringify(syntheticShowcase)));
     delete copy.playbooks[goldId()];
     setShowcase(copy);
-    expect(renderBeats()[2]!.textContent).toContain("Its playbook: sponsor, venue and promo plan.");
+    expect(renderBeats()[0]!.textContent).toContain("Its playbook: sponsor, venue and promo plan.");
   });
   it("drops only the pitch clause when the sponsor is missing, and only the bill clause when there is no act", () => {
     editCards((c) => { if (c.kind === "sponsors") c.status = "empty"; });
-    let plan = renderBeats()[2]!.textContent!;
+    let plan = renderBeats()[0]!.textContent!;
     expect(plan).not.toContain("pitch");
     expect(plan).toContain("on the bill");
     cleanup();
     editCards((c) => { if (c.kind === "co_billing") c.status = "empty"; });
-    plan = renderBeats()[2]!.textContent!;
+    plan = renderBeats()[0]!.textContent!;
     expect(plan).toContain("pitch");
     expect(plan).not.toContain("on the bill");
   });
   it("never prints a do-not-book act in the beats: next act, or no bill clause", () => {
     editCards((c) => { if (c.kind === "co_billing") (c as unknown as { items: unknown[] }).items = [{ name: "Ariel Pink" }, { name: "Synthetic Artist 02" }]; });
-    let plan = renderBeats()[2]!.textContent!;
+    let plan = renderBeats()[0]!.textContent!;
     expect(document.body.textContent).not.toContain("Ariel Pink");
     expect(plan).toContain("put Synthetic Artist 02 on the bill");
     cleanup();
     editCards((c) => { if (c.kind === "co_billing") (c as unknown as { items: unknown[] }).items = [{ name: "Ariel Pink" }]; });
-    plan = renderBeats()[2]!.textContent!;
+    plan = renderBeats()[0]!.textContent!;
     expect(document.body.textContent).not.toContain("Ariel Pink");
     expect(plan).not.toContain("on the bill");
     expect(plan).toContain("pitch");
@@ -208,18 +212,18 @@ describe("Landing Try a routing", () => {
     setShowcase(parseShowcase(syntheticShowcase));
     render(<MemoryRouter><Landing /></MemoryRouter>);
     const example = screen.getByRole("link", { name: "See the example tour" });
-    const routing = screen.getByRole("link", { name: "Try a routing" });
+    const routing = screen.getByRole("link", { name: "Watch a recorded routing run" });
     expect(routing.getAttribute("href")).toBe("/tours/board?showcase=routing");
     expect(example.compareDocumentPosition(routing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
   });
   it("is hidden without a routing in the recording (placeholder, or an older recording)", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
-    expect(screen.queryByRole("link", { name: "Try a routing" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Watch a recorded routing run" })).toBeNull();
     setShowcase(parseShowcase({ ...(syntheticShowcase as object), routing: undefined }));
     cleanup();
     render(<MemoryRouter><Landing /></MemoryRouter>);
-    expect(screen.queryByRole("link", { name: "Try a routing" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Watch a recorded routing run" })).toBeNull();
     setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
   });
 });

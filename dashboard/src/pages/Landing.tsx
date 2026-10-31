@@ -81,9 +81,9 @@ function Story() {
   const bill = p.coBill;
   const clauses = [p.sponsor && `pitch ${p.sponsor}`, bill && `put ${bill} on the bill`].filter(Boolean).join(", ");
   const steps = [
+    { label: "How you win it", text: clauses ? `Its playbook: ${clauses}.` : "Its playbook: sponsor, venue and promo plan." },
     { label: "The hold", text: `${d.artist}: ${d.markets} ${d.markets === 1 ? "market" : "markets"}${d.regions.length ? ` across ${joinList(d.regions)}` : ""}. Which ones get dates?` },
     { label: "Worth a second look", text: `${m.city} moves #${m.fanRank} → #${m.winRank} when you add winnability.` },
-    { label: "How you win it", text: clauses ? `Its playbook: ${clauses}.` : "Its playbook: sponsor, venue and promo plan." },
   ];
   return (
     <ol aria-label="The story in three beats" className="grid list-none gap-4 p-0 md:grid-cols-3 md:gap-6 lg:col-span-12 lg:row-start-3 lg:mt-10">
@@ -136,7 +136,7 @@ export default function Landing() {
         {tour && showcaseAvailable() && <button type="button" data-testid="take-tour" onClick={tour.start} className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">How it works (2 min)</button>}
         {showcaseRoutingAvailable() && (
           <>
-          <NextStepLink to="/tours/board?showcase=routing" className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Try a routing</NextStepLink>
+          <NextStepLink to="/tours/board?showcase=routing" className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Watch a recorded routing run</NextStepLink>
           <p className="max-w-[44ch] text-[13px] leading-[1.4] text-canvas-muted">{TRY_ROUTING_LINE}</p>
           </>
         )}

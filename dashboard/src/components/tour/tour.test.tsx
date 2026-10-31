@@ -140,7 +140,7 @@ describe("persistent entry", () => {
   it("sits directly under the two main buttons, before Try a routing", () => {
     mount("/");
     const how = screen.getByRole("button", { name: "How it works (2 min)" });
-    const routing = screen.getByRole("link", { name: "Try a routing" });
+    const routing = screen.getByRole("link", { name: "Watch a recorded routing run" });
     const own = screen.getByRole("link", { name: "Try your own artist" });
     expect(own.compareDocumentPosition(how) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(how.compareDocumentPosition(routing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
