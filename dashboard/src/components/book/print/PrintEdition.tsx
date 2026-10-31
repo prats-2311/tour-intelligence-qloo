@@ -243,7 +243,7 @@ function Slope({ rows, held }: { rows: TourBook["market"]["slope"]; held: Set<st
   );
 }
 
-export function PrintEdition({ book, artist, artistId, regions, window, now, recordedAt }: { book: TourBook; artist: string; artistId?: string; regions: string[]; window?: DateWindow; now: Date; recordedAt: string | null }) {
+export function PrintEdition({ book, artist, artistId, regions, window, now, recordedAt, totalChapters }: { book: TourBook; /** City chapters on the tour; when more than the book holds, the contents say how many are included. */ totalChapters?: number; artist: string; artistId?: string; regions: string[]; window?: DateWindow; now: Date; recordedAt: string | null }) {
   const label = editionLabel(book.source, recordedAt);
   const footer = `Tour Intelligence × Qloo · ${label}`;
   const chapters = book.chapters;
@@ -292,6 +292,7 @@ export function PrintEdition({ book, artist, artistId, regions, window, now, rec
 
       <nav id="print-contents" aria-label="Contents" className="pe-contents">
         <h2>Contents</h2>
+        {totalChapters !== undefined && totalChapters > chapters.length && <p className="pe-note">{chapters.length} of {totalChapters} city chapters included; the rest were still building.</p>}
         <ol>
           {toc.map((t, i) => <li key={t.id}><a href={`#${t.id}`}><span className="no">{i + 1}</span><span className="t">{t.title}{t.sub && <small>{t.sub}</small>}</span></a></li>)}
         </ol>

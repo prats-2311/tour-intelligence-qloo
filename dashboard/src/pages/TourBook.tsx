@@ -3,11 +3,12 @@ import { useQueries } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/Toast";
 import { useReducedMotion } from "framer-motion";
 import { CalendarPlus, Printer, Share2, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { carryQuery } from "@/lib/qloo/pitchLinks";
 import { BookCover } from "@/components/book/BookCover";
 import { ChapterIndex, type IndexItem } from "@/components/book/ChapterIndex";
+import { PendingChapter } from "@/components/book/PendingChapter";
 import { CityChapter } from "@/components/book/CityChapter";
 import { MarketChapter } from "@/components/book/MarketChapter";
 import { CallsAppendix } from "@/components/book/CallsAppendix";
@@ -18,12 +19,12 @@ import { TeamBar } from "@/components/collab/TeamBar";
 import { fetchThisWeek } from "@/lib/qloo/client";
 import { LONG_NAMES_BRIEF, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { toIcs } from "@/lib/qloo/ics";
-import { getPlaybook, loadPlaybook, playbookKey, type PlaybookRequest } from "@/lib/qloo/playbookStore";
+import { getPlaybook, loadPlaybook, playbookKey, subscribePlaybooks, type PlaybookRequest } from "@/lib/qloo/playbookStore";
 import { SAMPLE_TEXT } from "@/lib/qloo/labels";
 import { loadBudget } from "@/lib/budget/storage";
 import { runKey } from "@/lib/qloo/journey";
 import { defaultShortlist, sortCities } from "@/lib/qloo/ranking";
-import { buildTourBook } from "@/lib/qloo/tourBook";
+import { buildTourBook, type BookCityChapter } from "@/lib/qloo/tourBook";
 import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
@@ -37,6 +38,8 @@ import { SHOWCASE } from "@/lib/qloo/showcase";
 
 // Same pacing CityPlaybook uses so sample books do not feel slow.
 const SAMPLE_PLAYBOOK_DELAY_MS = 10;
+// A city with no result after this long becomes a failed chapter (with Retry) so it never holds the rest of the book.
+const CHAPTER_TIMEOUT_MS = 120_000;
 const btnBase = "inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-[10px] px-3 text-[14px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:cursor-not-allowed disabled:opacity-50 lg:h-10 lg:flex-none lg:px-4";
 const btnSecondary = `${btnBase} bg-paper-raised text-canvas-text hover:bg-[#3a3932]`;
 const btnGold = `${btnBase} btn-gold`;
@@ -78,8 +81,8 @@ function TourBookPage() {
   const reduce = useReducedMotion();
   const started = useRef<string | null>(null);
   const progressRef = useRef<HTMLDivElement>(null);
-  const [step, setStep] = useState(0);
-  const [preparedKey, setPreparedKey] = useState<string | null>(null);
+    const [pbTick, setPbTick] = useState(0); // bumps whenever any playbook changes, so chapters appear as they finish
+  const [timedOut, setTimedOut] = useState<ReadonlySet<string>>(new Set());
   const [chaptersOpen, setChaptersOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const { toast } = useToast();
@@ -112,21 +115,29 @@ function TourBookPage() {
     [prepKey],
   );
 
-  // Playbooks are prepared one at a time to keep the Qloo budget predictable.
+  useEffect(() => subscribePlaybooks(() => setPbTick((n) => n + 1)), []);
+
+  // One attempt at one city: resolves when the playbook settles or after the timeout, whichever is first.
+  const attempt = useCallback(async (req: PlaybookRequest) => {
+    setTimedOut((t) => { if (!t.has(req.city.id)) return t; const n = new Set(t); n.delete(req.city.id); return n; });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const expired = new Promise<void>((resolve) => { timer = setTimeout(() => { setTimedOut((t) => new Set(t).add(req.city.id)); resolve(); }, CHAPTER_TIMEOUT_MS); });
+    try { await Promise.race([loadPlaybook(req).catch(() => undefined), expired]); } finally { clearTimeout(timer); }
+  }, []);
+
+  // Playbooks are prepared one at a time to keep the Qloo budget predictable; each chapter shows as soon as its own playbook is done.
   useEffect(() => {
     if (!boardReady) return;
     let cancelled = false;
     void (async () => {
       for (let i = 0; i < requests.length; i++) {
         if (cancelled) return;
-        setStep(i + 1);
         const req = requests[i]!;
-        if (getPlaybook(playbookKey(req.artistEntityId, req.city.id, req.sampleSet, req.variant))?.status !== "done") await loadPlaybook(req);
+        if (getPlaybook(playbookKey(req.artistEntityId, req.city.id, req.sampleSet, req.variant))?.status !== "done") await attempt(req);
       }
-      if (!cancelled) setPreparedKey(prepKey);
     })();
     return () => { cancelled = true; };
-  }, [boardReady, requests, prepKey]);
+  }, [boardReady, requests, prepKey, attempt]);
 
   const weekQueries = useQueries({
     queries: picked.map((c) => ({
@@ -142,7 +153,7 @@ function TourBookPage() {
   });
   const weeksKey = weekQueries.map((q) => q.dataUpdatedAt).join(",");
 
-  const prepared = boardReady && preparedKey === prepKey;
+  const prepared = boardReady;
   // The user's own figures from browser storage (never fetched); read once the book is ready.
   const savedBudget = useMemo(() => (prepared ? loadBudget(runKey(state.source, state.sampleSet, artist?.name, variant === "routing"), picked.map((c) => c.id)) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -156,7 +167,7 @@ function TourBookPage() {
       weeks: Object.fromEntries(picked.map((c, i) => [c.id, weekQueries[i]?.data])),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prepared, prepKey, weeksKey, state.brief, state.cities, state.log, accentOrder]);
+  }, [prepared, prepKey, weeksKey, pbTick, state.brief, state.cities, state.log, accentOrder]);
 
   // Reading progress: written straight to the bar so scrolling never re-renders the book.
   useEffect(() => {
@@ -180,6 +191,10 @@ function TourBookPage() {
     document.querySelectorAll(".tour-book .book-chapter").forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, [book]);
+
+  // Ready when the playbook is done; failed after an error, a lost connection or the timeout; otherwise still building.
+  const phaseOf = (c: BookCityChapter): "ready" | "failed" | "pending" =>
+    c.status === "ready" ? "ready" : c.playbook?.status === "error" || c.playbook?.status === "interrupted" || timedOut.has(c.city.id) ? "failed" : "pending";
 
   const jump = (id: string) => {
     setChaptersOpen(false);
@@ -214,9 +229,7 @@ function TourBookPage() {
             <AgentLogChip events={state.log} onOpen={() => setLogOpen(true)} />
             <Sheet open={logOpen} onClose={() => setLogOpen(false)} title="Agent log"><AgentLog events={state.log} /></Sheet>
           </>
-        ) : (
-          <p role="status" className="text-[13px] text-canvas-muted tabular-nums">Preparing playbooks · {Math.max(step, 1)} of {requests.length}</p>
-        )}
+        ) : null}
         <div className="skeleton h-[160px] w-full rounded-[18px]" aria-hidden />
       </Centered>
     );
@@ -247,6 +260,10 @@ function TourBookPage() {
     toast({ message: "Calendar file downloaded.", tone: "success" });
   };
 
+  const readyCount = book.chapters.filter((c) => phaseOf(c) === "ready").length;
+  const retry = (id: string) => { const req = requests.find((r) => r.city.id === id); if (req) void attempt(req); };
+  const printBook = readyCount === book.chapters.length ? book : { ...book, chapters: book.chapters.filter((c) => phaseOf(c) === "ready") };
+
   const actions = (
     <>
       <button type="button" onClick={() => void share()} className={btnSecondary}><Share2 size={16} aria-hidden />Share</button>
@@ -262,14 +279,14 @@ function TourBookPage() {
 
   const items: IndexItem[] = [
     { id: "market", label: "Market selection" },
-    ...book.chapters.map((c) => ({ id: c.city.id, label: c.city.name, accent: c.accent, verdict: c.city.verdict })),
+    ...book.chapters.map((c) => ({ id: c.city.id, label: phaseOf(c) === "ready" ? c.city.name : `${c.city.name} (${phaseOf(c) === "failed" ? "couldn't build" : "building…"})`, accent: c.accent, verdict: c.city.verdict })),
     { id: "provenance", label: "Provenance" },
     { id: "calls", label: "Qloo calls" },
   ];
 
   return (
     <>
-    {printing && createPortal(<PrintEdition book={book} artist={artist!.name} artistId={artist?.entityId} regions={effectiveRegions(state.brief!, state.cities)} window={dateWindow} now={new Date()} recordedAt={book.source === "showcase" ? SHOWCASE.recordedAt : null} />, document.body)}
+    {printing && createPortal(<PrintEdition book={printBook} totalChapters={book.chapters.length} artist={artist!.name} artistId={artist?.entityId} regions={effectiveRegions(state.brief!, state.cities)} window={dateWindow} now={new Date()} recordedAt={book.source === "showcase" ? SHOWCASE.recordedAt : null} />, document.body)}
     <div className="tour-book -mx-4 -mt-6 lg:mx-0 lg:mt-0">
       <header data-noprint className="sticky top-0 z-30 flex h-[52px] items-center gap-2 bg-canvas-raised px-2 lg:top-14 lg:px-6">
         <Link to={`/tours/board${sampleQ}`} aria-label="Close" className="inline-flex size-11 shrink-0 items-center justify-center rounded-[10px] text-canvas-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"><X size={20} aria-hidden /></Link>
@@ -290,6 +307,8 @@ function TourBookPage() {
         <Link to="/tours/mine" className="inline-flex min-h-11 items-center text-canvas-text underline decoration-canvas-muted underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Switch tour →</Link>
       </div>
 
+      {readyCount < book.chapters.length && <p data-noprint role="status" aria-live="polite" className="px-4 pt-2 text-[13px] text-canvas-muted tabular-nums lg:px-6">{readyCount} of {book.chapters.length} chapters ready</p>}
+
       <div data-noprint className="px-4 pt-3 empty:hidden lg:px-6"><TeamBar cities={state.cities} tourThread="tour:book" /></div>
 
       {usingDefault && <p data-noprint data-testid="default-shortlist-note" className="px-4 pt-3 text-[13px] text-canvas-muted lg:px-6">Showing the {picked.length} {picked.length === 1 ? "market" : "markets"} we'd hold by default: you haven't picked any yet.</p>}
@@ -303,7 +322,7 @@ function TourBookPage() {
         <div className="book-page flex min-w-0 flex-col gap-12 pb-24 lg:col-start-2 lg:max-w-5xl lg:bg-paper lg:p-14 lg:pb-14">
           <div data-tour="book-cover"><BookCover artist={artist!.name} regions={effectiveRegions(state.brief!, state.cities)} season={book.subtitle} chapters={book.chapters} sample={book.source !== "live"} showcase={book.source === "showcase"} clocks={!!dateWindow} /></div>
           <MarketChapter market={book.market} />
-          {book.chapters.map((c) => <CityChapter key={c.city.id} chapter={c} sample={book.source !== "live"} showcase={book.source === "showcase"} artist={artist?.name} artistId={artist?.entityId} window={dateWindow} stops={picked} budget={savedBudget} pitchSearch={carryQuery(params, sampleQ)} />)}
+          {book.chapters.map((c) => phaseOf(c) !== "ready" ? <PendingChapter key={c.city.id} id={c.city.id} city={c.city.name} failed={phaseOf(c) === "failed"} onRetry={() => retry(c.city.id)} /> : <CityChapter key={c.city.id} chapter={c} sample={book.source !== "live"} showcase={book.source === "showcase"} artist={artist?.name} artistId={artist?.entityId} window={dateWindow} stops={picked} budget={savedBudget} pitchSearch={carryQuery(params, sampleQ)} />)}
           <ProvenanceAppendix rows={book.provenance} calls={book.calls} sample={book.source !== "live"} showcase={book.source === "showcase"} />
           <CallsAppendix calls={book.calls} />
           {book.source !== "live" && <p data-print-footer className="print-footer">{book.source === "showcase" ? showcaseBannerText() : SAMPLE_TEXT}</p>}

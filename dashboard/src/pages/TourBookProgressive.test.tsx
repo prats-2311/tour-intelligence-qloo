@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, configure, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -50,10 +50,10 @@ describe("TourBook progressive rendering", () => {
     seed(FAILED, errored);
     renderBook([DONE, PENDING, FAILED]);
     await screen.findByRole("heading", { name: "Mexico City", level: 2 });
+    await waitFor(() => expect(screen.getByRole("status").textContent).toMatch(/1 of 3 chapters ready/));
     expect(screen.getByTestId("book-which-tour")).toBeTruthy();
     expect(screen.getByRole("heading", { name: /Market selection/i })).toBeTruthy();
     expect(screen.getAllByText(/building this chapter/i).length).toBeGreaterThan(0);
-    expect(screen.getByRole("status").textContent).toMatch(/1 of 3 chapters ready/);
     expect(screen.getAllByText("Couldn't build this chapter.")).toHaveLength(1);
     expect(screen.queryByText(/Playbook incomplete/)).toBeNull();
     loader.load.mockClear();
@@ -63,11 +63,12 @@ describe("TourBook progressive rendering", () => {
   });
 
   it("a city with no result after 120 s becomes a failed chapter without blocking the others", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     seed(DONE, done(DONE));
     renderBook([DONE, PENDING]);
     await screen.findByRole("heading", { name: "Mexico City", level: 2 });
+    await waitFor(() => expect(screen.getByRole("status").textContent).toMatch(/1 of 2/));
     expect(screen.queryByText("Couldn't build this chapter.")).toBeNull();
-    vi.useFakeTimers();
     await act(async () => { await vi.advanceTimersByTimeAsync(121_000); });
     expect(screen.getAllByText("Couldn't build this chapter.")).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "Mexico City", level: 2 })).toBeTruthy();
@@ -78,7 +79,7 @@ describe("TourBook progressive rendering", () => {
     for (const id of [DONE, PENDING]) seed(id, done(id));
     renderBook([DONE, PENDING]);
     await screen.findByRole("heading", { name: "Guadalajara", level: 2 });
-    expect(screen.queryByText(/building this chapter/i)).toBeNull();
+    await waitFor(() => expect(screen.queryByText(/building this chapter/i)).toBeNull());
     expect(screen.queryByText(/chapters ready/)).toBeNull();
     expect(screen.queryByText("Couldn't build this chapter.")).toBeNull();
   });

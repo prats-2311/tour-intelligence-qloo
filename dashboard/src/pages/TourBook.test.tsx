@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, configure, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -211,6 +211,7 @@ describe("TourBook", () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal("navigator", { ...navigator, share: undefined, clipboard: { writeText } });
     renderAt("/tours/book?sample=1");
+    await screen.findByRole("heading", { name: "Curitiba", level: 2 }); // every chapter ready: the progress line is gone, the toast is the only status
     fireEvent.click(await screen.findByRole("button", { name: "Share" }));
     const toast = await screen.findByRole("status");
     expect(toast.textContent).toContain("Link copied");
@@ -250,7 +251,7 @@ describe("TourBook", () => {
     vi.spyOn(client, "streamCityPlaybook").mockImplementation((q, o) =>
       o?.cityId === "4005539" ? (async function* () { yield { type: "error" as const, code: "BUDGET", message: "x" }; })() : real(q, o));
     renderAt("/tours/book?sample=1");
-    expect(await screen.findByText("Playbook incomplete — Session limit reached")).toBeTruthy();
+    expect(await screen.findByText("Couldn't build this chapter.")).toBeTruthy();
     for (const name of ["Mexico City", "São Paulo", "Guadalajara", "Curitiba"]) expect(await screen.findByRole("heading", { name, level: 2 })).toBeTruthy();
     expect(screen.getAllByText(/\d+ verified · \d+ removed/).length).toBeGreaterThan(0);
   });
@@ -269,7 +270,7 @@ describe("TourBook", () => {
   it("once the user has chosen a shortlist there is no default note", async () => {
     renderAt("/tours/book?sample=1", <ChooseShortlist />);
     await screen.findByRole("heading", { name: "Market selection" });
-    expect(screen.queryByTestId("default-shortlist-note")).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId("default-shortlist-note")).toBeNull());
   });
   it("a bare /tours/book with no run loads the example", async () => {
     setShowcase(parseShowcase(syntheticShowcase));
