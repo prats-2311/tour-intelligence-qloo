@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { expect } from "@playwright/test";
-import { test } from "./fixtures";
+import AxeBuilder from "@axe-core/playwright";
+import { expect, type Page } from "@playwright/test";
+import { markTestTraffic, test } from "./fixtures";
 import { blockMapTiles } from "./live";
 
 // Saved tours, end to end: plan a tour, see it saved, find it in My tours, search, open, mark final, delete.
@@ -47,11 +48,156 @@ test("plan, auto-save, search, open, mark final, delete", async ({ page }) => {
 
   await page.goto("/tours/mine");
   const again = page.getByTestId("saved-tour").first();
-  await again.getByRole("button", { name: /^Mark .* as final$/ }).click();
+  await again.getByRole("button", { name: /^Mark final: / }).click();
   await expect(again.getByTestId("tour-status")).toHaveText("Final");
 
   await again.getByRole("button", { name: /^Delete / }).click();
   await expect(again.getByText("Delete this tour? This can't be undone.")).toBeVisible();
   await again.getByRole("button", { name: "Yes, delete" }).click();
   await expect(page.getByText("No saved tours yet. Plan a tour and it's saved here automatically.")).toBeVisible();
+});
+
+// ---- more cases ----------------------------------------------------------------------------------------------------------------------
+async function stubRuns(page: Page) {
+  await blockMapTiles(page);
+  await page.route("**/api/qloo/tour-board", (r) => r.fulfill({ status: 200, contentType: "text/event-stream", body: sse(rec.boardEvents) }));
+  await page.route("**/api/qloo/city-playbook**", (r) => r.fulfill({ status: 200, contentType: "text/event-stream", body: sse(Object.values(rec.playbooks)[0] ?? []) }));
+}
+async function plan(page: Page) {
+  await stubRuns(page);
+  await page.goto("/tours/board?new=1");
+  await page.getByLabel("Artist", { exact: true }).fill(rec.artist);
+  await page.getByRole("button", { name: "Score markets" }).click();
+  await expect(page.locator("[data-toast-viewport]").getByText("Saved to My tours")).toBeVisible({ timeout: 20_000 });
+}
+const ownerToken = (page: Page) => page.evaluate(() => localStorage.getItem("tiq.owner"));
+async function firstSavedId(page: Page): Promise<string> {
+  await page.goto("/tours/mine");
+  const href = await page.getByTestId("saved-tour").first().getByRole("link", { name: /^Open / }).getAttribute("href");
+  return new URL(href!, "http://x").searchParams.get("saved")!;
+}
+const rowsOf = (page: Page) => page.getByTestId("city-row").evaluateAll((els) => els.map((e) => (e.textContent ?? "").replace(/\s+/g, " ").trim()));
+
+test("a reload of My tours keeps the list (the owner token persists)", async ({ page }) => {
+  await plan(page);
+  await page.goto("/tours/mine");
+  await expect(page.getByTestId("saved-tour")).toHaveCount(1);
+  const tok = await ownerToken(page);
+  await page.reload();
+  await expect(page.getByTestId("saved-tour")).toHaveCount(1);
+  expect(await ownerToken(page)).toBe(tok);
+});
+
+test("another browser (a different owner) cannot see or open the tour", async ({ page, browser }) => {
+  await plan(page);
+  const id = await firstSavedId(page);
+  const mine = await ownerToken(page);
+  const ctx2 = await browser.newContext({ viewport: page.viewportSize() ?? undefined });
+  await markTestTraffic(ctx2);
+  const p2 = await ctx2.newPage();
+  await stubRuns(p2);
+  await p2.goto("/tours/mine");
+  await expect(p2.getByText("No saved tours yet. Plan a tour and it's saved here automatically.")).toBeVisible();
+  const other = await p2.evaluate(async () => ((await (await fetch("/api/owners", { method: "POST" })).json()) as { ownerToken: string }).ownerToken);
+  expect(other).toBeTruthy();
+  expect(other).not.toBe(mine);
+  await p2.goto(`/tours/board?saved=${id}`);
+  await expect(p2.getByText("That saved tour no longer exists.")).toBeVisible();
+  const status = await p2.evaluate(async ([tid, tok]) => (await fetch(`/api/tours/${tid}`, { headers: { "x-tiq-owner": tok! } })).status, [id, other] as const);
+  expect(status).toBe(404);
+  const noTok = await p2.evaluate(async (tid) => (await fetch(`/api/tours/${tid}`)).status, id);
+  expect([401, 403, 404]).toContain(noTok);
+  await ctx2.close();
+});
+
+test("the showcase never creates a saved tour", async ({ page }) => {
+  const posts: string[] = [];
+  page.on("request", (q) => { if (q.method() === "POST" && /\/api\/(tours|owners)(\?|$)/.test(q.url())) posts.push(q.url()); });
+  await stubRuns(page);
+  await page.goto("/tours/board?showcase=1");
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+  await page.waitForTimeout(2500);
+  expect(posts).toEqual([]);
+});
+
+test("opening a saved tour makes no board request and shows the same rows and scores", async ({ page }) => {
+  await plan(page);
+  await expect(page.getByTestId("city-row").first()).toBeVisible();
+  await expect.poll(async () => (await rowsOf(page)).length).toBeGreaterThan(2);
+  const before = await rowsOf(page);
+  const id = await firstSavedId(page);
+  const board: string[] = [];
+  page.on("request", (q) => { if (q.url().includes("/api/qloo/tour-board")) board.push(q.url()); });
+  await page.goto(`/tours/mine`);
+  await page.getByTestId("saved-tour").first().getByRole("link", { name: /^Open / }).click();
+  await expect(page).toHaveURL(new RegExp(`saved=${id}`));
+  await expect.poll(async () => (await rowsOf(page)).length).toBe(before.length);
+  expect(await rowsOf(page)).toEqual(before);
+  expect(board).toEqual([]);
+});
+
+test("the Tour Book and a seeded playbook open from a saved tour without new Qloo calls", async ({ page }) => {
+  await plan(page);
+  const cityId = Object.keys(rec.playbooks)[0]!;
+  await page.locator("#city-row-" + cityId).click();
+  await expect(page).toHaveURL(new RegExp(`/tours/playbook/${cityId}`));
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.waitForResponse((r) => r.request().method() === "PATCH" && r.url().includes("/api/tours/"), { timeout: 15_000 });
+  const calls: string[] = [];
+  page.on("request", (q) => { if (/\/api\/qloo\/(tour-board|city-playbook)/.test(q.url())) calls.push(q.url()); });
+  await page.goto("/tours/mine");
+  await page.getByTestId("saved-tour").first().getByRole("link", { name: /^Open / }).click();
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+  await page.getByRole("link", { name: /Tour Book/ }).first().click();
+  await expect(page).toHaveURL(/\/tours\/book/);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.goBack();
+  await page.locator("#city-row-" + cityId).click();
+  await expect(page).toHaveURL(new RegExp(`/tours/playbook/${cityId}`));
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  expect(calls).toEqual([]);
+});
+
+test("My tours at phone width: no horizontal scroll and every action reachable", async ({ page }) => {
+  await plan(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/tours/mine");
+  const row = page.getByTestId("saved-tour").first();
+  await expect(row).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  for (const [role, name] of [["link", /^Open /], ["button", /^Mark final: /], ["button", /^Delete /]] as const) {
+    const el = row.getByRole(role, { name });
+    await el.scrollIntoViewIfNeeded();
+    const box = (await el.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(391);
+    expect(box.height).toBeGreaterThanOrEqual(40);
+  }
+});
+
+test("delete removes it from the list and the saved link then says it is gone", async ({ page }) => {
+  await plan(page);
+  const id = await firstSavedId(page);
+  const row = page.getByTestId("saved-tour").first();
+  await row.getByRole("button", { name: /^Delete / }).click();
+  await row.getByRole("button", { name: "Yes, delete" }).click();
+  await expect(page.getByTestId("saved-tour")).toHaveCount(0);
+  await page.goto(`/tours/board?saved=${id}`);
+  await expect(page.getByText("That saved tour no longer exists.")).toBeVisible();
+});
+
+test("Save as campaign (POST /api/tours without an owner token) is not taken over by saved tours", async ({ page }) => {
+  await page.goto("/");
+  const r = await page.evaluate(async () => { const res = await fetch("/api/tours", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }); return { status: res.status, text: await res.text() }; });
+  expect(r.text).not.toContain("owner required");
+  expect(r.status).not.toBe(201);
+});
+
+test("My tours has no serious or critical accessibility violations", async ({ page }) => {
+  await plan(page);
+  await page.goto("/tours/mine");
+  await expect(page.getByTestId("saved-tour").first()).toBeVisible();
+  const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  expect(violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`)).toEqual([]);
+  expect(violations.map((v) => v.id)).toEqual([]);
 });

@@ -81,10 +81,10 @@ describe("My tours", () => {
   it("Mark final patches the status and flips the chip and button", async () => {
     mount();
     const row = (await screen.findByText("Lumen Vale tour")).closest("li")!;
-    fireEvent.click(within(row).getByRole("button", { name: "Mark Lumen Vale tour as final" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Mark final: Lumen Vale tour" }));
     await waitFor(() => expect(calls.find((c) => c.method === "PATCH")?.body).toEqual({ status: "final" }));
     await waitFor(() => expect(within(row).getByText("Final")).toBeTruthy());
-    expect(within(row).getByRole("button", { name: "Mark Lumen Vale tour as draft" })).toBeTruthy();
+    expect(within(row).getByRole("button", { name: "Mark draft: Lumen Vale tour" })).toBeTruthy();
   });
   it("Delete asks inline first, then deletes; Cancel keeps it", async () => {
     mount();

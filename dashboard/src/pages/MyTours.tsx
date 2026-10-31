@@ -55,7 +55,7 @@ function Row({ tour, onStatus, onDeleted, onError }: { tour: TourListItem; onSta
       ) : (
         <div className="flex flex-wrap gap-2 sm:justify-end">
           <Link to={`/tours/board?saved=${encodeURIComponent(tour.id)}`} aria-label={`Open ${tour.title}`} className={btn}>Open</Link>
-          <button type="button" disabled={busy} aria-label={`Mark ${tour.title} as ${next}`} onClick={() => void mark()} className={btn}>{next === "final" ? "Mark final" : "Mark draft"}</button>
+          <button type="button" disabled={busy} aria-label={`Mark ${next}: ${tour.title}`} onClick={() => void mark()} className={btn}>{next === "final" ? "Mark final" : "Mark draft"}</button>
           <button ref={askRef} type="button" disabled={busy} aria-label={`Delete ${tour.title}`} onClick={() => setConfirming(true)} className={dangerBtn}>Delete</button>
         </div>
       )}
