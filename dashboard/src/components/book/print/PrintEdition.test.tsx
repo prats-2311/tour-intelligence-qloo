@@ -95,4 +95,12 @@ describe("print edition", () => {
     expect(sec.textContent).toContain("Hold 14 Mar");
     expect(container.querySelectorAll("button")).toHaveLength(0);
   });
+  it("notes how many city chapters are included only when some were still building", () => {
+    const { rerender } = render(<PrintEdition {...props} totalChapters={6} />);
+    expect(screen.getByText("4 of 6 city chapters included; the rest were still building.")).toBeTruthy();
+    rerender(<PrintEdition {...props} totalChapters={4} />);
+    expect(screen.queryByText(/city chapters included/)).toBeNull();
+    rerender(<PrintEdition {...props} />);
+    expect(screen.queryByText(/city chapters included/)).toBeNull();
+  });
 });
