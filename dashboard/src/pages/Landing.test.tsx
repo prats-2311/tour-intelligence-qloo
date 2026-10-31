@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { OWNER_KEY } from "@/lib/tours/api";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sortCities } from "@/lib/qloo/ranking";
 import { SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
@@ -228,3 +229,32 @@ describe("Landing Try a routing", () => {
   });
 });
 
+
+describe("Landing saved tours link", () => {
+  afterEach(() => localStorage.clear());
+  it("with an owner token and saved tours it links to My tours with the count, after the page has rendered", async () => {
+    localStorage.setItem(OWNER_KEY, "tok");
+    const f = vi.fn(async () => new Response(JSON.stringify({ tours: [{ id: "a" }, { id: "b" }] }), { status: 200, headers: { "content-type": "application/json" } }));
+    vi.stubGlobal("fetch", f);
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    expect(screen.queryByRole("link", { name: /Your saved tours/ })).toBeNull();
+    const link = await screen.findByRole("link", { name: "Your saved tours (2) →" });
+    expect(link.getAttribute("href")).toBe("/tours/mine");
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+  it("makes no request and shows no link without an owner token", async () => {
+    localStorage.clear();
+    const f = vi.fn(); vi.stubGlobal("fetch", f);
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    await waitFor(() => expect(screen.getByRole("link", { name: "See the example tour" })).toBeTruthy());
+    expect(f).not.toHaveBeenCalled();
+    expect(screen.queryByRole("link", { name: /Your saved tours/ })).toBeNull();
+  });
+  it("shows nothing when the list is empty or the request fails", async () => {
+    localStorage.setItem(OWNER_KEY, "tok");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("x", { status: 503 })));
+    render(<MemoryRouter><Landing /></MemoryRouter>);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByRole("link", { name: /Your saved tours/ })).toBeNull();
+  });
+});

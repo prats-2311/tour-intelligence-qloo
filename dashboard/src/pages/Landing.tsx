@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { DualBars } from "@/components/qloo/DualBars";
 import { VerdictGlyph } from "@/components/qloo/VerdictGlyph";
@@ -12,6 +12,7 @@ import { proofFor, rankShiftLine, SHOWCASE, showcaseAvailable, showcaseCities, s
 import { storyBeats } from "@/lib/qloo/story";
 import type { ScoredCity, Verdict } from "@/lib/qloo/types";
 import { useIsDesktop } from "@/lib/useMediaQuery";
+import { hasOwnerToken, listTours } from "@/lib/tours/api";
 import { useTour } from "@/components/tour/tourContext";
 
 export const HEADLINE = "Know which brands your artist's fans love in each city, before the sponsor meeting.";
@@ -108,8 +109,21 @@ function MapPreview() {
   );
 }
 
+/** How many tours this browser has saved; null until known, and never fetched without an owner token. */
+function useSavedCount(): number | null {
+  const [n, setN] = useState<number | null>(null);
+  useEffect(() => {
+    if (!hasOwnerToken()) return;
+    const ctl = new AbortController();
+    listTours({}, { signal: ctl.signal }).then((r) => { if (!ctl.signal.aborted && r.length > 0) setN(r.length); }).catch(() => { /* the link is a convenience */ });
+    return () => ctl.abort();
+  }, []);
+  return n;
+}
+
 export default function Landing() {
   const isDesktop = useIsDesktop();
+  const savedCount = useSavedCount();
   const tour = useTour();
   return (
     <div className="mx-auto grid w-full max-w-[1240px] gap-8 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-12 lg:gap-y-0 lg:pt-6">
@@ -134,6 +148,7 @@ export default function Landing() {
           </div>
         </div>
         {tour && showcaseAvailable() && <button type="button" data-testid="take-tour" onClick={tour.start} className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">How it works (2 min)</button>}
+        {savedCount !== null && <Link to="/tours/mine" className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Your saved tours ({savedCount}) →</Link>}
         {showcaseRoutingAvailable() && (
           <>
           <NextStepLink to="/tours/board?showcase=routing" className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Watch a recorded routing run</NextStepLink>
