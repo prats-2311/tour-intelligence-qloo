@@ -24,7 +24,7 @@ describe("tour registry", () => {
     const steps = tourById("plan")!.steps(show());
     const last = steps[steps.length - 1]!;
     expect(last.id).toBe("saved");
-    expect(last.targets).toEqual(["nav-mine"]);
+    expect(last.targets).toEqual(["nav-mine", "nav-menu"]);
     expect(last.body).toMatch(/saved here as a draft/);
   });
   it("the essentials lead with the sponsor story, not the board", () => {

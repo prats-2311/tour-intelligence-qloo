@@ -31,7 +31,7 @@ const TOURS: TourSpec[] = [
       { title: "Budget", targets: ["budget-header"], strict: true },
       { title: "Your documents and a city plan", targets: ["chat-tools", "ask"], strict: true },
       { title: "Compare: the same model, without Qloo", targets: ["sponsors-compare"], strict: true },
-      { title: "Your saved tours", targets: ["nav-mine"], strict: true },
+      { title: "Your saved tours", targets: ["nav-mine", "nav-menu"] },
     ],
   },
   {

@@ -74,6 +74,11 @@ describe("Tours in the sidebar", () => {
     expect(screen.queryByTestId("tour-popover")).toBeNull();
     expect(document.activeElement).toBe(burger);
   });
+  it("on a phone the menu button carries the nav-menu tour target (My tours lives in the drawer)", () => {
+    desktop = false;
+    mount();
+    expect(screen.getByRole("button", { name: "Open navigation" }).getAttribute("data-tour")).toBe("nav-menu");
+  });
   it("no Tours section without a real recording", () => {
     setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
     mount();

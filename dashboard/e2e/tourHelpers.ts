@@ -35,7 +35,7 @@ export const ringOnTarget = (page: Page, ids: string[]) => page.evaluate((list) 
     if (Math.abs(r.left - (t.left - 6)) < 10 && Math.abs(r.top - (t.top - 6)) < 10 && Math.abs(r.width - (t.width + 12)) < 10 && Math.abs(r.height - (t.height + 12)) < 10) return true;
     // A target taller (or wider) than the free band gets a ring cut to the viewport and the band: it must lie inside the padded target and start where the visible part starts.
     const inside = r.left >= t.left - 16 && r.right <= t.right + 16 && r.top >= t.top - 16 && r.bottom <= t.bottom + 16;
-    const cut = r.height < t.height + 12 - 10 || r.width < t.width + 12 - 10 || r.top > t.top - 6 + 10;
+    const cut = r.height < t.height + 12 - 10 || r.width < t.width + 12 - 10 || r.top >= t.top - 6 + 10; // a target flush with the viewport edge (the phone menu button) gets a ring clamped 4px in, exactly 10px off
     return inside && cut && r.height > 20;
   });
 }, ids);

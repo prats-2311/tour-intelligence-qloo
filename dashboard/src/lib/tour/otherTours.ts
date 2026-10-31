@@ -45,7 +45,7 @@ export function planTourSteps(show: Showcase): TourStep[] {
       body: `Gemini alone picks five brands, and each is placed on Qloo's own fan ranking. It measures how far the model strays from Qloo's ranking, not whether Qloo is right, and it runs only when opened.`,
     },
     {
-      id: "saved", title: "Your saved tours", route: playbook, targets: ["nav-mine"],
+      id: "saved", title: "Your saved tours", route: playbook, targets: ["nav-mine", "nav-menu"],
       body: "Every tour you plan is saved here as a draft. Search by artist or city, reopen it instantly, and mark it final when it's confirmed.",
     },
   ];

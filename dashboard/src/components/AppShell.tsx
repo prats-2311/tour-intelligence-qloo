@@ -66,7 +66,7 @@ function Shell({ children }: { children: ReactNode }) {
       ) : (
         <>
           <div data-mobile-bar data-app-chrome className="flex h-11 shrink-0 items-center gap-1 bg-canvas-raised pr-2">
-            <button ref={hamburger} data-nav-toggle type="button" aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls={DRAWER_ID} onClick={() => setDrawerOpen(true)} className="inline-flex size-11 items-center justify-center rounded-[8px] text-bone outline-none focus-visible:ring-2 focus-visible:ring-gold">
+            <button ref={hamburger} data-nav-toggle data-tour="nav-menu" type="button" aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls={DRAWER_ID} onClick={() => setDrawerOpen(true)} className="inline-flex size-11 items-center justify-center rounded-[8px] text-bone outline-none focus-visible:ring-2 focus-visible:ring-gold">
               <Menu size={20} aria-hidden />
             </button>
             <Breadcrumbs inline />
