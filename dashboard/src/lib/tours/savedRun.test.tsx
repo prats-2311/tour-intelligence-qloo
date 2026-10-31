@@ -31,6 +31,14 @@ describe("saved run format (same shape as a recording)", () => {
     const ok = parseSavedRun({ v: 1, brief: SAMPLE_BRIEF, boardEvents: [{ type: "bogus" }, LUMEN_VALE_SAMPLE[0], LUMEN_VALE_SAMPLE.find((e) => e.type === "city_scored")], playbooks: {} });
     expect(ok?.boardEvents.length).toBe(2);
   });
+  it("playbooks keyed __proto__ / constructor / prototype are skipped and never touch the prototype", () => {
+    const sc = LUMEN_VALE_SAMPLE.find((e) => e.type === "city_scored")!;
+    const raw = JSON.parse(`{"v":1,"brief":${JSON.stringify(SAMPLE_BRIEF)},"boardEvents":${JSON.stringify([sc])},"playbooks":{"__proto__":${JSON.stringify([sc])},"constructor":${JSON.stringify([sc])},"prototype":${JSON.stringify([sc])},"ok":${JSON.stringify([sc])}}}`);
+    const run = parseSavedRun(raw)!;
+    expect(Object.keys(run.playbooks)).toEqual(["ok"]);
+    expect(Object.getPrototypeOf(run.playbooks)).toBeNull();
+    expect(Array.isArray(Object.getPrototypeOf(run.playbooks))).toBe(false);
+  });
   it("summaryOf lists artist, regions and the scored cities with verdict and score", () => {
     const sum = summaryOf(board());
     expect(sum.artist).toBe("Lumen Vale");
