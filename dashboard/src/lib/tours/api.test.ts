@@ -64,6 +64,24 @@ describe("owner token", () => {
       expect(calls.length).toBe(1);
     }
   });
+  it("410 (saved data expired) maps to not_found", async () => {
+    localStorage.setItem(OWNER_KEY, "tok");
+    stub(() => json({ error: "saved tour data expired" }, 410));
+    await expect(getTour("abcdefgh12")).rejects.toMatchObject({ kind: "not_found", status: 410 });
+  });
+  it("sends the session headers on owners and tours calls", async () => {
+    stub((url) => (url === "/api/owners" ? json({ ownerToken: "t1" }, 201) : json({ tours: [] })));
+    await listTours({});
+    expect(headersOf(calls[0]!)["x-session-id"]).toBeTruthy();
+    expect(headersOf(calls[1]!)["x-session-id"]).toBe(headersOf(calls[0]!)["x-session-id"]);
+  });
+  it("maps 429 and 413 save errors to toast kinds", async () => {
+    localStorage.setItem(OWNER_KEY, "tok");
+    stub(() => json({ error: "too many saves, try again later" }, 429));
+    await expect(saveTour({ summary: { artist: "a", cities: [] }, run: {} })).rejects.toMatchObject({ kind: "rate_limited", message: "Too many saves just now. Try again in a little while." });
+    stub(() => json({ error: "saved tours are full; delete some to save more" }, 413));
+    await expect(saveTour({ summary: { artist: "a", cities: [] }, run: {} })).rejects.toMatchObject({ kind: "full", message: "Your saved tours are full. Delete some to save more." });
+  });
   it("private mode (storage throws): the feature is disabled and nothing is requested", async () => {
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("denied"); });
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("denied"); });

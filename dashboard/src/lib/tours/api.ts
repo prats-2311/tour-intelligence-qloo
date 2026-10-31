@@ -1,10 +1,10 @@
-import { isTestTraffic } from "@/lib/qloo/session";
+import { isTestTraffic, sessionHeaders } from "@/lib/qloo/session";
 
 /** Saved tours (times are epoch ms): the browser's side of the BFF contract (`/api/owners`, `/api/tours*`). The owner token is the only credential; it lives in localStorage. */
 export const OWNER_KEY = "tiq.owner";
 export const LIMIT_MESSAGE = "You have 50 saved tours; delete one to save more.";
 
-export type ToursErrorKind = "disabled" | "limit" | "not_found" | "too_large" | "unauthorized" | "server" | "network";
+export type ToursErrorKind = "disabled" | "limit" | "not_found" | "too_large" | "full" | "rate_limited" | "unauthorized" | "server" | "network";
 export class ToursError extends Error {
   kind: ToursErrorKind;
   status: number;
@@ -45,7 +45,7 @@ export async function ensureOwner(opts: Opts = {}): Promise<string> {
   if (!creating) {
     creating = (async () => {
       let res: Response;
-      try { res = await (opts.fetchImpl ?? fetch)("/api/owners", { method: "POST", signal: opts.signal, headers: isTestTraffic() ? { "x-tiq-test": "1" } : {} }); }
+      try { res = await (opts.fetchImpl ?? fetch)("/api/owners", { method: "POST", signal: opts.signal, headers: sessionHeaders() }); }
       catch { throw new ToursError("network", "Couldn't reach the server."); }
       if (!res.ok) throw new ToursError("server", "Couldn't set up saved tours.", res.status);
       const j = (await res.json().catch(() => ({}))) as { ownerToken?: unknown };
@@ -58,7 +58,7 @@ export async function ensureOwner(opts: Opts = {}): Promise<string> {
 }
 
 async function send(path: string, init: { method?: string; body?: unknown }, opts: Opts, token: string): Promise<Response> {
-  const headers: Record<string, string> = { "x-tiq-owner": token, ...(isTestTraffic() ? { "x-tiq-test": "1" } : {}), ...(init.body !== undefined ? { "content-type": "application/json" } : {}) };
+  const headers: Record<string, string> = { ...sessionHeaders(), "x-tiq-owner": token, ...(init.body !== undefined ? { "content-type": "application/json" } : {}) };
   try {
     return await (opts.fetchImpl ?? fetch)(path, { method: init.method ?? "GET", signal: opts.signal, headers, ...(init.body !== undefined ? { body: JSON.stringify(init.body) } : {}) });
   } catch (e) {
@@ -83,8 +83,10 @@ async function request(path: string, init: { method?: string; body?: unknown }, 
   }
   if (res.ok) return res;
   if (await isOwnerRequired(res)) throw new ToursError("unauthorized", "Saved tours are unavailable in this browser.", 401);
-  if (res.status === 404) throw new ToursError("not_found", "That saved tour no longer exists.", 404);
+  if (res.status === 404 || res.status === 410) throw new ToursError("not_found", "That saved tour no longer exists.", res.status);
   if (res.status === 409) throw new ToursError("limit", LIMIT_MESSAGE, 409);
+  if (res.status === 429) throw new ToursError("rate_limited", "Too many saves just now. Try again in a little while.", 429);
+  if (res.status === 413 && (await res.clone().json().catch(() => null))?.error?.startsWith?.("saved tours are full")) throw new ToursError("full", "Your saved tours are full. Delete some to save more.", 413);
   if (res.status === 413) throw new ToursError("too_large", "This tour is too large to save.", 413);
   throw new ToursError("server", "Saved tours are unavailable right now. Try again in a moment.", res.status);
 }

@@ -130,4 +130,26 @@ describe("savedTours BFF proxy", () => {
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: "owner required" });
   });
+  it("POST /api/owners forwards the first x-forwarded-for entry as x-tiq-client, ignoring a browser-supplied x-tiq-client; other routes never send it", async () => {
+    const fetchImpl = vi.fn(async () => json(201, { ownerToken: "abc" }));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    await fetch(`${base}/api/owners`, { method: "POST", headers: { "x-forwarded-for": "9.9.9.9, 10.0.0.1", "x-tiq-client": "spoofed" } });
+    expect(fetchImpl.mock.calls[0][1].headers["x-tiq-client"]).toBe("9.9.9.9");
+    await fetch(`${base}/api/owners`, { method: "POST", headers: { "x-tiq-client": "spoofed" } });
+    expect(fetchImpl.mock.calls[1][1].headers["x-tiq-client"]).toMatch(/127\.0\.0\.1/);
+    await fetch(`${base}/api/tours`, { headers: { ...H, "x-forwarded-for": "9.9.9.9", "x-tiq-client": "spoofed" } });
+    expect(fetchImpl.mock.calls[2][1].headers).not.toHaveProperty("x-tiq-client");
+  });
+  it("body-parser errors on tours routes are JSON: 413 tour too large, malformed 400 invalid JSON", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const fetchImpl = vi.fn(async () => json(201, { id: "x" }));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const big = await fetch(`${base}/api/tours`, { method: "POST", headers: H, body: JSON.stringify({ run: "x".repeat(5_300_000) }) });
+    expect(big.status).toBe(413);
+    expect(await big.json()).toEqual({ error: "tour too large" });
+    const bad = await fetch(`${base}/api/tours/abcdefgh12`, { method: "PATCH", headers: H, body: "{not json" });
+    expect(bad.status).toBe(400);
+    expect(await bad.json()).toEqual({ error: "invalid JSON" });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
 });

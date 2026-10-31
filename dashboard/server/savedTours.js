@@ -12,7 +12,7 @@ const toursJson = express.json({ limit: "5mb" });
  * `devUrl` is the COLLAB_FAKE in-memory server (never set in production); it serves these routes too.
  */
 export function mountSavedTours(app, { gatewayUrl, getToken, fetchImpl = fetch, devUrl }) {
-  async function forward(req, res, { path, method, body }) {
+  async function forward(req, res, { path, method, body, client }) {
     const base = devUrl || gatewayUrl;
     if (!base) return res.status(503).json({ error: "Qloo gateway not configured" });
     const local = Boolean(devUrl) || isLoopbackUrl(base);
@@ -28,6 +28,8 @@ export function mountSavedTours(app, { gatewayUrl, getToken, fetchImpl = fetch, 
           ...(local ? {} : { authorization: `Bearer ${await getToken()}` }),
           ...(sessionId && sessionId.length <= 128 ? { "x-session-id": sessionId } : {}),
           ...(owner ? { "x-tiq-owner": owner } : {}),
+          // Only owner creation is limited per browser address, and the browser can never choose it: any incoming x-tiq-client is ignored.
+          ...(client ? { "x-tiq-client": client } : {}),
           ...(req.header("x-tiq-test") === "1" ? { "x-tiq-test": "1" } : {}),
           ...(body !== undefined ? { "content-type": "application/json" } : {}),
         },
@@ -50,7 +52,9 @@ export function mountSavedTours(app, { gatewayUrl, getToken, fetchImpl = fetch, 
     return false;
   };
 
-  app.post("/api/owners", (req, res) => forward(req, res, { path: "/v1/owners", method: "POST" }));
+  // Cloud Run sets x-forwarded-for; the first entry is the browser address (the gateway only sees this server).
+  const clientAddress = (req) => (req.header("x-forwarded-for") ?? "").split(",")[0].trim().slice(0, 128) || String(req.ip ?? "");
+  app.post("/api/owners", (req, res) => forward(req, res, { path: "/v1/owners", method: "POST", client: clientAddress(req) }));
   app.post("/api/tours", (req, res, next) => (req.header("x-tiq-owner") ? next() : next("route")), toursJson, (req, res) => forward(req, res, { path: "/v1/tours", method: "POST", body: req.body ?? {} }));
   app.get("/api/tours", (req, res) => {
     const params = new URLSearchParams();
@@ -61,4 +65,10 @@ export function mountSavedTours(app, { gatewayUrl, getToken, fetchImpl = fetch, 
   app.get("/api/tours/:id", (req, res) => validId(req, res) && forward(req, res, { path: `/v1/tours/${req.params.id}`, method: "GET" }));
   app.patch("/api/tours/:id", (req, res, next) => (validId(req, res) ? next() : undefined), toursJson, (req, res) => forward(req, res, { path: `/v1/tours/${req.params.id}`, method: "PATCH", body: req.body ?? {} }));
   app.delete("/api/tours/:id", (req, res) => validId(req, res) && forward(req, res, { path: `/v1/tours/${req.params.id}`, method: "DELETE" }));
+  // Body-parser failures on the routes above: JSON, never an HTML page or stack.
+  app.use((err, req, res, next) => {
+    if (err?.type === "entity.too.large") return res.status(413).json({ error: "tour too large" });
+    if (err?.type === "entity.parse.failed") return res.status(400).json({ error: "invalid JSON" });
+    return next(err);
+  });
 }
