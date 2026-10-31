@@ -14,9 +14,9 @@ import TourBook from "./TourBook";
 const loader = vi.hoisted(() => ({ load: vi.fn() }));
 vi.mock("@/lib/qloo/playbookStore", async (orig) => ({ ...(await orig<typeof import("@/lib/qloo/playbookStore")>()), loadPlaybook: (...a: unknown[]) => loader.load(...a) }));
 
-configure({ asyncUtilTimeout: 5000 });
+configure({ asyncUtilTimeout: 3000 });
 const ARTIST = "sample-lumen-vale";
-const [DONE, PENDING, FAILED] = ["3530597", "4005539", "3448439"]; // Guadalajara, Curitiba, third city
+const [DONE, PENDING, FAILED] = ["3530597", "4005539", "3448439"]; // Mexico City, Guadalajara, São Paulo
 const done = (id: string): PlaybookState => samplePlaybookEvents(id)!.reduce((s, event) => playbookReducer(s, { type: "event", event }), playbookReducer(initialPlaybook, { type: "start", source: "sample" }));
 const errored: PlaybookState = { ...initialPlaybook, status: "error", source: "sample", error: { code: "X", message: "boom" } };
 const seed = (id: string, s: PlaybookState) => seedPlaybook(playbookKey(ARTIST, id), s);
@@ -49,7 +49,7 @@ describe("TourBook progressive rendering", () => {
     seed(DONE, done(DONE));
     seed(FAILED, errored);
     renderBook([DONE, PENDING, FAILED]);
-    await screen.findByRole("heading", { name: "Guadalajara", level: 2 });
+    await screen.findByRole("heading", { name: "Mexico City", level: 2 });
     expect(screen.getByTestId("book-which-tour")).toBeTruthy();
     expect(screen.getByRole("heading", { name: /Market selection/i })).toBeTruthy();
     expect(screen.getAllByText(/building this chapter/i).length).toBeGreaterThan(0);
@@ -65,19 +65,19 @@ describe("TourBook progressive rendering", () => {
   it("a city with no result after 120 s becomes a failed chapter without blocking the others", async () => {
     seed(DONE, done(DONE));
     renderBook([DONE, PENDING]);
-    await screen.findByRole("heading", { name: "Guadalajara", level: 2 });
+    await screen.findByRole("heading", { name: "Mexico City", level: 2 });
     expect(screen.queryByText("Couldn't build this chapter.")).toBeNull();
     vi.useFakeTimers();
     await act(async () => { await vi.advanceTimersByTimeAsync(121_000); });
     expect(screen.getAllByText("Couldn't build this chapter.")).toHaveLength(1);
-    expect(screen.getByRole("heading", { name: "Guadalajara", level: 2 })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Mexico City", level: 2 })).toBeTruthy();
     expect(within(screen.getByRole("status")).getByText(/1 of 2 chapters ready/)).toBeTruthy();
   });
 
   it("with every playbook cached there are no placeholders and no progress line", async () => {
     for (const id of [DONE, PENDING]) seed(id, done(id));
     renderBook([DONE, PENDING]);
-    await screen.findByRole("heading", { name: "Curitiba", level: 2 });
+    await screen.findByRole("heading", { name: "Guadalajara", level: 2 });
     expect(screen.queryByText(/building this chapter/i)).toBeNull();
     expect(screen.queryByText(/chapters ready/)).toBeNull();
     expect(screen.queryByText("Couldn't build this chapter.")).toBeNull();
