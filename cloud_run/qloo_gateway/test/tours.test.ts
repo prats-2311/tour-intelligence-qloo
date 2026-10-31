@@ -4,7 +4,7 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { mountTours, TOURS_JSON_LIMIT } from "../src/tours/routes.js";
 import { FirestoreToursStore, MemoryToursStore, type FsLike } from "../src/tours/store.js";
-import { foldText } from "../src/tours/model.js";
+import { foldText, TOUR_TTL_DAYS, OWNER_TTL_DAYS } from "../src/tours/model.js";
 import { createApp } from "../src/http/app.js";
 
 const DAY = 86_400_000;
@@ -62,6 +62,23 @@ describe("owners", () => {
     advance(61 * 60_000);
     await request(app).get("/v1/tours").set("x-tiq-owner", tok);
     expect((await store.getOwner(hash))!.lastSeenAt.getTime()).toBe(now());
+  });
+  it("owners carry expiresAt = lastSeenAt + 90 days, slid on touch; an expired owner is unknown (401)", async () => {
+    expect(TOUR_TTL_DAYS).toBe(45);
+    const { app, store, advance, now } = setup();
+    const tok = await owner(app);
+    const hash = createHash("sha256").update(tok).digest("hex");
+    const o1 = (await store.getOwner(hash))!;
+    expect(o1.expiresAt!.getTime()).toBe(o1.lastSeenAt.getTime() + OWNER_TTL_DAYS * DAY);
+    advance(2 * 3_600_000);
+    await request(app).get("/v1/tours").set("x-tiq-owner", tok);
+    const o2 = (await store.getOwner(hash))!;
+    expect(o2.lastSeenAt.getTime()).toBe(now());
+    expect(o2.expiresAt!.getTime()).toBe(now() + OWNER_TTL_DAYS * DAY);
+    advance(OWNER_TTL_DAYS * DAY + 1);
+    const res = await request(app).get("/v1/tours").set("x-tiq-owner", tok);
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({ error: "owner required" });
   });
   it("marks test traffic on the owner", async () => {
     const { app, store } = setup();
@@ -188,7 +205,7 @@ describe("tours CRUD", () => {
   it("foldText strips accents and lowercases", () => {
     expect(foldText("São Paulo · Zürich ÉCOLE")).toBe("sao paulo · zurich ecole");
   });
-  it("stores test: true for test traffic only, and expiresAt = updatedAt + 180 days", async () => {
+  it("stores test: true for test traffic only, and expiresAt = updatedAt + 45 days", async () => {
     const { app, store, advance } = setup();
     const tok = await owner(app);
     const real = (await create(app, tok)).body.id;
@@ -199,11 +216,11 @@ describe("tours CRUD", () => {
     expect((await store.getTour(sess))!.test).toBe(true);
     const d = (await store.getTour(real))!;
     expect(d.expiresAt).toBeInstanceOf(Date);
-    expect(d.expiresAt.getTime()).toBe(d.updatedAt.getTime() + 180 * DAY);
+    expect(d.expiresAt.getTime()).toBe(d.updatedAt.getTime() + TOUR_TTL_DAYS * DAY);
     advance(DAY);
     await request(app).patch(`/v1/tours/${real}`).set("x-tiq-owner", tok).send({ title: "t" });
     const d2 = (await store.getTour(real))!;
-    expect(d2.expiresAt.getTime()).toBe(d2.updatedAt.getTime() + 180 * DAY);
+    expect(d2.expiresAt.getTime()).toBe(d2.updatedAt.getTime() + TOUR_TTL_DAYS * DAY);
     expect(d2.ownerHash).toBe(createHash("sha256").update(tok).digest("hex"));
   });
   it("validates input: 400 for bad shapes", async () => {
@@ -274,5 +291,48 @@ describe("FirestoreToursStore", () => {
     expect((await request(app).delete(`/v1/tours/${id}`).set("x-tiq-owner", other)).status).toBe(404);
     expect((await request(app).delete(`/v1/tours/${id}`).set("x-tiq-owner", tok)).status).toBe(204);
     expect([...docs.keys()].filter((k) => k.startsWith("user_tours/"))).toEqual([]);
+  });
+  it("a title-only PATCH rewrites expiresAt on every chunk so chunks never expire before the tour", async () => {
+    const { fs, docs } = fakeFs();
+    const { app, advance } = setup({ store: new FirestoreToursStore({ db: fs }) });
+    const tok = await owner(app);
+    const id = (await create(app, tok, { run: { blob: "z".repeat(1_500_000) } })).body.id;
+    advance(10 * DAY);
+    await request(app).patch(`/v1/tours/${id}`).set("x-tiq-owner", tok).send({ title: "renamed" });
+    const tourExp = (docs.get(`user_tours/${id}`)!.expiresAt as Date).getTime();
+    const chunkKeys = [...docs.keys()].filter((k) => k.startsWith(`user_tours/${id}/chunks/`));
+    expect(chunkKeys).toHaveLength(3);
+    for (const k of chunkKeys) { expect((docs.get(k)!.expiresAt as Date).getTime()).toBe(tourExp); expect(typeof docs.get(k)!.data).toBe("string"); }
+  });
+  it("a missing chunk is 410 saved tour data expired, and the tour plus remaining chunks are deleted", async () => {
+    const { fs, docs } = fakeFs();
+    const { app } = setup({ store: new FirestoreToursStore({ db: fs }) });
+    const tok = await owner(app);
+    const id = (await create(app, tok, { run: { blob: "z".repeat(1_500_000) } })).body.id;
+    docs.delete(`user_tours/${id}/chunks/1`);
+    const r = await request(app).get(`/v1/tours/${id}`).set("x-tiq-owner", tok);
+    expect(r.status).toBe(410);
+    expect(r.body).toEqual({ error: "saved tour data expired" });
+    expect([...docs.keys()].filter((k) => k.startsWith(`user_tours/${id}`))).toEqual([]);
+    expect((await request(app).get(`/v1/tours/${id}`).set("x-tiq-owner", tok)).status).toBe(404);
+  });
+});
+
+describe("tours with damaged data (memory store)", () => {
+  it("a chunk set that does not parse is 410 and deletes the tour", async () => {
+    const { app, store } = setup();
+    const tok = await owner(app);
+    const id = (await create(app, tok)).body.id;
+    await store.saveTour(id, (await store.getTour(id))!, ['{"a":']);
+    const r = await request(app).get(`/v1/tours/${id}`).set("x-tiq-owner", tok);
+    expect(r.status).toBe(410);
+    expect(await store.getTour(id)).toBeNull();
+  });
+  it("fewer chunks than chunkCount is 410", async () => {
+    const { app, store } = setup();
+    const tok = await owner(app);
+    const id = (await create(app, tok)).body.id;
+    await store.saveTour(id, { ...(await store.getTour(id))!, chunkCount: 3 });
+    expect((await request(app).get(`/v1/tours/${id}`).set("x-tiq-owner", tok)).status).toBe(410);
   });
 });

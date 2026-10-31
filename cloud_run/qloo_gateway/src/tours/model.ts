@@ -1,11 +1,14 @@
 export const MAX_TOURS_PER_OWNER = 50;
 export const MAX_RUN_CHARS = 4_000_000;
 export const CHUNK_CHARS = 700_000;
-export const TTL_DAYS = 180;
+/** Saved tours live 45 days after their last save: the same as the Qloo cache TTL (QLOO_CACHE_TTL_DAYS=45). */
+export const TOUR_TTL_DAYS = 45;
+/** An owner record is purged 90 days after the owner was last seen (Firestore TTL on tour_owners.expiresAt). */
+export const OWNER_TTL_DAYS = 90;
 export const TOUR_ID = /^[A-Za-z0-9_-]{8,40}$/;
 
 export interface TourCity { id: string; name: string; country: string; verdict?: string; score?: number }
-export interface OwnerDoc { createdAt: Date; lastSeenAt: Date; test?: true }
+export interface OwnerDoc { createdAt: Date; lastSeenAt: Date; expiresAt?: Date; test?: true }
 export interface TourDoc {
   ownerHash: string; title: string; status: "draft" | "final"; artist: string; artistLower: string; regions: string[]; cities: TourCity[]; search: string;
   createdAt: Date; updatedAt: Date; expiresAt: Date; runBytes: number; chunkCount: number; test?: true;

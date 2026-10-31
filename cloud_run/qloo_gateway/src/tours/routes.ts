@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import type { Express, Request, Response } from "express";
 import { TEST_HEADER, isTestTraffic } from "../analytics/bigquery.js";
 import { WindowLimiter } from "../collab/limits.js";
-import { MAX_RUN_CHARS, MAX_TOURS_PER_OWNER, TOUR_ID, TTL_DAYS, ToursError, chunkString, defaultTitle, foldText, parseStatus, parseSummary, parseTitle, searchText, serializeRun, type Summary, type TourDoc } from "./model.js";
+import { MAX_RUN_CHARS, MAX_TOURS_PER_OWNER, TOUR_ID, TOUR_TTL_DAYS, OWNER_TTL_DAYS, ToursError, chunkString, defaultTitle, foldText, parseStatus, parseSummary, parseTitle, searchText, serializeRun, type Summary, type TourDoc } from "./model.js";
 import type { ToursStore } from "./store.js";
 
 export const TOURS_JSON_LIMIT = "5mb";
@@ -43,8 +43,8 @@ export function mountTours(app: Express, deps: ToursDeps): void {
     if (!tok || tok.length > 200) { res.status(401).json({ error: "owner required" }); return null; }
     const hash = sha256(tok);
     const owner = await store.getOwner(hash);
-    if (!owner) { res.status(401).json({ error: "owner required" }); return null; }
-    if (now() - owner.lastSeenAt.getTime() >= HOUR) await store.touchOwner(hash, new Date(now()));
+    if (!owner || (owner.expiresAt && owner.expiresAt.getTime() <= now())) { res.status(401).json({ error: "owner required" }); return null; }
+    if (now() - owner.lastSeenAt.getTime() >= HOUR) { const at = new Date(now()); await store.touchOwner(hash, at, new Date(at.getTime() + OWNER_TTL_DAYS * DAY)); }
     return hash;
   }
   const idOf = (req: Request, res: Response): string | null => {
@@ -71,7 +71,7 @@ export function mountTours(app: Express, deps: ToursDeps): void {
       if (!ownerLimit.take(sid(req) ?? `ip:${req.ip ?? "?"}`)) return void res.status(429).json({ error: "Too many requests, try again later" });
       const token = newToken();
       const at = new Date(now());
-      await store.createOwner(sha256(token), { createdAt: at, lastSeenAt: at, ...(isTest(req) ? { test: true as const } : {}) });
+      await store.createOwner(sha256(token), { createdAt: at, lastSeenAt: at, expiresAt: new Date(at.getTime() + OWNER_TTL_DAYS * DAY), ...(isTest(req) ? { test: true as const } : {}) });
       res.status(201).set("cache-control", "no-store").json({ ownerToken: token });
     } catch (err) { fail(res, err); }
   });
@@ -88,7 +88,7 @@ export function mountTours(app: Express, deps: ToursDeps): void {
       if ((await store.listTours(hash)).length >= MAX_TOURS_PER_OWNER) return void res.status(409).json({ error: `tour limit reached (${MAX_TOURS_PER_OWNER})` });
       const chunks = chunkString(run);
       const at = new Date(now());
-      const doc: TourDoc = { ownerHash: hash, title, status, artist: summary.artist, artistLower: foldText(summary.artist), regions: summary.regions, cities: summary.cities, search: searchText(title, summary), createdAt: at, updatedAt: at, expiresAt: new Date(at.getTime() + TTL_DAYS * DAY), runBytes: run.length, chunkCount: chunks.length, ...(isTest(req) ? { test: true as const } : {}) };
+      const doc: TourDoc = { ownerHash: hash, title, status, artist: summary.artist, artistLower: foldText(summary.artist), regions: summary.regions, cities: summary.cities, search: searchText(title, summary), createdAt: at, updatedAt: at, expiresAt: new Date(at.getTime() + TOUR_TTL_DAYS * DAY), runBytes: run.length, chunkCount: chunks.length, ...(isTest(req) ? { test: true as const } : {}) };
       const id = newId();
       await store.saveTour(id, doc, chunks);
       res.status(201).json({ id, updatedAt: at.getTime() });
@@ -116,7 +116,14 @@ export function mountTours(app: Express, deps: ToursDeps): void {
       if (!id) return;
       const t = await store.getTour(id);
       if (!live(t, hash)) return void res.status(404).json({ error: "Tour not found" });
-      const run = JSON.parse((await store.readChunks(id)).join(""));
+      const chunks = await store.readChunks(id, t.chunkCount);
+      let run: unknown;
+      try { if (!chunks) throw new Error("missing chunk"); run = JSON.parse(chunks.join("")); }
+      catch {
+        // A chunk expired or is damaged: the tour cannot be opened. Drop it and the remaining chunks.
+        await store.deleteTour(id);
+        return void res.status(410).json({ error: "saved tour data expired" });
+      }
       res.set("cache-control", "no-store").json({ ...meta(id, t), run });
     } catch (err) { fail(res, err); }
   });
@@ -143,7 +150,7 @@ export function mountTours(app: Express, deps: ToursDeps): void {
       if (run !== undefined) { chunks = chunkString(run); next.runBytes = run.length; next.chunkCount = chunks.length; }
       next.search = searchText(next.title, summary);
       next.updatedAt = new Date(now());
-      next.expiresAt = new Date(next.updatedAt.getTime() + TTL_DAYS * DAY);
+      next.expiresAt = new Date(next.updatedAt.getTime() + TOUR_TTL_DAYS * DAY);
       await store.saveTour(id, next, chunks);
       res.json({ id, updatedAt: next.updatedAt.getTime() });
     } catch (err) { fail(res, err); }

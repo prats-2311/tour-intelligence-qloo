@@ -4,11 +4,12 @@ import type { OwnerDoc, TourDoc } from "./model.js";
 export interface ToursStore {
   createOwner(hash: string, doc: OwnerDoc): Promise<void>;
   getOwner(hash: string): Promise<OwnerDoc | null>;
-  touchOwner(hash: string, at: Date): Promise<void>;
+  touchOwner(hash: string, at: Date, expiresAt?: Date): Promise<void>;
   listTours(ownerHash: string): Promise<Array<TourDoc & { id: string }>>;
   getTour(id: string): Promise<TourDoc | null>;
   saveTour(id: string, doc: TourDoc, chunks?: string[]): Promise<void>;
-  readChunks(id: string): Promise<string[]>;
+  /** Chunks 0..count-1 in order (all stored ones when count is omitted); null when any of them is missing. */
+  readChunks(id: string, count?: number): Promise<string[] | null>;
   deleteTour(id: string): Promise<void>;
 }
 
@@ -20,11 +21,11 @@ export class MemoryToursStore implements ToursStore {
   private chunks = new Map<string, string[]>();
   async createOwner(hash: string, doc: OwnerDoc) { this.owners.set(hash, cp(doc)); }
   async getOwner(hash: string) { const d = this.owners.get(hash); return d ? cp(d) : null; }
-  async touchOwner(hash: string, at: Date) { const d = this.owners.get(hash); if (d) d.lastSeenAt = new Date(at); }
+  async touchOwner(hash: string, at: Date, expiresAt?: Date) { const d = this.owners.get(hash); if (d) { d.lastSeenAt = new Date(at); if (expiresAt) d.expiresAt = new Date(expiresAt); } }
   async listTours(ownerHash: string) { return [...this.tours].filter(([, t]) => t.ownerHash === ownerHash).map(([id, t]) => ({ id, ...cp(t) })); }
   async getTour(id: string) { const d = this.tours.get(id); return d ? cp(d) : null; }
   async saveTour(id: string, doc: TourDoc, chunks?: string[]) { this.tours.set(id, cp(doc)); if (chunks) this.chunks.set(id, [...chunks]); }
-  async readChunks(id: string) { return [...(this.chunks.get(id) ?? [])]; }
+  async readChunks(id: string, count?: number) { const c = this.chunks.get(id) ?? []; if (count === undefined) return [...c]; return c.length >= count ? c.slice(0, count) : null; }
   async deleteTour(id: string) { this.tours.delete(id); this.chunks.delete(id); }
   /** Test helper: everything stored, to assert no raw token is ever kept. */
   dump() { return { owners: [...this.owners], tours: [...this.tours], chunks: [...this.chunks] }; }
@@ -41,8 +42,8 @@ const readTour = (raw: Record<string, unknown>): TourDoc => ({ ...(raw as unknow
 
 /**
  * `tour_owners/<sha256(token)>`, `user_tours/<id>` and `user_tours/<id>/chunks/<n>` ({ data: string }, at most 700,000 ASCII chars each).
- * OPERATOR: enable a Firestore TTL policy on `expiresAt` for collection group `user_tours` (updatedAt + 180 days). The chunk
- * subcollection docs carry the same `expiresAt` so one TTL policy on collection group `chunks` clears them too. Not run from code.
+ * OPERATOR: enable a Firestore TTL policy on `expiresAt` for collection group `user_tours` (updatedAt + 45 days, TOUR_TTL_DAYS). The chunk
+ * subcollection docs carry the same `expiresAt` so one TTL policy on collection group `chunks` clears them too. Owners: TTL on `tour_owners.expiresAt` (lastSeenAt + 90 days). Not run from code.
  * Querying owner tours by `ownerHash` equality needs only the automatic single-field index.
  */
 export class FirestoreToursStore implements ToursStore {
@@ -52,12 +53,12 @@ export class FirestoreToursStore implements ToursStore {
   async getOwner(hash: string) {
     const s = await this.db.doc(`tour_owners/${hash}`).get();
     const d = s.exists ? s.data() : undefined;
-    return d ? { ...(d as unknown as OwnerDoc), createdAt: toDate(d.createdAt), lastSeenAt: toDate(d.lastSeenAt) } : null;
+    return d ? { ...(d as unknown as OwnerDoc), createdAt: toDate(d.createdAt), lastSeenAt: toDate(d.lastSeenAt), ...(d.expiresAt ? { expiresAt: toDate(d.expiresAt) } : {}) } : null;
   }
-  async touchOwner(hash: string, at: Date) {
+  async touchOwner(hash: string, at: Date, expiresAt?: Date) {
     const ref = this.db.doc(`tour_owners/${hash}`);
     const s = await ref.get();
-    if (s.exists) await ref.set({ ...s.data()!, lastSeenAt: at });
+    if (s.exists) await ref.set({ ...s.data()!, lastSeenAt: at, ...(expiresAt ? { expiresAt } : {}) });
   }
   async listTours(ownerHash: string) {
     const snap = await this.db.collection("user_tours").where("ownerHash", "==", ownerHash).get();
@@ -68,17 +69,25 @@ export class FirestoreToursStore implements ToursStore {
     return s.exists ? readTour(s.data()!) : null;
   }
   async saveTour(id: string, doc: TourDoc, chunks?: string[]) {
-    if (!chunks) return void (await this.db.doc(`user_tours/${id}`).set({ ...doc }));
-    const old = (await this.db.collection(`user_tours/${id}/chunks`).get()).docs.map((d) => d.id);
+    const existing = (await this.db.collection(`user_tours/${id}/chunks`).get()).docs.filter((d) => d.exists);
     const batch = this.db.batch();
-    chunks.forEach((data, n) => batch.set(this.db.doc(`user_tours/${id}/chunks/${n}`) as never, { data, expiresAt: doc.expiresAt }));
-    for (const oid of old) if (!(Number(oid) < chunks.length)) batch.delete(this.db.doc(`user_tours/${id}/chunks/${oid}`) as never);
+    if (chunks) {
+      chunks.forEach((data, n) => batch.set(this.db.doc(`user_tours/${id}/chunks/${n}`) as never, { data, expiresAt: doc.expiresAt }));
+      for (const d of existing) if (!(Number(d.id) < chunks.length)) batch.delete(this.db.doc(`user_tours/${id}/chunks/${d.id}`) as never);
+    } else {
+      // Metadata-only save: the tour's expiry slides, so every chunk's must too (a chunk may never expire before its tour).
+      for (const d of existing) batch.set(this.db.doc(`user_tours/${id}/chunks/${d.id}`) as never, { ...d.data()!, expiresAt: doc.expiresAt });
+    }
     batch.set(this.db.doc(`user_tours/${id}`) as never, { ...doc });
     await batch.commit();
   }
-  async readChunks(id: string) {
-    const snap = await this.db.collection(`user_tours/${id}/chunks`).get();
-    return snap.docs.filter((d) => d.exists).sort((a, b) => Number(a.id) - Number(b.id)).map((d) => String(d.data()!.data ?? ""));
+  async readChunks(id: string, count?: number) {
+    const snap = (await this.db.collection(`user_tours/${id}/chunks`).get()).docs.filter((d) => d.exists);
+    const byIdx = new Map(snap.map((d) => [Number(d.id), String(d.data()!.data ?? "")]));
+    const n = count ?? snap.length;
+    const out: string[] = [];
+    for (let i = 0; i < n; i++) { const c = byIdx.get(i); if (c === undefined) return null; out.push(c); }
+    return out;
   }
   async deleteTour(id: string) {
     const old = (await this.db.collection(`user_tours/${id}/chunks`).get()).docs.map((d) => d.id);
