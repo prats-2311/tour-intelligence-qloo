@@ -10,7 +10,7 @@ import { LOCAL_DESCRIBE_CAP, LOCAL_SUGGESTIONS, matchPool, matchSuggestion } fro
 import { cityPopularityArgs, LOCAL_ACT_POOL, localActRankArgs } from "./recArgs.js";
 import { dropNonSponsors } from "./nonSponsors.js";
 import { keepVerified, type SponsorCandidate, type SponsorVerdicts } from "./sponsorCheck.js";
-import { emptySupportCopy, genreTagNames, HEADLINER_SIZE_UNKNOWN, rankLifted, SIZE_UNCHECKED_COPY, smallerThanHeadliner, SPONSOR_LIFT_NOTE } from "./playbookTrust.js";
+import { dedupeByName, emptySupportCopy, genreTagNames, HEADLINER_SIZE_UNKNOWN, rankLifted, SIZE_UNCHECKED_COPY, smallerThanHeadliner, SPONSOR_LIFT_NOTE } from "./playbookTrust.js";
 
 /** Size of the baseline lists (the city's own favourites) that lift is measured against. */
 const BASELINE_LIMIT = 20;
@@ -83,7 +83,7 @@ export async function* runCityPlaybook(
       }
     }
     if (headliner === undefined) sizeWarnings.push({ tool: "qloo_describe", kind: "partial", message: HEADLINER_SIZE_UNKNOWN });
-    const coScale = smallerThanHeadliner(extractEntities(a.raw.artists.envelope), headliner);
+    const coScale = smallerThanHeadliner(dedupeByName(extractEntities(a.raw.artists.envelope)), headliner);
     const candidates = coScale.kept.slice(0, 3);
     const settled = await Promise.allSettled(candidates.map(async (c) => {
       const r = await trackedCall(deps, input.sessionId, "qloo_compare_audiences", { group_a: [input.artistEntityId], group_b: [c.entityId] }, events);
@@ -122,7 +122,7 @@ export async function* runCityPlaybook(
     const brandBase = baselineOf(brandBaseS), movieBase = baselineOf(movieBaseS), tvBase = baselineOf(tvBaseS);
     const tags = (tagsS as PromiseFulfilledResult<CallResult>).value;
     const proxyRecs = (proxyS as PromiseFulfilledResult<CallResult>).value;
-    const candidatesPop = extractEntities(proxyRecs.envelope);
+    const candidatesPop = dedupeByName(extractEntities(proxyRecs.envelope));
     const proxies = candidatesPop.slice(0, 5); // the city's mainstream: the shared-taste comparison baseline, whatever its size
     const poolScale = smallerThanHeadliner(candidatesPop, headliner);
     const poolKept = poolScale.kept;
@@ -157,7 +157,7 @@ export async function* runCityPlaybook(
     }
     const suggestedIds = new Set([...novel, ...poolHits].map((e) => e.entityId));
     const novelScale = smallerThanHeadliner(novel, headliner);
-    const candidateActs = suggested === null ? poolKept : [...new Map([...novelScale.kept, ...poolKept].map((e) => [e.entityId, e])).values()].slice(0, LOCAL_SUGGESTIONS);
+    const candidateActs = suggested === null ? poolKept : dedupeByName([...new Map([...novelScale.kept, ...poolKept].map((e) => [e.entityId, e])).values()]).slice(0, LOCAL_SUGGESTIONS);
     const talentBigger = poolScale.biggerThanHeadliner + novelScale.biggerThanHeadliner;
     const talentUnknown = poolScale.popularityUnknown + novelScale.popularityUnknown;
     let rankUnavailable = false;
@@ -172,7 +172,7 @@ export async function* runCityPlaybook(
       const rankedActs = ranked ? extractEntities(ranked.envelope) : [];
       if (ranked) talentRefs.push(ref("qloo_rank", ranked));
       if (ranked && rankedActs.length > 0) {
-        localActs = rankedActs.slice(0, 5);
+        localActs = dedupeByName(rankedActs).slice(0, 5);
         talentWarnings.push(...warningsFor("qloo_rank", ranked));
       } else {
         rankUnavailable = true;
@@ -192,7 +192,7 @@ export async function* runCityPlaybook(
     const { raw } = a;
     // Non-profit, advocacy, political and religious organisations are not sponsors: removed before ranking, so they reach neither the card, the merch brands nor the narrative evidence.
     // The name list is the backstop (a listed name is hidden whatever the model says); the model check then hides every candidate it does not affirm as a sponsor.
-    const allBrands = extractEntities(raw.brands.envelope);
+    const allBrands = dedupeByName(extractEntities(raw.brands.envelope));
     const listed = dropNonSponsors(allBrands);
     let brandPool = listed;
     let sponsorCheck: "unavailable" | undefined;
@@ -208,8 +208,8 @@ export async function* runCityPlaybook(
     const sponsorLift = rankLifted(brandPool.items, brandBase ? extractEntities(brandBase.envelope) : null);
     const sponsors = sponsorLift.items;
     const baselineRefs = (r: CallResult | null) => (r ? [ref("qloo_recommend", r)] : []);
-    const filmLift = rankLifted(extractEntities(raw.films.envelope), movieBase ? extractEntities(movieBase.envelope) : null, { dropMainstream: true });
-    const tvLift = rankLifted(extractEntities(raw.tv.envelope), tvBase ? extractEntities(tvBase.envelope) : null, { dropMainstream: true });
+    const filmLift = rankLifted(dedupeByName(extractEntities(raw.films.envelope)), movieBase ? extractEntities(movieBase.envelope) : null, { dropMainstream: true });
+    const tvLift = rankLifted(dedupeByName(extractEntities(raw.tv.envelope)), tvBase ? extractEntities(tvBase.envelope) : null, { dropMainstream: true });
     const mainstreamDropped = filmLift.mainstreamDropped + tvLift.mainstreamDropped;
     const sizeKnown = headliner !== undefined;
     const sizeNote: Record<string, string> = sizeKnown ? {} : { sizeNote: SIZE_UNCHECKED_COPY };
@@ -227,7 +227,7 @@ export async function* runCityPlaybook(
         ...(sponsors.length > 0 ? { summary: { brands: sponsors.slice(0, 5).map((b) => b.name) } } : {}) },
       card("promo_zones", displayZones(a.zones, known!.name).slice(0, 5), [ref("qloo_where_popular", raw.inCity)], warningsFor("qloo_where_popular", raw.inCity)),
       { ...card("local_moment",
-        interleave([extractEntities(raw.artists.envelope), filmLift.items, tvLift.items, a.placeEntities], 9),
+        interleave([dedupeByName(extractEntities(raw.artists.envelope)), filmLift.items, tvLift.items, a.placeEntities], 9),
         [ref("qloo_recommend", raw.artists), ref("qloo_recommend", raw.films), ref("qloo_recommend", raw.tv), ...(a.placeEntities.length > 0 ? [ref("qloo_recommend", raw.places)] : []), ...(filmLift.lifted ? baselineRefs(movieBase) : []), ...(tvLift.lifted ? baselineRefs(tvBase) : [])],
         [raw.artists, raw.films, raw.tv, raw.places].flatMap((r) => warningsFor("qloo_recommend", r))),
         ...(filmLift.lifted || tvLift.lifted ? { summary: { mainstreamDropped } } : {}) },

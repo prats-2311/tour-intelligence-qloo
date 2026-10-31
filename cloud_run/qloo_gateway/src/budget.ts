@@ -2,8 +2,10 @@ import type { TxDb } from "./web/usage.js";
 
 export const PUBLIC_SESSION_PREFIX = "mcp-public-";
 export const DEFAULT_PUBLIC_DAILY = 400;
-/** Uncached Qloo calls one session may make: a cold board (~63) plus up to 6 hybrid playbooks (~16 each, ~11 with the describe cap). */
-export const SESSION_QLOO_BUDGET = 160;
+/** Uncached Qloo calls one session may make: a cold board (~63) plus many hybrid playbooks (~16 each, ~11 with the describe cap), with headroom for a long live run. */
+export const SESSION_QLOO_BUDGET = 400;
+/** Gemini calls one session may make (narratives, strategist, local acts, sponsor checks). */
+export const SESSION_GEMINI_BUDGET = 60;
 
 export class BudgetExceededError extends Error {
   constructor(public readonly scope: "session" | "daily" | "public") {

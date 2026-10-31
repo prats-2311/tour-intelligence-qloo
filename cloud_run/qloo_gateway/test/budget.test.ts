@@ -155,3 +155,11 @@ describe("BudgetGuard", () => {
     });
   });
 });
+
+describe("per-session budget constants", () => {
+  it("pins the live-run limits", async () => {
+    const m = await import("../src/budget.js");
+    expect(m.SESSION_QLOO_BUDGET).toBe(400);
+    expect((m as Record<string, unknown>).SESSION_GEMINI_BUDGET).toBe(60);
+  });
+});

@@ -5,7 +5,7 @@ import type { CallResult, QlooCaller } from "../qlooCall.js";
 import type { GatewayEvent, QlooEnvelope } from "../types.js";
 import { dropNonSponsors } from "./nonSponsors.js";
 import { artistTasteArgs, cityPopularityArgs } from "./recArgs.js";
-import { rankLifted } from "./playbookTrust.js";
+import { dedupeByName, rankLifted } from "./playbookTrust.js";
 import { keepVerified, type SponsorCandidate, type SponsorVerdicts } from "./sponsorCheck.js";
 import { Aborted, BudgetStop, resolveLocation, trackedCall } from "./tourBoard.js";
 
@@ -113,7 +113,7 @@ export async function runSponsorSegments(input: SponsorSegmentsInput, deps: Spon
     ]);
 
     const prepared = [...bandJobs, allFansJob].map(({ seg, base }) => {
-      const all = usable(seg) ? extractEntities(seg.envelope) : [];
+      const all = usable(seg) ? dedupeByName(extractEntities(seg.envelope)) : [];
       const listed = dropNonSponsors(all);
       return { seg, base: usable(base) ? base : null, all, listed, desc: usable(seg) ? descriptionsOf(seg.envelope) : new Map<string, string>() };
     });

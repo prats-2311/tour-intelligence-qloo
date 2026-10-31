@@ -1,5 +1,5 @@
 import { Firestore } from "@google-cloud/firestore";
-import { BudgetGuard, FirestoreDailyCountStore, SESSION_QLOO_BUDGET } from "./budget.js";
+import { BudgetGuard, FirestoreDailyCountStore, SESSION_GEMINI_BUDGET, SESSION_QLOO_BUDGET } from "./budget.js";
 import { FirestoreCache, MemoryCache, TieredCache } from "./cache.js";
 import { loadCities } from "./geo/cities.js";
 import { createApp } from "./http/app.js";
@@ -51,7 +51,7 @@ console.log(`qloo_gateway strategist models: ${strategistModels.join(", ")} · t
 for (const line of startupStatus(process.env, selected, { harnessFound: !!findOnPath(process.env.QLOO_BIN ?? "qloo", process.env.PATH) })) console.log(`qloo_gateway ${line}`);
 const narratorModels = [process.env.GEMINI_MODEL ?? "gemini-3.8-flash", process.env.GEMINI_FALLBACK_MODEL ?? "gemini-2.5-flash"];
 // Per-session limit is in memory; the daily count is persisted (gemini_usage/<YYYY-MM>) so restarts and extra instances share it.
-const geminiBudget = new BudgetGuard({ perSession: 20, perDay: Number.MAX_SAFE_INTEGER });
+const geminiBudget = new BudgetGuard({ perSession: SESSION_GEMINI_BUDGET, perDay: Number.MAX_SAFE_INTEGER });
 const geminiCaps = { perDay: Number.isFinite(geminiCeiling) && geminiCeiling > 0 ? geminiCeiling : 300, perMonth: 20_000 };
 const firestoreUsage = process.env.QLOO_USAGE_BACKEND === "firestore";
 const dailyUsage = firestoreUsage ? new FirestoreUsageStore({ db: new Firestore(), prefix: "gemini_usage", caps: geminiCaps }) : new MemoryUsageStore(geminiCaps);

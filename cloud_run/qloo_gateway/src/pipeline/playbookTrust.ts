@@ -7,6 +7,20 @@ export const NO_SIZE_DATA_COPY = "No support pick: Qloo had no size data for the
 export const COMPARE_FAILED_COPY = (n: number) => `No support pick: the shared-taste comparison failed for ${n} ${n === 1 ? "act" : "acts"}.`;
 export const HEADLINER_SIZE_UNKNOWN = "headliner popularity unavailable, support acts not size-checked";
 
+import { fold } from "./nonSponsors.js";
+
+/** Drops later items whose accent- and case-folded name repeats an earlier one (Qloo can return two entities with one name). Keeps the first, best-ranked; nameless items stay. Run before any top-N cut so the list still fills. */
+export function dedupeByName<T extends { name?: unknown }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  return items.filter((it) => {
+    const key = typeof it.name === "string" ? fold(it.name) : "";
+    if (!key) return true;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 const finite = (n: number) => Number.isFinite(n);
 interface Scored { entityId: string }
 export type WithRank<T> = T & { artistRank?: number; cityRank?: number | null; rankLift?: number };

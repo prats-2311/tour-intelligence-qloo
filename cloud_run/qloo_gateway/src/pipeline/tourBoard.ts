@@ -11,6 +11,7 @@ import { concentrationValue, isThin, rescaleAffinity } from "../scoring/config.j
 import { fanHeat } from "../scoring/fanHeat.js";
 import { CLOSE_CALL_BAND, closeCall, verdict, winnability } from "../scoring/winnability.js";
 import { artistTasteArgs } from "./recArgs.js";
+import { dedupeByName } from "./playbookTrust.js";
 import { noVenuesCopy, sameCityVenues, venueArgs } from "./venues.js";
 import type { DataWarning, EvidenceRef, GatewayEvent, Score, Verdict } from "../types.js";
 
@@ -131,13 +132,13 @@ export async function activationInputs(artist: string, loc: { where: string; inC
     call(deps, sessionId, "qloo_recommend", { target_type: "tv_show", signals: [artist], signal_location: where, limit: 10 }, events),
   ] as const);
   // Only real venues in this city count: Qloo also returns places in neighbouring towns and countries, and ones with no geocode.
-  const placeEntities = sameCityVenues(extractEntities(places.envelope), loc.city, where);
+  const placeEntities = dedupeByName(sameCityVenues(extractEntities(places.envelope), loc.city, where));
   // F6: qloo_rank needs entity ids; names come back as needs_input with candidates.
   const venueIds = placeEntities.map((e) => e.entityId);
   const ranked = venueIds.length > 0
     ? await call(deps, sessionId, "qloo_rank", { options: venueIds, option_type: "place", signals: [artist], signal_location: where }, events)
     : undefined;
-  const rankedVenues = ranked ? extractEntities(ranked.envelope) : [];
+  const rankedVenues = ranked ? dedupeByName(extractEntities(ranked.envelope)) : [];
   const venueFallback = ranked !== undefined && rankedVenues.length === 0;
   const venues = {
     items: venueFallback ? [...placeEntities].sort((a, b) => (Number.isNaN(b.affinity) ? -1 : b.affinity) - (Number.isNaN(a.affinity) ? -1 : a.affinity)).slice(0, 3) : rankedVenues.slice(0, 3),
