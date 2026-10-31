@@ -32,3 +32,19 @@ export function defaultShortlist(cities: ScoredCity[], maxStops: number): string
     .slice(0, Math.max(0, maxStops))
     .map((c) => c.id);
 }
+
+/** The default book: the default shortlist plus the team's confirmed cities, minus dropped ones, in ranking order.
+ *  Confirmed cities are never cut by the cap; `changed` is true when statuses altered the default set. */
+export function bookCities(cities: ScoredCity[], maxStops: number, statuses: Record<string, string>): { ids: string[]; changed: boolean } {
+  const base = defaultShortlist(cities, maxStops);
+  const ranked = sortCities(cities, "winnability");
+  const confirmed = new Set(ranked.filter((c) => statuses[c.id] === "confirmed").map((c) => c.id));
+  const kept = new Set(base.filter((id) => statuses[id] !== "dropped"));
+  const room = Math.max(0, maxStops);
+  const inOrder = ranked.filter((c) => kept.has(c.id) || confirmed.has(c.id)).map((c) => c.id);
+  const optional = inOrder.filter((id) => !confirmed.has(id));
+  const allowed = new Set([...confirmed, ...optional.slice(0, Math.max(0, room - confirmed.size))]);
+  const ids = inOrder.filter((id) => allowed.has(id));
+  const same = ids.length === base.length && ids.every((id) => base.includes(id));
+  return { ids, changed: !same };
+}

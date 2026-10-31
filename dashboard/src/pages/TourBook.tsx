@@ -15,6 +15,7 @@ import { CallsAppendix } from "@/components/book/CallsAppendix";
 import { ProvenanceAppendix } from "@/components/book/ProvenanceAppendix";
 import { AgentLog, AgentLogChip } from "@/components/qloo/AgentLog";
 import { Sheet } from "@/components/qloo/Sheet";
+import { useWorkspace } from "@/lib/collab/workspaceContext";
 import { TeamBar } from "@/components/collab/TeamBar";
 import { fetchThisWeek } from "@/lib/qloo/client";
 import { LONG_NAMES_BRIEF, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
@@ -23,7 +24,7 @@ import { getPlaybook, loadPlaybook, playbookKey, subscribePlaybooks, type Playbo
 import { SAMPLE_TEXT } from "@/lib/qloo/labels";
 import { loadBudget } from "@/lib/budget/storage";
 import { runKey } from "@/lib/qloo/journey";
-import { defaultShortlist, sortCities } from "@/lib/qloo/ranking";
+import { bookCities, sortCities } from "@/lib/qloo/ranking";
 import { buildTourBook, type BookCityChapter } from "@/lib/qloo/tourBook";
 import { useOpenExampleRun, useWantsExample } from "@/lib/qloo/useOpenExampleRun";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
@@ -104,10 +105,14 @@ function TourBookPage() {
 
   // Nothing held: the book covers the default shortlist (Play and Hidden goldmine markets) and says so.
   const usingDefault = state.shortlist == null || state.shortlist.length === 0;
-  const picked = useMemo(() => {
-    const chosen = new Set(usingDefault ? defaultShortlist(state.cities, state.brief?.maxStops ?? 8) : shortlist);
-    return sortCities(state.cities, "winnability").filter((c) => chosen.has(c.id));
-  }, [state.cities, state.brief?.maxStops, shortlist, usingDefault]);
+  const teamStatuses = useWorkspace().snapshot?.statuses;
+  const { picked, statusApplied } = useMemo(() => {
+    const st: Record<string, string> = {};
+    for (const [id, e] of Object.entries(teamStatuses ?? {})) st[id] = e.status;
+    const def = usingDefault ? bookCities(state.cities, state.brief?.maxStops ?? 8, st) : null;
+    const chosen = new Set(def ? def.ids : shortlist);
+    return { picked: sortCities(state.cities, "winnability").filter((c) => chosen.has(c.id)), statusApplied: !!def?.changed };
+  }, [state.cities, state.brief?.maxStops, shortlist, usingDefault, teamStatuses]);
   const prepKey = `${sample}|${state.sampleSet ?? ""}|${variant}|${artist?.entityId ?? ""}|${picked.map((c) => c.id).join(",")}`;
   const requests = useMemo<PlaybookRequest[]>(
     () => (artist ? picked.map((c) => ({ artist: artist.name, artistEntityId: artist.entityId, artistPopularity: artist.popularity, city: { id: c.id, name: c.name, country: c.country }, sample, sampleSet: state.sampleSet, ...routingVariant, delayMs: sample ? (state.sampleSet === "showcase" ? 0 : SAMPLE_PLAYBOOK_DELAY_MS) : undefined })) : []),
@@ -311,7 +316,7 @@ function TourBookPage() {
 
       <div data-noprint className="px-4 pt-3 empty:hidden lg:px-6"><TeamBar cities={state.cities} tourThread="tour:book" /></div>
 
-      {usingDefault && <p data-noprint data-testid="default-shortlist-note" className="px-4 pt-3 text-[13px] text-canvas-muted lg:px-6">Showing the {picked.length} {picked.length === 1 ? "market" : "markets"} we'd hold by default: you haven't picked any yet.</p>}
+      {usingDefault && <p data-noprint data-testid="default-shortlist-note" className="px-4 pt-3 text-[13px] text-canvas-muted lg:px-6">Showing the {picked.length} {picked.length === 1 ? "market" : "markets"} we'd hold by default{statusApplied ? ", plus the team's confirmed cities and without dropped ones." : ": you haven't picked any yet."}</p>}
 
       <div className="lg:mt-6 lg:grid lg:grid-cols-[minmax(180px,240px)_minmax(0,1fr)] lg:gap-x-8">
         {isDesktop && (

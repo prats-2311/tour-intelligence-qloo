@@ -15,6 +15,8 @@ import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { parseShowcase, setShowcase } from "@/lib/qloo/showcase";
 import { PLACEHOLDER_SHOWCASE } from "@/lib/qloo/placeholderShowcase";
 import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
+import { WorkspaceContext, OFF } from "@/lib/collab/workspaceContext";
+import { emptySnapshot } from "@/lib/collab/types";
 import TourBook from "./TourBook";
 
 // Four sample playbooks are prepared one after another at the page's 10 ms replay pace.
@@ -266,6 +268,26 @@ describe("TourBook", () => {
     expect(screen.getByTestId("default-shortlist-note").textContent).toMatch(/^Showing the \d+ markets we'd hold by default/);
     expect(screen.queryByText("No markets shortlisted — hold dates for cities on the Tour Board")).toBeNull();
     expect(screen.getAllByRole("heading", { level: 2 }).length).toBeGreaterThan(2);
+  });
+  it("default book applies team statuses: confirmed city added, dropped city removed, note says so", async () => {
+    const snap = { ...emptySnapshot("w"), statuses: {
+      "4887398": { status: "confirmed", at: 1, name: "A", role: "manager" },
+      "3530597": { status: "dropped", at: 1, name: "A", role: "manager" },
+    } } as never;
+    render(
+      <WorkspaceContext.Provider value={{ ...OFF, enabled: true, ws: "w", snapshot: snap }}>
+        <QueryClientProvider client={new QueryClient()}>
+          <ToastProvider><TourBoardProvider sampleDelayMs={0}>
+            <MemoryRouter initialEntries={["/tours/book?sample=1"]}>
+              <Routes><Route path="/tours/book" element={<TourBook />} /></Routes>
+            </MemoryRouter>
+          </TourBoardProvider></ToastProvider>
+        </QueryClientProvider>
+      </WorkspaceContext.Provider>,
+    );
+    expect(await screen.findByRole("heading", { name: "Chicago", level: 2 })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Mexico City", level: 2 })).toBeNull();
+    expect(screen.getByTestId("default-shortlist-note").textContent).toMatch(/plus the team's confirmed cities and without dropped ones/);
   });
   it("once the user has chosen a shortlist there is no default note", async () => {
     renderAt("/tours/book?sample=1", <ChooseShortlist />);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SAMPLE_CITIES } from "./fixtures/lumenVale";
-import { defaultShortlist, ordinal, sortCities, summarize } from "./ranking";
+import { bookCities, defaultShortlist, ordinal, sortCities, summarize } from "./ranking";
 
 describe("ranking", () => {
   it("winnability order matches the sample", () => {
@@ -37,5 +37,45 @@ describe("ranking", () => {
     expect(defaultShortlist(SAMPLE_CITIES, 8)).toEqual(["3530597", "3448439", "4005539", "3464975"]);
     expect(defaultShortlist(SAMPLE_CITIES, 2)).toEqual(["3530597", "3448439"]);
     expect(defaultShortlist(SAMPLE_CITIES.filter((c) => c.verdict === "skip"), 8)).toEqual([]);
+  });
+});
+
+describe("bookCities", () => {
+  const ids = (st: Record<string, string>, max = 8) => bookCities(SAMPLE_CITIES, max, st).ids;
+  it("no statuses equals defaultShortlist, unchanged", () => {
+    const r = bookCities(SAMPLE_CITIES, 8, {});
+    expect(r.ids).toEqual(defaultShortlist(SAMPLE_CITIES, 8));
+    expect(r.changed).toBe(false);
+  });
+  it("excludes dropped cities", () => {
+    const r = bookCities(SAMPLE_CITIES, 8, { "3530597": "dropped" });
+    expect(r.ids).not.toContain("3530597");
+    expect(r.changed).toBe(true);
+  });
+  it("includes confirmed cities even when the verdict is Skip or Consider", () => {
+    const r = ids({ "4887398": "confirmed", "3451190": "confirmed" });
+    expect(r).toContain("4887398");
+    expect(r).toContain("3451190");
+  });
+  it("considering and on_hold do not change the set", () => {
+    const r = bookCities(SAMPLE_CITIES, 8, { "4887398": "considering", "4671654": "on_hold" });
+    expect(r.ids).toEqual(defaultShortlist(SAMPLE_CITIES, 8));
+    expect(r.changed).toBe(false);
+  });
+  it("cap never cuts confirmed; cuts lowest-ranked non-confirmed first", () => {
+    const r = ids({ "4887398": "confirmed", "3451190": "confirmed" }, 3);
+    expect(r).toHaveLength(3);
+    expect(r).toContain("4887398");
+    expect(r).toContain("3451190");
+    expect(r).toContain("3530597");
+  });
+  it("confirmed beyond the cap are all kept", () => {
+    const r = ids({ "4887398": "confirmed", "3451190": "confirmed", "4671654": "confirmed" }, 2);
+    expect(r).toHaveLength(3);
+  });
+  it("a city both dropped and in the default is out; ids are in ranking order", () => {
+    const r = ids({ "4887398": "confirmed" });
+    const order = sortCities(SAMPLE_CITIES, "winnability").map((c) => c.id);
+    expect(r).toEqual(order.filter((id) => r.includes(id)));
   });
 });
