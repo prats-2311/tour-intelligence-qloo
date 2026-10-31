@@ -1,5 +1,6 @@
 import { showcaseParam } from "@/lib/qloo/showcase";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useWorkspace } from "@/lib/collab/workspaceContext";
 import { useLocation, matchPath } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
 import { Sheet } from "@/components/qloo/Sheet";
@@ -87,7 +88,13 @@ function useLauncherModel() {
     ? (state.cities.find((c) => c.id === focusCityId)?.name ?? (sample && state.cities.length === 0 ? SAMPLE_CITIES.find((c) => c.id === focusCityId)?.name : undefined))
     : undefined;
   const title = cityName ? `About ${cityName}` : state.artist ? `About ${state.artist.name}` : showcase ? SHOWCASE_IDLE_HINT : "Ask about a tour";
-  const context = focusCityId ? { ...strategistContext, focusCityId } : strategistContext;
+  const { snapshot } = useWorkspace();
+  const statuses = snapshot?.statuses;
+  const withStatus = useMemo(() => {
+    if (!statuses || !strategistContext.cities) return strategistContext;
+    return { ...strategistContext, cities: strategistContext.cities.map((c) => (statuses[c.id]?.status ? { ...c, teamStatus: statuses[c.id]!.status as string } : c)) };
+  }, [strategistContext, statuses]);
+  const context = focusCityId ? { ...withStatus, focusCityId } : withStatus;
   return { sample, showcase, title, context };
 }
 

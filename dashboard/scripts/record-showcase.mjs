@@ -112,7 +112,7 @@ export function strategistContext(boardEvents, brief) {
   }
   if (brief) ctx.regions = brief.cities?.length ? [...new Set(cities.map((c) => countryLabel(c.country)))] : brief.regions;
   if (cities.length > 0) {
-    ctx.cities = cities.slice(0, 20).map((c) => ({ id: c.id, name: c.name, country: c.country, verdict: c.verdict, fanHeat: c.fanHeat?.value ?? null, activation: c.activation?.value ?? null, winnability: c.winnability?.value ?? null }));
+    ctx.cities = cities.slice(0, 20).map((c) => ({ id: c.id, name: c.name, country: c.country, verdict: c.verdict, fanHeat: c.fanHeat?.value ?? null, activation: c.activation?.value ?? null, winnability: c.winnability?.value ?? null, ...(c.closeCall ? { closeCall: true } : {}), ...(c.warnings?.some((w) => w.kind === "partial") ? { partialData: true } : {}), ...(c.candidateSource === "major_market" ? { majorMarket: true } : {}) }));
   }
   return ctx;
 }

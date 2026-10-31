@@ -116,7 +116,7 @@ export interface StrategistDocument { id: string; name: string; pages: Array<{ n
 export interface StrategistContext {
   artist?: { name: string; entityId: string };
   regions?: string[];
-  cities?: Array<{ id: string; name: string; country: string; verdict: string; fanHeat: number | null; activation: number | null; winnability: number | null }>;
+  cities?: Array<{ id: string; name: string; country: string; verdict: string; fanHeat: number | null; activation: number | null; winnability: number | null; /** Team workspace status for the city (on_hold, confirmed...). */ teamStatus?: string; closeCall?: boolean; partialData?: boolean; majorMarket?: boolean }>;
   focusCityId?: string;
 }
 export type WithoutQloo =
