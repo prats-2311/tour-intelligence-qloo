@@ -220,15 +220,21 @@ test("reloading an open playbook keeps the same artist and scores, never the exa
   // A bare playbook URL (no saved id, no example flag) says the tour is not open, instead of showing the example.
   await page.goto(`/tours/playbook/${cityId}`);
   await expect(page.getByRole("heading", { name: "This tour isn't open in this tab" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "My tours" })).toBeVisible();
+  await expect(page.locator("#main-content").getByRole("link", { name: "My tours" })).toBeVisible();
 });
 
 test("a tour note written while the tour was open is there when it is reopened from My tours", async ({ page }) => {
   await plan(page);
   await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
   const text = `Saved-tour note ${Date.now()}`;
-  const notesBtn = () => page.getByRole("button", { name: /Tour notes/ }).first();
-  await notesBtn().click();
+  // Wide bars show "Tour notes" as a button; narrow ones put it in the Team menu.
+  const openNotes = async () => {
+    const btn = page.getByRole("button", { name: /Tour notes/ }).first();
+    if (await btn.isVisible().catch(() => false)) { await btn.click(); return; }
+    await page.getByRole("button", { name: "Team", exact: true }).first().click();
+    await page.getByRole("menuitem", { name: /^Tour notes/ }).click();
+  };
+  await openNotes();
   await page.getByRole("textbox", { name: "Add a note" }).fill(text);
   await page.getByRole("button", { name: "Add note" }).click();
   const who = page.getByTestId("inline-identity");
@@ -246,6 +252,6 @@ test("a tour note written while the tour was open is there when it is reopened f
   await expect(page).toHaveURL(/\/tours\/board\?.*saved=/);
   await expect(page).toHaveURL(/[?&]ws=/, { timeout: 20_000 });
   await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
-  await notesBtn().click();
+  await openNotes();
   await expect(page.getByRole("list", { name: "Notes" }).getByText(text)).toBeVisible({ timeout: 20_000 });
 });
