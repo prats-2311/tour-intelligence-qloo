@@ -36,7 +36,7 @@ export function mountSavedTours(app, { gatewayUrl, getToken, fetchImpl = fetch, 
       if (upstream.status === 204) return res.status(204).end();
       const type = upstream.headers.get("content-type") ?? "";
       const text = await upstream.text();
-      if (!upstream.ok && !type.includes("json")) return res.status(upstream.status).json({ error: "Qloo gateway unavailable" });
+      if (!upstream.ok && !type.includes("json")) return res.status(502).json({ error: "gateway unavailable" });
       res.status(upstream.status).type(type.includes("json") ? "application/json" : "text/plain").send(text);
     } catch (err) {
       if (!controller.signal.aborted) console.error("[savedTours]", err?.message ?? String(err));

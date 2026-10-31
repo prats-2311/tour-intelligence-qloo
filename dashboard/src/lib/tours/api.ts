@@ -67,15 +67,22 @@ async function send(path: string, init: { method?: string; body?: unknown }, opt
   }
 }
 
+/** True only for the gateway's own `401 {error:"owner required"}`; any other 401/403 (IAM, proxies) must not cost the user their token. */
+async function isOwnerRequired(res: Response): Promise<boolean> {
+  if (res.status !== 401) return false;
+  const j = (await res.clone().json().catch(() => null)) as { error?: unknown } | null;
+  return j?.error === "owner required";
+}
+
 async function request(path: string, init: { method?: string; body?: unknown }, opts: Opts): Promise<Response> {
   let res = await send(path, init, opts, await ensureOwner(opts));
-  if (res.status === 401) {
+  if (await isOwnerRequired(res)) {
     // The server no longer knows this token: drop it, make a new one, and try once more.
     dropToken();
     res = await send(path, init, opts, await ensureOwner(opts));
   }
   if (res.ok) return res;
-  if (res.status === 401) throw new ToursError("unauthorized", "Saved tours are unavailable in this browser.", 401);
+  if (await isOwnerRequired(res)) throw new ToursError("unauthorized", "Saved tours are unavailable in this browser.", 401);
   if (res.status === 404) throw new ToursError("not_found", "That saved tour no longer exists.", 404);
   if (res.status === 409) throw new ToursError("limit", LIMIT_MESSAGE, 409);
   if (res.status === 413) throw new ToursError("too_large", "This tour is too large to save.", 413);

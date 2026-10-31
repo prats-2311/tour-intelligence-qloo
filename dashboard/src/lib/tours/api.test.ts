@@ -54,6 +54,16 @@ describe("owner token", () => {
     expect(calls.filter((c) => c.url === "/api/owners").length).toBe(1);
     expect(calls.filter((c) => c.url !== "/api/owners").length).toBe(2);
   });
+  it("a 401/403 that is not the gateway's owner-required keeps the token and is a server error", async () => {
+    for (const [status, body] of [[401, { error: "gateway unavailable" }], [403, { error: "x" }], [401, null]] as const) {
+      localStorage.setItem(OWNER_KEY, "keep");
+      calls.length = 0;
+      stub(() => (body ? json(body, status) : new Response("<html>", { status, headers: { "content-type": "text/html" } })));
+      await expect(listTours({})).rejects.toMatchObject({ kind: "server", status });
+      expect(localStorage.getItem(OWNER_KEY)).toBe("keep");
+      expect(calls.length).toBe(1);
+    }
+  });
   it("private mode (storage throws): the feature is disabled and nothing is requested", async () => {
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("denied"); });
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("denied"); });

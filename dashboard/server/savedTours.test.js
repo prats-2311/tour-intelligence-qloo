@@ -113,4 +113,21 @@ describe("savedTours BFF proxy", () => {
     const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl: async () => { throw new Error("boom"); } });
     expect((await fetch(`${base}/api/tours`, { headers: H })).status).toBe(502);
   });
+  it("a non-JSON upstream error (Cloud Run IAM HTML 401/403) becomes 502 gateway unavailable, never passed through", async () => {
+    for (const status of [401, 403, 500]) {
+      const fetchImpl = vi.fn(async () => new Response("<html>Forbidden</html>", { status, headers: { "content-type": "text/html" } }));
+      const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+      const res = await fetch(`${base}/api/tours`, { headers: H });
+      expect(res.status).toBe(502);
+      expect(await res.json()).toEqual({ error: "gateway unavailable" });
+      await new Promise((r) => { server.closeAllConnections?.(); server.close(r); });
+      server = undefined;
+    }
+  });
+  it("a JSON 401 from the gateway still passes through", async () => {
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl: async () => json(401, { error: "owner required" }) });
+    const res = await fetch(`${base}/api/tours`, { headers: H });
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "owner required" });
+  });
 });
