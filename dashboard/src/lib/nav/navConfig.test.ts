@@ -8,7 +8,7 @@ const ROUTES = ["/", "/tours/board", "/tours/playbook/:cityId", "/tours/book", "
 describe("nav config", () => {
   it("has the three groups in order with the requested items", () => {
     expect(NAV_GROUPS.map((g) => [g.label, g.items.map((i) => i.label)])).toEqual([
-      ["Plan", ["Overview", "Tour Board", "Playbooks", "Tour Book", "Charts", "Budget"]],
+      ["Plan", ["Overview", "Tour Board", "My tours", "Playbooks", "Tour Book", "Charts", "Budget"]],
       ["Team", ["Team activity", "Share link"]],
       ["More", ["How we tested it", "Use from your AI agent", "What's next"]],
     ]);

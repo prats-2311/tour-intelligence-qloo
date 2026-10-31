@@ -1,7 +1,7 @@
 export type Crumb = { label: string; /** Plain path; callers add the preserved query. Absent for text-only crumbs and the current page. */ href?: string; current?: boolean };
 
 const TOUR_PAGES: Record<string, string> = { "/tours/book": "Tour Book", "/tours/insights": "Charts", "/insights": "Charts", "/tours/budget": "Budget" };
-const STANDALONE: Record<string, string> = { "/proof": "How we tested it", "/agents": "Use from your AI agent", "/v2": "What's next" };
+const STANDALONE: Record<string, string> = { "/proof": "How we tested it", "/agents": "Use from your AI agent", "/v2": "What's next", "/tours/mine": "My tours" };
 
 const safeDecode = (s: string): string => { try { return decodeURIComponent(s); } catch { return s; } };
 

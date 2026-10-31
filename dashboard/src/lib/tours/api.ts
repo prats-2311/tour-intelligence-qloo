@@ -28,6 +28,9 @@ function storeToken(t: string): boolean {
 }
 function dropToken(): void { try { localStorage.removeItem(OWNER_KEY); } catch { /* storage blocked */ } }
 
+/** True once this browser holds an owner token (nothing has been saved before that, so there is nothing to list). */
+export const hasOwnerToken = (): boolean => readToken() !== null;
+
 /** True when this browser can keep the owner token (false in some private windows): saved tours are then off. */
 export function savedToursAvailable(): boolean {
   try { const k = "tiq.probe"; localStorage.setItem(k, "1"); localStorage.removeItem(k); return true; } catch { return false; }

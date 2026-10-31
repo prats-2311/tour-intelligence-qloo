@@ -3,6 +3,7 @@
 export const routeImports = {
   landing: () => import("../pages/Landing"),
   board: () => import("../pages/TourBoard"),
+  mine: () => import("../pages/MyTours"),
   playbook: () => import("../pages/CityPlaybook"),
   pitch: () => import("../pages/PitchSheet"),
   book: () => import("../pages/TourBook"),
@@ -17,4 +18,4 @@ export type RouteKey = keyof typeof routeImports;
 
 /** Every path App.tsx registers a page for (not the legacy redirects or the catch-all). The nav hides an item whose route is not listed,
  *  so a branch that adds a route adds its path here and the item appears. App.shell.test.tsx checks this list against App.tsx. */
-export const REGISTERED_ROUTE_PATHS: readonly string[] = ["/", "/tours/board", "/tours/playbook/:cityId", "/tours/pitch/:cityId/:brand", "/tours/book", "/tours/budget", "/tours/insights", "/proof", "/insights", "/v2", "/agents"];
+export const REGISTERED_ROUTE_PATHS: readonly string[] = ["/", "/tours/board", "/tours/mine", "/tours/playbook/:cityId", "/tours/pitch/:cityId/:brand", "/tours/book", "/tours/budget", "/tours/insights", "/proof", "/insights", "/v2", "/agents"];

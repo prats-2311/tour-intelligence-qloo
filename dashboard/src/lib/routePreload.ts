@@ -6,6 +6,7 @@ export function routeKey(path: string): RouteKey | null {
   const p = path.split(/[?#]/)[0] ?? "";
   if (p === "/") return "landing";
   if (p === "/tours/board") return "board";
+  if (p === "/tours/mine") return "mine";
   if (p.startsWith("/tours/playbook/")) return "playbook";
   if (p === "/tours/book") return "book";
   if (p === "/tours/budget") return "budget";
