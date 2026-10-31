@@ -53,6 +53,21 @@ export async function compareSponsorsWithoutQloo(input: SponsorsWithoutQlooInput
   const prompt = sponsorsPrompt(input.artist, input.city.name, input.city.country);
   const body = { contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", responseSchema: SCHEMA, temperature: 0.2 } };
   try {
+    const events: GatewayEvent[] = [];
+    const d = { qloo: deps.qloo, cities: deps.cities, ...(deps.signal ? { signal: deps.signal } : {}) };
+    const ask = (tool: string, args: Record<string, unknown>) => trackedCall(d, input.sessionId, tool, args, events);
+    // The Qloo lookups don't depend on the model's picks, so they run while the model answers.
+    const qlooP = (async () => {
+      const known = findCity(deps.cities, input.city);
+      const loc = known ? await resolveLocation(input.artistId, known, d, input.sessionId, events) : undefined;
+      if (!loc || loc.status === "unresolved") return null;
+      return Promise.all([
+        ask("qloo_recommend", artistTasteArgs("brand", input.artistId, loc.where, FAN_LIMIT)),
+        ask("qloo_recommend", cityPopularityArgs("brand", loc.where, CITY_LIMIT)),
+      ]);
+    })();
+    qlooP.catch(() => {}); // surfaced below; never an unhandled rejection if the model path returns first
+
     let picks: string[] | null = null, model = "";
     for (let attempt = 0; attempt < 2 && !picks; attempt++) {
       try {
@@ -62,16 +77,9 @@ export async function compareSponsorsWithoutQloo(input: SponsorsWithoutQlooInput
     }
     if (!picks) return unavailable("invalid", "Comparison unavailable");
 
-    const events: GatewayEvent[] = [];
-    const d = { qloo: deps.qloo, cities: deps.cities, ...(deps.signal ? { signal: deps.signal } : {}) };
-    const ask = (tool: string, args: Record<string, unknown>) => trackedCall(d, input.sessionId, tool, args, events);
-    const known = findCity(deps.cities, input.city);
-    const loc = known ? await resolveLocation(input.artistId, known, d, input.sessionId, events) : undefined;
-    if (!loc || loc.status === "unresolved") return unavailable("error", "Comparison unavailable");
-    const [fanR, cityR] = await Promise.all([
-      ask("qloo_recommend", artistTasteArgs("brand", input.artistId, loc.where, FAN_LIMIT)),
-      ask("qloo_recommend", cityPopularityArgs("brand", loc.where, CITY_LIMIT)),
-    ]);
+    const q = await qlooP;
+    if (!q) return unavailable("error", "Comparison unavailable");
+    const [fanR, cityR] = q;
     if (fanR.envelope.status === "error") return unavailable("error", "Comparison unavailable");
     const fan = extractEntities(fanR.envelope);
     const city = cityR.envelope.status === "error" ? null : extractEntities(cityR.envelope);
@@ -84,9 +92,8 @@ export async function compareSponsorsWithoutQloo(input: SponsorsWithoutQlooInput
     const baselineFull = !!city && city.length >= CITY_LIMIT;
 
     let described = 0;
-    const brands: SponsorPick[] = [];
-    for (const name of picks) {
-      if (isNonSponsor(name)) { brands.push({ name, fanRank: null, cityRank: null, nonSponsor: true }); continue; }
+    const brands: SponsorPick[] = await Promise.all(picks.map(async (name): Promise<SponsorPick> => {
+      if (isNonSponsor(name)) return { name, fanRank: null, cityRank: null, nonSponsor: true };
       let fanRank = fanByName.get(key(name)) ?? null;
       let cityRank = baselineFull ? cityByName.get(key(name)) ?? null : null;
       if (fanRank === null && described < MAX_DESCRIBE) {
@@ -95,8 +102,8 @@ export async function compareSponsorsWithoutQloo(input: SponsorsWithoutQlooInput
         const id = r.envelope.status === "ok" ? extractEntities(r.envelope)[0]?.entityId : undefined;
         if (id) { fanRank = fanById.get(id) ?? null; if (baselineFull) cityRank = cityById.get(id) ?? cityRank; }
       }
-      brands.push({ name, fanRank, cityRank });
-    }
+      return { name, fanRank, cityRank };
+    }));
 
     // The sponsors card's #1: the fans' first 10 non-sponsors, ordered by the playbook's own lift rule against the city baseline.
     const card = fan.slice(0, CARD_LIMIT).filter((e) => !isNonSponsor(e.name));

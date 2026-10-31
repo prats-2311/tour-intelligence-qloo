@@ -105,6 +105,35 @@ describe("compareSponsorsWithoutQloo", () => {
     expect(r.brands.slice(1).every((b) => b.fanRank === null)).toBe(true);
   });
 
+  it("starts the Qloo lookups while the model is still answering (picks do not gate them)", async () => {
+    const q = fakeQloo();
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    const g = vi.fn(async () => { await gate; return { candidates: [{ content: { parts: [{ text: JSON.stringify({ brands: ["A", "B", "C", "D", "E"] }) }] } }] }; });
+    const p = compareSponsorsWithoutQloo(IN, mkDeps(g, q));
+    await vi.waitFor(() => expect(q.calls.filter((c) => c.tool === "qloo_recommend")).toHaveLength(2));
+    release();
+    expect((await p).status).toBe("ok");
+  });
+  it("runs the describe lookups concurrently and keeps the picks' order", async () => {
+    const calls: Array<{ tool: string; args: Record<string, unknown> }> = [];
+    let inflight = 0, peak = 0;
+    const qloo: QlooCaller = {
+      async call(tool, args) {
+        calls.push({ tool, args });
+        if (tool === "qloo_where_popular") return wrap(cityHeat);
+        if (tool === "qloo_recommend") return wrap(brandEnv(Array.isArray(args.signals) ? FAN : CITYB));
+        inflight++; peak = Math.max(peak, inflight);
+        await new Promise((r) => setTimeout(r, 15));
+        inflight--;
+        return wrap({ operation: "describe", status: "empty", results: [] });
+      },
+    };
+    const r = await compareSponsorsWithoutQloo(IN, mkDeps(gem(["A", "B", "C", "D", "E"]), { qloo, calls }));
+    if (r.status !== "ok") throw new Error("not ok");
+    expect(peak).toBe(5);
+    expect(r.brands.map((b) => b.name)).toEqual(["A", "B", "C", "D", "E"]);
+  });
   it("does not describe a matched name", async () => {
     const q = fakeQloo();
     await compareSponsorsWithoutQloo(IN, mkDeps(gem(["Coca-Cola", "Fan3", "Fan4", "Fan5", "Fan6"]), q));
