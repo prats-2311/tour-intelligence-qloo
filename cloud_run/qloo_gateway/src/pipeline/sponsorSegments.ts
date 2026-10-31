@@ -124,8 +124,10 @@ export async function runSponsorSegments(input: SponsorSegmentsInput, deps: Spon
     let segCheck: SponsorVerdicts | null = null, allCheck: SponsorVerdicts | null = null;
     if (deps.sponsorCheck) {
       if (deps.signal?.aborted) throw new Aborted();
-      if (segCandidates.length > 0) segCheck = await deps.sponsorCheck(segCandidates, input.sessionId);
-      if (allCandidates.length > 0) allCheck = await deps.sponsorCheck(allCandidates, input.sessionId);
+      [segCheck, allCheck] = await Promise.all([
+        segCandidates.length > 0 ? deps.sponsorCheck(segCandidates, input.sessionId) : null,
+        allCandidates.length > 0 ? deps.sponsorCheck(allCandidates, input.sessionId) : null,
+      ]);
     }
 
     const lift = (p: (typeof prepared)[number], check: SponsorVerdicts | null) => {

@@ -125,6 +125,19 @@ describe("sponsor check", () => {
     expect(new Set(first).size).toBe(first.length); // de-duplicated across bands
     expect(check.mock.calls[1]![0].map((c) => c.entityId)).toEqual(["A1", "A2", "A3", "A4", "A5", "A6"]);
   });
+  it("starts both model checks before either resolves (concurrent)", async () => {
+    const started: string[] = []; let resolved = 0; let startedBeforeFirstResolve = 0;
+    const check = vi.fn(async (c: Array<{ entityId: string }>) => {
+      started.push(c[0]!.entityId);
+      await new Promise((r) => setTimeout(r, 20));
+      if (resolved === 0) startedBeforeFirstResolve = started.length;
+      resolved++;
+      return verdictsOf(c.map((x) => x.entityId));
+    });
+    await run({}, { sponsorCheck: check }).p;
+    expect(check).toHaveBeenCalledTimes(2);
+    expect(startedBeforeFirstResolve).toBe(2);
+  });
   it("hides non-sponsors (model no, missing id, listed name) and counts them", async () => {
     const check = vi.fn(async () => verdictsOf(["S1", "A1", "A2", "A3", "A4", "A5", "A6"], ["S2"])); // S3.. missing -> hidden when the check is available
     const r = await run({}, { sponsorCheck: check }).p;
