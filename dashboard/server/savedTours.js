@@ -52,8 +52,8 @@ export function mountSavedTours(app, { gatewayUrl, getToken, fetchImpl = fetch, 
     return false;
   };
 
-  // Cloud Run sets x-forwarded-for; the first entry is the browser address (the gateway only sees this server).
-  const clientAddress = (req) => (req.header("x-forwarded-for") ?? "").split(",")[0].trim().slice(0, 128) || String(req.ip ?? "");
+  // Cloud Run's front end appends the real client address as the LAST x-forwarded-for entry (earlier ones are client-controlled).
+  const clientAddress = (req) => (req.header("x-forwarded-for") ?? "").split(",").pop().trim().slice(0, 128) || String(req.ip ?? "");
   app.post("/api/owners", (req, res) => forward(req, res, { path: "/v1/owners", method: "POST", client: clientAddress(req) }));
   app.post("/api/tours", (req, res, next) => (req.header("x-tiq-owner") ? next() : next("route")), toursJson, (req, res) => forward(req, res, { path: "/v1/tours", method: "POST", body: req.body ?? {} }));
   app.get("/api/tours", (req, res) => {
