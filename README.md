@@ -35,19 +35,20 @@ Open <https://tour-intel-qloo.web.app>. It opens on a recorded example, so there
 2. **Los Angeles playbook, sponsor hook.** Open Los Angeles. The Sponsors card ranks brands by how much higher the fans rank them than the city does, which is the hook above. ![Playbook](docs/screens/04-playbook-desktop.png)
 3. **By age group.** On the Sponsors card, pick an age group to see brands that group's fans rank higher.
 4. **Pitch sheet.** Open a sponsor's pitch sheet: one page, print-ready.
-5. **Claims.** Open a claim badge to see the Checked-claims panel: what was verified against the cited Qloo results, and what was struck.
-6. **/proof, "At a glance".** The scoreboard of what Qloo won and what a plain LLM won. ![Proof](docs/screens/06-proof-desktop.png)
-7. **/agents.** The nine public MCP tools, the plugin and WebMCP, with an example tour report for a fictional artist.
+5. **My tours.** Open My tours in the sidebar to see saved tours. Each row has Open, Tour Book, Mark final and Delete. ![My tours](docs/screens/07-my-tours-desktop.png)
+6. **Claims.** Open a claim badge to see the Checked-claims panel: what was verified against the cited Qloo results, and what was struck.
+7. **/proof, "At a glance".** The scoreboard of what Qloo won and what a plain LLM won. ![Proof](docs/screens/06-proof-desktop.png)
+8. **/agents.** The nine public MCP tools, the plugin and WebMCP, with an example tour report for a fictional artist.
 
-Also worth a look: the board's winnability view ![Decide](docs/screens/02-board-winnability-desktop.png) and the same cities as a generic LLM ranks them, without Qloo ![Without Qloo](docs/screens/03-board-without-qloo-desktop.png), and the printable Tour Book ![Tour Book](docs/screens/05-tour-book-cover-desktop.png).
+Also worth a look: the board's winnability view ![Decide](docs/screens/02-board-winnability-desktop.png) and the same cities as a generic LLM ranks them, without Qloo ![Without Qloo](docs/screens/03-board-without-qloo-desktop.png), and the Tour Book (A4 print edition) ![Tour Book (A4 print edition)](docs/screens/05-tour-book-cover-desktop.png).
 
-<!-- Screenshot list (one place to fix names): 01-landing, 02-board-winnability, 03-board-without-qloo, 04-playbook-*, 05-tour-book-cover, 06-proof; each in -desktop.png and -mobile.png under docs/screens/ -->
+<!-- Screenshot list (one place to fix names): 01-landing, 02-board-winnability, 03-board-without-qloo, 04-playbook-*, 05-tour-book-cover, 06-proof, 07-my-tours (desktop only); each in -desktop.png and -mobile.png under docs/screens/ -->
 
 ## What it does
 
 ### Plan
 
-- **Tour Board.** Winnability per city, which is 0.5 x fan heat + 0.5 x activation, with a verdict (Play, Hidden goldmine, De-risk, Consider, Skip, or Not enough data). "Try a routing" scores cities you paste. A "Without Qloo" view shows the same cities as a generic LLM ranks them. A "where fan heat and winnability disagree" section is "worth a second look", not a ranking claim.
+- **Tour Board.** Winnability per city, which is 0.5 x fan heat + 0.5 x activation, with a verdict (Play, Hidden goldmine, De-risk, Consider, Skip, or Not enough data). "Watch a recorded routing run" replays a run where a tour's cities were pasted and scored; it scores cities you paste. A "Without Qloo" view shows the same cities as a generic LLM ranks them. A "where fan heat and winnability disagree" section is "worth a second look", not a ranking claim.
 - **City playbooks.** One per city, built from the artist's fans:
   - **Sponsors** with rank-based lift versus the city, and a **By age group** view that uses Qloo audience demographics and its demographic signal, on age only. Each group shows a signed index such as "+0.91 vs the average audience (not a share)". Groups that include under-21s carry a note to keep alcohol sponsors out.
   - **Pitch sheet** per sponsor: one page that prints.
@@ -56,9 +57,9 @@ Also worth a look: the board's winnability view ![Decide](docs/screens/02-board-
   - **Advance & risks.** Weather history from Open-Meteo for the dates (labelled not a forecast), public holidays from Nager.Date, and visa and equipment notes from Tavily search plus Gemini. Every web source is checked against the destination country, and every number in a note must appear in its own source.
   - **Checked-claims panel** from any claim badge, and a "How to read these numbers" key.
 - **Charts** (`/tours/insights`). An age matrix by city, a fan heat versus activation quadrant with the verdict guide lines, and filters.
-- **Saved tours** (`/tours/mine`). When a live board finishes, the tour is saved as a draft automatically; the recorded example is never saved. Search by artist, city or title (accent-insensitive, every word must match), filter Drafts or Final, then Open to replay the saved run with no new Qloo calls for the board, Mark final or draft, or Delete. No sign-in: your browser holds an anonymous owner token, and only that browser can see its tours. Up to 50 tours (60 saves an hour and 40 MB in all per owner), kept 45 days after the last change, and an idle owner expires 90 days after last use. See [ADR 0009](docs/adr/0009-saved-tours-anonymous-owner-tokens.md).
+- **Saved tours** (`/tours/mine`). When a live board finishes, the tour is saved as a draft automatically; the recorded example is never saved. Search by artist, city or title (accent-insensitive, every word must match), filter Drafts or Final, then Open to replay the saved run with no new Qloo calls for the board, open its Tour Book, Mark final or draft, or Delete. No sign-in: your browser holds an anonymous owner token, and only that browser can see its tours. Up to 50 tours (60 saves an hour and 40 MB in all per owner), kept 45 days after the last change, and an idle owner expires 90 days after last use. See [ADR 0009](docs/adr/0009-saved-tours-anonymous-owner-tokens.md).
 - **Budget** (`/tours/budget`). Your own figures per city and per leg, totals, CSV export. It stays in your browser and nothing is estimated for you.
-- **Tour Book.** The printable document with a chapter per city, `.ics` dates, sharing, and your team's decisions.
+- **Tour Book.** The A4 print edition: a cover, a market-selection page and a chapter per city, with `.ics` dates, sharing, `.ics` dates, sharing, and your team's decisions. Each book is labelled "Tour Book for <artist> tour", with Example or Saved and a "Switch tour" control.
 - **Taste Loop concept** at `/v2`. A fictional artist with real LA data, no predicted numbers, a short tour and "Experiences fans could book". Its RSVP-style buttons are logged as anonymous prototype taps when analytics are on, and stay disabled otherwise.
 
 ### Prove
@@ -68,15 +69,15 @@ Also worth a look: the board's winnability view ![Decide](docs/screens/02-board-
 
 ### Team
 
-- **Strategist chat.** Ask about the tour with its work log visible. On the recorded example you can pick an "Ask live" suggestion or type a question. Add up to 3 private documents (PDF, text, Markdown or CSV) and get answers with page citations that are checked. "Draft a city plan" writes a one-page plan with fixed sections. "Save to team notes" files an answer in the workspace after you confirm.
+- **Strategist chat.** Ask about the tour with its work log visible. On the recorded example you can pick an "Ask live" suggestion or type a question. Add up to 3 private documents (PDF, text, Markdown or CSV) and get answers with page citations that are checked. "Draft a city plan" writes a one-page plan with fixed sections. "Save to team notes" files an answer in the workspace after you confirm. It answers sponsor questions by age group (a `sponsors_by_age` tool with the six Qloo age buckets) and answers routing and risk questions from the board (scores, flags, team statuses). Numbers you type in a question are not flagged by the answer check.
 - **Team workspaces.** Share a link, no sign-in. A workspace holds city statuses, notes on cities and cards, overrides of Qloo's pick (each with a reason), sponsor leads and an activity log, and shows the decisions in the Tour Book. Each visitor of the recorded example gets a private copy with a seeded discussion between fictional teammates.
 - **Guided tours.** Four short ones: The essentials, Plan the tour (ends at My tours), Work as a team (offered when workspaces are on), Trust and agents.
-- **Shell.** Sidebar with breadcrumbs and tooltips, toasts for saves and shares, a skip link, a not-found page, a favicon and a link preview card. Place rows open a Google Maps search; act rows open a Spotify search.
+- **Shell.** The logo links home. Sidebar with breadcrumbs and tooltips, toasts for saves and shares, a skip link, a not-found page, a favicon and a link preview card. Place rows open a Google Maps search; act rows open a Spotify search.
 
 ### Agents
 
 - **Public MCP server and Claude Code plugin.** See [Connect an AI agent](#connect-an-ai-agent).
-- **WebMCP.** The dashboard registers 11 tools in Chrome: `get_tour_board`, `get_city_playbook`, `open_city`, `set_comparison_mode`, `build_tour_from_shortlist`, `open_tour_book`, `get_sponsors_by_age`, `get_advance_risks`, `get_team_notes`, `add_team_note`, `set_city_status`.
+- **WebMCP.** The dashboard registers 11 tools in Chrome. On the live site they are on through a Chrome origin-trial token, with no flag; elsewhere Chrome needs the WebMCP flag. The tools: `get_tour_board`, `get_city_playbook`, `open_city`, `set_comparison_mode`, `build_tour_from_shortlist`, `open_tour_book`, `get_sponsors_by_age`, `get_advance_risks`, `get_team_notes`, `add_team_note`, `set_city_status`.
 - **/agents.** Lists the tools, the install lines and an example report.
 
 ## How it uses Qloo
@@ -298,6 +299,8 @@ Names only; copy [`.env.example`](.env.example) to `.env` (git-ignored; loaded b
 | `RECORDINGS_DIR` | the private recorded example | the synthetic Lumen Vale sample |
 | `QLOO_GATEWAY_URL` | dashboard server to gateway | set by `dev:all`; a loopback URL sends no Google token |
 | `PORT`, `GATEWAY_PORT` | ports | gateway 8080, dashboard server 8787, Vite 5173 |
+
+Write-ups and chat use `gemini-2.5-flash` first with `gemini-3.8-flash` as fallback (env `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `STRATEGIST_MODEL`, `STRATEGIST_FALLBACK_MODEL`). Per-session budgets are 400 Qloo and 60 Gemini calls; daily ceilings are set in the deploy script.
 
 Other names (`QLOO_BASE_URL`, `QLOO_TRUSTED_BASE_URL`, `QLOO_BIN`, daily ceilings, model names, `QLOO_CACHE_BACKEND`, `QLOO_USAGE_BACKEND`, deployment-only URLs) are documented in `.env.example`. The gateway keeps its cache, usage counts and team workspaces in memory unless `QLOO_*_BACKEND=firestore`, which needs Google ADC.
 
