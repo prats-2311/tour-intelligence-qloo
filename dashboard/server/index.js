@@ -6,6 +6,7 @@ import path from "node:path";
 import { jsonExceptStrategist, mountQlooProxy } from "./qlooProxy.js";
 import { mountRecordings } from "./recordings.js";
 import { mountTours, statusFromCallTool } from "./tours.js";
+import { mountSavedTours } from "./savedTours.js";
 import { requireOrchestratorJob } from "./requireOrchestratorJob.js";
 import { bffStatus } from "./startupStatus.js";
 import { NOT_CONFIGURED, requireTourDataApi } from "./requireTourDataApi.js";
@@ -337,6 +338,8 @@ function slugify(text) {
 
 const app = express();
 app.use(cors());
+// Saved tours (anonymous owner token, gateway-backed) first: POST /api/tours with x-tiq-owner is theirs, anything else falls through to Save as campaign.
+mountSavedTours(app, { gatewayUrl: QLOO_GATEWAY, getToken: getQlooGatewayToken, devUrl: process.env.COLLAB_FAKE === "1" && process.env.NODE_ENV !== "production" ? (process.env.COLLAB_FAKE_URL || "http://127.0.0.1:8094") : undefined });
 // Before the app-wide parser: /api/tours parses its own (larger) body.
 mountTours(app, { callTool: statusFromCallTool(callTool) });
 app.use(jsonExceptStrategist());
