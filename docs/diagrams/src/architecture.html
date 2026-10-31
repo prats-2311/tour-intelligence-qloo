@@ -31,7 +31,7 @@ const chips = [
   ["Strategist + answer check", "chat, documents, page cites", "check"],
   ["This week", "web search, music filter", "web"],
   ["Advance", "source and country checks", "web"],
-  ["Workspaces", "team notes, statuses, overrides", ""],
+  ["Workspaces + saved tours", "notes; tours per owner", ""],
   ["Analytics", "derived counts only", ""],
 ];
 chips.forEach((c, i) => { const col = i % 2, row = Math.floor(i / 2); box(col ? R : L, Y + row * (H + G), W, H, c[0], c[1], c[2]); });
@@ -45,7 +45,7 @@ const ex = [
   [266, "Gemini", "Vertex AI or Google AI Studio. Narrative, chat, checks", ""],
   [382, "Tavily", "Web search for this week and Advance. 25 a day cap", "web"],
   [498, "Open-Meteo + Nager.Date", "Weather history and public holidays", "web"],
-  [614, "Firestore", "Cache, usage counters, workspaces (30 days)", ""],
+  [614, "Firestore", "Cache, usage, workspaces (30 days), saved tours (45 days)", ""],
   [730, "BigQuery", "Analytics: derived counts only", ""],
 ];
 ex.forEach((e) => box(X, e[0], EW, EH, e[1], e[2], e[3]));

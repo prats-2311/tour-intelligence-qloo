@@ -56,6 +56,7 @@ Also worth a look: the board's winnability view ![Decide](docs/screens/02-board-
   - **Advance & risks.** Weather history from Open-Meteo for the dates (labelled not a forecast), public holidays from Nager.Date, and visa and equipment notes from Tavily search plus Gemini. Every web source is checked against the destination country, and every number in a note must appear in its own source.
   - **Checked-claims panel** from any claim badge, and a "How to read these numbers" key.
 - **Charts** (`/tours/insights`). An age matrix by city, a fan heat versus activation quadrant with the verdict guide lines, and filters.
+- **Saved tours** (`/tours/mine`). When a live board finishes, the tour is saved as a draft automatically; the recorded example is never saved. Search by artist, city or title (accent-insensitive, every word must match), filter Drafts or Final, then Open to replay the saved run with no new Qloo calls for the board, Mark final or draft, or Delete. No sign-in: your browser holds an anonymous owner token, and only that browser can see its tours. Up to 50 tours (60 saves an hour and 40 MB in all per owner), kept 45 days after the last change, and an idle owner expires 90 days after last use. See [ADR 0009](docs/adr/0009-saved-tours-anonymous-owner-tokens.md).
 - **Budget** (`/tours/budget`). Your own figures per city and per leg, totals, CSV export. It stays in your browser and nothing is estimated for you.
 - **Tour Book.** The printable document with a chapter per city, `.ics` dates, sharing, and your team's decisions.
 - **Taste Loop concept** at `/v2`. A fictional artist with real LA data, no predicted numbers, a short tour and "Experiences fans could book". Its RSVP-style buttons are logged as anonymous prototype taps when analytics are on, and stay disabled otherwise.
@@ -69,7 +70,7 @@ Also worth a look: the board's winnability view ![Decide](docs/screens/02-board-
 
 - **Strategist chat.** Ask about the tour with its work log visible. On the recorded example you can pick an "Ask live" suggestion or type a question. Add up to 3 private documents (PDF, text, Markdown or CSV) and get answers with page citations that are checked. "Draft a city plan" writes a one-page plan with fixed sections. "Save to team notes" files an answer in the workspace after you confirm.
 - **Team workspaces.** Share a link, no sign-in. A workspace holds city statuses, notes on cities and cards, overrides of Qloo's pick (each with a reason), sponsor leads and an activity log, and shows the decisions in the Tour Book. Each visitor of the recorded example gets a private copy with a seeded discussion between fictional teammates.
-- **Guided tours.** Four short ones: The essentials, Plan the tour, Work as a team (offered when workspaces are on), Trust and agents.
+- **Guided tours.** Four short ones: The essentials, Plan the tour (ends at My tours), Work as a team (offered when workspaces are on), Trust and agents.
 - **Shell.** Sidebar with breadcrumbs and tooltips, toasts for saves and shares, a skip link, a not-found page, a favicon and a link preview card. Place rows open a Google Maps search; act rows open a Spotify search.
 
 ### Agents
@@ -174,17 +175,23 @@ flowchart LR
   A[AI agents<br/>MCP clients and plugin] --> P
   D["Dashboard (Cloud Run)<br/>React SPA, Express BFF, WebMCP tools"] --> G
   D -.-> S[(Private GCS<br/>recorded example)]
+  U -.- LS[(Browser localStorage<br/>tiq.owner token)]
   P["Public MCP server<br/>9 tools, rate-limited"] --> G
   subgraph PRIV["IAM-private"]
-    G["qloo_gateway (Cloud Run)<br/>Qloo caller with budgets, scoring and lift,<br/>playbook, sponsor check, sponsor segments,<br/>sponsors without Qloo, narrator and claim checker,<br/>strategist and answer check (documents),<br/>this week, advance, workspaces, analytics"]
+    G["qloo_gateway (Cloud Run)<br/>Qloo caller with budgets, scoring and lift,<br/>playbook, sponsor check, sponsor segments,<br/>sponsors without Qloo, narrator and claim checker,<br/>strategist and answer check (documents),<br/>this week, advance, workspaces, saved tours, analytics"]
+    TG["/v1/owners and /v1/tours<br/>owner token hashed, saved tours"]
     H["qloo mcp harness<br/>stdio child, 10 allowlisted tools"]
   end
+  TG --> TF[(Firestore<br/>tour_owners, user_tours + chunks)]
   G --> H --> Q[(Qloo API)]
   G --> V[Gemini<br/>Vertex AI or AI Studio]
   G --> T[Tavily<br/>web search, 25 a day]
   G --> W["Open-Meteo and Nager.Date<br/>weather, holidays"]
+  D -->|"x-tiq-owner"| TG
   G --> F[(Firestore<br/>cache, usage, workspaces)]
   G -.-> B[(BigQuery<br/>derived counts)]
+  classDef saved stroke:#9bd18b,stroke-width:2px;
+  class TG,TF saved;
   classDef qloo stroke:#ffcc00,stroke-width:2px;
   classDef web stroke:#6aa8ff,stroke-width:2px;
   class H,Q qloo;
@@ -225,6 +232,7 @@ Decisions, each with context and consequences:
 - [ADR 0006 team workspaces as capability links](docs/adr/0006-workspaces-capability-links.md)
 - [ADR 0007 public MCP server and plugin](docs/adr/0007-public-mcp-and-plugin.md)
 - [ADR 0008 honest proof](docs/adr/0008-honest-proof.md)
+- [ADR 0009 saved tours with gateway-issued anonymous owner tokens](docs/adr/0009-saved-tours-anonymous-owner-tokens.md)
 
 The design spec is [docs/superpowers/specs/2026-10-16-tour-intelligence-qloo-design.md](docs/superpowers/specs/2026-10-16-tour-intelligence-qloo-design.md).
 
@@ -337,6 +345,7 @@ Details: [ADR 0005](docs/adr/0005-bigquery-analytics.md).
 ![What happens to a document: read in the tab, sent as text in one request to Gemini, checked against the cited page; never to Qloo, cache, database or logs.](docs/diagrams/documents-privacy.png)
 
 - **The budget** stays in your browser's storage.
+- **Saved tours** are stored in Firestore so you can come back on the same browser. What is stored: the tour's summary (artist, regions, cities, title, status), search text built from them, and the finished run (the board you saw, in chunks of at most 700,000 characters; at most 4 million in all). The gateway issues a random owner token on first use (`POST /v1/owners`); your browser keeps it in `localStorage` (`tiq.owner`), sends it as `x-tiq-owner`, and the gateway stores only its sha256. Only the owner can read a tour; anyone else gets a 404. Tours expire 45 days after the last change (to match the 45-day Qloo cache; a Firestore TTL on `expiresAt`), an owner with no activity expires 90 days after last use, and you can delete a tour at any time. Nothing is sent to Qloo to save, search or reopen a tour. Clearing site data loses access to your tours. See [ADR 0009](docs/adr/0009-saved-tours-anonymous-owner-tokens.md).
 - **Workspaces** are capability links: anyone with the link can read and write, and there is no sign-in. They expire after 30 days. Do not put anything there you would not give to everyone holding the link. See [ADR 0006](docs/adr/0006-workspaces-capability-links.md).
 - **Qloo data policy.** No Qloo response data is committed here. Real recordings are served from private storage by the dashboard server; tests use synthetic fixtures; `scripts/check-public-data.sh` guards the public clone. Only artist, city, venue and brand names go to Qloo, never personal data. See [ADR 0003](docs/adr/0003-recordings-private-synthetic-tests.md).
 - **Public MCP.** No sign-in; your IP is hashed to scope the rate limit and budget.
