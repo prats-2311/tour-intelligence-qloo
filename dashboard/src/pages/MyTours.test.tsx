@@ -78,6 +78,13 @@ describe("My tours", () => {
     fireEvent.click(within(row).getByRole("link", { name: "Open Lumen Vale tour" }));
     expect(screen.getByTestId("where").textContent).toBe("/tours/board?saved=a");
   });
+  it("each row has a Tour Book link with a unique name that opens /tours/book?saved=<id>", async () => {
+    mount();
+    const row = (await screen.findByText("Lumen Vale tour")).closest("li")!;
+    expect(screen.getByRole("link", { name: "Tour Book: Mara Quill tour" }).getAttribute("href")).toBe("/tours/book?saved=b");
+    fireEvent.click(within(row).getByRole("link", { name: "Tour Book: Lumen Vale tour" }));
+    expect(screen.getByTestId("where").textContent).toBe("/tours/book?saved=a");
+  });
   it("Mark final patches the status and flips the chip and button", async () => {
     mount();
     const row = (await screen.findByText("Lumen Vale tour")).closest("li")!;

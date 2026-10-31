@@ -47,6 +47,13 @@ test("plan, auto-save, search, open, mark final, delete", async ({ page }) => {
   await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
   expect(boardCalls).toBe(0);
 
+  // Tour Book action: the saved tour's own book, same page, no board request.
+  await page.goto("/tours/mine");
+  await page.getByTestId("saved-tour").first().getByRole("link", { name: /^Tour Book: / }).click();
+  await expect(page).toHaveURL(/\/tours\/book\?saved=/);
+  await expect(page.getByText("Tour Book for", { exact: false })).toBeVisible({ timeout: 30_000 });
+  expect(boardCalls).toBe(0);
+
   await page.goto("/tours/mine");
   const again = page.getByTestId("saved-tour").first();
   await again.getByRole("button", { name: /^Mark final: / }).click();
