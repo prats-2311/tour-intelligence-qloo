@@ -36,7 +36,7 @@ describe("Breadcrumbs", () => {
     mount("/tours/board?showcase=1");
     const nav = screen.getByRole("navigation", { name: "Breadcrumb" });
     expect(nav.querySelector("ol")).toBeTruthy();
-    expect(trail()).toEqual(["Overview", `${SHOWCASE.artist} tour`, "Tour Board"]);
+    expect(trail()).toEqual(["Overview", `Example: ${SHOWCASE.artist} tour`, "Tour Board"]);
     const last = nav.querySelector("li:last-child [aria-current='page']");
     expect(last?.textContent).toBe("Tour Board");
     expect(nav.querySelectorAll("[aria-current]")).toHaveLength(1);
@@ -49,14 +49,14 @@ describe("Breadcrumbs", () => {
   it("playbook: city name from the recording, city is text, Tour Board links back", () => {
     const city = showcaseCities().find((c) => synthetic.playbooks[c.id as keyof typeof synthetic.playbooks])!;
     mount(`/tours/playbook/${city.id}?showcase=1`);
-    expect(trail()).toEqual(["Overview", `${SHOWCASE.artist} tour`, "Tour Board", city.name, "Playbook"]);
+    expect(trail()).toEqual(["Overview", `Example: ${SHOWCASE.artist} tour`, "Tour Board", city.name, "Playbook"]);
     expect(screen.getByRole("link", { name: "Tour Board" }).getAttribute("href")).toBe("/tours/board?showcase=1");
     expect(screen.queryByRole("link", { name: city.name })).toBeNull();
   });
   it("sample set: artist and city from the Lumen Vale fixture", () => {
     const c = SAMPLE_CITIES[1]!;
     mount(`/tours/playbook/${c.id}?sample=1`);
-    expect(trail()[1]).toBe("Lumen Vale tour");
+    expect(trail()[1]).toBe("Example: Lumen Vale tour");
     expect(trail()[3]).toBe(c.name);
   });
   it.each([["/tours/book", "Tour Book"], ["/insights", "Charts"], ["/tours/insights", "Charts"], ["/tours/budget", "Budget"]])("%s ends in %s", (path, last) => {
@@ -73,7 +73,7 @@ describe("Breadcrumbs", () => {
     mount(`/tours/playbook/${city.id}?showcase=1`);
     expect(trail().filter(Boolean)).toEqual(["Overview", "…", "Playbook"]);
     fireEvent.click(screen.getByRole("button", { name: "Show full path" }));
-    expect(trail()).toEqual(["Overview", `${SHOWCASE.artist} tour`, "Tour Board", city.name, "Playbook"]);
+    expect(trail()).toEqual(["Overview", `Example: ${SHOWCASE.artist} tour`, "Tour Board", city.name, "Playbook"]);
   });
   it("a short trail is never collapsed on a narrow screen", () => {
     narrow = true;

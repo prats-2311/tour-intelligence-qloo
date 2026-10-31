@@ -15,6 +15,10 @@ describe("buildCrumbs", () => {
     expect(trail.map((c) => c.label)).toEqual(["Overview", "Your tour", "Tour Board", "City", "Pitch sheet · OBEY"]);
     expect(trail[3]!.href).toBe("/tours/playbook/42");
   });
+  it("an example (showcase or sample) run names the tour crumb Example: <artist> tour; live and untitled stay", () => {
+    expect(buildCrumbs({ pathname: "/tours/board", artist: "Mac DeMarco", cityName: null, example: true }).map((c) => c.label)).toEqual(["Overview", "Example: Mac DeMarco tour", "Tour Board"]);
+    expect(buildCrumbs({ pathname: "/tours/board", artist: null, cityName: null, example: true })[1]!.label).toBe("Your tour");
+  });
   it("book", () => expect(labels("/tours/book")).toEqual(["Overview", "Mac DeMarco tour", "Tour Book"]));
   it("insights, new and legacy paths", () => {
     expect(labels("/tours/insights")).toEqual(["Overview", "Mac DeMarco tour", "Charts"]);

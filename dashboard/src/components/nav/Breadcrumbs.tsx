@@ -17,7 +17,7 @@ export function Breadcrumbs({ inline = false }: { /** In the phone top bar next 
   const [expanded, setExpanded] = useState(false);
   const cityId = (matchPath("/tours/playbook/:cityId", pathname) ?? matchPath("/tours/pitch/:cityId/:brand", pathname))?.params.cityId ?? null;
   const { artist, cityName } = resolveTourNames({ stateArtist: state.brief?.artist ?? state.artist?.name, stateCities: state.cities, search, cityId });
-  const crumbs = buildCrumbs({ pathname, artist, cityName, fresh: new URLSearchParams(search).get("new") === "1" });
+  const crumbs = buildCrumbs({ pathname, artist, cityName, fresh: new URLSearchParams(search).get("new") === "1", example: state.source !== "live" || ["showcase", "sample"].some((k) => new URLSearchParams(search).has(k)) });
   if (crumbs.length === 0) return null;
   const collapsed = narrow && !expanded && crumbs.length > 3;
   const shown = collapsed ? [crumbs[0]!, null, crumbs[crumbs.length - 1]!] : crumbs;

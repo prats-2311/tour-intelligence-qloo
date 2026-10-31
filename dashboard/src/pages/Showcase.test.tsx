@@ -49,7 +49,7 @@ describe("recorded showcase", () => {
     render(<MemoryRouter><Landing /></MemoryRouter>);
     const card = screen.getByRole("region", { name: "Delta recorded routing row" });
     expect(within(card).getByText("Fan density ranks it 3rd of 3. Adding winnability puts it 1st.")).toBeTruthy();
-    expect(within(card).getByText("Recorded Qloo run · 2026-10-16 — not live")).toBeTruthy();
+    expect(within(card).getByText("Example · Recorded Qloo run · 2026-10-16 — not live")).toBeTruthy();
     expect(within(card).getByRole("link", { name: "Delta" }).getAttribute("href")).toBe("/tours/playbook/d?showcase=1");
     expect(screen.getByRole("link", { name: "See the example tour" }).getAttribute("href")).toBe("/tours/board?showcase=1");
   });

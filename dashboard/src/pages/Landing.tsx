@@ -59,7 +59,7 @@ function ProofCard() {
             </h2>
             <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-canvas-muted">{hero.country}</span>
           </div>
-          <div className="mt-2"><SampleBanner compact source={RECORDED ? "showcase" : "sample"} /></div>
+          <div className="mt-2"><SampleBanner compact example source={RECORDED ? "showcase" : "sample"} /></div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
           <span data-testid="proof-winnability" className="font-mono text-[28px] font-bold leading-none text-canvas-text tabular lg:text-4xl">{hero.winnability.value === null ? "—" : Math.round(hero.winnability.value)}</span>
