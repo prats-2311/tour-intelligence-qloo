@@ -17,7 +17,7 @@ import { useTour } from "@/components/tour/tourContext";
 export const HEADLINE = "Know which brands your artist's fans love in each city, before the sponsor meeting.";
 export const SUBLINE = "In Los Angeles, Mac DeMarco's fans rank Stüssy #1. It isn't in LA's top 20. Qloo taste data, per city, for every stop on the routing.";
 export const LINE2 = "Then see which cities to win first: fan heat and winnability for every market.";
-export const TRY_ARTIST_LINE = "Type any artist; we build fresh city playbooks on the spot.";
+export const TRY_ARTIST_LINE = "Type any artist, or paste your own cities; we build fresh city playbooks on the spot.";
 export const TRY_ROUTING_LINE = "Replays a recorded run where a tour's cities were pasted, scored and ordered.";
 /** Mirrors the map glyphs (VERDICT_SHAPE): shape carries the verdict. "Under the radar" is the Hidden goldmine shape; copy rules keep that phrase off the landing. */
 export const MAP_LEGEND_ITEMS: Array<{ verdict: Verdict; label: string }> = [
@@ -42,7 +42,7 @@ const sampleLine = (): string => {
 // The recording's own scoring config (when it has one) drives the hero bars' ticks; otherwise the bars keep the default thresholds.
 const recordedThresholds = () => SHOWCASE.boardEvents.find((e) => e.type === "scoring")?.scoring?.thresholds;
 const noop = () => {};
-const CTA = "flex min-h-[52px] items-center justify-center rounded-[10px] px-6 font-sans text-[16px] outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold active:scale-[0.98] motion-reduce:active:scale-100 lg:min-h-12 lg:text-[15px]";
+const CTA = "flex min-h-[52px] items-center justify-center rounded-[10px] px-6 font-sans text-[16px] outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold active:scale-[0.98] motion-reduce:active:scale-100 lg:min-h-12 lg:min-w-[200px] lg:text-[15px] whitespace-nowrap text-center";
 
 function ProofCard() {
   const RECORDED = isRecorded();
@@ -126,11 +126,11 @@ export default function Landing() {
       </section>
       <div className="lg:col-span-5 lg:col-start-1 lg:row-start-2 lg:mt-8 lg:self-start">
         <p data-testid="protagonist" className="mb-3 max-w-[44ch] text-[15px] leading-[1.45] text-canvas-text [text-wrap:pretty]">{PROTAGONIST}</p>
-        <div className="flex flex-col gap-2.5 lg:flex-row lg:gap-4">
+        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:gap-4">
           <NextStepLink to="/tours/board?showcase=1" className={`${CTA} bg-gold font-semibold text-on-gold hover:bg-gold-soft active:bg-[#efb900]`}>See the example tour</NextStepLink>
           <div className="flex flex-col gap-1.5">
             <Link to="/tours/board?new=1" className={`${CTA} bg-paper-raised font-medium text-canvas-text hover:bg-[#3a3932]`}>Try your own artist</Link>
-            <p className="max-w-[34ch] text-[13px] leading-[1.4] text-canvas-muted">{TRY_ARTIST_LINE}</p>
+            <p className="max-w-[40ch] text-[13px] leading-[1.4] text-canvas-muted">{TRY_ARTIST_LINE}</p>
           </div>
         </div>
         {tour && showcaseAvailable() && <button type="button" data-testid="take-tour" onClick={tour.start} className="mt-1 flex min-h-11 w-fit items-center text-[14px] text-canvas-text underline decoration-canvas-muted underline-offset-4 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">How it works (2 min)</button>}

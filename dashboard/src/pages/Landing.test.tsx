@@ -32,7 +32,7 @@ describe("Landing", () => {
   it("says what each try-it entry does", () => {
     setShowcase(parseShowcase(syntheticShowcase));
     render(<MemoryRouter><Landing /></MemoryRouter>);
-    expect(screen.getByText("Type any artist; we build fresh city playbooks on the spot.")).toBeTruthy();
+    expect(screen.getByText("Type any artist, or paste your own cities; we build fresh city playbooks on the spot.")).toBeTruthy();
     expect(screen.getByText("Replays a recorded run where a tour's cities were pasted, scored and ordered.")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Try a routing" })).toBeTruthy();
     setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE));
