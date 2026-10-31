@@ -10,6 +10,7 @@ import { DRAWER_ID, NavDrawer } from "./nav/NavDrawer";
 import { Sidebar } from "./nav/Sidebar";
 import { useWorkspace } from "@/lib/collab/workspaceContext";
 import { ToastProvider, useToast } from "./ui/Toast";
+import { TourAutoSave } from "@/lib/tours/useAutoSave";
 import { shareToast } from "./collab/useCollabWrite";
 import type { NavActionId } from "@/lib/nav/navConfig";
 import { useNavCollapsed } from "@/lib/nav/useNavCollapsed";
@@ -17,7 +18,7 @@ import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 
 /** The shell owns the one toast viewport for every page under it. */
 export function AppShell({ children }: { children: ReactNode }) {
-  return <ToastProvider><Shell>{children}</Shell></ToastProvider>;
+  return <ToastProvider><TourAutoSave /><Shell>{children}</Shell></ToastProvider>;
 }
 
 function Shell({ children }: { children: ReactNode }) {

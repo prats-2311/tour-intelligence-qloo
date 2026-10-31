@@ -19,7 +19,7 @@ test("plan, auto-save, search, open, mark final, delete", async ({ page }) => {
   await page.route("**/api/qloo/tour-board", (r) => r.fulfill({ status: 200, contentType: "text/event-stream", body: sse(rec.boardEvents) }));
   await page.route("**/api/qloo/city-playbook**", (r) => r.fulfill({ status: 200, contentType: "text/event-stream", body: sse(Object.values(rec.playbooks)[0] ?? []) }));
   await page.goto("/tours/board?new=1");
-  await page.getByLabel("Artist").fill(rec.artist);
+  await page.getByLabel("Artist", { exact: true }).fill(rec.artist);
   await page.getByRole("button", { name: "Score markets" }).click();
 
   const toast = page.locator("[data-toast-viewport]").getByText("Saved to My tours");

@@ -34,7 +34,7 @@ export function summaryOf(state: BoardState): TourSummary {
   return {
     artist: brief?.artist ?? state.artist?.name ?? "",
     regions: brief?.regions ?? [],
-    cities: state.cities.map((c) => ({ id: c.id, name: c.name, country: c.country, verdict: c.verdict, score: c.winnability.value })),
+    cities: state.cities.map((c) => ({ id: c.id, name: c.name, country: c.country, verdict: c.verdict, ...(c.winnability.value === null ? {} : { score: c.winnability.value }) })),
   };
 }
 

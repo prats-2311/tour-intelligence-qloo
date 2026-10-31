@@ -75,6 +75,15 @@ describe("owners", () => {
 });
 
 describe("tours CRUD", () => {
+  it("accepts a city with a null score (insufficient data) and stores it without one", async () => {
+    const { app } = setup();
+    const tok = await owner(app);
+    const c = await create(app, tok, { summary: summary({ cities: [{ id: "sp", name: "São Paulo", country: "Brazil", verdict: "insufficient_data", score: null }] }) });
+    expect(c.status).toBe(201);
+    const got = await request(app).get(`/v1/tours/${c.body.id}`).set("x-tiq-owner", tok);
+    expect(got.body.cities[0]).toMatchObject({ id: "sp", verdict: "insufficient_data" });
+    expect(got.body.cities[0].score).toBeUndefined();
+  });
   it("round trip create / list / get / patch / delete", async () => {
     const { app, advance, store } = setup();
     const tok = await owner(app);

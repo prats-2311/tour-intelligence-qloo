@@ -40,6 +40,16 @@ describe("saved run format (same shape as a recording)", () => {
   });
 });
 
+describe("summaryOf with unscored cities", () => {
+  it("leaves out a null winnability so the gateway never sees score: null", () => {
+    const state = board();
+    state.cities = state.cities.map((c, i) => (i === 0 ? { ...c, winnability: { value: null, reason: "insufficient_data" as const, refs: [] } } : c));
+    const sum = summaryOf(state);
+    expect(JSON.parse(JSON.stringify(sum)).cities[0]).not.toHaveProperty("score", null);
+    expect(typeof sum.cities[1]!.score).toBe("number");
+  });
+});
+
 describe("playbooks ride along", () => {
   it("a finished live playbook is exported as events and seeds the store with no request", async () => {
     const id = SAMPLE_PLAYBOOK_CITY_IDS[0];

@@ -6,7 +6,6 @@ import { TasteInsightsSkeleton, TourBoardSkeleton, PlaybookSkeleton } from "./co
 import { QlooWebMcpTools } from "./components/QlooWebMcpTools";
 import { routeImports } from "./lib/routeImports";
 import { TourProvider } from "./components/tour/TourProvider";
-import { TourAutoSave } from "./lib/tours/useAutoSave";
 import { WorkspaceProvider } from "./lib/collab/WorkspaceProvider";
 
 // Landing and every route ship as separate chunks so the initial bundle stays small; each gets a fixed-height
@@ -44,7 +43,6 @@ export default function App() {
     <WorkspaceProvider>
       <TourProvider>
       <QlooWebMcpTools />
-      <TourAutoSave />
       <AppShell>
         {/* Every lazy route gets its own Suspense + matching skeleton. A bare
             fallback={null} would show a blank page on a direct load (fresh

@@ -48,7 +48,7 @@ export function parseSummary(v: unknown): Summary {
     const o = c as Record<string, unknown>;
     const city: TourCity = { id: str(o.id, 80, "city id", 1), name: str(o.name, 120, "city name", 1), country: str(o.country, 120, "city country") };
     if (o.verdict !== undefined) city.verdict = str(o.verdict, 40, "verdict");
-    if (o.score !== undefined) {
+    if (o.score !== undefined && o.score !== null) { // null = "insufficient data": stored without a score
       if (typeof o.score !== "number" || !Number.isFinite(o.score)) throw new ToursError(400, "score must be a number");
       city.score = o.score;
     }
