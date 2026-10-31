@@ -20,6 +20,7 @@ import { VerdictChip } from "@/components/qloo/VerdictChip";
 import { VerdictGlyph } from "@/components/qloo/VerdictGlyph";
 import { WhyThisScore } from "@/components/qloo/WhyThisScore";
 import { TourBoardSkeleton } from "@/components/ui/Skeletons";
+import { useOpenSavedTour } from "@/lib/tours/useOpenSaved";
 import { fetchWithoutQloo } from "@/lib/qloo/client";
 import { LONG_CITY_NAMES, LONG_NAMES_BRIEF, SAMPLE_BRIEF, SAMPLE_CITIES } from "@/lib/qloo/fixtures/lumenVale";
 import { SAMPLE_WITHOUT_QLOO } from "@/lib/qloo/fixtures/strategistSample";
@@ -170,6 +171,8 @@ export default function TourBoard() {
   setShowcaseVariant(wantRouting ? "routing" : "main"); // before any accessor below reads the recording (see useShowcaseVariant)
   const wantSample = sampleParam === "1" || wantLong || wantShowcase;
   const wantNew = params.get("new") === "1";
+  const savedId = params.get("saved");
+  const saved = useOpenSavedTour(savedId);
   const sampleKey = `${sampleParam ?? ""}|${showParam ?? ""}`; // switching between examples on the same page starts the new one
   const started = useRef<string | null>(null);
   const modeParam = params.get("mode");
@@ -201,7 +204,7 @@ export default function TourBoard() {
 
   // Entering the board with no run and no params opens the recorded example, so the first screen is never an empty form.
   // "Try your own artist" arrives with ?new=1 and gets the brief form instead.
-  const autoExample = useWantsExample(!wantSample && !wantNew);
+  const autoExample = useWantsExample(!wantSample && !wantNew && !savedId);
   useOpenExampleRun(autoExample);
 
   // A new run starts clean: no stale selection (the provider's reducer clears the shortlist on start).
@@ -215,7 +218,7 @@ export default function TourBoard() {
     setLastBrief(state.brief);
     reset();
     // ?new=1 keeps the brief form on screen instead of reopening the example.
-    setParams((p) => { const n = new URLSearchParams(p); n.delete("sample"); n.delete("showcase"); n.delete("mode"); n.set("new", "1"); return n; }, { replace: true });
+    setParams((p) => { const n = new URLSearchParams(p); n.delete("sample"); n.delete("showcase"); n.delete("mode"); n.delete("saved"); n.set("new", "1"); return n; }, { replace: true });
   };
 
   const sorted = useMemo(() => sortCities(state.cities, mode === "density" ? "density" : "winnability"), [state.cities, mode]);
@@ -291,6 +294,18 @@ export default function TourBoard() {
     document.getElementById(`city-row-${id}`)?.scrollIntoView?.({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
   };
 
+  // A saved tour opens from its stored run: hold the page's height while it loads, and say so when it cannot be opened.
+  if (saved.status === "loading") return <TourBoardSkeleton />;
+  if (saved.status === "error") {
+    return (
+      <div className="mx-auto flex w-full max-w-md flex-col items-start gap-3 py-10">
+        <h1 className="font-title text-[24px] leading-tight text-canvas-text">Couldn't open this tour</h1>
+        <p role="alert" className="text-[13px] text-canvas-muted">{saved.message}</p>
+        <Link to="/tours/mine" className={secondaryBtn}>Back to My tours</Link>
+      </div>
+    );
+  }
+
   if (showcaseMissing) return <ShowcaseUnavailable sampleHref="/tours/board?sample=1" />;
 
   // The example (or a ?sample/?showcase run) starts in an effect: hold the page's height meanwhile so the form never flashes and nothing jumps.
@@ -304,6 +319,7 @@ export default function TourBoard() {
           <p className="text-[13px] text-canvas-muted">Want to see it first? {showcaseAvailable() ? "The example tour replays a recorded Qloo run." : "The example tour runs on sample data."}</p>
           <button type="button" onClick={showcase} className={secondaryBtn}>See the example tour</button>
         </div>
+        <p className="mx-auto w-full max-w-xl text-[13px]"><Link to="/tours/mine" className="inline-flex min-h-11 items-center text-canvas-muted underline-offset-2 hover:text-bone hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Your saved tours →</Link></p>
       </div>
     );
   }
