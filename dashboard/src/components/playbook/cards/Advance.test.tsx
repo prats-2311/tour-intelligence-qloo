@@ -32,6 +32,19 @@ describe("AdvanceBody", () => {
     expect(screen.getAllByTestId("advance-skeleton")).toHaveLength(4);
     expect(screen.getByText(ADVANCE_FOOTER)).toBeTruthy();
   });
+  it("shows weather and holidays while only the web part is still loading", () => {
+    render(<AdvanceBody data={{ weather: ok.weather, holidays: ok.holidays, generatedAt: "t" }} loading={false} loadingWeb />);
+    expect(within(screen.getByRole("region", { name: "Weather" })).getByText(/average 24\.5°C/)).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Holidays" })).getByText("Benito Juarez")).toBeTruthy();
+    expect(screen.getAllByTestId("advance-skeleton")).toHaveLength(2);
+    expect(within(screen.getByRole("region", { name: "Visas and work permits" })).getByTestId("advance-skeleton")).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Weather" })).queryByTestId("advance-skeleton")).toBeNull();
+  });
+  it("shows the web sections while the fast part is still loading", () => {
+    render(<AdvanceBody data={{ visa: ok.visa, equipment: ok.equipment, generatedAt: "t" }} loading={false} loadingFast />);
+    expect(screen.getAllByTestId("advance-skeleton")).toHaveLength(2);
+    expect(screen.getByText("A permit is needed.")).toBeTruthy();
+  });
   it("renders weather with the not-a-forecast label and source link", () => {
     render(<AdvanceBody data={ok} loading={false} />);
     const w = within(screen.getByRole("region", { name: "Weather" }));

@@ -125,6 +125,11 @@ export function mountQlooProxy(app, { gatewayUrl, getToken, fetchImpl = fetch, c
       params.set("lat", lat);
       params.set("lon", lon);
     }
+    const part = req.query.part;
+    if (part !== undefined) {
+      if (part !== "fast" && part !== "web") return res.status(400).json({ error: "part must be fast or web" });
+      params.set("part", part);
+    }
     return forward(req, res, { route: "advance", path: `/v1/advance?${params}`, method: "GET" });
   });
   // Sponsors by age group: GET with a short allowlist; the required ones are validated here, the optional city hints only forwarded when well formed.

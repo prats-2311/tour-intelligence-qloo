@@ -228,6 +228,18 @@ describe("qlooProxy", () => {
     for (const bad of ["city=G&country=MX&start=2027-03-12", `${q}&lat=20`, `${q}&lat=abc&lon=1`, `${q}&lat=95&lon=1`, `${q}&artistCountry=${"x".repeat(81)}`]) expect((await get(bad)).status).toBe(400);
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
+  it("forwards advance part=fast|web and rejects other values", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ weather: {} }), { status: 200, headers: { "content-type": "application/json" } }));
+    const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });
+    const get = (qs) => fetch(`${base}/api/qloo/advance?${qs}`, { headers: { "x-session-id": "s" } });
+    const q = "city=Guadalajara&country=MX&start=2027-03-12&end=2027-03-15";
+    expect((await get(`${q}&part=fast`)).status).toBe(200);
+    expect(fetchImpl.mock.calls[0][0]).toBe(`https://gw/v1/advance?${q}&part=fast`);
+    expect((await get(`${q}&part=web`)).status).toBe(200);
+    expect(fetchImpl.mock.calls[1][0]).toBe(`https://gw/v1/advance?${q}&part=web`);
+    expect((await get(`${q}&part=nope`)).status).toBe(400);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
   it("forwards only allowlisted sponsor-segments params and rejects missing or long values", async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ status: "no_skew", indexes: {}, bands: [] }), { status: 200, headers: { "content-type": "application/json" } }));
     const base = await start({ gatewayUrl: "https://gw", getToken: async () => "t", fetchImpl });

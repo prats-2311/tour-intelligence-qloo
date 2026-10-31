@@ -150,18 +150,22 @@ export async function fetchThisWeek(q: { city: string; country: string; window?:
 }
 
 export const ADVANCE_DOWN = "Could not load this. Try again later.";
-const advanceError = (): AdvanceRisks => ({ weather: { status: "unavailable", message: ADVANCE_DOWN }, holidays: { status: "unavailable", message: ADVANCE_DOWN }, visa: { status: "unavailable", message: ADVANCE_DOWN }, equipment: { status: "unavailable", message: ADVANCE_DOWN }, generatedAt: "" });
+const down = () => ({ status: "unavailable" as const, message: ADVANCE_DOWN });
+const advanceError = (part?: "fast" | "web"): AdvanceRisks => ({
+  ...(part !== "web" ? { weather: down(), holidays: down() } : {}), ...(part !== "fast" ? { visa: down(), equipment: down() } : {}), generatedAt: "",
+}) as AdvanceRisks;
 
-/** Advance & risks for one city; a failed request becomes four "unavailable" sections. */
-export async function fetchAdvance(q: { city: string; country: string; window: DateWindow; artistCountry?: string; lat?: number; lon?: number }, opts: { fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<AdvanceRisks> {
+/** Advance & risks for one city; `part` limits it to fast (weather, holidays) or web (visa, equipment). A failed request becomes "unavailable" sections for what was asked. */
+export async function fetchAdvance(q: { city: string; country: string; window: DateWindow; artistCountry?: string; lat?: number; lon?: number; part?: "fast" | "web" }, opts: { fetchImpl?: typeof fetch; signal?: AbortSignal } = {}): Promise<AdvanceRisks> {
   const p = new URLSearchParams({ city: q.city, country: q.country, start: q.window.start, end: q.window.end });
   if (q.artistCountry?.trim()) p.set("artistCountry", q.artistCountry.trim());
   if (typeof q.lat === "number" && typeof q.lon === "number") { p.set("lat", String(q.lat)); p.set("lon", String(q.lon)); }
+  if (q.part) p.set("part", q.part);
   try {
     const res = await (opts.fetchImpl ?? fetch)(`/api/qloo/advance?${p}`, { signal: opts.signal, headers: { ...sessionHeaders() } });
-    return res.ok ? ((await res.json()) as AdvanceRisks) : advanceError();
+    return res.ok ? ((await res.json()) as AdvanceRisks) : advanceError(q.part);
   } catch {
-    return advanceError();
+    return advanceError(q.part);
   }
 }
 

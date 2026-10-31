@@ -45,7 +45,7 @@ import type { SegmentRequest } from "@/lib/qloo/segmentStore";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { ShowcaseUnavailable } from "@/components/qloo/ShowcaseUnavailable";
 import { isRoutingBrief, setShowcaseVariant, variantOfBrief, type ShowcaseVariant, showcaseAvailable, showcaseBrief, showcaseCities, showcaseParam, showcasePlaybookCities, showcasePlaybookEvents, showcaseQuery, showcaseRoutingAvailable } from "@/lib/qloo/showcase";
-import type { CardKind, PlaybookCard as Card, SampleSet } from "@/lib/qloo/types";
+import type { AdvanceRisks, CardKind, PlaybookCard as Card, SampleSet } from "@/lib/qloo/types";
 import { visibleClaimTotals } from "@/lib/qloo/doNotBook";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
@@ -171,13 +171,22 @@ function CityPlaybookPage() {
   });
   // Advance & risks is fetched only once its tab is opened (web lookups cost credits); the recorded example gets live lookups for its real cities, the invented sample none.
   const advanceReady = !!shownCity && !!window && !unrecorded && (!sample || state.sampleSet === "showcase");
-  const advance = useQuery({
-    queryKey: ["advance", sample, state.sampleSet, cityId, window?.start, window?.end, state.brief?.artistCountry ?? ""],
-    queryFn: () => fetchAdvance({ city: shownCity!.name, country: shownCity!.country, window: window!, lat: shownCity!.lat, lon: shownCity!.lon, ...(state.brief?.artistCountry ? { artistCountry: state.brief.artistCountry } : {}) }),
+  // Two parts so weather and holidays (fast) show without waiting for the visa and customs web lookups.
+  const advanceQuery = (part: "fast" | "web") => ({
+    queryKey: ["advance", part, sample, state.sampleSet, cityId, window?.start, window?.end, state.brief?.artistCountry ?? ""],
+    queryFn: () => fetchAdvance({ city: shownCity!.name, country: shownCity!.country, window: window!, lat: shownCity!.lat, lon: shownCity!.lon, part, ...(state.brief?.artistCountry ? { artistCountry: state.brief.artistCountry } : {}) }),
     enabled: tab === "advance" && advanceReady,
     staleTime: Infinity,
     retry: false,
   });
+  const advanceFast = useQuery(advanceQuery("fast"));
+  const advanceWeb = useQuery(advanceQuery("web"));
+  const advance: { data: Partial<AdvanceRisks> | undefined; isFetching: boolean; isError: boolean; refetch: () => Promise<unknown> } = {
+    data: advanceFast.data || advanceWeb.data ? { ...(advanceFast.data ? { weather: advanceFast.data.weather, holidays: advanceFast.data.holidays } : {}), ...(advanceWeb.data ? { visa: advanceWeb.data.visa, equipment: advanceWeb.data.equipment } : {}), generatedAt: advanceWeb.data?.generatedAt ?? advanceFast.data?.generatedAt ?? "" } : undefined,
+    isFetching: advanceFast.isFetching || advanceWeb.isFetching,
+    isError: advanceFast.isError || advanceWeb.isError,
+    refetch: () => Promise.all([advanceFast.refetch(), advanceWeb.refetch()]),
+  };
   // The lookups use web credits and can take a while: if the reader has moved to another tab by the time they finish, say so.
   const tabNow = useRef(tab);
   tabNow.current = tab;
@@ -377,7 +386,7 @@ function CityPlaybookPage() {
   const advancePanel = noSample ? noSamplePanel : (
     <div data-testid="advance-panel" className="w-full">
       <PlaybookCard accent={accent} meta={`${code} · ADVANCE & RISKS`} title="Advance & risks" narrativeStatus="unavailable" refsCount={0} hasEvidence>
-        <AdvanceBody data={advance.data} loading={advance.isPending || advance.isFetching} onRetry={() => void advance.refetch()} {...(advanceNote ? { message: advanceNote } : {})} />
+        <AdvanceBody data={advance.data} loading={false} loadingFast={advanceFast.isPending || advanceFast.isFetching} loadingWeb={advanceWeb.isPending || advanceWeb.isFetching} onRetry={() => void advance.refetch()} {...(advanceNote ? { message: advanceNote } : {})} />
       </PlaybookCard>
     </div>
   );

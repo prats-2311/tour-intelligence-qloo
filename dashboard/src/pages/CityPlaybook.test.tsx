@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useEffect } from "react";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -263,7 +263,8 @@ describe("CityPlaybook Advance & risks tab", () => {
     expect(spy).not.toHaveBeenCalled();
     fireEvent.click(tab);
     expect(await screen.findByText("Web lookups are paused for today.")).toBeTruthy();
-    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy.mock.calls.map((c) => c[0].part).sort()).toEqual(["fast", "web"]);
     const q = spy.mock.calls[0]![0];
     expect(q).toMatchObject({ window: { start: "2027-03-12", end: "2027-03-15" }, lat: expect.any(Number), lon: expect.any(Number) });
     expect(q.artistCountry).toBeUndefined();
@@ -277,10 +278,21 @@ describe("CityPlaybook Advance & risks tab", () => {
     expect(panel.className).toMatch(/\bw-full\b/);
     expect(panel.className).not.toMatch(/max-w-/);
   });
+  it("shows weather as soon as the fast part lands while the web part is still loading", async () => {
+    withWindow({ start: "2027-03-12", end: "2027-03-15" });
+    vi.spyOn(client, "fetchAdvance").mockImplementation(async (q) => q.part === "fast"
+      ? { weather: { status: "unavailable", message: "Fast weather answer." }, holidays: { status: "unavailable", message: "h" } } as never
+      : new Promise(() => {}));
+    renderAt(`/tours/playbook/${firstId()}?showcase=1`);
+    fireEvent.click(await screen.findByRole("tab", { name: "Advance & risks" }));
+    expect(await screen.findByText("Fast weather answer.")).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Visas and work permits" })).getByTestId("advance-skeleton")).toBeTruthy();
+  });
   it("tells the reader when the lookups finish after they moved to another tab, and stays quiet when they are watching", async () => {
     withWindow({ start: "2027-03-12", end: "2027-03-15" });
-    let done!: (v: typeof risks) => void;
-    vi.spyOn(client, "fetchAdvance").mockImplementation(() => new Promise((r) => { done = r as typeof done; }));
+    const pending: Array<(v: typeof risks) => void> = [];
+    const done = (v: typeof risks) => pending.forEach((r) => r(v));
+    vi.spyOn(client, "fetchAdvance").mockImplementation(() => new Promise((r) => { pending.push(r as (v: typeof risks) => void); }));
     renderAt(`/tours/playbook/${firstId()}?showcase=1`);
     fireEvent.click(await screen.findByRole("tab", { name: "Advance & risks" }));
     fireEvent.click(screen.getByRole("tab", { name: "How to win" }));

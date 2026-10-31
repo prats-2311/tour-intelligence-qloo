@@ -81,10 +81,11 @@ function WebBody({ s, nationality }: { s: AdvanceWeb; nationality?: boolean }) {
 
 /** Advance & risks body: one block per lookup, each with its own loading, unavailable and capped states. */
 export const ADVANCE_OFFLINE = "Advance & risks needs the live service. Try again.";
-export function AdvanceBody({ data, loading, message, onRetry }: { data: AdvanceRisks | undefined; loading: boolean; message?: string; /** Offered when every lookup failed at once (the service itself is down). */ onRetry?: () => void }) {
+export function AdvanceBody({ data, loading, loadingFast, loadingWeb, message, onRetry }: { data: Partial<AdvanceRisks> | undefined; loading: boolean; /** Per-part loading (weather + holidays / visa + equipment); each defaults to `loading`. */ loadingFast?: boolean; loadingWeb?: boolean; message?: string; /** Offered when every lookup failed at once (the service itself is down). */ onRetry?: () => void }) {
   if (message) return <p className={MUTED}>{message}</p>;
-  // A failed request becomes four identical "unavailable" sections; say it once, with a way to try again.
-  if (data && [data.weather, data.holidays, data.visa, data.equipment].every((s) => s.status === "unavailable" && s.message === ADVANCE_DOWN)) {
+  // A failed request becomes identical "unavailable" sections; say it once, with a way to try again.
+  const all = data && [data.weather, data.holidays, data.visa, data.equipment];
+  if (all && all.every((s) => s !== undefined && s.status === "unavailable" && s.message === ADVANCE_DOWN)) {
     return (
       <div role="status" className="flex flex-col items-start gap-2">
         <p className="text-[15px] text-canvas-text">{ADVANCE_OFFLINE}</p>
@@ -92,17 +93,19 @@ export function AdvanceBody({ data, loading, message, onRetry }: { data: Advance
       </div>
     );
   }
-  const wait = loading || !data;
+  const fast = loadingFast ?? loading, web = loadingWeb ?? loading;
+  // A section waits while its own part loads; a loaded part that left a section out reads as unavailable.
+  const gone = { status: "unavailable" as const, message: ADVANCE_DOWN };
   return (
     <div>
       <div data-testid="advance-columns" className="grid grid-cols-1 gap-x-10 lg:grid-cols-2">
         <div className="min-w-0">
-          <Section title="Weather" label="Weather">{wait ? <Skeleton /> : <WeatherBody w={data.weather} />}</Section>
-          <Section title="Holidays in the window" label="Holidays">{wait ? <Skeleton /> : <HolidayBody h={data.holidays} />}</Section>
+          <Section title="Weather" label="Weather">{fast || !data ? <Skeleton /> : <WeatherBody w={data.weather ?? gone} />}</Section>
+          <Section title="Holidays in the window" label="Holidays">{fast || !data ? <Skeleton /> : <HolidayBody h={data.holidays ?? gone} />}</Section>
         </div>
         <div className="min-w-0 border-t border-canvas-line pt-4 lg:border-t-0 lg:pt-0">
-          <Section title="Visas & work permits" label="Visas and work permits">{wait ? <Skeleton /> : <WebBody s={data.visa} nationality />}</Section>
-          <Section title="Equipment & customs" label="Equipment and customs">{wait ? <Skeleton /> : <WebBody s={data.equipment} />}</Section>
+          <Section title="Visas & work permits" label="Visas and work permits">{web || !data ? <Skeleton /> : <WebBody s={data.visa ?? gone} nationality />}</Section>
+          <Section title="Equipment & customs" label="Equipment and customs">{web || !data ? <Skeleton /> : <WebBody s={data.equipment ?? gone} />}</Section>
         </div>
       </div>
       <p className={`mt-4 border-t border-canvas-line pt-3 ${MUTED}`}>{ADVANCE_FOOTER}</p>

@@ -210,6 +210,25 @@ describe("fetchAdvance", () => {
   });
 });
 
+describe("fetchAdvance parts", () => {
+  it("appends part, and a failed part is unavailable only for its own sections", async () => {
+    const { fetchAdvance } = await import("./client");
+    const w = { start: "2027-03-12", end: "2027-03-15" };
+    const f = vi.fn(async (_u: string) => new Response(JSON.stringify({}), { status: 200 }));
+    await fetchAdvance({ city: "G", country: "MX", window: w, part: "fast" }, { fetchImpl: f as unknown as typeof fetch });
+    expect(String(f.mock.calls[0]![0])).toBe("/api/qloo/advance?city=G&country=MX&start=2027-03-12&end=2027-03-15&part=fast");
+    const bad = (async () => new Response("x", { status: 502 })) as unknown as typeof fetch;
+    const fast = await fetchAdvance({ city: "G", country: "MX", window: w, part: "fast" }, { fetchImpl: bad });
+    expect(fast.weather?.status).toBe("unavailable");
+    expect(fast.holidays?.status).toBe("unavailable");
+    expect(fast.visa).toBeUndefined();
+    const web = await fetchAdvance({ city: "G", country: "MX", window: w, part: "web" }, { fetchImpl: bad });
+    expect(web.visa?.status).toBe("unavailable");
+    expect(web.equipment?.status).toBe("unavailable");
+    expect(web.weather).toBeUndefined();
+  });
+});
+
 describe("fetchSponsorSegments", () => {
   const json = (b: unknown, status = 200) => vi.fn(async () => new Response(JSON.stringify(b), { status, headers: { "content-type": "application/json" } }));
   const Q = { artistId: "A1", artist: "Mac", city: "Los Angeles", country: "US", cityId: "9", lat: 34.05, lon: -118.24 };
