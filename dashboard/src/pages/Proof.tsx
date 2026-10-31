@@ -21,8 +21,8 @@ const AMENDMENT_9_ANCHOR = "amendment-9-test-b-on-cases-after-the-models-trainin
 /** Commits live in the public repo. */
 export const COMMIT_URL = "https://github.com/prats-2311/tour-intelligence-qloo/commit/";
 const AMENDMENT_10_ANCHOR = "amendment-10-catch-rates-for-the-products-other-checkers-2026-10-30-before-any-of-these-was-run";
-/** Update by hand when the suites change (not computed at build). 31 Oct 2026: dashboard vitest 1,811 + gateway vitest 1,073 + public MCP pytest 107 = 2,991. */
-export const ENGINEERING_TESTS = 2991;
+/** Update by hand when the suites change (not computed at build). 31 Oct 2026: dashboard vitest 1,936 + gateway vitest 1,146 + MCP pytest 107. */
+export const ENGINEERING_TESTS = 3189;
 export const ENGINEERING_AS_OF = "30 Oct 2026";
 const TITLE = "Would it have found what the real tour used?";
 const REASON = "Run 1 asked Qloo for artists the headliner's fans like in that city, which returns global taste neighbours. Run 2 ranked the city's own popular artists by taste fit and was judged on fresh cases reviewed after the change; it did no better, because Qloo's city-popularity list misses the most famous national acts.";

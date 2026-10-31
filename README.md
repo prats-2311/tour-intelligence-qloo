@@ -307,13 +307,13 @@ Counts at this commit. The Vitest, pytest and script suites were run on a clean 
 
 | Suite | Command | Result |
 |---|---|---|
-| Dashboard (Vitest) | `cd dashboard && npm test` | 1,811 tests in 153 files, all passing |
-| Gateway (Vitest) | `cd cloud_run/qloo_gateway && npm test` | 1,073 passing, 2 skipped (they need private calibration files), in 73 files |
+| Dashboard (Vitest) | `cd dashboard && npm test` | 1,936 tests in 169 files, all passing |
+| Gateway (Vitest) | `cd cloud_run/qloo_gateway && npm test` | 1,146 passing, 2 skipped (they need private calibration files), in 80 files |
 | Public MCP server (pytest) | `pytest cloud_run/agent_mcp_server/tests` | 107 passing (the archived Agentic Cinema Python tests are not counted) |
 | Script guards (node:test) | `npm run test:scripts` | 10 passing |
-| End-to-end (Playwright) | `cd dashboard && npm run e2e` | 155 tests in 16 spec files, each run at phone and desktop width (310 runs) |
+| End-to-end (Playwright) | `cd dashboard && npm run e2e` | 183 tests in 20 spec files, each run at phone and desktop width (366 runs) |
 
-That is 2,991 automated unit and integration tests across the three product suites, plus 310 end-to-end runs. The end-to-end specs run against the dev server with fixtures (or a deployed site through `E2E_BASE_URL`) and are not part of `./run_tests.sh`. The key rules were mutation-checked: a rule was broken on purpose to see whether a test failed, and the commits named "mutation gaps" record the tests added where none did. The numbers shown on `/proof` are fixed when that page is edited and may lag these.
+That is 3,189 automated unit and integration tests across the three product suites, plus 366 end-to-end runs. The end-to-end specs run against the dev server with fixtures (or a deployed site through `E2E_BASE_URL`) and are not part of `./run_tests.sh`. The key rules were mutation-checked: a rule was broken on purpose to see whether a test failed, and the commits named "mutation gaps" record the tests added where none did. The numbers shown on `/proof` are fixed when that page is edited and may lag these.
 
 ```bash
 npm run test:scripts                                  # dev:all and .env.example guards
