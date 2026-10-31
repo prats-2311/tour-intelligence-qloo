@@ -15,6 +15,9 @@ const subscribe = (l: () => void) => { listeners.add(l); return () => { listener
 export const playbookKey = (artistEntityId: string, cityId: string, sampleSet?: SampleSet, variant?: "routing"): string => `${artistEntityId}|${cityId}|${sampleSet ?? "default"}${variant ? `|${variant}` : ""}`;
 const keyOf = (r: PlaybookRequest) => playbookKey(r.artistEntityId, r.city.id, r.sampleSet, r.variant);
 
+/** Calls `l` after any playbook changes; returns the unsubscribe. */
+export function subscribePlaybooks(l: () => void): () => void { return subscribe(l); }
+
 export function getPlaybook(key: string): PlaybookState | undefined { return states.get(key); }
 
 function putState(key: string, s: PlaybookState): PlaybookState { states.set(key, s); notify(); return s; }

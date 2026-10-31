@@ -74,7 +74,7 @@ describe("tours calls", () => {
     expect(calls[1]!.url).toBe("/api/tours");
   });
   it("patchTour PATCHes JSON; getTour GETs; deleteTour DELETEs and accepts 204", async () => {
-    stub((url, init) => (init.method === "DELETE" ? json(null, 204) : json({ id: "t1", updatedAt: "u", run: {} })));
+    stub((_url, init) => (init.method === "DELETE" ? json(null, 204) : json({ id: "t1", updatedAt: "u", run: {} })));
     await patchTour("t1", { status: "final" });
     expect(calls[0]!.url).toBe("/api/tours/t1");
     expect(calls[0]!.init.method).toBe("PATCH");

@@ -31,6 +31,14 @@ describe("toast system", () => {
     expect(input.readOnly).toBe(true);
     expect(input.value).toBe("https://x.test/?ws=1");
   });
+  it("renders an action button that runs its handler and dismisses the toast", () => {
+    setup();
+    const onClick = vi.fn();
+    act(() => { api.toast({ message: "Saved to My tours", action: { label: "Open My tours", onClick } }); });
+    fireEvent.click(screen.getByRole("button", { name: "Open My tours" }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Saved to My tours")).toBeNull();
+  });
   it("auto-dismisses after 5 seconds", () => {
     setup();
     expect(TOAST_MS).toBe(5000);

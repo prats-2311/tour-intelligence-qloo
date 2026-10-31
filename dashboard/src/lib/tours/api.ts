@@ -6,7 +6,9 @@ export const LIMIT_MESSAGE = "You have 50 saved tours; delete one to save more."
 
 export type ToursErrorKind = "disabled" | "limit" | "not_found" | "too_large" | "unauthorized" | "server" | "network";
 export class ToursError extends Error {
-  constructor(public kind: ToursErrorKind, message: string, public status = 0) { super(message); this.name = "ToursError"; }
+  kind: ToursErrorKind;
+  status: number;
+  constructor(kind: ToursErrorKind, message: string, status = 0) { super(message); this.name = "ToursError"; this.kind = kind; this.status = status; }
 }
 
 export type TourStatus = "draft" | "final";

@@ -9,8 +9,10 @@ import { boardReducer, initialBoard, type BoardState } from "./tourBoardReducer"
 import { seedPlaybooks, type SavedRun } from "../tours/savedRun";
 import type { SampleSet, StrategistContext, TourBrief } from "./types";
 
-type Ctx = { state: BoardState; strategistContext: StrategistContext; shortlist: string[]; accentOrder: string[]; /** The city whose playbook was opened last in the current run (null before any). */ lastOpenedId: string | null; setLastOpened(id: string): void; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: SampleSet; delayMs?: number }): void; /** Re-runs the held recorded run step by step at the recorded pace. */ replay(): void; abort(): void; reset(): void; /** Opens a saved tour: the board finishes at once from its stored events, with no Qloo call. */ loadSaved(run: SavedRun): void };
+type Ctx = { state: BoardState; strategistContext: StrategistContext; shortlist: string[]; accentOrder: string[]; /** The city whose playbook was opened last in the current run (null before any). */ lastOpenedId: string | null; setLastOpened(id: string): void; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: SampleSet; delayMs?: number }): void; /** Re-runs the held recorded run step by step at the recorded pace. */ replay(): void; abort(): void; reset(): void; /** Opens a saved tour: the board finishes at once from its stored events, with no Qloo call. */ loadSaved(run: SavedRun, tourId?: string): void };
 const TourBoardContext = createContext<Ctx | null>(null);
+
+let runCounter = 0; // module-wide: every run, in any provider, gets its own id
 
 /** A recorded run opens finished; Replay passes this pace to watch the agent work. */
 export const REPLAY_DELAY_MS = 60;
@@ -41,7 +43,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
     const controller = new AbortController();
     controllerRef.current = controller;
     const sample = opts.sample ?? isSampleMode();
-    dispatch({ type: "start", brief, source: !sample ? "live" : opts.sampleSet === "showcase" ? "showcase" : "sample", sampleSet: opts.sampleSet });
+    dispatch({ type: "start", runId: ++runCounter, brief, source: !sample ? "live" : opts.sampleSet === "showcase" ? "showcase" : "sample", sampleSet: opts.sampleSet });
     void (async () => {
       let terminal = false;
       try {
@@ -64,9 +66,9 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
   }, [run]);
 
   const reset = useCallback(() => { silentAbort(); dispatch({ type: "reset" }); }, [silentAbort]);
-  const loadSaved = useCallback((saved: SavedRun) => {
+  const loadSaved = useCallback((saved: SavedRun, tourId?: string) => {
     silentAbort();
-    dispatch({ type: "load", brief: saved.brief, events: saved.boardEvents, shortlist: saved.shortlist });
+    dispatch({ type: "load", brief: saved.brief, events: saved.boardEvents, shortlist: saved.shortlist, savedId: tourId, runId: ++runCounter });
     const entity = saved.boardEvents.find((e) => e.type === "resolve");
     if (entity?.type === "resolve") seedPlaybooks(entity.entity.entityId, saved.boardEvents.flatMap((e) => (e.type === "city_scored" ? [e.city] : [])), saved.playbooks);
   }, [silentAbort]);

@@ -14,6 +14,8 @@ export interface ToastInput {
   tone?: ToastTone;
   /** Text the person may need to copy by hand (a link when the clipboard refused); shown in a read-only field. */
   selectable?: string;
+  /** One optional button (e.g. "Open My tours"): runs `onClick`, then the toast closes. */
+  action?: { label: string; onClick: () => void };
   /** Overrides the 5 s default, in ms. */
   duration?: number;
 }
@@ -72,6 +74,7 @@ function ToastItem({ t, onDismiss }: { t: ToastItemData; onDismiss: (id: number)
       <div className="flex min-w-0 flex-1 flex-col gap-1.5 py-2.5">
         {t.title && <p className="font-semibold">{t.title}</p>}
         <p className="break-words leading-[1.4]">{t.message}</p>
+        {t.action && <button type="button" onClick={() => { t.action!.onClick(); onDismiss(t.id); }} className="inline-flex min-h-11 w-fit items-center rounded-[8px] px-1 text-[13px] font-semibold text-gold underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">{t.action.label}</button>}
         {t.selectable && <input readOnly value={t.selectable} onFocus={(e) => e.currentTarget.select()} aria-label="Text to copy" className="w-full rounded-[6px] border border-canvas-line bg-canvas px-2 py-1 text-[12px] text-canvas-text" />}
       </div>
       <button type="button" onClick={() => onDismiss(t.id)} aria-label="Dismiss notification" className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-[8px] text-canvas-muted hover:text-bone focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">

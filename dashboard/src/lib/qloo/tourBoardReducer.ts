@@ -20,14 +20,18 @@ export type BoardState = {
   needsInput?: Extract<GatewayEvent, { type: "needs_input" }>;
   error?: { code: string; message: string };
   interruptReason?: "user" | "connection";
+  /** Distinct for every run the provider starts or loads (saved tours key on it, so re-running the same brief is a new run). */
+  runId?: number;
+  /** Set when the run was opened from a saved tour: the id it is stored under. */
+  savedId?: string;
 };
 
 export type BoardAction =
-  | { type: "start"; brief: TourBrief; source: Source; sampleSet?: SampleSet }
+  | { type: "start"; brief: TourBrief; source: Source; sampleSet?: SampleSet; runId?: number }
   | { type: "event"; event: GatewayEvent }
   | { type: "interrupted"; reason?: "user" | "connection" }
   | { type: "shortlist"; ids: string[] }
-  | { type: "load"; brief: TourBrief; events: GatewayEvent[]; shortlist: string[] | null }
+  | { type: "load"; brief: TourBrief; events: GatewayEvent[]; shortlist: string[] | null; savedId?: string; runId?: number }
   | { type: "reset" };
 
 export const initialBoard: BoardState = { status: "idle", source: "live", cities: [], scoring: null, shortlist: null, log: [], regionsEmpty: [], regionsUnavailable: [], routingUnmatched: [] };
@@ -36,16 +40,16 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
   switch (action.type) {
     // A saved tour opens finished: its recorded events fold through the same reducer a live stream uses.
     case "load": {
-      let s = boardReducer(initialBoard, { type: "start", brief: action.brief, source: "live" });
+      let s = boardReducer(initialBoard, { type: "start", brief: action.brief, source: "live", runId: action.runId });
       for (const event of action.events) s = boardReducer(s, { type: "event", event });
-      return { ...s, status: s.status === "streaming" ? "done" : s.status, shortlist: action.shortlist };
+      return { ...s, status: s.status === "streaming" ? "done" : s.status, shortlist: action.shortlist, ...(action.savedId ? { savedId: action.savedId } : {}) };
     }
     case "reset":
       return initialBoard;
     case "shortlist":
       return { ...state, shortlist: action.ids };
     case "start":
-      return { ...initialBoard, status: "streaming", source: action.source, sampleSet: action.sampleSet, brief: action.brief };
+      return { ...initialBoard, status: "streaming", source: action.source, sampleSet: action.sampleSet, brief: action.brief, ...(action.runId !== undefined ? { runId: action.runId } : {}) };
     case "interrupted":
       return state.status === "streaming" ? { ...state, status: "interrupted", interruptReason: action.reason ?? "connection" } : state;
     case "event": {
