@@ -1,6 +1,7 @@
 import express, { type NextFunction, type Request, type Response } from "express";
 import type { City } from "../geo/cities.js";
 import { mountCollab, type CollabDeps } from "../collab/routes.js";
+import { mountTours, TOURS_JSON_LIMIT, type ToursDeps } from "../tours/routes.js";
 import { PUBLIC_SESSION_PREFIX } from "../budget.js";
 import { DISABLED_ANALYTICS, TEST_HEADER, isTestTraffic, sha256, type Analytics } from "../analytics/bigquery.js";
 import { observePlaybook } from "../analytics/playbookLog.js";
@@ -37,12 +38,14 @@ async function streamSse(res: Response, gen: AsyncGenerator<GatewayEvent>, contr
   res.end();
 }
 
-export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; advance?: (input: AdvanceInput) => Promise<Advance>; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; documents?: UserDocument[]; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo>; collab?: CollabDeps; analytics?: Analytics; sponsorSegmentsDeadlineMs?: number; sponsorsWithoutQloo?: (input: SponsorsWithoutQlooInput, signal: AbortSignal) => Promise<SponsorsWithoutQloo> }) {
+export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; advance?: (input: AdvanceInput) => Promise<Advance>; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; documents?: UserDocument[]; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo>; collab?: CollabDeps; tours?: ToursDeps; analytics?: Analytics; sponsorSegmentsDeadlineMs?: number; sponsorsWithoutQloo?: (input: SponsorsWithoutQlooInput, signal: AbortSignal) => Promise<SponsorsWithoutQloo> }) {
   const app = express();
   const analytics = deps.analytics ?? DISABLED_ANALYTICS;
   const stats = createStats(analytics);
   // Only the strategist route may carry private documents (up to 60,000 characters of text), so only it gets a larger body; the parser runs first and marks the body read.
   app.use("/v1/strategist", express.json({ limit: "150kb" }));
+  // Saved tours carry a recorded board run (up to 4,000,000 chars); only /v1/tours gets the larger body.
+  app.use("/v1/tours", express.json({ limit: TOURS_JSON_LIMIT }));
   app.use(express.json({ limit: "64kb" }));
 
   // Cloud Run reserves paths ending in "z" (Google answers 404 before the app), so /health is the deployed path; /healthz stays for local use.
@@ -254,6 +257,8 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
     const byId = new Map(deps.cities.map((c) => [c.id, c]));
     mountCollab(app, { analytics, cityOf: (id) => byId.get(id), ...deps.collab });
   }
+
+  if (deps.tours) mountTours(app, deps.tours);
 
   app.use((err: { status?: number; statusCode?: number; message?: string }, _req: Request, res: Response, _next: NextFunction) => {
     if (res.headersSent) return void res.end();

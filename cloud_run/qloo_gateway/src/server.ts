@@ -18,6 +18,7 @@ import { suggestLocalActs } from "./pipeline/localActs.js";
 import { classifySponsors } from "./pipeline/sponsorCheck.js";
 import { advance } from "./web/advance.js";
 import { thisWeek } from "./web/thisWeek.js";
+import { FirestoreToursStore, MemoryToursStore } from "./tours/store.js";
 import { FirestoreCollabStore, MemoryCollabStore } from "./collab/store.js";
 import { logQlooBaseUrl } from "./startupLog.js";
 import { selectGenerate } from "./narrative/provider.js";
@@ -65,13 +66,15 @@ const webDeps = {
 };
 // Team workspaces: one Firestore doc each (collab_workspaces/<ws>); the operator enables a TTL policy on `expiresAt`.
 const collabStore = firestoreUsage ? new FirestoreCollabStore({ db: new Firestore() }) : new MemoryCollabStore();
+// Saved tours: tour_owners / user_tours (+ chunks); the operator enables a TTL policy on `expiresAt` for user_tours and chunks.
+const toursStore = firestoreUsage ? new FirestoreToursStore({ db: new Firestore() as never }) : new MemoryToursStore();
 const qlooCaller = createQlooCaller({ mcp, cache, budget });
 const cities = loadCities();
 // Optional BigQuery analytics: on only when BQ_DATASET (and GOOGLE_CLOUD_PROJECT) are set; otherwise a no-op.
 const analytics = createAnalytics(process.env);
 if (analytics.enabled) console.log(`analytics: BigQuery dataset ${analytics.dataset}`);
 const app = createApp({
-  qloo: qlooCaller, cities, analytics, collab: { store: collabStore }, health: () => mcp.health(), narrate, thisWeek: (input) => thisWeek(input, webDeps), advance: (input) => advance(input, webDeps),
+  qloo: qlooCaller, cities, analytics, collab: { store: collabStore }, tours: { store: toursStore }, health: () => mcp.health(), narrate, thisWeek: (input) => thisWeek(input, webDeps), advance: (input) => advance(input, webDeps),
   localActs: (input) => suggestLocalActs(input, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
   sponsorCheck: (candidates, sessionId) => classifySponsors(candidates, sessionId, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),
   withoutQloo: (input) => rankWithoutQloo(input, { ...(generate ? { generate } : {}), models: narratorModels, ceiling: { ceiling: geminiBudget, dailyUsage }, cache }),

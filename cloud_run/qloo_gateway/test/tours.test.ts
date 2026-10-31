@@ -113,7 +113,7 @@ describe("tours CRUD", () => {
   it("chunks a 1.6M-char run into 3 chunks of at most 700,000 chars and reassembles it identically", async () => {
     const { app, store } = setup();
     const tok = await owner(app);
-    const run = { blob: "e".repeat(1_600_000 - 12) };
+    const run = { blob: "e".repeat(1_600_000 - 11) };
     const serialized = JSON.stringify(run);
     expect(serialized.length).toBe(1_600_000);
     const c = await create(app, tok, { run });
