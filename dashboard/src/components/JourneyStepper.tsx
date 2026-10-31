@@ -1,9 +1,10 @@
 import { Check } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { isRoutingBrief } from "@/lib/qloo/showcase";
-import { journeyLinks, stepOf, STEPS, type StepId } from "@/lib/qloo/journey";
+import { journeyLinks, journeyQuery, stepOf, STEPS, type StepId } from "@/lib/qloo/journey";
 import { usePreloadWhenVisible } from "@/lib/routePreload";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
+import { navHref } from "@/lib/nav/navQuery";
 
 type State = "done" | "current" | "todo";
 
@@ -37,6 +38,7 @@ export function JourneyStepper({ variant }: { variant: "top" | "bottom" }) {
   const { pathname, search } = useLocation();
   const { state, shortlist, lastOpenedId } = useTourBoard();
   const links = journeyLinks({ status: state.status, source: state.source, sampleSet: state.sampleSet, routing: isRoutingBrief(state.brief), cities: state.cities, shortlist, lastOpenedId });
+  const runQuery = journeyQuery(state.source, state.sampleSet, isRoutingBrief(state.brief));
   // The blank "Plan a tour" form (?new=1) is step 1: nothing is scored, so nothing is done.
   const current = pathname === "/tours/board" && new URLSearchParams(search).get("new") === "1" ? "markets" : stepOf(pathname);
   const at = current ? STEPS.findIndex((s) => s.id === current) : -1;
@@ -45,7 +47,7 @@ export function JourneyStepper({ variant }: { variant: "top" | "bottom" }) {
     <ol className={bottom ? "m-0 flex h-16 list-none items-stretch justify-around p-0" : "m-0 flex list-none items-center gap-1 p-0"}>
       {STEPS.map((s, i) => (
         <Step
-          key={s.id} id={s.id} label={s.label} n={i + 1} to={links[s.id]} bottom={bottom}
+          key={s.id} id={s.id} label={s.label} n={i + 1} to={navHref(links[s.id], search, runQuery)} bottom={bottom}
           state={i === at ? "current" : i < at ? "done" : "todo"}
           preload={at >= 0 && i === at + 1}
         />
