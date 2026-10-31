@@ -41,9 +41,11 @@ const wrap = (page: React.ReactNode, url: string) => (
     <TourBoardProvider sampleDelayMs={0}><MemoryRouter initialEntries={[url]} key={url}>{page}<Where /></MemoryRouter></TourBoardProvider>
   </QueryClientProvider></ToastProvider>
 );
+const pickRegion = () => { const b = screen.getByRole("button", { name: /^Mexico$/ }); if (b.getAttribute("aria-pressed") !== "true") fireEvent.click(b); };
 const currentSearch = () => screen.getByTestId("search").textContent ?? "";
 const submitArtist = (name: string) => {
   fireEvent.change(screen.getByLabelText("Artist"), { target: { value: name } });
+  pickRegion();
   fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
 };
 const cityEvent = (i: number) => ({ type: "city_scored" as const, city: SAMPLE_CITIES[i]! });
@@ -312,6 +314,7 @@ describe("TourBoard", () => {
     });
     renderPage("/tours/board");
     fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "Pedro" } });
+    pickRegion();
     fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
     fireEvent.click(await screen.findByRole("button", { name: "Pedro Capó" }));
     await waitFor(() => expect(spy.mock.calls.at(-1)![0]).toMatchObject({ artist: "Pedro", artistEntityId: "P2" }));
@@ -323,6 +326,7 @@ describe("TourBoard", () => {
     });
     renderPage("/tours/board");
     fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "Beyoncé" } });
+    pickRegion();
     fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
     expect(await screen.findByText(/No Qloo signal in Atlantis/)).toBeTruthy();
   });
@@ -359,6 +363,7 @@ describe("TourBoard", () => {
     });
     renderPage("/tours/board");
     fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "Ada" } });
+    pickRegion();
     fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
     expect(await screen.findByText("Connection lost — results so far shown")).toBeTruthy();
     const rows = screen.getAllByTestId("city-row");
@@ -375,6 +380,7 @@ describe("TourBoard", () => {
     });
     renderPage("/tours/board");
     fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "Ada" } });
+    pickRegion();
     fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
     fireEvent.click(await screen.findByRole("button", { name: "Stop" }));
     expect(await screen.findByText("Stopped — results so far shown")).toBeTruthy();
@@ -761,6 +767,7 @@ describe("TourBoard paste your cities", () => {
     renderPage("/tours/board?new=1");
     fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "Lumen Vale" } });
     fireEvent.change(screen.getByLabelText("Paste your cities"), { target: { value: "Aldea, MX\nAtlantis\nNowhere, MX" } });
+    pickRegion();
     fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
     await waitFor(() => expect(screen.getAllByTestId("city-row")).toHaveLength(2));
     expect(spy.mock.calls[0]![0].cities).toEqual([{ name: "Aldea", country: "MX" }, { name: "Atlantis" }, { name: "Nowhere", country: "MX" }]);
@@ -786,6 +793,7 @@ describe("TourBoard paste your cities", () => {
     renderPage("/tours/board?new=1");
     fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "X" } });
     fireEvent.change(screen.getByLabelText("Paste your cities"), { target: { value: "Atlantis" } });
+    pickRegion();
     fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
     expect(await screen.findByText("Not in our city list: Atlantis. Check the spelling or add the country.")).toBeTruthy();
     expect(screen.getByText("None of the pasted cities are in our city list.")).toBeTruthy();

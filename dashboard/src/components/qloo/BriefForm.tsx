@@ -4,7 +4,6 @@ import { parsePastedCities, ROUTING_CAP_NOTE, routingLabel } from "@/lib/qloo/ro
 import type { TourBrief } from "@/lib/qloo/types";
 
 const PRESETS = ["Mexico", "Brazil", "United States", "Colombia", "Argentina", "United Kingdom", "Spain", "Japan", "India"];
-const DEFAULT_REGIONS = ["Mexico", "Brazil", "United States"];
 const MAX_REGIONS = 6;
 const MAX_WINDOW_DAYS = 62; // the gateway rejects longer This week windows
 const field = "h-12 w-full min-w-0 rounded-[10px] bg-paper-raised px-3 text-[15px] text-canvas-text placeholder:text-canvas-muted lg:h-10";
@@ -13,7 +12,7 @@ export function BriefForm({ onSubmit, defaultBrief }: { onSubmit: (brief: TourBr
   const ids = { paste: useId(), pasteHint: useId(), artist: useId(), home: useId(), homeHint: useId(), stops: useId(), region: useId(), err: useId(), wStart: useId(), wEnd: useId(), wErr: useId() };
   const [artist, setArtist] = useState(defaultBrief?.artist ?? "");
   const [home, setHome] = useState(defaultBrief?.artistCountry ?? "");
-  const [regions, setRegions] = useState<string[]>(defaultBrief?.regions ?? DEFAULT_REGIONS);
+  const [regions, setRegions] = useState<string[]>(defaultBrief?.regions ?? []);
   const [custom, setCustom] = useState<string[]>(() => (defaultBrief?.regions ?? []).filter((r) => !PRESETS.includes(r)));
   const [draft, setDraft] = useState("");
   const [stops, setStops] = useState(String(defaultBrief?.maxStops ?? 6));

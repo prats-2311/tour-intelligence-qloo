@@ -6,7 +6,28 @@ import { BriefForm } from "./BriefForm";
 afterEach(cleanup);
 
 const fill = () => fireEvent.change(screen.getByLabelText("Artist"), { target: { value: "Lumen Vale" } });
-const submit = () => fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
+const pickRegion = () => { const b = screen.getByRole("button", { name: /^Mexico$/ }); if (b.getAttribute("aria-pressed") !== "true") fireEvent.click(b); };
+const submitRaw = () => fireEvent.click(screen.getByRole("button", { name: "Score markets" }));
+const submit = () => { pickRegion(); submitRaw(); };
+
+describe("BriefForm regions", () => {
+  it("a new tour starts with no region selected and asks for one", () => {
+    const onSubmit = vi.fn();
+    render(<BriefForm onSubmit={onSubmit} />);
+    expect(screen.getByText("Regions (0 of 6)", { exact: false })).toBeTruthy();
+    fill();
+    submitRaw();
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText("Pick at least one region.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Mexico/ }));
+    submitRaw();
+    expect(onSubmit.mock.calls[0]![0].regions).toEqual(["Mexico"]);
+  });
+  it("an existing brief keeps its regions", () => {
+    render(<BriefForm onSubmit={vi.fn()} defaultBrief={{ artist: "A", regions: ["Japan", "India"], maxStops: 4 }} />);
+    expect(screen.getByText("Regions (2 of", { exact: false })).toBeTruthy();
+  });
+});
 
 describe("BriefForm date window", () => {
   it("submits an optional date window and rejects an end before the start", () => {

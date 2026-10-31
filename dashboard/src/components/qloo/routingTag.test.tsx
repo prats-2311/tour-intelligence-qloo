@@ -79,6 +79,7 @@ describe("BriefForm Paste your cities", () => {
     paste(Array.from({ length: 8 }, (_, i) => `City ${i}`).join("\n"));
     expect(screen.queryByText("Up to 8 cities — the first 8 will be used.")).toBeNull();
     paste("  \n ");
+    fireEvent.click(screen.getByRole("button", { name: /^Mexico$/ }));
     submit();
     expect("cities" in onSubmit.mock.calls[0]![0]).toBe(false);
   });
