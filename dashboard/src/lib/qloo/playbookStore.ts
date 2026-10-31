@@ -62,4 +62,7 @@ export function usePlaybookSnapshot(key: string): PlaybookState | undefined {
   return useSyncExternalStore(subscribe, () => states.get(key));
 }
 
+/** Puts a finished playbook straight into the store (a saved tour opening with the playbooks it already had): no request is made. */
+export function seedPlaybook(key: string, s: PlaybookState): void { states.set(key, s); notify(); }
+
 export function resetPlaybooks(): void { epoch++; states.clear(); inflight.clear(); notify(); }

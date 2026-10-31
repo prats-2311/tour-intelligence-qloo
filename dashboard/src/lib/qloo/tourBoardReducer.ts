@@ -27,12 +27,19 @@ export type BoardAction =
   | { type: "event"; event: GatewayEvent }
   | { type: "interrupted"; reason?: "user" | "connection" }
   | { type: "shortlist"; ids: string[] }
+  | { type: "load"; brief: TourBrief; events: GatewayEvent[]; shortlist: string[] | null }
   | { type: "reset" };
 
 export const initialBoard: BoardState = { status: "idle", source: "live", cities: [], scoring: null, shortlist: null, log: [], regionsEmpty: [], regionsUnavailable: [], routingUnmatched: [] };
 
 export function boardReducer(state: BoardState, action: BoardAction): BoardState {
   switch (action.type) {
+    // A saved tour opens finished: its recorded events fold through the same reducer a live stream uses.
+    case "load": {
+      let s = boardReducer(initialBoard, { type: "start", brief: action.brief, source: "live" });
+      for (const event of action.events) s = boardReducer(s, { type: "event", event });
+      return { ...s, status: s.status === "streaming" ? "done" : s.status, shortlist: action.shortlist };
+    }
     case "reset":
       return initialBoard;
     case "shortlist":
