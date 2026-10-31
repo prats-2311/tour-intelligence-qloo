@@ -4,6 +4,7 @@ export const LIMITS = { messages: 12, messageChars: 1000, nameChars: 100, cities
 const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u2028\u2029\u202A-\u202E\u2066-\u2069]/g;
 const ID = /^[A-Za-z0-9_:.-]{1,128}$/;
 const NAME = /^[\p{L}\p{M}\p{N} '.,&()-]{1,100}$/u;
+const TEAM_STATUS = /^[a-z_]{1,24}$/;
 const VERDICTS = new Set(["play", "hidden_goldmine", "de_risk", "consider", "skip", "insufficient_data"]);
 const rec = (v: unknown) => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null);
 const score = (v: unknown) => v === null || (typeof v === "number" && Number.isFinite(v));
@@ -56,7 +57,11 @@ export function validateContext(input: unknown): { ok: true; context: Strategist
       if (!x) continue;
       if (typeof x.id !== "string" || x.id.length > 32 || !ID.test(x.id) || !isSafeContextText(x.name) || !isSafeContextText(x.country) || typeof x.verdict !== "string" || !VERDICTS.has(x.verdict)
         || !score(x.fanHeat) || !score(x.activation) || !score(x.winnability)) continue;
-      cities.push({ id: x.id, name: (x.name as string).trim(), country: (x.country as string).trim(), verdict: x.verdict, fanHeat: x.fanHeat as number | null, activation: x.activation as number | null, winnability: x.winnability as number | null });
+      cities.push({
+        id: x.id, name: (x.name as string).trim(), country: (x.country as string).trim(), verdict: x.verdict, fanHeat: x.fanHeat as number | null, activation: x.activation as number | null, winnability: x.winnability as number | null,
+        ...(typeof x.teamStatus === "string" && TEAM_STATUS.test(x.teamStatus) ? { teamStatus: x.teamStatus } : {}),
+        ...(x.closeCall === true ? { closeCall: true } : {}), ...(x.partialData === true ? { partialData: true } : {}), ...(x.majorMarket === true ? { majorMarket: true } : {}),
+      });
     }
     ctx.cities = cities;
   }

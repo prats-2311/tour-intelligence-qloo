@@ -12,7 +12,7 @@ const deps = (qloo: QlooCaller) => ({ qloo, cities: CITIES, sessionId: "s" });
 describe("strategist tools", () => {
   it("declares every allowed Qloo tool plus get_city_playbook, never qloo_capabilities", () => {
     expect(STRATEGIST_QLOO_TOOLS).not.toContain("qloo_capabilities");
-    expect(STRATEGIST_DECLARATIONS.map((d) => d.name).sort()).toEqual([...STRATEGIST_QLOO_TOOLS, "get_city_playbook"].sort());
+    expect(STRATEGIST_DECLARATIONS.map((d) => d.name).sort()).toEqual([...STRATEGIST_QLOO_TOOLS, "get_city_playbook", "sponsors_by_age"].sort());
   });
   it("rejects a disallowed tool without calling Qloo", async () => {
     const qloo = okQloo();

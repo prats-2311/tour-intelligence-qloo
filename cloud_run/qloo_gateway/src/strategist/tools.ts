@@ -8,6 +8,9 @@ import type { StrategistToolStatus, UserDocument } from "../types.js";
 import { isSafeName } from "./safety.js";
 import { filterToolData, isDoNotBook, mentionsDoNotBook } from "../displayFilters/doNotBook.js";
 import { isNonSponsor } from "../pipeline/nonSponsors.js";
+import { findCity } from "../geo/location.js";
+import { BAND_PHRASE, runSponsorSegments } from "../pipeline/sponsorSegments.js";
+import { AGE_GROUP_HELP, parseAgeGroup } from "./ageGroup.js";
 
 export const STRATEGIST_QLOO_TOOLS: readonly string[] = [
   "qloo_describe", "qloo_where_popular", "qloo_audience_demographics", "qloo_entity_tags", "qloo_trends",
@@ -55,8 +58,10 @@ export const STRATEGIST_DECLARATIONS: FunctionDeclaration[] = [
   decl("qloo_find_tags", "Search Qloo taste tags by keyword or meaning.",
     { query: str("Search text"), semantic: bool("Match by meaning instead of keyword"), limit }, ["query"]),
   decl("get_city_playbook", "Build the activation playbook evidence (sponsors, merch tags, promo zones, local moment, venues, co-billing, talent) for the artist in one city.",
-    { artist: str("Artist name"), artistEntityId: str("Qloo entity id of the artist"), city: str("City name"), country: str("Two-letter country code") },
-    ["artist", "artistEntityId", "city", "country"]),
+    { artist: str("Artist name (defaults to the board artist)"), artistEntityId: str("Qloo entity id of the artist (defaults to the board artist)"), city: str("City name"), country: str("Two-letter country code") },
+    ["city", "country"]),
+  decl("sponsors_by_age", "Sponsor brands for the board artist's fans of one age group in one city (the app's Sponsors by age group). Valid age_group values are the Qloo buckets 24_and_younger, 25_to_29, 30_to_34, 35_to_44, 45_to_54, 55_and_older; phrasings like 25-29, late twenties or 55+ are mapped. Lift is vs the average audience, not a share.",
+    { city: str("City name"), country: str("Two-letter country code"), age_group: str("Age group, for example 25_to_29, 25-29 or 55+") }, ["city", "country", "age_group"]),
 ];
 
 export interface ToolOutcome {
@@ -133,10 +138,49 @@ export function cityHeatForModel(results: unknown, cities: City[], max = 10): { 
 const rejected = (name: string, summary: string): ToolOutcome => ({ name, status: "rejected", summary, data: null });
 const failed = (name: string, err: unknown): ToolOutcome => ({ name, status: "error", summary: String((err as Error)?.message ?? err), data: null });
 
-interface Deps { qloo: QlooCaller; cities: City[]; sessionId: string; documents?: UserDocument[]; signal?: AbortSignal }
+interface Deps { qloo: QlooCaller; cities: City[]; sessionId: string; /** The board's artist: tools default to its Qloo id and a matching name is swapped for it. */ artist?: { name: string; entityId: string }; documents?: UserDocument[]; signal?: AbortSignal }
 
-async function playbook(args: Record<string, unknown>, deps: Deps): Promise<ToolOutcome> {
+const fold = (t: string): string => t.toLowerCase().replace(/\s+/g, " ").trim();
+const isBoardArtist = (v: unknown, a: Deps["artist"]): boolean => !!a && typeof v === "string" && (fold(v) === fold(a.name) || v === a.entityId);
+
+/** The board artist's id replaces an omitted entity and any argument that is the artist's name; other entities pass through. */
+function withBoardArtist(name: string, args: Record<string, unknown>, a: Deps["artist"]): Record<string, unknown> {
+  if (!a) return args;
+  const out: Record<string, unknown> = { ...args };
+  const swap = (v: unknown) => (isBoardArtist(v, a) ? a.entityId : v);
+  for (const k of ["entity"]) if (out[k] !== undefined) out[k] = swap(out[k]);
+  for (const k of ["entities", "signals", "group_a", "group_b"]) if (Array.isArray(out[k])) out[k] = (out[k] as unknown[]).map(swap);
+  if (out.entity === undefined && ["qloo_describe", "qloo_where_popular", "qloo_audience_demographics"].includes(name)) out.entity = a.entityId;
+  if (name === "qloo_recommend" && out.signals === undefined && out.signal_tags === undefined) out.signals = [a.entityId];
+  return out;
+}
+
+const AGE_BRANDS_MAX = 5;
+
+async function sponsorsByAge(args: Record<string, unknown>, deps: Deps): Promise<ToolOutcome> {
+  const name = "sponsors_by_age";
+  const band = parseAgeGroup(args.age_group);
+  if (!band) return rejected(name, `Unknown age group ${JSON.stringify(args.age_group)}. ${AGE_GROUP_HELP}`);
+  if (!deps.artist) return rejected(name, "No artist on the board; plan a tour first so the artist is known.");
+  if (!isSafeName(args.city) || !isSafeName(args.country)) return rejected(name, "Unsafe argument: city or country");
+  try {
+    const city = findCity(deps.cities, { name: args.city, country: args.country });
+    const out = await runSponsorSegments({ artistId: deps.artist.entityId, onlyBand: band, city: { name: args.city, country: args.country, ...(city ? { id: city.id } : {}) }, sessionId: deps.sessionId }, { qloo: deps.qloo, cities: deps.cities, ...(deps.signal ? { signal: deps.signal } : {}) });
+    const b = out.bands[0];
+    if (out.status === "unavailable" || !b) return { name, status: "empty", summary: out.message ?? `No age breakdown for ${band}.`, data: { ageGroup: band, phrase: BAND_PHRASE[band], status: out.status } };
+    const items = b.items.filter((it) => !isDoNotBook(it.name) && !isNonSponsor(it.name)).slice(0, AGE_BRANDS_MAX);
+    const data = filterToolData({ ageGroup: band, phrase: b.phrase, index: b.index, lifted: b.lifted, brands: items.map((it) => ({ name: it.name, artistRank: it.artistRank, ...(it.cityRank !== null ? { cityRank: it.cityRank } : {}) })) }, { brands: true }).data;
+    return { name, status: b.status === "unavailable" ? "empty" : "ok", summary: `${items.length} brands for ${band}; rank is vs the average audience, not a share`, resultCount: items.length, data };
+  } catch (err) {
+    return failed(name, err);
+  }
+}
+
+async function playbook(rawArgs: Record<string, unknown>, deps: Deps): Promise<ToolOutcome> {
   const name = "get_city_playbook";
+  const args: Record<string, unknown> = { ...rawArgs };
+  if (deps.artist && (args.artist === undefined || isBoardArtist(args.artist, deps.artist))) args.artist = deps.artist.name;
+  if (deps.artist && (args.artistEntityId === undefined || isBoardArtist(args.artistEntityId, deps.artist))) args.artistEntityId = deps.artist.entityId;
   const { artist, artistEntityId, city, country } = args;
   const badKey = (["artist", "city", "country"] as const).find((k) => !isSafeName(args[k])) ?? (typeof artistEntityId !== "string" || !ID.test(artistEntityId) ? "artistEntityId" : null);
   if (badKey) return rejected(name, `Unsafe argument: ${badKey}`);
@@ -185,10 +229,12 @@ function quotesDocument(args: Record<string, unknown>, documents: UserDocument[]
 
 export async function executeTool(call: { name: string; args: Record<string, unknown> }, deps: Deps): Promise<ToolOutcome> {
   const { name } = call;
-  const args = rec(call.args) ?? {};
-  if (quotesDocument(args, deps.documents)) return rejected(name, "Document text is never sent to Qloo");
-  if (name === "get_city_playbook") return playbook(args, deps);
+  const rawArgs = rec(call.args) ?? {};
+  if (quotesDocument(rawArgs, deps.documents)) return rejected(name, "Document text is never sent to Qloo");
+  if (name === "get_city_playbook") return playbook(rawArgs, deps);
+  if (name === "sponsors_by_age") return sponsorsByAge(rawArgs, deps);
   if (!STRATEGIST_QLOO_TOOLS.includes(name)) return rejected(name, `Tool not allowed: ${name}`);
+  const args = withBoardArtist(name, rawArgs, deps.artist);
   const bad = unsafeKey(args);
   if (bad) return rejected(name, `Unsafe argument: ${bad}`);
   try {

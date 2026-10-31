@@ -47,7 +47,7 @@ export interface SponsorSegments {
   bands: SegmentBand[];
 }
 
-export interface SponsorSegmentsInput { artistId: string; city: { name: string; country: string; id?: string; lat?: number; lon?: number }; sessionId: string }
+export interface SponsorSegmentsInput { /** Force one age band instead of picking the over-indexing ones (strategist). */ onlyBand?: AgeBand; artistId: string; city: { name: string; country: string; id?: string; lat?: number; lon?: number }; sessionId: string }
 export interface SponsorSegmentsDeps {
   qloo: QlooCaller; cities: City[]; signal?: AbortSignal;
   sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>;
@@ -90,7 +90,7 @@ export async function runSponsorSegments(input: SponsorSegmentsInput, deps: Spon
     const demo = await ask("qloo_audience_demographics", { entity: input.artistId, entity_type: "artist" });
     const indexes = usable(demo) ? ageIndexes(demo.envelope) : null;
     if (!indexes) return unavailable("demographics", "Qloo has no age breakdown for this artist.");
-    const picked = pickBands(indexes);
+    const picked = input.onlyBand ? [{ band: input.onlyBand, index: indexes[input.onlyBand] ?? 0 }] : pickBands(indexes);
     if (picked.length === 0) return { status: "no_skew", indexes, bands: [] };
 
     // The playbook's own location string (same cached lookups), never a fresh guess.

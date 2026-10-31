@@ -29,13 +29,15 @@ function pageNumbers(documents: UserDocument[], id: string, n: number): number[]
  * Raw number tokens in the answer that are unsupported (same match rules as verifyClaims).
  * A sentence that cites `[doc:id p.n]` is checked only against the numbers on those pages of the user's documents; every other sentence only against tool results and board-context scores. Neither source ever vouches for the other.
  */
-export function unsupportedNumbers(answer: string, toolData: unknown[], context: StrategistContext, documents: UserDocument[] = []): string[] {
+export function unsupportedNumbers(answer: string, toolData: unknown[], context: StrategistContext, documents: UserDocument[] = [], userTexts: string[] = []): string[] {
   const pool: number[] = [];
   const scores: number[] = [];
   collect(toolData, pool, scores);
   // Prose drops the minus sign of coordinates (-118.26 -> "118.26"), so non-score negatives also match by absolute value.
   for (const v of [...pool]) if (v < 0) pool.push(-v);
   for (const c of context.cities ?? []) collect([c.fanHeat, c.activation, c.winnability], pool);
+  // Numbers the user typed ("fans aged 25-29") are theirs, not claims; they support the plain (non-cited) sentences.
+  for (const t of userTexts) for (const tok of numberTokens(t)) pool.push(tok.value);
   const flagged: string[] = [];
   for (const sentence of stripStructure(answer).split(SENTENCES)) {
     const cites = [...sentence.matchAll(CITE)];
