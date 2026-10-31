@@ -266,6 +266,16 @@ describe("advance route", () => {
     expect(ok.status).toBe(200);
     expect(advance).toHaveBeenCalledWith({ city: "G", country: "MX", start: "2027-03-12", end: "2027-03-15", sessionId: "s", artistCountry: "GB", lat: 20.6, lon: -103.3 });
   });
+  it("forwards part=fast|web and rejects other values", async () => {
+    const advance = vi.fn(async () => ({ generatedAt: "t" }));
+    const app = createApp({ ...base, advance });
+    const q = "city=G&country=MX&start=2027-03-12&end=2027-03-15";
+    expect((await request(app).get(`/v1/advance?${q}&part=nope`).set("x-session-id", "s")).status).toBe(400);
+    for (const part of ["fast", "web"]) {
+      expect((await request(app).get(`/v1/advance?${q}&part=${part}`).set("x-session-id", "s")).status).toBe(200);
+      expect(advance).toHaveBeenLastCalledWith(expect.objectContaining({ part }));
+    }
+  });
   it("answers all-unavailable when not configured", async () => {
     const res = await request(createApp(base)).get("/v1/advance?city=G&country=MX&start=2027-03-12&end=2027-03-15").set("x-session-id", "s");
     expect(res.body.visa.status).toBe("unavailable");

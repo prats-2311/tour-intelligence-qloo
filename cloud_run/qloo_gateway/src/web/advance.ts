@@ -12,7 +12,9 @@ export interface AdvanceDeps {
   search?: WebSearch; usage: UsageStore; cache: Cache; generate?: GenerateFn; models: string[]; ceiling: BudgetGuard; dailyUsage?: UsageStore;
   fetchImpl?: typeof fetch; now?: () => number; log?: (line: string) => void; warn?: (line: string) => void;
 }
-export interface AdvanceInput { city: string; country: string; start: string; end: string; artistCountry?: string; lat?: number; lon?: number; sessionId: string }
+/** "fast" = weather + holidays; "web" = visa + equipment; absent = all four. */
+export type AdvancePart = "fast" | "web";
+export interface AdvanceInput { city: string; country: string; start: string; end: string; artistCountry?: string; lat?: number; lon?: number; sessionId: string; part?: AdvancePart }
 
 export interface AdvanceItem { text: string; sourceUrl: string }
 export interface AdvanceSource { title: string; url: string }
@@ -25,6 +27,8 @@ export type Holidays =
 export type WebSection =
   | { status: "ok"; summary: string; leadTime?: string; items: AdvanceItem[]; sources: AdvanceSource[]; artistCountry?: string; cached: boolean }
   | { status: "unavailable" | "capped"; message: string; summary?: string; items?: AdvanceItem[]; sources?: AdvanceSource[]; artistCountry?: string };
+/** What a `part` request returns: only that part's sections are present. */
+export type AdvancePartial = Partial<Advance> & { generatedAt: string };
 export interface Advance { weather: Weather; holidays: Holidays; visa: WebSection; equipment: WebSection; generatedAt: string }
 
 /** Bumped when a search query or prompt changes, so older cached answers are not served. */
@@ -324,22 +328,25 @@ async function webSection(kind: Kind, input: AdvanceInput, deps: AdvanceDeps, ct
 
 const down = (message: string) => ({ status: "unavailable" as const, message });
 
-/** Runs all four lookups in parallel; a section that throws becomes "unavailable" and the others are unaffected. */
-export async function advance(input: AdvanceInput, deps: AdvanceDeps): Promise<Advance> {
+/** Runs the lookups in parallel (all four, or one `part`); a section that throws becomes "unavailable" and the others are unaffected. */
+export async function advance(input: AdvanceInput & { part?: undefined }, deps: AdvanceDeps): Promise<Advance>;
+export async function advance(input: AdvanceInput, deps: AdvanceDeps): Promise<AdvancePartial>;
+export async function advance(input: AdvanceInput, deps: AdvanceDeps): Promise<AdvancePartial> {
   const ctry = resolveCountry(input.country);
   const artist = input.artistCountry?.trim() ? resolveCountry(input.artistCountry) : undefined;
-  const [w, h, v, e] = await Promise.allSettled([weather(input, deps, ctry), holidays(input, deps, ctry), webSection("visa", input, deps, ctry, artist), webSection("equipment", input, deps, ctry)]);
   const warn = deps.warn ?? console.warn;
-  const pick = <T>(r: PromiseSettledResult<T>, name: string, fallback: T): T => {
-    if (r.status === "fulfilled") return r.value;
-    warn(`[advance] ${name} failed: ${msg(r.reason)}`);
-    return fallback;
+  const settle = async <T>(name: string, run: () => Promise<T>, fallback: T): Promise<T> => {
+    try { return await run(); } catch (err) { warn(`[advance] ${name} failed: ${msg(err)}`); return fallback; }
   };
+  const wantFast = input.part !== "web", wantWeb = input.part !== "fast";
+  const [w, h, v, e] = await Promise.all([
+    wantFast ? settle("weather", () => weather(input, deps, ctry), down("Weather history is unavailable right now.")) : undefined,
+    wantFast ? settle("holidays", () => holidays(input, deps, ctry), down("Public holidays are unavailable right now.")) : undefined,
+    wantWeb ? settle("visa", () => webSection("visa", input, deps, ctry, artist), down("Web lookup failed.")) : undefined,
+    wantWeb ? settle("equipment", () => webSection("equipment", input, deps, ctry), down("Web lookup failed.")) : undefined,
+  ]);
   return {
-    weather: pick(w, "weather", down("Weather history is unavailable right now.")),
-    holidays: pick(h, "holidays", down("Public holidays are unavailable right now.")),
-    visa: pick(v, "visa", down("Web lookup failed.")),
-    equipment: pick(e, "equipment", down("Web lookup failed.")),
+    ...(w ? { weather: w } : {}), ...(h ? { holidays: h } : {}), ...(v ? { visa: v } : {}), ...(e ? { equipment: e } : {}),
     generatedAt: new Date((deps.now ?? Date.now)()).toISOString(),
   };
 }

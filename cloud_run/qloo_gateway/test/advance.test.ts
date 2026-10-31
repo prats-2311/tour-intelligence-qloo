@@ -249,3 +249,39 @@ describe("holiday de-duplication", () => {
     expect(filterHolidays(all, "2027-03-25", "2027-03-27")).toHaveLength(1);
   });
 });
+
+describe("advance parts", () => {
+  it("part=fast runs only weather and holidays (no search, no model) and omits the web sections", async () => {
+    const d = deps();
+    const r = await advance({ ...input, part: "fast" }, d);
+    expect(r.weather?.status).toBe("ok");
+    expect(r.holidays?.status).toBe("ok");
+    expect(r.visa).toBeUndefined();
+    expect(r.equipment).toBeUndefined();
+    expect(d.search).not.toHaveBeenCalled();
+  });
+  it("part=web runs only visa and equipment (no weather/holiday fetches) and omits the fast sections", async () => {
+    const f = fakeFetch();
+    const d = deps({ fetchImpl: f as unknown as typeof fetch });
+    const r = await advance({ ...input, part: "web" }, d);
+    expect(r.visa?.status).toBe("ok");
+    expect(r.equipment?.status).toBe("ok");
+    expect(r.weather).toBeUndefined();
+    expect(r.holidays).toBeUndefined();
+    expect(f).not.toHaveBeenCalled();
+    expect(d.search).toHaveBeenCalled();
+  });
+  it("no part runs all four, as before", async () => {
+    const r = await advance(input, deps());
+    expect([r.weather.status, r.holidays.status, r.visa.status, r.equipment.status]).toEqual(["ok", "ok", "ok", "ok"]);
+  });
+  it("each part is cached on its own: a fast then web request reuse their own entries", async () => {
+    const cache = new MemoryCache();
+    await advance({ ...input, part: "fast" }, deps({ cache }));
+    const f = fakeFetch(); const d = deps({ cache, fetchImpl: f as unknown as typeof fetch });
+    await advance({ ...input, part: "fast" }, d);
+    expect(f).not.toHaveBeenCalled();
+    await advance({ ...input, part: "web" }, d);
+    expect(d.search).toHaveBeenCalled();
+  });
+});

@@ -15,7 +15,7 @@ import { MAX_ROUTING_CITIES } from "../pipeline/routing.js";
 import { runTourBoard } from "../pipeline/tourBoard.js";
 import { ValidationError, type QlooCaller } from "../qlooCall.js";
 import { isSafeContextText, LIMITS, sanitizeMessages, validateContext, validateDocuments } from "../strategist/safety.js";
-import type { Advance, AdvanceInput } from "../web/advance.js";
+import type { Advance, AdvanceInput, AdvancePartial } from "../web/advance.js";
 import { advanceUnavailable } from "../web/advance.js";
 import type { ChatMessage, GatewayEvent, NarrateFn, StrategistContext, ThisWeek, UserDocument, WithoutQloo } from "../types.js";
 
@@ -38,7 +38,7 @@ async function streamSse(res: Response, gen: AsyncGenerator<GatewayEvent>, contr
   res.end();
 }
 
-export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; advance?: (input: AdvanceInput) => Promise<Advance>; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; documents?: UserDocument[]; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo>; collab?: CollabDeps; tours?: ToursDeps; analytics?: Analytics; sponsorSegmentsDeadlineMs?: number; sponsorsWithoutQloo?: (input: SponsorsWithoutQlooInput, signal: AbortSignal) => Promise<SponsorsWithoutQloo> }) {
+export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () => Promise<{ connected: boolean; ready: boolean }>; narrate?: NarrateFn; advance?: (input: AdvanceInput) => Promise<Advance | AdvancePartial>; thisWeek?: (input: { city: string; country: string; start: string; end: string; sessionId: string }) => Promise<ThisWeek>; strategist?: (input: { messages: ChatMessage[]; context: StrategistContext; documents?: UserDocument[]; sessionId: string }, signal: AbortSignal) => AsyncGenerator<GatewayEvent>; localActs?: (input: { artist: string; city: { name: string; country: string }; sessionId: string }) => Promise<string[] | null>; sponsorCheck?: (candidates: SponsorCandidate[], sessionId: string) => Promise<SponsorVerdicts>; withoutQloo?: (input: { artist: string; regions: string[]; cities: Array<{ name: string; country: string }>; sessionId: string }) => Promise<WithoutQloo>; collab?: CollabDeps; tours?: ToursDeps; analytics?: Analytics; sponsorSegmentsDeadlineMs?: number; sponsorsWithoutQloo?: (input: SponsorsWithoutQlooInput, signal: AbortSignal) => Promise<SponsorsWithoutQloo> }) {
   const app = express();
   const analytics = deps.analytics ?? DISABLED_ANALYTICS;
   const stats = createStats(analytics);
@@ -221,16 +221,16 @@ export function createApp(deps: { qloo: QlooCaller; cities: City[]; health: () =
 
   app.get("/v1/advance", async (req, res, next) => {
     const sessionId = req.header("x-session-id");
-    const { city, country, start, end, artistCountry, lat, lon } = req.query;
+    const { city, country, start, end, artistCountry, lat, lon, part } = req.query;
     const coord = (v: unknown, max: number) => v === undefined || (typeof v === "string" && v !== "" && Number.isFinite(Number(v)) && Math.abs(Number(v)) <= max);
     if (!validSession(sessionId) || [city, country, start, end].some((v) => typeof v !== "string" || !v || v.length > 80)
       || !ISO_DATE.test(String(start)) || !ISO_DATE.test(String(end)) || String(end) < String(start)
       || !((Date.parse(String(end)) - Date.parse(String(start))) / 86_400_000 <= 62)
-      || (artistCountry !== undefined && (typeof artistCountry !== "string" || artistCountry.length > 80)) || !coord(lat, 90) || !coord(lon, 180) || (lat === undefined) !== (lon === undefined)) {
-      return void res.status(400).json({ error: "x-session-id, city, country, start, end (YYYY-MM-DD, ≤ 62 days) required; artistCountry, lat and lon optional" });
+      || (artistCountry !== undefined && (typeof artistCountry !== "string" || artistCountry.length > 80)) || (part !== undefined && part !== "fast" && part !== "web") || !coord(lat, 90) || !coord(lon, 180) || (lat === undefined) !== (lon === undefined)) {
+      return void res.status(400).json({ error: "x-session-id, city, country, start, end (YYYY-MM-DD, ≤ 62 days) required; artistCountry, lat, lon and part (fast|web) optional" });
     }
     if (!deps.advance) return void res.json(advanceUnavailable("Advance lookups are not configured."));
-    const input: AdvanceInput = { city: String(city), country: String(country), start: String(start), end: String(end), sessionId, ...(typeof artistCountry === "string" && artistCountry.trim() ? { artistCountry: artistCountry.trim() } : {}), ...(lat !== undefined && lon !== undefined ? { lat: Number(lat), lon: Number(lon) } : {}) };
+    const input: AdvanceInput = { city: String(city), country: String(country), start: String(start), end: String(end), sessionId, ...(typeof artistCountry === "string" && artistCountry.trim() ? { artistCountry: artistCountry.trim() } : {}), ...(lat !== undefined && lon !== undefined ? { lat: Number(lat), lon: Number(lon) } : {}), ...(part === "fast" || part === "web" ? { part } : {}) };
     try { res.json(await deps.advance(input)); } catch (err) { next(err); }
   });
   // Team workspaces (/v1/ws): absent without a store, so the routes 404 and the dashboard hides collaboration.
