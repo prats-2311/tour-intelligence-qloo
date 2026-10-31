@@ -94,7 +94,7 @@ describe("tour registry", () => {
   });
   it("lazy controls are highlighted, never triggered: the plan tour points at the Advance tab and the compare control", () => {
     const plan = tourById("plan")!.steps(show());
-    expect(plan.map((s) => s.id)).toEqual(["age-matrix", "filters", "advance", "budget", "chat", "compare"]);
+    expect(plan.map((s) => s.id)).toEqual(["age-matrix", "filters", "advance", "budget", "chat", "compare", "saved"]);
     expect(plan[2]!.targets[0]).toBe("tab-advance");
     expect(plan[4]!.opens).toBe("ask");
     expect(plan[5]!.targets[0]).toBe("sponsors-compare");
