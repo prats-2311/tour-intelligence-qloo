@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/Toast";
+import { useWorkspace } from "@/lib/collab/workspaceContext";
+import { WS_ID } from "@/lib/collab/types";
 import { subscribePlaybooks } from "@/lib/qloo/playbookStore";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { patchTour, saveTour, ToursError } from "./api";
@@ -22,6 +24,9 @@ export function TourAutoSave(): null {
   const { state, markSaved } = useTourBoard();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { ws } = useWorkspace();
+  const wsRef = useRef(ws);
+  wsRef.current = ws;
   const location = useLocation();
   const locRef = useRef(location);
   locRef.current = location;
@@ -34,8 +39,8 @@ export function TourAutoSave(): null {
   const snapshot = () => {
     const s = stateRef.current;
     const playbooks = s.artist ? exportPlaybooks(s.artist.entityId, s.cities) : {};
-    const run = buildSavedRun(s, playbooks);
-    return { run, summary: summaryOf(s), sig: `${Object.keys(playbooks).sort().join(",")}|${(s.shortlist ?? []).join(",")}` };
+    const run = buildSavedRun(s, playbooks, wsRef.current);
+    return { run, summary: summaryOf(s), sig: `${Object.keys(playbooks).sort().join(",")}|${(s.shortlist ?? []).join(",")}|${wsRef.current && WS_ID.test(wsRef.current) ? wsRef.current : ""}` };
   };
 
   // First save.
@@ -85,7 +90,7 @@ export function TourAutoSave(): null {
     if (eligible) schedule();
     return () => { unsub(); clearTimeout(timer.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eligible, state.runId, shortlistKey]);
+  }, [eligible, state.runId, shortlistKey, ws]);
 
   return null;
 }

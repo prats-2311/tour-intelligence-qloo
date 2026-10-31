@@ -201,3 +201,51 @@ test("My tours has no serious or critical accessibility violations", async ({ pa
   expect(violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`)).toEqual([]);
   expect(violations.map((v) => v.id)).toEqual([]);
 });
+
+test("reloading an open playbook keeps the same artist and scores, never the example", async ({ page }) => {
+  await plan(page);
+  const cityId = Object.keys(rec.playbooks)[0]!;
+  await page.locator("#city-row-" + cityId).click();
+  await expect(page).toHaveURL(new RegExp(`/tours/playbook/${cityId}.*saved=`));
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.waitForResponse((r) => r.request().method() === "PATCH" && r.url().includes("/api/tours/"), { timeout: 15_000 });
+  const crumb = async () => (await page.getByRole("navigation", { name: /breadcrumb/i }).innerText()).replace(/\s+/g, " ").trim();
+  const before = { crumb: await crumb(), h1: await page.getByRole("heading", { level: 1 }).innerText() };
+  expect(before.crumb).toContain(`${rec.artist} tour`);
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 20_000 });
+  expect(await page.getByRole("heading", { level: 1 }).innerText()).toBe(before.h1);
+  expect(await crumb()).toBe(before.crumb);
+  await expect(page.getByText("Recorded Qloo run")).toHaveCount(0);
+  // A bare playbook URL (no saved id, no example flag) says the tour is not open, instead of showing the example.
+  await page.goto(`/tours/playbook/${cityId}`);
+  await expect(page.getByRole("heading", { name: "This tour isn't open in this tab" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "My tours" })).toBeVisible();
+});
+
+test("a tour note written while the tour was open is there when it is reopened from My tours", async ({ page }) => {
+  await plan(page);
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+  const text = `Saved-tour note ${Date.now()}`;
+  const notesBtn = () => page.getByRole("button", { name: /Tour notes/ }).first();
+  await notesBtn().click();
+  await page.getByRole("textbox", { name: "Add a note" }).fill(text);
+  await page.getByRole("button", { name: "Add note" }).click();
+  const who = page.getByTestId("inline-identity");
+  if (await who.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await who.getByLabel("Your name").fill("E2E Tester");
+    await who.getByText("Promoter", { exact: true }).click();
+    await who.getByRole("button", { name: "Save" }).click();
+  }
+  await expect(page.getByRole("list", { name: "Notes" }).getByText(text)).toBeVisible({ timeout: 20_000 });
+  const patched = await page.waitForResponse((r) => r.request().method() === "PATCH" && r.url().includes("/api/tours/") && /"ws":"/.test(r.request().postData() ?? ""), { timeout: 15_000 });
+  expect(patched.ok()).toBe(true);
+  await page.keyboard.press("Escape");
+  await page.goto("/tours/mine");
+  await page.getByTestId("saved-tour").first().getByRole("link", { name: /^Open / }).click();
+  await expect(page).toHaveURL(/\/tours\/board\?.*saved=/);
+  await expect(page).toHaveURL(/[?&]ws=/, { timeout: 20_000 });
+  await expect(page.getByTestId("city-row").first()).toBeVisible({ timeout: 20_000 });
+  await notesBtn().click();
+  await expect(page.getByRole("list", { name: "Notes" }).getByText(text)).toBeVisible({ timeout: 20_000 });
+});

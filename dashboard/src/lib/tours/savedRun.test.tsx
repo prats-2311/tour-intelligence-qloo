@@ -24,6 +24,15 @@ describe("saved run format (same shape as a recording)", () => {
     expect(run.boardEvents.length).toBe(state.log.length);
     expect(parseSavedRun(JSON.parse(JSON.stringify(run)))?.boardEvents.length).toBe(state.log.length);
   });
+  it("the team workspace id round-trips; an invalid or non-string one is dropped", () => {
+    const run = buildSavedRun(board(), {}, "ws_abcdefghij");
+    expect(run.ws).toBe("ws_abcdefghij");
+    expect(parseSavedRun(JSON.parse(JSON.stringify(run)))?.ws).toBe("ws_abcdefghij");
+    expect(buildSavedRun(board(), {}, "bad id!").ws).toBeUndefined();
+    expect("ws" in (parseSavedRun({ ...JSON.parse(JSON.stringify(run)), ws: "../x" }) ?? { ws: 1 })).toBe(false);
+    expect("ws" in (parseSavedRun({ ...JSON.parse(JSON.stringify(run)), ws: 7 }) ?? { ws: 1 })).toBe(false);
+    expect("ws" in buildSavedRun(board(), {})).toBe(false);
+  });
   it("parse rejects junk and drops unknown event types", () => {
     expect(parseSavedRun(null)).toBeNull();
     expect(parseSavedRun({})).toBeNull();

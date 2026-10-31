@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
 import { getTour, ToursError } from "./api";
 import { parseSavedRun } from "./savedRun";
@@ -11,6 +12,10 @@ export type OpenSavedStatus = "none" | "loading" | "ready" | "error";
  */
 export function useOpenSavedTour(id: string | null): { status: OpenSavedStatus; message: string | null } {
   const { state, loadSaved } = useTourBoard();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const locRef = useRef(location);
+  locRef.current = location;
   const tried = useRef<string | null>(null);
   const [failed, setFailed] = useState<{ id: string; message: string } | null>(null);
   const held = !!id && state.savedId === id;
@@ -24,6 +29,10 @@ export function useOpenSavedTour(id: string | null): { status: OpenSavedStatus; 
         const run = parseSavedRun(t.run);
         if (!run) throw new ToursError("server", "This saved tour couldn't be opened. It may have been saved by a different version.");
         loadSaved(run, id);
+        // The tour's team workspace comes back with it (unless the address already names one, e.g. a shared link).
+        const here = locRef.current;
+        const q = new URLSearchParams(here.search);
+        if (run.ws && !q.has("ws")) { q.set("ws", run.ws); navigate({ pathname: here.pathname, search: `?${q.toString()}`, hash: here.hash }, { replace: true }); }
       })
       .catch((e: unknown) => {
         if (ctl.signal.aborted) return;

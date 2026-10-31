@@ -8,6 +8,7 @@ import { LUMEN_VALE_SAMPLE, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { samplePlaybookEvents, SAMPLE_PLAYBOOK_CITY_IDS } from "@/lib/qloo/fixtures/lumenValePlaybooks";
 import { resetPlaybooks } from "@/lib/qloo/playbookStore";
 import { TourBoardProvider, useTourBoard } from "@/lib/qloo/TourBoardProvider";
+import { OFF, WorkspaceContext } from "@/lib/collab/workspaceContext";
 import { OWNER_KEY } from "./api";
 import { buildSavedRun } from "./savedRun";
 import { boardReducer, initialBoard } from "@/lib/qloo/tourBoardReducer";
@@ -34,8 +35,12 @@ function Probe() {
     }}>open-saved</button>
   </div>);
 }
-function mount(entry = "/") {
-  return render(<MemoryRouter initialEntries={[entry]}><ToastProvider><TourBoardProvider><TourAutoSave /><Probe /></TourBoardProvider></ToastProvider></MemoryRouter>);
+function tree(entry: string, ws: string | null) {
+  return <MemoryRouter initialEntries={[entry]}><WorkspaceContext.Provider value={{ ...OFF, enabled: true, ws }}><ToastProvider><TourBoardProvider><TourAutoSave /><Probe /></TourBoardProvider></ToastProvider></WorkspaceContext.Provider></MemoryRouter>;
+}
+function mount(entry = "/", ws: string | null = null) {
+  const r = render(tree(entry, ws));
+  return { ...r, setWs: (w: string | null) => r.rerender(tree(entry, w)) };
 }
 async function* fakeStream(): AsyncGenerator<GatewayEvent> { for (const e of LUMEN_VALE_SAMPLE) yield e; }
 const posts = () => calls.filter((c) => c.method === "POST" && c.url === "/api/tours");
@@ -142,5 +147,34 @@ describe("later changes in the same session patch", () => {
     expect(patches()[0]!.url).toBe("/api/tours/t-1");
     expect(Object.keys(patches()[0]!.body.run.playbooks)).toEqual([id]);
     expect(posts().length).toBe(1);
+  });
+});
+
+describe("the team workspace rides along with the saved tour", () => {
+  const WS = "ws_abcdefghij";
+  it("a workspace already attached is in the first save", async () => {
+    mount("/", WS);
+    act(() => screen.getByText("live").click());
+    await waitFor(() => expect(posts().length).toBe(1));
+    expect(posts()[0]!.body.run.ws).toBe(WS);
+  });
+  it("a workspace attached after the save is patched in once", async () => {
+    const m = mount("/");
+    act(() => screen.getByText("live").click());
+    await waitFor(() => expect(posts().length).toBe(1));
+    expect(posts()[0]!.body.run.ws).toBeUndefined();
+    vi.useFakeTimers();
+    act(() => m.setWs(WS));
+    await act(async () => { await vi.advanceTimersByTimeAsync(PATCH_DEBOUNCE_MS + 50); });
+    expect(patches().length).toBe(1);
+    expect(patches()[0]!.body.run.ws).toBe(WS);
+    await act(async () => { await vi.advanceTimersByTimeAsync(PATCH_DEBOUNCE_MS + 50); });
+    expect(patches().length).toBe(1);
+  });
+  it("an invalid workspace id is never stored", async () => {
+    mount("/", "nope");
+    act(() => screen.getByText("live").click());
+    await waitFor(() => expect(posts().length).toBe(1));
+    expect(posts()[0]!.body.run.ws).toBeUndefined();
   });
 });

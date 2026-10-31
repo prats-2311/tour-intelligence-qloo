@@ -3,6 +3,7 @@ import { playbookReducer, initialPlaybook, type PlaybookState } from "@/lib/qloo
 import { cleanEvents } from "@/lib/qloo/showcase";
 import type { BoardState } from "@/lib/qloo/tourBoardReducer";
 import type { GatewayEvent, ScoredCity, TourBrief } from "@/lib/qloo/types";
+import { WS_ID } from "@/lib/collab/types";
 import type { TourSummary } from "./api";
 
 /**
@@ -11,22 +12,23 @@ import type { TourSummary } from "./api";
  * the session had already loaded comes back with it (a city without one is fetched live when opened, as usual). `thisWeek`, the generic ranking
  * and strategist chats are not stored: they are cheap to ask again and can be stale. `shortlist` keeps the cities held for the tour.
  */
-export interface SavedRun { v: 1; brief: TourBrief; boardEvents: GatewayEvent[]; playbooks: Record<string, GatewayEvent[]>; shortlist: string[] | null }
+export interface SavedRun { v: 1; brief: TourBrief; boardEvents: GatewayEvent[]; playbooks: Record<string, GatewayEvent[]>; shortlist: string[] | null; /** The team workspace (notes, statuses) that belongs to this tour, so reopening it brings the team's work back. */ ws?: string }
 
-export function buildSavedRun(state: BoardState, playbooks: Record<string, GatewayEvent[]>): SavedRun {
-  return { v: 1, brief: state.brief!, boardEvents: state.log, playbooks, shortlist: state.shortlist };
+export function buildSavedRun(state: BoardState, playbooks: Record<string, GatewayEvent[]>, ws?: string | null): SavedRun {
+  return { v: 1, brief: state.brief!, boardEvents: state.log, playbooks, shortlist: state.shortlist, ...(ws && WS_ID.test(ws) ? { ws } : {}) };
 }
 
 /** Reads a stored run defensively: anything unrecognised is dropped, and a run with no scored city is not a run (null). */
 export function parseSavedRun(input: unknown): SavedRun | null {
-  const o = input as { v?: unknown; brief?: unknown; boardEvents?: unknown; playbooks?: unknown; shortlist?: unknown } | null;
+  const o = input as { v?: unknown; brief?: unknown; boardEvents?: unknown; playbooks?: unknown; shortlist?: unknown; ws?: unknown } | null;
   if (!o || typeof o !== "object" || o.v !== 1 || !o.brief || typeof o.brief !== "object" || typeof (o.brief as TourBrief).artist !== "string") return null;
   const boardEvents = cleanEvents(o.boardEvents);
   if (!boardEvents.some((e) => e.type === "city_scored")) return null;
   const playbooks: Record<string, GatewayEvent[]> = Object.create(null);
   if (o.playbooks && typeof o.playbooks === "object") for (const [id, evs] of Object.entries(o.playbooks as Record<string, unknown>)) { if (id === "__proto__" || id === "constructor" || id === "prototype") continue; const c = cleanEvents(evs); if (c.length) playbooks[id] = c; }
   const shortlist = Array.isArray(o.shortlist) && o.shortlist.every((x) => typeof x === "string") ? (o.shortlist as string[]) : null;
-  return { v: 1, brief: o.brief as TourBrief, boardEvents, playbooks, shortlist };
+  const ws = typeof o.ws === "string" && WS_ID.test(o.ws) ? o.ws : undefined;
+  return { v: 1, brief: o.brief as TourBrief, boardEvents, playbooks, shortlist, ...(ws ? { ws } : {}) };
 }
 
 export function summaryOf(state: BoardState): TourSummary {

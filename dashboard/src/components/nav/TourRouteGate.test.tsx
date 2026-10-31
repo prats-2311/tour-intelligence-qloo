@@ -11,10 +11,10 @@ import { buildSavedRun } from "@/lib/tours/savedRun";
 import { TourRouteGate } from "./TourRouteGate";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
-function savedBody() {
+function savedBody(ws?: unknown) {
   let s = boardReducer(initialBoard, { type: "start", brief: SAMPLE_BRIEF, source: "live" });
   for (const event of LUMEN_VALE_SAMPLE) s = boardReducer(s, { type: "event", event });
-  return { id: "t-1", title: "x", status: "draft", summary: {}, run: buildSavedRun(s, {}), updatedAt: "u", createdAt: "u" };
+  return { id: "t-1", title: "x", status: "draft", summary: {}, run: { ...buildSavedRun(s, {}), ...(ws === undefined ? {} : { ws }) }, updatedAt: "u", createdAt: "u" };
 }
 function Page() {
   const { state } = useTourBoard();
@@ -84,5 +84,22 @@ describe("TourRouteGate", () => {
     screen.getByText("other").click();
     await waitFor(() => expect(screen.getByTestId("q").textContent).toBe("?ws=w1&saved=t-1"));
     expect(fetched.length).toBe(1);
+  });
+
+  it("opening a saved tour that has a team workspace puts ws in the address (replace), so its notes load", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => json(savedBody("ws_abcdefghij"))));
+    mount("/tours/playbook/5746545?saved=t-1");
+    await waitFor(() => expect(screen.getByTestId("q").textContent).toBe("?saved=t-1&ws=ws_abcdefghij"));
+  });
+  it("a ws already in the address wins, and an invalid stored ws is ignored", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => json(savedBody("ws_abcdefghij"))));
+    mount("/tours/playbook/5746545?saved=t-1&ws=ws_shared12345");
+    await waitFor(() => expect(screen.getByTestId("artist")).toBeTruthy());
+    expect(screen.getByTestId("q").textContent).toBe("?saved=t-1&ws=ws_shared12345");
+    cleanup();
+    vi.stubGlobal("fetch", vi.fn(async () => json(savedBody("../evil"))));
+    mount("/tours/playbook/5746545?saved=t-1");
+    await waitFor(() => expect(screen.getByTestId("artist")).toBeTruthy());
+    expect(screen.getByTestId("q").textContent).toBe("?saved=t-1");
   });
 });
