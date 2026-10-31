@@ -5,7 +5,7 @@ import { isRoutingBrief } from "@/lib/qloo/showcase";
 
 const MODE_KEYS = ["showcase", "sample"] as const;
 
-/** Builds a nav link that keeps the data mode and the team workspace: `showcase` / `sample` from the current URL (else from the run's own
+/** Builds a nav link that keeps the data mode, the team workspace and the open saved tour: `showcase` / `sample` from the current URL (else from the run's own
  *  query, for a bare /tours/board that loaded the showcase) and `ws`. Page-local params (mode, new, …) are dropped. Params already on `to` win. */
 export function navHref(to: string, urlSearch: string, runQuery: string): string {
   const [path = "", own = ""] = to.split("?");
@@ -19,6 +19,9 @@ export function navHref(to: string, urlSearch: string, runQuery: string): string
   }
   const ws = url.get("ws");
   if (ws && !out.has("ws")) out.set("ws", ws);
+  // A saved tour stays open across a reload: carry its id on links that are not showcase/sample ones.
+  const saved = url.get("saved");
+  if (saved && !out.has("saved") && !MODE_KEYS.some((k) => out.has(k))) out.set("saved", saved);
   const q = out.toString();
   return q ? `${path}?${q}` : path;
 }

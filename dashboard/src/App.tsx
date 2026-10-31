@@ -1,6 +1,7 @@
 import { useShowcaseVariant } from "@/lib/qloo/useShowcaseVariant";
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, Link } from "react-router-dom";
+import { TourRouteGate } from "./components/nav/TourRouteGate";
 import { AppShell } from "./components/AppShell";
 import { TasteInsightsSkeleton, TourBoardSkeleton, PlaybookSkeleton } from "./components/ui/Skeletons";
 import { QlooWebMcpTools } from "./components/QlooWebMcpTools";
@@ -47,6 +48,7 @@ export default function App() {
         {/* Every lazy route gets its own Suspense + matching skeleton. A bare
             fallback={null} would show a blank page on a direct load (fresh
             visit, shared link, reload) until the route's chunk arrived. */}
+        <TourRouteGate>
         <Routes>
           <Route path="/" element={<Suspense fallback={<LandingSkeleton />}><Landing /></Suspense>} />
           <Route path="/tours/board" element={<Suspense fallback={<TourBoardSkeleton />}><TourBoard /></Suspense>} />
@@ -66,6 +68,7 @@ export default function App() {
           ))}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </TourRouteGate>
       </AppShell>
       </TourProvider>
     </WorkspaceProvider>

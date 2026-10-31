@@ -32,6 +32,7 @@ export type BoardAction =
   | { type: "interrupted"; reason?: "user" | "connection" }
   | { type: "shortlist"; ids: string[] }
   | { type: "load"; brief: TourBrief; events: GatewayEvent[]; shortlist: string[] | null; savedId?: string; runId?: number }
+  | { type: "saved"; runId: number; savedId: string }
   | { type: "reset" };
 
 export const initialBoard: BoardState = { status: "idle", source: "live", cities: [], scoring: null, shortlist: null, log: [], regionsEmpty: [], regionsUnavailable: [], routingUnmatched: [] };
@@ -44,6 +45,9 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
       for (const event of action.events) s = boardReducer(s, { type: "event", event });
       return { ...s, status: s.status === "streaming" ? "done" : s.status, shortlist: action.shortlist, ...(action.savedId ? { savedId: action.savedId } : {}) };
     }
+    // The run `runId` was stored as `savedId` (auto-save). Ignored when another run has replaced it meanwhile.
+    case "saved":
+      return state.runId === action.runId ? { ...state, savedId: action.savedId } : state;
     case "reset":
       return initialBoard;
     case "shortlist":

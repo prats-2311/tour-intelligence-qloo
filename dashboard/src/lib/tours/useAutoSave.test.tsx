@@ -22,7 +22,7 @@ function Probe() {
   const { state, run, loadSaved } = useTourBoard();
   const where = useLocation();
   return (<div>
-    <span data-testid="status">{state.status}</span><span data-testid="where">{where.pathname}</span>
+    <span data-testid="status">{state.status}</span><span data-testid="where">{where.pathname}</span><span data-testid="search">{where.search}</span>
     <button onClick={() => run(SAMPLE_BRIEF, { sample: false })}>live</button>
     <button onClick={() => run(SAMPLE_BRIEF, { sample: true, sampleSet: "showcase" })}>showcase</button>
     <button onClick={() => run(SAMPLE_BRIEF, { sample: true })}>sample</button>
@@ -34,8 +34,8 @@ function Probe() {
     }}>open-saved</button>
   </div>);
 }
-function mount() {
-  return render(<MemoryRouter><ToastProvider><TourBoardProvider><TourAutoSave /><Probe /></TourBoardProvider></ToastProvider></MemoryRouter>);
+function mount(entry = "/") {
+  return render(<MemoryRouter initialEntries={[entry]}><ToastProvider><TourBoardProvider><TourAutoSave /><Probe /></TourBoardProvider></ToastProvider></MemoryRouter>);
 }
 async function* fakeStream(): AsyncGenerator<GatewayEvent> { for (const e of LUMEN_VALE_SAMPLE) yield e; }
 const posts = () => calls.filter((c) => c.method === "POST" && c.url === "/api/tours");
@@ -52,6 +52,14 @@ beforeEach(() => {
 afterEach(() => { cleanup(); resetPlaybooks(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe("auto-save of a live run", () => {
+  it("adds saved=<id> to the URL (replace, other params kept) once the run is saved, so a reload reopens it", async () => {
+    mount("/tours/playbook/5746545?ws=w1");
+    act(() => screen.getByText("live").click());
+    await waitFor(() => expect(screen.getByTestId("search").textContent).toContain("saved=t-1"));
+    expect(screen.getByTestId("search").textContent).toContain("ws=w1");
+    expect(screen.getByTestId("where").textContent).toBe("/tours/playbook/5746545");
+  });
+
   it("posts once as a draft when a live run completes, and toasts with an Open My tours action", async () => {
     mount();
     act(() => screen.getByText("live").click());

@@ -9,7 +9,7 @@ import { boardReducer, initialBoard, type BoardState } from "./tourBoardReducer"
 import { seedPlaybooks, type SavedRun } from "../tours/savedRun";
 import type { SampleSet, StrategistContext, TourBrief } from "./types";
 
-type Ctx = { state: BoardState; strategistContext: StrategistContext; shortlist: string[]; accentOrder: string[]; /** The city whose playbook was opened last in the current run (null before any). */ lastOpenedId: string | null; setLastOpened(id: string): void; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: SampleSet; delayMs?: number }): void; /** Re-runs the held recorded run step by step at the recorded pace. */ replay(): void; abort(): void; reset(): void; /** Opens a saved tour: the board finishes at once from its stored events, with no Qloo call. */ loadSaved(run: SavedRun, tourId?: string): void };
+type Ctx = { state: BoardState; strategistContext: StrategistContext; shortlist: string[]; accentOrder: string[]; /** The city whose playbook was opened last in the current run (null before any). */ lastOpenedId: string | null; setLastOpened(id: string): void; setShortlist(ids: string[]): void; toggleShortlist(id: string): void; run(brief: TourBrief, opts?: { sample?: boolean; sampleSet?: SampleSet; delayMs?: number }): void; /** Re-runs the held recorded run step by step at the recorded pace. */ replay(): void; abort(): void; reset(): void; /** Opens a saved tour: the board finishes at once from its stored events, with no Qloo call. */ loadSaved(run: SavedRun, tourId?: string): void; /** Records that run `runId` is stored as saved tour `tourId` (so the URL can carry it and the board never reloads it). */ markSaved(runId: number, tourId: string): void };
 const TourBoardContext = createContext<Ctx | null>(null);
 
 let runCounter = 0; // module-wide: every run, in any provider, gets its own id
@@ -72,6 +72,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
     const entity = saved.boardEvents.find((e) => e.type === "resolve");
     if (entity?.type === "resolve") seedPlaybooks(entity.entity.entityId, saved.boardEvents.flatMap((e) => (e.type === "city_scored" ? [e.city] : [])), saved.playbooks);
   }, [silentAbort]);
+  const markSaved = useCallback((runId: number, savedId: string) => dispatch({ type: "saved", runId, savedId }), []);
   useEffect(() => () => { silentAbort(); }, [silentAbort]);
 
   const shortlist = useMemo(() => state.shortlist ?? defaultShortlist(state.cities, state.brief?.maxStops ?? 8), [state.shortlist, state.cities, state.brief?.maxStops]);
@@ -84,7 +85,7 @@ export function TourBoardProvider({ children, sampleDelayMs }: { children: React
 
   const strategistContext = useMemo<StrategistContext>(() => buildStrategistContext(state.artist, state.brief, state.cities), [state.artist, state.brief, state.cities]);
 
-  const value = useMemo(() => ({ state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, replay, abort, reset, loadSaved }), [state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, abort, reset, loadSaved]);
+  const value = useMemo(() => ({ state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, replay, abort, reset, loadSaved, markSaved }), [state, strategistContext, shortlist, accentOrder, lastOpenedId, setLastOpened, setShortlist, toggleShortlist, run, abort, reset, loadSaved, markSaved]);
   return <TourBoardContext.Provider value={value}>{children}</TourBoardContext.Provider>;
 }
 

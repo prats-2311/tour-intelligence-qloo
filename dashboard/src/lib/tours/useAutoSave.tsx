@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/Toast";
 import { subscribePlaybooks } from "@/lib/qloo/playbookStore";
 import { useTourBoard } from "@/lib/qloo/TourBoardProvider";
@@ -19,9 +19,12 @@ const titleOf = (artist: string) => `${artist} tour`;
 
 /** Saves a finished LIVE board run as a draft once, then patches it as playbooks load or the shortlist changes. Never for the example or samples. Renders nothing. */
 export function TourAutoSave(): null {
-  const { state } = useTourBoard();
+  const { state, markSaved } = useTourBoard();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const locRef = useRef(location);
+  locRef.current = location;
   const stateRef = useRef(state);
   stateRef.current = state;
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -45,6 +48,13 @@ export function TourAutoSave(): null {
     void saveTour({ title: titleOf(summary.artist), status: "draft", summary, run })
       .then((r) => {
         saved.set(runId, { id: r.id, sig });
+        markSaved(runId, r.id);
+        // Keep the tour's id in the address so a reload, a new tab or a shared link reopens this tour (never the example).
+        const here = locRef.current;
+        if (here.pathname.startsWith("/tours/") && stateRef.current.runId === runId) {
+          const q = new URLSearchParams(here.search);
+          if (!q.has("showcase") && !q.has("sample") && q.get("saved") !== r.id) { q.set("saved", r.id); navigate({ pathname: here.pathname, search: `?${q.toString()}`, hash: here.hash }, { replace: true }); }
+        }
         toast({ message: "Saved to My tours", action: { label: "Open My tours", onClick: () => navigate("/tours/mine") } });
       })
       .catch((e: unknown) => {

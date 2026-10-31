@@ -16,4 +16,6 @@ describe("navHref: keeps showcase, sample and ws across nav links", () => {
   it("adds ws to the run's query when the URL only has ws", () => expect(navHref("/x", "?ws=w1", "?showcase=1")).toBe("/x?showcase=1&ws=w1"));
   it("no params gives a bare path", () => expect(navHref("/proof", "", "")).toBe("/proof"));
   it("keeps the params already on the target (a playbook link that carries its own ?showcase=1)", () => expect(navHref("/tours/playbook/9?showcase=1", "?ws=w", "")).toBe("/tours/playbook/9?showcase=1&ws=w"));
+  it("keeps saved=<id> next to ws so a reload reopens the same tour", () => expect(navHref("/tours/book", "?saved=t-1&ws=w", "")).toBe("/tours/book?ws=w&saved=t-1"));
+  it("does not add saved to a showcase or sample link", () => expect(navHref("/tours/book", "?saved=t-1&showcase=1", "")).toBe("/tours/book?showcase=1"));
 });
