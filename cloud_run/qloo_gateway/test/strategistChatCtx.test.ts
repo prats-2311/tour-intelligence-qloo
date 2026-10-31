@@ -147,4 +147,14 @@ describe("number checker counts user text", () => {
     for await (const e of runStrategist({ messages: [{ role: "user", text: "different for fans aged 25-29?" }], context: {}, sessionId: "s" }, d)) evs.push(e);
     expect(evs.find((e) => e.type === "strategist_message")).toMatchObject({ unsupportedNumbers: [] });
   });
+  it("system prompt tells it to use plain words for flags, and field names are replaced in the answer", async () => {
+    const generate = vi.fn(async (): Promise<GeminiResponse> => ({ candidates: [{ content: { parts: [{ text: "No partialData or closeCall flags; majorMarket, teamStatus ok." }] } }] }));
+    const d = { generate, models: ["m"], ceiling: { ceiling: new BudgetGuard({ perSession: 20, perDay: 300 }) }, qloo: fake().qloo, cities: CITIES };
+    const evs: Array<{ type: string; text?: string }> = [];
+    for await (const e of runStrategist({ messages: [{ role: "user", text: "risk?" }], context: { artist: BOARD }, sessionId: "s" }, d)) evs.push(e as never);
+    const sys = (generate.mock.calls[0] as unknown as [string, { systemInstruction: { parts: Array<{ text: string }> } }])[1].systemInstruction.parts[0]!.text;
+    expect(sys).toMatch(/never (write|use|mention) the field names/i);
+    const m = evs.find((e) => e.type === "strategist_message")!;
+    expect(m.text).toBe("No partial data or close call flags; major market, team status ok.");
+  });
 });

@@ -84,4 +84,15 @@ describe("unsupportedNumbers with document citations", () => {
   it("keeps the old behaviour without documents", () => {
     expect(unsupportedNumbers("Expect 5,000 [doc:d1 p.1].", [], {})).toEqual(["5,000"]);
   });
+  it("does not flag numbers inside brand or place names present in tool data, context or user text", () => {
+    expect(unsupportedNumbers("Forever 21 fans lean young.", [[{ name: "Forever 21" }]], {})).toEqual([]);
+    expect(unsupportedNumbers("Try club 33 downtown.", [], {}, [], ["what about Club 33?"])).toEqual([]);
+    expect(unsupportedNumbers("Fox Theater 2 fits.", [], { cities: [{ id: "1", name: "Fox Theater 2", country: "US", verdict: "x", fanHeat: 1, activation: 1, winnability: 1 }] } as never)).toEqual([]);
+    expect(unsupportedNumbers("Forever 21 has 77 stores.", [[{ name: "Forever 21" }]], {})).toEqual(["77"]);
+  });
+  it("accepts a number that rounds from a higher-precision supported value", () => {
+    expect(unsupportedNumbers("Activation is 44.38.", [[{ a: 44.3812345 }]], {})).toEqual([]);
+    expect(unsupportedNumbers("Heat 70.48 and fit 0.99.", [[{ a: 70.4823 }, { b: 0.9871 }]], {})).toEqual([]);
+    expect(unsupportedNumbers("Activation is 55.5.", [[{ a: 44.3812345 }]], {})).toEqual(["55.5"]);
+  });
 });

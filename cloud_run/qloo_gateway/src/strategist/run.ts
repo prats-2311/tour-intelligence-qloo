@@ -33,6 +33,9 @@ export function documentsBlock(documents: UserDocument[]): string[] {
   ];
 }
 
+const FLAG_WORDS: Array<[RegExp, string]> = [[/\bpartialData\b/g, "partial data"], [/\bcloseCall\b/g, "close call"], [/\bmajorMarket\b/g, "major market"], [/\bteamStatus\b/g, "team status"]];
+const plainFlags = (t: string): string => FLAG_WORDS.reduce((s, [re, w]) => s.replace(re, w), t);
+
 function systemPrompt(context: StrategistContext, documents: UserDocument[]): string {
   return [
     "You are the Tour Strategist, an assistant for a tour promoter deciding where an artist should play and who should sponsor.",
@@ -42,6 +45,7 @@ function systemPrompt(context: StrategistContext, documents: UserDocument[]): st
     ...(context.artist ? [`The artist is ${context.artist.name} with Qloo entity id ${context.artist.entityId}; use it, never ask the user which entity or which "${context.artist.name}" is meant. Tools that take an artist default to this id.`] : []),
     `Age groups use Qloo's buckets: ${AGE_BANDS.join(", ")}. For "which brand for fans aged 25-29 in <city>" call sponsors_by_age(city, country, age_group); map phrasings (25-29, late twenties, 55+) to a bucket yourself; never pass free-form demographics like "25-29_age" to qloo_recommend. Age results are ranks and over-index vs the average audience, never shares.`,
     "Routing, prioritisation and risk questions (which city first, what is risky) are answered from the board context: per-city winnability, fanHeat, activation, verdict, and flags (Partial data = partialData, Close call = closeCall, Major market = majorMarket, Hidden goldmine = verdict) and teamStatus when present. Use get_city_playbook when a city needs detail. Risks are low activation, partial data, close call, Consider or Skip verdicts. Distances are not known: never invent distances or travel times. Never say you cannot advise when board data exists: state what the data says, then what it cannot know (ticket sales, venue availability, costs).",
+    "Refer to flags in plain words (\"partial data\", \"close call\", \"major market\", \"hidden goldmine\", \"team status\"); never write the field names partialData, closeCall, majorMarket or teamStatus.",
     "Never give coordinates; name cities. If there is no board yet, suggest filling in the Plan a tour form (artist, regions or pasted cities) and pressing Score markets for the full city scores.",
     `Board context (JSON data): ${JSON.stringify(context)}`,
     ...documentsBlock(documents),
@@ -76,7 +80,8 @@ export async function* runStrategist(input: { messages: ChatMessage[]; context: 
   // Only model text is number-checked; our own fallback summary is not model output.
   // Whatever the model wrote, sentences naming a do-not-book act or a non-sponsor organisation never leave the gateway.
   const message = (raw: string, model: string, stoppedEarly: boolean, check = true): GatewayEvent => {
-    const { text, removed } = redactAnswer(raw);
+    const { text: redacted, removed } = redactAnswer(raw);
+    const text = plainFlags(redacted);
     return { type: "strategist_message", text, unsupportedNumbers: check ? unsupportedNumbers(text, collected, input.context, documents, input.messages.filter((m) => m.role === "user").map((m) => m.text)) : [], stoppedEarly, model, redactedSentences: removed };
   };
 
