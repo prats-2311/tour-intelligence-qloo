@@ -17,9 +17,15 @@ import type { GatewayEvent } from "@/lib/qloo/types";
 import syntheticShowcase from "@/test/fixtures/showcase.synthetic.json";
 import PitchSheet from "./PitchSheet";
 
+const pbOverride = vi.hoisted(() => ({ fn: null as null | ((r: Record<string, unknown>) => Record<string, unknown>) }));
+vi.mock("@/lib/qloo/playbookStore", async (orig) => {
+  const m = await orig<typeof import("@/lib/qloo/playbookStore")>();
+  return { ...m, usePlaybook: (...a: Parameters<typeof m.usePlaybook>) => { const r = m.usePlaybook(...a); return pbOverride.fn ? (pbOverride.fn(r as never) as typeof r) : r; } };
+});
+
 const GDL = "/tours/pitch/4005539/Cerro%20Alto%20Mezcal";
 beforeEach(() => { vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} })); });
-afterEach(() => { setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE)); cleanup(); resetPlaybooks(); resetSegments(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => { pbOverride.fn = null; setShowcase(parseShowcase(PLACEHOLDER_SHOWCASE)); cleanup(); resetPlaybooks(); resetSegments(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 const renderAt = (url: string, ws?: Parameters<typeof WorkspaceContext.Provider>[0]["value"]) =>
   render(
@@ -76,7 +82,7 @@ describe("pitch sheet page", () => {
       renderAt(`/tours/pitch/4005539/${brand}?sample=1`);
       expect(await screen.findByText("This name isn't available for a pitch sheet.")).toBeTruthy();
       expect(document.body.textContent).not.toMatch(/Ariel Pink|Planned Parenthood/);
-      expect(screen.getByRole("link", { name: "Back to playbook" })).toBeTruthy();
+      expect(await screen.findByRole("link", { name: "Back to playbook" })).toBeTruthy();
       cleanup();
     }
   });
@@ -105,6 +111,7 @@ describe("pitch sheet page", () => {
     vi.stubGlobal("print", print);
     const { container } = renderAt(`${GDL}?sample=1`);
     await screen.findByRole("heading", { level: 1 });
+    await waitFor(() => expect((screen.getByRole("button", { name: "Print / Save as PDF" }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(screen.getByRole("button", { name: "Print / Save as PDF" }));
     expect(print).toHaveBeenCalledOnce();
     expect(container.querySelector(".pitch-sheet")).toBeTruthy();
@@ -122,6 +129,7 @@ describe("pitch sheet page", () => {
     Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
     renderAt(`${GDL}?sample=1`);
     await screen.findByRole("heading", { level: 1 });
+    await waitFor(() => expect((screen.getByRole("button", { name: "Copy as text" }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(screen.getByRole("button", { name: "Copy as text" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
     const text = (writeText.mock.calls[0] as unknown as [string])[0];
@@ -152,5 +160,30 @@ describe("Pitch sheet action on the Sponsors card", () => {
   it("shows no action where the card has no pitch target (the Tour Book list)", () => {
     body({});
     expect(screen.queryByRole("link", { name: /Pitch sheet/ })).toBeNull();
+  });
+});
+
+describe("pitch sheet while the playbook is still streaming", () => {
+  it("shows the sheet once cards exist, with a loading note and print/copy disabled", async () => {
+    pbOverride.fn = (r) => ({ ...r, status: "streaming", narrative: null });
+    renderAt(`${GDL}?sample=1`);
+    expect(await screen.findByRole("heading", { level: 1, name: /Cerro Alto Mezcal/ })).toBeTruthy();
+    expect(screen.getByText("Write-up still loading…")).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Print / Save as PDF" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Copy as text" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+  it("done: no note, print and copy enabled", async () => {
+    renderAt(`${GDL}?sample=1`);
+    await screen.findByRole("heading", { level: 1 });
+    await waitFor(() => expect(screen.queryByText("Write-up still loading…")).toBeNull());
+    expect((screen.getByRole("button", { name: "Print / Save as PDF" }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole("button", { name: "Copy as text" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+  it("no cards yet: skeleton, no sheet", async () => {
+    pbOverride.fn = (r) => ({ ...r, status: "streaming", cards: [], narrative: null });
+    renderAt(`${GDL}?sample=1`);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+    expect(screen.queryByText("Write-up still loading…")).toBeNull();
   });
 });

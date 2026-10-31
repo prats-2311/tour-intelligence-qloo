@@ -89,8 +89,8 @@ function PitchSheetPage() {
     return <Plain>{<p className={muted}>Pitch sheets are built from a scored run. Open this city from a Tour Board.</p>}<Link to="/tours/board" className={btn}>Go to Tour Board</Link></Plain>;
   }
   if (!artist || unrecorded || pb.status === "error" || pb.status === "interrupted") return <Plain><p className={muted}>The playbook for {shownCity.name} isn't loaded, so there is nothing to build a sheet from. Open it on the playbook first.</p>{back}</Plain>;
-  // Built only from a finished playbook: cards arrive one by one and the narrative last, so a partial one would change under the reader.
-  if (pb.status !== "done") return <PlaybookSkeleton />;
+  // Shown as soon as cards exist (the narrative is optional); Print/Copy stay off until the playbook is done so the printed copy never changes under the reader.
+  if (pb.status !== "done" && pb.cards.length === 0) return <PlaybookSkeleton />;
 
   const sheet = buildPitchSheet({
     brand, artist: artist.name, city: { id: shownCity.id, name: shownCity.name, country: shownCity.country }, cards: pb.cards,
@@ -98,14 +98,14 @@ function PitchSheetPage() {
     segments: segments.status === "done" ? segments.data : null, week: week.data, narrative: pb.narrative ?? undefined, snapshot: ws.enabled ? ws.snapshot : null,
   });
   if (sheet.status === "unavailable") return <Plain><p className="text-[15px] text-canvas-text">{sheet.message}</p>{back}</Plain>;
-  return <Sheet sheet={sheet} back={back} />;
+  return <Sheet sheet={sheet} back={back} loading={pb.status !== "done"} />;
 }
 
 function Plain({ children }: { children: React.ReactNode }) {
   return <div className="mx-auto flex w-full max-w-md flex-col items-start gap-3 py-10">{children}</div>;
 }
 
-function Sheet({ sheet, back }: { sheet: PitchSheetOk; back: React.ReactNode }) {
+function Sheet({ sheet, back, loading }: { sheet: PitchSheetOk; back: React.ReactNode; loading: boolean }) {
   const { toast } = useToast();
   const copy = async () => {
     const text = pitchSheetText(sheet);
@@ -115,8 +115,9 @@ function Sheet({ sheet, back }: { sheet: PitchSheetOk; back: React.ReactNode }) 
     <article className="pitch-sheet mx-auto flex w-full max-w-[820px] flex-col gap-5 rounded-[18px] bg-paper p-5 pb-8 md:p-8">
       <div data-pitch-actions data-noprint className="flex flex-wrap items-center gap-2">
         {back}
-        <button type="button" onClick={() => window.print()} className={btn}>Print / Save as PDF</button>
-        <button type="button" onClick={() => void copy()} className={btn}>Copy as text</button>
+        <button type="button" disabled={loading} onClick={() => window.print()} className={`${btn} disabled:cursor-not-allowed disabled:opacity-50`}>Print / Save as PDF</button>
+        <button type="button" disabled={loading} onClick={() => void copy()} className={`${btn} disabled:cursor-not-allowed disabled:opacity-50`}>Copy as text</button>
+        {loading && <span className="text-[12px] text-canvas-muted">Write-up still loading…</span>}
       </div>
       <header className="flex flex-col gap-1">
         <h1 className="font-title break-words text-[30px] leading-[1.1] text-canvas-text">{sheet.title}</h1>
