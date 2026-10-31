@@ -284,6 +284,12 @@ function TourBookPage() {
         />
       </header>
 
+      <div data-noprint data-testid="book-which-tour" className="flex flex-wrap items-center gap-x-3 px-4 pt-3 text-[13px] text-canvas-muted lg:px-6">
+        <span>Tour Book for {artist!.name} tour</span>
+        {(state.savedId || sample) && <span className="rounded-full bg-paper-raised px-2 py-0.5 text-[12px] font-semibold text-canvas-text">{state.savedId ? "Saved" : "Example"}</span>}
+        <Link to="/tours/mine" className="inline-flex min-h-11 items-center text-canvas-text underline decoration-canvas-muted underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">Switch tour →</Link>
+      </div>
+
       <div data-noprint className="px-4 pt-3 empty:hidden lg:px-6"><TeamBar cities={state.cities} tourThread="tour:book" /></div>
 
       {usingDefault && <p data-noprint data-testid="default-shortlist-note" className="px-4 pt-3 text-[13px] text-canvas-muted lg:px-6">Showing the {picked.length} {picked.length === 1 ? "market" : "markets"} we'd hold by default: you haven't picked any yet.</p>}

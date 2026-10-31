@@ -5,6 +5,8 @@ import { useEffect } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as client from "@/lib/qloo/client";
+import { buildSavedRun } from "@/lib/tours/savedRun";
+import { boardReducer, initialBoard } from "@/lib/qloo/tourBoardReducer";
 import { LUMEN_VALE_SAMPLE, SAMPLE_BRIEF } from "@/lib/qloo/fixtures/lumenVale";
 import { countQlooCalls } from "@/lib/qloo/narrate";
 import { resetPlaybooks } from "@/lib/qloo/playbookStore";
@@ -97,6 +99,35 @@ describe("TourBook budget", () => {
     expect(sec.textContent).toContain("Cost 10,000 USD");
     expect(sec.textContent).not.toMatch(/Income|Margin|Break-even|—|NaN/);
     localStorage.clear();
+  });
+});
+
+function LoadSaved() {
+  const { loadSaved } = useTourBoard();
+  useEffect(() => {
+    let st = boardReducer(initialBoard, { type: "start", brief: SAMPLE_BRIEF, source: "live" });
+    for (const event of LUMEN_VALE_SAMPLE) st = boardReducer(st, { type: "event", event });
+    loadSaved(buildSavedRun(st, {}), "t-1");
+  }, [loadSaved]);
+  return null;
+}
+
+describe("TourBook which-tour header", () => {
+  it("an example run says which tour it is, tags it Example and links to Switch tour", async () => {
+    renderAt("/tours/book?sample=1");
+    await screen.findByRole("heading", { name: "Market selection" });
+    const line = screen.getByTestId("book-which-tour");
+    expect(line.textContent).toContain("Tour Book for Lumen Vale tour");
+    expect(within(line).getByText("Example")).toBeTruthy();
+    expect(line.hasAttribute("data-noprint")).toBe(true);
+    expect(screen.getByRole("link", { name: "Switch tour →" }).getAttribute("href")).toBe("/tours/mine");
+  });
+  it("a saved tour is tagged Saved", async () => {
+    renderAt("/tours/book?saved=t-1", <LoadSaved />);
+    await screen.findByRole("heading", { name: "Market selection" });
+    const line = screen.getByTestId("book-which-tour");
+    expect(within(line).getByText(/^Saved/)).toBeTruthy();
+    expect(within(line).queryByText("Example")).toBeNull();
   });
 });
 
