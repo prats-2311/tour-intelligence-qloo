@@ -211,7 +211,7 @@ test("reloading an open playbook keeps the same artist and scores, never the exa
   await page.waitForResponse((r) => r.request().method() === "PATCH" && r.url().includes("/api/tours/"), { timeout: 15_000 });
   const crumb = async () => (await page.getByRole("navigation", { name: /breadcrumb/i }).innerText()).replace(/\s+/g, " ").trim();
   const before = { crumb: await crumb(), h1: await page.getByRole("heading", { level: 1 }).innerText() };
-  expect(before.crumb).toContain(`${rec.artist} tour`);
+  if ((page.viewportSize()?.width ?? 0) >= 1024) expect(before.crumb).toContain(`${rec.artist} tour`); // phones collapse the trail
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 20_000 });
   expect(await page.getByRole("heading", { level: 1 }).innerText()).toBe(before.h1);
