@@ -49,7 +49,7 @@ describe("Compare: the same model, without Qloo", () => {
     expect(qloo.getByText("fans rank it #1 · not in the city's top 20")).toBeTruthy();
     const gem = within(within(res).getByTestId("compare-gemini"));
     expect(gem.getByText("Nike").closest("li")!.textContent).toContain("#14 with these fans");
-    expect(gem.getByText("Red Bull").closest("li")!.textContent).toContain("not in these fans' top 50");
+    expect(gem.getByText("Red Bull").closest("li")!.textContent).toContain("not in these fans' top 20");
     expect(gem.getByText("Red Cross").closest("li")!.textContent).toContain("not a brand");
     expect(gem.getAllByRole("listitem")).toHaveLength(5);
   });
@@ -59,7 +59,7 @@ describe("Compare: the same model, without Qloo", () => {
     fireEvent.click(toggle());
     await screen.findByTestId("compare-result");
     // ranked: 14, 2, 30 -> average 15.3 ; unranked brands: Red Bull only (Red Cross is not a brand): 1 of 4
-    expect(screen.getByTestId("compare-summary").textContent).toBe("Gemini's picks average #15.3 with these fans; 1 of 4 aren't in their top 50.");
+    expect(screen.getByTestId("compare-summary").textContent).toBe("Gemini's picks average #15.3 with these fans; 1 of 4 aren't in their top 20.");
     expect(screen.getByTestId("compare-note").textContent).toBe("Measured on Qloo's own fan ranking: this shows how far a model's memory strays from these fans' taste, not that the ranking is right.");
     expect(container.textContent).not.toContain("%");
   });

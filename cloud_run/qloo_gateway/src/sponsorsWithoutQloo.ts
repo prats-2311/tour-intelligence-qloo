@@ -14,8 +14,8 @@ import type { GatewayEvent } from "./types.js";
 
 /** Bump when the prompt or the result shape changes: it is part of the cache key. */
 export const SPONSORS_PROMPT_VERSION = "v1";
-/** The playbook's own request sizes: the card asks for 10 fan brands and a 20-brand city baseline; this asks for 50 fan brands so ranks up to 50 are known. */
-const CARD_LIMIT = 10, FAN_LIMIT = 50, CITY_LIMIT = 20, MAX_DESCRIBE = 5, PICKS = 5;
+/** The playbook's own request sizes: the card asks for 10 fan brands and a 20-brand city baseline; this asks for 20 fan brands (Qloo's per-call cap) so ranks up to 20 are known. */
+const CARD_LIMIT = 10, FAN_LIMIT = 20, CITY_LIMIT = 20, MAX_DESCRIBE = 5, PICKS = 5;
 export const SPONSORS_NOTE = "Measured on Qloo's own fan ranking: this shows how far a model's memory strays from these fans' taste, not that the ranking is right.";
 
 export const sponsorsPrompt = (artist: string, city: string, country: string) =>

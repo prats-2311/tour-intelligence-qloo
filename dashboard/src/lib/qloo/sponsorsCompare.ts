@@ -37,7 +37,7 @@ export function parseSponsorsCompare(json: unknown): SponsorsCompare {
   return { status: "ok", model: typeof o.model === "string" ? o.model : "", brands, qlooTop, cached: o.cached === true };
 }
 
-export const pickLine = (b: ComparePick): string => (b.nonSponsor ? "not a brand" : b.fanRank === null ? "not in these fans' top 50" : `#${b.fanRank} with these fans`);
+export const pickLine = (b: ComparePick): string => (b.nonSponsor ? "not a brand" : b.fanRank === null ? "not in these fans' top 20" : `#${b.fanRank} with these fans`);
 export const qlooLine = (t: CompareTop): string => `fans rank it #${t.fanRank} · ${t.cityRank === null ? "not in the city's top 20" : `city #${t.cityRank}`}`;
 
 const trim = (n: number): string => String(Math.round(n * 10) / 10);
@@ -48,6 +48,6 @@ export function compareSummary(brands: ComparePick[]): string | null {
   if (measured.length === 0) return null;
   const ranked = measured.filter((b) => b.fanRank !== null).map((b) => b.fanRank!);
   const out = measured.length - ranked.length;
-  if (ranked.length === 0) return `${out} of ${measured.length} of Gemini's picks aren't in these fans' top 50.`;
-  return `Gemini's picks average #${trim(ranked.reduce((a, c) => a + c, 0) / ranked.length)} with these fans; ${out} of ${measured.length} aren't in their top 50.`;
+  if (ranked.length === 0) return `${out} of ${measured.length} of Gemini's picks aren't in these fans' top 20.`;
+  return `Gemini's picks average #${trim(ranked.reduce((a, c) => a + c, 0) / ranked.length)} with these fans; ${out} of ${measured.length} aren't in their top 20.`;
 }

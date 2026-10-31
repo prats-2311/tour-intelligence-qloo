@@ -79,11 +79,11 @@ describe("compareSponsorsWithoutQloo", () => {
     expect(r.brands[0]!.fanRank).toBe(2);
   });
 
-  it("asks Qloo for 50 fan brands, and the card's city baseline of 20", async () => {
+  it("asks Qloo for 20 fan brands (the per-call cap), and the card's city baseline of 20", async () => {
     const q = fakeQloo();
     await compareSponsorsWithoutQloo(IN, mkDeps(gem(["A", "B", "C", "D", "E"]), q));
     const recs = q.calls.filter((c) => c.tool === "qloo_recommend");
-    expect(recs.find((c) => Array.isArray(c.args.signals))!.args).toMatchObject({ target_type: "brand", signals: ["ART"], limit: 50 });
+    expect(recs.find((c) => Array.isArray(c.args.signals))!.args).toMatchObject({ target_type: "brand", signals: ["ART"], limit: 20 });
     expect(recs.find((c) => !Array.isArray(c.args.signals))!.args).toMatchObject({ target_type: "brand", limit: 20 });
   });
 
@@ -193,5 +193,16 @@ describe("sponsors-without-qloo route", () => {
   it("answers unavailable/disabled without the dep", async () => {
     const res = await request(createApp(base)).get(`/v1/sponsors-without-qloo?${q}`).set("x-session-id", "s");
     expect(res.body).toMatchObject({ status: "unavailable", reason: "disabled" });
+  });
+});
+
+describe("Qloo argument limits", () => {
+  it("every qloo_recommend call passes the gateway validator (limit 1-20)", async () => {
+    const { validateToolCall } = await import("../src/validate.js");
+    const q = fakeQloo();
+    await compareSponsorsWithoutQloo(IN, mkDeps(gem(["Coke", "Nike"]), q));
+    const recs = q.calls.filter((c) => c.tool === "qloo_recommend");
+    expect(recs.length).toBeGreaterThan(0);
+    for (const c of recs) expect(validateToolCall(c.tool, c.args)).toMatchObject({ ok: true });
   });
 });

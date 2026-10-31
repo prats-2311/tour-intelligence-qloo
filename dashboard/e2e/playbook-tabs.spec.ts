@@ -119,7 +119,7 @@ test("Compare: the same model, without Qloo loads only on click, from a fake gat
   await expect(card.getByText("Live: asks Gemini once, cached after.")).toBeVisible();
   expect(calls).toBe(0);
   await card.getByRole("button", { name: "Compare: the same model, without Qloo" }).click();
-  await expect(card.getByTestId("compare-summary")).toHaveText("Gemini's picks average #15.3 with these fans; 1 of 4 aren't in their top 50.");
+  await expect(card.getByTestId("compare-summary")).toHaveText("Gemini's picks average #15.3 with these fans; 1 of 4 aren't in their top 20.");
   await expect(card.getByTestId("compare-note")).toContainText("not that the ranking is right.");
   expect(calls).toBe(1);
   await card.scrollIntoViewIfNeeded();

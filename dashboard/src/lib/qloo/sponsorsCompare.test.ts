@@ -21,7 +21,7 @@ describe("copy", () => {
 describe("pickLine and qlooLine", () => {
   it("reads rank, absence and non-brands", () => {
     expect(pickLine({ name: "Nike", fanRank: 14, cityRank: null })).toBe("#14 with these fans");
-    expect(pickLine({ name: "Nike", fanRank: null, cityRank: null })).toBe("not in these fans' top 50");
+    expect(pickLine({ name: "Nike", fanRank: null, cityRank: null })).toBe("not in these fans' top 20");
     expect(pickLine({ name: "Red Cross", fanRank: null, cityRank: null, nonSponsor: true })).toBe("not a brand");
   });
   it("qlooLine gives the fan rank and the city standing", () => {
@@ -33,16 +33,16 @@ describe("pickLine and qlooLine", () => {
 describe("compareSummary", () => {
   const b = (fanRank: number | null, extra = {}) => ({ name: "x", fanRank, cityRank: null, ...extra });
   it("averages the ranked picks and counts the unranked ones", () => {
-    expect(compareSummary([b(14), b(2), b(null), b(null), b(32)])).toBe("Gemini's picks average #16 with these fans; 2 of 5 aren't in their top 50.");
+    expect(compareSummary([b(14), b(2), b(null), b(null), b(32)])).toBe("Gemini's picks average #16 with these fans; 2 of 5 aren't in their top 20.");
   });
   it("keeps one decimal only when needed", () => {
-    expect(compareSummary([b(1), b(2), b(null), b(null), b(null)])).toBe("Gemini's picks average #1.5 with these fans; 3 of 5 aren't in their top 50.");
+    expect(compareSummary([b(1), b(2), b(null), b(null), b(null)])).toBe("Gemini's picks average #1.5 with these fans; 3 of 5 aren't in their top 20.");
   });
-  it("with no ranked pick, says only how many are outside the top 50", () => {
-    expect(compareSummary([b(null), b(null), b(null), b(null), b(null)])).toBe("5 of 5 of Gemini's picks aren't in these fans' top 50.");
+  it("with no ranked pick, says only how many are outside the top 20", () => {
+    expect(compareSummary([b(null), b(null), b(null), b(null), b(null)])).toBe("5 of 5 of Gemini's picks aren't in these fans' top 20.");
   });
   it("ignores non-brands in both counts and says so; no data at all gives null", () => {
-    expect(compareSummary([b(10), b(null), b(null, { nonSponsor: true }), b(20), b(30)])).toBe("Gemini's picks average #20 with these fans; 1 of 4 aren't in their top 50.");
+    expect(compareSummary([b(10), b(null), b(null, { nonSponsor: true }), b(20), b(30)])).toBe("Gemini's picks average #20 with these fans; 1 of 4 aren't in their top 20.");
     expect(compareSummary([])).toBeNull();
     expect(compareSummary([b(null, { nonSponsor: true })])).toBeNull();
   });
