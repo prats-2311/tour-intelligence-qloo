@@ -427,7 +427,7 @@ test("the landing leads with the pitch: headline, protagonist and no overflow, a
   page.on("request", (r) => { if (/\/api\/qloo/.test(r.url())) qloo.push(r.url()); });
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1, name: "Know which brands your artist's fans love in each city, before the sponsor meeting." })).toBeVisible();
-  await expect(page.getByText("The scenario: venues are holding dates until Friday. Pick which 2 of 5 smaller markets to confirm.")).toBeVisible(); // e3c6616 landing copy
+  await expect(page.getByText("The scenario: a sponsor meeting on Friday. Which brand do you pitch in each city?")).toBeVisible(); // 5cb6457 landing copy
   await expect(page.getByRole("link", { name: "How we tested it →" })).toBeVisible();
   await expect(page.getByText("Same engine for film press tours."), "9bb862a dropped the unbacked film-press line").toHaveCount(0);
   expect(await noOverflow(page)).toBe(true);
