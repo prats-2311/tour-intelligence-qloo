@@ -1,4 +1,4 @@
-import { isTestTraffic, sessionHeaders } from "@/lib/qloo/session";
+import { sessionHeaders } from "@/lib/qloo/session";
 
 /** Saved tours (times are epoch ms): the browser's side of the BFF contract (`/api/owners`, `/api/tours*`). The owner token is the only credential; it lives in localStorage. */
 export const OWNER_KEY = "tiq.owner";
@@ -47,6 +47,7 @@ export async function ensureOwner(opts: Opts = {}): Promise<string> {
       let res: Response;
       try { res = await (opts.fetchImpl ?? fetch)("/api/owners", { method: "POST", signal: opts.signal, headers: sessionHeaders() }); }
       catch { throw new ToursError("network", "Couldn't reach the server."); }
+      if (res.status === 429) throw new ToursError("rate_limited", "Too many saves just now. Try again in a little while.", 429);
       if (!res.ok) throw new ToursError("server", "Couldn't set up saved tours.", res.status);
       const j = (await res.json().catch(() => ({}))) as { ownerToken?: unknown };
       if (typeof j.ownerToken !== "string" || !j.ownerToken) throw new ToursError("server", "Couldn't set up saved tours.", res.status);
